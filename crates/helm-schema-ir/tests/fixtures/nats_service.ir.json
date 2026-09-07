@@ -505,61 +505,6 @@
       "condition": [
         [
           {
-            "path": "config.patch",
-            "type": "truthy"
-          },
-          {
-            "path": "config.patch.*.op",
-            "type": "eq",
-            "value": "test"
-          },
-          {
-            "path": "config",
-            "type": "with"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "nats.defaultValues"
-          ],
-          "span": {
-            "end": 4215,
-            "start": 4104
-          },
-          "template_path": "charts/nats/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "nats.loadMergePatch"
-          ],
-          "span": {
-            "end": 8606,
-            "start": 8496
-          },
-          "template_path": "charts/nats/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 7941,
-            "start": 7759
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "config.merge.doc"
-    },
-    {
-      "condition": [
-        [
-          {
             "path": "service.enabled",
             "type": "truthy"
           },
@@ -1543,42 +1488,6 @@
             "path": "config",
             "type": "with"
           }
-        ],
-        [
-          {
-            "path": "config.patch",
-            "type": "truthy"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "config.patch.*.op",
-                  "type": "eq",
-                  "value": "move"
-                }
-              ],
-              [
-                {
-                  "path": "config.patch.*.op",
-                  "type": "eq",
-                  "value": "remove"
-                }
-              ],
-              [
-                {
-                  "path": "config.patch.*.op",
-                  "type": "eq",
-                  "value": "replace"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "path": "config",
-            "type": "with"
-          }
         ]
       ],
       "kind": "Scalar",
@@ -1631,314 +1540,12 @@
           "span": {
             "end": 4719,
             "start": 4467
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 6330,
-            "start": 5302
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 5443,
-            "start": 5339
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 6217,
-            "start": 5686
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "config.patch.*.fromLastMap.doc"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "config.patch",
-            "type": "truthy"
-          },
-          {
-            "path": "config.patch.*.op",
-            "type": "eq",
-            "value": "test"
-          },
-          {
-            "path": "config",
-            "type": "with"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "nats.defaultValues"
-          ],
-          "span": {
-            "end": 4215,
-            "start": 4104
-          },
-          "template_path": "charts/nats/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "nats.loadMergePatch"
-          ],
-          "span": {
-            "end": 8606,
-            "start": 8496
-          },
-          "template_path": "charts/nats/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 7941,
-            "start": 7759
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "config.patch.*.fromLastMap.doc.doc"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "config.patch",
-            "type": "truthy"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "config.patch.*.op",
-                  "type": "eq",
-                  "value": "copy"
-                }
-              ],
-              [
-                {
-                  "path": "config.patch.*.op",
-                  "type": "eq",
-                  "value": "move"
-                }
-              ],
-              [
-                {
-                  "path": "config.patch.*.op",
-                  "type": "eq",
-                  "value": "test"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "path": "config",
-            "type": "with"
-          }
-        ],
-        [
-          {
-            "path": "config.patch",
-            "type": "truthy"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "config.patch.*.op",
-                  "type": "eq",
-                  "value": "move"
-                }
-              ],
-              [
-                {
-                  "path": "config.patch.*.op",
-                  "type": "eq",
-                  "value": "remove"
-                }
-              ],
-              [
-                {
-                  "path": "config.patch.*.op",
-                  "type": "eq",
-                  "value": "replace"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "path": "config",
-            "type": "with"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "nats.defaultValues"
-          ],
-          "span": {
-            "end": 4215,
-            "start": 4104
-          },
-          "template_path": "charts/nats/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "nats.loadMergePatch"
-          ],
-          "span": {
-            "end": 8606,
-            "start": 8496
-          },
-          "template_path": "charts/nats/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 4832,
-            "start": 4062
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 4203,
-            "start": 4099
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 4719,
-            "start": 4467
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 6330,
-            "start": 5302
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 5443,
-            "start": 5339
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 6217,
-            "start": 5686
           },
           "template_path": "charts/nats/templates/_jsonpatch.tpl"
         }
       ],
       "resource": null,
       "source_expr": "config.patch.*.fromLastMap.root"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "config.patch",
-            "type": "truthy"
-          },
-          {
-            "path": "config.patch.*.op",
-            "type": "eq",
-            "value": "test"
-          },
-          {
-            "path": "config",
-            "type": "with"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "nats.defaultValues"
-          ],
-          "span": {
-            "end": 4215,
-            "start": 4104
-          },
-          "template_path": "charts/nats/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "nats.loadMergePatch"
-          ],
-          "span": {
-            "end": 8606,
-            "start": 8496
-          },
-          "template_path": "charts/nats/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 7941,
-            "start": 7759
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "config.patch.*.fromLastMap.root.doc"
     },
     {
       "condition": [
@@ -2315,6 +1922,16 @@
             "jsonpatch"
           ],
           "span": {
+            "end": 4832,
+            "start": 4062
+          },
+          "template_path": "charts/nats/templates/_jsonpatch.tpl"
+        },
+        {
+          "helper_chain": [
+            "jsonpatch"
+          ],
+          "span": {
             "end": 6346,
             "start": 4854
           },
@@ -2337,6 +1954,16 @@
           "span": {
             "end": 7717,
             "start": 6352
+          },
+          "template_path": "charts/nats/templates/_jsonpatch.tpl"
+        },
+        {
+          "helper_chain": [
+            "jsonpatch"
+          ],
+          "span": {
+            "end": 7588,
+            "start": 7083
           },
           "template_path": "charts/nats/templates/_jsonpatch.tpl"
         },
@@ -3481,40 +3108,6 @@
       "condition": [
         [
           {
-            "path": "natsBox.contexts.*.tls",
-            "type": "truthy"
-          },
-          {
-            "path": "natsBox.contexts.*.tls.contents",
-            "type": "truthy"
-          },
-          {
-            "path": "natsBox.contexts",
-            "type": "range"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "nats.defaultValues"
-          ],
-          "span": {
-            "end": 3966,
-            "start": 3852
-          },
-          "template_path": "charts/nats/templates/_helpers.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "natsBox.contexts.*.tls.contents"
-    },
-    {
-      "condition": [
-        [
-          {
             "path": "service",
             "type": "with"
           }
@@ -3555,25 +3148,6 @@
             "type": "truthy"
           },
           {
-            "path": "service.patch.*.op",
-            "type": "eq",
-            "value": "test"
-          },
-          {
-            "path": "service",
-            "type": "with"
-          }
-        ],
-        [
-          {
-            "path": "service.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "service.patch",
-            "type": "truthy"
-          },
-          {
             "alternatives": [
               [
                 {
@@ -3609,68 +3183,6 @@
           {
             "path": "service",
             "type": "with"
-          },
-          {
-            "path": "service.merge",
-            "schema_type": "array",
-            "type": "type_is"
-          },
-          {
-            "path": "service.merge",
-            "schema_type": "object",
-            "type": "not_type_is"
-          }
-        ],
-        [
-          {
-            "path": "service.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "service.patch",
-            "type": "truthy"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "service.patch.*.op",
-                  "type": "eq",
-                  "value": "add"
-                }
-              ],
-              [
-                {
-                  "path": "service.patch.*.op",
-                  "type": "eq",
-                  "value": "copy"
-                }
-              ],
-              [
-                {
-                  "path": "service.patch.*.op",
-                  "type": "eq",
-                  "value": "move"
-                }
-              ],
-              [
-                {
-                  "path": "service.patch.*.op",
-                  "type": "eq",
-                  "value": "replace"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "path": "service",
-            "type": "with"
-          },
-          {
-            "path": "service.merge",
-            "schema_type": "object",
-            "type": "type_is"
           }
         ],
         [
@@ -3842,8 +3354,8 @@
             "jsonpatch"
           ],
           "span": {
-            "end": 7941,
-            "start": 7759
+            "end": 7588,
+            "start": 7083
           },
           "template_path": "charts/nats/templates/_jsonpatch.tpl"
         }
@@ -3911,55 +3423,6 @@
         "metadata",
         "spec"
       ]
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "service.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "service.patch",
-            "type": "truthy"
-          },
-          {
-            "path": "service.patch.*.op",
-            "type": "eq",
-            "value": "test"
-          },
-          {
-            "path": "service",
-            "type": "with"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "nats.loadMergePatch"
-          ],
-          "span": {
-            "end": 8606,
-            "start": 8496
-          },
-          "template_path": "charts/nats/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 7941,
-            "start": 7759
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "service.merge.doc"
     },
     {
       "condition": [
@@ -4573,46 +4036,6 @@
             "path": "service",
             "type": "with"
           }
-        ],
-        [
-          {
-            "path": "service.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "service.patch",
-            "type": "truthy"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "service.patch.*.op",
-                  "type": "eq",
-                  "value": "move"
-                }
-              ],
-              [
-                {
-                  "path": "service.patch.*.op",
-                  "type": "eq",
-                  "value": "remove"
-                }
-              ],
-              [
-                {
-                  "path": "service.patch.*.op",
-                  "type": "eq",
-                  "value": "replace"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "path": "service",
-            "type": "with"
-          }
         ]
       ],
       "kind": "Scalar",
@@ -4655,300 +4078,12 @@
           "span": {
             "end": 4719,
             "start": 4467
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 6330,
-            "start": 5302
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 5443,
-            "start": 5339
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 6217,
-            "start": 5686
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "service.patch.*.fromLastMap.doc"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "service.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "service.patch",
-            "type": "truthy"
-          },
-          {
-            "path": "service.patch.*.op",
-            "type": "eq",
-            "value": "test"
-          },
-          {
-            "path": "service",
-            "type": "with"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "nats.loadMergePatch"
-          ],
-          "span": {
-            "end": 8606,
-            "start": 8496
-          },
-          "template_path": "charts/nats/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 7941,
-            "start": 7759
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "service.patch.*.fromLastMap.doc.doc"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "service.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "service.patch",
-            "type": "truthy"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "service.patch.*.op",
-                  "type": "eq",
-                  "value": "copy"
-                }
-              ],
-              [
-                {
-                  "path": "service.patch.*.op",
-                  "type": "eq",
-                  "value": "move"
-                }
-              ],
-              [
-                {
-                  "path": "service.patch.*.op",
-                  "type": "eq",
-                  "value": "test"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "path": "service",
-            "type": "with"
-          }
-        ],
-        [
-          {
-            "path": "service.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "service.patch",
-            "type": "truthy"
-          },
-          {
-            "alternatives": [
-              [
-                {
-                  "path": "service.patch.*.op",
-                  "type": "eq",
-                  "value": "move"
-                }
-              ],
-              [
-                {
-                  "path": "service.patch.*.op",
-                  "type": "eq",
-                  "value": "remove"
-                }
-              ],
-              [
-                {
-                  "path": "service.patch.*.op",
-                  "type": "eq",
-                  "value": "replace"
-                }
-              ]
-            ],
-            "type": "any_of"
-          },
-          {
-            "path": "service",
-            "type": "with"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "nats.loadMergePatch"
-          ],
-          "span": {
-            "end": 8606,
-            "start": 8496
-          },
-          "template_path": "charts/nats/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 4832,
-            "start": 4062
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 4203,
-            "start": 4099
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 4719,
-            "start": 4467
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 6330,
-            "start": 5302
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 5443,
-            "start": 5339
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 6217,
-            "start": 5686
           },
           "template_path": "charts/nats/templates/_jsonpatch.tpl"
         }
       ],
       "resource": null,
       "source_expr": "service.patch.*.fromLastMap.root"
-    },
-    {
-      "condition": [
-        [
-          {
-            "path": "service.enabled",
-            "type": "truthy"
-          },
-          {
-            "path": "service.patch",
-            "type": "truthy"
-          },
-          {
-            "path": "service.patch.*.op",
-            "type": "eq",
-            "value": "test"
-          },
-          {
-            "path": "service",
-            "type": "with"
-          }
-        ]
-      ],
-      "kind": "Scalar",
-      "path": [],
-      "provenance": [
-        {
-          "helper_chain": [
-            "nats.loadMergePatch"
-          ],
-          "span": {
-            "end": 8606,
-            "start": 8496
-          },
-          "template_path": "charts/nats/templates/_helpers.tpl"
-        },
-        {
-          "helper_chain": [
-            "jsonpatch"
-          ],
-          "span": {
-            "end": 7941,
-            "start": 7759
-          },
-          "template_path": "charts/nats/templates/_jsonpatch.tpl"
-        }
-      ],
-      "resource": null,
-      "source_expr": "service.patch.*.fromLastMap.root.doc"
     },
     {
       "condition": [
@@ -5355,6 +4490,16 @@
             "jsonpatch"
           ],
           "span": {
+            "end": 4832,
+            "start": 4062
+          },
+          "template_path": "charts/nats/templates/_jsonpatch.tpl"
+        },
+        {
+          "helper_chain": [
+            "jsonpatch"
+          ],
+          "span": {
             "end": 6346,
             "start": 4854
           },
@@ -5377,6 +4522,16 @@
           "span": {
             "end": 7717,
             "start": 6352
+          },
+          "template_path": "charts/nats/templates/_jsonpatch.tpl"
+        },
+        {
+          "helper_chain": [
+            "jsonpatch"
+          ],
+          "span": {
+            "end": 7588,
+            "start": 7083
           },
           "template_path": "charts/nats/templates/_jsonpatch.tpl"
         },

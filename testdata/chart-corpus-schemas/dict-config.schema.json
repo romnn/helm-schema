@@ -66,10 +66,10 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/c"
+                  "$ref": "#/$defs/d"
                 },
                 {
-                  "$ref": "#/$defs/b"
+                  "$ref": "#/$defs/c"
                 },
                 {
                   "not": {
@@ -201,11 +201,29 @@
       "type": "string"
     },
     "b": {
+      "properties": {
+        "ingress": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/t"
+            },
+            {
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
+    },
+    "c": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "c": {
+    "d": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
@@ -318,22 +336,63 @@
     },
     {
       "if": {
-        "properties": {
-          "ingress": {
-            "anyOf": [
+        "anyOf": [
+          {
+            "allOf": [
               {
-                "$ref": "#/$defs/t"
+                "properties": {
+                  "ingress": {
+                    "$ref": "#/$defs/1"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
               },
               {
-                "type": "object"
+                "$ref": "#/$defs/b"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "properties": {
+                          "ingress": {}
+                        },
+                        "required": [
+                          "ingress"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "properties": {
+                        "ingress": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "ingress"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
+              },
+              {
+                "$ref": "#/$defs/b"
               }
             ]
           }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -417,10 +476,10 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/c"
+                        "$ref": "#/$defs/d"
                       },
                       {
-                        "$ref": "#/$defs/b"
+                        "$ref": "#/$defs/c"
                       },
                       {
                         "not": {

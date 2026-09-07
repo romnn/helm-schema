@@ -31,22 +31,101 @@
   "allOf": [
     {
       "if": {
-        "properties": {
-          "ingress": {
-            "anyOf": [
+        "anyOf": [
+          {
+            "allOf": [
               {
+                "properties": {
+                  "ingress": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/t"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/t"
+                "properties": {
+                  "ingress": {
+                    "properties": {
+                      "enabled": {
+                        "$ref": "#/$defs/t"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "ingress": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/t"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "ingress"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "properties": {
+                          "ingress": {}
+                        },
+                        "required": [
+                          "ingress"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    {
+                      "properties": {
+                        "ingress": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "ingress"
+                      ],
+                      "type": "object"
+                    }
+                  ]
+                }
               }
             ]
           }
-        },
-        "required": [
-          "ingress"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
         "additionalProperties": {},

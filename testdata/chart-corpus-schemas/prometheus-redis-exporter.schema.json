@@ -12,6 +12,19 @@
       "type": "object"
     },
     "10": {
+      "additionalProperties": {},
+      "properties": {
+        "additionalMetricsRelabels": {
+          "$ref": "#/$defs/E"
+        },
+        "additionalRelabeling": {
+          "$ref": "#/$defs/E"
+        },
+        "interval": {},
+        "scrapeTimeout": {}
+      }
+    },
+    "11": {
       "properties": {
         "redisPasswordFile": {
           "$ref": "#/$defs/q"
@@ -22,30 +35,30 @@
       ],
       "type": "object"
     },
-    "11": {
+    "12": {
       "properties": {
         "clientCertFile": {
-          "$ref": "#/$defs/j"
+          "$ref": "#/$defs/k"
         }
       },
       "required": [
         "clientCertFile"
-      ],
-      "type": "object"
-    },
-    "12": {
-      "properties": {
-        "serverCertFile": {
-          "$ref": "#/$defs/j"
-        }
-      },
-      "required": [
-        "serverCertFile"
       ],
       "type": "object"
     },
     "13": {
       "properties": {
+        "serverCertFile": {
+          "$ref": "#/$defs/k"
+        }
+      },
+      "required": [
+        "serverCertFile"
+      ],
+      "type": "object"
+    },
+    "14": {
+      "properties": {
         "clientCertFile": {
           "$ref": "#/$defs/q"
         }
@@ -55,10 +68,10 @@
       ],
       "type": "object"
     },
-    "14": {
+    "15": {
       "properties": {
         "clientKeyFile": {
-          "$ref": "#/$defs/j"
+          "$ref": "#/$defs/k"
         }
       },
       "required": [
@@ -66,7 +79,7 @@
       ],
       "type": "object"
     },
-    "15": {
+    "16": {
       "properties": {
         "serverCertFile": {
           "$ref": "#/$defs/q"
@@ -77,10 +90,10 @@
       ],
       "type": "object"
     },
-    "16": {
+    "17": {
       "properties": {
         "serverKeyFile": {
-          "$ref": "#/$defs/j"
+          "$ref": "#/$defs/k"
         }
       },
       "required": [
@@ -88,7 +101,7 @@
       ],
       "type": "object"
     },
-    "17": {
+    "18": {
       "properties": {
         "clientKeyFile": {
           "$ref": "#/$defs/q"
@@ -99,7 +112,7 @@
       ],
       "type": "object"
     },
-    "18": {
+    "19": {
       "properties": {
         "serverKeyFile": {
           "$ref": "#/$defs/q"
@@ -110,7 +123,7 @@
       ],
       "type": "object"
     },
-    "19": {
+    "1a": {
       "additionalProperties": false,
       "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
       "properties": {
@@ -148,20 +161,10 @@
         "null"
       ]
     },
-    "1a": {
+    "1b": {
       "description": "A list of node selector requirements by node's fields.",
       "items": {
-        "$ref": "#/$defs/1f"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "1b": {
-      "description": "A list of node selector requirements by node's labels.",
-      "items": {
-        "$ref": "#/$defs/1f"
+        "$ref": "#/$defs/1g"
       },
       "type": [
         "array",
@@ -169,6 +172,16 @@
       ]
     },
     "1c": {
+      "description": "A list of node selector requirements by node's labels.",
+      "items": {
+        "$ref": "#/$defs/1g"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "1d": {
       "additionalProperties": false,
       "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
       "properties": {
@@ -200,7 +213,7 @@
         }
       ]
     },
-    "1d": {
+    "1e": {
       "allOf": [
         {
           "$ref": "#/$defs/f"
@@ -236,7 +249,7 @@
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": "string"
     },
-    "1e": {
+    "1f": {
       "allOf": [
         {
           "$ref": "#/$defs/f"
@@ -272,7 +285,7 @@
       "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
       "type": "string"
     },
-    "1f": {
+    "1g": {
       "additionalProperties": false,
       "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
       "properties": {
@@ -304,7 +317,7 @@
         "null"
       ]
     },
-    "1g": {
+    "1h": {
       "allOf": [
         {
           "$ref": "#/$defs/f"
@@ -340,7 +353,7 @@
       "description": "key is the key to project.",
       "type": "string"
     },
-    "1h": {
+    "1i": {
       "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
         "$ref": "#/$defs/i"
@@ -351,7 +364,7 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "1i": {
+    "1j": {
       "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
         "$ref": "#/$defs/i"
@@ -362,7 +375,7 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "1j": {
+    "1k": {
       "additionalProperties": false,
       "description": "SELinuxOptions are the labels to be applied to the container",
       "properties": {
@@ -400,7 +413,7 @@
         "null"
       ]
     },
-    "1k": {
+    "1l": {
       "additionalProperties": {
         "$ref": "#/$defs/i"
       },
@@ -410,7 +423,7 @@
         "null"
       ]
     },
-    "1l": {
+    "1m": {
       "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
       "type": "string"
     },
@@ -555,7 +568,7 @@
     "F": {
       "properties": {
         "auth": {
-          "$ref": "#/$defs/10"
+          "$ref": "#/$defs/11"
         }
       },
       "required": [
@@ -566,7 +579,7 @@
     "G": {
       "properties": {
         "redisPasswordFile": {
-          "$ref": "#/$defs/j"
+          "$ref": "#/$defs/k"
         }
       },
       "required": [
@@ -626,19 +639,19 @@
               "$ref": "#/$defs/r"
             },
             "matchLabelKeys": {
-              "$ref": "#/$defs/1i"
+              "$ref": "#/$defs/1j"
             },
             "mismatchLabelKeys": {
-              "$ref": "#/$defs/1h"
+              "$ref": "#/$defs/1i"
             },
             "namespaceSelector": {
               "$ref": "#/$defs/r"
             },
             "namespaces": {
-              "$ref": "#/$defs/Y"
+              "$ref": "#/$defs/Z"
             },
             "topologyKey": {
-              "$ref": "#/$defs/1l"
+              "$ref": "#/$defs/1m"
             }
           },
           "required": [
@@ -664,7 +677,7 @@
     "K": {
       "properties": {
         "caCertFile": {
-          "$ref": "#/$defs/j"
+          "$ref": "#/$defs/k"
         }
       },
       "required": [
@@ -794,6 +807,17 @@
       "type": "string"
     },
     "V": {
+      "properties": {
+        "isSecret": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "isSecret"
+      ],
+      "type": "object"
+    },
+    "W": {
       "additionalProperties": false,
       "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
       "properties": {
@@ -801,19 +825,19 @@
           "$ref": "#/$defs/r"
         },
         "matchLabelKeys": {
-          "$ref": "#/$defs/1i"
+          "$ref": "#/$defs/1j"
         },
         "mismatchLabelKeys": {
-          "$ref": "#/$defs/1h"
+          "$ref": "#/$defs/1i"
         },
         "namespaceSelector": {
           "$ref": "#/$defs/r"
         },
         "namespaces": {
-          "$ref": "#/$defs/Y"
+          "$ref": "#/$defs/Z"
         },
         "topologyKey": {
-          "$ref": "#/$defs/1l"
+          "$ref": "#/$defs/1m"
         }
       },
       "required": [
@@ -824,7 +848,7 @@
         "null"
       ]
     },
-    "W": {
+    "X": {
       "anyOf": [
         {
           "$ref": "#/$defs/4"
@@ -842,7 +866,7 @@
           "$ref": "#/$defs/3"
         },
         {
-          "$ref": "#/$defs/1d"
+          "$ref": "#/$defs/1e"
         },
         {
           "$ref": "#/$defs/c"
@@ -852,7 +876,7 @@
         }
       ]
     },
-    "X": {
+    "Y": {
       "anyOf": [
         {
           "$ref": "#/$defs/4"
@@ -880,7 +904,7 @@
         }
       ]
     },
-    "Y": {
+    "Z": {
       "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
       "items": {
         "$ref": "#/$defs/i"
@@ -889,19 +913,6 @@
         "array",
         "null"
       ]
-    },
-    "Z": {
-      "additionalProperties": {},
-      "properties": {
-        "additionalMetricsRelabels": {
-          "$ref": "#/$defs/E"
-        },
-        "additionalRelabeling": {
-          "$ref": "#/$defs/E"
-        },
-        "interval": {},
-        "scrapeTimeout": {}
-      }
     },
     "a": {
       "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
@@ -978,6 +989,12 @@
       ]
     },
     "j": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "k": {
       "properties": {
         "secret": {
           "properties": {
@@ -994,12 +1011,6 @@
       "required": [
         "secret"
       ],
-      "type": "object"
-    },
-    "k": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
       "type": "object"
     },
     "l": {
@@ -1061,13 +1072,59 @@
           "$ref": "#/$defs/3"
         },
         {
-          "$ref": "#/$defs/1d"
+          "$ref": "#/$defs/1e"
         },
         {
           "$ref": "#/$defs/c"
         },
         {
           "$ref": "#/$defs/a"
+        }
+      ]
+    },
+    "providerSchema2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/4"
+        },
+        {
+          "$ref": "#/$defs/3"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/f"
+            },
+            {
+              "$ref": "#/$defs/8"
+            },
+            {
+              "$ref": "#/$defs/e"
+            },
+            {
+              "$ref": "#/$defs/7"
+            },
+            {
+              "$ref": "#/$defs/9"
+            },
+            {
+              "$ref": "#/$defs/g"
+            },
+            {
+              "$ref": "#/$defs/d"
+            },
+            {
+              "$ref": "#/$defs/5"
+            },
+            {
+              "$ref": "#/$defs/6"
+            },
+            {
+              "$ref": "#/$defs/h"
+            }
+          ],
+          "description": "The key of the secret to select from.  Must be a valid secret key.",
+          "type": "string"
         }
       ]
     },
@@ -1196,7 +1253,7 @@
       "additionalProperties": {},
       "properties": {
         "name": {
-          "$ref": "#/$defs/W"
+          "$ref": "#/$defs/X"
         }
       }
     },
@@ -1212,7 +1269,7 @@
               "$ref": "#/$defs/2"
             },
             {
-              "$ref": "#/$defs/1g"
+              "$ref": "#/$defs/1h"
             },
             {
               "$ref": "#/$defs/3"
@@ -1274,7 +1331,7 @@
             "$ref": "#/$defs/G"
           },
           {
-            "$ref": "#/$defs/10"
+            "$ref": "#/$defs/11"
           }
         ]
       }
@@ -1320,7 +1377,7 @@
           {
             "properties": {
               "auth": {
-                "$ref": "#/$defs/j"
+                "$ref": "#/$defs/k"
               }
             },
             "required": [
@@ -1609,7 +1666,7 @@
             "additionalProperties": {},
             "properties": {
               "nameOverride": {
-                "$ref": "#/$defs/X"
+                "$ref": "#/$defs/Y"
               }
             }
           }
@@ -2005,7 +2062,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/18"
+                    "$ref": "#/$defs/19"
                   }
                 },
                 "required": [
@@ -2016,7 +2073,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/16"
+                    "$ref": "#/$defs/17"
                   }
                 },
                 "required": [
@@ -2034,7 +2091,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/14"
+                    "$ref": "#/$defs/15"
                   }
                 },
                 "required": [
@@ -2045,7 +2102,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/17"
+                    "$ref": "#/$defs/18"
                   }
                 },
                 "required": [
@@ -2092,7 +2149,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/11"
+                    "$ref": "#/$defs/12"
                   }
                 },
                 "required": [
@@ -2103,7 +2160,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/13"
+                    "$ref": "#/$defs/14"
                   }
                 },
                 "required": [
@@ -2121,7 +2178,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/15"
+                    "$ref": "#/$defs/16"
                   }
                 },
                 "required": [
@@ -2132,7 +2189,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/12"
+                    "$ref": "#/$defs/13"
                   }
                 },
                 "required": [
@@ -2895,10 +2952,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/1b"
+                            "$ref": "#/$defs/1c"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/1a"
+                            "$ref": "#/$defs/1b"
                           }
                         },
                         "type": "object",
@@ -2935,10 +2992,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/1b"
+                            "$ref": "#/$defs/1c"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/1a"
+                            "$ref": "#/$defs/1b"
                           }
                         },
                         "type": [
@@ -2982,7 +3039,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/V"
+                    "$ref": "#/$defs/W"
                   },
                   "type": [
                     "array",
@@ -3012,7 +3069,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/V"
+                    "$ref": "#/$defs/W"
                   },
                   "type": [
                     "array",
@@ -3029,7 +3086,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/k"
+          "$ref": "#/$defs/j"
         },
         {
           "type": "null"
@@ -3039,7 +3096,7 @@
     "annotations": {
       "allOf": [
         {
-          "$ref": "#/$defs/1k"
+          "$ref": "#/$defs/1l"
         },
         {
           "$ref": "#/$defs/s"
@@ -3140,81 +3197,6 @@
                 "$ref": "#/$defs/1"
               },
               {
-                "$ref": "#/$defs/j"
-              },
-              {
-                "$ref": "#/$defs/z"
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "secret": {
-                "additionalProperties": {},
-                "description": "Use existing secret (ignores redisPassword)",
-                "properties": {
-                  "key": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/4"
-                      },
-                      {
-                        "const": ""
-                      },
-                      {
-                        "$ref": "#/$defs/3"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/f"
-                          },
-                          {
-                            "$ref": "#/$defs/8"
-                          },
-                          {
-                            "$ref": "#/$defs/e"
-                          },
-                          {
-                            "$ref": "#/$defs/7"
-                          },
-                          {
-                            "$ref": "#/$defs/9"
-                          },
-                          {
-                            "$ref": "#/$defs/g"
-                          },
-                          {
-                            "$ref": "#/$defs/d"
-                          },
-                          {
-                            "$ref": "#/$defs/5"
-                          },
-                          {
-                            "$ref": "#/$defs/6"
-                          },
-                          {
-                            "$ref": "#/$defs/h"
-                          }
-                        ],
-                        "description": "The key of the secret to select from.  Must be a valid secret key.",
-                        "type": "string"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/1"
-              },
-              {
                 "$ref": "#/$defs/z"
               },
               {
@@ -3260,7 +3242,7 @@
                         "$ref": "#/$defs/3"
                       },
                       {
-                        "$ref": "#/$defs/1e"
+                        "$ref": "#/$defs/1f"
                       }
                     ],
                     "description": "The secret key will be mounted into this path as a file\ne.g., if secret key is pass.json, the env variable\nREDIS_PASSWORD_FILE will be set to /auth/pass.json"
@@ -3278,7 +3260,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/j"
+                  "$ref": "#/$defs/k"
                 }
               },
               {
@@ -3377,7 +3359,7 @@
                     "description": "Use existing secret (ignores redisPassword)",
                     "properties": {
                       "name": {
-                        "$ref": "#/$defs/W"
+                        "$ref": "#/$defs/X"
                       }
                     }
                   }
@@ -3457,6 +3439,35 @@
             ]
           },
           "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "$ref": "#/$defs/1"
+              },
+              {
+                "$ref": "#/$defs/k"
+              },
+              {
+                "$ref": "#/$defs/z"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "secret": {
+                "additionalProperties": {},
+                "description": "Use existing secret (ignores redisPassword)",
+                "properties": {
+                  "key": {
+                    "$ref": "#/$defs/providerSchema2"
+                  }
+                }
+              }
+            }
+          }
         }
       ],
       "properties": {
@@ -3518,7 +3529,7 @@
           "$ref": "#/$defs/A"
         },
         {
-          "$ref": "#/$defs/k"
+          "$ref": "#/$defs/j"
         }
       ],
       "description": "global custom labels, applied to all resrouces"
@@ -3678,7 +3689,7 @@
           "$ref": "#/$defs/2"
         },
         {
-          "$ref": "#/$defs/k"
+          "$ref": "#/$defs/j"
         },
         {
           "type": "null"
@@ -3697,7 +3708,7 @@
           "type": "array"
         },
         {
-          "$ref": "#/$defs/k"
+          "$ref": "#/$defs/j"
         },
         {
           "type": "null"
@@ -3845,13 +3856,13 @@
           "$ref": "#/$defs/A"
         },
         {
-          "$ref": "#/$defs/k"
+          "$ref": "#/$defs/j"
         }
       ],
       "description": "prometheus.io/path: /metrics\nprometheus.io/port: \"9121\"\nprometheus.io/scrape: \"true\""
     },
     "nameOverride": {
-      "$ref": "#/$defs/X"
+      "$ref": "#/$defs/Y"
     },
     "networkPolicy": {
       "additionalProperties": {},
@@ -3941,7 +3952,7 @@
           "x-kubernetes-map-type": "atomic"
         },
         {
-          "$ref": "#/$defs/k"
+          "$ref": "#/$defs/j"
         },
         {
           "type": "null"
@@ -3996,10 +4007,10 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/1j"
+              "$ref": "#/$defs/1k"
             },
             "seccompProfile": {
-              "$ref": "#/$defs/1c"
+              "$ref": "#/$defs/1d"
             },
             "supplementalGroups": {
               "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
@@ -4045,13 +4056,13 @@
               ]
             },
             "windowsOptions": {
-              "$ref": "#/$defs/19"
+              "$ref": "#/$defs/1a"
             }
           },
           "type": "object"
         },
         {
-          "$ref": "#/$defs/k"
+          "$ref": "#/$defs/j"
         },
         {
           "type": "null"
@@ -4322,6 +4333,25 @@
       "allOf": [
         {
           "if": {
+            "$ref": "#/$defs/1"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "source": {
+                "additionalProperties": {},
+                "description": "Use an existing configmap or secret will ignore redisAddress",
+                "properties": {
+                  "name": {
+                    "$ref": "#/$defs/providerSchema1"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "if": {
             "allOf": [
               {
                 "$ref": "#/$defs/1"
@@ -4360,85 +4390,102 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/1"
-          },
-          "then": {
             "allOf": [
               {
-                "additionalProperties": {},
-                "properties": {
-                  "source": {
-                    "additionalProperties": {},
-                    "description": "Use an existing configmap or secret will ignore redisAddress",
-                    "properties": {
-                      "name": {
-                        "$ref": "#/$defs/providerSchema1"
-                      }
-                    }
-                  }
-                }
+                "$ref": "#/$defs/V"
               },
               {
+                "$ref": "#/$defs/1"
+              }
+            ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "source": {
                 "additionalProperties": {},
+                "description": "Use an existing configmap or secret will ignore redisAddress",
                 "properties": {
-                  "source": {
-                    "additionalProperties": {},
-                    "description": "Use an existing configmap or secret will ignore redisAddress",
-                    "properties": {
-                      "key": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/4"
-                          },
-                          {
-                            "allOf": [
-                              {
-                                "$ref": "#/$defs/f"
-                              },
-                              {
-                                "$ref": "#/$defs/8"
-                              },
-                              {
-                                "$ref": "#/$defs/e"
-                              },
-                              {
-                                "$ref": "#/$defs/7"
-                              },
-                              {
-                                "$ref": "#/$defs/9"
-                              },
-                              {
-                                "$ref": "#/$defs/g"
-                              },
-                              {
-                                "$ref": "#/$defs/d"
-                              },
-                              {
-                                "$ref": "#/$defs/5"
-                              },
-                              {
-                                "$ref": "#/$defs/6"
-                              },
-                              {
-                                "$ref": "#/$defs/h"
-                              }
-                            ],
-                            "description": "The key to select.",
-                            "type": "string"
-                          },
-                          {
-                            "const": ""
-                          },
-                          {
-                            "$ref": "#/$defs/3"
-                          }
-                        ]
-                      }
-                    }
+                  "key": {
+                    "$ref": "#/$defs/providerSchema2"
                   }
                 }
               }
+            }
+          }
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/V"
+                }
+              },
+              {
+                "$ref": "#/$defs/1"
+              }
             ]
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "source": {
+                "additionalProperties": {},
+                "description": "Use an existing configmap or secret will ignore redisAddress",
+                "properties": {
+                  "key": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/4"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/f"
+                          },
+                          {
+                            "$ref": "#/$defs/8"
+                          },
+                          {
+                            "$ref": "#/$defs/e"
+                          },
+                          {
+                            "$ref": "#/$defs/7"
+                          },
+                          {
+                            "$ref": "#/$defs/9"
+                          },
+                          {
+                            "$ref": "#/$defs/g"
+                          },
+                          {
+                            "$ref": "#/$defs/d"
+                          },
+                          {
+                            "$ref": "#/$defs/5"
+                          },
+                          {
+                            "$ref": "#/$defs/6"
+                          },
+                          {
+                            "$ref": "#/$defs/h"
+                          }
+                        ],
+                        "description": "The key to select.",
+                        "type": "string"
+                      },
+                      {
+                        "const": ""
+                      },
+                      {
+                        "$ref": "#/$defs/3"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
           }
         }
       ],
@@ -4505,7 +4552,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/16"
+                "$ref": "#/$defs/17"
               },
               {
                 "$ref": "#/$defs/1"
@@ -4531,7 +4578,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/14"
+                "$ref": "#/$defs/15"
               },
               {
                 "$ref": "#/$defs/1"
@@ -4712,7 +4759,7 @@
                 "$ref": "#/$defs/1"
               },
               {
-                "$ref": "#/$defs/15"
+                "$ref": "#/$defs/16"
               }
             ]
           },
@@ -4802,7 +4849,7 @@
                 "$ref": "#/$defs/1"
               },
               {
-                "$ref": "#/$defs/13"
+                "$ref": "#/$defs/14"
               }
             ]
           },
@@ -4828,7 +4875,7 @@
                 "$ref": "#/$defs/1"
               },
               {
-                "$ref": "#/$defs/12"
+                "$ref": "#/$defs/13"
               }
             ]
           },
@@ -4851,7 +4898,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/17"
+                "$ref": "#/$defs/18"
               },
               {
                 "$ref": "#/$defs/1"
@@ -4965,7 +5012,7 @@
                     "$ref": "#/$defs/3"
                   },
                   {
-                    "$ref": "#/$defs/1e"
+                    "$ref": "#/$defs/1f"
                   }
                 ],
                 "description": "All secrets key about TLS config will be mounted into this path"
@@ -4980,7 +5027,7 @@
                 "$ref": "#/$defs/1"
               },
               {
-                "$ref": "#/$defs/11"
+                "$ref": "#/$defs/12"
               }
             ]
           },
@@ -5105,7 +5152,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/18"
+                "$ref": "#/$defs/19"
               },
               {
                 "$ref": "#/$defs/1"
@@ -5296,7 +5343,7 @@
                         "$ref": "#/$defs/4"
                       },
                       {
-                        "$ref": "#/$defs/1g"
+                        "$ref": "#/$defs/1h"
                       },
                       {
                         "$ref": "#/$defs/3"
@@ -5320,7 +5367,7 @@
           "$ref": "#/$defs/2"
         },
         {
-          "$ref": "#/$defs/k"
+          "$ref": "#/$defs/j"
         },
         {
           "additionalProperties": false,
@@ -5408,13 +5455,13 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/1j"
+              "$ref": "#/$defs/1k"
             },
             "seccompProfile": {
-              "$ref": "#/$defs/1c"
+              "$ref": "#/$defs/1d"
             },
             "windowsOptions": {
-              "$ref": "#/$defs/19"
+              "$ref": "#/$defs/1a"
             }
           },
           "type": "object"
@@ -5454,7 +5501,7 @@
         "annotations": {
           "allOf": [
             {
-              "$ref": "#/$defs/1k"
+              "$ref": "#/$defs/1l"
             },
             {
               "$ref": "#/$defs/s"
@@ -5472,7 +5519,7 @@
               "$ref": "#/$defs/A"
             },
             {
-              "$ref": "#/$defs/k"
+              "$ref": "#/$defs/j"
             }
           ]
         },
@@ -5742,18 +5789,19 @@
         "enabled": {
           "description": "When set true then use a ServiceMonitor to configure scraping"
         },
+        "labels": {},
         "multipleTarget": {},
         "targets": {
           "anyOf": [
             {
               "additionalProperties": {
-                "$ref": "#/$defs/Z"
+                "$ref": "#/$defs/10"
               },
               "type": "object"
             },
             {
               "items": {
-                "$ref": "#/$defs/Z"
+                "$ref": "#/$defs/10"
               },
               "type": "array"
             }

@@ -5748,32 +5748,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/u"
-          },
-          {
-            "$ref": "#/$defs/l"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "route": {
-            "additionalProperties": {},
-            "description": "Note: This is the Openshift route",
-            "properties": {
-              "tls": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "properties": {
@@ -7099,6 +7073,78 @@
                 "null",
                 "string"
               ]
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "route": {
+                        "properties": {
+                          "tls": {}
+                        },
+                        "required": [
+                          "tls"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "route"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "route": {
+                      "properties": {
+                        "tls": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "tls"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "route"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "$ref": "#/$defs/u"
+          },
+          {
+            "$ref": "#/$defs/l"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "route": {
+            "additionalProperties": {},
+            "description": "Note: This is the Openshift route",
+            "properties": {
+              "tls": {
+                "type": "object"
+              }
             }
           }
         }

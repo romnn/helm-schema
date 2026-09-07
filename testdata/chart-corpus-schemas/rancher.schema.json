@@ -6,14 +6,9 @@
       }
     },
     "10": {
-      "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-      "format": "int32",
-      "type": "null"
-    },
-    "11": {
       "properties": {
         "ingress": {
-          "$ref": "#/$defs/W"
+          "$ref": "#/$defs/V"
         }
       },
       "required": [
@@ -21,7 +16,7 @@
       ],
       "type": "object"
     },
-    "12": {
+    "11": {
       "anyOf": [
         {
           "not": {
@@ -49,10 +44,21 @@
         }
       ]
     },
+    "12": {
+      "properties": {
+        "customLogos": {
+          "$ref": "#/$defs/r"
+        }
+      },
+      "required": [
+        "customLogos"
+      ],
+      "type": "object"
+    },
     "13": {
       "properties": {
         "customLogos": {
-          "$ref": "#/$defs/o"
+          "$ref": "#/$defs/17"
         }
       },
       "required": [
@@ -61,17 +67,6 @@
       "type": "object"
     },
     "14": {
-      "properties": {
-        "customLogos": {
-          "$ref": "#/$defs/F"
-        }
-      },
-      "required": [
-        "customLogos"
-      ],
-      "type": "object"
-    },
-    "15": {
       "additionalProperties": {},
       "properties": {
         "failureThreshold": {
@@ -112,10 +107,10 @@
         "timeoutSeconds": {
           "anyOf": [
             {
-              "$ref": "#/$defs/10"
+              "$ref": "#/$defs/Z"
             },
             {
-              "$ref": "#/$defs/Z"
+              "$ref": "#/$defs/Y"
             },
             {
               "$ref": "#/$defs/f"
@@ -134,7 +129,7 @@
       },
       "type": "object"
     },
-    "16": {
+    "15": {
       "properties": {
         "antiAffinity": {
           "enum": [
@@ -147,7 +142,7 @@
       ],
       "type": "object"
     },
-    "17": {
+    "16": {
       "properties": {
         "destination": {
           "enum": [
@@ -157,6 +152,17 @@
       },
       "required": [
         "destination"
+      ],
+      "type": "object"
+    },
+    "17": {
+      "properties": {
+        "volumeName": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "volumeName"
       ],
       "type": "object"
     },
@@ -673,7 +679,7 @@
         "port": {},
         "protocol": {},
         "tls": {
-          "$ref": "#/$defs/R"
+          "$ref": "#/$defs/Q"
         }
       },
       "type": "object"
@@ -723,7 +729,7 @@
           "type": "string"
         },
         {
-          "$ref": "#/$defs/M"
+          "$ref": "#/$defs/L"
         }
       ]
     },
@@ -748,7 +754,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/M"
+          "$ref": "#/$defs/L"
         }
       ]
     },
@@ -842,7 +848,7 @@
         },
         "limits": {
           "additionalProperties": {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/H"
           },
           "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "type": [
@@ -852,7 +858,7 @@
         },
         "requests": {
           "additionalProperties": {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/H"
           },
           "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "type": [
@@ -1106,17 +1112,6 @@
     },
     "F": {
       "properties": {
-        "volumeName": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "volumeName"
-      ],
-      "type": "object"
-    },
-    "G": {
-      "properties": {
         "tls": {
           "enum": [
             null
@@ -1128,7 +1123,7 @@
       ],
       "type": "object"
     },
-    "H": {
+    "G": {
       "properties": {
         "ingress": {}
       },
@@ -1137,7 +1132,7 @@
       ],
       "type": "object"
     },
-    "I": {
+    "H": {
       "oneOf": [
         {
           "type": [
@@ -1153,7 +1148,7 @@
         }
       ]
     },
-    "J": {
+    "I": {
       "properties": {
         "ingress": {
           "enum": [
@@ -1166,10 +1161,10 @@
       ],
       "type": "object"
     },
-    "K": {
+    "J": {
       "description": "Optional: Image-specific registry override\nregistry: \"\""
     },
-    "L": {
+    "K": {
       "anyOf": [
         {
           "$ref": "#/$defs/d"
@@ -1197,7 +1192,7 @@
         }
       ]
     },
-    "M": {
+    "L": {
       "allOf": [
         {
           "$ref": "#/$defs/a"
@@ -1232,10 +1227,10 @@
       ],
       "type": "string"
     },
-    "N": {
+    "M": {
       "anyOf": [
         {
-          "$ref": "#/$defs/11"
+          "$ref": "#/$defs/10"
         },
         {
           "properties": {
@@ -1268,7 +1263,7 @@
         }
       ]
     },
-    "O": {
+    "N": {
       "if": {
         "$ref": "#/$defs/B"
       },
@@ -1291,7 +1286,7 @@
         }
       }
     },
-    "P": {
+    "O": {
       "not": {
         "allOf": [
           {
@@ -1305,10 +1300,10 @@
         ]
       }
     },
-    "Q": {
+    "P": {
       "anyOf": [
         {
-          "$ref": "#/$defs/o"
+          "$ref": "#/$defs/r"
         },
         {
           "allOf": [
@@ -1316,13 +1311,13 @@
               "$ref": "#/$defs/E"
             },
             {
-              "$ref": "#/$defs/F"
+              "$ref": "#/$defs/17"
             }
           ]
         }
       ]
     },
-    "R": {
+    "Q": {
       "additionalProperties": {},
       "properties": {
         "certificateRefs": {
@@ -1344,7 +1339,7 @@
         "mode": {}
       }
     },
-    "S": {
+    "R": {
       "additionalProperties": {},
       "properties": {
         "port": {
@@ -1352,7 +1347,7 @@
         }
       }
     },
-    "T": {
+    "S": {
       "properties": {
         "auditLog": {
           "$ref": "#/$defs/D"
@@ -1363,7 +1358,7 @@
       ],
       "type": "object"
     },
-    "U": {
+    "T": {
       "properties": {
         "postDelete": {
           "$ref": "#/$defs/h"
@@ -1374,14 +1369,14 @@
       ],
       "type": "object"
     },
-    "V": {
+    "U": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
         "string",
         "null"
       ]
     },
-    "W": {
+    "V": {
       "properties": {
         "tls": {
           "properties": {
@@ -1402,7 +1397,7 @@
       ],
       "type": "object"
     },
-    "X": {
+    "W": {
       "additionalProperties": {},
       "properties": {
         "source": {
@@ -1414,7 +1409,7 @@
         }
       }
     },
-    "Y": {
+    "X": {
       "allOf": [
         {
           "$ref": "#/$defs/3"
@@ -1428,10 +1423,15 @@
       ],
       "type": "string"
     },
-    "Z": {
+    "Y": {
       "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
       "format": "int32",
       "type": "integer"
+    },
+    "Z": {
+      "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+      "format": "int32",
+      "type": "null"
     },
     "a": {
       "not": {
@@ -1454,7 +1454,7 @@
             "type": "integer"
           },
           {
-            "$ref": "#/$defs/Y"
+            "$ref": "#/$defs/X"
           },
           {
             "type": "number"
@@ -1472,7 +1472,7 @@
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/Y"
+        "$ref": "#/$defs/X"
       },
       "type": "object"
     },
@@ -1533,7 +1533,7 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/o"
           },
           "propertyNames": {
             "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
@@ -1542,7 +1542,7 @@
         },
         {
           "items": {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/o"
           },
           "type": "array"
         }
@@ -1587,14 +1587,14 @@
     "k": {
       "anyOf": [
         {
-          "$ref": "#/$defs/11"
+          "$ref": "#/$defs/10"
         },
         {
           "properties": {
             "gateway": {
               "properties": {
                 "gatewayClass": {
-                  "$ref": "#/$defs/W"
+                  "$ref": "#/$defs/V"
                 }
               },
               "required": [
@@ -1650,22 +1650,9 @@
       ]
     },
     "o": {
-      "properties": {
-        "volumeKind": {
-          "enum": [
-            "persistentVolumeClaim"
-          ]
-        }
-      },
-      "required": [
-        "volumeKind"
-      ],
-      "type": "object"
-    },
-    "p": {
       "$ref": "#/$defs/helm-double-quoted-safe"
     },
-    "q": {
+    "p": {
       "anyOf": [
         {
           "$ref": "#/$defs/1c"
@@ -1683,7 +1670,7 @@
         }
       ]
     },
-    "r": {
+    "q": {
       "properties": {
         "image": {
           "properties": {
@@ -1699,6 +1686,19 @@
       },
       "required": [
         "image"
+      ],
+      "type": "object"
+    },
+    "r": {
+      "properties": {
+        "volumeKind": {
+          "enum": [
+            "persistentVolumeClaim"
+          ]
+        }
+      },
+      "required": [
+        "volumeKind"
       ],
       "type": "object"
     },
@@ -1750,7 +1750,7 @@
         "port": {},
         "protocol": {},
         "tls": {
-          "$ref": "#/$defs/R"
+          "$ref": "#/$defs/Q"
         }
       }
     },
@@ -1953,7 +1953,7 @@
           {
             "properties": {
               "auditLog": {
-                "$ref": "#/$defs/17"
+                "$ref": "#/$defs/16"
               }
             },
             "required": [
@@ -2033,7 +2033,7 @@
           "description": "Traditional Ingress configuration\nReadme for details and instruction on adding tls secrets.",
           "properties": {
             "tls": {
-              "$ref": "#/$defs/X"
+              "$ref": "#/$defs/W"
             }
           }
         }
@@ -2170,7 +2170,7 @@
                     "$ref": "#/$defs/c"
                   },
                   {
-                    "$ref": "#/$defs/M"
+                    "$ref": "#/$defs/L"
                   }
                 ]
               }
@@ -2219,7 +2219,7 @@
         "additionalProperties": {},
         "properties": {
           "features": {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/o"
           }
         }
       }
@@ -2298,7 +2298,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/U"
+        "$ref": "#/$defs/T"
       },
       "then": {
         "allOf": [
@@ -2313,7 +2313,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "tag": {
-                        "$ref": "#/$defs/p"
+                        "$ref": "#/$defs/o"
                       }
                     }
                   }
@@ -2406,7 +2406,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/N"
+        "$ref": "#/$defs/M"
       },
       "then": {
         "additionalProperties": {},
@@ -2485,11 +2485,11 @@
         "anyOf": [
           {
             "not": {
-              "$ref": "#/$defs/H"
+              "$ref": "#/$defs/G"
             }
           },
           {
-            "$ref": "#/$defs/J"
+            "$ref": "#/$defs/I"
           }
         ]
       },
@@ -2587,11 +2587,11 @@
         "anyOf": [
           {
             "not": {
-              "$ref": "#/$defs/16"
+              "$ref": "#/$defs/15"
             }
           },
           {
-            "$ref": "#/$defs/16"
+            "$ref": "#/$defs/15"
           }
         ]
       },
@@ -2647,7 +2647,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/N"
+            "$ref": "#/$defs/M"
           }
         ]
       },
@@ -2882,7 +2882,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/q"
+        "$ref": "#/$defs/p"
       },
       "then": false
     },
@@ -2944,7 +2944,7 @@
       "if": {
         "properties": {
           "preUpgrade": {
-            "$ref": "#/$defs/r"
+            "$ref": "#/$defs/q"
           }
         },
         "required": [
@@ -3005,7 +3005,7 @@
             "$ref": "#/$defs/k"
           },
           {
-            "$ref": "#/$defs/P"
+            "$ref": "#/$defs/O"
           },
           {
             "anyOf": [
@@ -3013,7 +3013,7 @@
                 "not": {
                   "properties": {
                     "letsEncrypt": {
-                      "$ref": "#/$defs/H"
+                      "$ref": "#/$defs/G"
                     }
                   },
                   "required": [
@@ -3025,7 +3025,7 @@
               {
                 "properties": {
                   "letsEncrypt": {
-                    "$ref": "#/$defs/J"
+                    "$ref": "#/$defs/I"
                   }
                 },
                 "required": [
@@ -3052,7 +3052,7 @@
                   "gateway": {
                     "properties": {
                       "gatewayClass": {
-                        "$ref": "#/$defs/G"
+                        "$ref": "#/$defs/F"
                       }
                     },
                     "required": [
@@ -3161,7 +3161,7 @@
         "additionalProperties": {},
         "properties": {
           "noDefaultAdmin": {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/o"
           }
         }
       }
@@ -3170,7 +3170,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/N"
+            "$ref": "#/$defs/M"
           },
           {
             "properties": {
@@ -3289,7 +3289,7 @@
           {
             "properties": {
               "auditLog": {
-                "$ref": "#/$defs/r"
+                "$ref": "#/$defs/q"
               }
             },
             "required": [
@@ -3301,7 +3301,7 @@
             "$ref": "#/$defs/z"
           },
           {
-            "$ref": "#/$defs/T"
+            "$ref": "#/$defs/S"
           }
         ]
       },
@@ -3541,7 +3541,7 @@
             }
           },
           {
-            "$ref": "#/$defs/r"
+            "$ref": "#/$defs/q"
           }
         ]
       },
@@ -3553,6 +3553,59 @@
             "description": "Rancher image configuration",
             "properties": {
               "registry": {
+                "type": [
+                  "null",
+                  "string"
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "customLogos": {
+                "properties": {
+                  "storageClass": {
+                    "$ref": "#/$defs/t"
+                  }
+                },
+                "required": [
+                  "storageClass"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "customLogos"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "$ref": "#/$defs/13"
+            }
+          },
+          {
+            "$ref": "#/$defs/12"
+          },
+          {
+            "$ref": "#/$defs/y"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "customLogos": {
+            "additionalProperties": {},
+            "description": "Rancher custom logos persistence",
+            "properties": {
+              "storageClass": {
                 "type": [
                   "null",
                   "string"
@@ -3824,7 +3877,7 @@
             "$ref": "#/$defs/z"
           },
           {
-            "$ref": "#/$defs/T"
+            "$ref": "#/$defs/S"
           }
         ]
       },
@@ -4390,11 +4443,11 @@
                     "properties": {
                       "additionalListeners": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/O"
+                          "$ref": "#/$defs/N"
                         },
                         "description": "Additional listener configs\n- name: http\nprotocol: HTTP\nport: 80\nhostname: \"*.example.com\"\n- name: https\nprotocol: HTTPS\nport: 443\nhostname: \"*.example.com\"\ntls:\nmode: Terminate\ncertificateRefs:\n- name: app-tls\nkind: Secret",
                         "items": {
-                          "$ref": "#/$defs/O"
+                          "$ref": "#/$defs/N"
                         }
                       }
                     }
@@ -4440,11 +4493,11 @@
                     "properties": {
                       "additionalListeners": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/S"
+                          "$ref": "#/$defs/R"
                         },
                         "description": "Additional listener configs\n- name: http\nprotocol: HTTP\nport: 80\nhostname: \"*.example.com\"\n- name: https\nprotocol: HTTPS\nport: 443\nhostname: \"*.example.com\"\ntls:\nmode: Terminate\ncertificateRefs:\n- name: app-tls\nkind: Secret",
                         "items": {
-                          "$ref": "#/$defs/S"
+                          "$ref": "#/$defs/R"
                         }
                       }
                     }
@@ -4602,12 +4655,12 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/13"
+                "$ref": "#/$defs/12"
               },
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/14"
+                    "$ref": "#/$defs/13"
                   },
                   {
                     "properties": {
@@ -4663,7 +4716,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/12"
+        "$ref": "#/$defs/11"
       },
       "then": false
     },
@@ -4682,7 +4735,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "tls": {
-                    "$ref": "#/$defs/X"
+                    "$ref": "#/$defs/W"
                   }
                 }
               }
@@ -4699,40 +4752,6 @@
             "null",
             "string"
           ]
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "not": {
-              "$ref": "#/$defs/14"
-            }
-          },
-          {
-            "$ref": "#/$defs/13"
-          },
-          {
-            "$ref": "#/$defs/y"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "customLogos": {
-            "additionalProperties": {},
-            "description": "Rancher custom logos persistence",
-            "properties": {
-              "storageClass": {
-                "type": [
-                  "null",
-                  "string"
-                ]
-              }
-            }
-          }
         }
       }
     },
@@ -4767,7 +4786,7 @@
             "$ref": "#/$defs/k"
           },
           {
-            "$ref": "#/$defs/P"
+            "$ref": "#/$defs/O"
           },
           {
             "$ref": "#/$defs/n"
@@ -4834,7 +4853,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/12"
+            "$ref": "#/$defs/11"
           },
           {
             "anyOf": [
@@ -4933,7 +4952,7 @@
               {
                 "properties": {
                   "ingress": {
-                    "$ref": "#/$defs/G"
+                    "$ref": "#/$defs/F"
                   }
                 },
                 "required": [
@@ -4947,11 +4966,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/H"
+                  "$ref": "#/$defs/G"
                 }
               },
               {
-                "$ref": "#/$defs/J"
+                "$ref": "#/$defs/I"
               }
             ]
           }
@@ -5067,7 +5086,7 @@
           {
             "properties": {
               "postDelete": {
-                "$ref": "#/$defs/r"
+                "$ref": "#/$defs/q"
               }
             },
             "required": [
@@ -5076,7 +5095,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/U"
+            "$ref": "#/$defs/T"
           }
         ]
       },
@@ -5107,7 +5126,7 @@
       "description": "Control how the Rancher agents validate TLS connections\nValid options: strict, or system-store\nNote, for new installations empty will default to strict on 2.9+, or system-store on 2.8 or older"
     },
     "aggregationRegistrationTimeout": {
-      "$ref": "#/$defs/L"
+      "$ref": "#/$defs/K"
     },
     "antiAffinity": {
       "anyOf": [
@@ -5206,7 +5225,7 @@
                 "$ref": "#/$defs/h"
               },
               {
-                "$ref": "#/$defs/17"
+                "$ref": "#/$defs/16"
               }
             ]
           },
@@ -5272,7 +5291,7 @@
                 "$ref": "#/$defs/h"
               },
               {
-                "$ref": "#/$defs/q"
+                "$ref": "#/$defs/p"
               }
             ]
           },
@@ -5342,7 +5361,7 @@
     "busyboxImage": {},
     "busyboxImagePullPolicy": {},
     "cacheSyncTimeout": {
-      "$ref": "#/$defs/L"
+      "$ref": "#/$defs/K"
     },
     "certmanager": {
       "additionalProperties": {},
@@ -5358,106 +5377,10 @@
           "if": {
             "allOf": [
               {
-                "not": {
-                  "$ref": "#/$defs/F"
-                }
-              },
-              {
                 "$ref": "#/$defs/h"
               },
               {
-                "$ref": "#/$defs/o"
-              },
-              {
-                "not": {
-                  "properties": {
-                    "storageClass": {
-                      "enum": [
-                        "-"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "storageClass"
-                  ],
-                  "type": "object"
-                }
-              }
-            ]
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "storageClass": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/d"
-                  },
-                  {
-                    "$ref": "#/$defs/f"
-                  },
-                  {
-                    "$ref": "#/$defs/c"
-                  },
-                  {
-                    "description": "storageClassName is the name of the StorageClass required by the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1",
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/$defs/g"
-                  },
-                  {
-                    "$ref": "#/$defs/e"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/a"
-                      },
-                      {
-                        "$ref": "#/$defs/4"
-                      },
-                      {
-                        "$ref": "#/$defs/9"
-                      },
-                      {
-                        "$ref": "#/$defs/3"
-                      },
-                      {
-                        "$ref": "#/$defs/7"
-                      },
-                      {
-                        "$ref": "#/$defs/5"
-                      },
-                      {
-                        "$ref": "#/$defs/8"
-                      },
-                      {
-                        "$ref": "#/$defs/1"
-                      },
-                      {
-                        "$ref": "#/$defs/2"
-                      },
-                      {
-                        "$ref": "#/$defs/6"
-                      }
-                    ],
-                    "description": "storageClassName is the name of the StorageClass required by the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1",
-                    "type": "string"
-                  }
-                ]
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/h"
-              },
-              {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/r"
               }
             ]
           },
@@ -5520,7 +5443,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/Q"
+                "$ref": "#/$defs/P"
               },
               {
                 "$ref": "#/$defs/E"
@@ -5530,7 +5453,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/o"
+                  "$ref": "#/$defs/r"
                 }
               }
             ]
@@ -5604,7 +5527,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/Q"
+                "$ref": "#/$defs/P"
               },
               {
                 "$ref": "#/$defs/h"
@@ -5717,7 +5640,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/V"
+                        "$ref": "#/$defs/U"
                       },
                       "optional": {
                         "description": "Specify whether the ConfigMap or its key must be defined",
@@ -5773,7 +5696,7 @@
                         ]
                       },
                       "divisor": {
-                        "$ref": "#/$defs/I"
+                        "$ref": "#/$defs/H"
                       },
                       "resource": {
                         "description": "Required: resource to select",
@@ -5798,7 +5721,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/V"
+                        "$ref": "#/$defs/U"
                       },
                       "optional": {
                         "description": "Specify whether the Secret or its key must be defined",
@@ -6033,7 +5956,7 @@
         "pullPolicy": {},
         "registry": {},
         "repository": {
-          "$ref": "#/$defs/K"
+          "$ref": "#/$defs/J"
         },
         "tag": {
           "description": "Defaults to .Chart.appVersion\nrancher/rancher image tag. https://hub.docker.com/r/rancher/rancher/tags/"
@@ -6056,7 +5979,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/G"
+                "$ref": "#/$defs/F"
               }
             ]
           },
@@ -6118,7 +6041,7 @@
       }
     },
     "livenessProbe": {
-      "$ref": "#/$defs/15"
+      "$ref": "#/$defs/14"
     },
     "nameOverride": {
       "anyOf": [
@@ -6211,7 +6134,7 @@
                 "$ref": "#/$defs/h"
               },
               {
-                "$ref": "#/$defs/q"
+                "$ref": "#/$defs/p"
               }
             ]
           },
@@ -6242,7 +6165,7 @@
           "properties": {
             "registry": {},
             "repository": {
-              "$ref": "#/$defs/K"
+              "$ref": "#/$defs/J"
             },
             "tag": {}
           }
@@ -6262,7 +6185,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/q"
+            "$ref": "#/$defs/p"
           },
           "then": false
         }
@@ -6274,7 +6197,7 @@
           "properties": {
             "registry": {},
             "repository": {
-              "$ref": "#/$defs/K"
+              "$ref": "#/$defs/J"
             },
             "tag": {
               "description": "Optional: Image-specific pull policy override\npullPolicy: \"Always\""
@@ -6359,7 +6282,7 @@
       "description": "If you are using certs signed by a private CA set to 'true' and set the 'tls-ca'\nin the 'cattle-system' namespace. See the README.md for details"
     },
     "proxy": {
-      "$ref": "#/$defs/L"
+      "$ref": "#/$defs/K"
     },
     "rancherImage": {},
     "rancherImagePullPolicy": {
@@ -6386,7 +6309,7 @@
       "description": "Control additional labels and annotations on namespaces create by Rancher."
     },
     "readinessProbe": {
-      "$ref": "#/$defs/15"
+      "$ref": "#/$defs/14"
     },
     "replicas": {
       "description": "Number of Rancher server replicas. Setting to negative number will dynamically between 0 and the abs(replicas) based on available nodes.\nof available nodes in the cluster"
@@ -6505,10 +6428,10 @@
         "timeoutSeconds": {
           "anyOf": [
             {
-              "$ref": "#/$defs/10"
+              "$ref": "#/$defs/Z"
             },
             {
-              "$ref": "#/$defs/Z"
+              "$ref": "#/$defs/Y"
             },
             {
               "$ref": "#/$defs/f"

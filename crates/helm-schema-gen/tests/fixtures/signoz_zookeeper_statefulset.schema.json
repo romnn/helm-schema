@@ -18609,6 +18609,78 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "anyOf": [
+              {
+                "not": {
+                  "properties": {
+                    "diagnosticMode": {
+                      "properties": {
+                        "enabled": {}
+                      },
+                      "required": [
+                        "enabled"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "diagnosticMode"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "properties": {
+                  "diagnosticMode": {
+                    "properties": {
+                      "enabled": {
+                        "enum": [
+                          null
+                        ]
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "diagnosticMode"
+                ],
+                "type": "object"
+              }
+            ]
+          },
+          {
+            "not": {
+              "properties": {
+                "image": {
+                  "properties": {
+                    "debug": {
+                      "$ref": "#/$defs/t"
+                    }
+                  },
+                  "required": [
+                    "debug"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "image"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "not": {
@@ -25549,25 +25621,11 @@
       "additionalProperties": {},
       "properties": {
         "imagePullSecrets": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            }
+          "type": [
+            "array",
+            "integer",
+            "null",
+            "object"
           ]
         },
         "imageRegistry": {},
@@ -25667,25 +25725,11 @@
         "digest": {},
         "pullPolicy": {},
         "pullSecrets": {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "additionalProperties": {},
-              "type": "object"
-            }
+          "type": [
+            "array",
+            "integer",
+            "null",
+            "object"
           ]
         },
         "registry": {},
@@ -29351,25 +29395,11 @@
             "digest": {},
             "pullPolicy": {},
             "pullSecrets": {
-              "anyOf": [
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "items": {},
-                  "type": "array"
-                },
-                {
-                  "type": "integer"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "additionalProperties": {},
-                  "type": "object"
-                }
+              "type": [
+                "array",
+                "integer",
+                "null",
+                "object"
               ]
             },
             "registry": {},

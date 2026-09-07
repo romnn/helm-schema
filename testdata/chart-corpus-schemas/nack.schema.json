@@ -7,6 +7,38 @@
       ]
     },
     "10": {
+      "additionalProperties": false,
+      "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+      "properties": {
+        "key": {
+          "description": "The label key that the selector applies to.",
+          "type": "string"
+        },
+        "operator": {
+          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
+          "type": "string"
+        },
+        "values": {
+          "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
+          "items": {
+            "$ref": "#/$defs/1"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "key",
+        "operator"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "11": {
       "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
         "$ref": "#/$defs/1"
@@ -17,7 +49,7 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "11": {
+    "12": {
       "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
         "$ref": "#/$defs/1"
@@ -28,7 +60,7 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "12": {
+    "13": {
       "additionalProperties": false,
       "description": "SELinuxOptions are the labels to be applied to the container",
       "properties": {
@@ -66,7 +98,7 @@
         "null"
       ]
     },
-    "13": {
+    "14": {
       "additionalProperties": {
         "$ref": "#/$defs/m"
       },
@@ -76,11 +108,11 @@
         "null"
       ]
     },
-    "14": {
+    "15": {
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "null"
     },
-    "15": {
+    "16": {
       "additionalProperties": {
         "$ref": "#/$defs/1"
       },
@@ -90,11 +122,11 @@
         "null"
       ]
     },
-    "16": {
+    "17": {
       "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
       "type": "string"
     },
-    "17": {
+    "18": {
       "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
       "items": {
         "$ref": "#/$defs/1"
@@ -193,6 +225,15 @@
     },
     "A": {
       "properties": {
+        "secret": {}
+      },
+      "required": [
+        "secret"
+      ],
+      "type": "object"
+    },
+    "B": {
+      "properties": {
         "credentials": {
           "$ref": "#/$defs/t"
         }
@@ -202,7 +243,7 @@
       ],
       "type": "object"
     },
-    "B": {
+    "C": {
       "properties": {
         "registry": {
           "$ref": "#/$defs/t"
@@ -213,7 +254,7 @@
       ],
       "type": "object"
     },
-    "C": {
+    "D": {
       "properties": {
         "nkey": {
           "$ref": "#/$defs/t"
@@ -224,15 +265,15 @@
       ],
       "type": "object"
     },
-    "D": {
+    "E": {
       "description": "Kind is the type of resource being referenced",
       "type": "string"
     },
-    "E": {
+    "F": {
       "description": "Name is the name of resource being referenced",
       "type": "string"
     },
-    "F": {
+    "G": {
       "properties": {
         "secret": {
           "enum": [
@@ -245,7 +286,7 @@
       ],
       "type": "object"
     },
-    "G": {
+    "H": {
       "properties": {
         "image": {
           "enum": [
@@ -258,7 +299,7 @@
       ],
       "type": "object"
     },
-    "H": {
+    "I": {
       "properties": {
         "nats": {
           "enum": [
@@ -271,20 +312,20 @@
       ],
       "type": "object"
     },
-    "I": {
+    "J": {
       "properties": {
-        "tls": {
+        "nkey": {
           "enum": [
             null
           ]
         }
       },
       "required": [
-        "tls"
+        "nkey"
       ],
       "type": "object"
     },
-    "J": {
+    "K": {
       "additionalProperties": false,
       "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
       "properties": {
@@ -292,19 +333,19 @@
           "$ref": "#/$defs/f"
         },
         "matchLabelKeys": {
-          "$ref": "#/$defs/11"
+          "$ref": "#/$defs/12"
         },
         "mismatchLabelKeys": {
-          "$ref": "#/$defs/10"
+          "$ref": "#/$defs/11"
         },
         "namespaceSelector": {
           "$ref": "#/$defs/f"
         },
         "namespaces": {
-          "$ref": "#/$defs/17"
+          "$ref": "#/$defs/18"
         },
         "topologyKey": {
-          "$ref": "#/$defs/16"
+          "$ref": "#/$defs/17"
         }
       },
       "required": [
@@ -315,7 +356,7 @@
         "null"
       ]
     },
-    "K": {
+    "L": {
       "additionalProperties": false,
       "description": "DownwardAPIVolumeFile represents information to create the file containing the pod field",
       "properties": {
@@ -393,7 +434,7 @@
         "null"
       ]
     },
-    "L": {
+    "M": {
       "description": "items if unspecified, each key-value pair in the Data field of the referenced ConfigMap will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the ConfigMap, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
       "items": {
         "$ref": "#/$defs/s"
@@ -403,7 +444,7 @@
         "null"
       ]
     },
-    "M": {
+    "N": {
       "additionalProperties": false,
       "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
       "properties": {
@@ -441,7 +482,7 @@
         "null"
       ]
     },
-    "N": {
+    "O": {
       "allOf": [
         {
           "$ref": "#/$defs/e"
@@ -477,17 +518,17 @@
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
-    "O": {
+    "P": {
       "description": "A list of node selector requirements by node's fields.",
       "items": {
-        "$ref": "#/$defs/Z"
+        "$ref": "#/$defs/10"
       },
       "type": [
         "array",
         "null"
       ]
     },
-    "P": {
+    "Q": {
       "additionalProperties": {
         "$ref": "#/$defs/1"
       },
@@ -497,7 +538,7 @@
         "null"
       ]
     },
-    "Q": {
+    "R": {
       "additionalProperties": {},
       "allOf": [
         {
@@ -529,7 +570,7 @@
         }
       }
     },
-    "R": {
+    "S": {
       "additionalProperties": {
         "$ref": "#/$defs/m"
       },
@@ -539,18 +580,18 @@
         "null"
       ]
     },
-    "S": {
+    "T": {
       "description": "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required.",
       "type": [
         "string",
         "null"
       ]
     },
-    "T": {
+    "U": {
       "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
       "type": "null"
     },
-    "U": {
+    "V": {
       "properties": {
         "jetstream": {
           "properties": {
@@ -569,17 +610,17 @@
       ],
       "type": "object"
     },
-    "V": {
+    "W": {
       "description": "A list of node selector requirements by node's labels.",
       "items": {
-        "$ref": "#/$defs/Z"
+        "$ref": "#/$defs/10"
       },
       "type": [
         "array",
         "null"
       ]
     },
-    "W": {
+    "X": {
       "additionalProperties": false,
       "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
       "properties": {
@@ -611,7 +652,7 @@
         }
       ]
     },
-    "X": {
+    "Y": {
       "allOf": [
         {
           "$ref": "#/$defs/e"
@@ -647,7 +688,7 @@
       "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
       "type": "string"
     },
-    "Y": {
+    "Z": {
       "anyOf": [
         {
           "$ref": "#/$defs/6"
@@ -679,38 +720,6 @@
         {
           "$ref": "#/$defs/7"
         }
-      ]
-    },
-    "Z": {
-      "additionalProperties": false,
-      "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-      "properties": {
-        "key": {
-          "description": "The label key that the selector applies to.",
-          "type": "string"
-        },
-        "operator": {
-          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-          "type": "string"
-        },
-        "values": {
-          "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-          "items": {
-            "$ref": "#/$defs/1"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        }
-      },
-      "required": [
-        "key",
-        "operator"
-      ],
-      "type": [
-        "object",
-        "null"
       ]
     },
     "a": {
@@ -896,10 +905,10 @@
           "$ref": "#/$defs/6"
         },
         {
-          "$ref": "#/$defs/T"
+          "$ref": "#/$defs/U"
         },
         {
-          "$ref": "#/$defs/X"
+          "$ref": "#/$defs/Y"
         },
         {
           "$ref": "#/$defs/4"
@@ -997,19 +1006,19 @@
               "$ref": "#/$defs/f"
             },
             "matchLabelKeys": {
-              "$ref": "#/$defs/11"
+              "$ref": "#/$defs/12"
             },
             "mismatchLabelKeys": {
-              "$ref": "#/$defs/10"
+              "$ref": "#/$defs/11"
             },
             "namespaceSelector": {
               "$ref": "#/$defs/f"
             },
             "namespaces": {
-              "$ref": "#/$defs/17"
+              "$ref": "#/$defs/18"
             },
             "topologyKey": {
-              "$ref": "#/$defs/16"
+              "$ref": "#/$defs/17"
             }
           },
           "required": [
@@ -1061,21 +1070,25 @@
       ]
     },
     "y": {
+      "properties": {
+        "tls": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "z": {
       "additionalProperties": {},
       "properties": {
         "secret": {
           "type": "object"
         }
       }
-    },
-    "z": {
-      "properties": {
-        "secret": {}
-      },
-      "required": [
-        "secret"
-      ],
-      "type": "object"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1302,7 +1315,7 @@
               {
                 "properties": {
                   "jetstream": {
-                    "$ref": "#/$defs/I"
+                    "$ref": "#/$defs/y"
                   }
                 },
                 "required": [
@@ -1401,11 +1414,11 @@
           },
           {
             "not": {
-              "$ref": "#/$defs/U"
+              "$ref": "#/$defs/V"
             }
           },
           {
-            "$ref": "#/$defs/U"
+            "$ref": "#/$defs/V"
           }
         ]
       },
@@ -1454,7 +1467,7 @@
               {
                 "properties": {
                   "jetstream": {
-                    "$ref": "#/$defs/H"
+                    "$ref": "#/$defs/I"
                   }
                 },
                 "required": [
@@ -1477,7 +1490,7 @@
           "jetstream": {
             "properties": {
               "image": {
-                "$ref": "#/$defs/B"
+                "$ref": "#/$defs/C"
               }
             },
             "required": [
@@ -1503,7 +1516,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "repository": {
-                        "$ref": "#/$defs/Y"
+                        "$ref": "#/$defs/Z"
                       }
                     }
                   }
@@ -1521,7 +1534,126 @@
                     "additionalProperties": {},
                     "properties": {
                       "registry": {
-                        "$ref": "#/$defs/Y"
+                        "$ref": "#/$defs/Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "jetstream": {
+                "properties": {
+                  "nats": {
+                    "$ref": "#/$defs/D"
+                  }
+                },
+                "required": [
+                  "nats"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "jetstream"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "jetstream": {
+                      "properties": {
+                        "nats": {
+                          "$ref": "#/$defs/J"
+                        }
+                      },
+                      "required": [
+                        "nats"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "jetstream"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "jetstream": {
+                        "properties": {
+                          "nats": {
+                            "properties": {
+                              "nkey": {}
+                            },
+                            "required": [
+                              "nkey"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "nats"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "jetstream"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "jetstream": {
+                "additionalProperties": {},
+                "properties": {
+                  "nats": {
+                    "additionalProperties": {},
+                    "description": "NATS URL",
+                    "properties": {
+                      "nkey": {
+                        "$ref": "#/$defs/z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "jetstream": {
+                "additionalProperties": {},
+                "properties": {
+                  "nats": {
+                    "additionalProperties": {},
+                    "description": "NATS URL",
+                    "properties": {
+                      "nkey": {
+                        "type": "object"
                       }
                     }
                   }
@@ -1568,7 +1700,7 @@
               {
                 "properties": {
                   "jetstream": {
-                    "$ref": "#/$defs/G"
+                    "$ref": "#/$defs/H"
                   }
                 },
                 "required": [
@@ -1686,7 +1818,7 @@
           "jetstream": {
             "properties": {
               "nats": {
-                "$ref": "#/$defs/A"
+                "$ref": "#/$defs/B"
               }
             },
             "required": [
@@ -1732,7 +1864,7 @@
                     "description": "NATS URL",
                     "properties": {
                       "credentials": {
-                        "$ref": "#/$defs/y"
+                        "$ref": "#/$defs/z"
                       }
                     }
                   }
@@ -1772,69 +1904,6 @@
         "$ref": "#/$defs/n"
       },
       "then": false
-    },
-    {
-      "if": {
-        "properties": {
-          "jetstream": {
-            "properties": {
-              "nats": {
-                "$ref": "#/$defs/C"
-              }
-            },
-            "required": [
-              "nats"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "jetstream"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "jetstream": {
-                "additionalProperties": {},
-                "properties": {
-                  "nats": {
-                    "additionalProperties": {},
-                    "description": "NATS URL",
-                    "properties": {
-                      "nkey": {
-                        "$ref": "#/$defs/y"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "jetstream": {
-                "additionalProperties": {},
-                "properties": {
-                  "nats": {
-                    "additionalProperties": {},
-                    "description": "NATS URL",
-                    "properties": {
-                      "nkey": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
     }
   ],
   "properties": {
@@ -2121,7 +2190,7 @@
                     ]
                   },
                   "items": {
-                    "$ref": "#/$defs/L"
+                    "$ref": "#/$defs/M"
                   },
                   "name": {
                     "$ref": "#/$defs/l"
@@ -2194,7 +2263,7 @@
                   "items": {
                     "description": "Items is a list of downward API volume file",
                     "items": {
-                      "$ref": "#/$defs/K"
+                      "$ref": "#/$defs/L"
                     },
                     "type": [
                       "array",
@@ -2240,7 +2309,7 @@
                         "description": "ObjectMeta is metadata that all persisted resources must have, which includes all objects users must create.",
                         "properties": {
                           "annotations": {
-                            "$ref": "#/$defs/15"
+                            "$ref": "#/$defs/16"
                           },
                           "creationTimestamp": {
                             "$ref": "#/$defs/q"
@@ -2283,7 +2352,7 @@
                             ]
                           },
                           "labels": {
-                            "$ref": "#/$defs/P"
+                            "$ref": "#/$defs/Q"
                           },
                           "managedFields": {
                             "description": "ManagedFields maps workflow-id and version to the set of fields that are managed by that workflow. This is mostly for internal housekeeping, and users typically shouldn't need to set or understand this field. A workflow can be the user's name, a controller's name, or the name of a specific apply path like \"ci-cd\". The set of fields is always in the version that the workflow used when modifying the object.",
@@ -2463,13 +2532,13 @@
                             "description": "TypedLocalObjectReference contains enough information to let you locate the typed referenced object inside the same namespace.",
                             "properties": {
                               "apiGroup": {
-                                "$ref": "#/$defs/S"
+                                "$ref": "#/$defs/T"
                               },
                               "kind": {
-                                "$ref": "#/$defs/D"
+                                "$ref": "#/$defs/E"
                               },
                               "name": {
-                                "$ref": "#/$defs/E"
+                                "$ref": "#/$defs/F"
                               }
                             },
                             "required": [
@@ -2486,13 +2555,13 @@
                             "additionalProperties": false,
                             "properties": {
                               "apiGroup": {
-                                "$ref": "#/$defs/S"
+                                "$ref": "#/$defs/T"
                               },
                               "kind": {
-                                "$ref": "#/$defs/D"
+                                "$ref": "#/$defs/E"
                               },
                               "name": {
-                                "$ref": "#/$defs/E"
+                                "$ref": "#/$defs/F"
                               },
                               "namespace": {
                                 "description": "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled.",
@@ -2516,10 +2585,10 @@
                             "description": "VolumeResourceRequirements describes the storage resource requirements for a volume.",
                             "properties": {
                               "limits": {
-                                "$ref": "#/$defs/R"
+                                "$ref": "#/$defs/S"
                               },
                               "requests": {
-                                "$ref": "#/$defs/13"
+                                "$ref": "#/$defs/14"
                               }
                             },
                             "type": [
@@ -3066,7 +3135,7 @@
                           "description": "Adapts a ConfigMap into a projected volume.\n\nThe contents of the target ConfigMap's Data field will be presented in a projected volume as files using the keys in the Data field as the file names, unless the items element is populated with specific mappings of keys to paths. Note that this is identical to a configmap volume source without the default mode.",
                           "properties": {
                             "items": {
-                              "$ref": "#/$defs/L"
+                              "$ref": "#/$defs/M"
                             },
                             "name": {
                               "$ref": "#/$defs/l"
@@ -3087,7 +3156,7 @@
                             "items": {
                               "description": "Items is a list of DownwardAPIVolume file",
                               "items": {
-                                "$ref": "#/$defs/K"
+                                "$ref": "#/$defs/L"
                               },
                               "type": [
                                 "array",
@@ -3530,10 +3599,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/V"
+                            "$ref": "#/$defs/W"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/O"
+                            "$ref": "#/$defs/P"
                           }
                         },
                         "type": "object",
@@ -3570,10 +3639,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/V"
+                            "$ref": "#/$defs/W"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/O"
+                            "$ref": "#/$defs/P"
                           }
                         },
                         "type": [
@@ -3617,7 +3686,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/J"
+                    "$ref": "#/$defs/K"
                   },
                   "type": [
                     "array",
@@ -3647,7 +3716,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/J"
+                    "$ref": "#/$defs/K"
                   },
                   "type": [
                     "array",
@@ -3791,13 +3860,13 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/12"
+              "$ref": "#/$defs/13"
             },
             "seccompProfile": {
-              "$ref": "#/$defs/W"
+              "$ref": "#/$defs/X"
             },
             "windowsOptions": {
-              "$ref": "#/$defs/M"
+              "$ref": "#/$defs/N"
             }
           },
           "type": "object"
@@ -3819,7 +3888,7 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/P"
+                  "$ref": "#/$defs/Q"
                 },
                 {
                   "additionalProperties": {
@@ -3874,7 +3943,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/H"
+                "$ref": "#/$defs/I"
               }
             ]
           },
@@ -3884,7 +3953,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/G"
+                "$ref": "#/$defs/H"
               },
               {
                 "not": {
@@ -3916,7 +3985,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/I"
+                "$ref": "#/$defs/y"
               }
             ]
           },
@@ -3980,7 +4049,7 @@
                     ]
                   },
                   {
-                    "$ref": "#/$defs/B"
+                    "$ref": "#/$defs/C"
                   }
                 ]
               },
@@ -4058,14 +4127,14 @@
               "if": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/A"
+                    "$ref": "#/$defs/B"
                   },
                   {
                     "anyOf": [
                       {
                         "properties": {
                           "credentials": {
-                            "$ref": "#/$defs/F"
+                            "$ref": "#/$defs/G"
                           }
                         },
                         "required": [
@@ -4077,7 +4146,7 @@
                         "not": {
                           "properties": {
                             "credentials": {
-                              "$ref": "#/$defs/z"
+                              "$ref": "#/$defs/A"
                             }
                           },
                           "required": [
@@ -4101,7 +4170,7 @@
                         "not": {
                           "properties": {
                             "nkey": {
-                              "$ref": "#/$defs/z"
+                              "$ref": "#/$defs/A"
                             }
                           },
                           "required": [
@@ -4113,7 +4182,7 @@
                       {
                         "properties": {
                           "nkey": {
-                            "$ref": "#/$defs/F"
+                            "$ref": "#/$defs/G"
                           }
                         },
                         "required": [
@@ -4124,7 +4193,27 @@
                     ]
                   },
                   {
-                    "$ref": "#/$defs/C"
+                    "$ref": "#/$defs/D"
+                  },
+                  {
+                    "not": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/J"
+                        },
+                        {
+                          "not": {
+                            "properties": {
+                              "nkey": {}
+                            },
+                            "required": [
+                              "nkey"
+                            ],
+                            "type": "object"
+                          }
+                        }
+                      ]
+                    }
                   }
                 ]
               },
@@ -4134,10 +4223,10 @@
           "description": "NATS URL",
           "properties": {
             "credentials": {
-              "$ref": "#/$defs/Q"
+              "$ref": "#/$defs/R"
             },
             "nkey": {
-              "$ref": "#/$defs/Q"
+              "$ref": "#/$defs/R"
             },
             "url": {}
           },
@@ -4198,10 +4287,10 @@
                         "$ref": "#/$defs/6"
                       },
                       {
-                        "$ref": "#/$defs/T"
+                        "$ref": "#/$defs/U"
                       },
                       {
-                        "$ref": "#/$defs/X"
+                        "$ref": "#/$defs/Y"
                       },
                       {
                         "$ref": "#/$defs/2"
@@ -4250,7 +4339,7 @@
     "nameOverride": {
       "anyOf": [
         {
-          "$ref": "#/$defs/N"
+          "$ref": "#/$defs/O"
         },
         {
           "$ref": "#/$defs/6"
@@ -4268,7 +4357,7 @@
           "$ref": "#/$defs/5"
         },
         {
-          "$ref": "#/$defs/14"
+          "$ref": "#/$defs/15"
         },
         {
           "$ref": "#/$defs/3"
@@ -4373,7 +4462,7 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/15"
+              "$ref": "#/$defs/16"
             },
             {
               "additionalProperties": {
@@ -4436,10 +4525,10 @@
               "x-kubernetes-list-type": "map"
             },
             "limits": {
-              "$ref": "#/$defs/R"
+              "$ref": "#/$defs/S"
             },
             "requests": {
-              "$ref": "#/$defs/13"
+              "$ref": "#/$defs/14"
             }
           },
           "type": "object"
@@ -4498,10 +4587,10 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/12"
+              "$ref": "#/$defs/13"
             },
             "seccompProfile": {
-              "$ref": "#/$defs/W"
+              "$ref": "#/$defs/X"
             },
             "supplementalGroups": {
               "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
@@ -4547,7 +4636,7 @@
               ]
             },
             "windowsOptions": {
-              "$ref": "#/$defs/M"
+              "$ref": "#/$defs/N"
             }
           },
           "type": "object"
@@ -4564,7 +4653,7 @@
     "serviceAccountName": {
       "anyOf": [
         {
-          "$ref": "#/$defs/N"
+          "$ref": "#/$defs/O"
         },
         {
           "$ref": "#/$defs/6"
@@ -4582,7 +4671,7 @@
           "$ref": "#/$defs/5"
         },
         {
-          "$ref": "#/$defs/14"
+          "$ref": "#/$defs/15"
         },
         {
           "$ref": "#/$defs/3"

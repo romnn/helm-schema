@@ -58,24 +58,32 @@
       "type": "string"
     },
     "B": {
+      "properties": {
+        "image": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/t"
+            },
+            {
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
+    },
+    "C": {
       "description": "The port that will be exposed by this service.",
       "format": "int32",
       "type": "integer"
     },
-    "C": {
+    "D": {
       "description": "A list of node selector requirements by node's fields.",
       "items": {
-        "$ref": "#/$defs/F"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "D": {
-      "description": "A list of node selector requirements by node's labels.",
-      "items": {
-        "$ref": "#/$defs/F"
+        "$ref": "#/$defs/G"
       },
       "type": [
         "array",
@@ -83,6 +91,16 @@
       ]
     },
     "E": {
+      "description": "A list of node selector requirements by node's labels.",
+      "items": {
+        "$ref": "#/$defs/G"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "F": {
       "additionalProperties": false,
       "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
       "properties": {
@@ -114,7 +132,7 @@
         }
       ]
     },
-    "F": {
+    "G": {
       "additionalProperties": false,
       "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
       "properties": {
@@ -146,7 +164,7 @@
         "null"
       ]
     },
-    "G": {
+    "H": {
       "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
         "$ref": "#/$defs/2"
@@ -157,7 +175,7 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "H": {
+    "I": {
       "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
         "$ref": "#/$defs/2"
@@ -168,17 +186,17 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "I": {
+    "J": {
       "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
       "format": "int32",
       "type": "integer"
     },
-    "J": {
+    "K": {
       "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
       "format": "int32",
       "type": "null"
     },
-    "K": {
+    "L": {
       "additionalProperties": false,
       "description": "SELinuxOptions are the labels to be applied to the container",
       "properties": {
@@ -216,11 +234,11 @@
         "null"
       ]
     },
-    "L": {
+    "M": {
       "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
       "type": "string"
     },
-    "M": {
+    "N": {
       "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
       "items": {
         "$ref": "#/$defs/2"
@@ -394,10 +412,10 @@
     "l": {
       "anyOf": [
         {
-          "$ref": "#/$defs/I"
+          "$ref": "#/$defs/J"
         },
         {
-          "$ref": "#/$defs/J"
+          "$ref": "#/$defs/K"
         },
         {
           "$ref": "#/$defs/1"
@@ -419,7 +437,7 @@
     "m": {
       "anyOf": [
         {
-          "$ref": "#/$defs/B"
+          "$ref": "#/$defs/C"
         },
         {
           "$ref": "#/$defs/f"
@@ -517,19 +535,19 @@
               "$ref": "#/$defs/o"
             },
             "matchLabelKeys": {
-              "$ref": "#/$defs/H"
+              "$ref": "#/$defs/I"
             },
             "mismatchLabelKeys": {
-              "$ref": "#/$defs/G"
+              "$ref": "#/$defs/H"
             },
             "namespaceSelector": {
               "$ref": "#/$defs/o"
             },
             "namespaces": {
-              "$ref": "#/$defs/M"
+              "$ref": "#/$defs/N"
             },
             "topologyKey": {
-              "$ref": "#/$defs/L"
+              "$ref": "#/$defs/M"
             }
           },
           "required": [
@@ -560,19 +578,19 @@
           "$ref": "#/$defs/o"
         },
         "matchLabelKeys": {
-          "$ref": "#/$defs/H"
+          "$ref": "#/$defs/I"
         },
         "mismatchLabelKeys": {
-          "$ref": "#/$defs/G"
+          "$ref": "#/$defs/H"
         },
         "namespaceSelector": {
           "$ref": "#/$defs/o"
         },
         "namespaces": {
-          "$ref": "#/$defs/M"
+          "$ref": "#/$defs/N"
         },
         "topologyKey": {
-          "$ref": "#/$defs/L"
+          "$ref": "#/$defs/M"
         }
       },
       "required": [
@@ -730,10 +748,10 @@
     "v": {
       "anyOf": [
         {
-          "$ref": "#/$defs/I"
+          "$ref": "#/$defs/J"
         },
         {
-          "$ref": "#/$defs/J"
+          "$ref": "#/$defs/K"
         },
         {
           "$ref": "#/$defs/4"
@@ -1176,51 +1194,6 @@
     },
     {
       "if": {
-        "properties": {
-          "image": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/t"
-              },
-              {
-                "type": "object"
-              }
-            ]
-          }
-        },
-        "required": [
-          "image"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "additionalProperties": {},
-                "properties": {
-                  "repository": {
-                    "$ref": "#/$defs/k"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "image": {
-                "type": "object"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "not": {
@@ -1249,6 +1222,24 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/B"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "additionalProperties": {},
+            "properties": {
+              "repository": {
+                "$ref": "#/$defs/k"
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -1368,6 +1359,53 @@
           "description": "For a list of available arguments\nPlease see https://github.com/kubernetes-incubator/external-storage/blob/HEAD/nfs/docs/deployment.md#arguments\ndevice-based-fsids: false\ngrace-period: 0"
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "image": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "image": {}
+                    },
+                    "required": [
+                      "image"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "$ref": "#/$defs/B"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "image": {
+            "type": "object"
+          }
+        }
+      }
     }
   ],
   "properties": {
@@ -1395,10 +1433,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/D"
+                            "$ref": "#/$defs/E"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/C"
+                            "$ref": "#/$defs/D"
                           }
                         },
                         "type": "object",
@@ -1435,10 +1473,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/D"
+                            "$ref": "#/$defs/E"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/C"
+                            "$ref": "#/$defs/D"
                           }
                         },
                         "type": [
@@ -1766,10 +1804,10 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/K"
+              "$ref": "#/$defs/L"
             },
             "seccompProfile": {
-              "$ref": "#/$defs/E"
+              "$ref": "#/$defs/F"
             },
             "supplementalGroups": {
               "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
@@ -2139,10 +2177,10 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/K"
+              "$ref": "#/$defs/L"
             },
             "seccompProfile": {
-              "$ref": "#/$defs/E"
+              "$ref": "#/$defs/F"
             },
             "windowsOptions": {
               "$ref": "#/$defs/w"
@@ -2368,7 +2406,7 @@
         "statdPort": {
           "anyOf": [
             {
-              "$ref": "#/$defs/B"
+              "$ref": "#/$defs/C"
             },
             {
               "$ref": "#/$defs/f"

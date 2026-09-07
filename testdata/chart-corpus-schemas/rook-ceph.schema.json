@@ -896,56 +896,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/G"
-          },
-          {
-            "$ref": "#/$defs/1"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "csi": {
-            "additionalProperties": {},
-            "properties": {
-              "provisioner": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/K"
-          },
-          {
-            "$ref": "#/$defs/1"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "csi": {
-            "additionalProperties": {},
-            "properties": {
-              "attacher": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/$defs/v"
           },
           {
@@ -995,6 +945,148 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/L"
+          },
+          {
+            "$ref": "#/$defs/1"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "csi": {
+                      "properties": {
+                        "cephcsi": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "cephcsi"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "csi"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "csi": {
+                        "properties": {
+                          "cephcsi": {}
+                        },
+                        "required": [
+                          "cephcsi"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "csi"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "cephcsi": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "csi": {
+                        "properties": {
+                          "registrar": {}
+                        },
+                        "required": [
+                          "registrar"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "csi"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "csi": {
+                      "properties": {
+                        "registrar": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "registrar"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "csi"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "$ref": "#/$defs/J"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "registrar": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -1133,31 +1225,6 @@
                   "null",
                   "string"
                 ]
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/M"
-          },
-          {
-            "$ref": "#/$defs/1"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "csi": {
-            "additionalProperties": {},
-            "properties": {
-              "resizer": {
-                "type": "object"
               }
             }
           }
@@ -1397,6 +1464,77 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/K"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "csi": {
+                        "properties": {
+                          "attacher": {}
+                        },
+                        "required": [
+                          "attacher"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "csi"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "csi": {
+                      "properties": {
+                        "attacher": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "attacher"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "csi"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "attacher": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "properties": {
@@ -1467,6 +1605,77 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "csi": {
+                      "properties": {
+                        "provisioner": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "provisioner"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "csi"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "csi": {
+                        "properties": {
+                          "provisioner": {}
+                        },
+                        "required": [
+                          "provisioner"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "csi"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "$ref": "#/$defs/G"
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "provisioner": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -1625,31 +1834,6 @@
             "additionalProperties": {},
             "properties": {
               "serviceMonitor": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/J"
-          },
-          {
-            "$ref": "#/$defs/1"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "csi": {
-            "additionalProperties": {},
-            "properties": {
-              "registrar": {
                 "type": "object"
               }
             }
@@ -2613,7 +2797,108 @@
       "if": {
         "allOf": [
           {
+            "properties": {
+              "discover": {
+                "$ref": "#/$defs/4"
+              }
+            },
+            "required": [
+              "discover"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "discover": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "discover"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "discover": {}
+                    },
+                    "required": [
+                      "discover"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "discover": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/$defs/H"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "csi": {
+                      "properties": {
+                        "snapshotter": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "snapshotter"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "csi"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "csi": {
+                        "properties": {
+                          "snapshotter": {}
+                        },
+                        "required": [
+                          "snapshotter"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "csi"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
+            }
           },
           {
             "$ref": "#/$defs/1"
@@ -2816,27 +3101,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "if": {
-        "properties": {
-          "discover": {
-            "$ref": "#/$defs/4"
-          }
-        },
-        "required": [
-          "discover"
-        ],
-        "type": "object"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "discover": {
-            "type": "object"
-          }
-        }
       }
     },
     {
@@ -3086,31 +3350,6 @@
       "then": false
     },
     {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/L"
-          },
-          {
-            "$ref": "#/$defs/1"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "csi": {
-            "additionalProperties": {},
-            "properties": {
-              "cephcsi": {
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "additionalProperties": {},
       "properties": {
         "image": {
@@ -3133,6 +3372,77 @@
             "repository": {
               "$ref": "#/$defs/helm-double-quoted-safe",
               "description": "Image"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/I"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "csi": {
+                      "properties": {
+                        "csiAddons": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "csiAddons"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "csi"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "csi": {
+                        "properties": {
+                          "csiAddons": {}
+                        },
+                        "required": [
+                          "csiAddons"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "csi"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "$ref": "#/$defs/1"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "csi": {
+            "additionalProperties": {},
+            "properties": {
+              "csiAddons": {
+                "type": "object"
+              }
             }
           }
         }
@@ -3490,7 +3800,53 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/M"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "csi": {
+                      "properties": {
+                        "resizer": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "resizer"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "csi"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "csi": {
+                        "properties": {
+                          "resizer": {}
+                        },
+                        "required": [
+                          "resizer"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "csi"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
+            }
           },
           {
             "$ref": "#/$defs/1"
@@ -3503,7 +3859,7 @@
           "csi": {
             "additionalProperties": {},
             "properties": {
-              "csiAddons": {
+              "resizer": {
                 "type": "object"
               }
             }

@@ -31,30 +31,80 @@
   "allOf": [
     {
       "if": {
-        "properties": {
-          "acmesolver": {
+        "allOf": [
+          {
             "properties": {
-              "image": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/t"
+              "acmesolver": {
+                "properties": {
+                  "image": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/t"
+                      }
+                    ]
                   }
-                ]
+                },
+                "required": [
+                  "image"
+                ],
+                "type": "object"
               }
             },
             "required": [
-              "image"
+              "acmesolver"
             ],
             "type": "object"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "acmesolver": {
+                        "properties": {
+                          "image": {}
+                        },
+                        "required": [
+                          "image"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "acmesolver"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "acmesolver": {
+                      "properties": {
+                        "image": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "image"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "acmesolver"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
           }
-        },
-        "required": [
-          "acmesolver"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -170,30 +220,80 @@
     },
     {
       "if": {
-        "properties": {
-          "global": {
+        "allOf": [
+          {
             "properties": {
-              "leaderElection": {
-                "anyOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/t"
+              "global": {
+                "properties": {
+                  "leaderElection": {
+                    "anyOf": [
+                      {
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/t"
+                      }
+                    ]
                   }
-                ]
+                },
+                "required": [
+                  "leaderElection"
+                ],
+                "type": "object"
               }
             },
             "required": [
-              "leaderElection"
+              "global"
             ],
             "type": "object"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "global": {
+                        "properties": {
+                          "leaderElection": {}
+                        },
+                        "required": [
+                          "leaderElection"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "global"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "properties": {
+                        "leaderElection": {
+                          "enum": [
+                            null
+                          ]
+                        }
+                      },
+                      "required": [
+                        "leaderElection"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
           }
-        },
-        "required": [
-          "global"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -248,15 +348,49 @@
     },
     {
       "if": {
-        "properties": {
-          "ingressShim": {
-            "$ref": "#/$defs/t"
+        "allOf": [
+          {
+            "properties": {
+              "ingressShim": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "ingressShim"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "ingressShim": {}
+                    },
+                    "required": [
+                      "ingressShim"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "ingressShim": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "ingressShim"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
           }
-        },
-        "required": [
-          "ingressShim"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
         "additionalProperties": {},
@@ -446,22 +580,56 @@
     },
     {
       "if": {
-        "properties": {
-          "livenessProbe": {
-            "anyOf": [
-              {
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/t"
+        "allOf": [
+          {
+            "properties": {
+              "livenessProbe": {
+                "anyOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/t"
+                  }
+                ]
               }
-            ]
+            },
+            "required": [
+              "livenessProbe"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "not": {
+                    "properties": {
+                      "livenessProbe": {}
+                    },
+                    "required": [
+                      "livenessProbe"
+                    ],
+                    "type": "object"
+                  }
+                },
+                {
+                  "properties": {
+                    "livenessProbe": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "livenessProbe"
+                  ],
+                  "type": "object"
+                }
+              ]
+            }
           }
-        },
-        "required": [
-          "livenessProbe"
-        ],
-        "type": "object"
+        ]
       },
       "then": {
         "additionalProperties": {},
