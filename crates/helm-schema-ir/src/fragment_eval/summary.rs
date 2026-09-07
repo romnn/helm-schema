@@ -105,56 +105,6 @@ struct DeferredScalarProjection {
 }
 
 impl FragmentSummary {
-    /// Projects rendered-program facts into the shared expression-effect channels.
-    pub(crate) fn expression_effects(&self) -> crate::eval_effect::Effects {
-        let summary = self;
-        // The resolver boundary is the one place summary facts enter
-        // expression effects; collectors read the Effects fields only.
-        // Encoded rows surface as encoded paths so value-lattice lowerings
-        // keep the "sink does not constrain the value" semantics the row
-        // recorded (the projected value's output paths carry no encoding
-        // flag).
-        let mut observed_facts = summary.observed_facts.clone();
-        let helper_observed_shape_erased_paths =
-            std::mem::take(&mut observed_facts.shape_erased_paths);
-        crate::eval_effect::Effects {
-            chart_default_paths: summary.chart_defaults.clone(),
-            root_set_mutations: summary.root_set_mutations.clone(),
-            root_set_predicates: summary.root_set_predicates.clone(),
-            root_set_value_dispatches: summary.root_set_value_dispatches.clone(),
-            observed_facts,
-            parsed_yaml_input_paths: summary.parsed_yaml_input_paths.clone(),
-            yaml_serialized_paths: summary.yaml_serialized_paths.clone(),
-            json_serialized_paths: summary
-                .rendered
-                .iter()
-                .filter(|row| row.meta.json_serialized)
-                .map(|row| row.path.clone())
-                .collect(),
-            encoded_paths: summary
-                .encoded_paths()
-                .into_iter()
-                .map(|path| helm_schema_core::ValuesPath::parse(&path))
-                .collect(),
-            helper_observed_shape_erased_paths,
-            // An include renders its body to text, so every path the value
-            // carries is derived text at the call site: a consuming stage
-            // (`include … | trimAll`) must not claim contracts on the
-            // helper's internal paths.
-            derived_text_paths: summary
-                .value
-                .as_ref()
-                .map(AbstractValue::paths)
-                .unwrap_or_default(),
-            helper_reads: summary.reads.clone(),
-            helper_rendered: summary.rendered.clone(),
-            helper_suppressed_paths: summary.suppress_predicate_paths.clone(),
-            helper_text_captures: summary.text_captures.iter().cloned().collect(),
-            member_host_conversions: summary.member_host_conversions.clone(),
-            ..crate::eval_effect::Effects::default()
-        }
-    }
-
     pub(crate) fn scalar_dispatch(&self, db: &IrAnalysisDb) -> Option<&ScalarValueDispatch> {
         self.scalar_dispatch
             .get_or_init(|| {
@@ -240,22 +190,6 @@ pub(crate) fn eval_bound_helper_fragment(
             }),
         )
     };
-    finish_fragment_summary(
-        interpreter,
-        root,
-        root_render_indent,
-        scalar_dispatch,
-        deferred_scalar_projection,
-    )
-}
-
-fn finish_fragment_summary(
-    interpreter: Interpreter<'_>,
-    root: Guarded<AbstractFragment>,
-    root_render_indent: Option<usize>,
-    scalar_dispatch: OnceCell<Option<ScalarValueDispatch>>,
-    deferred_scalar_projection: Option<DeferredScalarProjection>,
-) -> FragmentSummary {
     let json_payload_truth = interpreter
         .json_payload_truth_outputs
         .first()
@@ -301,75 +235,6 @@ fn finish_fragment_summary(
     }
 }
 
-pub(crate) fn eval_static_template_fragment(
-    request: &crate::static_file_template::StaticTemplateProgram,
-    env: &crate::eval_env::EvalEnv,
-    db: &IrAnalysisDb,
-    seen: &HashSet<String>,
-) -> FragmentSummary {
-    let (source, selection) = match &request.source {
-        crate::static_file_template::StaticTemplateSource::Constructed { program, condition } => {
-            (program.as_str(), Some(condition.clone()))
-        }
-        crate::static_file_template::StaticTemplateSource::ValuesDefault {
-            path,
-            program,
-            condition,
-        } => (
-            program.as_str(),
-            Some(Predicate::all(vec![
-                condition.clone(),
-                Predicate::from(helm_schema_core::Guard::Eq {
-                    path: helm_schema_core::ValuesPath::parse(path),
-                    value: helm_schema_core::GuardValue::string(program),
-                }),
-            ])),
-        ),
-    };
-    let token = format!("tpl:{source}");
-    if seen.contains(&token) {
-        return FragmentSummary::default();
-    }
-    let Some(tree) = helm_schema_ast::parse_go_template(source) else {
-        return FragmentSummary::default();
-    };
-    let document = TemplatedDocument::parse_with_root(source, tree.root_node());
-    let mut interpreter = Interpreter::for_source(source, None, db, &tree, &document);
-    interpreter.helper_scope = true;
-    interpreter.helper_seen = seen.clone();
-    interpreter.helper_seen.insert(token);
-    interpreter.root_bindings = crate::expr_eval::bindings_from_helper_arg_value(
-        request.dot.clone(),
-        Some(&env.root_fields),
-    );
-    interpreter.root_value_dot = request.dot.clone();
-    interpreter.locals = SymbolicLocalState::with_root(
-        request.dot.clone().unwrap_or(AbstractValue::Unknown),
-        crate::eval_env::BindingEvaluationMode::Evaluated,
-    );
-    interpreter.push_dot(
-        request.dot.clone(),
-        crate::eval_env::BindingEvaluationMode::Evaluated,
-    );
-    if let Some(selection) = selection {
-        interpreter.active_predicates.push(selection);
-    }
-    let roots: Vec<NodeView<'_>> = document.roots().iter().map(NodeView::plain).collect();
-    let root_render_indent = roots
-        .iter()
-        .filter_map(|root| interpreter.helper_root_content_indent(root.node))
-        .min();
-    let root = interpreter.eval_node_list(&roots).assemble();
-    let scalar_dispatch = scalar_dispatch_from_fragment(&root, db.predicate_memo().as_ref());
-    finish_fragment_summary(
-        interpreter,
-        root,
-        root_render_indent,
-        OnceCell::from(scalar_dispatch),
-        None,
-    )
-}
-
 fn bound_helper_interpreter<'a>(
     name: &str,
     body: &ParsedHelperBody<'a>,
@@ -387,7 +252,7 @@ fn bound_helper_interpreter<'a>(
         body_facts,
     );
     interpreter.source_offset = body.body_offset;
-    interpreter.helper_provenance_chain = vec![name.to_string()];
+    interpreter.inline_files = vec![format!("define:{name}")];
     interpreter.helper_scope = true;
     interpreter.helper_seen = seen.clone();
     interpreter.root_bindings = resolution.bindings.clone();

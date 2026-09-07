@@ -884,8 +884,8 @@ fn record_operand_presence_result_under(
     // Only an operand that IS one raw values path carries the claim, the
     // same rule the string lane applies: a derived operand (a merge, a
     // `default` chain, a helper's rendered text) hands the call whatever the
-    // derivation produced, so those paths' own absence is not what aborts. Reading
-    // the layered identities instead fabricates subjects — k8s-infra's
+    // derivation produced, so those paths' own absence is not what aborts.
+    // Reading the layered identities instead fabricates subjects — k8s-infra's
     // preset merge grew 951 clauses over spellings like
     // `otelAgent.presets.hostMetrics.scrapers.service.pipelines`, which
     // name no key the chart ever has.

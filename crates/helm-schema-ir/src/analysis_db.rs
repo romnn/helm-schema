@@ -2,7 +2,7 @@ use std::cell::{OnceCell, RefCell};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::rc::Rc;
 
-use helm_schema_ast::{DefineIndex, DefineSourceRole, TemplateExpr};
+use helm_schema_ast::{DefineIndex, TemplateExpr};
 use helm_schema_core::ValuesPath;
 
 use crate::abstract_value::AbstractValue;
@@ -36,8 +36,10 @@ pub struct ParsedDefines {
 }
 
 struct ParsedDefinesInner {
-    define_bodies: BTreeMap<String, CachedDefineBody>,
+    define_bodies: HashMap<String, CachedDefineBody>,
+    define_names: BTreeSet<String>,
     define_source_paths: BTreeMap<String, BTreeSet<String>>,
+    implicit_template_names: BTreeMap<String, String>,
     file_sources: HashMap<String, String>,
 }
 
@@ -45,20 +47,20 @@ impl ParsedDefines {
     /// Discovers define boundaries and prepares lazy per-body parse cells.
     #[must_use]
     pub fn new(defines: &DefineIndex) -> Self {
-        let mut define_bodies = BTreeMap::new();
+        let mut define_bodies = HashMap::new();
+        let mut define_names = BTreeSet::new();
         let mut define_source_paths: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
+        let mut implicit_template_names = BTreeMap::new();
         let mut file_sources = HashMap::new();
-        for (path, src, role) in defines.file_sources() {
-            if role == DefineSourceRole::FilesGet {
-                file_sources.insert(path.to_string(), src.to_string());
-                continue;
+        for (path, src) in defines.file_sources() {
+            file_sources.insert(path.to_string(), src.to_string());
+            if let Some(template_relative_path) = template_relative_path(path) {
+                let name = format!("@file:{path}");
+                implicit_template_names.insert(template_relative_path, name.clone());
+                define_bodies.insert(name, CachedDefineBody::new(src, path, 0));
             }
-            define_bodies.insert(path.to_string(), CachedDefineBody::new(src, path, 0));
-            define_source_paths
-                .entry(path.to_string())
-                .or_default()
-                .insert(path.to_string());
             for block in extract_define_blocks(src) {
+                define_names.insert(block.name.clone());
                 define_source_paths
                     .entry(block.name.clone())
                     .or_default()
@@ -72,15 +74,17 @@ impl ParsedDefines {
         Self {
             inner: Rc::new(ParsedDefinesInner {
                 define_bodies,
+                define_names,
                 define_source_paths,
+                implicit_template_names,
                 file_sources,
             }),
         }
     }
 
-    /// Iterates executable file and named-definition entries in stable order.
+    /// Iterates real define names in stable order, excluding implicit files.
     pub fn define_names(&self) -> impl Iterator<Item = &str> {
-        self.inner.define_bodies.keys().map(String::as_str)
+        self.inner.define_names.iter().map(String::as_str)
     }
 
     /// Returns the last-defined body Helm resolves for `name`.
@@ -138,24 +142,13 @@ pub(crate) struct IrAnalysisDb {
     bound_helper_calls: RefCell<BTreeMap<BoundHelperCallCacheKey, Rc<FragmentSummary>>>,
     /// Transitive literal-helper-call closures memoized for this chart analysis.
     ///
-    /// Unknown closures preserve the whole active call chain and caller context.
-    helper_seen_footprints: RefCell<HashMap<String, HelperDependencyFootprint>>,
+    /// `None` records an unknown closure and preserves the whole active call chain in the key.
+    helper_seen_footprints: RefCell<HashMap<String, Option<BTreeSet<String>>>>,
     custom_merge_helpers: RefCell<HashMap<String, Option<CustomMergeHelper>>>,
     nil_scrub_helpers: RefCell<HashMap<String, bool>>,
     predicate_memo: Rc<helm_schema_core::PredicateMemo>,
     /// Exact immutable Helm root fields, represented separately from values.
     static_root_fields: HashMap<String, AbstractValue>,
-}
-
-struct HelperDependencyFootprint {
-    reachable: Option<BTreeSet<String>>,
-    caller_name: CallerNameUse,
-}
-
-#[derive(Clone, Copy)]
-enum CallerNameUse {
-    Unobservable,
-    MayObserve,
 }
 
 pub(crate) struct BoundHelperCallSummary {
@@ -288,6 +281,19 @@ impl IrAnalysisDb {
         self.parsed_defines.inner.define_bodies.contains_key(name)
     }
 
+    pub(crate) fn implicit_template_name(&self, suffix: &str) -> Option<&str> {
+        let suffix = suffix.trim_start_matches('/');
+        let mut matches = self
+            .parsed_defines
+            .inner
+            .implicit_template_names
+            .iter()
+            .filter(|(path, _)| path.as_str() == suffix)
+            .map(|(_, name)| name.as_str());
+        let first = matches.next()?;
+        matches.next().is_none().then_some(first)
+    }
+
     pub(crate) fn file_source(&self, path: &str) -> Option<&str> {
         self.parsed_defines
             .inner
@@ -329,7 +335,7 @@ impl IrAnalysisDb {
             .collect()
     }
 
-    /// Indexed `.Files.Get` payload paths,
+    /// Indexed chart file paths (templates plus `.Files.Get` sources),
     /// sorted for deterministic enumeration.
     pub(crate) fn file_source_paths(&self) -> Vec<&str> {
         let mut paths: Vec<&str> = self
@@ -1028,17 +1034,7 @@ impl IrAnalysisDb {
             seen,
         });
         let seen_key = self.helper_seen_key(name, seen);
-        let caller_name = self
-            .helper_seen_footprints
-            .borrow()
-            .get(name)
-            .map_or(CallerNameUse::MayObserve, |footprint| footprint.caller_name);
-        let key = BoundHelperCallCacheKey::from_resolution(
-            name,
-            &resolved.resolution,
-            seen_key,
-            caller_name,
-        );
+        let key = BoundHelperCallCacheKey::from_resolution(name, &resolved.resolution, seen_key);
 
         if let Some(cached) = self.bound_helper_calls.borrow().get(&key) {
             seen.remove(name);
@@ -1067,9 +1063,7 @@ impl IrAnalysisDb {
     fn helper_seen_key(&self, name: &str, seen: &HashSet<String>) -> BTreeSet<String> {
         self.prepare_helper_seen_footprint(name);
         let footprints = self.helper_seen_footprints.borrow();
-        let footprint = footprints
-            .get(name)
-            .and_then(|footprint| footprint.reachable.as_ref());
+        let footprint = footprints.get(name).and_then(Option::as_ref);
         seen.iter()
             .filter(|helper| footprint.is_none_or(|footprint| footprint.contains(*helper)))
             .cloned()
@@ -1083,20 +1077,14 @@ impl IrAnalysisDb {
         let mut footprint = BTreeSet::new();
         let mut pending = vec![name.to_string()];
         let mut complete = true;
-        let mut caller_name = CallerNameUse::Unobservable;
         while let Some(helper) = pending.pop() {
             if !footprint.insert(helper.clone()) {
                 continue;
             }
             let Some(expressions) = self.parsed_defines.expressions(&helper) else {
-                caller_name = CallerNameUse::MayObserve;
                 continue;
             };
-            let mut independent_locals = BTreeSet::new();
             for expression in expressions {
-                if !expression_ignores_caller_name(expression, &mut independent_locals) {
-                    caller_name = CallerNameUse::MayObserve;
-                }
                 expression.walk(|inner| {
                     if matches!(inner, TemplateExpr::Unknown(_)) {
                         complete = false;
@@ -1120,8 +1108,6 @@ impl IrAnalysisDb {
                         )) => {
                             if self.has_helper(callee) {
                                 pending.push(callee.clone());
-                            } else {
-                                caller_name = CallerNameUse::MayObserve;
                             }
                         }
                         _ => complete = false,
@@ -1129,104 +1115,17 @@ impl IrAnalysisDb {
                 });
             }
         }
-        let footprint = HelperDependencyFootprint {
-            reachable: complete.then_some(footprint),
-            caller_name: if complete {
-                caller_name
-            } else {
-                CallerNameUse::MayObserve
-            },
-        };
+        let footprint = complete.then_some(footprint);
         self.helper_seen_footprints
             .borrow_mut()
             .insert(name.to_string(), footprint);
     }
 }
 
-/// Proves independence only when root data is selected before being consumed.
-/// Bare root transport is allowed solely at literal helper calls, whose whole
-/// reachable closure receives the same proof.
-fn expression_ignores_caller_name(
-    expression: &TemplateExpr,
-    independent_locals: &mut BTreeSet<String>,
-) -> bool {
-    match expression {
-        TemplateExpr::Literal(_) => true,
-        TemplateExpr::Field(path) => {
-            !path.is_empty() && !path.iter().any(|field| field == "Template")
-        }
-        TemplateExpr::Selector { operand, path } => {
-            !path.iter().any(|field| field == "Template")
-                && (matches!(operand.deparen(), TemplateExpr::Variable(name) if name.is_empty())
-                    || expression_ignores_caller_name(operand, independent_locals))
-        }
-        TemplateExpr::Variable(name) => independent_locals.contains(name),
-        TemplateExpr::Call { function, args } => {
-            if function == "tpl" {
-                return false;
-            }
-            if matches!(function.as_str(), "include" | "template") {
-                let [callee, argument] = args.as_slice() else {
-                    return false;
-                };
-                if !matches!(
-                    callee.deparen(),
-                    TemplateExpr::Literal(
-                        helm_schema_ast::Literal::String(_)
-                            | helm_schema_ast::Literal::RawString(_)
-                    )
-                ) {
-                    return false;
-                }
-                return matches!(argument.deparen(), TemplateExpr::Field(path) if path.is_empty())
-                    || matches!(argument.deparen(), TemplateExpr::Variable(name) if name.is_empty())
-                    || expression_ignores_caller_name(argument, independent_locals);
-            }
-            args.iter()
-                .all(|argument| expression_ignores_caller_name(argument, independent_locals))
-        }
-        TemplateExpr::Pipeline(stages) => stages
-            .iter()
-            .all(|stage| expression_ignores_caller_name(stage, independent_locals)),
-        TemplateExpr::Parenthesized(inner) => {
-            expression_ignores_caller_name(inner, independent_locals)
-        }
-        TemplateExpr::VariableDefinition { name, value }
-        | TemplateExpr::Assignment { name, value } => {
-            if !expression_ignores_caller_name(value, independent_locals) {
-                return false;
-            }
-            independent_locals.insert(name.trim_start_matches('$').to_string());
-            true
-        }
-        TemplateExpr::Unknown(_) => false,
-    }
-}
-
-fn contains_root_context(value: &AbstractValue) -> bool {
-    match value {
-        AbstractValue::RootContext => true,
-        AbstractValue::Dict(entries) => entries.values().any(contains_root_context),
-        AbstractValue::List(items)
-        | AbstractValue::FirstTruthy(items)
-        | AbstractValue::MergedLayers(items) => items.iter().any(contains_root_context),
-        AbstractValue::Choice(items) => items.iter().any(contains_root_context),
-        AbstractValue::Overlay { entries, fallback } => {
-            entries.values().any(contains_root_context) || contains_root_context(fallback)
-        }
-        AbstractValue::Top
-        | AbstractValue::Unknown
-        | AbstractValue::ValuesPath(_)
-        | AbstractValue::JsonDecodedPath(_)
-        | AbstractValue::RangeKey(_)
-        | AbstractValue::KeysList(_)
-        | AbstractValue::OutputPath(_, _)
-        | AbstractValue::StringSet(_)
-        | AbstractValue::DerivedBoolean(_)
-        | AbstractValue::SplitList { .. }
-        | AbstractValue::SplitSegment { .. }
-        | AbstractValue::Widened(_) => false,
-    }
+fn template_relative_path(path: &str) -> Option<String> {
+    let marker = "templates/";
+    let index = path.rfind(marker)?;
+    Some(path[(index + marker.len())..].to_string())
 }
 
 /// One dot (`.`) binding as the two evaluation flavors see it: value
@@ -1270,15 +1169,9 @@ struct ResolveBoundHelperCallParams<'a, 'context> {
 fn resolve_bound_helper_call(
     params: &ResolveBoundHelperCallParams<'_, '_>,
 ) -> ResolvedBoundHelperCall {
-    let root_fields: BTreeMap<String, AbstractValue> = params
-        .eval_env
-        .root_fields
-        .iter()
-        .map(|(key, value)| (key.clone(), value.clone()))
-        .collect();
     let mut argument_effects = Effects::default();
     let mut eval_arg = |expr: &TemplateExpr, seen: &mut HashSet<String>| {
-        let mut result = document_result_from_expr(
+        let result = document_result_from_expr(
             expr,
             params.eval_env,
             params.outer_bindings,
@@ -1286,13 +1179,6 @@ fn resolve_bound_helper_call(
             params.context,
             seen,
         );
-        if !matches!(result.value, Some(AbstractValue::RootContext)) {
-            let mut fields = root_fields.clone();
-            fields.extend(result.effects.root_set_mutations.clone());
-            result.value = result
-                .value
-                .map(|value| capture_root_context(value, &fields));
-        }
         argument_effects.merge(result.effects.clone().execution_only());
         result
     };
@@ -1328,10 +1214,6 @@ fn resolve_bound_helper_call(
             params.current_dot,
         )
     });
-    if !matches!(helper_fragment_dot, Some(AbstractValue::RootContext)) {
-        helper_fragment_dot =
-            helper_fragment_dot.map(|value| capture_root_context(value, &root_fields));
-    }
 
     let mut widened_paths = BTreeSet::new();
     widen_large_bound_values(&mut bindings, params.helper_name, &mut widened_paths);
@@ -1384,62 +1266,6 @@ fn resolve_bound_helper_call(
             root_value_dispatches,
         },
         argument_effects,
-    }
-}
-
-/// Captures root data at the call boundary, after earlier caller mutations.
-///
-/// Unmodeled fields remain unknown and cannot resolve through a later caller's root.
-pub(crate) fn capture_root_context(
-    value: AbstractValue,
-    fields: &BTreeMap<String, AbstractValue>,
-) -> AbstractValue {
-    match value {
-        AbstractValue::RootContext => {
-            let mut entries = fields.clone();
-            entries
-                .entry("Values".to_string())
-                .or_insert_with(AbstractValue::values_root);
-            AbstractValue::Unknown.with_overlay_entries(entries)
-        }
-        AbstractValue::Dict(entries) => AbstractValue::Dict(
-            entries
-                .into_iter()
-                .map(|(key, value)| (key, capture_root_context(value, fields)))
-                .collect(),
-        ),
-        AbstractValue::List(items) => AbstractValue::List(
-            items
-                .into_iter()
-                .map(|value| capture_root_context(value, fields))
-                .collect(),
-        ),
-        AbstractValue::Choice(items) => AbstractValue::Choice(
-            items
-                .into_iter()
-                .map(|value| capture_root_context(value, fields))
-                .collect(),
-        ),
-        AbstractValue::FirstTruthy(items) => AbstractValue::FirstTruthy(
-            items
-                .into_iter()
-                .map(|value| capture_root_context(value, fields))
-                .collect(),
-        ),
-        AbstractValue::MergedLayers(items) => AbstractValue::MergedLayers(
-            items
-                .into_iter()
-                .map(|value| capture_root_context(value, fields))
-                .collect(),
-        ),
-        AbstractValue::Overlay { entries, fallback } => AbstractValue::Overlay {
-            entries: entries
-                .into_iter()
-                .map(|(key, value)| (key, capture_root_context(value, fields)))
-                .collect(),
-            fallback: Box::new(capture_root_context(*fallback, fields)),
-        },
-        other => other,
     }
 }
 
@@ -1537,7 +1363,6 @@ impl BoundHelperCallCacheKey {
         name: &str,
         resolution: &BoundHelperCallResolution,
         seen: BTreeSet<String>,
-        caller_name: CallerNameUse,
     ) -> Self {
         let BoundHelperCallResolution {
             bindings,
@@ -1545,37 +1370,13 @@ impl BoundHelperCallCacheKey {
             root_truthy_predicates,
             root_value_dispatches,
         } = resolution;
-        let mut bindings = bindings
-            .iter()
-            .map(|(key, value)| (key.clone(), value.clone()))
-            .collect::<BTreeMap<_, _>>();
-        let fragment_is_root = match &dot.fragment {
-            Some(AbstractValue::RootContext) => true,
-            Some(AbstractValue::Dict(fields)) => fields == &bindings,
-            _ => false,
-        };
-        let mut dot = dot.clone();
-        match caller_name {
-            CallerNameUse::Unobservable
-                if matches!(dot.helper, Some(AbstractValue::RootContext))
-                    && fragment_is_root
-                    && !bindings.values().any(contains_root_context) =>
-            {
-                if let Some(AbstractValue::Dict(template)) = bindings.get_mut("Template") {
-                    template.remove("Name");
-                }
-                if let Some(AbstractValue::Dict(fields)) = &mut dot.fragment
-                    && let Some(AbstractValue::Dict(template)) = fields.get_mut("Template")
-                {
-                    template.remove("Name");
-                }
-            }
-            CallerNameUse::Unobservable | CallerNameUse::MayObserve => {}
-        }
         Self {
             name: name.to_string(),
-            bindings,
-            dot,
+            bindings: bindings
+                .iter()
+                .map(|(key, value)| (key.clone(), value.clone()))
+                .collect(),
+            dot: dot.clone(),
             root_truthy_predicates: root_truthy_predicates
                 .iter()
                 .map(|(key, value)| (key.clone(), value.clone()))

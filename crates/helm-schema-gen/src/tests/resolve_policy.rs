@@ -718,7 +718,7 @@ fn common_plain_string_survives_all_provider_evidence_merges() {
 }
 
 #[test]
-fn runtime_default_hint_retains_null_without_unconditional_consumer() {
+fn dependency_default_refill_accepts_null_without_parent_consumer() {
     let provider_schema = serde_json::json!({
         "additionalProperties": { "type": "string" },
         "type": "object",
@@ -732,7 +732,7 @@ fn runtime_default_hint_retains_null_without_unconditional_consumer() {
                 ..ContractValuePathFacts::default()
             },
             ValuesYamlPathFacts {
-                has_runtime_default: true,
+                has_dependency_default: true,
                 ..ValuesYamlPathFacts::default()
             },
         ),
@@ -765,7 +765,7 @@ fn runtime_default_hint_retains_null_without_unconditional_consumer() {
                     ..ContractValuePathFacts::default()
                 },
                 ValuesYamlPathFacts {
-                    has_runtime_default: true,
+                    has_dependency_default: true,
                     ..ValuesYamlPathFacts::default()
                 },
             ),
@@ -789,7 +789,7 @@ fn runtime_default_hint_retains_null_without_unconditional_consumer() {
                     ..ContractValuePathFacts::default()
                 },
                 ValuesYamlPathFacts {
-                    has_runtime_default: true,
+                    has_dependency_default: true,
                     ..ValuesYamlPathFacts::default()
                 },
             ),

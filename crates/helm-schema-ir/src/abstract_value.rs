@@ -625,6 +625,61 @@ impl AbstractValue {
         }
     }
 
+    pub(crate) fn require_rendered_source_presence(self) -> Self {
+        match self {
+            Self::ValuesPath(path) | Self::JsonDecodedPath(path) => {
+                let mut meta = HelperOutputMeta {
+                    input_identity: true,
+                    ..HelperOutputMeta::default()
+                };
+                meta.conjoin_branches(&BTreeSet::from([helm_schema_core::Predicate::from(
+                    helm_schema_core::Guard::Absent { path: path.clone() },
+                )
+                .negated()]));
+                Self::OutputPath(path, meta)
+            }
+            Self::OutputPath(path, mut meta) => {
+                meta.conjoin_branches(&BTreeSet::from([helm_schema_core::Predicate::from(
+                    helm_schema_core::Guard::Absent { path: path.clone() },
+                )
+                .negated()]));
+                Self::OutputPath(path, meta)
+            }
+            Self::Dict(entries) => Self::Dict(
+                entries
+                    .into_iter()
+                    .map(|(key, value)| (key, value.require_rendered_source_presence()))
+                    .collect(),
+            ),
+            Self::List(items) => Self::List(
+                items
+                    .into_iter()
+                    .map(Self::require_rendered_source_presence)
+                    .collect(),
+            ),
+            Self::Overlay { entries, fallback } => Self::Overlay {
+                entries: entries
+                    .into_iter()
+                    .map(|(key, value)| (key, value.require_rendered_source_presence()))
+                    .collect(),
+                fallback: Box::new(fallback.require_rendered_source_presence()),
+            },
+            Self::Choice(choices) => Self::Choice(
+                choices
+                    .into_iter()
+                    .map(Self::require_rendered_source_presence)
+                    .collect(),
+            ),
+            Self::FirstTruthy(candidates) => Self::FirstTruthy(
+                candidates
+                    .into_iter()
+                    .map(Self::require_rendered_source_presence)
+                    .collect(),
+            ),
+            other => other,
+        }
+    }
+
     pub(crate) fn fragment_range_item(&self) -> Option<Self> {
         match self {
             Self::ValuesPath(path) => {

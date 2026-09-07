@@ -121,19 +121,6 @@ pub(crate) fn eval_document(
     };
     let document = TemplatedDocument::parse_with_root(source, tree.root_node());
     let mut interpreter = Interpreter::for_source(source, source_path, db, &tree, &document);
-    if let Some(name) = source_path.filter(|path| db.has_helper(path)) {
-        // Only entry execution supplies Name; nested programs retain their caller's data.
-        let template = interpreter
-            .root_bindings
-            .entry("Template".to_string())
-            .or_insert_with(|| AbstractValue::Dict(BTreeMap::new()));
-        if let AbstractValue::Dict(fields) = template {
-            fields.insert(
-                "Name".to_string(),
-                AbstractValue::StringSet(BTreeSet::from([name.to_string()])),
-            );
-        }
-    }
     let roots: Vec<NodeView<'_>> = document.roots().iter().map(NodeView::plain).collect();
     let contributions = interpreter.eval_node_list(&roots);
     EvaluatedDocument {
@@ -1383,8 +1370,9 @@ pub(super) struct Interpreter<'a> {
     /// the memoized evaluations of one helper body.
     pub(super) body_facts: Rc<BodyEvalFacts>,
     pub(super) inline_regions: Vec<Span>,
-    /// Named helper bodies contributing to source provenance.
-    pub(super) helper_provenance_chain: Vec<String>,
+    /// Static file templates currently being inlined (cycle prevention for
+    /// `.Files.Get`-style template requests).
+    pub(super) inline_files: Vec<String>,
     /// Whether this interpreter evaluates a helper body (a summary run).
     pub(super) helper_scope: bool,
     /// Whether scalar output dispatches refine rendered holes. This is set
@@ -1540,7 +1528,7 @@ impl<'a> Interpreter<'a> {
             db,
             body_facts,
             inline_regions,
-            helper_provenance_chain: Vec::new(),
+            inline_files: Vec::new(),
             helper_scope: false,
             scalar_output_projection: false,
             helper_seen: HashSet::new(),
@@ -1679,7 +1667,12 @@ impl<'a> Interpreter<'a> {
         span: Span,
     ) -> Option<Rc<SiteFacts>> {
         let provenance = self.source_path.map(|source_path| {
-            let helper_chain = self.helper_provenance_chain.clone();
+            let helper_chain = self
+                .inline_files
+                .iter()
+                .filter_map(|entry| entry.strip_prefix("define:"))
+                .map(std::string::ToString::to_string)
+                .collect();
             ContractProvenance::new(
                 source_path,
                 SourceSpan::new(
@@ -2050,6 +2043,14 @@ impl<'a> Interpreter<'a> {
         }
     }
 
+    /// Absorb one nested interpreter's read verbatim (nested static-file
+    /// evaluations already stamped their own guards and sites).
+    pub(super) fn push_nested_read(&mut self, read: ValueRead) {
+        if self.reads_seen.insert(read.clone()) {
+            self.reads.push(read);
+        }
+    }
+
     /// Pathless reads for the splices of a templated mapping key. Keys have
     /// no guarded arms in the tree, so their reads are recorded at the eval
     /// site where the ambient predicates (branch and range conditions) are
@@ -2260,11 +2261,9 @@ impl<'a> Interpreter<'a> {
     ) -> Vec<FailCapture> {
         let mut scoped = Vec::new();
         for body_capture in captures {
-            let (conjunction, ranged) = super::capture_scope::scope_capture_conditions(
-                body_capture,
-                self.fail_capture_conjunction(Vec::new()),
-                self.capture_ranged_modes(),
-            );
+            let mut ranged = self.capture_ranged_modes();
+            ranged.merge(&body_capture.ranged);
+            let conjunction = self.fail_capture_conjunction(body_capture.conjunction.clone());
             let mut kind = body_capture.kind.clone();
             // Ambient execution scope turns a direct string contract into an implication.
             // Its conjunction is the complete scope.
@@ -3249,7 +3248,7 @@ impl<'a> Interpreter<'a> {
                         .find_map(TemplateExpr::fragment_indent_width)
                 })
                 .or_else(|| Some(self.line_indent(source_offset + node.start_byte()))),
-            NodeAction::If(_) | NodeAction::With | NodeAction::Range => {
+            NodeAction::If(_) | NodeAction::With(_) | NodeAction::Range(_) => {
                 let mut cursor = node.walk();
                 let mut minimum = None;
                 if cursor.goto_first_child() {

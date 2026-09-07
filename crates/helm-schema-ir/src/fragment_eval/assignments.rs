@@ -589,6 +589,7 @@ impl Interpreter<'_> {
         if let Some(assignment) = parse_helper_assignment_from_exprs(exprs) {
             let rhs = std::slice::from_ref(&assignment.rhs_expr);
             self.record_required_subjects(rhs);
+            let inlined_template_value = self.inline_static_template_value(rhs);
             let condition_truthy_reduction = {
                 let context = self.value_path_context();
                 context
@@ -601,7 +602,9 @@ impl Interpreter<'_> {
             // The binding is the hole value without widened members (an
             // unknown call result is influence, not a values-backed
             // fragment).
-            let fragment_value = hole.value.clone().and_then(AbstractValue::without_widened);
+            let fragment_value = inlined_template_value
+                .clone()
+                .or_else(|| hole.value.clone().and_then(AbstractValue::without_widened));
             let binding_metadata = self.binding_value_metadata(
                 assignment.kind,
                 fragment_value.as_ref(),
@@ -610,8 +613,11 @@ impl Interpreter<'_> {
             );
             let fragment_binding = self.binding_from_result(
                 assignment.kind,
-                hole.value.as_ref(),
-                hole.proven_operands.as_ref(),
+                fragment_value.as_ref(),
+                inlined_template_value
+                    .is_none()
+                    .then_some(hole.proven_operands.as_ref())
+                    .flatten(),
                 &binding_metadata,
             );
             // Derived Booleans and explicitly opaque values own truth that

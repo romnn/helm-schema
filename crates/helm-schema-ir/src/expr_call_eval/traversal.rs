@@ -244,7 +244,7 @@ fn project_index_result(mut base: EvalResult, steps: &[IndexStep], env: &EvalEnv
     let mut effects = base.effects;
     let value = base
         .value
-        .and_then(|value| project_index_value(value, steps, env, &mut effects));
+        .and_then(|value| project_index_value(value, steps, &mut effects));
     let mut result = value.map_or_else(
         || EvalResult::with_effects(None, Effects::default()),
         |value| EvalResult::from_value_with_memo(value, env.predicate_memo.as_ref()),
@@ -268,7 +268,6 @@ fn project_index_result(mut base: EvalResult, steps: &[IndexStep], env: &EvalEnv
 fn project_index_value(
     value: AbstractValue,
     steps: &[IndexStep],
-    env: &EvalEnv,
     effects: &mut Effects,
 ) -> Option<AbstractValue> {
     let mut values = vec![value];
@@ -334,12 +333,7 @@ fn project_index_value(
                         }
                     }
                 }
-                let next = if !option.integer_index {
-                    env.value_at_path(value, &option.segments)
-                } else {
-                    apply_index_segment(value, option)
-                };
-                if let Some(next) = next {
+                if let Some(next) = apply_index_segment(value, option) {
                     for next_path in next.paths() {
                         for base_path in &base_paths {
                             if base_path.segments().next().is_some()

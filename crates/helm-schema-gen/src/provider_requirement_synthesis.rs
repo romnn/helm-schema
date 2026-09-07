@@ -12,9 +12,8 @@
 //! non-null chart default, or branch overlays with exact decoded guards that
 //! are dormant on a missing default. This keeps intentionally unset chart
 //! inputs valid while still rejecting a null override that deletes a
-//! provider-valid default.
-//! Runtime fallback hints abstain because a merge may supply the source.
-//! Ordered merge layers also
+//! provider-valid default. Dependency-owned defaults abstain because Helm
+//! refills them at the subchart coalescing stage. Ordered merge layers also
 //! abstain: absence in one layer selects a lower layer rather than rendering
 //! null, so presence is a property of the combined result, not any individual
 //! source path. Path-wide serialization or fragment facts from a separate use
@@ -40,7 +39,7 @@ use crate::provider_resolution::ProviderSchemaResolutions;
 pub(crate) fn synthesized_required_source_implications(
     contract_schema_signals: &ContractSchemaSignals,
     values_yaml_doc: &YamlValue,
-    runtime_defaults: &crate::condition_encoding::RuntimeDefaultHints,
+    subchart_defaults_doc: &YamlValue,
     provider_resolutions: &ProviderSchemaResolutions,
 ) -> BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> {
     let mut implications: BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> =
@@ -59,7 +58,7 @@ pub(crate) fn synthesized_required_source_implications(
         }
         let base_facts = evidence.facts;
         if base_facts.has_unconditional_render_use
-            && !runtime_defaults.contains_path(value_path)
+            && !source_has_dependency_default(subchart_defaults_doc, value_path)
             && source_has_non_null_default(values_yaml_doc, value_path)
             && !base_facts.is_nullable
             && evidence.provider_schema_uses.iter().any(|use_| {
@@ -101,7 +100,7 @@ pub(crate) fn synthesized_required_source_implications(
             if overlay.guards.is_empty() {
                 continue;
             }
-            if runtime_defaults.contains_path(value_path) {
+            if source_has_dependency_default(subchart_defaults_doc, value_path) {
                 continue;
             }
             if !source_has_non_null_default(values_yaml_doc, value_path)
@@ -187,7 +186,7 @@ pub(crate) fn synthesized_required_source_implications(
 )]
 pub(crate) fn synthesized_ranged_member_required_implications(
     contract_schema_signals: &ContractSchemaSignals,
-    runtime_defaults: &crate::condition_encoding::RuntimeDefaultHints,
+    subchart_defaults_doc: &YamlValue,
     provider_resolutions: &ProviderSchemaResolutions,
 ) -> BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> {
     let mut implications: BTreeMap<ValuesPath, Vec<ContractRequirementImplication>> =
@@ -343,17 +342,20 @@ pub(crate) fn synthesized_ranged_member_required_implications(
                     outer_guards,
                     // An integer iterable has no members to constrain;
                     // leaving that lane open is the safe direction.
-                    runtime_defaults
-                        .defaulted_member_keys(collection_segments, field_segments)
-                        .map_or(
-                            ContractRequirementTarget::Members {
-                                allow_integer: true,
-                            },
-                            |keys| ContractRequirementTarget::MembersExceptKeys {
-                                keys,
-                                allow_integer: true,
-                            },
-                        ),
+                    dependency_defaulted_member_keys(
+                        subchart_defaults_doc,
+                        collection_segments,
+                        field_segments,
+                    )
+                    .map_or(
+                        ContractRequirementTarget::Members {
+                            allow_integer: true,
+                        },
+                        |keys| ContractRequirementTarget::MembersExceptKeys {
+                            keys,
+                            allow_integer: true,
+                        },
+                    ),
                     requirements,
                 ),
             );
@@ -366,6 +368,35 @@ pub(crate) fn synthesized_ranged_member_required_implications(
 fn source_has_non_null_default(values_yaml_doc: &YamlValue, value_path: &ValuesPath) -> bool {
     crate::values_yaml::yaml_value_at_values_path(values_yaml_doc, value_path)
         .is_some_and(|value| !value.is_null())
+}
+
+fn source_has_dependency_default(
+    subchart_defaults_doc: &YamlValue,
+    value_path: &ValuesPath,
+) -> bool {
+    crate::values_yaml::yaml_value_at_values_path(subchart_defaults_doc, value_path).is_some()
+}
+
+fn dependency_defaulted_member_keys(
+    subchart_defaults_doc: &YamlValue,
+    collection_segments: &[String],
+    field_segments: &[String],
+) -> Option<std::collections::BTreeSet<String>> {
+    let YamlValue::Mapping(members) =
+        crate::values_yaml::yaml_value_at_segments(subchart_defaults_doc, collection_segments)?
+    else {
+        return None;
+    };
+    let keys = members
+        .iter()
+        .filter_map(|(key, member)| {
+            let key = key.as_str()?;
+            crate::values_yaml::yaml_value_at_segments(member, field_segments)
+                .filter(|default| !default.is_null())
+                .map(|_| key.to_string())
+        })
+        .collect::<std::collections::BTreeSet<_>>();
+    (!keys.is_empty()).then_some(keys)
 }
 
 fn provider_use_rejects_null(

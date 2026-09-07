@@ -713,6 +713,7 @@ impl Interpreter<'_> {
                     return Vec::new();
                 }
                 self.record_required_subjects(&exprs);
+                let _ = self.inline_static_file_fragments(&exprs);
                 let hole = self.eval_hole_exprs(&exprs);
                 self.absorb_hole_effects(&hole.effects, RenderedDemotion::None);
                 let defaulted = hole.effects.default_paths_with_local();
@@ -758,9 +759,9 @@ impl Interpreter<'_> {
                 self.eval_assignment_exprs(&exprs);
                 Vec::new()
             }
-            NodeAction::Range => self.eval_inline_range(node, text),
+            NodeAction::Range(_) => self.eval_inline_range(node, text),
             NodeAction::If(_) => self.eval_inline_control_action(node, text),
-            NodeAction::With => self.eval_inline_with(node, text),
+            NodeAction::With(_) => self.eval_inline_with(node, text),
             NodeAction::Output(None) | NodeAction::Assignment(None) | NodeAction::Suppressed => {
                 Vec::new()
             }

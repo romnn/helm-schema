@@ -138,45 +138,11 @@ fn eval_invocation(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    let preserves_program_text = matches!(
-        invocation.function,
-        "include"
-            | "template"
-            | "tpl"
-            | "and"
-            | "or"
-            | "default"
-            | "coalesce"
-            | "ternary"
-            | "indent"
-            | "nindent"
-    );
-    let mut result = eval_invocation_value(invocation, env, resolver);
-    // Lexical constraints on a program's output survive only unchanged text or value selection.
-    if !preserves_program_text {
-        result.effects.helper_text_captures.clear();
-    }
-    result
-}
-
-fn eval_invocation_value(
-    invocation: CallInvocation<'_>,
-    env: &EvalEnv,
-    resolver: &mut impl HelperCallValueResolver,
-) -> EvalResult {
     let CallInvocation {
         function,
         args,
         mut piped,
     } = invocation;
-    if crate::function_semantics::is_files_get(function) && args.len() == 1 && piped.is_none() {
-        let path = eval_expr_with_helper_calls(&args[0], env, resolver);
-        let mut result = resolver
-            .resolve_file_contents(&path, env)
-            .unwrap_or_else(EvalResult::none);
-        result.effects.merge(path.effects.execution_only());
-        return result;
-    }
     if !has_catalog_or_dispatch_exception(function) {
         return match piped {
             Some(piped) => eval_unknown_call(args, piped.result.effects, env, resolver),
@@ -1683,17 +1649,6 @@ pub(crate) fn conjoin_result_selection(result: &mut EvalResult, predicates: &BTr
     for row in &mut result.effects.helper_rendered {
         row.meta.conjoin_branches(predicates);
     }
-    result.effects.helper_text_captures = std::mem::take(&mut result.effects.helper_text_captures)
-        .into_iter()
-        .map(|mut capture| {
-            for predicate in predicates {
-                if !capture.conjunction.contains(predicate) {
-                    capture.conjunction.push(predicate.clone());
-                }
-            }
-            capture
-        })
-        .collect();
 }
 
 pub(super) fn conjoin_result_reachability(
@@ -1727,17 +1682,6 @@ fn scope_execution_effects(effects: &mut Effects, predicates: &BTreeSet<Predicat
             .condition
             .conjoined(&GuardDnf::from_conjunction(predicates.iter().cloned()));
     }
-    effects.helper_text_captures = std::mem::take(&mut effects.helper_text_captures)
-        .into_iter()
-        .map(|mut capture| {
-            for predicate in predicates {
-                if !capture.conjunction.contains(predicate) {
-                    capture.conjunction.push(predicate.clone());
-                }
-            }
-            capture
-        })
-        .collect();
     effects.observed_facts.captures = std::mem::take(&mut effects.observed_facts.captures)
         .into_iter()
         .map(|mut capture| {
@@ -1781,6 +1725,11 @@ fn eval_helper_call(
     {
         return result;
     }
+    if let Some(template_name) = args.first().and_then(template_base_path_suffix)
+        && let Some(result) = resolver.resolve_implicit_template_call(&template_name, args.get(1))
+    {
+        return result;
+    }
     if let Some(callee_expr) = args.first()
         && !matches!(callee_expr.deparen(), TemplateExpr::Literal(_))
     {
@@ -1805,6 +1754,37 @@ fn eval_helper_call(
     let mut effects = Effects::default();
     merge_arg_effects(args, env, resolver, &mut effects);
     EvalResult::with_effects(None, effects)
+}
+
+fn template_base_path_suffix(expr: &TemplateExpr) -> Option<String> {
+    let TemplateExpr::Call { function, args } = expr.deparen() else {
+        return None;
+    };
+    let (base, suffix_args) = args.split_first()?;
+    if function != "print" || suffix_args.is_empty() || !is_template_base_path(base) {
+        return None;
+    }
+
+    let mut suffix = String::new();
+    for arg in suffix_args {
+        let TemplateExpr::Literal(Literal::String(part) | Literal::RawString(part)) = arg.deparen()
+        else {
+            return None;
+        };
+        suffix.push_str(part);
+    }
+    (!suffix.is_empty()).then_some(suffix)
+}
+
+fn is_template_base_path(expr: &TemplateExpr) -> bool {
+    match expr.deparen() {
+        TemplateExpr::Field(path) => path.as_slice() == ["Template", "BasePath"],
+        TemplateExpr::Selector { operand, path } => {
+            path.as_slice() == ["Template", "BasePath"]
+                && matches!(operand.deparen(), TemplateExpr::Variable(name) if name.is_empty())
+        }
+        _ => false,
+    }
 }
 
 fn eval_all_args(

@@ -135,7 +135,7 @@ pub(crate) struct ValuesYamlPathFacts {
     pub(crate) is_empty_string: bool,
     pub(crate) is_empty_map: bool,
     pub(crate) is_mapping: bool,
-    pub(crate) has_runtime_default: bool,
+    pub(crate) has_dependency_default: bool,
 }
 
 impl ValuesYamlPathFacts {
@@ -155,7 +155,7 @@ impl ValuesYamlPathInfo {
             is_empty_string: self.is_empty_string,
             is_empty_map: self.is_empty_map,
             is_mapping: self.is_mapping,
-            has_runtime_default: false,
+            has_dependency_default: false,
         }
     }
 }

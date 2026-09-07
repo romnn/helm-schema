@@ -14,15 +14,10 @@ pub(crate) trait HelperCallValueResolver {
     fn resolve_helper_call(&mut self, name: &str, arg: Option<&TemplateExpr>)
     -> Option<EvalResult>;
 
-    fn resolve_file_contents(&mut self, _paths: &EvalResult, _env: &EvalEnv) -> Option<EvalResult> {
-        None
-    }
-
-    fn resolve_static_template(
+    fn resolve_implicit_template_call(
         &mut self,
-        _template: &EvalResult,
-        _dot: Option<&AbstractValue>,
-        _env: &EvalEnv,
+        _suffix: &str,
+        _arg: Option<&TemplateExpr>,
     ) -> Option<EvalResult> {
         None
     }
@@ -230,17 +225,17 @@ pub(crate) fn eval_expr_with_helper_calls(
     match expr {
         TemplateExpr::Parenthesized(inner) => eval_expr_with_helper_calls(inner, env, resolver),
         TemplateExpr::Field(path) if path.first().is_some_and(|segment| segment == "Values") => {
-            // Captured roots and mutated context copies retain their own Values member.
-            // Project that member while preserving navigation effects on its raw source.
-            // Other contexts keep the root-values shortcut, including `$.Values.…`.
+            // Inside `with $copy` over a context copy whose `Values` member
+            // was replaced (`set $copy.Values …`), `.Values.…` reads the
+            // copy's overridden member. Only the Overlay shape that
+            // mutation produces re-routes; every other context keeps the
+            // root-values shortcut, including `$.Values.…`, which names
+            // the genuine root and never resolves here.
             if let Some(AbstractValue::Overlay { entries, .. }) = &env.dot
                 && entries.contains_key("Values")
                 && let Some(value) = env.dot.as_ref().and_then(|dot| dot.apply_to_path(path))
             {
-                let mut result =
-                    EvalResult::from_value_with_memo(value, env.predicate_memo.as_ref());
-                record_field_access_captures(path, env, &mut result.effects);
-                result
+                EvalResult::from_value_with_memo(value, env.predicate_memo.as_ref())
             } else {
                 let Some((_, tail)) = path.split_first() else {
                     return EvalResult::none();
@@ -258,9 +253,7 @@ pub(crate) fn eval_expr_with_helper_calls(
                 .as_ref()
                 .and_then(|value| env.value_at_path(value, path));
             let value = value.or_else(|| {
-                if !env.allow_field_root_lookup
-                    || !matches!(env.dot, None | Some(AbstractValue::RootContext))
-                {
+                if !env.allow_field_root_lookup {
                     return None;
                 }
                 let (head, tail) = path.split_first()?;
@@ -544,7 +537,7 @@ pub(crate) fn bindings_for_helper_arg_with(
     }
 }
 
-pub(crate) fn bindings_from_helper_arg_value(
+fn bindings_from_helper_arg_value(
     value: Option<AbstractValue>,
     outer: Option<&HashMap<String, AbstractValue>>,
 ) -> HashMap<String, AbstractValue> {

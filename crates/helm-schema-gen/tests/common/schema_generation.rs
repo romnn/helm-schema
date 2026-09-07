@@ -12,7 +12,8 @@ pub fn generate_schema_with_values_yaml(
     let composed = values_yaml
         .and_then(|source| serde_yaml::from_str(source).ok())
         .unwrap_or(serde_yaml::Value::Null);
-    let documents = PreparedValuesDocuments::new(composed, serde_yaml::Value::Null);
+    let documents =
+        PreparedValuesDocuments::new(composed, serde_yaml::Value::Null, serde_yaml::Value::Null);
     generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, provider).with_values_documents(&documents),
     )

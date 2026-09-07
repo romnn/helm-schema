@@ -528,6 +528,11 @@ impl Interpreter<'_> {
             .extend(facts.values_root_helper_includes.iter().cloned());
     }
 
+    pub(super) fn absorb_nested_observed_facts(&mut self, facts: &ObservedFacts) {
+        self.snapshot_pre_rewrite_strict_paths(facts);
+        self.observed_facts.absorb(facts);
+    }
+
     fn snapshot_pre_rewrite_strict_paths(&mut self, facts: &ObservedFacts) {
         if !facts.values_root_helper_includes.is_empty()
             && self.observed_facts.values_root_helper_includes.is_empty()

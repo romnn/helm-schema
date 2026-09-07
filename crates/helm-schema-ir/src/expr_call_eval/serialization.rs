@@ -475,7 +475,9 @@ pub(super) fn eval_repeat(
 }
 
 /// `tpl` renders its first argument as a template against the given context.
-/// Static programs execute through the resolver; unresolved programs retain their source flow.
+/// Statically the rendered output is the template argument's content, so the
+/// value transfers from the first argument (literal template text carries no
+/// attributable content and is dropped).
 pub(super) fn eval_tpl(
     args: &[TemplateExpr],
     env: &EvalEnv,
@@ -485,20 +487,13 @@ pub(super) fn eval_tpl(
         return eval_all_args(args, env, resolver);
     };
     let mut template = eval_expr_with_helper_calls(template_expr, env, resolver);
-    let context = eval_expr_with_helper_calls(context_expr, env, resolver);
-    let mut invocation_env = env.clone();
-    invocation_env
-        .root_fields
-        .extend(template.effects.root_set_mutations.clone());
-    invocation_env
-        .root_fields
-        .extend(context.effects.root_set_mutations.clone());
-    let rendered =
-        resolver.resolve_static_template(&template, context.value.as_ref(), &invocation_env);
-    // Program-source text is parsed as Go template code, not as the rendered YAML document.
-    template.effects.helper_text_captures.clear();
-    let context_effects = context.effects.execution_only();
     let mut effects = Effects::default();
+    // The context argument's value AND effects are deliberately discarded:
+    // a context like `$` reads the whole values tree, and letting that read
+    // reach the call site stamps the context's map shape onto the rendered
+    // scalar (grafana's `name: {{ tpl .name $ }}` items were typed as
+    // objects this way).
+    let _context = eval_expr_with_helper_calls(context_expr, env, resolver);
     let value = if expression_applies_to_yaml(template_expr) {
         // `tpl` re-renders the serialized YAML text: template-free content
         // round-trips unchanged and templated scalar leaves stay scalars,
@@ -511,8 +506,8 @@ pub(super) fn eval_tpl(
                 .iter()
                 .map(|path| helm_schema_core::ValuesPath::parse(path)),
         );
-        effects.merge(std::mem::take(&mut template.effects));
-        template.value.take()
+        effects.merge(template.effects);
+        template.value
     } else {
         // `tpl` type-asserts its template to a Go string: a raw values
         // subject (`tpl .Values.extraEnv $`, also through a `with`-bound
@@ -539,16 +534,9 @@ pub(super) fn eval_tpl(
                 .iter()
                 .map(|path| helm_schema_core::ValuesPath::parse(path)),
         );
-        template.value.take()
+        template.value
     }
     .and_then(rendered_content_value);
-    // Context evaluation can fail or mutate data, but its map does not render as tpl output.
-    effects.merge(context_effects);
-    if let Some(mut rendered) = rendered {
-        effects.merge(std::mem::take(&mut rendered.effects));
-        rendered.effects = effects;
-        return rendered;
-    }
     EvalResult::with_effects(value, effects)
 }
 

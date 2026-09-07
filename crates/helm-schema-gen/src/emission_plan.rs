@@ -6,7 +6,6 @@ use serde_yaml::Value as YamlValue;
 
 use crate::ValuesSchemaInput;
 use crate::base_schema::{BaseOwner, ConditionalTargetIndex, classify_base};
-use crate::condition_encoding::RuntimeDefaultHints;
 use crate::condition_encoding::{
     HELM_TRUTHY_DEFINITION_NAME, helm_truthy_definition_schema, value_references_helm_truthy,
 };
@@ -42,7 +41,7 @@ pub(crate) struct LoweredEmissionPlan {
 pub(crate) struct RootValuesDocuments {
     composed: YamlValue,
     input_defaults: YamlValue,
-    runtime_defaults: RuntimeDefaultHints,
+    subchart_defaults: YamlValue,
     dependency_refill: YamlValue,
     guarded: Vec<GuardedRootValuesDocuments>,
 }
@@ -51,7 +50,7 @@ pub(crate) struct RootValuesDocuments {
 struct GuardedRootValuesDocuments {
     guards: Vec<helm_schema_core::ConditionalGuard>,
     composed: YamlValue,
-    runtime_defaults: RuntimeDefaultHints,
+    subchart_defaults: YamlValue,
     dependency_refill: YamlValue,
 }
 
@@ -89,18 +88,18 @@ impl RootValuesDocuments {
                 )
             })
             .max_by_key(|(_, documents)| documents.guards.len());
-        let (values_document, composed, runtime_defaults, dependency_refill) = guarded.map_or(
+        let (values_document, composed, subchart_defaults, dependency_refill) = guarded.map_or(
             (
                 None,
                 &self.composed,
-                &self.runtime_defaults,
+                &self.subchart_defaults,
                 &self.dependency_refill,
             ),
             |(index, documents)| {
                 (
                     Some(index),
                     &documents.composed,
-                    &documents.runtime_defaults,
+                    &documents.subchart_defaults,
                     &documents.dependency_refill,
                 )
             },
@@ -109,7 +108,7 @@ impl RootValuesDocuments {
             values_document,
             composed,
             crate::condition_encoding::AbsenceDefaults {
-                runtime_defaults,
+                deeper_stage: subchart_defaults,
                 dependency_refill,
                 dependency_roots,
             },
@@ -120,7 +119,7 @@ impl RootValuesDocuments {
 fn prepare_guarded_values_documents(
     signals: &ContractSchemaSignals,
     composed: &YamlValue,
-    runtime_defaults: &RuntimeDefaultHints,
+    subchart_defaults: &YamlValue,
     dependency_refill: &YamlValue,
     predicate_memo: &helm_schema_core::PredicateMemo,
 ) -> Vec<GuardedRootValuesDocuments> {
@@ -158,8 +157,12 @@ fn prepare_guarded_values_documents(
                 .collect::<BTreeSet<_>>();
             let mut branch_composed = composed.clone();
             crate::values_yaml::apply_values_default_sources(&mut branch_composed, &sources);
-            let mut branch_runtime_defaults = runtime_defaults.clone();
-            branch_runtime_defaults.extend_sources(&branch_composed, &sources);
+            let mut branch_subchart_defaults = subchart_defaults.clone();
+            crate::values_yaml::copy_values_default_sources(
+                &mut branch_subchart_defaults,
+                &branch_composed,
+                &sources,
+            );
             let mut branch_dependency_refill = dependency_refill.clone();
             crate::values_yaml::copy_values_default_sources(
                 &mut branch_dependency_refill,
@@ -169,7 +172,7 @@ fn prepare_guarded_values_documents(
             GuardedRootValuesDocuments {
                 guards: branch_guards.clone(),
                 composed: branch_composed,
-                runtime_defaults: branch_runtime_defaults,
+                subchart_defaults: branch_subchart_defaults,
                 dependency_refill: branch_dependency_refill,
             }
         })
@@ -222,9 +225,15 @@ impl LoweredEmissionPlan {
             &mut input_defaults,
             input.shadowed_input_paths.unwrap_or(&BTreeSet::new()),
         );
-        // Input documents are already coalesced, so dependency declarations
-        // cannot restore a missing key during condition encoding.
-        let runtime_defaults = RuntimeDefaultHints::from_sources(
+        let mut subchart_defaults = input
+            .values_documents
+            .map_or(YamlValue::Null, |documents| documents.dependency.clone());
+        // Chart-internal root merges (`set $ "Values" (mustMergeOverwrite
+        // defaults .Values)`) fill their defaults at render time, after any
+        // null-deletion, so absence at such paths reads as the merged default
+        // exactly like a dependency-owned key reads as its subchart default.
+        crate::values_yaml::copy_values_default_sources(
+            &mut subchart_defaults,
             &composed,
             contract_schema_signals.values_default_sources(),
         );
@@ -239,14 +248,14 @@ impl LoweredEmissionPlan {
         let guarded = prepare_guarded_values_documents(
             &contract_schema_signals,
             &composed,
-            &runtime_defaults,
+            &subchart_defaults,
             &dependency_refill,
             &predicate_memo,
         );
         let documents = RootValuesDocuments {
             composed,
             input_defaults,
-            runtime_defaults,
+            subchart_defaults,
             dependency_refill,
             guarded,
         };
@@ -257,7 +266,7 @@ impl LoweredEmissionPlan {
         let resolved_paths = PathSchemaResolver::new(
             &contract_schema_signals,
             &documents.input_defaults,
-            &documents.runtime_defaults,
+            &documents.subchart_defaults,
             &provider_resolutions,
         )
         .resolve_all();
@@ -265,7 +274,7 @@ impl LoweredEmissionPlan {
             &resolved_paths,
             &contract_schema_signals,
             &documents.composed,
-            &documents.runtime_defaults,
+            &documents.subchart_defaults,
             &provider_resolutions,
         );
         let terminal_schemas = contract_schema_signals

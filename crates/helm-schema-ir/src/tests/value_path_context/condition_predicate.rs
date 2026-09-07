@@ -873,8 +873,8 @@ fn with_predicates_preserve_header_projection_semantics() {
 #[test]
 fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
     let mut defines = DefineIndex::new();
-    defines.add_files_get_source("files/profile-demo.yaml", "a: 1\n");
-    defines.add_files_get_source("files/profile-ambient.yaml", "b: 2\n");
+    defines.add_file_source("files/profile-demo.yaml", "a: 1\n");
+    defines.add_file_source("files/profile-ambient.yaml", "b: 2\n");
     defines.add_file_source("templates/other.yaml", "kind: ConfigMap\n");
     let defines = Box::leak(Box::new(defines));
     let analysis_db = Box::leak(Box::new(IrAnalysisDb::new(defines)));

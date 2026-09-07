@@ -97,10 +97,10 @@ pub enum CliError {
     #[error("no charts discovered")]
     NoChartsDiscovered,
 
-    /// A chart manifest has no usable chart name.
-    #[error("chart name missing for {path}")]
-    ChartNameMissing {
-        /// Path of the unnamed chart.
+    /// A discovered subchart path has no usable chart name.
+    #[error("subchart name missing for {path}")]
+    SubchartNameMissing {
+        /// Path of the unnamed subchart.
         path: String,
     },
 

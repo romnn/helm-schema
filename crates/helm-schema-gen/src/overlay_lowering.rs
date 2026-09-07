@@ -169,7 +169,7 @@ pub(crate) fn collect_conditional_schemas(
     resolved_paths: &[ResolvedPathSchema],
     contract_schema_signals: &ContractSchemaSignals,
     values_yaml_doc: &YamlValue,
-    runtime_defaults: &crate::condition_encoding::RuntimeDefaultHints,
+    subchart_defaults_doc: &YamlValue,
     provider_resolutions: &ProviderSchemaResolutions,
 ) -> (Vec<LoweredConjunct>, InsertionAbstentionCounts) {
     let mut insertion_abstentions = InsertionAbstentionCounts::default();
@@ -177,7 +177,7 @@ pub(crate) fn collect_conditional_schemas(
         crate::provider_requirement_synthesis::synthesized_required_source_implications(
             contract_schema_signals,
             values_yaml_doc,
-            runtime_defaults,
+            subchart_defaults_doc,
             provider_resolutions,
         );
     for (path, split_implications) in
@@ -195,7 +195,7 @@ pub(crate) fn collect_conditional_schemas(
         .chain(
             crate::provider_requirement_synthesis::synthesized_ranged_member_required_implications(
                 contract_schema_signals,
-                runtime_defaults,
+                subchart_defaults_doc,
                 provider_resolutions,
             ),
         )

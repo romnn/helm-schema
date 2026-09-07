@@ -1100,7 +1100,6 @@ fn ternary_type_selector_partitions_helper_output_candidates() {
     "#};
     let values_yaml = "extraEnvVars: []\n";
     let schema = schema_for_values_yaml(parse_ir_with_helpers(source, helpers), Some(values_yaml));
-
     for (instance, want, label) in [
         (
             serde_json::json!({
@@ -1711,9 +1710,11 @@ fn live_guarded_unset_provider_source_preserves_chart_default() {
     );
 }
 
-/// A deleted dependency provider source remains missing after coalescing.
+/// A dependency-owned default is restored by Helm's subchart coalescing even
+/// when the parent document omits the leaf. It must therefore not become a
+/// parent-level presence requirement.
 #[test]
-fn dependency_default_does_not_suppress_provider_source_presence() {
+fn dependency_default_suppresses_parent_provider_source_presence() {
     let source = indoc! {r"
         apiVersion: v1
         kind: Service
@@ -1728,22 +1729,21 @@ fn dependency_default_does_not_suppress_provider_source_presence() {
         child:
           port: 80
     "};
-    let schema = schema_for_dependency_values_yaml(parse_ir(source), values_yaml, values_yaml);
+    let schema =
+        schema_for_dependency_values_yaml(parse_ir(source), values_yaml, values_yaml, values_yaml);
     let instance = serde_json::json!({ "child": {} });
 
-    sim_assert_eq!(
-        have: &schema,
-        want: &schema_for_values_yaml(parse_ir(source), Some(values_yaml))
-    );
     assert!(
-        !schema_accepts_instance(&schema, &instance),
-        "missing input renders a provider-invalid null: schema={schema}"
+        schema_accepts_instance(&schema, &instance),
+        "the dependency refills its provider source before rendering: schema={schema}"
     );
 }
 
-/// Missing ranged provider sources render null for declared and new members alike.
+/// Layered maps refill leaves only for the dependency's named entries. A
+/// parent may omit `containerPort` from an overridden built-in port, while a
+/// newly added enabled port still renders null without that leaf.
 #[test]
-fn dependency_defaults_do_not_refill_named_ranged_provider_sources() {
+fn dependency_defaults_refill_named_ranged_provider_sources() {
     let source = indoc! {r"
         apiVersion: apps/v1
         kind: Deployment
@@ -1776,11 +1776,17 @@ fn dependency_defaults_do_not_refill_named_ranged_provider_sources() {
               enabled: true
               containerPort: 4317
     "};
-    let schema =
-        schema_for_dependency_values_yaml(parse_ir(source), composed_values, composed_values);
-    sim_assert_eq!(
-        have: &schema,
-        want: &schema_for_values_yaml(parse_ir(source), Some(composed_values))
+    let deeper_stage_values = indoc! {"
+        child:
+          ports:
+            otlp:
+              containerPort: 4317
+    "};
+    let schema = schema_for_dependency_values_yaml(
+        parse_ir(source),
+        composed_values,
+        deeper_stage_values,
+        composed_values,
     );
 
     for (instance, want, label) in [
@@ -1788,8 +1794,8 @@ fn dependency_defaults_do_not_refill_named_ranged_provider_sources() {
             serde_json::json!({ "child": { "ports": {
                 "otlp": { "enabled": true },
             } } }),
-            false,
-            "a deleted declared port remains missing after coalescing",
+            true,
+            "the dependency refills its named port",
         ),
         (
             serde_json::json!({ "child": { "ports": {
@@ -2770,7 +2776,7 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() -> eyre::Result<()>
     let resolved = crate::path_resolver::PathSchemaResolver::new(
         &schema_signals,
         &values_yaml,
-        &crate::condition_encoding::RuntimeDefaultHints::default(),
+        &serde_yaml::Value::Null,
         &provider_resolutions,
     )
     .resolve_all();
@@ -2898,7 +2904,7 @@ fn zalando_extra_envs_keeps_podspec_envvar_shape() -> eyre::Result<()> {
     let resolved = crate::path_resolver::PathSchemaResolver::new(
         &schema_signals,
         &values_yaml,
-        &crate::condition_encoding::RuntimeDefaultHints::default(),
+        &serde_yaml::Value::Null,
         &provider_resolutions,
     )
     .resolve_all();

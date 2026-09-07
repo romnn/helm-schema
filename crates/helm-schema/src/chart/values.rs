@@ -32,6 +32,29 @@ pub fn build_composed_values_document(
 }
 
 /// The dependency charts' declared defaults, composed under their value
+/// prefixes with each parent's effective `global` values propagated into
+/// its direct children, MINUS every path the root chart's own values.yaml
+/// declares. A key present here fills at the SUBCHART's coalesce stage even
+/// when the parent-level document misses it, so schema generation reads
+/// absence at such paths as the subchart default instead of nil.
+/// Root-declared keys are excluded because their absence can only mean Helm
+/// null-deletion, which poisons the key through every later merge stage —
+/// the subchart default does NOT resurrect a deleted key.
+#[instrument(skip_all)]
+pub fn build_dependency_values_document(
+    charts: &[ChartContext],
+    dependency_refill: &YamlValue,
+) -> EngineResult<YamlValue> {
+    let root = charts.first().ok_or(CliError::NoChartsDiscovered)?;
+    let root_values_path = root.chart_dir.join("values.yaml")?;
+    if root_values_path.is_file()? {
+        let parent = serde_yaml::from_str::<YamlValue>(&root_values_path.read_to_string()?)?;
+        return Ok(subtract_declared_paths(dependency_refill, &parent));
+    }
+    Ok(dependency_refill.clone())
+}
+
+/// The dependency charts' declared defaults, composed under their value
 /// prefixes, WITHOUT the parent-declared subtraction: what helm refills a
 /// missing or null dependency values root with. `coalesceDeps` recreates
 /// the root table and coalesces the subchart's own values into it, and the
@@ -115,6 +138,37 @@ fn scoped_global_path(chart_prefix: &[String], relative_path: &[String]) -> Stri
             .chain(std::iter::once("global".to_string()))
             .chain(relative_path.iter().cloned()),
     )
+}
+
+/// `composed` minus every path `parent` declares: keys both documents
+/// carry recurse member-wise (a parent `falco-talon: {}` stub keeps the
+/// subchart's keys underneath), keys only `composed` carries survive
+/// whole, and parent-declared leaves are removed.
+fn subtract_declared_paths(composed: &YamlValue, parent: &YamlValue) -> YamlValue {
+    match (composed, parent) {
+        (YamlValue::Mapping(composed_map), YamlValue::Mapping(parent_map)) => {
+            let mut remaining = serde_yaml::Mapping::new();
+            for (key, value) in composed_map {
+                match parent_map.get(key) {
+                    None => {
+                        remaining.insert(key.clone(), value.clone());
+                    }
+                    Some(parent_value) => {
+                        let child = subtract_declared_paths(value, parent_value);
+                        if !matches!(child, YamlValue::Null) {
+                            remaining.insert(key.clone(), child);
+                        }
+                    }
+                }
+            }
+            if remaining.is_empty() {
+                YamlValue::Null
+            } else {
+                YamlValue::Mapping(remaining)
+            }
+        }
+        _ => YamlValue::Null,
+    }
 }
 
 #[instrument(skip_all)]

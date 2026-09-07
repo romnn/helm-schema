@@ -179,11 +179,9 @@ impl ControlOutcome {
 impl SymbolicLocalState {
     pub(crate) fn with_root(value: AbstractValue, mode: BindingEvaluationMode) -> Self {
         let mut state = Self::default();
-        let root = match mode {
-            BindingEvaluationMode::Direct => LocalBinding::direct(value),
-            BindingEvaluationMode::Evaluated => LocalBinding::evaluated(value),
-        };
-        state.fragment_values.insert(String::new(), root);
+        state
+            .fragment_values
+            .insert(String::new(), LocalBinding::new(value, mode));
         state
     }
 
@@ -470,6 +468,13 @@ impl SymbolicLocalState {
         self.record_scope_shadow(&variable);
         self.clear_variable(&variable);
         self.range_domains.insert(variable, literals);
+    }
+
+    pub(crate) fn set_chart_value_defaults(
+        &mut self,
+        defaults: BTreeSet<helm_schema_core::ValuesPath>,
+    ) {
+        self.chart_value_defaults = defaults;
     }
 
     pub(crate) fn append_chart_value_defaults(

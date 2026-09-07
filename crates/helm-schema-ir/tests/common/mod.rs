@@ -17,15 +17,7 @@ pub struct IrCorpusCase<'a> {
 pub fn build_define_index(spec: test_util::DefineSourceSpec<'_>) -> eyre::Result<DefineIndex> {
     let mut idx = DefineIndex::new();
     for source in spec.load()? {
-        if spec
-            .file_sources
-            .iter()
-            .any(|(name, _)| *name == source.path)
-        {
-            idx.add_files_get_source(&source.path, &source.source);
-        } else {
-            idx.add_file_source(&source.path, &source.source);
-        }
+        idx.add_file_source(&source.path, &source.source);
     }
     Ok(idx)
 }

@@ -47,15 +47,17 @@ pub use emission_report::{
 #[derive(Debug, Clone, PartialEq)]
 pub struct PreparedValuesDocuments {
     composed: YamlValue,
+    dependency: YamlValue,
     dependency_refill: YamlValue,
 }
 
 impl PreparedValuesDocuments {
     /// Creates the complete values-document bundle prepared by the caller.
     #[must_use]
-    pub fn new(composed: YamlValue, dependency_refill: YamlValue) -> Self {
+    pub fn new(composed: YamlValue, dependency: YamlValue, dependency_refill: YamlValue) -> Self {
         Self {
             composed,
+            dependency,
             dependency_refill,
         }
     }
@@ -73,11 +75,22 @@ pub struct ValuesSchemaInput<'a> {
     pub contract_schema_signals: &'a ContractSchemaSignals,
     /// Resource-schema oracle used to constrain rendered Kubernetes fields.
     pub provider: &'a dyn ResourceSchemaOracle,
-    /// Parsed declaration metadata and dependency-root context, when available.
+    /// Parsed chart and dependency values documents, when available.
     ///
-    /// Schemas validate already-coalesced values, so declarations do not restore
-    /// missing members in the input document.
-    /// Explicit runtime merges carry their own analysis facts.
+    /// The dependency document contains only dependency charts' declared
+    /// defaults, composed under their value prefixes. A key present there
+    /// fills at the SUBCHART's
+    /// coalesce stage even when the parent-level document misses it —
+    /// including after a parent-level null-deletion — so absence at such
+    /// paths reads as the subchart default instead of nil. When absent,
+    /// every missing key reads as nil.
+    ///
+    /// The dependency-refill document contains the same defaults without the
+    /// parent-declared subtraction: what Helm refills a missing or null
+    /// dependency values root with. Absence below such a root reads as nil
+    /// only while the root survives — deleting the root itself hands the
+    /// whole subtree back to the subchart's own defaults, and only the keys
+    /// they miss stay gone.
     pub values_documents: Option<&'a PreparedValuesDocuments>,
     /// Descendant `global.*` input paths hidden by an ancestor chart's
     /// declared global value. Helm accepts these paths but never exposes

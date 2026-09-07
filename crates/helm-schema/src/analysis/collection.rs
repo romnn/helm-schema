@@ -58,18 +58,13 @@ pub(crate) fn analyze_charts(
         if chart.is_library {
             continue;
         }
-        let mut static_root_strings = chart.static_root_strings.clone();
-        static_root_strings.insert(
-            vec!["Template".to_string(), "BasePath".to_string()],
-            format!("{}/templates", chart.template_namespace),
-        );
         let symbolic_context = SymbolicIrContext::with_parsed_policy(
             &parsed_defines,
             SymbolicPolicy {
                 chart_default_strings: values_roots
                     .string_defaults_for_prefix(&chart.values_prefix),
                 kubernetes_version: kubernetes_version.map(str::to_string),
-                static_root_strings,
+                static_root_strings: chart.static_root_strings.clone(),
             },
         );
         let optional_helpers = optional_dependency_helpers_for_chart(chart, charts, &define_corpus);
