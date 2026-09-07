@@ -81,7 +81,7 @@ fn collect_dispatch(
                 };
                 *dispatch = Some(arms);
             }
-            NodeAction::Assignment(_) | NodeAction::With(_) | NodeAction::Range(_) => {
+            NodeAction::Assignment(_) | NodeAction::With | NodeAction::Range => {
                 return false;
             }
         }

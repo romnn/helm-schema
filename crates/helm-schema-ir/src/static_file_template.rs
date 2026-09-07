@@ -1,18 +1,22 @@
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
-
-use helm_schema_ast::TemplateExpr;
+use std::collections::{BTreeMap, BTreeSet};
 
 use crate::abstract_value::AbstractValue;
-use crate::expr_eval::literal_helper_call_callee;
-use crate::fragment_expr_eval::FragmentEvalContext;
-use crate::helper_meta::HelperOutputMeta;
-use crate::node_eval::{NodeAction, node_action};
+use crate::analysis_db::IrAnalysisDb;
+use crate::eval_effect::EvalResult;
+use crate::eval_env::EvalEnv;
+use helm_schema_core::{GuardValue, Predicate};
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum StaticTemplateSource {
-    File { path: String },
-    ValuesDefault { path: String, program: String },
-    Constructed { program: String },
+    ValuesDefault {
+        path: String,
+        program: String,
+        condition: Predicate,
+    },
+    Constructed {
+        program: String,
+        condition: Predicate,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
@@ -21,172 +25,106 @@ pub(crate) struct StaticTemplateProgram {
     pub(crate) dot: Option<AbstractValue>,
 }
 
-#[derive(Clone, Debug)]
-pub(crate) struct LiteralHelperCall {
-    pub(crate) name: String,
-    pub(crate) arg: Option<TemplateExpr>,
-}
-
-pub(crate) fn literal_helper_calls_from_exprs(exprs: &[TemplateExpr]) -> Vec<LiteralHelperCall> {
-    let mut out = Vec::new();
-    for expr in exprs {
-        expr.walk(|node| {
-            let TemplateExpr::Call { function, args } = node else {
-                return;
-            };
-            let Some(name) = literal_helper_call_callee(function, args) else {
-                return;
-            };
-            out.push(LiteralHelperCall {
-                name: name.to_string(),
-                arg: args.get(1).cloned(),
-            });
-        });
-    }
-    out.sort_by(|left, right| {
-        left.name
-            .cmp(&right.name)
-            .then_with(|| format!("{:?}", left.arg).cmp(&format!("{:?}", right.arg)))
-    });
-    out.dedup_by(|left, right| left.name == right.name && left.arg == right.arg);
-    out
-}
-
-pub(crate) fn collect_template_requests_from_helper(
-    name: &str,
-    helper_dot: Option<&AbstractValue>,
-    context: FragmentEvalContext<'_>,
+/// Resolves already-evaluated tpl inputs at their invocation boundary.
+pub(crate) fn static_template_programs(
+    template: &EvalResult,
+    dot: Option<&AbstractValue>,
+    env: &EvalEnv,
+    db: &IrAnalysisDb,
 ) -> BTreeSet<StaticTemplateProgram> {
-    let Some(body) = context.analysis_db.parsed_helper_body(name) else {
-        return BTreeSet::new();
+    let fields: BTreeMap<String, AbstractValue> = env
+        .root_fields
+        .iter()
+        .map(|(key, value)| (key.clone(), value.clone()))
+        .collect();
+    let dot = dot
+        .cloned()
+        .map(|value| crate::analysis_db::capture_root_context(value, &fields));
+    let mut programs = BTreeSet::new();
+    let Some(value) = &template.value else {
+        return programs;
     };
-
-    let locals = HashMap::new();
-    let local_output_meta = HashMap::new();
-    let mut requests = BTreeSet::new();
-    walk_template_exprs(body.source, body.tree.root_node(), &mut |expr| {
-        requests.extend(collect_template_requests_from_exprs(
-            std::slice::from_ref(expr),
-            helper_dot,
-            &locals,
-            &local_output_meta,
-            context,
-        ));
-    });
-    requests
-}
-
-pub(crate) fn collect_template_requests_from_exprs(
-    exprs: &[TemplateExpr],
-    current_dot: Option<&AbstractValue>,
-    locals: &HashMap<String, AbstractValue>,
-    local_output_meta: &HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
-    context: FragmentEvalContext<'_>,
-) -> BTreeSet<StaticTemplateProgram> {
-    let mut requests = BTreeSet::new();
-    for expr in exprs {
-        let mut seen = HashSet::new();
-        let mut resolve_fragment_value = |expr: &TemplateExpr| {
-            context.fragment_value_from_expr_with_meta(
-                expr,
-                locals,
-                local_output_meta,
-                current_dot,
-                &mut seen,
-            )
-        };
-        expr.walk(|node| {
-            if let TemplateExpr::Call { function, args } = node
-                && function == "tpl"
-                && let Some(template_arg) = args.first()
-            {
-                let dot = args.get(1).and_then(&mut resolve_fragment_value);
-                let mut paths = BTreeSet::new();
-                collect_files_get_paths(template_arg, &mut resolve_fragment_value, &mut paths);
-                for path in paths {
-                    requests.insert(StaticTemplateProgram {
-                        source: StaticTemplateSource::File { path },
-                        dot: dot.clone(),
-                    });
-                }
-                if let Some(value) = resolve_fragment_value(template_arg) {
-                    for path_pattern in value.fragment_source_paths() {
-                        for (path, program) in context
-                            .analysis_db
-                            .chart_default_programs_matching(&path_pattern.encode())
-                        {
-                            requests.insert(StaticTemplateProgram {
-                                source: StaticTemplateSource::ValuesDefault {
-                                    path: path.to_string(),
-                                    program: program.to_string(),
-                                },
-                                dot: dot.clone(),
-                            });
-                        }
-                    }
-                    for program in value.strings() {
-                        if !matches!(
-                            helm_schema_ast::contains_template_action(&program),
-                            Ok(true)
-                        ) {
-                            continue;
-                        }
-                        requests.insert(StaticTemplateProgram {
-                            source: StaticTemplateSource::Constructed { program },
-                            dot: dot.clone(),
-                        });
-                    }
+    let source_paths = value.fragment_source_paths();
+    let source_meta = value.output_meta();
+    for path_pattern in &source_paths {
+        let mut selections = Vec::new();
+        if let Some(dispatch) = &template.scalar_dispatch {
+            for (condition, source) in &dispatch.arms {
+                if matches!(source, crate::scalar_value::ScalarValue::Identity(path) if path == path_pattern)
+                {
+                    selections.push(condition.clone());
                 }
             }
+        }
+        if selections.is_empty()
+            && let Some(meta) = source_meta
+                .get(path_pattern)
+                .or_else(|| template.effects.local_output_meta.get(path_pattern))
+        {
+            selections.extend(
+                meta.predicates
+                    .iter()
+                    .map(|branch| Predicate::all(branch.iter().cloned().collect())),
+            );
+        }
+        let condition = if selections.is_empty() {
+            if source_paths.len() != 1 {
+                continue;
+            }
+            Predicate::True
+        } else {
+            env.predicate_memo.normalize(Predicate::Or(selections))
+        };
+        for (path, program) in db.chart_default_programs_matching(&path_pattern.encode()) {
+            programs.insert(StaticTemplateProgram {
+                source: StaticTemplateSource::ValuesDefault {
+                    path: path.to_string(),
+                    program: program.to_string(),
+                    condition: condition.clone(),
+                },
+                dot: dot.clone(),
+            });
+        }
+    }
+    for (condition, program) in literal_programs(template) {
+        if !matches!(
+            helm_schema_ast::contains_template_action(&program),
+            Ok(true)
+        ) {
+            continue;
+        }
+        programs.insert(StaticTemplateProgram {
+            source: StaticTemplateSource::Constructed { program, condition },
+            dot: dot.clone(),
         });
     }
-    requests
+    programs
 }
 
-fn walk_template_exprs(
-    source: &str,
-    node: tree_sitter::Node<'_>,
-    visit: &mut impl FnMut(&TemplateExpr),
-) {
-    match node_action(source, node) {
-        NodeAction::Assignment(Some(exprs)) | NodeAction::Output(Some(exprs)) => {
-            for expr in &exprs {
-                visit(expr);
-            }
-        }
-        NodeAction::If(Some(header))
-        | NodeAction::With(Some(header))
-        | NodeAction::Range(Some(header)) => visit(header.expr()),
-        NodeAction::Text
-        | NodeAction::Suppressed
-        | NodeAction::Assignment(None)
-        | NodeAction::If(None)
-        | NodeAction::With(None)
-        | NodeAction::Range(None)
-        | NodeAction::Output(None)
-        | NodeAction::Descend => {}
+fn literal_programs(template: &EvalResult) -> Vec<(Predicate, String)> {
+    let Some(value) = &template.value else {
+        return Vec::new();
+    };
+    match &template.scalar_dispatch {
+        Some(dispatch) => dispatch
+            .arms
+            .iter()
+            .filter_map(|(condition, value)| {
+                if let crate::scalar_value::ScalarValue::Literal(GuardValue::String(program)) =
+                    value
+                {
+                    Some((condition.clone(), program.clone()))
+                } else {
+                    None
+                }
+            })
+            .collect::<Vec<_>>(),
+        None => match value {
+            AbstractValue::StringSet(strings) if strings.len() == 1 => strings
+                .iter()
+                .map(|program| (Predicate::True, program.clone()))
+                .collect(),
+            _ => Vec::new(),
+        },
     }
-
-    let mut cursor = node.walk();
-    for child in node.children(&mut cursor) {
-        walk_template_exprs(source, child, visit);
-    }
-}
-
-fn collect_files_get_paths<F>(
-    expr: &TemplateExpr,
-    resolve_fragment_value: &mut F,
-    out: &mut BTreeSet<String>,
-) where
-    F: FnMut(&TemplateExpr) -> Option<AbstractValue>,
-{
-    expr.walk(|node| {
-        if let TemplateExpr::Call { function, args } = node
-            && crate::function_semantics::is_files_get(function)
-            && let Some(path_arg) = args.first()
-            && let Some(binding) = resolve_fragment_value(path_arg)
-        {
-            out.extend(binding.strings());
-        }
-    });
 }

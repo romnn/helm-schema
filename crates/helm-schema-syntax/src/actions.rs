@@ -39,7 +39,10 @@ pub(crate) struct ActionToken {
 #[derive(Clone, Copy, Debug)]
 pub(crate) enum TokenKind {
     /// `{{ pipeline }}` — renders output at this position.
-    Output { expr_span: Span },
+    Output {
+        expr_span: Span,
+        render_indent: Option<usize>,
+    },
     /// `{{ $x := … }}` / `{{ $x = … }}` — renders nothing.
     Assign,
     /// `{{/* … */}}`.
@@ -63,12 +66,51 @@ pub(crate) enum TokenKind {
     Error,
 }
 
-pub(crate) fn collect_action_tokens(root: tree_sitter::Node<'_>) -> Vec<ActionToken> {
+pub(crate) fn collect_action_tokens(root: tree_sitter::Node<'_>, source: &str) -> Vec<ActionToken> {
     let mut out = Vec::new();
     let mut next_region = 0usize;
     walk_body(root, &mut next_region, &mut out);
+    for token in &mut out {
+        let TokenKind::Output {
+            expr_span,
+            render_indent,
+        } = &mut token.kind
+        else {
+            continue;
+        };
+        *render_indent = root
+            .descendant_for_byte_range(expr_span.start, expr_span.end)
+            .and_then(|node| terminal_indent_width(node, source));
+    }
     out.sort_by_key(|token| (token.span.start, token.span.end));
     out
+}
+
+/// Reads a terminal parsed `indent`/`nindent` call without interpreting source text.
+fn terminal_indent_width(node: tree_sitter::Node<'_>, source: &str) -> Option<usize> {
+    let terminal = match node.kind() {
+        "function_call" => node,
+        "chained_pipeline" | "pipeline" | "template_action" => {
+            let mut cursor = node.walk();
+            node.named_children(&mut cursor).last()?
+        }
+        _ => return None,
+    };
+    if terminal.kind() != "function_call" {
+        return None;
+    }
+    let function = terminal.child_by_field_name("function")?;
+    let name = function.utf8_text(source.as_bytes()).ok()?;
+    if !matches!(name, "indent" | "nindent") {
+        return None;
+    }
+    let arguments = terminal.child_by_field_name("arguments")?;
+    let mut cursor = arguments.walk();
+    let width = arguments.named_children(&mut cursor).next()?;
+    if width.kind() != "int_literal" {
+        return None;
+    }
+    width.utf8_text(source.as_bytes()).ok()?.parse().ok()
 }
 
 fn is_left_delimiter(kind: &str) -> bool {
@@ -136,6 +178,7 @@ fn dispatch_body_child<'tree>(
             span: node_span(child),
             kind: TokenKind::Output {
                 expr_span: node_span(child),
+                render_indent: None,
             },
         }),
         "break_action" => out.push(ActionToken {
@@ -316,6 +359,7 @@ fn classify_group(named: &[tree_sitter::Node<'_>]) -> TokenKind {
             let last = named.last().unwrap_or(first);
             TokenKind::Output {
                 expr_span: Span::new(first.start_byte(), last.end_byte()),
+                render_indent: None,
             }
         }
     }

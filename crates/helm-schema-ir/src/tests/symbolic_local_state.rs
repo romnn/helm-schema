@@ -2,6 +2,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{GetBinding, GetBindingPlan};
+use crate::eval_env::{BindingDecision, BindingEvaluationMode, LocalBinding};
 use crate::fragment_assignment::AssignmentKind;
 use crate::helper_meta::HelperOutputMeta;
 use crate::scalar_value::{
@@ -10,6 +11,149 @@ use crate::scalar_value::{
 use crate::symbolic_local_state::SymbolicLocalState;
 use helm_schema_core::{GuardValue, Predicate, PredicateMemo, ValuesPath};
 use test_util::prelude::sim_assert_eq;
+
+#[test]
+fn unconditioned_binding_join_keeps_values_but_proves_no_mixed_mode_arm() {
+    let direct = LocalBinding::direct(values_path!("direct"));
+    let evaluated = LocalBinding::evaluated(values_path!("evaluated"));
+    let unknown = LocalBinding::unknown();
+
+    let joined = LocalBinding::join_unconditioned(vec![&direct, &evaluated, &unknown]);
+    let projection = joined.projection(&PredicateMemo::default());
+
+    sim_assert_eq!(have: projection.alternatives.is_empty(), want: true);
+    sim_assert_eq!(have: projection.has_unresolved, want: true);
+    sim_assert_eq!(
+        have: joined.paths(),
+        want: BTreeSet::from([ValuesPath::parse("direct"), ValuesPath::parse("evaluated")]),
+    );
+}
+
+#[test]
+fn partial_binding_decision_keeps_proven_subsets_and_unresolved_remainder() {
+    let when_true = Predicate::truthy_path("select_true");
+    let when_false = Predicate::truthy_path("select_false");
+    let binding = LocalBinding::select(
+        BindingDecision::new(TruthCondition::from_subsets(
+            when_true.clone(),
+            when_false.clone(),
+            false,
+        )),
+        LocalBinding::direct(values_path!("direct")),
+        LocalBinding::evaluated(values_path!("evaluated")),
+    );
+
+    let projection = binding.projection(&PredicateMemo::default());
+
+    sim_assert_eq!(
+        have: projection.alternatives,
+        want: BTreeSet::from([
+            crate::eval_env::LocalBindingAlternative {
+                condition: when_true,
+                value: values_path!("direct"),
+                mode: BindingEvaluationMode::Direct,
+                metadata: crate::eval_env::BindingValueMetadata::default(),
+            },
+            crate::eval_env::LocalBindingAlternative {
+                condition: when_false,
+                value: values_path!("evaluated"),
+                mode: BindingEvaluationMode::Evaluated,
+                metadata: crate::eval_env::BindingValueMetadata::default(),
+            },
+        ]),
+    );
+    sim_assert_eq!(have: projection.has_unresolved, want: true);
+    sim_assert_eq!(
+        have: binding.paths(),
+        want: BTreeSet::from([ValuesPath::parse("direct"), ValuesPath::parse("evaluated")]),
+    );
+}
+
+#[test]
+fn unrelated_unknown_binding_decisions_do_not_compare_as_the_same_execution() {
+    let direct = LocalBinding::direct(values_path!("direct"));
+    let evaluated = LocalBinding::evaluated(values_path!("evaluated"));
+    let first = LocalBinding::select(
+        BindingDecision::new(TruthCondition::Unknown),
+        direct.clone(),
+        evaluated.clone(),
+    );
+    let second = LocalBinding::select(
+        BindingDecision::new(TruthCondition::Unknown),
+        direct,
+        evaluated,
+    );
+
+    sim_assert_eq!(have: first == second, want: false);
+}
+
+#[test]
+fn symbolic_range_exit_widens_only_bindings_changed_by_the_iteration() {
+    let mut entry = SymbolicLocalState::default();
+    entry.fragment_values.insert(
+        "cfg".to_string(),
+        LocalBinding::evaluated(values_path!("items")),
+    );
+    entry.fragment_values.insert(
+        "stable".to_string(),
+        LocalBinding::direct(values_path!("stable")),
+    );
+    let mut positive_exit = entry.clone();
+    positive_exit.fragment_values.insert(
+        "cfg".to_string(),
+        LocalBinding::direct(values_path!("items.*")),
+    );
+
+    positive_exit
+        .widen_changed_fragment_bindings(&entry, BindingDecision::new(TruthCondition::Unknown));
+
+    let cfg = positive_exit
+        .fragment_values
+        .get("cfg")
+        .map(|binding| binding.projection(&PredicateMemo::default()));
+    sim_assert_eq!(
+        have: cfg.as_ref().map(|projection| projection.alternatives.is_empty()),
+        want: Some(true),
+    );
+    sim_assert_eq!(
+        have: cfg.as_ref().map(|projection| projection.has_unresolved),
+        want: Some(true),
+    );
+    sim_assert_eq!(
+        have: positive_exit.fragment_values.get("cfg").map(LocalBinding::paths),
+        want: Some(BTreeSet::from([ValuesPath::parse("items.*")])),
+    );
+    sim_assert_eq!(
+        have: positive_exit.fragment_values.get("stable"),
+        want: entry.fragment_values.get("stable"),
+    );
+}
+
+#[test]
+fn local_binding_has_no_structural_alternative_cap() {
+    let mut binding =
+        LocalBinding::direct(AbstractValue::StringSet(BTreeSet::from(["0".to_string()])));
+    for index in 1..129 {
+        binding = LocalBinding::select(
+            BindingDecision::new(TruthCondition::exact(Predicate::truthy_path(format!(
+                "gate{index}"
+            )))),
+            LocalBinding::new(
+                AbstractValue::StringSet(BTreeSet::from([index.to_string()])),
+                if index % 2 == 0 {
+                    BindingEvaluationMode::Direct
+                } else {
+                    BindingEvaluationMode::Evaluated
+                },
+            ),
+            binding,
+        );
+    }
+    let projection = binding.projection(&PredicateMemo::default());
+
+    sim_assert_eq!(have: projection.alternatives.len(), want: 129);
+    sim_assert_eq!(have: projection.has_unresolved, want: false);
+}
 
 fn state_with_scalar_arm_count(count: usize) -> SymbolicLocalState {
     let mut state = SymbolicLocalState::default();
@@ -262,8 +406,8 @@ fn snapshot_restore_replaces_all_local_state_maps() {
     state = snapshot;
 
     sim_assert_eq!(
-        have: state.fragment_values.get("image"),
-        want: Some(&values_path!("image"))
+        have: state.fragment_values.get("image").and_then(|binding| binding.value()),
+        want: Some(values_path!("image"))
     );
     assert!(state.range_domains.is_empty());
     sim_assert_eq!(
@@ -292,8 +436,8 @@ fn local_scope_restores_shadowed_fragment_value() {
     state.exit_local_scope();
 
     sim_assert_eq!(
-        have: state.fragment_values.get("name"),
-        want: Some(&values_path!("outer"))
+        have: state.fragment_values.get("name").and_then(|binding| binding.value()),
+        want: Some(values_path!("outer"))
     );
 }
 
@@ -315,8 +459,8 @@ fn local_scope_keeps_assignment_to_outer_fragment_value() {
     state.exit_local_scope();
 
     sim_assert_eq!(
-        have: state.fragment_values.get("name"),
-        want: Some(&values_path!("assigned"))
+        have: state.fragment_values.get("name").and_then(|binding| binding.value()),
+        want: Some(values_path!("assigned"))
     );
 }
 
@@ -390,8 +534,8 @@ fn fragment_assignment_replaces_outer_get_binding() {
 
     assert!(!state.get_bindings.contains_key("value"));
     sim_assert_eq!(
-        have: state.fragment_values.get("value"),
-        want: Some(&values_path!("assigned"))
+        have: state.fragment_values.get("value").and_then(|binding| binding.value()),
+        want: Some(values_path!("assigned"))
     );
 }
 
@@ -410,8 +554,8 @@ fn local_scope_restores_range_domain_shadowing_outer_binding() {
 
     assert!(!state.range_domains.contains_key("key"));
     sim_assert_eq!(
-        have: state.fragment_values.get("key"),
-        want: Some(&values_path!("outer"))
+        have: state.fragment_values.get("key").and_then(|binding| binding.value()),
+        want: Some(values_path!("outer"))
     );
 }
 
@@ -588,8 +732,8 @@ fn branch_join_keeps_bindings_present_in_all_outcomes() {
     joined.join_branch_outcomes(&entry_snapshot, &[first, second]);
 
     sim_assert_eq!(
-        have: joined.fragment_values.get("name"),
-        want: Some(&AbstractValue::Choice(
+        have: joined.fragment_values.get("name").and_then(|binding| binding.value()),
+        want: Some(AbstractValue::Choice(
             [
                 values_path!("first"),
                 values_path!("second")

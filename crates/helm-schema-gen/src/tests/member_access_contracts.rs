@@ -179,6 +179,53 @@ fn grouped_selector_receiver_is_optional_but_present_scalars_fail() {
     );
 }
 
+/// Executable actions after an inline definition retain an ignored merge operand's effects.
+#[test]
+fn inline_definition_does_not_hide_later_assignment_effects() {
+    let src = indoc! {r#"
+        {{- define "defaults" -}}
+        child: {{ .Values.parent.child | quote }}
+        {{- end -}}
+        {{- $_ := merge .Values (include "defaults" . | fromYaml) -}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          fixed: value
+    "#};
+    let helper = indoc! {r#"
+        {{- define "defaults" -}}
+        child: {{ .Values.parent.child | quote }}
+        {{- end -}}
+    "#};
+    let reference = indoc! {r#"
+        {{- $_ := merge .Values (include "defaults" . | fromYaml) -}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          fixed: value
+    "#};
+    let schema = schema_for(parse_ir_with_helpers(src, src));
+    let expected = schema_for(parse_ir_with_helpers(reference, helper));
+
+    sim_assert_eq!(have: &schema, want: &expected);
+    for (instance, want) in [
+        (serde_json::json!({}), false),
+        (serde_json::json!({ "parent": null }), false),
+        (serde_json::json!({ "parent": "wrong" }), false),
+        (serde_json::json!({ "parent": {} }), true),
+    ] {
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: want,
+            "instance={instance}; schema={schema}",
+        );
+    }
+}
+
 /// A `hasKey` guard on the rendered leaf is already enforced by property
 /// presence. Its provider schema must therefore occupy the empty leaf slot
 /// directly instead of turning that scalar slot into an object host.
@@ -1151,20 +1198,13 @@ fn dependency_owned_host_schema() -> Value {
     contract.push_pathless_dependency_fragment("other");
     contract.push_pathless_dependency_fragment("gated");
     contract.push_pathless_dependency_fragment("refilled");
-    schema_for_dependency_values_yaml(
-        contract,
-        dependency_owned_values_yaml(),
-        subchart_yaml,
-        subchart_yaml,
-    )
+    schema_for_dependency_values_yaml(contract, dependency_owned_values_yaml(), subchart_yaml)
 }
 
-/// A navigated host under a DEPENDENCY values root binds while that root
-/// survives: a deletion INSIDE a present root sticks through every later
-/// merge stage and reaches the consumer as nil, whoever declared the key
-/// (measured against helm v4.2.3 on a parent/subchart pair). A key the
-/// subchart itself declares still fills at its own coalesce stage when the
-/// parent-level document simply omits it.
+/// Deleted hosts beneath a surviving dependency root reach consumers as nil.
+///
+/// Coalescing has completed before validation, regardless of which chart declared
+/// the deleted key.
 #[test]
 fn dependency_owned_hosts_bind_while_their_root_survives() {
     let schema = dependency_owned_host_schema();
@@ -1177,8 +1217,8 @@ fn dependency_owned_hosts_bind_while_their_root_survives() {
         ),
         (
             serde_json::json!({ "sub": { "subDeclared": null } }),
-            true,
-            "an omitted subchart-declared host reads its own default",
+            false,
+            "a deleted subchart-declared host also aborts",
         ),
         (
             serde_json::json!({ "gated": { "parentOnly": null } }),

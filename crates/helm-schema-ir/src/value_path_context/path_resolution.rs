@@ -11,7 +11,10 @@ use crate::fragment_expr_eval::{document_result_from_expr, fragment_context_valu
 use crate::helper_meta::HelperOutputMeta;
 use crate::observed_facts::{HintGrade, ObservedFacts};
 
-use super::{RangeSubject, RangeSubjectIdentity, ValuePathContext};
+use super::{
+    RangeSubject, RangeSubjectIdentity, RangeValueAlternative, RangeValueAlternatives,
+    ValuePathContext,
+};
 
 impl ValuePathContext<'_> {
     pub(crate) fn expression_output_effects(&self, exprs: &[TemplateExpr]) -> Effects {
@@ -106,6 +109,29 @@ impl ValuePathContext<'_> {
         );
         let evaluated_truth_reachability = evaluated
             .output_reachability_with_memo(SelectionPolarity::Truthy, env.predicate_memo.as_ref());
+        let output_meta = evaluated.effects.local_output_meta.clone();
+        let value_alternatives =
+            evaluated
+                .proven_operands
+                .as_ref()
+                .map(|proven| RangeValueAlternatives {
+                    known: proven
+                        .known
+                        .iter()
+                        .filter_map(|operand| {
+                            operand
+                                .result
+                                .value
+                                .clone()
+                                .and_then(AbstractValue::without_widened)
+                                .map(|value| RangeValueAlternative {
+                                    condition: operand.condition.clone(),
+                                    value,
+                                })
+                        })
+                        .collect(),
+                    has_unresolved: proven.has_unresolved,
+                });
         let mut influence_paths = evaluated
             .effects
             .output_value_paths()
@@ -154,6 +180,8 @@ impl ValuePathContext<'_> {
             input_identity,
             member_identity,
             member_value,
+            output_meta,
+            value_alternatives,
         }
     }
 }

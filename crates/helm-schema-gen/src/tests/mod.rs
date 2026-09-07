@@ -24,6 +24,7 @@ mod block_scalar_projection;
 mod bound_helpers;
 mod canonical_emission;
 mod chart_local_crd_contracts;
+mod coalesced_inputs;
 mod completed_token_contracts;
 mod condition_encoding;
 mod default_hint_extraction;
@@ -187,7 +188,7 @@ pub(crate) fn prepared_values_documents(values_yaml: Option<&str>) -> PreparedVa
     let composed = values_yaml
         .and_then(|source| serde_yaml::from_str(source).ok())
         .unwrap_or(serde_yaml::Value::Null);
-    PreparedValuesDocuments::new(composed, serde_yaml::Value::Null, serde_yaml::Value::Null)
+    PreparedValuesDocuments::new(composed, serde_yaml::Value::Null)
 }
 
 fn schema_for_values_yaml(source: impl SchemaSignalSource, values_yaml: Option<&str>) -> Value {
@@ -198,20 +199,15 @@ fn schema_for_values_yaml(source: impl SchemaSignalSource, values_yaml: Option<&
     )
 }
 
-/// Schema for a chart with dependencies: the composed defaults, the
-/// deeper-stage defaults a missing key reads instead of nil (the subchart
-/// declarations the parent's own values.yaml does not repeat), and the
-/// defaults helm refills a DELETED dependency values root with.
+/// Schema with composed declaration metadata and separate dependency-root declarations.
 fn schema_for_dependency_values_yaml(
     source: impl SchemaSignalSource,
     values_yaml: &str,
-    deeper_stage_yaml: &str,
     refill_yaml: &str,
 ) -> Value {
     let schema_signals = source.into_schema_signals();
     let documents = PreparedValuesDocuments::new(
         serde_yaml::from_str(values_yaml).unwrap_or(serde_yaml::Value::Null),
-        serde_yaml::from_str(deeper_stage_yaml).unwrap_or(serde_yaml::Value::Null),
         serde_yaml::from_str(refill_yaml).unwrap_or(serde_yaml::Value::Null),
     );
     generate_values_schema(

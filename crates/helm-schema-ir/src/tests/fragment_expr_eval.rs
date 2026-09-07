@@ -9,7 +9,7 @@ use helm_schema_core::{
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
 use crate::eval_effect::{CaptureKind, EvalResult, SelectionPolarity, SelectionTruthSource};
-use crate::eval_env::EvalEnv;
+use crate::eval_env::{EvalEnv, LocalBinding};
 use crate::fragment_expr_eval::{
     FragmentEvalContext, context_value_from_outer_expr, document_result_from_expr,
 };
@@ -21,6 +21,13 @@ fn conditional_path(value: &str) -> helm_schema_core::ValuesPath {
     helm_schema_core::ValuesPath::parse(value)
 }
 
+fn direct_local_bindings(values: &HashMap<String, AbstractValue>) -> HashMap<String, LocalBinding> {
+    values
+        .iter()
+        .map(|(name, value)| (name.clone(), LocalBinding::direct(value.clone())))
+        .collect()
+}
+
 fn helper_result_from_expr_with_fragment_locals(
     expr: &TemplateExpr,
     fragment_locals: &HashMap<String, AbstractValue>,
@@ -29,8 +36,12 @@ fn helper_result_from_expr_with_fragment_locals(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> EvalResult {
-    let mut env = EvalEnv::from_helper_context(outer, current_dot);
-    env.locals = fragment_locals.clone();
+    let mut env = EvalEnv::from_helper_context(
+        outer,
+        current_dot,
+        crate::eval_env::BindingEvaluationMode::Evaluated,
+    );
+    env.locals = direct_local_bindings(fragment_locals);
     let mut result = document_result_from_expr(expr, &env, outer, current_dot, context, seen);
     result.value = result.value.map(|value| value.to_context_value());
     result
@@ -400,7 +411,11 @@ fn defaulted_helper_merge_does_not_require_the_raw_source() {
     let fragment_context = helper_context(&analysis_db);
     let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
     let call_argument = single_expr(".Values.configMap");
-    let summary_env = EvalEnv::from_helper_context(Some(&root_bindings), None);
+    let summary_env = EvalEnv::from_helper_context(
+        Some(&root_bindings),
+        None,
+        crate::eval_env::BindingEvaluationMode::Direct,
+    );
     let mut summary_seen = HashSet::new();
     let call = analysis_db.summarize_bound_helper_call(
         "load",
@@ -766,16 +781,23 @@ fn helper_context(analysis_db: &IrAnalysisDb) -> FragmentEvalContext<'_> {
 }
 
 #[test]
-fn outer_expr_bare_dot_uses_root_bindings_as_current_context() {
+fn outer_expr_bare_dot_preserves_root_context_identity() {
     let expr = single_expr(".");
     let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
 
     sim_assert_eq!(
         have: context_value_from_outer_expr(&expr, None, None, Some(&root_bindings), None),
-        want: Some(AbstractValue::Dict(BTreeMap::from([(
-            "Values".to_string(),
-            AbstractValue::values_root(),
-        )])))
+        want: Some(AbstractValue::RootContext)
+    );
+}
+
+#[test]
+fn outer_expr_bare_dot_keeps_the_implicit_values_root() {
+    let expr = single_expr(".");
+
+    sim_assert_eq!(
+        have: context_value_from_outer_expr(&expr, None, None, Some(&HashMap::new()), None),
+        want: Some(AbstractValue::RootContext)
     );
 }
 
@@ -802,7 +824,11 @@ fn literal_helper_dispatch_uses_the_values_root_as_its_actual_dot() {
         panic!("include expression");
     };
     let mut summary_seen = HashSet::new();
-    let summary_env = EvalEnv::from_helper_context(Some(&root_bindings), None);
+    let summary_env = EvalEnv::from_helper_context(
+        Some(&root_bindings),
+        None,
+        crate::eval_env::BindingEvaluationMode::Direct,
+    );
     let call = analysis_db.summarize_bound_helper_call(
         "use-fips-images",
         args.get(1),
@@ -854,7 +880,11 @@ fn partial_helper_scalar_dispatch_is_deferred_and_cached() {
     let context = helper_context(&analysis_db);
     let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
     let mut seen = HashSet::new();
-    let env = EvalEnv::from_helper_context(Some(&root_bindings), None);
+    let env = EvalEnv::from_helper_context(
+        Some(&root_bindings),
+        None,
+        crate::eval_env::BindingEvaluationMode::Direct,
+    );
     let call = analysis_db.summarize_bound_helper_call(
         "partial-mode",
         None,
@@ -1014,7 +1044,11 @@ fn helper_fail_header_uses_nested_include_rendered_truthiness() {
     );
     let call_argument = TemplateExpr::Field(Vec::new());
     let mut summary_seen = HashSet::new();
-    let summary_env = EvalEnv::from_helper_context(Some(&root_bindings), None);
+    let summary_env = EvalEnv::from_helper_context(
+        Some(&root_bindings),
+        None,
+        crate::eval_env::BindingEvaluationMode::Direct,
+    );
     let call = analysis_db.summarize_bound_helper_call(
         "validate-runtime",
         Some(&call_argument),
@@ -1900,16 +1934,13 @@ fn partial_helper_conditions_keep_typed_subsets_in_both_control_lanes() {
 }
 
 #[test]
-fn outer_expr_root_variable_uses_root_bindings_as_current_context() {
+fn outer_expr_root_variable_preserves_root_context_identity() {
     let expr = single_expr("$");
     let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
 
     sim_assert_eq!(
         have: context_value_from_outer_expr(&expr, None, None, Some(&root_bindings), None),
-        want: Some(AbstractValue::Dict(BTreeMap::from([(
-            "Values".to_string(),
-            AbstractValue::values_root(),
-        )])))
+        want: Some(AbstractValue::RootContext)
     );
 }
 
@@ -1917,9 +1948,10 @@ fn outer_expr_root_variable_uses_root_bindings_as_current_context() {
 fn outer_expr_fragment_local_selector_uses_shared_expression_eval() {
     let expr = single_expr(r#"dict "name" $ctx.config.name"#);
     let fragment_locals = context_local();
+    let bindings = direct_local_bindings(&fragment_locals);
 
     sim_assert_eq!(
-        have: context_value_from_outer_expr(&expr, Some(&fragment_locals), None, None, None),
+        have: context_value_from_outer_expr(&expr, Some(&bindings), None, None, None),
         want: Some(AbstractValue::Dict(BTreeMap::from([(
             "name".to_string(),
             values_path!("serviceAccount.name"),
@@ -2405,10 +2437,11 @@ fn json_serialized_helper_preserves_structured_root_value_for_decoding() {
     let expr = single_expr(r#"include "json.roundtrip" (dict "doc" $values) | fromJson"#);
     let mut seen = HashSet::new();
     let locals = HashMap::from([("values".to_string(), AbstractValue::values_root())]);
+    let bindings = direct_local_bindings(&locals);
     sim_assert_eq!(
         have: context_value_from_outer_expr(
             &single_expr(r#"dict "doc" $values"#),
-            Some(&locals),
+            Some(&bindings),
             None,
             None,
             None,
@@ -2423,8 +2456,9 @@ fn json_serialized_helper_preserves_structured_root_value_for_decoding() {
         panic!("include expression");
     };
     let mut summary_seen = HashSet::new();
-    let mut summary_env = EvalEnv::from_helper_context(None, None);
-    summary_env.locals = locals.clone();
+    let mut summary_env =
+        EvalEnv::from_helper_context(None, None, crate::eval_env::BindingEvaluationMode::Direct);
+    summary_env.locals = bindings;
     let call = analysis_db.summarize_bound_helper_call(
         "json.roundtrip",
         args.get(1),

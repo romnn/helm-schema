@@ -35,6 +35,72 @@ struct BoundHelperValueResolver<'env, 'a, 'context, 'seen> {
 }
 
 impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
+    fn resolve_file_contents(&mut self, paths: &EvalResult, env: &EvalEnv) -> Option<EvalResult> {
+        let mut contents = std::collections::BTreeSet::new();
+        for path in paths.value.as_ref()?.strings() {
+            let source = self.params.context.analysis_db.file_source(&path)?;
+            contents.insert(source.to_string());
+        }
+        if contents.is_empty() {
+            return None;
+        }
+        let mut result =
+            EvalResult::with_effects(Some(AbstractValue::StringSet(contents)), Effects::default());
+        if let Some(dispatch) = &paths.scalar_dispatch {
+            let mut arms = Vec::new();
+            for (condition, value) in &dispatch.arms {
+                if let crate::scalar_value::ScalarValue::Literal(
+                    helm_schema_core::GuardValue::String(path),
+                ) = value
+                    && let Some(source) = self.params.context.analysis_db.file_source(path)
+                {
+                    arms.push((
+                        condition.clone(),
+                        crate::scalar_value::ScalarValue::Literal(
+                            helm_schema_core::GuardValue::string(source),
+                        ),
+                    ));
+                }
+            }
+            let complete = dispatch.complete && arms.len() == dispatch.arms.len();
+            result = result.with_scalar_dispatch_with_memo(
+                crate::scalar_value::ScalarValueDispatch { arms, complete },
+                env.predicate_memo.as_ref(),
+            );
+        }
+        Some(result)
+    }
+
+    fn resolve_static_template(
+        &mut self,
+        template: &EvalResult,
+        dot: Option<&AbstractValue>,
+        env: &EvalEnv,
+    ) -> Option<EvalResult> {
+        let db = self.params.context.analysis_db;
+        let programs =
+            crate::static_file_template::static_template_programs(template, dot, env, db);
+        if programs.is_empty() {
+            return None;
+        }
+        let mut values = Vec::new();
+        let mut effects = Effects::default();
+        for program in programs {
+            let summary = crate::fragment_eval::summary::eval_static_template_fragment(
+                &program,
+                env,
+                db,
+                self.params.seen,
+            );
+            effects.merge(summary.expression_effects());
+            values.extend(summary.value);
+        }
+        Some(EvalResult::with_effects(
+            AbstractValue::choice(values),
+            effects,
+        ))
+    }
+
     fn resolve_helper_call(
         &mut self,
         name: &str,
@@ -62,51 +128,7 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
             self.params.seen,
         );
         let summary = &call.summary;
-        // The resolver boundary is the one place summary facts enter
-        // expression effects; collectors read the Effects fields only.
-        // Encoded rows surface as encoded paths so value-lattice lowerings
-        // keep the "sink does not constrain the value" semantics the row
-        // recorded (the projected value's output paths carry no encoding
-        // flag).
-        let mut observed_facts = summary.observed_facts.clone();
-        let helper_observed_shape_erased_paths =
-            std::mem::take(&mut observed_facts.shape_erased_paths);
-        let mut effects = Effects {
-            chart_default_paths: summary.chart_defaults.clone(),
-            root_set_mutations: summary.root_set_mutations.clone(),
-            root_set_predicates: summary.root_set_predicates.clone(),
-            root_set_value_dispatches: summary.root_set_value_dispatches.clone(),
-            observed_facts,
-            parsed_yaml_input_paths: summary.parsed_yaml_input_paths.clone(),
-            yaml_serialized_paths: summary.yaml_serialized_paths.clone(),
-            json_serialized_paths: summary
-                .rendered
-                .iter()
-                .filter(|row| row.meta.json_serialized)
-                .map(|row| row.path.clone())
-                .collect(),
-            encoded_paths: summary
-                .encoded_paths()
-                .into_iter()
-                .map(|path| helm_schema_core::ValuesPath::parse(&path))
-                .collect(),
-            helper_observed_shape_erased_paths,
-            // An include renders its body to text, so every path the value
-            // carries is derived text at the call site: a consuming stage
-            // (`include … | trimAll`) must not claim contracts on the
-            // helper's internal paths.
-            derived_text_paths: summary
-                .value
-                .as_ref()
-                .map(AbstractValue::paths)
-                .unwrap_or_default(),
-            helper_reads: summary.reads.clone(),
-            helper_rendered: summary.rendered.clone(),
-            helper_suppressed_paths: summary.suppress_predicate_paths.clone(),
-            helper_text_captures: summary.text_captures.iter().cloned().collect(),
-            member_host_conversions: summary.member_host_conversions.clone(),
-            ..Effects::default()
-        };
+        let mut effects = summary.expression_effects();
         effects.merge(call.argument_effects);
         // Helper arguments execute first, so a body mutation of the same root
         // field is the value visible after the call returns.
@@ -134,20 +156,6 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
                 None => result,
             },
         )
-    }
-
-    fn resolve_implicit_template_call(
-        &mut self,
-        suffix: &str,
-        arg: Option<&TemplateExpr>,
-    ) -> Option<EvalResult> {
-        let name = self
-            .params
-            .context
-            .analysis_db
-            .implicit_template_name(suffix)?
-            .to_string();
-        self.resolve_helper_call(&name, arg)
     }
 }
 

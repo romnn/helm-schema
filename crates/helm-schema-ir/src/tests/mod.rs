@@ -24,6 +24,7 @@ mod ip_item_pattern;
 mod observed_facts;
 mod range_modes;
 mod resource_identity;
+mod root_capture;
 mod selection_reachability;
 mod symbolic_local_state;
 mod url_parse_pattern;
@@ -119,7 +120,7 @@ fn direct_tpl_files_get_executes_json_template_source() {
         {{- end }}
     "};
     let mut index = DefineIndex::new();
-    index.add_file_source("config/client-auth.json", file);
+    index.add_files_get_source("config/client-auth.json", file);
     let ir = SymbolicIrContext::new(&index)
         .generate_contract_ir(src)
         .finalize();
@@ -268,7 +269,7 @@ fn ranged_tpl_executes_a_selected_nested_default_program() {
 }
 
 #[test]
-fn base_path_include_executes_implicit_template_source() {
+fn base_path_include_executes_exact_template_source() {
     let src = indoc! {r#"
         apiVersion: v1
         kind: ConfigMap
@@ -282,16 +283,25 @@ fn base_path_include_executes_implicit_template_source() {
         {{- end }}
     "};
     let mut index = DefineIndex::new();
-    index.add_file_source("templates/_create.txt", partial);
-    let ir = SymbolicIrContext::new(&index)
-        .generate_contract_ir(src)
-        .finalize();
+    index.add_file_source("fixture/templates/_create.txt", partial);
+    let ir = SymbolicIrContext::with_policy(
+        &index,
+        crate::SymbolicPolicy {
+            static_root_strings: std::collections::BTreeMap::from([(
+                vec!["Template".to_string(), "BasePath".to_string()],
+                "fixture/templates".to_string(),
+            )]),
+            ..crate::SymbolicPolicy::default()
+        },
+    )
+    .generate_contract_ir(src)
+    .finalize();
 
     assert!(
         ir.uses()
             .iter()
             .any(|use_| use_.source_expr == conditional_path("buckets.*.name")),
-        "the implicit template body should contribute its member access: {ir:#?}"
+        "the exact template body should contribute its member access: {ir:#?}"
     );
 }
 
@@ -823,7 +833,7 @@ fn nonempty_choice_list_range_preserves_computed_mutation() {
 fn checksum_include_rows_stay_serialized_at_the_annotation_slot() {
     let mut idx = DefineIndex::new();
     idx.add_file_source(
-        "templates/configmaps/config.yaml",
+        "fixture/templates/configmaps/config.yaml",
         indoc! {r#"
             kind: ConfigMap
             apiVersion: v1
@@ -852,9 +862,18 @@ fn checksum_include_rows_stay_serialized_at_the_annotation_slot() {
               annotations:
                 checksum/config: {{ include (print $.Template.BasePath "/configmaps/config.yaml") . | sha256sum }}
     "#};
-    let ir = SymbolicIrContext::new(&idx)
-        .generate_contract_ir(src)
-        .finalize();
+    let ir = SymbolicIrContext::with_policy(
+        &idx,
+        crate::SymbolicPolicy {
+            static_root_strings: std::collections::BTreeMap::from([(
+                vec!["Template".to_string(), "BasePath".to_string()],
+                "fixture/templates".to_string(),
+            )]),
+            ..crate::SymbolicPolicy::default()
+        },
+    )
+    .generate_contract_ir(src)
+    .finalize();
 
     let annotation_kinds: Vec<ValueKind> = ir
         .uses()

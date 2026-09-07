@@ -83,6 +83,8 @@ impl<T> Guarded<T> {
             *arm_condition =
                 and_conditions_with_memo(condition.clone(), arm_condition.clone(), memo);
         }
+        self.arms
+            .retain(|(condition, _)| *condition != Predicate::False);
     }
 
     /// Append all arms of `other`.

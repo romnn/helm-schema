@@ -22,7 +22,12 @@ pub(crate) fn collect_manifest_contract_for_chart(
     for file in loaded_chart.files_with_role(chart::FileRole::ManifestTemplate) {
         let source = file.source()?;
         let (mut manifest_contract, template_local_resource_schemas) =
-            collect_manifest_contract_for_template(source, &file.path, symbolic_context)?;
+            collect_manifest_contract_for_template(
+                source,
+                &file.path,
+                &chart.template_name(&file.path),
+                symbolic_context,
+            )?;
         manifest_contract.map_value_paths(|path| {
             helm_schema_core::ValuesPath::parse(&chart::scope_values_path(
                 &path.encode(),
@@ -57,8 +62,8 @@ pub(crate) fn collect_manifest_contract_for_chart(
     // indented URLs) and fail, so only the contract lane runs here.
     for file in loaded_chart.files_with_role(chart::FileRole::NotesTemplate) {
         let source = file.source()?;
-        let mut notes_contract =
-            symbolic_context.generate_contract_ir_for_source(source, file.path.as_str());
+        let mut notes_contract = symbolic_context
+            .generate_contract_ir_for_source(source, &chart.template_name(&file.path));
         // NOTES is a Go-template text program, not YAML. Direct holes use
         // Go's textual formatting and therefore impose no input shape; real
         // strict calls and terminal effects remain in their own channels.
@@ -89,9 +94,10 @@ pub(crate) struct ManifestContractAnalysis {
 fn collect_manifest_contract_for_template(
     source: &str,
     path: &VfsPath,
+    execution_name: &str,
     symbolic_context: &SymbolicIrContext,
 ) -> EngineResult<(ContractIr, Vec<LocalResourceSchema>)> {
-    let contract = symbolic_context.generate_contract_ir_for_source(source, path.as_str());
+    let contract = symbolic_context.generate_contract_ir_for_source(source, execution_name);
     let local_resource_schemas = local_resource_schemas_from_template_source(
         source,
         path.as_str(),
@@ -261,7 +267,7 @@ impl<'a> DefineCorpus<'a> {
             for path in defines.define_source_paths(name) {
                 let owner = charts
                     .iter()
-                    .map(normalized_chart_dir)
+                    .map(|chart| chart.template_namespace.clone())
                     .filter(|dir| file_in_dir(path, dir))
                     .max_by_key(String::len);
                 if let Some(owner) = &owner {
@@ -297,12 +303,6 @@ impl<'a> DefineCorpus<'a> {
     }
 }
 
-/// Define-index paths are chart-relative while chart dirs carry a leading
-/// slash; compare both without it and on directory boundaries.
-fn normalized_chart_dir(chart: &chart::ChartContext) -> String {
-    chart.chart_dir.as_str().trim_start_matches('/').to_string()
-}
-
 fn file_in_dir(file: &str, dir: &str) -> bool {
     let file = file.trim_start_matches('/');
     dir.is_empty() || file == dir || file.starts_with(&format!("{dir}/"))
@@ -333,7 +333,7 @@ pub(crate) fn optional_dependency_helpers_for_chart(
         if activation_sets.is_empty() {
             continue;
         }
-        let helper_names = corpus.names_owned_solely_under(&normalized_chart_dir(dependency));
+        let helper_names = corpus.names_owned_solely_under(&dependency.template_namespace);
         if helper_names.is_empty() {
             continue;
         }

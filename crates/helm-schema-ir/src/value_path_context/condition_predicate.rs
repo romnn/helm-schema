@@ -762,12 +762,13 @@ impl ValuePathContext<'_> {
             .eval_env
             .locals
             .get(name)
-            .or_else(|| self.eval_env.locals.get(name.trim_start_matches('$')))?;
+            .or_else(|| self.eval_env.locals.get(name.trim_start_matches('$')))?
+            .value()?;
         let AbstractValue::RangeKey(path) = binding else {
             return None;
         };
         let predicate = Predicate::from(Guard::RangeKeyEquals {
-            path: path.clone(),
+            path,
             key: literal.to_string(),
         });
         Some(if negated {
@@ -789,12 +790,13 @@ impl ValuePathContext<'_> {
             .eval_env
             .locals
             .get(name)
-            .or_else(|| self.eval_env.locals.get(name.trim_start_matches('$')))?;
+            .or_else(|| self.eval_env.locals.get(name.trim_start_matches('$')))?
+            .value()?;
         let AbstractValue::RangeKey(path) = binding else {
             return None;
         };
         Some(Predicate::from(Guard::RangeKeyPrefix {
-            path: path.clone(),
+            path,
             prefix: prefix.to_string(),
         }))
     }
@@ -1177,6 +1179,44 @@ impl ValuePathContext<'_> {
             .map(|predicate| predicate.negated())
     }
 
+    /// Applies a predicate decoder without erasing a binding's selected value.
+    ///
+    /// Every proven value remains paired with the condition that selected it.
+    /// An unresolved selection abstains because its missing truth arm cannot be complemented.
+    fn selected_value_predicate(
+        &self,
+        expr: &TemplateExpr,
+        predicate: impl Fn(&AbstractValue) -> Option<Predicate>,
+    ) -> Option<Predicate> {
+        let evaluated = eval_expr(expr, self.expression_eval_env());
+        if let Some(proven) = &evaluated.proven_operands {
+            if proven.has_unresolved {
+                return None;
+            }
+            if !matches!(
+                proven.known.as_slice(),
+                [operand] if operand.condition == Predicate::True
+            ) {
+                if proven.known.is_empty() {
+                    return None;
+                }
+                let selected = proven
+                    .known
+                    .iter()
+                    .map(|operand| {
+                        Some(Predicate::all(vec![
+                            operand.condition.clone(),
+                            predicate(operand.result.value.as_ref()?)?,
+                        ]))
+                    })
+                    .collect::<Option<Vec<_>>>()?;
+                return Some(predicate_any(selected));
+            }
+        }
+        self.with_body_fragment_value_expr(expr)
+            .and_then(|value| predicate(&value))
+    }
+
     fn has_key_predicate(&self, args: &[TemplateExpr]) -> Option<Predicate> {
         let [map, key] = args else {
             return None;
@@ -1187,8 +1227,7 @@ impl ValuePathContext<'_> {
             TemplateExpr::Literal(Literal::String(key) | Literal::RawString(key)) => key.clone(),
             key => self.constant_scalar(key)?,
         };
-        self.with_body_fragment_value_expr(map)
-            .and_then(|value| value_has_key(&value, &key))
+        self.selected_value_predicate(map, |value| value_has_key(value, &key))
     }
 
     /// `regexMatch pattern subject` over a literal pattern and one
@@ -1211,32 +1250,33 @@ impl ValuePathContext<'_> {
         if subject_is_total_stringification(subject) {
             return None;
         }
-        let value = self.with_body_fragment_value_expr(subject)?;
-        let path = match value {
-            // The subject is a destructured range KEY: the pattern applies
-            // per key of the ranged collection (traefik's uppercase
-            // `ingressRoute` gate).
-            AbstractValue::RangeKey(collection) if collection.segments().next().is_some() => {
-                return Some(Predicate::from(Guard::RangeKeyMatches {
-                    path: collection,
-                    pattern: pattern.to_string(),
-                }));
-            }
-            value => value
-                .input_identity_path()
-                .filter(|path| path.segments().next().is_some())?,
-        };
-        // A subject that reached this consumer through `tpl` carries its
-        // rendered OUTPUT here, not the raw program: the pattern then
-        // constrains the render, and a raw value carrying a template action
-        // is admitted (redis-ha `masterGroupName: "{{ .Release.Name }}"`).
-        // The string contract from `tpl`'s input assertion still stands.
-        let templated = self.subject_is_derived_text(subject, &path.encode());
-        Some(Predicate::from(Guard::MatchesPattern {
-            path,
-            pattern: pattern.to_string(),
-            templated,
-        }))
+        self.selected_value_predicate(subject, |value| {
+            let path = match value {
+                // The subject is a destructured range key, so the pattern
+                // applies to every key of the ranged collection (Traefik's
+                // uppercase `ingressRoute` gate).
+                AbstractValue::RangeKey(collection) if collection.segments().next().is_some() => {
+                    return Some(Predicate::from(Guard::RangeKeyMatches {
+                        path: collection.clone(),
+                        pattern: pattern.to_string(),
+                    }));
+                }
+                value => value
+                    .input_identity_path()
+                    .filter(|path| path.segments().next().is_some())?,
+            };
+            // A subject that reached this consumer through `tpl` carries its
+            // rendered output here, so the pattern constrains that render.
+            // A raw value carrying a template action is therefore admitted
+            // (redis-ha's `masterGroupName: "{{ .Release.Name }}"`).
+            // The string contract from `tpl`'s input assertion still stands.
+            let templated = self.subject_is_derived_text(subject, &path.encode());
+            Some(Predicate::from(Guard::MatchesPattern {
+                path,
+                pattern: pattern.to_string(),
+                templated,
+            }))
+        })
     }
 
     /// `hasPrefix`/`hasSuffix` over a literal affix and a values-path
@@ -1363,27 +1403,18 @@ impl ValuePathContext<'_> {
         if schema_type.is_none() && !(function == "kindIs" && type_name == "invalid") {
             return None;
         }
-        let predicates = args
-            .iter()
-            .skip(1)
-            .map(|arg| {
-                if schema_type.is_some() {
-                    self.single_resolved_values_path_expr(arg)
-                } else {
-                    eval_expr(arg, self.expression_eval_env()).exact_input_identity()
-                }
-            })
-            .collect::<Option<Vec<_>>>()?
-            .into_iter()
-            .map(|path| match &schema_type {
-                Some(schema_type) => Predicate::from(Guard::TypeIs {
-                    path: helm_schema_core::ValuesPath::parse(&path),
-                    schema_type: schema_type.clone(),
-                }),
-                None => Predicate::invalid_kind_path(path),
-            })
-            .collect::<Vec<_>>();
-        (!predicates.is_empty()).then(|| Predicate::all(predicates))
+        let [_, subject] = args else {
+            return None;
+        };
+        crate::expr_call_eval::selected_type_test_truth(
+            &eval_expr(subject, self.expression_eval_env()),
+            function,
+            type_name,
+            schema_type.as_deref(),
+            self.expression_eval_env().predicate_memo.as_ref(),
+        )
+        .predicate()
+        .cloned()
     }
 
     /// `eq (include "mode" .) "literal"`: when the called helper is a pure
@@ -1558,6 +1589,7 @@ impl ValuePathContext<'_> {
                     .locals
                     .get(name)
                     .or_else(|| self.eval_env.locals.get(name.trim_start_matches('$')))?
+                    .value()?
                 else {
                     return None;
                 };

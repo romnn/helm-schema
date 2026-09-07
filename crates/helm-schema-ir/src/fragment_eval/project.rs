@@ -128,14 +128,21 @@ fn walk_guarded(
         .retain(|condition| !matches!(condition.kind(), helm_schema_core::PredicateKind::False));
     sibling_conditions.sort();
     sibling_conditions.dedup();
+    let sibling_signatures = sibling_conditions
+        .iter()
+        .map(predicate_conjuncts)
+        .collect::<Vec<_>>();
     let minimal_sibling_conditions = sibling_conditions
         .iter()
-        .filter(|condition| {
-            !sibling_conditions.iter().any(|other| {
-                other != *condition && predicate_is_conjunctive_subset(other, condition)
-            })
+        .zip(&sibling_signatures)
+        .enumerate()
+        .filter(|(index, (_, signature))| {
+            !sibling_signatures
+                .iter()
+                .enumerate()
+                .any(|(other, subset)| other != *index && subset.is_subset(signature))
         })
-        .cloned()
+        .map(|(_, (condition, _))| condition.clone())
         .collect::<Vec<_>>();
     for (condition, node) in &guarded.arms {
         if *condition == Predicate::False {
@@ -160,26 +167,24 @@ fn walk_guarded(
     }
 }
 
-fn predicate_is_conjunctive_subset(subset: &Predicate, superset: &Predicate) -> bool {
-    fn collect(predicate: &Predicate, out: &mut std::collections::BTreeSet<Predicate>) {
+fn predicate_conjuncts(predicate: &Predicate) -> std::collections::BTreeSet<Predicate> {
+    fn collect(predicate: &Predicate, conjuncts: &mut std::collections::BTreeSet<Predicate>) {
         match predicate.kind() {
             helm_schema_core::PredicateKind::True => {}
             helm_schema_core::PredicateKind::And(predicates) => {
                 for predicate in predicates {
-                    collect(predicate, out);
+                    collect(predicate, conjuncts);
                 }
             }
             _ => {
-                out.insert(predicate.clone());
+                conjuncts.insert(predicate.clone());
             }
         }
     }
 
-    let mut subset_conjuncts = std::collections::BTreeSet::new();
-    let mut superset_conjuncts = std::collections::BTreeSet::new();
-    collect(subset, &mut subset_conjuncts);
-    collect(superset, &mut superset_conjuncts);
-    subset_conjuncts.is_subset(&superset_conjuncts)
+    let mut conjuncts = std::collections::BTreeSet::new();
+    collect(predicate, &mut conjuncts);
+    conjuncts
 }
 
 #[expect(

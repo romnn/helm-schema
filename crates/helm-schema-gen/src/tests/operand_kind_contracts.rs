@@ -1,5 +1,5 @@
 use super::*;
-use indoc::indoc;
+use indoc::{formatdoc, indoc};
 use test_util::prelude::sim_assert_eq;
 
 /// Go-template `eq`/`ne` against a STRING literal terminates on
@@ -1994,6 +1994,243 @@ fn type_dispatch_survives_approximate_liveness_guard() {
         assert!(
             schema_accepts_instance(&schema, &instance),
             "both dispatch arms render: instance={instance}; schema={schema}"
+        );
+    }
+}
+
+#[test]
+fn selected_binding_type_dispatch_matches_explicit_branch_dispatch() {
+    for (label, string_test, map_test) in [
+        ("kindIs", r#"kindIs "string""#, r#"kindIs "map""#),
+        (
+            "typeIs",
+            r#"typeIs "string""#,
+            r#"typeIs "map[string]interface {}""#,
+        ),
+    ] {
+        let source = formatdoc! {r#"
+            {{{{- $x := .Values.a -}}}}
+            {{{{- if .Values.useB -}}}}{{{{- $x = .Values.b -}}}}{{{{- end -}}}}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: test
+            data:
+              {{{{- if {string_test} $x }}}}
+              selected: string
+              {{{{- else if {map_test} $x }}}}
+              selected: map
+              {{{{- else }}}}
+              {{{{- fail "unsupported selected kind" }}}}
+              {{{{- end }}}}
+        "#};
+        let reference = formatdoc! {r#"
+            {{{{- if or (and .Values.useB ({string_test} .Values.b)) (and (not .Values.useB) ({string_test} .Values.a)) }}}}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: test
+            data:
+              selected: string
+            {{{{- else if or (and .Values.useB ({map_test} .Values.b)) (and (not .Values.useB) ({map_test} .Values.a)) }}}}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: test
+            data:
+              selected: map
+            {{{{- else }}}}
+            {{{{- fail "unsupported selected kind" }}}}
+            {{{{- end }}}}
+        "#};
+        let schema = schema_for_values_yaml(parse_ir(&source), None);
+        let expected = schema_for_values_yaml(parse_ir(&reference), None);
+
+        sim_assert_eq!(have: schema, want: expected, "function={label}");
+        for (instance, accepted) in [
+            (
+                serde_json::json!({ "useB": false, "a": "ok", "b": 7 }),
+                true,
+            ),
+            (serde_json::json!({ "useB": false, "a": {}, "b": 7 }), true),
+            (
+                serde_json::json!({ "useB": false, "a": 7, "b": "ok" }),
+                false,
+            ),
+            (
+                serde_json::json!({ "useB": false, "a": null, "b": "ok" }),
+                false,
+            ),
+            (serde_json::json!({ "useB": true, "a": 7, "b": "ok" }), true),
+            (serde_json::json!({ "useB": true, "a": 7, "b": {} }), true),
+            (
+                serde_json::json!({ "useB": true, "a": "ok", "b": 7 }),
+                false,
+            ),
+            (
+                serde_json::json!({ "useB": true, "a": "ok", "b": null }),
+                false,
+            ),
+        ] {
+            sim_assert_eq!(
+                have: schema_accepts_instance(&schema, &instance),
+                want: accepted,
+                "function={label}; instance={instance}",
+            );
+        }
+    }
+}
+
+#[test]
+fn selected_binding_default_type_test_matches_explicit_selection() {
+    for (label, type_test) in [
+        ("kindIs", r#"kindIs "map""#),
+        ("typeIs", r#"typeIs "map[string]interface {}""#),
+    ] {
+        let source = formatdoc! {r#"
+            {{{{- $selected := .Values.a -}}}}
+            {{{{- if .Values.useB -}}}}{{{{- $selected = .Values.b -}}}}{{{{- end -}}}}
+            {{{{- if {type_test} (default (dict) $selected) }}}}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: test
+            {{{{- else }}}}
+            {{{{- fail "selected value must default to a map" }}}}
+            {{{{- end }}}}
+        "#};
+        let reference = formatdoc! {r#"
+            {{{{- if or (and .Values.useB .Values.b ({type_test} .Values.b)) (and .Values.useB (not .Values.b)) (and (not .Values.useB) .Values.a ({type_test} .Values.a)) (and (not .Values.useB) (not .Values.a)) }}}}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: test
+            {{{{- else }}}}
+            {{{{- fail "selected value must default to a map" }}}}
+            {{{{- end }}}}
+        "#};
+        let schema = schema_for_values_yaml(parse_ir(&source), None);
+        let expected = schema_for_values_yaml(parse_ir(&reference), None);
+
+        sim_assert_eq!(have: schema, want: expected, "function={label}");
+        for (instance, accepted) in [
+            (
+                serde_json::json!({ "useB": false, "a": {}, "b": "bad" }),
+                true,
+            ),
+            (
+                serde_json::json!({ "useB": false, "a": null, "b": "bad" }),
+                true,
+            ),
+            (serde_json::json!({ "useB": false, "a": "", "b": {} }), true),
+            (
+                serde_json::json!({ "useB": false, "a": "bad", "b": {} }),
+                false,
+            ),
+            (
+                serde_json::json!({ "useB": false, "a": ["bad"], "b": {} }),
+                false,
+            ),
+            (
+                serde_json::json!({ "useB": true, "a": "bad", "b": {} }),
+                true,
+            ),
+            (
+                serde_json::json!({ "useB": true, "a": "bad", "b": null }),
+                true,
+            ),
+            (serde_json::json!({ "useB": true, "a": {}, "b": "" }), true),
+            (
+                serde_json::json!({ "useB": true, "a": {}, "b": "bad" }),
+                false,
+            ),
+            (
+                serde_json::json!({ "useB": true, "a": {}, "b": ["bad"] }),
+                false,
+            ),
+        ] {
+            sim_assert_eq!(
+                have: schema_accepts_instance(&schema, &instance),
+                want: accepted,
+                "function={label}; instance={instance}",
+            );
+        }
+    }
+}
+
+/// A complete nested default uses only its surviving scalar result.
+#[test]
+fn constant_selected_default_type_test_matches_its_explicit_branch() {
+    let source = indoc! {r#"
+        {{- if kindIs "map" (default (dict) (ternary "selected" (dict "k" 1) true)) }}
+        {{- fail "the selected string is not a map" }}
+        {{- else }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        {{- end }}
+    "#};
+    let reference = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+    "#};
+
+    sim_assert_eq!(
+        have: schema_for_values_yaml(parse_ir(source), None),
+        want: schema_for_values_yaml(parse_ir(reference), None),
+    );
+}
+
+/// A Boolean fallback types only the scalar-dispatch arm that selects it.
+#[test]
+fn default_boolean_type_test_matches_its_explicit_selection() {
+    let source = indoc! {r#"
+        {{- if kindIs "bool" (.Values.x | default false) }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        {{- else }}
+        {{- fail "the selected value is not Boolean" }}
+        {{- end }}
+    "#};
+    let reference = indoc! {r#"
+        {{- if or (not .Values.x) (kindIs "bool" .Values.x) }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        {{- else }}
+        {{- fail "the selected value is not Boolean" }}
+        {{- end }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(source), None);
+
+    sim_assert_eq!(
+        have: &schema,
+        want: &schema_for_values_yaml(parse_ir(reference), None),
+    );
+    for (instance, accepted) in [
+        (serde_json::json!({}), true),
+        (serde_json::json!({ "x": null }), true),
+        (serde_json::json!({ "x": false }), true),
+        (serde_json::json!({ "x": 0 }), true),
+        (serde_json::json!({ "x": "" }), true),
+        (serde_json::json!({ "x": [] }), true),
+        (serde_json::json!({ "x": {} }), true),
+        (serde_json::json!({ "x": true }), true),
+        (serde_json::json!({ "x": 1 }), false),
+        (serde_json::json!({ "x": "set" }), false),
+        (serde_json::json!({ "x": [1] }), false),
+        (serde_json::json!({ "x": { "set": true } }), false),
+    ] {
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: accepted,
+            "instance={instance}; schema={schema}",
         );
     }
 }

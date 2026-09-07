@@ -4,6 +4,7 @@ use helm_schema_ast::{DefineIndex, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
+use crate::eval_env::LocalBinding;
 use crate::fragment_assignment::{
     AssignmentKind, ParsedHelperAssignment, apply_local_set_mutations_from_exprs,
     parse_helper_assignment_from_exprs,
@@ -66,13 +67,22 @@ fn apply_local_set_mutations(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> bool {
-    apply_local_set_mutations_from_exprs(
+    let mut bindings = local_bindings
+        .iter()
+        .map(|(name, value)| (name.clone(), LocalBinding::direct(value.clone())))
+        .collect();
+    let changed = apply_local_set_mutations_from_exprs(
         &parse_expr_text(text),
-        local_bindings,
+        &mut bindings,
         current_dot,
         context,
         seen,
-    )
+    );
+    *local_bindings = bindings
+        .into_iter()
+        .filter_map(|(name, binding)| binding.value().map(|value| (name, value)))
+        .collect();
+    changed
 }
 
 fn empty_context(analysis_db: &IrAnalysisDb) -> FragmentEvalContext<'_> {

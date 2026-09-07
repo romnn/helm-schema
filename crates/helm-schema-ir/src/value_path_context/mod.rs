@@ -7,7 +7,7 @@ use crate::eval_env::EvalEnv;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::HelperOutputMeta;
 use crate::symbolic_local_state::IntCastSource;
-use helm_schema_core::ValuesPath;
+use helm_schema_core::{Predicate, ValuesPath};
 
 mod condition_predicate;
 mod path_resolution;
@@ -38,6 +38,20 @@ pub(crate) struct RangeSubject {
     pub(crate) input_identity: Option<RangeSubjectIdentity>,
     pub(crate) member_identity: Option<RangeSubjectIdentity>,
     pub(crate) member_value: Option<AbstractValue>,
+    pub(crate) output_meta: BTreeMap<ValuesPath, HelperOutputMeta>,
+    pub(crate) value_alternatives: Option<RangeValueAlternatives>,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct RangeValueAlternative {
+    pub(crate) condition: Predicate,
+    pub(crate) value: AbstractValue,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct RangeValueAlternatives {
+    pub(crate) known: Vec<RangeValueAlternative>,
+    pub(crate) has_unresolved: bool,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

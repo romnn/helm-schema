@@ -11,7 +11,7 @@ use helm_schema_syntax::{BlockScalar, ScalarPart, ScalarParts, Span};
 
 use crate::ValueKind;
 use crate::abstract_value::AbstractValue;
-use crate::eval_effect::{Effects, SelectionReachability};
+use crate::eval_effect::{Effects, ProvenOperands, SelectionReachability};
 use crate::expr_eval::literal_helper_call_callee;
 use crate::fragment_assignment::parse_helper_assignment_from_exprs;
 use crate::fragment_expr_eval::FragmentEvalContext;
@@ -38,6 +38,7 @@ pub(super) struct HoleEval {
     pub(super) truth_reachability: SelectionReachability,
     pub(super) json_payload_truth: TruthCondition,
     pub(super) scalar_dispatch: Option<ScalarValueDispatch>,
+    pub(super) proven_operands: Option<ProvenOperands>,
 }
 
 /// Whether an expression invokes `fail` anywhere: evaluating it terminates
@@ -303,7 +304,6 @@ impl Interpreter<'_> {
             return (Guarded::empty(), None);
         }
         self.record_required_subjects(&exprs);
-        let inlined = self.inline_static_file_fragments(&exprs);
         let width = exprs
             .iter()
             .rev()
@@ -316,7 +316,7 @@ impl Interpreter<'_> {
         let document_root =
             !self.helper_scope && width.is_none() && self.line_indent(span.start) == 0;
         if let Some((spliced, root_render_indent)) = self.splice_helper_call_hole(&exprs) {
-            let mut out = spliced;
+            let out = spliced;
             let width = match (width, root_render_indent) {
                 (Some(width), Some(root_render_indent)) => {
                     Some(width.saturating_add(root_render_indent))
@@ -343,7 +343,6 @@ impl Interpreter<'_> {
                     }
                 }
             }
-            out.extend(inlined);
             self.restore_site(previous_site);
             return (out, width);
         }
@@ -355,6 +354,9 @@ impl Interpreter<'_> {
             ));
         }
         self.absorb_hole_effects(&hole.effects, RenderedDemotion::None);
+        if !self.in_value_slot {
+            self.record_yaml_text_captures(&hole.effects.helper_text_captures);
+        }
         let (value, extra_paths) =
             prepare_hole_value(hole.value, &hole.effects, kind == ValueKind::Scalar);
         if document_root
@@ -434,7 +436,6 @@ impl Interpreter<'_> {
             }));
         }
         stamp_fragment_sites(&mut out, self.current_site.as_ref());
-        out.extend(inlined);
         self.restore_site(previous_site);
         (out, width)
     }
@@ -658,6 +659,8 @@ impl Interpreter<'_> {
             self.record_yaml_text_captures(&summary.text_captures);
         }
         self.absorb_member_host_conversions(&summary.member_host_conversions);
+        self.parsed_yaml_input_paths
+            .extend(summary.parsed_yaml_input_paths.iter().cloned());
         self.yaml_serialized_paths
             .extend(summary.yaml_serialized_paths.iter().cloned());
         self.chart_defaults_observed
@@ -705,7 +708,6 @@ impl Interpreter<'_> {
             return Vec::new();
         }
         self.record_required_subjects(&exprs);
-        let _ = self.inline_static_file_fragments(&exprs);
         // Fragment-rendering holes (`toYaml … | nindent`) keep fragment
         // evidence even inside scalar text; everything else is a partial
         // scalar contribution.
@@ -1286,15 +1288,11 @@ impl Interpreter<'_> {
             return;
         }
         self.record_required_subjects(&exprs);
-        let _ = self.inline_static_file_fragments(&exprs);
         let hole = self.eval_hole_exprs(&exprs);
         self.absorb_hole_effects(&hole.effects, RenderedDemotion::Serialized);
-        // The block's text is opaque unless its key names a YAML document,
-        // and only a splice that reaches it through nothing but indent
-        // shaping still renders the called body's own characters. Both hold
-        // for jenkins' `jcasc-default-config.yaml: |-`, whose embedded
-        // document stops parsing when a JCasC key breaks its plain token.
-        if self.block_text_is_yaml && splice_target_helper_call(&exprs).is_some() {
+        // A YAML-named block certifies the sink for unchanged program text.
+        // Expression transfer functions discard these captures when they transform that text.
+        if self.block_text_is_yaml {
             self.record_yaml_text_captures(&hole.effects.helper_text_captures);
         }
         self.push_effects_reads(&hole, ValueKind::Serialized);

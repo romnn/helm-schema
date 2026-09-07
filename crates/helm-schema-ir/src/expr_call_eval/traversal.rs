@@ -3,9 +3,10 @@ use std::collections::BTreeSet;
 use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
-use crate::eval_effect::{Effects, EvalResult};
+use crate::eval_effect::{Effects, EvalResult, ProvenOperand, ProvenOperands};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
+use crate::function_semantics::ArgumentEvaluationMode;
 use crate::helper_meta::HelperOutputMeta;
 use helm_schema_core::Predicate;
 
@@ -191,10 +192,6 @@ fn chain_subject_capture(path: &str) -> crate::eval_effect::FailCapture {
     }
 }
 
-#[expect(
-    clippy::too_many_lines,
-    reason = "keeping this semantic operation together makes its state transitions easier to audit"
-)]
 pub(super) fn eval_index(
     args: &[TemplateExpr],
     object_host: bool,
@@ -205,41 +202,82 @@ pub(super) fn eval_index(
         return EvalResult::none();
     };
     let base = eval_expr_with_helper_calls(base_expr, env, resolver);
-    let mut effects = Effects::default();
+    let mut execution_effects = Effects::default();
     if object_host {
-        record_member_host_access(&base, &mut effects);
+        record_member_host_access(&base, &mut execution_effects);
     }
     // Both spellings reject a nil subject before any key lookup: Go's
     // `index` answers "index of untyped nil" (cilium's
     // `index .Values.extraConfig …`) and sprig's `get` type-asserts its
     // map parameter.
-    record_operand_presence_result(&base, &mut effects);
-    effects.merge(base.effects);
-    let Some(value) = base.value else {
-        return EvalResult::with_effects(None, effects);
-    };
+    record_operand_presence_result(&base, &mut execution_effects);
+    if base.value.is_none() {
+        execution_effects.merge(base.effects);
+        return EvalResult::with_effects(None, execution_effects);
+    }
 
-    let mut values = vec![value];
+    let mut steps = Vec::new();
     for arg in path_args {
         let arg_result = eval_expr_with_helper_calls(arg, env, resolver);
-        effects.merge(arg_result.effects);
+        execution_effects.merge(arg_result.effects);
         let Some(options) = path_segment_options(arg, arg_result.value.as_ref()) else {
-            return EvalResult::with_effects(None, effects);
+            execution_effects.merge(base.effects);
+            return EvalResult::with_effects(None, execution_effects);
         };
-        // A variable key must not extend a whole-values-root identity that
-        // rides one arm of a CHOICE subject: the join lost the correlation
-        // between subject arms and key candidates (`index $lastMap
-        // $lastKey` in nats' jsonpatch pairs the root arm with the other
-        // arms' scaffolding keys), and a fabricated root member would mint
-        // values properties the chart never reads. A single-valued subject
-        // keeps the exact navigation — the split-path traversal reads
-        // `index $.Values <segment>` per unrolled key, and helper-computed
-        // key alternatives fan out over a NON-choice root exactly.
         let literal_key = matches!(
             arg.deparen(),
             TemplateExpr::Literal(Literal::String(_) | Literal::RawString(_) | Literal::Int(_))
         );
-        let values_snapshot: Vec<AbstractValue> = if literal_key {
+        steps.push(IndexStep {
+            options,
+            literal_key,
+        });
+    }
+
+    let mut result = project_index_result(base, &steps, env);
+    result.effects.merge(execution_effects);
+    result
+}
+
+fn project_index_result(mut base: EvalResult, steps: &[IndexStep], env: &EvalEnv) -> EvalResult {
+    let proven_operands = base.proven_operands.take();
+    let mut effects = base.effects;
+    let value = base
+        .value
+        .and_then(|value| project_index_value(value, steps, env, &mut effects));
+    let mut result = value.map_or_else(
+        || EvalResult::with_effects(None, Effects::default()),
+        |value| EvalResult::from_value_with_memo(value, env.predicate_memo.as_ref()),
+    );
+    result.effects.merge(effects);
+    result.proven_operands = proven_operands.map(|proven| ProvenOperands {
+        known: proven
+            .known
+            .into_iter()
+            .map(|operand| ProvenOperand {
+                condition: operand.condition,
+                evaluation_mode: ArgumentEvaluationMode::Evaluated,
+                result: Box::new(project_index_result(*operand.result, steps, env)),
+            })
+            .collect(),
+        has_unresolved: proven.has_unresolved,
+    });
+    result
+}
+
+fn project_index_value(
+    value: AbstractValue,
+    steps: &[IndexStep],
+    env: &EvalEnv,
+    effects: &mut Effects,
+) -> Option<AbstractValue> {
+    let mut values = vec![value];
+    for step in steps {
+        // A variable key must not extend a whole-values-root identity that
+        // rides one arm of a choice subject.
+        // The uncorrelated root arm would otherwise pair with another arm's
+        // key and mint a values property the chart never reads.
+        let values_snapshot: Vec<AbstractValue> = if step.literal_key {
             values.clone()
         } else {
             values
@@ -255,7 +293,7 @@ pub(super) fn eval_index(
         let mut next_values = Vec::new();
         for value in &values_snapshot {
             let base_paths = value.paths();
-            for option in &options {
+            for option in &step.options {
                 if option.integer_index
                     && let Some(index) = option
                         .segments
@@ -296,7 +334,12 @@ pub(super) fn eval_index(
                         }
                     }
                 }
-                if let Some(next) = apply_index_segment(value, option) {
+                let next = if !option.integer_index {
+                    env.value_at_path(value, &option.segments)
+                } else {
+                    apply_index_segment(value, option)
+                };
+                if let Some(next) = next {
                     for next_path in next.paths() {
                         for base_path in &base_paths {
                             if base_path.segments().next().is_some()
@@ -316,16 +359,7 @@ pub(super) fn eval_index(
         }
         values = next_values;
     }
-
-    let value = AbstractValue::choice(values);
-    match value {
-        Some(value) => {
-            let mut result = EvalResult::from_value_with_memo(value, env.predicate_memo.as_ref());
-            result.effects.merge(effects);
-            result
-        }
-        None => EvalResult::with_effects(None, effects),
-    }
+    AbstractValue::choice(values)
 }
 
 pub(super) fn record_member_host_access(operand: &EvalResult, effects: &mut Effects) {
@@ -355,6 +389,11 @@ pub(super) fn record_member_host_access(operand: &EvalResult, effects: &mut Effe
 pub(super) struct PathSegmentOption {
     segments: Vec<String>,
     integer_index: bool,
+}
+
+struct IndexStep {
+    options: Vec<PathSegmentOption>,
+    literal_key: bool,
 }
 
 /// Replace whole-values-root identity arms with opaque present values, so

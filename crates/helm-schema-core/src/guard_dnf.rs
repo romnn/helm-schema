@@ -156,7 +156,29 @@ impl GuardDnf {
     /// Union conditions after their evidence payloads are known to be equal,
     /// re-normalizing so duplicate and subsumed disjuncts are absorbed.
     pub fn union_absorbing(&mut self, other: Self) {
-        *self = Self::from_disjunction(std::mem::take(&mut self.0).into_iter().chain(other.0));
+        let mut other_disjuncts = other.0;
+        let Some(incoming) = other_disjuncts.pop_first() else {
+            return;
+        };
+        if !other_disjuncts.is_empty()
+            || self
+                .0
+                .iter()
+                .any(|existing| conjunctions_resolve_complementary(existing, &incoming))
+        {
+            *self = Self::from_disjunction(
+                std::mem::take(&mut self.0)
+                    .into_iter()
+                    .chain(std::iter::once(incoming))
+                    .chain(other_disjuncts),
+            );
+            return;
+        }
+        if self.0.iter().any(|existing| existing.is_subset(&incoming)) {
+            return;
+        }
+        self.0.retain(|existing| !incoming.is_subset(existing));
+        self.0.insert(incoming);
     }
 
     /// Rewrites every values path and re-normalizes the formula.
@@ -172,6 +194,27 @@ impl GuardDnf {
                     .collect::<Vec<_>>()
             }));
     }
+}
+
+fn conjunctions_resolve_complementary(
+    left: &BTreeSet<Predicate>,
+    right: &BTreeSet<Predicate>,
+) -> bool {
+    if left.len() != right.len() {
+        return false;
+    }
+    let mut left_difference = left.difference(right);
+    let Some(left_extra) = left_difference.next() else {
+        return false;
+    };
+    if left_difference.next().is_some() {
+        return false;
+    }
+    let mut right_difference = right.difference(left);
+    let Some(right_extra) = right_difference.next() else {
+        return false;
+    };
+    right_difference.next().is_none() && predicates_are_complementary(left_extra, right_extra)
 }
 
 impl Serialize for GuardDnf {

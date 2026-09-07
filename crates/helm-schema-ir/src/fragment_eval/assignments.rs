@@ -19,6 +19,7 @@ use crate::fragment_assignment::parse_helper_assignment_from_exprs;
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::function_semantics::{function_semantics, type_descriptor_call_subject};
 use crate::helper_meta::merge_rendered_row_meta;
+use crate::scalar_value::TruthCondition;
 use crate::{Guard, ValueKind};
 use helm_schema_core::Predicate;
 
@@ -376,6 +377,7 @@ impl Interpreter<'_> {
             exprs,
             &self.root_bindings,
             self.current_value_dot().as_ref(),
+            self.current_dot_binding_mode(),
         );
         self.chart_defaults_observed
             .extend(effects.chart_default_paths.iter().cloned());
@@ -399,7 +401,17 @@ impl Interpreter<'_> {
             }
         }
 
-        let mut template_bindings = self.locals.range_member_values.clone();
+        let mut template_bindings = self
+            .locals
+            .range_member_values
+            .iter()
+            .map(|(name, value)| {
+                (
+                    name.clone(),
+                    crate::eval_env::LocalBinding::direct(value.clone()),
+                )
+            })
+            .collect::<std::collections::HashMap<_, _>>();
         template_bindings.extend(
             self.locals
                 .fragment_values
@@ -410,6 +422,7 @@ impl Interpreter<'_> {
         let env = crate::eval_env::EvalEnv::from_fragment_context(
             &template_bindings,
             current_dot.as_ref(),
+            self.current_dot_binding_mode(),
         )
         .with_predicate_memo(std::rc::Rc::clone(self.db.predicate_memo()));
         for expr in exprs {
@@ -426,13 +439,142 @@ impl Interpreter<'_> {
                 let Some(binding) = self.locals.fragment_values.get(name) else {
                     continue;
                 };
-                if !is_context_copy(binding) {
+                if !binding.value().as_ref().is_some_and(is_context_copy) {
                     continue;
                 }
                 let updated = binding.clone().with_overlay_entries(entries.clone());
                 self.locals.fragment_values.insert(name.clone(), updated);
             }
         }
+    }
+
+    fn binding_value_metadata(
+        &self,
+        kind: crate::fragment_assignment::AssignmentKind,
+        fragment_value: Option<&AbstractValue>,
+        output_effects: &crate::eval_effect::Effects,
+        hole_effects: &crate::eval_effect::Effects,
+    ) -> crate::eval_env::BindingValueMetadata {
+        let default_paths = output_effects.default_paths_with_local();
+        let mut output_meta = output_effects.local_output_meta.clone();
+        merge_rendered_row_meta(&mut output_meta, &hole_effects.helper_rendered);
+        if let Some(binding) = fragment_value {
+            for (path, meta) in binding.output_meta() {
+                output_meta.entry(path).or_default().merge(&meta);
+            }
+        }
+        for path in &hole_effects.observed_facts.shape_erased_paths {
+            output_meta.entry(path.clone()).or_default().shape_erased = true;
+        }
+        for path in &hole_effects.stringified_paths {
+            output_meta.entry(path.clone()).or_default().stringified = true;
+        }
+        for path in &hole_effects.yaml_serialized_paths {
+            output_meta.entry(path.clone()).or_default().yaml_serialized = true;
+        }
+        for path in &hole_effects.templated_yaml_paths {
+            output_meta.entry(path.clone()).or_default().templated_yaml = true;
+        }
+        for path in &hole_effects.derived_text_paths {
+            output_meta.entry(path.clone()).or_default().derived_text = true;
+        }
+        for (path, keys) in &hole_effects.omitted_map_keys {
+            let meta = output_meta.entry(path.clone()).or_default();
+            for key in keys {
+                meta.omitted_keys.insert(key.clone(), Vec::new());
+            }
+        }
+        for path in &hole_effects.json_serialized_paths {
+            output_meta.entry(path.clone()).or_default().json_serialized = true;
+        }
+        let fragment_paths = fragment_value
+            .map(AbstractValue::fragment_rendered_paths)
+            .unwrap_or_default();
+        let dependency_only_paths: std::collections::BTreeSet<&ValuesPath> = hole_effects
+            .helper_dependency_rendered
+            .iter()
+            .map(|row| &row.path)
+            .filter(|path| !fragment_paths.contains(*path))
+            .collect();
+        output_meta.retain(|path, _| !dependency_only_paths.contains(path));
+        let merge_identity_crosses_helper =
+            output_meta.values().any(|meta| meta.merge_layers.is_some());
+        if !self.active_predicates.is_empty()
+            && (kind == crate::fragment_assignment::AssignmentKind::Assignment
+                || merge_identity_crosses_helper)
+        {
+            if let Some(binding) = fragment_value {
+                for path in binding.fragment_rendered_paths() {
+                    output_meta.entry(path).or_default();
+                }
+            }
+            let flowing: std::collections::BTreeSet<String> =
+                output_meta.keys().map(ValuesPath::encode).collect();
+            for (path, meta) in &mut output_meta {
+                let site: std::collections::BTreeSet<Predicate> = self
+                    .active_predicates
+                    .iter()
+                    .filter(|predicate| {
+                        predicate_applies_to_flowing_path(predicate, &path.encode(), &flowing)
+                    })
+                    .cloned()
+                    .collect();
+                meta.conjoin_branches(&site);
+            }
+        }
+        crate::eval_env::BindingValueMetadata {
+            default_paths,
+            output_meta,
+        }
+    }
+
+    fn binding_from_result(
+        &self,
+        kind: crate::fragment_assignment::AssignmentKind,
+        value: Option<&AbstractValue>,
+        proven_operands: Option<&crate::eval_effect::ProvenOperands>,
+        fallback_metadata: &crate::eval_env::BindingValueMetadata,
+    ) -> Option<crate::eval_env::LocalBinding> {
+        let Some(proven) = proven_operands else {
+            return value
+                .cloned()
+                .and_then(AbstractValue::without_widened)
+                .map(|value| {
+                    crate::eval_env::LocalBinding::new_with_metadata(
+                        value,
+                        crate::eval_env::BindingEvaluationMode::Evaluated,
+                        fallback_metadata.clone(),
+                    )
+                });
+        };
+        let mut binding = crate::eval_env::LocalBinding::unknown();
+        let mut retained = false;
+        for operand in proven.known.iter().rev() {
+            let leaf_metadata = self.binding_value_metadata(
+                kind,
+                operand.result.value.as_ref(),
+                &operand.result.effects,
+                &operand.result.effects,
+            );
+            let Some(leaf) = self.binding_from_result(
+                kind,
+                operand.result.value.as_ref(),
+                operand.result.proven_operands.as_ref(),
+                &leaf_metadata,
+            ) else {
+                continue;
+            };
+            binding = crate::eval_env::LocalBinding::select(
+                crate::eval_env::BindingDecision::new(TruthCondition::exact_with_memo(
+                    operand.condition.clone(),
+                    self.db.predicate_memo().as_ref(),
+                )),
+                leaf,
+                binding,
+            );
+            retained = true;
+        }
+        retained.then_some(binding)
     }
 
     #[expect(
@@ -447,7 +589,6 @@ impl Interpreter<'_> {
         if let Some(assignment) = parse_helper_assignment_from_exprs(exprs) {
             let rhs = std::slice::from_ref(&assignment.rhs_expr);
             self.record_required_subjects(rhs);
-            let inlined_template_value = self.inline_static_template_value(rhs);
             let condition_truthy_reduction = {
                 let context = self.value_path_context();
                 context
@@ -455,21 +596,31 @@ impl Interpreter<'_> {
                     .then(|| context.condition_predicate_expr(&assignment.rhs_expr))
             };
             let output_effects = self.value_path_context().expression_output_effects(rhs);
-            let bound_default_paths = output_effects.default_paths_with_local();
             let hole = self.eval_hole_exprs(rhs);
             let scalar_dispatch = hole.scalar_dispatch.clone();
             // The binding is the hole value without widened members (an
             // unknown call result is influence, not a values-backed
             // fragment).
-            let fragment_value = inlined_template_value
-                .or_else(|| hole.value.clone().and_then(AbstractValue::without_widened));
-            // A derived Boolean's value and truth are the same semantic
-            // fact. Other result kinds may carry truth used internally by
-            // their evaluator, but promoting it to an unrelated local would
-            // let scratch assignments scope later output.
-            let derived_boolean_truth = if matches!(
+            let fragment_value = hole.value.clone().and_then(AbstractValue::without_widened);
+            let binding_metadata = self.binding_value_metadata(
+                assignment.kind,
                 fragment_value.as_ref(),
-                Some(AbstractValue::DerivedBoolean(_))
+                &output_effects,
+                &hole.effects,
+            );
+            let fragment_binding = self.binding_from_result(
+                assignment.kind,
+                hole.value.as_ref(),
+                hole.proven_operands.as_ref(),
+                &binding_metadata,
+            );
+            // Derived Booleans and explicitly opaque values own truth that
+            // is independent of their representable value. Other result
+            // kinds may carry evaluator-internal truth that must not scope
+            // unrelated later output.
+            let result_truth = if matches!(
+                fragment_value.as_ref(),
+                Some(AbstractValue::DerivedBoolean(_) | AbstractValue::Unknown)
             ) {
                 hole.truth
                     .predicate()
@@ -478,7 +629,7 @@ impl Interpreter<'_> {
             } else {
                 None
             };
-            let rhs_truthy_reduction = derived_boolean_truth.or(condition_truthy_reduction);
+            let rhs_truthy_reduction = result_truth.or(condition_truthy_reduction);
             let previous_truthy_reduction = self
                 .locals
                 .truthy_reductions
@@ -563,52 +714,24 @@ impl Interpreter<'_> {
                             })
                     }),
             };
-            let previous_fragment_value = self
-                .locals
-                .fragment_values
-                .get(&assignment.variable)
-                .cloned();
-            // Helper bodies keep the prior binding when the right-hand side
-            // resolves to nothing (the summary lane's rule): an unresolvable
-            // re-assignment in one branch must not erase the other branches'
-            // value at the join.
-            if fragment_value.is_some() || scalar_dispatch.is_some() || !self.helper_scope {
-                self.locals.bind_fragment_value(
+            let fragment_binding = fragment_binding.or_else(|| {
+                (self.helper_scope
+                    && assignment.kind == crate::fragment_assignment::AssignmentKind::Assignment)
+                    .then(crate::eval_env::LocalBinding::unknown)
+            });
+            // An unresolved helper reassignment explicitly replaces stale
+            // state with Unknown; declarations still abstain when no binding
+            // can be justified.
+            if fragment_binding.is_some() || scalar_dispatch.is_some() || !self.helper_scope {
+                self.locals.bind_local_binding(
                     assignment.kind,
                     assignment.variable.clone(),
-                    fragment_value.clone(),
+                    fragment_binding,
                 );
                 if let Some(dispatch) = scalar_dispatch {
                     self.locals
                         .scalar_dispatches
                         .insert(assignment.variable.clone(), dispatch);
-                }
-            }
-            // A guarded self-advance (`$x = index $x $k` reassigning `$x`
-            // one member deeper while this step's `hasKey` presence guard
-            // is active) marks the local so the branch join keeps the
-            // advanced value: consumers stay a finite exact path, and
-            // their facts carry the member's presence guard.
-            if assignment.kind == crate::fragment_assignment::AssignmentKind::Assignment
-                && let (
-                    Some(AbstractValue::ValuesPath(parent)),
-                    Some(AbstractValue::ValuesPath(child)),
-                ) = (&previous_fragment_value, &fragment_value)
-                && child.is_descendant_of(parent)
-            {
-                let presence = Predicate::from(crate::Guard::Absent {
-                    path: child.clone(),
-                })
-                .negated();
-                let guarded = self
-                    .active_predicates
-                    .iter()
-                    .any(|active| match active.kind() {
-                        helm_schema_core::PredicateKind::And(items) => items.contains(&presence),
-                        _ => active == &presence,
-                    });
-                if guarded {
-                    self.locals.mark_traversal_advance(&assignment.variable);
                 }
             }
             if let Some(predicate) = truthy_reduction {
@@ -677,106 +800,16 @@ impl Interpreter<'_> {
                     .int_cast_sources
                     .insert(assignment.variable.clone(), source);
             }
-            let mut output_meta = output_effects.local_output_meta.clone();
-            merge_rendered_row_meta(&mut output_meta, &hole.effects.helper_rendered);
-            if let Some(binding) = &fragment_value {
-                for (path, meta) in binding.output_meta() {
-                    output_meta.entry(path).or_default().merge(&meta);
-                }
-            }
-            // A shape-erasing RHS (`$tag := … | toString`) rides the binding:
-            // wherever the local renders, the splice exposes no input shape.
-            for path in &hole.effects.observed_facts.shape_erased_paths {
-                output_meta.entry(path.clone()).or_default().shape_erased = true;
-            }
-            for path in &hole.effects.stringified_paths {
-                output_meta.entry(path.clone()).or_default().stringified = true;
-            }
-            for path in &hole.effects.yaml_serialized_paths {
-                output_meta.entry(path.clone()).or_default().yaml_serialized = true;
-            }
-            for path in &hole.effects.templated_yaml_paths {
-                output_meta.entry(path.clone()).or_default().templated_yaml = true;
-            }
-            // Likewise a derived-text RHS (`$port := include … .`): a later
-            // consuming transform on the local operates on rendered text and
-            // claims nothing about the underlying paths.
-            for path in &hole.effects.derived_text_paths {
-                output_meta.entry(path.clone()).or_default().derived_text = true;
-            }
-            // An omitting RHS (`$ctx = omit $ctx "runAsUser"`) rides the
-            // binding: wherever the local renders the map, the removed
-            // keys' sink typing must not bind. Retain guards start empty;
-            // the branch join fills them where the omit provably did not
-            // run.
-            for (path, keys) in &hole.effects.omitted_map_keys {
-                let meta = output_meta.entry(path.clone()).or_default();
-                for key in keys {
-                    meta.omitted_keys.insert(key.clone(), Vec::new());
-                }
-            }
-            for path in &hole.effects.json_serialized_paths {
-                output_meta.entry(path.clone()).or_default().json_serialized = true;
-            }
-            // Eager helper arguments execute, but their rendered values are dependencies rather
-            // than part of the assignment's value. Keep their runtime effects while preventing
-            // their output metadata from riding the assigned local.
-            let fragment_paths = fragment_value
-                .as_ref()
-                .map(AbstractValue::fragment_rendered_paths)
-                .unwrap_or_default();
-            let dependency_only_paths: std::collections::BTreeSet<&ValuesPath> = hole
-                .effects
-                .helper_dependency_rendered
-                .iter()
-                .map(|row| &row.path)
-                .filter(|path| !fragment_paths.contains(*path))
-                .collect();
-            output_meta.retain(|path, _| !dependency_only_paths.contains(path));
-            // A reassignment evaluated under branch predicates keeps them on
-            // each flowing path's meta because the write can survive a branch
-            // join. A declared ordered-merge identity needs the same stamp:
-            // its layer meta crosses helper-summary boundaries before the
-            // surrounding fragment can apply the lexical branch guard.
-            // Other declarations stay lexical and inherit the guard at their
-            // render site. A truthiness condition about a different flowing
-            // path describes a sibling's branch and stays off this path's
-            // meta.
-            let merge_identity_crosses_helper =
-                output_meta.values().any(|meta| meta.merge_layers.is_some());
-            if !self.active_predicates.is_empty()
-                && (assignment.kind == crate::fragment_assignment::AssignmentKind::Assignment
-                    || merge_identity_crosses_helper)
-            {
-                if let Some(binding) = &fragment_value {
-                    for path in binding.fragment_rendered_paths() {
-                        output_meta.entry(path).or_default();
-                    }
-                }
-                let flowing: std::collections::BTreeSet<String> =
-                    output_meta.keys().map(ValuesPath::encode).collect();
-                for (path, meta) in &mut output_meta {
-                    let site: std::collections::BTreeSet<Predicate> = self
-                        .active_predicates
-                        .iter()
-                        .filter(|predicate| {
-                            predicate_applies_to_flowing_path(predicate, &path.encode(), &flowing)
-                        })
-                        .cloned()
-                        .collect();
-                    meta.conjoin_branches(&site);
-                }
-            }
             // Keep the (possibly empty) default and meta entries: the branch
             // join unions per-variable facts only for variables every outcome
             // still tracks, and a pre-branch binding without facts must not
             // erase a branch's recorded ones.
             self.locals
                 .default_paths
-                .insert(assignment.variable.clone(), bound_default_paths);
+                .insert(assignment.variable.clone(), binding_metadata.default_paths);
             self.locals
                 .output_meta
-                .insert(assignment.variable.clone(), output_meta);
+                .insert(assignment.variable.clone(), binding_metadata.output_meta);
             let demotion = if self.helper_scope {
                 RenderedDemotion::Dependency
             } else {

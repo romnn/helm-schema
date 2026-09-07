@@ -414,6 +414,67 @@ fn raw_range_variable_definition_exposes_children() {
 }
 
 #[test]
+fn range_assignment_operator_remains_structurally_visible() {
+    for (operator, want) in [("=", true), (":=", false)] {
+        let src = format!("{{{{ range $value {operator} .Values.items }}}}{{{{ end }}}}");
+        let tree = crate::parse_go_template(&src).expect("parse source");
+        let mut stack = vec![tree.root_node()];
+        let mut range = None;
+        while let Some(node) = stack.pop() {
+            if node.kind() == "range_action" {
+                range = Some(node);
+                break;
+            }
+            let mut cursor = node.walk();
+            stack.extend(node.children(&mut cursor));
+        }
+        let range = range.expect("find range action");
+
+        sim_assert_eq!(
+            have: crate::range_uses_assignment(range),
+            want: want,
+            "operator={operator}; tree={}",
+            range.to_sexp(),
+        );
+        let header = crate::range_header_from_source(range, &src).expect("parse range header");
+        sim_assert_eq!(
+            have: crate::range_variable_name_expr(header.expr()),
+            want: Some("value".to_string()),
+            "operator={operator}; tree={}",
+            range.to_sexp(),
+        );
+
+        let destructured_src =
+            format!("{{{{ range $key, $value {operator} .Values.items }}}}{{{{ end }}}}");
+        let destructured_tree =
+            crate::parse_go_template(&destructured_src).expect("parse destructured source");
+        let mut stack = vec![destructured_tree.root_node()];
+        let mut destructured_range = None;
+        while let Some(node) = stack.pop() {
+            if node.kind() == "range_action" {
+                destructured_range = Some(node);
+                break;
+            }
+            let mut cursor = node.walk();
+            stack.extend(node.children(&mut cursor));
+        }
+        let destructured_range = destructured_range.expect("find destructured range action");
+        sim_assert_eq!(
+            have: crate::range_uses_assignment(destructured_range),
+            want: want,
+            "operator={operator}; tree={}",
+            destructured_range.to_sexp(),
+        );
+        sim_assert_eq!(
+            have: crate::range_has_destructured_variable_definition(destructured_range),
+            want: true,
+            "operator={operator}; tree={}",
+            destructured_range.to_sexp(),
+        );
+    }
+}
+
+#[test]
 fn pipeline_with_intervening_call_no_default_match() {
     // `.Values.X | upper | default 5` — the windows pattern matcher
     // should NOT pair `.Values.X` with `default` because `upper`

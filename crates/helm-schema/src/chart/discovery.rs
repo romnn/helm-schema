@@ -68,7 +68,22 @@ pub(crate) fn discover_chart_contexts_with_budget(
 ) -> EngineResult<Vec<ChartContext>> {
     let mut out = Vec::new();
     let chart_yaml = read_chart_yaml(root_chart_dir)?;
-    discover_chart_contexts_inner(root_chart_dir, &chart_yaml, &[], &[], load_budget, &mut out)?;
+    let namespace = chart_yaml
+        .name
+        .as_deref()
+        .filter(|name| !name.is_empty())
+        .ok_or_else(|| CliError::ChartNameMissing {
+            path: root_chart_dir.as_str().to_string(),
+        })?;
+    discover_chart_contexts_inner(
+        root_chart_dir,
+        &chart_yaml,
+        &[],
+        namespace,
+        &[],
+        load_budget,
+        &mut out,
+    )?;
     Ok(out)
 }
 
@@ -76,6 +91,7 @@ fn discover_chart_contexts_inner(
     chart_dir: &VfsPath,
     chart_yaml: &ChartYaml,
     parent_prefix: &[String],
+    template_namespace: &str,
     dependency_activation_chain: &[ChartDependencyActivation],
     load_budget: LoadBudget,
     out: &mut Vec<ChartContext>,
@@ -84,11 +100,15 @@ fn discover_chart_contexts_inner(
         .chart_type
         .as_deref()
         .is_some_and(|chart_type| chart_type.eq_ignore_ascii_case("library"));
-    let static_root_strings = chart_static_root_strings(chart_yaml);
+    let mut static_root_strings = chart_static_root_strings(chart_yaml);
+    if let Some(alias) = parent_prefix.last() {
+        static_root_strings.insert(vec!["Chart".to_string(), "Name".to_string()], alias.clone());
+    }
 
     out.push(ChartContext {
         chart_dir: chart_dir.clone(),
         values_prefix: parent_prefix.to_vec(),
+        template_namespace: template_namespace.to_string(),
         is_library,
         static_root_strings,
         dependency_activation_chain: dependency_activation_chain.to_vec(),
@@ -130,11 +150,8 @@ fn discover_chart_contexts_inner(
         let sub_name = sub_chart_yaml
             .name
             .clone()
-            .or_else(|| {
-                let name = sub_dir.filename();
-                if name.is_empty() { None } else { Some(name) }
-            })
-            .ok_or_else(|| CliError::SubchartNameMissing {
+            .filter(|name| !name.is_empty())
+            .ok_or_else(|| CliError::ChartNameMissing {
                 path: sub_dir.as_str().to_string(),
             })?;
 
@@ -155,6 +172,10 @@ fn discover_chart_contexts_inner(
             });
 
         for dependency_metadata in dependency_metadata {
+            let child_namespace = format!(
+                "{template_namespace}/charts/{}",
+                dependency_metadata.values_key
+            );
             let mut prefix = parent_prefix.to_vec();
             prefix.push(dependency_metadata.values_key);
 
@@ -171,6 +192,7 @@ fn discover_chart_contexts_inner(
                 &sub_dir,
                 &sub_chart_yaml,
                 &prefix,
+                &child_namespace,
                 &chain,
                 load_budget,
                 out,

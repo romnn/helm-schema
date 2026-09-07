@@ -3,8 +3,8 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
-use crate::eval_effect::{Effects, EvalResult};
-use crate::eval_env::EvalEnv;
+use crate::eval_effect::{Effects, EvalResult, ProvenOperand, ProvenOperands};
+use crate::eval_env::{BindingEvaluationMode, EvalEnv, LocalBinding};
 use crate::expr_call_eval::{eval_call_with_helper_calls, eval_pipeline_with_helper_calls};
 use crate::function_semantics::{CollectionShape, function_semantics};
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
@@ -14,10 +14,15 @@ pub(crate) trait HelperCallValueResolver {
     fn resolve_helper_call(&mut self, name: &str, arg: Option<&TemplateExpr>)
     -> Option<EvalResult>;
 
-    fn resolve_implicit_template_call(
+    fn resolve_file_contents(&mut self, _paths: &EvalResult, _env: &EvalEnv) -> Option<EvalResult> {
+        None
+    }
+
+    fn resolve_static_template(
         &mut self,
-        _suffix: &str,
-        _arg: Option<&TemplateExpr>,
+        _template: &EvalResult,
+        _dot: Option<&AbstractValue>,
+        _env: &EvalEnv,
     ) -> Option<EvalResult> {
         None
     }
@@ -84,6 +89,30 @@ fn call_dict_member_identity(
     Some((bound.direct_values_identity()?, tail.to_vec()))
 }
 
+fn record_field_access_captures(path: &[String], env: &EvalEnv, effects: &mut Effects) {
+    let direct_dot = env
+        .dot
+        .as_ref()
+        .and_then(AbstractValue::direct_values_identity);
+    if let Some(base) = direct_dot {
+        if env.dot_binding_mode == crate::eval_env::BindingEvaluationMode::Evaluated {
+            record_grouped_member_access_captures(&base.encode(), path, false, &[], env, effects);
+            return;
+        }
+        let mut segments = base.segments().cloned().collect::<Vec<_>>();
+        let accessed_from = segments.len();
+        segments.extend(path.iter().cloned().map(helm_schema_core::Segment::from));
+        record_member_access_captures(&segments, accessed_from, &[], env, effects);
+        return;
+    }
+    if let Some((base, navigated)) = call_dict_member_identity(path, env) {
+        let mut segments = base.segments().cloned().collect::<Vec<_>>();
+        let accessed_from = segments.len();
+        segments.extend(navigated.into_iter().map(helm_schema_core::Segment::from));
+        record_member_access_captures(&segments, accessed_from, &[], env, effects);
+    }
+}
+
 /// Record that `segments` was reached by Go field access: every nonterminal
 /// prefix at or past `accessed_from` must exist and host members whenever
 /// the surrounding control flow executes the access. The captures ride the
@@ -93,6 +122,7 @@ fn call_dict_member_identity(
 fn record_member_access_captures(
     segments: &[helm_schema_core::Segment],
     accessed_from: usize,
+    outer_predicates: &[Predicate],
     env: &EvalEnv,
     effects: &mut Effects,
 ) {
@@ -110,7 +140,7 @@ fn record_member_access_captures(
             continue;
         }
         let path = helm_schema_core::ValuesPath::from_segments(prefix.iter().cloned()).encode();
-        record_member_host_capture(&path, &[], env, effects);
+        record_member_host_capture(&path, outer_predicates, env, effects);
     }
 }
 
@@ -118,6 +148,7 @@ fn record_grouped_member_access_captures(
     receiver_path: &str,
     selected_path: &[String],
     missing_receiver_aborts: bool,
+    outer_predicates: &[Predicate],
     env: &EvalEnv,
     effects: &mut Effects,
 ) {
@@ -147,8 +178,9 @@ fn record_grouped_member_access_captures(
         if target.is_empty() {
             continue;
         }
-        let outer = receiver_guard.as_slice();
-        record_member_host_capture(&target, outer, env, effects);
+        let mut outer = outer_predicates.to_vec();
+        outer.extend(receiver_guard.iter().cloned());
+        record_member_host_capture(&target, &outer, env, effects);
     }
 }
 
@@ -198,17 +230,17 @@ pub(crate) fn eval_expr_with_helper_calls(
     match expr {
         TemplateExpr::Parenthesized(inner) => eval_expr_with_helper_calls(inner, env, resolver),
         TemplateExpr::Field(path) if path.first().is_some_and(|segment| segment == "Values") => {
-            // Inside `with $copy` over a context copy whose `Values` member
-            // was replaced (`set $copy.Values …`), `.Values.…` reads the
-            // copy's overridden member. Only the Overlay shape that
-            // mutation produces re-routes; every other context keeps the
-            // root-values shortcut, including `$.Values.…`, which names
-            // the genuine root and never resolves here.
+            // Captured roots and mutated context copies retain their own Values member.
+            // Project that member while preserving navigation effects on its raw source.
+            // Other contexts keep the root-values shortcut, including `$.Values.…`.
             if let Some(AbstractValue::Overlay { entries, .. }) = &env.dot
                 && entries.contains_key("Values")
                 && let Some(value) = env.dot.as_ref().and_then(|dot| dot.apply_to_path(path))
             {
-                EvalResult::from_value_with_memo(value, env.predicate_memo.as_ref())
+                let mut result =
+                    EvalResult::from_value_with_memo(value, env.predicate_memo.as_ref());
+                record_field_access_captures(path, env, &mut result.effects);
+                result
             } else {
                 let Some((_, tail)) = path.split_first() else {
                     return EvalResult::none();
@@ -221,13 +253,14 @@ pub(crate) fn eval_expr_with_helper_calls(
             env.predicate_memo.as_ref(),
         ),
         TemplateExpr::Field(path) => {
-            let dot_base = env
+            let value = env
                 .dot
                 .as_ref()
-                .and_then(AbstractValue::direct_values_identity);
-            let value = env.dot.as_ref().and_then(|value| value.apply_to_path(path));
+                .and_then(|value| env.value_at_path(value, path));
             let value = value.or_else(|| {
-                if !env.allow_field_root_lookup {
+                if !env.allow_field_root_lookup
+                    || !matches!(env.dot, None | Some(AbstractValue::RootContext))
+                {
                     return None;
                 }
                 let (head, tail) = path.split_first()?;
@@ -241,41 +274,22 @@ pub(crate) fn eval_expr_with_helper_calls(
             // What the access navigates: the dot's own values identity when
             // it has one, otherwise the identity a CALL DICT binds to the
             // first segment.
-            let access = match dot_base {
-                Some(base) => Some((base, path.clone())),
-                None => call_dict_member_identity(path, env),
-            };
-            if let Some((base, navigated)) = access {
-                let mut segments = base.segments().cloned().collect::<Vec<_>>();
-                let accessed_from = segments.len();
-                segments.extend(navigated.into_iter().map(helm_schema_core::Segment::from));
-                record_member_access_captures(&segments, accessed_from, env, &mut result.effects);
-            }
+            record_field_access_captures(path, env, &mut result.effects);
             attach_root_field_semantics(&mut result, path, env);
             result
         }
-        TemplateExpr::Selector { operand, path }
-            if matches!(operand.as_ref(), TemplateExpr::Variable(var) if var.is_empty())
-                && !env.locals.contains_key("")
-                && path.first().is_some_and(|segment| segment == "Values") =>
-        {
-            let Some((_, tail)) = path.split_first() else {
-                return EvalResult::none();
-            };
-            root_values_selector_result(tail, env)
-        }
-        TemplateExpr::Variable(var) if var.is_empty() => env.locals.get(var).cloned().map_or_else(
+        TemplateExpr::Variable(var) if var.is_empty() => env.locals.get(var).map_or_else(
             || {
                 EvalResult::from_value_with_memo(
                     AbstractValue::RootContext,
                     env.predicate_memo.as_ref(),
                 )
             },
-            |value| local_value_result(var, value, None, env),
+            |binding| local_binding_result(var, binding, env),
         ),
         TemplateExpr::Variable(var) if !var.is_empty() => {
-            if let Some(value) = env.locals.get(var).cloned() {
-                local_value_result(var, value, None, env)
+            if let Some(binding) = env.locals.get(var) {
+                local_binding_result(var, binding, env)
             } else if let Some(dispatch) = local_scalar_dispatch(var, env) {
                 EvalResult::none()
                     .with_scalar_dispatch_with_memo(dispatch.clone(), env.predicate_memo.as_ref())
@@ -295,72 +309,16 @@ pub(crate) fn eval_expr_with_helper_calls(
                 return result;
             }
             if let TemplateExpr::Variable(var) = operand.as_ref()
-                && let Some(value) = env
-                    .locals
-                    .get(var)
-                    .and_then(|binding| binding.apply_to_path(path))
+                && let Some(binding) = env.locals.get(var)
             {
-                let local_base = env
-                    .locals
-                    .get(var)
-                    .and_then(AbstractValue::direct_values_identity);
-                let selected_paths = value.fragment_source_paths();
-                let mut result = local_value_result(var, value, Some(&selected_paths), env);
-                if let Some(base) = local_base {
-                    // A `:=`-bound local is nil-SAFE to navigate for its own
-                    // hop, exactly like the grouped receiver form:
-                    // `$preset := .Values.global.affinity` renders with
-                    // `affinity` deleted (argo-cd), while `$preset.a.b` still
-                    // aborts on a missing `a` and a present non-object still
-                    // aborts with "can't evaluate field". A RANGE member
-                    // variable never went through a pipeline, so it keeps the
-                    // direct chain's abort on every nil member.
-                    if env.pipeline_bound_locals.contains(var) {
-                        record_grouped_member_access_captures(
-                            &base.encode(),
-                            path,
-                            false,
-                            env,
-                            &mut result.effects,
-                        );
-                    } else {
-                        let mut segments = base.segments().cloned().collect::<Vec<_>>();
-                        let accessed_from = segments.len();
-                        segments.extend(path.iter().cloned().map(helm_schema_core::Segment::from));
-                        record_member_access_captures(
-                            &segments,
-                            accessed_from,
-                            env,
-                            &mut result.effects,
-                        );
-                    }
-                }
-                return with_bound_selector_paths(result, expr, env);
-            }
-            if let TemplateExpr::Variable(var) = operand.as_ref()
-                && !var.is_empty()
-                && path.first().is_some_and(|segment| segment == "Values")
-            {
-                let Some((_, tail)) = path.split_first() else {
-                    return EvalResult::none();
-                };
-                let result = root_values_selector_result(tail, env);
+                let result = local_selector_result(var, binding, path, env);
                 return with_bound_selector_paths(result, expr, env);
             }
             if let TemplateExpr::Variable(var) = operand.as_ref()
                 && var.is_empty()
-                && !env.locals.contains_key(var)
-                && let Some((head, tail)) = path.split_first()
-                && let Some(value) = env
-                    .root_fields
-                    .get(head)
-                    .and_then(|value| value.apply_to_path(tail))
             {
-                let mut result =
-                    EvalResult::from_value_with_memo(value, env.predicate_memo.as_ref());
-                if tail.is_empty() {
-                    attach_named_root_field_semantics(&mut result, head, env);
-                }
+                let binding = LocalBinding::direct(AbstractValue::RootContext);
+                let result = local_selector_result(var, &binding, path, env);
                 return with_bound_selector_paths(result, expr, env);
             }
             let base = eval_expr_with_helper_calls(operand, env, resolver);
@@ -381,13 +339,14 @@ pub(crate) fn eval_expr_with_helper_calls(
             let value = base
                 .value
                 .as_ref()
-                .and_then(|value| value.apply_to_path(path));
+                .and_then(|value| env.value_at_path(value, path));
             let mut effects = base.effects;
             if let Some(receiver_path) = grouped_receiver {
                 record_grouped_member_access_captures(
                     &receiver_path.encode(),
                     path,
                     missing_grouped_receiver_aborts,
+                    &[],
                     env,
                     &mut effects,
                 );
@@ -475,7 +434,7 @@ fn root_values_selector_result(segments: &[String], env: &EvalEnv) -> EvalResult
         .cloned()
         .map(helm_schema_core::Segment::from)
         .collect::<Vec<_>>();
-    record_member_access_captures(&tail, 0, env, &mut result.effects);
+    record_member_access_captures(&tail, 0, &[], env, &mut result.effects);
     result
 }
 
@@ -506,8 +465,10 @@ pub(crate) fn eval_helper_exprs_direct_effects(
     exprs: &[TemplateExpr],
     bindings: &HashMap<String, AbstractValue>,
     current_dot: Option<&AbstractValue>,
+    dot_binding_mode: crate::eval_env::BindingEvaluationMode,
 ) -> Effects {
-    let env = EvalEnv::from_helper_context(Some(bindings), current_dot).without_helper_call_args();
+    let env = EvalEnv::from_helper_context(Some(bindings), current_dot, dot_binding_mode)
+        .without_helper_call_args();
     eval_exprs_effects(exprs, &env)
 }
 
@@ -583,7 +544,7 @@ pub(crate) fn bindings_for_helper_arg_with(
     }
 }
 
-fn bindings_from_helper_arg_value(
+pub(crate) fn bindings_from_helper_arg_value(
     value: Option<AbstractValue>,
     outer: Option<&HashMap<String, AbstractValue>>,
 ) -> HashMap<String, AbstractValue> {
@@ -616,16 +577,224 @@ pub(crate) fn is_helper_call_function(function: &str) -> bool {
     matches!(function, "include" | "template")
 }
 
-fn local_value_result(
+fn local_binding_result(var: &str, binding: &LocalBinding, env: &EvalEnv) -> EvalResult {
+    let projection = binding.projection(env.predicate_memo.as_ref());
+    let mut values = Vec::new();
+    let mut proven_operands = Vec::new();
+    for alternative in &projection.alternatives {
+        let alternative_result = local_value_result(
+            var,
+            Some(alternative.value.clone()),
+            None,
+            alternative.mode == BindingEvaluationMode::Evaluated,
+            Some(&alternative.metadata),
+            env,
+        );
+        proven_operands.push(ProvenOperand {
+            condition: alternative.condition.clone(),
+            evaluation_mode: match alternative.mode {
+                BindingEvaluationMode::Direct => {
+                    crate::function_semantics::ArgumentEvaluationMode::DirectLookup
+                }
+                BindingEvaluationMode::Evaluated => {
+                    crate::function_semantics::ArgumentEvaluationMode::Evaluated
+                }
+            },
+            result: Box::new(alternative_result.clone()),
+        });
+        values.extend(alternative_result.value);
+    }
+    if projection.has_unresolved {
+        values.push(AbstractValue::Unknown);
+    }
+    let value = AbstractValue::choice(values);
+    let selected_paths = value
+        .as_ref()
+        .map(AbstractValue::fragment_source_paths)
+        .unwrap_or_default();
+    let mut result = local_value_result(
+        var,
+        value,
+        None,
+        binding_has_evaluated_alternative(binding),
+        None,
+        env,
+    );
+    result.proven_operands = Some(ProvenOperands {
+        known: proven_operands,
+        has_unresolved: projection.has_unresolved,
+    });
+    if !selected_paths.is_empty() {
+        result.effects.local_source_paths.extend(selected_paths);
+    }
+    result
+}
+
+fn bound_values_member(value: &AbstractValue, env: &EvalEnv) -> Option<AbstractValue> {
+    match value {
+        AbstractValue::RootContext => Some(
+            env.root_fields
+                .get("Values")
+                .cloned()
+                .unwrap_or_else(AbstractValue::values_root),
+        ),
+        AbstractValue::Dict(entries) => entries.get("Values").cloned(),
+        AbstractValue::Overlay { entries, fallback } => entries
+            .get("Values")
+            .cloned()
+            .or_else(|| bound_values_member(fallback, env)),
+        _ => None,
+    }
+}
+
+fn local_selector_result(
     var: &str,
-    value: AbstractValue,
-    selected_paths: Option<&BTreeSet<helm_schema_core::ValuesPath>>,
+    binding: &LocalBinding,
+    path: &[String],
     env: &EvalEnv,
 ) -> EvalResult {
-    let source_paths = value.fragment_source_paths();
-    let mut result = EvalResult::from_value_with_memo(value, env.predicate_memo.as_ref());
-    if env.pipeline_bound_locals.contains(var) {
-        // A pipeline-bound local's fragment value records provenance, not
+    let projection = binding.projection(env.predicate_memo.as_ref());
+    let mut selected = Vec::new();
+    let mut proven_operands = Vec::new();
+    let mut member_effects = Effects::default();
+    let mut has_evaluated_selection = false;
+    for alternative in &projection.alternatives {
+        let outer = if alternative.condition == Predicate::True {
+            Vec::new()
+        } else {
+            vec![alternative.condition.clone()]
+        };
+        let (value, mode) = if path.first().is_some_and(|segment| segment == "Values") {
+            let Some((_, tail)) = path.split_first() else {
+                continue;
+            };
+            let Some(tail) = crate::abstract_value::resolve_root_values_methods(tail) else {
+                continue;
+            };
+            if let Some(values) = bound_values_member(&alternative.value, env) {
+                if let Some(base) = values.direct_values_identity() {
+                    let mut segments = base.segments().cloned().collect::<Vec<_>>();
+                    let accessed_from = segments.len();
+                    segments.extend(tail.iter().cloned().map(helm_schema_core::Segment::from));
+                    record_member_access_captures(
+                        &segments,
+                        accessed_from,
+                        &outer,
+                        env,
+                        &mut member_effects,
+                    );
+                }
+                let Some(value) = values.apply_to_path(tail) else {
+                    continue;
+                };
+                (value, BindingEvaluationMode::Direct)
+            } else {
+                let Some(value) = env.value_at_path(&alternative.value, path) else {
+                    continue;
+                };
+                (value, alternative.mode)
+            }
+        } else {
+            if let Some(base) = alternative.value.direct_values_identity() {
+                match alternative.mode {
+                    BindingEvaluationMode::Evaluated => record_grouped_member_access_captures(
+                        &base.encode(),
+                        path,
+                        false,
+                        &outer,
+                        env,
+                        &mut member_effects,
+                    ),
+                    BindingEvaluationMode::Direct => {
+                        let mut segments = base.segments().cloned().collect::<Vec<_>>();
+                        let accessed_from = segments.len();
+                        segments.extend(path.iter().cloned().map(helm_schema_core::Segment::from));
+                        record_member_access_captures(
+                            &segments,
+                            accessed_from,
+                            &outer,
+                            env,
+                            &mut member_effects,
+                        );
+                    }
+                }
+            }
+            let Some(value) = env.value_at_path(&alternative.value, path) else {
+                continue;
+            };
+            (value, alternative.mode)
+        };
+        let selected_paths = value.fragment_source_paths();
+        has_evaluated_selection |= mode == BindingEvaluationMode::Evaluated;
+        let alternative_result = local_value_result(
+            var,
+            Some(value.clone()),
+            Some(&selected_paths),
+            mode == BindingEvaluationMode::Evaluated,
+            Some(&alternative.metadata),
+            env,
+        );
+        proven_operands.push(ProvenOperand {
+            condition: alternative.condition.clone(),
+            evaluation_mode: match mode {
+                BindingEvaluationMode::Direct => {
+                    crate::function_semantics::ArgumentEvaluationMode::DirectLookup
+                }
+                BindingEvaluationMode::Evaluated => {
+                    crate::function_semantics::ArgumentEvaluationMode::GroupedReceiverLookup {
+                        selected_segments: path.len(),
+                    }
+                }
+            },
+            result: Box::new(alternative_result.clone()),
+        });
+        selected.extend(alternative_result.value);
+    }
+    if projection.has_unresolved {
+        selected.push(AbstractValue::Unknown);
+    }
+    let value = AbstractValue::choice(selected);
+    let selected_paths = value
+        .as_ref()
+        .map(AbstractValue::fragment_source_paths)
+        .unwrap_or_default();
+    let mut result = local_value_result(
+        var,
+        value,
+        Some(&selected_paths),
+        has_evaluated_selection || projection.has_unresolved,
+        None,
+        env,
+    );
+    result.effects.merge(member_effects);
+    result.proven_operands = Some(ProvenOperands {
+        known: proven_operands,
+        has_unresolved: projection.has_unresolved,
+    });
+    result
+}
+
+fn binding_has_evaluated_alternative(binding: &LocalBinding) -> bool {
+    binding.has_evaluated_value()
+}
+
+fn local_value_result(
+    var: &str,
+    value: Option<AbstractValue>,
+    selected_paths: Option<&BTreeSet<helm_schema_core::ValuesPath>>,
+    binding_is_evaluated: bool,
+    leaf_metadata: Option<&crate::eval_env::BindingValueMetadata>,
+    env: &EvalEnv,
+) -> EvalResult {
+    let source_paths = value
+        .as_ref()
+        .map(AbstractValue::fragment_source_paths)
+        .unwrap_or_default();
+    let mut result = value.map_or_else(EvalResult::none, |value| {
+        EvalResult::from_value_with_memo(value, env.predicate_memo.as_ref())
+    });
+    if binding_is_evaluated {
+        // An evaluated local's fragment value records provenance, not
         // necessarily its runtime scalar (`default`, transforms, and helper
         // output can all retain a source path while changing the value).
         // Only the separately tracked semantic domains below may recover
@@ -635,7 +804,10 @@ fn local_value_result(
         result.scalar_dispatch = None;
     }
     result.effects.local_source_paths = source_paths;
-    if let Some(default_paths) = env.local_default_paths.get(var) {
+    let default_paths = leaf_metadata
+        .map(|metadata| &metadata.default_paths)
+        .or_else(|| env.local_default_paths.get(var));
+    if let Some(default_paths) = default_paths {
         result
             .effects
             .local_default_paths
@@ -647,7 +819,10 @@ fn local_value_result(
                 .collect(),
         );
     }
-    if let Some(meta_by_path) = env.local_output_meta.get(var) {
+    let output_meta = leaf_metadata
+        .map(|metadata| &metadata.output_meta)
+        .or_else(|| env.local_output_meta.get(var));
+    if let Some(meta_by_path) = output_meta {
         match selected_paths {
             Some(paths) => result.effects.merge_local_output_meta(
                 meta_by_path

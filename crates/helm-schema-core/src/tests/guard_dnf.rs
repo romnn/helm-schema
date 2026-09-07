@@ -12,6 +12,54 @@ fn truthy(path: &str) -> Predicate {
     Predicate::truthy_path(path)
 }
 
+#[test]
+fn single_conjunction_union_matches_full_normalization_exhaustively() {
+    let a = truthy("a");
+    let b = truthy("b");
+    let c = truthy("c");
+    let alternatives = [
+        Vec::new(),
+        vec![a.clone()],
+        vec![a.clone().negated()],
+        vec![b.clone()],
+        vec![a.clone(), b.clone()],
+        vec![a.clone().negated(), b.clone()],
+        vec![a.clone(), c.clone()],
+        vec![a.negated(), c],
+    ];
+
+    for mask in 0_u16..(1 << alternatives.len()) {
+        let existing = GuardDnf::from_disjunction(alternatives.iter().enumerate().filter_map(
+            |(index, conjunction)| (mask & (1 << index) != 0).then_some(conjunction.clone()),
+        ));
+        for incoming_conjunction in &alternatives {
+            let incoming = GuardDnf::from_conjunction(incoming_conjunction.clone());
+            let expected = GuardDnf::from_disjunction(
+                existing
+                    .disjuncts()
+                    .iter()
+                    .cloned()
+                    .chain(incoming.disjuncts().iter().cloned()),
+            );
+            let mut actual = existing.clone();
+            actual.union_absorbing(incoming);
+            sim_assert_eq!(have: actual, want: expected);
+        }
+    }
+}
+
+#[test]
+fn single_conjunction_union_keeps_large_antichain() {
+    let mut condition = GuardDnf::never();
+    for index in 0..1_000 {
+        condition.union_absorbing(GuardDnf::from_conjunction([truthy(&format!(
+            "choice.{index}"
+        ))]));
+    }
+
+    sim_assert_eq!(have: condition.disjuncts().len(), want: 1_000);
+}
+
 fn reference_minimize_disjunction(mut keys: Vec<Vec<u8>>) -> Vec<Vec<u8>> {
     fn complementary(left: u8, right: u8) -> bool {
         matches!((left, right), (0, 1) | (1, 0) | (2, 3) | (3, 2))

@@ -38,7 +38,8 @@
 //! content of a container opened before (or closed after) the region
 //! inherits the branch guard.
 
-use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
+use std::cmp::Reverse;
+use std::collections::{BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet};
 use std::rc::Rc;
 
 use helm_schema_ast::{
@@ -47,14 +48,15 @@ use helm_schema_ast::{
 };
 use helm_schema_syntax as syntax;
 use helm_schema_syntax::{
-    Node, OpaqueKind, ScalarPart, ScalarParts, Span, TemplatedDocument, parse_go_template,
+    ControlRegion, Node, OpaqueKind, ScalarPart, ScalarParts, Span, TemplatedDocument,
+    parse_go_template,
 };
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
 use crate::bound_value_analysis::BoundValueContext;
 use crate::eval_effect::{CaptureKind, FailCapture};
-use crate::eval_env::EvalEnv;
+use crate::eval_env::{BindingEvaluationMode, EvalEnv};
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::{HelperOutputMeta, merge_provenance_sites};
 use crate::node_eval::{NodeAction, control_headers, node_action};
@@ -119,6 +121,19 @@ pub(crate) fn eval_document(
     };
     let document = TemplatedDocument::parse_with_root(source, tree.root_node());
     let mut interpreter = Interpreter::for_source(source, source_path, db, &tree, &document);
+    if let Some(name) = source_path.filter(|path| db.has_helper(path)) {
+        // Only entry execution supplies Name; nested programs retain their caller's data.
+        let template = interpreter
+            .root_bindings
+            .entry("Template".to_string())
+            .or_insert_with(|| AbstractValue::Dict(BTreeMap::new()));
+        if let AbstractValue::Dict(fields) = template {
+            fields.insert(
+                "Name".to_string(),
+                AbstractValue::StringSet(BTreeSet::from([name.to_string()])),
+            );
+        }
+    }
     let roots: Vec<NodeView<'_>> = document.roots().iter().map(NodeView::plain).collect();
     let contributions = interpreter.eval_node_list(&roots);
     EvaluatedDocument {
@@ -145,6 +160,195 @@ pub(crate) struct ControlFacts {
 pub(crate) struct BodyEvalFacts {
     pub(super) control_facts: HashMap<usize, ControlFacts>,
     pub(super) resource_spans: Vec<ResourceSpan>,
+    pub(super) adoption_plan: AdoptionPlan,
+}
+
+#[derive(Default)]
+pub(super) struct AdoptionPlan {
+    controls: HashMap<usize, Vec<EscapedControl>>,
+    control_positions: HashMap<(usize, usize), usize>,
+    crossing_priors: HashMap<usize, Vec<usize>>,
+    /// Deepest real content end, excluding a control region's enclosing span.
+    pub(super) content_ends: HashMap<usize, usize>,
+    pub(super) child_indexes: HashMap<usize, ChildIndex>,
+    pub(super) parent_shapes: HashMap<usize, ParentShape>,
+    parent_slots: HashMap<ParentSlot, Vec<usize>>,
+    layout_children: HashMap<usize, Vec<PlannedChild>>,
+}
+
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub(super) enum ParentKind {
+    Entry,
+    Item,
+}
+
+/// One rendered indentation slot inside a structural owner.
+#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub(super) struct ParentSlot {
+    owner_start: Option<usize>,
+    kind: ParentKind,
+    indent: usize,
+}
+
+/// Immutable source facts for one container that can own deferred content.
+#[derive(Clone, Copy)]
+pub(super) struct ParentShape {
+    pub(super) start: usize,
+    pub(super) slot: ParentSlot,
+    pub(super) indent: usize,
+    pub(super) accepts_same_indent: bool,
+    pub(super) established_content_mark: Option<usize>,
+}
+
+impl ParentShape {
+    pub(super) fn kind(&self) -> ParentKind {
+        self.slot.kind
+    }
+}
+
+#[derive(Clone, Copy)]
+struct PlannedChild {
+    start: usize,
+    disposition: LayoutDisposition,
+}
+
+#[derive(Clone, Copy)]
+enum LayoutDisposition {
+    OpenParent,
+    Barrier,
+    Transparent,
+}
+
+impl AdoptionPlan {
+    pub(super) fn slot_members_through(&self, shape: &ParentShape) -> &[usize] {
+        let Some(members) = self.parent_slots.get(&shape.slot) else {
+            return &[];
+        };
+        let end = members.partition_point(|start| *start <= shape.start);
+        members.get(..end).unwrap_or_default()
+    }
+
+    /// The source-known container suffix still open immediately before `end`.
+    pub(super) fn trailing_open_chain(&self, root_start: usize, end: usize) -> Vec<ParentShape> {
+        let mut chain = Vec::new();
+        let mut current = root_start;
+        loop {
+            let Some(children) = self.layout_children.get(&current) else {
+                break;
+            };
+            let Some(child) = children.iter().rev().find(|child| {
+                child.start < end && !matches!(child.disposition, LayoutDisposition::Transparent)
+            }) else {
+                break;
+            };
+            if !matches!(child.disposition, LayoutDisposition::OpenParent) {
+                break;
+            }
+            let Some(shape) = self.parent_shapes.get(&child.start).copied() else {
+                break;
+            };
+            chain.push(shape);
+            current = child.start;
+        }
+        chain
+    }
+}
+
+#[derive(Clone, Copy)]
+struct ChildExtent {
+    start: usize,
+    end: usize,
+    index: usize,
+}
+
+/// Source-ordered child intervals for deferred range and overlap queries.
+pub(super) struct ChildIndex {
+    entries: Vec<ChildExtent>,
+    leaf_base: usize,
+    max_ends: Vec<usize>,
+}
+
+impl ChildIndex {
+    fn new(children: &[PlannedNode]) -> Self {
+        let mut entries = children
+            .iter()
+            .enumerate()
+            .map(|(index, child)| ChildExtent {
+                start: child.start,
+                end: child.content_end,
+                index,
+            })
+            .collect::<Vec<_>>();
+        entries.sort_by_key(|child| child.start);
+        let leaf_base = entries.len().next_power_of_two();
+        let mut max_ends = vec![0; leaf_base * 2];
+        for (offset, child) in entries.iter().enumerate() {
+            max_ends[leaf_base + offset] = child.end;
+        }
+        for node in (1..leaf_base).rev() {
+            max_ends[node] = max_ends[node * 2].max(max_ends[node * 2 + 1]);
+        }
+        Self {
+            entries,
+            leaf_base,
+            max_ends,
+        }
+    }
+
+    pub(super) fn in_window(&self, window: SourceWindow) -> Vec<usize> {
+        let start = self
+            .entries
+            .partition_point(|child| child.start < window.start);
+        let end = window.end.map_or(self.entries.len(), |end| {
+            self.entries.partition_point(|child| child.start < end)
+        });
+        self.entries[start..end]
+            .iter()
+            .map(|child| child.index)
+            .collect()
+    }
+
+    pub(super) fn crossing(&self, boundary: usize) -> Vec<usize> {
+        let before = self.entries.partition_point(|child| child.start < boundary);
+        let mut crossing = Vec::new();
+        self.collect_crossing(1, 0, self.leaf_base, before, boundary, &mut crossing);
+        crossing
+    }
+
+    fn collect_crossing(
+        &self,
+        node: usize,
+        start: usize,
+        end: usize,
+        before: usize,
+        boundary: usize,
+        crossing: &mut Vec<usize>,
+    ) {
+        if start >= before || self.max_ends[node] <= boundary {
+            return;
+        }
+        if end - start == 1 {
+            if let Some(child) = self.entries.get(start) {
+                crossing.push(child.index);
+            }
+            return;
+        }
+        let middle = start + (end - start) / 2;
+        self.collect_crossing(node * 2, start, middle, before, boundary, crossing);
+        self.collect_crossing(node * 2 + 1, middle, end, before, boundary, crossing);
+    }
+}
+
+/// The exact CST path from an escaped container to the control that owns it.
+struct EscapedControl {
+    control_start: usize,
+    path: Vec<NodePathStep>,
+}
+
+#[derive(Clone)]
+enum NodePathStep {
+    Child(usize),
+    Branch { branch: usize, child: usize },
 }
 
 impl BodyEvalFacts {
@@ -159,8 +363,314 @@ impl BodyEvalFacts {
         Self {
             control_facts,
             resource_spans: crate::resource_identity::collect_resource_spans(document, db),
+            adoption_plan: collect_adoption_plan(source, document.roots()),
         }
     }
+}
+
+fn collect_adoption_plan(source: &str, nodes: &[Node]) -> AdoptionPlan {
+    let mut plan = AdoptionPlan::default();
+    let mut path = Vec::new();
+    let mut containers = Vec::new();
+    collect_adoptions(source, nodes, &mut path, &mut containers, &mut plan);
+    for controls in plan.controls.values_mut() {
+        controls.sort_by_key(|control| control.control_start);
+        controls.dedup_by_key(|control| control.control_start);
+    }
+    for (node_start, controls) in &plan.controls {
+        for (index, control) in controls.iter().enumerate() {
+            plan.control_positions
+                .insert((*node_start, control.control_start), index + 1);
+        }
+    }
+    for priors in plan.crossing_priors.values_mut() {
+        priors.sort_unstable();
+        priors.dedup();
+    }
+    for members in plan.parent_slots.values_mut() {
+        members.sort_unstable();
+        members.dedup();
+    }
+    plan
+}
+
+#[derive(Clone, Copy)]
+struct PlannedNode {
+    start: usize,
+    end: usize,
+    content_end: usize,
+    control_start: Option<usize>,
+    can_defer: bool,
+    disposition: LayoutDisposition,
+}
+
+fn collect_adoptions(
+    source: &str,
+    nodes: &[Node],
+    path: &mut Vec<NodePathStep>,
+    containers: &mut Vec<(usize, usize)>,
+    plan: &mut AdoptionPlan,
+) -> Vec<PlannedNode> {
+    let mut planned = Vec::with_capacity(nodes.len());
+    for (index, node) in nodes.iter().enumerate() {
+        path.push(NodePathStep::Child(index));
+        planned.push(collect_adoption_node(source, node, path, containers, plan));
+        path.pop();
+    }
+    collect_crossing_priors(&planned, plan);
+    planned
+}
+
+fn collect_adoption_node(
+    source: &str,
+    node: &Node,
+    path: &mut Vec<NodePathStep>,
+    containers: &mut Vec<(usize, usize)>,
+    plan: &mut AdoptionPlan,
+) -> PlannedNode {
+    let start = node.span_start();
+    let owner_start = containers.last().map(|(start, _)| *start);
+    let (end, content_end, direct_control, can_defer, disposition) = match node {
+        Node::Mapping(entry) => {
+            containers.push((start, path.len()));
+            let children = collect_adoptions(source, &entry.children, path, containers, plan);
+            containers.pop();
+            plan.child_indexes.insert(start, ChildIndex::new(&children));
+            plan.layout_children
+                .insert(start, planned_children_in_source_order(&children));
+            let shape = ParentShape {
+                start,
+                slot: ParentSlot {
+                    owner_start,
+                    kind: ParentKind::Entry,
+                    indent: entry.indent,
+                },
+                indent: entry.indent,
+                accepts_same_indent: entry.value.is_none() && entry.block.is_none(),
+                established_content_mark: established_content_mark_from_source(
+                    source,
+                    &entry.children,
+                    entry.indent,
+                ),
+            };
+            plan.parent_shapes.insert(start, shape);
+            if entry.opens_scope {
+                plan.parent_slots.entry(shape.slot).or_default().push(start);
+            }
+            (
+                children
+                    .iter()
+                    .map(|child| child.end)
+                    .fold(mapping_own_end(entry), usize::max),
+                children
+                    .iter()
+                    .map(|child| child.content_end)
+                    .fold(mapping_own_end(entry), usize::max),
+                None,
+                true,
+                if entry.opens_scope {
+                    LayoutDisposition::OpenParent
+                } else {
+                    LayoutDisposition::Barrier
+                },
+            )
+        }
+        Node::Sequence(item) => {
+            containers.push((start, path.len()));
+            let children = collect_adoptions(source, &item.children, path, containers, plan);
+            containers.pop();
+            plan.child_indexes.insert(start, ChildIndex::new(&children));
+            plan.layout_children
+                .insert(start, planned_children_in_source_order(&children));
+            let opens_scope = item.value.is_none() && item.block.is_none();
+            let shape = ParentShape {
+                start,
+                slot: ParentSlot {
+                    owner_start,
+                    kind: ParentKind::Item,
+                    indent: item.indent,
+                },
+                indent: item.indent,
+                accepts_same_indent: false,
+                established_content_mark: established_content_mark_from_source(
+                    source,
+                    &item.children,
+                    item.indent,
+                ),
+            };
+            plan.parent_shapes.insert(start, shape);
+            if opens_scope {
+                plan.parent_slots.entry(shape.slot).or_default().push(start);
+            }
+            (
+                children
+                    .iter()
+                    .map(|child| child.end)
+                    .fold(sequence_own_end(item), usize::max),
+                children
+                    .iter()
+                    .map(|child| child.content_end)
+                    .fold(sequence_own_end(item), usize::max),
+                None,
+                true,
+                if opens_scope {
+                    LayoutDisposition::OpenParent
+                } else {
+                    LayoutDisposition::Barrier
+                },
+            )
+        }
+        Node::Control(region) => {
+            if let Some((container_start, depth)) = containers
+                .iter()
+                .find(|(start, _)| *start > region.span.start)
+            {
+                plan.controls
+                    .entry(*container_start)
+                    .or_default()
+                    .push(EscapedControl {
+                        control_start: region.span.start,
+                        path: path[*depth..].to_vec(),
+                    });
+            }
+            let mut end = region.span.end;
+            let mut content_end = 0;
+            for (branch_index, branch) in region.branches.iter().enumerate() {
+                let mut children = Vec::with_capacity(branch.body.len());
+                for (child_index, child) in branch.body.iter().enumerate() {
+                    path.push(NodePathStep::Branch {
+                        branch: branch_index,
+                        child: child_index,
+                    });
+                    children.push(collect_adoption_node(source, child, path, containers, plan));
+                    path.pop();
+                }
+                collect_crossing_priors(&children, plan);
+                end = children.iter().map(|child| child.end).fold(end, usize::max);
+                content_end = children
+                    .iter()
+                    .map(|child| child.content_end)
+                    .fold(content_end, usize::max);
+            }
+            (
+                end,
+                content_end,
+                Some(region.span.start),
+                false,
+                LayoutDisposition::Transparent,
+            )
+        }
+        Node::Output(action) => (
+            action.span.end,
+            action.span.end,
+            None,
+            false,
+            LayoutDisposition::Barrier,
+        ),
+        Node::Comment(comment) => (
+            comment.span.end,
+            comment.span.end,
+            None,
+            false,
+            LayoutDisposition::Transparent,
+        ),
+        Node::Scalar(line) => (
+            scalar_parts_end(&line.content).max(line.span.end),
+            scalar_parts_end(&line.content).max(line.span.end),
+            None,
+            false,
+            LayoutDisposition::Barrier,
+        ),
+        Node::Opaque(opaque) => (
+            opaque.span.end,
+            opaque.span.end,
+            None,
+            false,
+            LayoutDisposition::Transparent,
+        ),
+    };
+    let control_start = direct_control.or_else(|| {
+        plan.controls
+            .get(&start)
+            .and_then(|controls| controls.iter().map(|control| control.control_start).min())
+    });
+    plan.content_ends.insert(start, content_end);
+    PlannedNode {
+        start,
+        end,
+        content_end,
+        control_start,
+        can_defer,
+        disposition,
+    }
+}
+
+fn planned_children_in_source_order(children: &[PlannedNode]) -> Vec<PlannedChild> {
+    let mut planned = children
+        .iter()
+        .map(|child| PlannedChild {
+            start: child.start,
+            disposition: child.disposition,
+        })
+        .collect::<Vec<_>>();
+    planned.sort_by_key(|child| child.start);
+    planned
+}
+
+fn collect_crossing_priors(nodes: &[PlannedNode], plan: &mut AdoptionPlan) {
+    let mut ordered = nodes.to_vec();
+    ordered.sort_by_key(|node| (node.control_start.unwrap_or(node.start), node.start));
+    let mut active = BTreeSet::new();
+    let mut expirations = BinaryHeap::new();
+    for node in ordered {
+        let evaluation_start = node.control_start.unwrap_or(node.start);
+        while let Some(Reverse((end, start))) = expirations.peek().copied() {
+            if end > evaluation_start {
+                break;
+            }
+            expirations.pop();
+            active.remove(&start);
+        }
+        if let Some(control_start) = node.control_start {
+            plan.crossing_priors
+                .entry(control_start)
+                .or_default()
+                .extend(active.iter().copied());
+        }
+        if node.can_defer {
+            active.insert(node.start);
+            expirations.push(Reverse((node.end, node.start)));
+        }
+    }
+}
+
+fn mapping_own_end(entry: &syntax::MappingEntry) -> usize {
+    let mut end = entry.span.end;
+    if let Some(value) = &entry.value {
+        end = end.max(scalar_parts_end(value));
+    }
+    if let Some(block) = &entry.block {
+        end = end.max(block.header.end).max(block.body.end);
+    }
+    end
+}
+
+fn sequence_own_end(item: &syntax::SequenceItem) -> usize {
+    let mut end = item.span.end;
+    if let Some(value) = &item.value {
+        end = end.max(scalar_parts_end(value));
+    }
+    if let Some(block) = &item.block {
+        end = end.max(block.header.end).max(block.body.end);
+    }
+    end
+}
+
+fn scalar_parts_end(parts: &ScalarParts) -> usize {
+    parts.parts.iter().fold(parts.span.end, |end, part| {
+        let (ScalarPart::Text(span) | ScalarPart::Hole(span)) = part;
+        end.max(span.end)
+    })
 }
 
 fn collect_control_facts(
@@ -195,6 +705,11 @@ fn collect_control_facts(
                 ArmSpec::Range {
                     header: range_header_from_source(node, source),
                     destructured: range_has_destructured_variable_definition(node),
+                    binding_kind: if helm_schema_ast::range_uses_assignment(node) {
+                        crate::fragment_assignment::AssignmentKind::Assignment
+                    } else {
+                        crate::fragment_assignment::AssignmentKind::Declaration
+                    },
                     value_variable: helm_schema_ast::range_destructured_value_variable(
                         node, source,
                     ),
@@ -229,8 +744,8 @@ fn collect_control_facts(
 /// conditional key AFTER it; signoz opens `annotations:` and fills it with a
 /// `nindent 4` splice BEFORE the column-0 splice that follows. Only the first
 /// container is still open when its splice runs.
-pub(super) fn established_content_mark(
-    interpreter: &Interpreter<'_>,
+fn established_content_mark_from_source(
+    source: &str,
     children: &[Node],
     container_indent: usize,
 ) -> Option<usize> {
@@ -240,19 +755,35 @@ pub(super) fn established_content_mark(
             Node::Mapping(entry) => (entry.indent > container_indent).then_some(entry.span.start),
             Node::Sequence(item) => (item.indent > container_indent).then_some(item.span.start),
             Node::Scalar(line) => (line.indent > container_indent).then_some(line.span.start),
-            Node::Output(action) => (interpreter.output_render_indent(action.span)
+            Node::Output(action) => (output_render_indent_from_source(source, action.span)
                 > container_indent)
                 .then_some(action.span.start),
             Node::Control(region) => region
                 .branches
                 .iter()
                 .filter_map(|branch| {
-                    established_content_mark(interpreter, &branch.body, container_indent)
+                    established_content_mark_from_source(source, &branch.body, container_indent)
                 })
                 .min(),
             Node::Comment(_) | Node::Opaque(_) => None,
         })
         .min()
+}
+
+fn output_render_indent_from_source(source: &str, span: Span) -> usize {
+    parse_expr_text(source.get(span.start..span.end).unwrap_or(""))
+        .iter()
+        .rev()
+        .find_map(TemplateExpr::fragment_indent_width)
+        .unwrap_or_else(|| {
+            let line_start = source
+                .get(..span.start)
+                .and_then(|prefix| prefix.rfind('\n'))
+                .map_or(0, |newline| newline + 1);
+            source
+                .get(line_start..)
+                .map_or(0, |line| line.len() - line.trim_start_matches(' ').len())
+        })
 }
 
 /// The byte where a container's first deeper *content* child appears (the
@@ -317,7 +848,7 @@ fn collect_inline_regions(nodes: &[Node], out: &mut Vec<Span>) {
 }
 
 /// What one level of nodes contributes to its enclosing container.
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(super) struct Contributions {
     pub(super) entries: Vec<MappingEntry>,
     pub(super) items: Vec<Guarded<AbstractFragment>>,
@@ -330,30 +861,54 @@ pub(super) struct Contributions {
     pub(super) loop_control: LoopControl,
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 pub(super) struct LoopControl {
-    pub(super) breaks: Vec<PathCondition>,
-    pub(super) continues: Vec<PathCondition>,
+    pub(super) breaks: Vec<crate::symbolic_local_state::ControlOutcome>,
+    pub(super) continues: Vec<crate::symbolic_local_state::ControlOutcome>,
 }
 
 impl LoopControl {
     pub(super) fn exit_condition(&self) -> PathCondition {
-        any_conditions(self.breaks.iter().chain(&self.continues).cloned().collect())
+        any_conditions(
+            self.breaks
+                .iter()
+                .chain(&self.continues)
+                .map(crate::symbolic_local_state::ControlOutcome::condition)
+                .collect(),
+        )
     }
 
     pub(super) fn break_condition(&self) -> PathCondition {
-        any_conditions(self.breaks.clone())
+        any_conditions(
+            self.breaks
+                .iter()
+                .map(crate::symbolic_local_state::ControlOutcome::condition)
+                .collect(),
+        )
     }
 
-    fn guard_all(&mut self, condition: &PathCondition, memo: &helm_schema_core::PredicateMemo) {
+    pub(super) fn guard_all(
+        &mut self,
+        condition: &PathCondition,
+        memo: &helm_schema_core::PredicateMemo,
+    ) {
         for exit in self.breaks.iter_mut().chain(&mut self.continues) {
-            *exit = super::domain::and_conditions_with_memo(condition.clone(), exit.clone(), memo);
+            exit.guard_all(condition.clone(), memo);
         }
     }
 
-    fn extend(&mut self, other: Self) {
+    pub(super) fn extend(&mut self, other: Self) {
         self.breaks.extend(other.breaks);
         self.continues.extend(other.continues);
+    }
+
+    pub(super) fn replace_states(
+        &mut self,
+        state: &crate::symbolic_local_state::SymbolicLocalState,
+    ) {
+        for exit in self.breaks.iter_mut().chain(&mut self.continues) {
+            exit.replace_state(state);
+        }
     }
 }
 
@@ -372,6 +927,7 @@ fn any_conditions(mut conditions: Vec<PathCondition>) -> PathCondition {
 }
 
 /// One fragment output looking for its container.
+#[derive(Clone)]
 pub(super) struct FloatingOutput {
     /// The rendered indent (`nindent`/`indent` width).
     pub(super) width: usize,
@@ -410,16 +966,20 @@ impl Contributions {
         condition: &PathCondition,
         memo: &helm_schema_core::PredicateMemo,
     ) {
-        for entry in &mut self.entries {
+        self.entries.retain_mut(|entry| {
+            let was_empty = entry.value.is_empty();
             entry.value.guard_all(condition, memo);
-        }
-        for item in &mut self.items {
+            was_empty || !entry.value.is_empty()
+        });
+        self.items.retain_mut(|item| {
             item.guard_all(condition, memo);
-        }
+            !item.is_empty()
+        });
         self.values.guard_all(condition, memo);
-        for floating in &mut self.floating {
+        self.floating.retain_mut(|floating| {
             floating.value.guard_all(condition, memo);
-        }
+            !floating.value.is_empty()
+        });
         self.loop_control.guard_all(condition, memo);
     }
 
@@ -431,6 +991,43 @@ impl Contributions {
         self.values.extend(other.values);
         self.floating.extend(other.floating);
         self.loop_control.extend(other.loop_control);
+    }
+
+    pub(super) fn extend_guarded_fragment(
+        &mut self,
+        guarded: Guarded<AbstractFragment>,
+        memo: &helm_schema_core::PredicateMemo,
+    ) {
+        for (condition, fragment) in guarded.arms {
+            if condition == Predicate::False {
+                continue;
+            }
+            match fragment {
+                AbstractFragment::Mapping(mapping) => {
+                    for mut entry in mapping.entries {
+                        entry.value.guard_all(&condition, memo);
+                        entry
+                            .value
+                            .arms
+                            .retain(|(condition, _)| *condition != Predicate::False);
+                        if !entry.value.is_empty() {
+                            self.merge_entry(entry.key, entry.value);
+                        }
+                    }
+                }
+                AbstractFragment::Sequence(sequence) => {
+                    for mut item in sequence.items {
+                        item.guard_all(&condition, memo);
+                        item.arms
+                            .retain(|(condition, _)| *condition != Predicate::False);
+                        if !item.is_empty() {
+                            self.items.push(item);
+                        }
+                    }
+                }
+                fragment => self.values.arms.push((condition, fragment)),
+            }
+        }
     }
 
     pub(super) fn take_loop_control(&mut self) -> LoopControl {
@@ -587,27 +1184,84 @@ fn predicate_has_range(predicate: &Predicate) -> bool {
     }
 }
 
-/// A node reference plus an optional adoption child limit: children whose
-/// spans start at or beyond the limit belong *after* the adopting control
-/// region (source order) and are evaluated there instead of inside the
-/// branch scope.
+/// A half-open source window for descendants of an adopted node.
+#[derive(Clone, Copy)]
+pub(super) struct SourceWindow {
+    pub(super) start: usize,
+    pub(super) end: Option<usize>,
+}
+
+impl SourceWindow {
+    fn all() -> Self {
+        Self {
+            start: 0,
+            end: None,
+        }
+    }
+
+    pub(super) fn bounded(start: usize, end: usize) -> Self {
+        Self {
+            start,
+            end: Some(end.max(start)),
+        }
+    }
+
+    pub(super) fn with_end(self, end: usize) -> Self {
+        Self {
+            start: self.start,
+            end: Some(self.end.map_or(end, |current| current.min(end))),
+        }
+    }
+
+    pub(super) fn contains(self, start: usize) -> bool {
+        start >= self.start && self.end.is_none_or(|end| start < end)
+    }
+
+    pub(super) fn intersect(self, other: Self) -> Self {
+        let end = match (self.end, other.end) {
+            (Some(left), Some(right)) => Some(left.min(right)),
+            (Some(end), None) | (None, Some(end)) => Some(end),
+            (None, None) => None,
+        };
+        Self {
+            start: self.start.max(other.start),
+            end,
+        }
+    }
+
+    pub(super) fn is_empty(self) -> bool {
+        self.end.is_some_and(|end| self.start >= end)
+    }
+}
+
+/// A node reference plus the source-window bounds of control adoption.
+///
+/// Children outside the window evaluate in another branch or after the
+/// region.
+/// Controls through the omitted boundary are evaluated by their owners
+/// instead of through the adopted ancestor chain.
 #[derive(Clone, Copy)]
 pub(super) struct NodeView<'n> {
     pub(super) node: &'n Node,
-    pub(super) child_limit: Option<usize>,
+    pub(super) window: SourceWindow,
+    pub(super) omitted_control: Option<usize>,
+    pub(super) control_cursor: usize,
 }
 
 impl<'n> NodeView<'n> {
     pub(super) fn plain(node: &'n Node) -> Self {
         Self {
             node,
-            child_limit: None,
+            window: SourceWindow::all(),
+            omitted_control: None,
+            control_cursor: 0,
         }
     }
 
-    /// The node's children that evaluate in place (before the child limit).
-    /// The limit propagates so deeper descendants past it stay excluded too;
-    /// the adopting control region re-attaches them outside its scope.
+    /// The node's children that evaluate in this source window.
+    ///
+    /// The bounds propagate so later descendants and the owning control stay
+    /// excluded until the adoption plan evaluates them.
     pub(super) fn in_scope_children(&self) -> Vec<NodeView<'n>> {
         let children = match self.node {
             Node::Mapping(entry) => &entry.children,
@@ -617,22 +1271,75 @@ impl<'n> NodeView<'n> {
         children
             .iter()
             .filter(|child| {
-                self.child_limit
-                    .is_none_or(|limit| child.span_start() < limit)
+                self.window.contains(child.span_start())
+                    && !matches!(child, Node::Control(region)
+                        if self.omitted_control.is_some_and(|omitted| region.span.start <= omitted))
             })
             .map(|child| NodeView {
                 node: child,
-                child_limit: self.child_limit,
+                window: self.window,
+                omitted_control: self.omitted_control,
+                control_cursor: 0,
             })
             .collect()
     }
+}
+
+fn control_at_path<'n>(root: &'n Node, path: &[NodePathStep]) -> Option<&'n ControlRegion> {
+    let mut node = root;
+    for step in path {
+        node = match (node, step) {
+            (Node::Mapping(entry), NodePathStep::Child(index)) => entry.children.get(*index)?,
+            (Node::Sequence(item), NodePathStep::Child(index)) => item.children.get(*index)?,
+            (Node::Control(region), NodePathStep::Branch { branch, child }) => {
+                region.branches.get(*branch)?.body.get(*child)?
+            }
+            _ => return None,
+        };
+    }
+    match node {
+        Node::Control(region) => Some(region),
+        _ => None,
+    }
+}
+
+/// Returns the branch and half-open source window containing a node start.
+pub(super) fn branch_window(region: &ControlRegion, node_start: usize) -> (usize, SourceWindow) {
+    let mut target = 0;
+    for (index, branch) in region.branches.iter().enumerate() {
+        if node_start >= branch.header.end {
+            target = index;
+        }
+    }
+    let start = region
+        .branches
+        .get(target)
+        .map_or(region.span.start, |branch| branch.header.end);
+    let end = region
+        .branches
+        .get(target + 1)
+        .map_or(region.span.end, |branch| branch.header.start);
+    (target, SourceWindow::bounded(start, end))
 }
 
 /// One adopted escaped sibling: its bounded in-scope view plus the
 /// enclosing region bound that caps this region's deferral window.
 pub(super) struct Adopted<'n> {
     pub(super) view: NodeView<'n>,
-    pub(super) defer_upper: Option<usize>,
+    pub(super) defer_window: SourceWindow,
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub(super) enum ParentShell {
+    Entry(EntryKey),
+    Item,
+}
+
+#[derive(Clone, PartialEq, Eq)]
+pub(super) struct ParentShellArm {
+    pub(super) source_start: usize,
+    pub(super) condition: PathCondition,
+    pub(super) shell: ParentShell,
 }
 
 /// One arm's decoded activation.
@@ -643,6 +1350,7 @@ pub(super) enum ArmSpec {
     Range {
         header: Option<TemplateHeader>,
         destructured: bool,
+        binding_kind: crate::fragment_assignment::AssignmentKind,
         value_variable: Option<String>,
         key_variable: Option<String>,
     },
@@ -658,6 +1366,12 @@ pub(super) struct ScopeMark {
     loop_depth: usize,
 }
 
+#[derive(Clone)]
+pub(super) struct DotBinding {
+    value: Option<AbstractValue>,
+    mode: BindingEvaluationMode,
+}
+
 pub(super) struct Interpreter<'a> {
     pub(super) source: &'a str,
     pub(super) source_path: Option<&'a str>,
@@ -669,9 +1383,8 @@ pub(super) struct Interpreter<'a> {
     /// the memoized evaluations of one helper body.
     pub(super) body_facts: Rc<BodyEvalFacts>,
     pub(super) inline_regions: Vec<Span>,
-    /// Static file templates currently being inlined (cycle prevention for
-    /// `.Files.Get`-style template requests).
-    pub(super) inline_files: Vec<String>,
+    /// Named helper bodies contributing to source provenance.
+    pub(super) helper_provenance_chain: Vec<String>,
     /// Whether this interpreter evaluates a helper body (a summary run).
     pub(super) helper_scope: bool,
     /// Whether scalar output dispatches refine rendered holes. This is set
@@ -685,10 +1398,10 @@ pub(super) struct Interpreter<'a> {
     /// Typed payload truth observed at whole-hole JSON helper outputs.
     pub(super) json_payload_truth_outputs: Vec<(Predicate, TruthCondition)>,
     pub(super) locals: SymbolicLocalState,
-    pub(super) dot_stack: Vec<Option<AbstractValue>>,
+    pub(super) dot_stack: Vec<DotBinding>,
     /// The value-flavor dot of a helper scope's root frame (the call
-    /// boundary resolves both flavors; see `DotFrame`). Document scope has
-    /// none: its value dot derives from the fragment dot.
+    /// boundary resolves both flavors; see [`DotBinding`]).
+    /// Document scope has none: its value dot derives from the fragment dot.
     pub(super) root_value_dot: Option<AbstractValue>,
     pub(super) root_bindings: HashMap<String, AbstractValue>,
     pub(super) root_truthy_predicates: HashMap<String, Predicate>,
@@ -723,6 +1436,7 @@ pub(super) struct Interpreter<'a> {
     /// this to recognize a matching `fromYaml` as a structural round trip.
     pub(super) yaml_serialized_paths: BTreeSet<helm_schema_core::ValuesPath>,
     pub(super) observed_facts: ObservedFacts,
+    pub(super) evaluated_parent_shells: HashMap<usize, Vec<ParentShellArm>>,
     /// Captures that hold only where this source's rendered TEXT is consumed
     /// as YAML. A helper body renders at its caller's position, so its plain
     /// slots corrupt a document only when the caller splices the body raw
@@ -790,6 +1504,10 @@ impl<'a> Interpreter<'a> {
         self.loop_depth = mark.loop_depth;
     }
 
+    pub(super) fn push_dot(&mut self, value: Option<AbstractValue>, mode: BindingEvaluationMode) {
+        self.dot_stack.push(DotBinding { value, mode });
+    }
+
     /// A fresh interpreter over one parsed source: control-header facts,
     /// inline-region spans, and resource spans are collected up front; all
     /// evaluation state starts empty.
@@ -822,12 +1540,15 @@ impl<'a> Interpreter<'a> {
             db,
             body_facts,
             inline_regions,
-            inline_files: Vec::new(),
+            helper_provenance_chain: Vec::new(),
             helper_scope: false,
             scalar_output_projection: false,
             helper_seen: HashSet::new(),
             json_payload_truth_outputs: Vec::new(),
-            locals: SymbolicLocalState::default(),
+            locals: SymbolicLocalState::with_root(
+                AbstractValue::RootContext,
+                BindingEvaluationMode::Direct,
+            ),
             dot_stack: Vec::new(),
             root_value_dot: None,
             root_bindings: db.static_root_fields().clone(),
@@ -844,6 +1565,7 @@ impl<'a> Interpreter<'a> {
             parsed_yaml_input_paths: BTreeSet::new(),
             yaml_serialized_paths: BTreeSet::new(),
             observed_facts: ObservedFacts::default(),
+            evaluated_parent_shells: HashMap::new(),
             text_captures: BTreeSet::new(),
             run_templated_text_paths: BTreeSet::new(),
             in_value_slot: false,
@@ -957,12 +1679,7 @@ impl<'a> Interpreter<'a> {
         span: Span,
     ) -> Option<Rc<SiteFacts>> {
         let provenance = self.source_path.map(|source_path| {
-            let helper_chain = self
-                .inline_files
-                .iter()
-                .filter_map(|entry| entry.strip_prefix("define:"))
-                .map(std::string::ToString::to_string)
-                .collect();
+            let helper_chain = self.helper_provenance_chain.clone();
             ContractProvenance::new(
                 source_path,
                 SourceSpan::new(
@@ -998,7 +1715,9 @@ impl<'a> Interpreter<'a> {
     }
 
     pub(super) fn current_dot_fragment(&self) -> Option<AbstractValue> {
-        self.dot_stack.last().cloned().flatten()
+        self.dot_stack
+            .last()
+            .and_then(|binding| binding.value.clone())
     }
 
     pub(super) fn current_dot_binding(&self) -> Option<AbstractValue> {
@@ -1009,7 +1728,7 @@ impl<'a> Interpreter<'a> {
         }
         self.dot_stack
             .last()
-            .and_then(|binding| binding.as_ref())
+            .and_then(|binding| binding.value.as_ref())
             .and_then(AbstractValue::to_current_dot_context_value)
     }
 
@@ -1027,10 +1746,26 @@ impl<'a> Interpreter<'a> {
             .or_else(|| self.current_dot_binding())
     }
 
+    pub(super) fn current_dot_binding_mode(&self) -> BindingEvaluationMode {
+        self.dot_stack
+            .last()
+            .map_or(BindingEvaluationMode::Direct, |binding| binding.mode)
+    }
+
     pub(super) fn value_path_context(&self) -> ValuePathContext<'_> {
         // Member bindings resolve for conditions and assignments; explicit
         // fragment values shadow them where both exist.
-        let mut template_bindings = self.locals.range_member_values.clone();
+        let mut template_bindings = self
+            .locals
+            .range_member_values
+            .iter()
+            .map(|(name, value)| {
+                (
+                    name.clone(),
+                    crate::eval_env::LocalBinding::direct(value.clone()),
+                )
+            })
+            .collect::<HashMap<_, _>>();
         template_bindings.extend(
             self.locals
                 .fragment_values
@@ -1048,14 +1783,16 @@ impl<'a> Interpreter<'a> {
             .as_ref()
             .map(AbstractValue::to_context_value)
             .or(current_value_dot);
-        let mut eval_env =
-            EvalEnv::from_helper_context(Some(&self.root_bindings), current_dot.as_ref())
-                .without_helper_call_args()
-                .with_predicate_memo(std::rc::Rc::clone(self.db.predicate_memo()));
+        let mut eval_env = EvalEnv::from_helper_context(
+            Some(&self.root_bindings),
+            current_dot.as_ref(),
+            self.current_dot_binding_mode(),
+        )
+        .without_helper_call_args()
+        .with_predicate_memo(std::rc::Rc::clone(self.db.predicate_memo()));
         // Locals and root bindings are distinct namespaces (see the hole
         // evaluator); roots resolve through `root_fields` only.
         eval_env.locals = template_bindings;
-        eval_env.pipeline_bound_locals = self.locals.fragment_values.keys().cloned().collect();
         eval_env.local_default_paths = self.locals.default_paths.clone();
         eval_env.local_output_meta = self.locals.output_meta.clone();
         eval_env.local_scalar_dispatches = self.locals.scalar_dispatches.clone();
@@ -1187,6 +1924,22 @@ impl<'a> Interpreter<'a> {
         GuardDnf::from_conjunction(self.active_predicates.iter().cloned())
     }
 
+    fn record_parent_shell(&mut self, node_start: usize, shell: ParentShell) {
+        let condition = self
+            .db
+            .predicate_memo()
+            .normalize(Predicate::all(self.active_predicates.clone()));
+        let arm = ParentShellArm {
+            source_start: node_start,
+            condition,
+            shell,
+        };
+        let arms = self.evaluated_parent_shells.entry(node_start).or_default();
+        if !arms.contains(&arm) {
+            arms.push(arm);
+        }
+    }
+
     pub(super) fn push_predicate(&mut self, predicate: Predicate) {
         // `False` is load-bearing: a decoded-dead branch (a `hasKey` probe
         // into a folded literal table that misses) must poison the captures
@@ -1292,14 +2045,6 @@ impl<'a> Interpreter<'a> {
             provenance,
             dependency,
         };
-        if self.reads_seen.insert(read.clone()) {
-            self.reads.push(read);
-        }
-    }
-
-    /// Absorb one nested interpreter's read verbatim (nested static-file
-    /// evaluations already stamped their own guards and sites).
-    pub(super) fn push_nested_read(&mut self, read: ValueRead) {
         if self.reads_seen.insert(read.clone()) {
             self.reads.push(read);
         }
@@ -1515,9 +2260,11 @@ impl<'a> Interpreter<'a> {
     ) -> Vec<FailCapture> {
         let mut scoped = Vec::new();
         for body_capture in captures {
-            let mut ranged = self.capture_ranged_modes();
-            ranged.merge(&body_capture.ranged);
-            let conjunction = self.fail_capture_conjunction(body_capture.conjunction.clone());
+            let (conjunction, ranged) = super::capture_scope::scope_capture_conditions(
+                body_capture,
+                self.fail_capture_conjunction(Vec::new()),
+                self.capture_ranged_modes(),
+            );
             let mut kind = body_capture.kind.clone();
             // Ambient execution scope turns a direct string contract into an implication.
             // Its conjunction is the complete scope.
@@ -1569,6 +2316,14 @@ impl<'a> Interpreter<'a> {
                 ranged,
                 kind,
             };
+            if capture.kind.sole_value_path().is_some_and(|path| {
+                path.segments()
+                    .any(helm_schema_core::Segment::is_each_member)
+            }) && capture.requirement_is_implied_by(&Predicate::all(
+                capture.conjunction.iter().cloned().collect(),
+            )) {
+                continue;
+            }
             if capture
                 .conjunction
                 .iter()
@@ -1622,13 +2377,73 @@ impl<'a> Interpreter<'a> {
         }
     }
 
+    fn escaped_control<'n>(&self, view: NodeView<'n>) -> Option<(&'n ControlRegion, usize)> {
+        let controls = self
+            .body_facts
+            .adoption_plan
+            .controls
+            .get(&view.node.span_start())?;
+        let mut cursor = view.control_cursor;
+        if view.omitted_control.is_some_and(|omitted| {
+            controls
+                .get(cursor)
+                .is_some_and(|planned| planned.control_start <= omitted)
+        }) {
+            let omitted = view.omitted_control?;
+            cursor = controls.partition_point(|planned| planned.control_start <= omitted);
+        }
+        let planned = controls.get(cursor)?;
+        if !view.window.contains(planned.control_start) {
+            return None;
+        }
+        Some((control_at_path(view.node, &planned.path)?, cursor + 1))
+    }
+
+    fn cursor_after_control(&self, view: NodeView<'_>, control_start: usize) -> usize {
+        self.body_facts
+            .adoption_plan
+            .control_positions
+            .get(&(view.node.span_start(), control_start))
+            .copied()
+            .map_or(view.control_cursor, |cursor| {
+                cursor.max(view.control_cursor)
+            })
+    }
+
     pub(super) fn eval_node_list(&mut self, nodes: &[NodeView<'_>]) -> Contributions {
-        // The CST appends children escaping an ill-nested region at
-        // container-close time, which can put them before the region in list
-        // order; span order is document order, and adoption depends on it.
-        let mut ordered: Vec<NodeView<'_>> = nodes.to_vec();
-        ordered.sort_by_key(|view| view.node.span_start());
+        // The precomputed path identifies the outermost escaped container for each control.
+        // Ordering that container at the control opener keeps its complete ancestor chain and
+        // eager holes in the source arm that executed them.
+        let mut ordered = nodes
+            .iter()
+            .copied()
+            .map(|view| {
+                let control = self.escaped_control(view);
+                (
+                    control.map_or_else(|| view.node.span_start(), |(region, _)| region.span.start),
+                    view,
+                    control,
+                )
+            })
+            .collect::<Vec<_>>();
+        ordered.sort_by_key(|(start, _, _)| *start);
+        let evaluation_starts = ordered
+            .iter()
+            .map(|(start, _, _)| *start)
+            .collect::<Vec<_>>();
+        let embedded_controls = ordered
+            .iter()
+            .map(|(_, _, control)| *control)
+            .collect::<Vec<_>>();
+        let ordered = ordered
+            .into_iter()
+            .map(|(_, view, _)| view)
+            .collect::<Vec<_>>();
         let nodes = &ordered;
+        let nodes_by_start = nodes
+            .iter()
+            .map(|view| (view.node.span_start(), *view))
+            .collect::<HashMap<_, _>>();
         let mut out = Contributions::default();
         let mut index = 0;
         let mut remaining = Predicate::True;
@@ -1636,87 +2451,147 @@ impl<'a> Interpreter<'a> {
             if remaining == Predicate::False {
                 break;
             }
+            let local_entry = self.locals.clone();
             let entry_scope = self.mark_scope();
             self.push_predicate(remaining.clone());
             let mut next = Contributions::default();
-            match view.node {
-                Node::Control(region) => {
-                    // Re-adopt siblings that escaped an ill-nested region:
-                    // their spans still lie inside the region, so they belong
-                    // to a branch body (with its guards and dot bindings).
-                    // Children of an adopted node that start after the region
-                    // end stay outside its scope via the child limit.
-                    let region_index = index;
-                    let mut adopted = Vec::new();
-                    while let Some(next) = nodes.get(index + 1) {
-                        if next.node.span_start() < region.span.end {
-                            // In-scope evaluation is bounded by the innermost
-                            // region end; deferral hands descendants past this
-                            // region (but within the enclosing bound) back to
-                            // this region, and the rest to the enclosing one.
-                            let in_scope = next
-                                .child_limit
-                                .map_or(region.span.end, |limit| limit.min(region.span.end));
-                            adopted.push(Adopted {
-                                view: NodeView {
-                                    node: next.node,
-                                    child_limit: Some(in_scope),
-                                },
-                                defer_upper: next.child_limit,
-                            });
-                            index += 1;
-                        } else {
-                            break;
-                        }
-                    }
-                    // Descendants of *earlier* siblings that escaped forward
-                    // into the region (a branch contributing to a container
-                    // opened before it) belong to branch bodies too; their
-                    // in-place evaluation was bounded at the region start.
-                    let mut escaped = Vec::new();
-                    for prior in nodes.get(..region_index).unwrap_or_default() {
-                        if matches!(prior.node, Node::Control(_)) {
-                            continue;
-                        }
-                        let mut chain = Vec::new();
-                        super::control::collect_deferred(
-                            prior.node,
-                            region.span.start,
-                            prior.child_limit,
-                            &mut chain,
-                            &mut escaped,
-                        );
-                    }
-                    next.extend(self.eval_control(region, &adopted, escaped));
+            let control = match view.node {
+                Node::Control(region) => Some((region, false, view.control_cursor)),
+                _ => embedded_controls[index]
+                    .map(|(region, next_cursor)| (region, true, next_cursor)),
+            };
+            if let Some((region, embedded, next_cursor)) = control {
+                // Re-adopt nodes that escaped an ill-nested region: their spans still lie inside
+                // the region, so they belong to a branch body with its guards and dot bindings.
+                // The adopted view stops at the next branch boundary.
+                // Later branch and post-region descendants retain the same
+                // container chain without reevaluating its eager holes.
+                let mut adopted = Vec::new();
+                if embedded {
+                    let (_, branch) = branch_window(region, view.node.span_start());
+                    adopted.push(Adopted {
+                        view: NodeView {
+                            node: view.node,
+                            window: SourceWindow {
+                                start: branch.start.max(view.window.start),
+                                end: Some(view.window.end.map_or_else(
+                                    || branch.end.unwrap_or(region.span.end),
+                                    |end| end.min(branch.end.unwrap_or(region.span.end)),
+                                )),
+                            },
+                            omitted_control: Some(region.span.start),
+                            control_cursor: next_cursor,
+                        },
+                        defer_window: view.window,
+                    });
                 }
-                Node::Output(action) => {
-                    let consumed = self.eval_output_with_lookahead(action, nodes, index, &mut next);
-                    index += consumed;
-                }
-                _ => {
-                    // Evaluation stops at the next control sibling's start:
-                    // descendants escaping into that region evaluate inside
-                    // its branches instead of unguarded in place.
-                    let mut bounded = *view;
-                    if let Some(region_start) = nodes
-                        .get(index + 1..)
-                        .into_iter()
-                        .flatten()
-                        .find_map(|next| match next.node {
-                            Node::Control(region) => Some(region.span.start),
-                            _ => None,
-                        })
-                    {
-                        bounded.child_limit = Some(
-                            bounded
-                                .child_limit
-                                .map_or(region_start, |limit| limit.min(region_start)),
-                        );
+                while let Some(next) = nodes.get(index + 1) {
+                    if next.node.span_start() < region.span.end {
+                        // In-scope evaluation is bounded by the innermost
+                        // region end; deferral hands descendants past this
+                        // region (but within the enclosing bound) back to
+                        // this region, and the rest to the enclosing one.
+                        let (_, branch) = branch_window(region, next.node.span_start());
+                        let in_scope = SourceWindow {
+                            start: branch.start.max(next.window.start),
+                            end: Some(next.window.end.map_or_else(
+                                || branch.end.unwrap_or(region.span.end),
+                                |end| end.min(branch.end.unwrap_or(region.span.end)),
+                            )),
+                        };
+                        adopted.push(Adopted {
+                            view: NodeView {
+                                node: next.node,
+                                window: in_scope,
+                                omitted_control: Some(
+                                    next.omitted_control.map_or(region.span.start, |omitted| {
+                                        omitted.max(region.span.start)
+                                    }),
+                                ),
+                                control_cursor: self.cursor_after_control(*next, region.span.start),
+                            },
+                            defer_window: next.window,
+                        });
+                        index += 1;
+                    } else {
+                        break;
                     }
-                    next.extend(self.eval_node(bounded));
+                }
+                // Descendants of *earlier* siblings that escaped forward
+                // into the region (a branch contributing to a container
+                // opened before it) belong to branch bodies too; their
+                // in-place evaluation was bounded at the region start.
+                let mut escaped = Vec::new();
+                for prior_start in self
+                    .body_facts
+                    .adoption_plan
+                    .crossing_priors
+                    .get(&region.span.start)
+                    .into_iter()
+                    .flatten()
+                {
+                    let Some(prior) = nodes_by_start.get(prior_start) else {
+                        continue;
+                    };
+                    let mut chain = Vec::new();
+                    super::control::collect_deferred(
+                        prior.node,
+                        SourceWindow {
+                            start: region.span.start,
+                            end: prior.window.end,
+                        },
+                        prior.omitted_control,
+                        &self.body_facts.adoption_plan,
+                        &self.evaluated_parent_shells,
+                        &mut chain,
+                        &mut escaped,
+                    );
+                }
+                next.extend(self.eval_control(region, &adopted, escaped));
+            } else {
+                match view.node {
+                    Node::Output(action) => {
+                        let consumed =
+                            self.eval_output_with_lookahead(action, nodes, index, &mut next);
+                        index += consumed;
+                    }
+                    _ => {
+                        // Evaluation stops at the next control sibling's start:
+                        // descendants escaping into that region evaluate inside
+                        // its branches instead of unguarded in place.
+                        let mut bounded = *view;
+                        if let Some(region_start) = evaluation_starts.get(index + 1).copied() {
+                            bounded.window = bounded.window.with_end(region_start);
+                        }
+                        next.extend(self.eval_node(bounded));
+                    }
                 }
             }
             self.rewind(entry_scope);
+            if remaining != Predicate::True {
+                let executed = self.locals.clone();
+                let skipped = local_entry.clone();
+                self.locals.join_control_outcomes(
+                    &local_entry,
+                    &[
+                        crate::symbolic_local_state::ControlOutcome::new(
+                            TruthCondition::exact_with_memo(
+                                remaining.clone(),
+                                self.db.predicate_memo().as_ref(),
+                            ),
+                            executed,
+                        ),
+                        crate::symbolic_local_state::ControlOutcome::new(
+                            TruthCondition::exact_with_memo(
+                                remaining.clone().negated(),
+                                self.db.predicate_memo().as_ref(),
+                            ),
+                            skipped,
+                        ),
+                    ],
+                    self.db.predicate_memo().as_ref(),
+                );
+            }
             let exit_condition = next.loop_control.exit_condition();
             next.guard_all(&remaining, self.db.predicate_memo().as_ref());
             out.extend(next);
@@ -1911,38 +2786,6 @@ impl<'a> Interpreter<'a> {
         self.line_indent(span.start)
     }
 
-    /// The structural indent of one node: containers report their own
-    /// indent, scalars their line indent, plain outputs their line indent,
-    /// and control regions the minimum over their branch bodies (a region's
-    /// rendered content sits at the body indent; the header line is
-    /// conventionally unindented). Outputs with an explicit rendered indent
-    /// (`… | nindent N`) report `None`: they float, and the float rules own
-    /// their placement (line columns are layout noise for them).
-    pub(super) fn structural_content_indent(&self, node: &Node) -> Option<usize> {
-        match node {
-            Node::Mapping(entry) => Some(entry.indent),
-            Node::Sequence(item) => Some(item.indent),
-            Node::Scalar(line) => Some(line.indent),
-            Node::Control(region) => region
-                .branches
-                .iter()
-                .flat_map(|branch| &branch.body)
-                .filter_map(|child| self.structural_content_indent(child))
-                .min(),
-            Node::Output(action) => {
-                let width = parse_expr_text(self.text(action.span))
-                    .iter()
-                    .rev()
-                    .find_map(TemplateExpr::fragment_indent_width);
-                match width {
-                    Some(_) => None,
-                    None => Some(self.line_indent(action.span.start)),
-                }
-            }
-            Node::Comment(_) | Node::Opaque(_) => None,
-        }
-    }
-
     /// Minimum caller-relative indent of a helper's rendered root.
     ///
     /// A left-trimmed bare output at the helper root removes its source
@@ -2007,6 +2850,7 @@ impl<'a> Interpreter<'a> {
             Node::Mapping(entry) => {
                 let previous_site = self.enter_hole_site(entry.key.span);
                 let key = self.entry_key(&entry.key);
+                self.record_parent_shell(entry.span.start, ParentShell::Entry(key.clone()));
                 self.push_key_reads(&key);
                 self.restore_site(previous_site);
                 let mut value = Guarded::empty();
@@ -2033,7 +2877,12 @@ impl<'a> Interpreter<'a> {
                         value.extend(evaluated);
                     }
                 }
-                let (mut children, siblings) = self.split_structural_children(view, entry.indent);
+                let (mut children, siblings) = self.split_structural_children(
+                    view,
+                    ParentKind::Entry,
+                    entry.indent,
+                    entry.value.is_none() && entry.block.is_none(),
+                );
                 // A bare output hanging at or above a block-scalar entry's
                 // indent (`key: |` followed by a column-0 `{{- include … }}`)
                 // renders into the still-open block whenever its text is
@@ -2100,7 +2949,12 @@ impl<'a> Interpreter<'a> {
                 let siblings = self.float_escaping_outputs(siblings, &mut child);
                 let opened_empty = entry.value.is_none() && entry.block.is_none();
                 let marked_at = content_child_mark(&entry.children, entry.indent);
-                let content_at = established_content_mark(self, &entry.children, entry.indent);
+                let content_at = self
+                    .body_facts
+                    .adoption_plan
+                    .parent_shapes
+                    .get(&entry.span.start)
+                    .and_then(|shape| shape.established_content_mark);
                 value.extend(child.take_floating_below(
                     entry.indent,
                     opened_empty,
@@ -2116,6 +2970,7 @@ impl<'a> Interpreter<'a> {
                 }
             }
             Node::Sequence(item) => {
+                self.record_parent_shell(item.span.start, ParentShell::Item);
                 let mut value = Guarded::empty();
                 if let Some(block) = &item.block {
                     value.extend(self.eval_block_scalar(block));
@@ -2125,7 +2980,8 @@ impl<'a> Interpreter<'a> {
                     value.extend(self.eval_scalar_parts(parts));
                     self.in_value_slot = previous_slot;
                 }
-                let (mut children, siblings) = self.split_structural_children(view, item.indent);
+                let (mut children, siblings) =
+                    self.split_structural_children(view, ParentKind::Item, item.indent, false);
                 // `- |` items adopt shallow bare outputs as block text, the
                 // same as block-scalar mapping entries above. The CST can
                 // retain an escaped output as a child or a sibling.
@@ -2210,10 +3066,20 @@ impl<'a> Interpreter<'a> {
                 self.eval_assignment_span(opaque.span);
             }
             Node::Opaque(opaque) if opaque.kind == OpaqueKind::Break => {
-                out.loop_control.breaks.push(Predicate::True);
+                out.loop_control
+                    .breaks
+                    .push(crate::symbolic_local_state::ControlOutcome::new(
+                        TruthCondition::exact(Predicate::True),
+                        self.locals.clone(),
+                    ));
             }
             Node::Opaque(opaque) if opaque.kind == OpaqueKind::Continue => {
-                out.loop_control.continues.push(Predicate::True);
+                out.loop_control
+                    .continues
+                    .push(crate::symbolic_local_state::ControlOutcome::new(
+                        TruthCondition::exact(Predicate::True),
+                        self.locals.clone(),
+                    ));
             }
             Node::Control(_) | Node::Output(_) | Node::Comment(_) | Node::Opaque(_) => {}
         }
@@ -2278,23 +3144,50 @@ impl<'a> Interpreter<'a> {
     fn split_structural_children<'n>(
         &self,
         view: NodeView<'n>,
+        parent_kind: ParentKind,
         container_indent: usize,
+        accepts_same_indent: bool,
     ) -> (Vec<NodeView<'n>>, Vec<NodeView<'n>>) {
-        view.in_scope_children()
-            .into_iter()
-            .partition(|child| self.node_belongs_inside(child.node, container_indent))
+        view.in_scope_children().into_iter().partition(|child| {
+            self.node_belongs_inside(
+                child.node,
+                parent_kind,
+                container_indent,
+                accepts_same_indent,
+            )
+        })
     }
 
-    fn node_belongs_inside(&self, node: &Node, container_indent: usize) -> bool {
+    pub(super) fn node_belongs_inside(
+        &self,
+        node: &Node,
+        parent_kind: ParentKind,
+        container_indent: usize,
+        accepts_same_indent: bool,
+    ) -> bool {
         match node {
             Node::Mapping(entry) => entry.indent > container_indent,
-            Node::Sequence(item) => item.indent >= container_indent,
+            Node::Sequence(item) => {
+                item.indent > container_indent
+                    || (item.indent == container_indent
+                        && parent_kind == ParentKind::Entry
+                        && accepts_same_indent)
+            }
             Node::Scalar(line) => line.indent > container_indent,
-            Node::Control(region) => region
-                .branches
-                .iter()
-                .flat_map(|branch| &branch.body)
-                .all(|child| self.node_belongs_inside(child, container_indent)),
+            Node::Control(region) => {
+                region
+                    .branches
+                    .iter()
+                    .flat_map(|branch| &branch.body)
+                    .all(|child| {
+                        self.node_belongs_inside(
+                            child,
+                            parent_kind,
+                            container_indent,
+                            accepts_same_indent,
+                        )
+                    })
+            }
             Node::Output(action) => {
                 // Deeper lines always belong; the explicit-width probe (a
                 // re-parse) only runs for the rare same-or-shallower case.
@@ -2317,7 +3210,7 @@ impl<'a> Interpreter<'a> {
             .is_some_and(|indent| indent > block_indent)
     }
 
-    fn control_render_indent(&self, span: Span) -> Option<usize> {
+    pub(super) fn control_render_indent(&self, span: Span) -> Option<usize> {
         let text = self.text(span);
         let tree = parse_go_template(text)?;
         self.template_render_indent(tree.root_node(), text, span.start)
@@ -2356,7 +3249,7 @@ impl<'a> Interpreter<'a> {
                         .find_map(TemplateExpr::fragment_indent_width)
                 })
                 .or_else(|| Some(self.line_indent(source_offset + node.start_byte()))),
-            NodeAction::If(_) | NodeAction::With(_) | NodeAction::Range(_) => {
+            NodeAction::If(_) | NodeAction::With | NodeAction::Range => {
                 let mut cursor = node.walk();
                 let mut minimum = None;
                 if cursor.goto_first_child() {

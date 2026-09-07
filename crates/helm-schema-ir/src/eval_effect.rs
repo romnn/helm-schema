@@ -2,6 +2,7 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use crate::abstract_value::AbstractValue;
 use crate::fragment_eval::ValueRead;
+use crate::function_semantics::ArgumentEvaluationMode;
 use crate::helper_meta::{HelperOutputMeta, RenderedRow};
 use crate::observed_facts::{HintGrade, ObservedFacts};
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
@@ -333,6 +334,32 @@ impl FailCapture {
         self.conjunction
             .iter()
             .any(helm_schema_core::Predicate::contains_approximation)
+    }
+
+    pub(crate) fn requirement_is_implied_by(
+        &self,
+        condition: &helm_schema_core::Predicate,
+    ) -> bool {
+        let (path, required_type) = match &self.kind {
+            CaptureKind::StringRequirement { path, .. } => (path, Some("string")),
+            CaptureKind::ValueType {
+                path, schema_type, ..
+            } => (path, Some(schema_type.as_str())),
+            CaptureKind::AbsenceAborts { path } => (path, None),
+            _ => return false,
+        };
+        condition.contract_guards().is_some_and(|guards| {
+            guards.iter().any(|guard| {
+                matches!(
+                    guard,
+                    crate::Guard::TypeIs {
+                        path: guarded,
+                        schema_type,
+                    } if *guarded == *path
+                        && required_type.is_none_or(|required| schema_type == required)
+                )
+            })
+        })
     }
 }
 
@@ -1190,6 +1217,25 @@ pub(crate) struct EvalResult {
     /// dispatches carry the runtime values that a helper receiving the
     /// mapping observes through its dot-relative fields.
     pub(crate) field_scalar_dispatches: BTreeMap<String, ScalarValueDispatch>,
+    /// Binding-owned operands for a direct variable expression.
+    /// The explicit unresolved remainder is distinct from an expression that
+    /// did not originate at a local binding.
+    pub(crate) proven_operands: Option<ProvenOperands>,
+}
+
+/// One proven binding operand under its structural selection condition.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) struct ProvenOperand {
+    pub(crate) condition: helm_schema_core::Predicate,
+    pub(crate) evaluation_mode: ArgumentEvaluationMode,
+    pub(crate) result: Box<EvalResult>,
+}
+
+/// Proven binding operands and any unresolved selection remainder.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub(crate) struct ProvenOperands {
+    pub(crate) known: Vec<ProvenOperand>,
+    pub(crate) has_unresolved: bool,
 }
 
 impl EvalResult {
@@ -1247,6 +1293,7 @@ impl EvalResult {
             json_payload_truth: TruthCondition::Unknown,
             scalar_dispatch,
             field_scalar_dispatches: BTreeMap::new(),
+            proven_operands: None,
         }
     }
 
@@ -1262,6 +1309,7 @@ impl EvalResult {
             json_payload_truth: TruthCondition::Unknown,
             scalar_dispatch: None,
             field_scalar_dispatches: BTreeMap::new(),
+            proven_operands: None,
         }
     }
 
@@ -1358,6 +1406,45 @@ impl EvalResult {
     }
 
     pub(crate) fn exact_input_identity(&self) -> Option<String> {
+        let (path, typed_path) = self.input_identity_candidate()?;
+        self.effects
+            .local_output_meta
+            .get(&typed_path)
+            .is_none_or(|meta| meta.predicates.is_empty())
+            .then_some(path)
+    }
+
+    /// Returns the raw input identity when `selection` proves its guarded output arm.
+    pub(crate) fn exact_input_identity_under(
+        &self,
+        selection: &helm_schema_core::Predicate,
+        memo: &helm_schema_core::PredicateMemo,
+    ) -> Option<String> {
+        let (path, typed_path) = self.input_identity_candidate()?;
+        let selected = self
+            .effects
+            .local_output_meta
+            .get(&typed_path)
+            .is_none_or(|meta| {
+                meta.predicates.is_empty()
+                    || memo.exactly_implies(
+                        selection,
+                        &helm_schema_core::Predicate::Or(
+                            meta.predicates
+                                .iter()
+                                .map(|branch| {
+                                    helm_schema_core::Predicate::all(
+                                        branch.iter().cloned().collect(),
+                                    )
+                                })
+                                .collect(),
+                        ),
+                    )
+            });
+        selected.then_some(path)
+    }
+
+    fn input_identity_candidate(&self) -> Option<(String, ValuesPath)> {
         let path = match self.value.as_ref()? {
             AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => path.encode(),
             AbstractValue::OutputPath(path, meta)
@@ -1370,13 +1457,8 @@ impl EvalResult {
         let typed_path = ValuesPath::parse(&path);
         (!self.effects.defaults.contains(&typed_path)
             && !self.effects.local_default_paths.contains(&typed_path)
-            && !self.effects.derived_text_paths.contains(&typed_path)
-            && self
-                .effects
-                .local_output_meta
-                .get(&typed_path)
-                .is_none_or(|meta| meta.predicates.is_empty()))
-        .then_some(path)
+            && !self.effects.derived_text_paths.contains(&typed_path))
+        .then_some((path, typed_path))
     }
 }
 

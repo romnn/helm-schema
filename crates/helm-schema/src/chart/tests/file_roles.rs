@@ -49,7 +49,15 @@ fn file_roles_preserve_existing_chart_file_classification() -> eyre::Result<()> 
     )?;
     test_util::write(&chart_dir.join("charts/child/config/child.json")?, "{}\n")?;
 
-    let files_without_tests = list_chart_files(&chart_dir, false)?;
+    let chart = ChartContext {
+        chart_dir,
+        values_prefix: Vec::new(),
+        template_namespace: "fixture".to_string(),
+        is_library: false,
+        static_root_strings: BTreeMap::new(),
+        dependency_activation_chain: Vec::new(),
+    };
+    let files_without_tests = list_chart_files(&chart, false)?;
     sim_assert_eq!(
         have: role_paths(&files_without_tests, FileRole::ManifestTemplate),
         want: vec!["deployment.yaml"]
@@ -67,12 +75,41 @@ fn file_roles_preserve_existing_chart_file_classification() -> eyre::Result<()> 
         want: vec!["client-auth.json", "config.yaml", "example.yaml"]
     );
 
-    let files_with_tests = list_chart_files(&chart_dir, true)?;
+    let files_with_tests = list_chart_files(&chart, true)?;
     sim_assert_eq!(
         have: role_paths(&files_with_tests, FileRole::ManifestTemplate),
         want: vec!["deployment.yaml", "test-job.yaml"]
     );
 
+    Ok(())
+}
+
+#[test]
+fn library_roles_register_only_underscore_basenames_without_losing_payloads() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+    for path in [
+        "templates/_helpers.tpl",
+        "templates/nested/_partial.yaml",
+        "templates/_directory/not-a-partial.yaml",
+        "templates/configmap.yaml",
+        "templates/NOTES.txt",
+        "files/configmap.yaml",
+    ] {
+        test_util::write(&chart_dir.join(path)?, "payload")?;
+    }
+    let chart = ChartContext {
+        chart_dir,
+        values_prefix: Vec::new(),
+        template_namespace: "fixture".to_string(),
+        is_library: true,
+        static_root_strings: BTreeMap::new(),
+        dependency_activation_chain: Vec::new(),
+    };
+    let files = list_chart_files(&chart, false)?;
+    sim_assert_eq!(have: role_paths(&files, FileRole::DefineIndexTemplate), want: vec!["_helpers.tpl", "_partial.yaml"]);
+    sim_assert_eq!(have: role_paths(&files, FileRole::ManifestTemplate), want: Vec::<String>::new());
+    sim_assert_eq!(have: role_paths(&files, FileRole::NotesTemplate), want: Vec::<String>::new());
+    sim_assert_eq!(have: role_paths(&files, FileRole::FilesGetSource), want: vec!["configmap.yaml"]);
     Ok(())
 }
 
@@ -84,6 +121,7 @@ fn loaded_chart_corpus_owns_the_classified_source_snapshot() -> eyre::Result<()>
     let chart = ChartContext {
         chart_dir,
         values_prefix: Vec::new(),
+        template_namespace: "fixture".to_string(),
         is_library: false,
         static_root_strings: BTreeMap::new(),
         dependency_activation_chain: Vec::new(),

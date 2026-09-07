@@ -20,7 +20,15 @@ pub fn build_define_index(
 ) -> eyre::Result<DefineIndex> {
     let mut idx = DefineIndex::new();
     for source in spec.load()? {
-        idx.add_file_source(&source.path, &source.source);
+        if spec
+            .file_sources
+            .iter()
+            .any(|(name, _)| *name == source.path)
+        {
+            idx.add_files_get_source(&source.path, &source.source);
+        } else {
+            idx.add_file_source(&source.path, &source.source);
+        }
     }
     Ok(idx)
 }
@@ -166,8 +174,7 @@ pub fn generate_schema_with_values_yaml(
     let composed = values_yaml
         .and_then(|source| serde_yaml::from_str(source).ok())
         .unwrap_or(serde_yaml::Value::Null);
-    let documents =
-        PreparedValuesDocuments::new(composed, serde_yaml::Value::Null, serde_yaml::Value::Null);
+    let documents = PreparedValuesDocuments::new(composed, serde_yaml::Value::Null);
     generate_values_schema(
         ValuesSchemaInput::new(&schema_signals, provider).with_values_documents(&documents),
     )

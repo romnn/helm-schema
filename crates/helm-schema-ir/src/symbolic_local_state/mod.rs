@@ -2,6 +2,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{GetBinding, GetBindingPlan};
+use crate::eval_env::{BindingEvaluationMode, BindingValueMetadata, LocalBinding};
 use crate::fragment_assignment::AssignmentKind;
 use crate::helper_meta::HelperOutputMeta;
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
@@ -10,14 +11,15 @@ use helm_schema_core::{Guard, Predicate, PredicateMemo};
 mod branch_join;
 
 use branch_join::{
-    joined_branch_outcomes, joined_scalar_dispatch_arms, joined_truthy_reduction_arms,
+    joined_binding_decisions, joined_branch_outcomes, joined_scalar_dispatch_arms,
+    joined_truthy_reduction_arms,
 };
 
 #[derive(Clone, Debug, Default)]
 pub(crate) struct SymbolicLocalState {
     pub(crate) range_domains: HashMap<String, Vec<String>>,
     pub(crate) get_bindings: HashMap<String, GetBinding>,
-    pub(crate) fragment_values: HashMap<String, AbstractValue>,
+    pub(crate) fragment_values: HashMap<String, LocalBinding>,
     pub(crate) default_paths: HashMap<String, BTreeSet<helm_schema_core::ValuesPath>>,
     pub(crate) output_meta:
         HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
@@ -64,13 +66,6 @@ pub(crate) struct SymbolicLocalState {
     /// every render. Unfaithful member conditions re-decode under this
     /// binding as a sound subset (positive-polarity consumers only).
     pub(crate) definite_range_member_values: HashMap<String, AbstractValue>,
-    /// Locals whose CURRENT value came from a guarded self-advance
-    /// (`$x = index $x $k` under a `hasKey $x $k` presence conjunct): one
-    /// traversal step into a member. The branch join keeps the advanced
-    /// (deepest) value instead of widening to a choice — facts derived
-    /// from the advanced identity carry its presence guard, which only
-    /// holds at runtime when the advance really happened.
-    pub(crate) traversal_advances: BTreeSet<String>,
     local_scopes: Vec<LocalScopeFrame>,
 }
 
@@ -93,8 +88,7 @@ struct LocalScopeFrame {
 struct VariableLocalState {
     range_domain: Option<Vec<String>>,
     get_binding: Option<GetBinding>,
-    fragment_value: Option<AbstractValue>,
-    traversal_advanced: bool,
+    fragment_value: Option<LocalBinding>,
     default_paths: Option<BTreeSet<helm_schema_core::ValuesPath>>,
     output_meta: Option<BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
     scalar_dispatch: Option<ScalarValueDispatch>,
@@ -107,7 +101,92 @@ struct VariableLocalState {
     definite_range_member_value: Option<AbstractValue>,
 }
 
+/// One complete local-state exit selected by a structural control condition.
+#[derive(Clone, Debug)]
+pub(crate) struct ControlOutcome {
+    condition: Predicate,
+    truth: Option<TruthCondition>,
+    state: SymbolicLocalState,
+}
+
+impl ControlOutcome {
+    pub(crate) fn new(truth: TruthCondition, state: SymbolicLocalState) -> Self {
+        let condition = truth
+            .predicate()
+            .cloned()
+            .unwrap_or_else(|| truth.when_true());
+        Self {
+            condition,
+            truth: Some(truth),
+            state,
+        }
+    }
+
+    pub(crate) fn unresolved_from_changed(entry: &SymbolicLocalState, known: &[Self]) -> Self {
+        let variables = known
+            .iter()
+            .flat_map(|outcome| outcome.state.fragment_values.keys())
+            .chain(entry.fragment_values.keys())
+            .cloned()
+            .collect::<BTreeSet<_>>();
+        let mut state = entry.clone();
+        for variable in variables {
+            if known.iter().all(|outcome| {
+                outcome.state.fragment_values.get(&variable) == entry.fragment_values.get(&variable)
+            }) {
+                continue;
+            }
+            state.clear_variable(&variable);
+            state
+                .fragment_values
+                .insert(variable, LocalBinding::unknown());
+        }
+        Self {
+            condition: Predicate::False,
+            truth: None,
+            state,
+        }
+    }
+
+    pub(crate) fn condition(&self) -> Predicate {
+        self.condition.clone()
+    }
+
+    pub(crate) fn guard_all(&mut self, condition: Predicate, memo: &PredicateMemo) {
+        self.condition = crate::scalar_value::conjoin_predicates_with_memo(
+            condition.clone(),
+            self.condition.clone(),
+            memo,
+        )
+        .unwrap_or(Predicate::False);
+        let Some(truth) = self.truth.take() else {
+            return;
+        };
+        self.truth = Some(TruthCondition::all_with_memo(
+            [
+                TruthCondition::from_predicate_with_memo(condition, memo),
+                truth,
+            ],
+            memo,
+        ));
+    }
+
+    pub(crate) fn replace_state(&mut self, state: &SymbolicLocalState) {
+        self.state = state.clone();
+    }
+}
+
 impl SymbolicLocalState {
+    pub(crate) fn with_root(value: AbstractValue, mode: BindingEvaluationMode) -> Self {
+        let mut state = Self::default();
+        let root = match mode {
+            BindingEvaluationMode::Direct => LocalBinding::direct(value),
+            BindingEvaluationMode::Evaluated => LocalBinding::evaluated(value),
+        };
+        state.fragment_values.insert(String::new(), root);
+        state
+    }
+
     pub(crate) fn join_branch_outcomes(&mut self, entry: &Self, outcomes: &[Self]) {
         *self = joined_branch_outcomes(entry, outcomes);
     }
@@ -125,6 +204,72 @@ impl SymbolicLocalState {
         if let Some(joined) = joined_scalar_dispatch_arms(entry, arms, has_unconditional_else, memo)
         {
             self.scalar_dispatches = joined;
+        }
+    }
+
+    pub(crate) fn join_binding_decisions(
+        &mut self,
+        fallthrough: &Self,
+        decisions: &[Option<std::rc::Rc<crate::eval_env::BindingDecision>>],
+        outcomes: &[Self],
+    ) {
+        self.fragment_values = joined_binding_decisions(fallthrough, decisions, outcomes);
+    }
+
+    /// Join every semantic local domain from a complete set of control exits.
+    pub(crate) fn join_control_outcomes(
+        &mut self,
+        entry: &Self,
+        outcomes: &[ControlOutcome],
+        memo: &PredicateMemo,
+    ) {
+        if outcomes.is_empty() {
+            *self = entry.clone();
+            return;
+        }
+        let states = outcomes
+            .iter()
+            .map(|outcome| outcome.state.clone())
+            .collect::<Vec<_>>();
+        let decisions = outcomes
+            .iter()
+            .map(|outcome| {
+                outcome
+                    .truth
+                    .clone()
+                    .map(crate::eval_env::BindingDecision::new)
+            })
+            .collect::<Vec<_>>();
+        let scalar_arms = outcomes
+            .iter()
+            .filter_map(|outcome| {
+                outcome
+                    .truth
+                    .clone()
+                    .map(|truth| (truth, outcome.state.clone()))
+            })
+            .collect::<Vec<_>>();
+        self.join_branch_outcomes(entry, &states);
+        self.join_binding_decisions(entry, &decisions, &states);
+        if scalar_arms.len() == outcomes.len() {
+            self.join_scalar_dispatch_arms(entry, &scalar_arms, true, memo);
+            self.join_truthy_reduction_arms(entry, &scalar_arms, true, memo);
+        }
+    }
+
+    pub(crate) fn widen_changed_fragment_bindings(
+        &mut self,
+        entry: &Self,
+        decision: std::rc::Rc<crate::eval_env::BindingDecision>,
+    ) {
+        for (variable, binding) in &mut self.fragment_values {
+            if entry.fragment_values.get(variable) == Some(binding) {
+                continue;
+            }
+            *binding = LocalBinding::unresolved_with_candidate(
+                std::rc::Rc::clone(&decision),
+                binding.clone(),
+            );
         }
     }
 
@@ -255,25 +400,76 @@ impl SymbolicLocalState {
         variable: String,
         binding: Option<AbstractValue>,
     ) {
+        self.bind_fragment_value_with_metadata(
+            kind,
+            variable,
+            binding,
+            BindingValueMetadata::default(),
+        );
+    }
+
+    pub(crate) fn bind_fragment_value_with_metadata(
+        &mut self,
+        kind: AssignmentKind,
+        variable: String,
+        binding: Option<AbstractValue>,
+        metadata: BindingValueMetadata,
+    ) {
+        self.bind_local_binding(
+            kind,
+            variable,
+            binding.map(|value| {
+                LocalBinding::new_with_metadata(value, BindingEvaluationMode::Evaluated, metadata)
+            }),
+        );
+    }
+
+    pub(crate) fn bind_local_binding(
+        &mut self,
+        kind: AssignmentKind,
+        variable: String,
+        binding: Option<LocalBinding>,
+    ) {
         self.record_binding_shadow(kind, &variable);
         self.set_fragment_value(variable, binding);
     }
 
-    pub(crate) fn mark_traversal_advance(&mut self, variable: &str) {
-        self.traversal_advances.insert(variable.to_string());
+    pub(crate) fn bind_direct_fragment_value(
+        &mut self,
+        kind: AssignmentKind,
+        variable: String,
+        binding: AbstractValue,
+    ) {
+        self.record_binding_shadow(kind, &variable);
+        let range_domain = self.range_domains.remove(&variable);
+        self.clear_variable(&variable);
+        if let Some(range_domain) = range_domain {
+            self.range_domains.insert(variable.clone(), range_domain);
+        }
+        self.fragment_values
+            .insert(variable, LocalBinding::direct(binding));
+    }
+
+    pub(crate) fn clear_current_binding(&mut self, variable: &str) {
+        self.clear_variable(variable);
+    }
+
+    pub(crate) fn bind_current_variable_state(
+        &mut self,
+        kind: AssignmentKind,
+        source: &str,
+        target: String,
+    ) {
+        let binding = self.variable_state(source);
+        self.record_binding_shadow(kind, &target);
+        self.clear_variable(&target);
+        self.restore_variable_state(&target, binding);
     }
 
     pub(crate) fn insert_range_domain(&mut self, variable: String, literals: Vec<String>) {
         self.record_scope_shadow(&variable);
         self.clear_variable(&variable);
         self.range_domains.insert(variable, literals);
-    }
-
-    pub(crate) fn set_chart_value_defaults(
-        &mut self,
-        defaults: BTreeSet<helm_schema_core::ValuesPath>,
-    ) {
-        self.chart_value_defaults = defaults;
     }
 
     pub(crate) fn append_chart_value_defaults(
@@ -311,7 +507,6 @@ impl SymbolicLocalState {
             range_domain: self.range_domains.get(variable).cloned(),
             get_binding: self.get_bindings.get(variable).cloned(),
             fragment_value: self.fragment_values.get(variable).cloned(),
-            traversal_advanced: self.traversal_advances.contains(variable),
             default_paths: self.default_paths.get(variable).cloned(),
             output_meta: self.output_meta.get(variable).cloned(),
             scalar_dispatch: self.scalar_dispatches.get(variable).cloned(),
@@ -348,11 +543,6 @@ impl SymbolicLocalState {
         restore_map_entry(&mut self.range_domains, variable, previous.range_domain);
         restore_map_entry(&mut self.get_bindings, variable, previous.get_binding);
         restore_map_entry(&mut self.fragment_values, variable, previous.fragment_value);
-        if previous.traversal_advanced {
-            self.traversal_advances.insert(variable.to_string());
-        } else {
-            self.traversal_advances.remove(variable);
-        }
         restore_map_entry(&mut self.default_paths, variable, previous.default_paths);
         restore_map_entry(&mut self.output_meta, variable, previous.output_meta);
         restore_map_entry(
@@ -393,7 +583,7 @@ impl SymbolicLocalState {
         );
     }
 
-    fn set_fragment_value(&mut self, variable: String, binding: Option<AbstractValue>) {
+    fn set_fragment_value(&mut self, variable: String, binding: Option<LocalBinding>) {
         self.clear_variable(&variable);
         if let Some(binding) = binding {
             self.fragment_values.insert(variable, binding);
@@ -406,7 +596,6 @@ impl SymbolicLocalState {
         self.range_domains.remove(variable);
         self.get_bindings.remove(variable);
         self.fragment_values.remove(variable);
-        self.traversal_advances.remove(variable);
         self.default_paths.remove(variable);
         self.output_meta.remove(variable);
         self.scalar_dispatches.remove(variable);

@@ -1396,6 +1396,88 @@ fn with_guarded_quote_into_string_sink_accepts_any_input() {
     }
 }
 
+/// Affix transforms enforce the catalogue's string contract on both operands.
+#[test]
+fn trim_affix_catalog_requires_string_affix_and_subject() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          prefix: {{ trimPrefix .Values.prefix .Values.subject | quote }}
+          suffix: {{ .Values.tail | trimSuffix .Values.suffix | quote }}
+    "#};
+    let reference = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          prefix-affix: {{ trim .Values.prefix | quote }}
+          prefix-subject: {{ trim .Values.subject | quote }}
+          suffix-affix: {{ trim .Values.suffix | quote }}
+          suffix-subject: {{ trim .Values.tail | quote }}
+    "#};
+
+    let schema = schema_for(parse_ir(src));
+    sim_assert_eq!(have: &schema, want: &schema_for(parse_ir(reference)));
+
+    for (instance, want) in [
+        (
+            serde_json::json!({
+                "prefix": "-",
+                "subject": "-value",
+                "suffix": "-",
+                "tail": "value-",
+            }),
+            true,
+        ),
+        (
+            serde_json::json!({
+                "prefix": {},
+                "subject": "-value",
+                "suffix": "-",
+                "tail": "value-",
+            }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "prefix": "-",
+                "subject": {},
+                "suffix": "-",
+                "tail": "value-",
+            }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "prefix": "-",
+                "subject": "-value",
+                "suffix": {},
+                "tail": "value-",
+            }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "prefix": "-",
+                "subject": "-value",
+                "suffix": "-",
+                "tail": {},
+            }),
+            false,
+        ),
+    ] {
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: want,
+            "instance={instance}; schema={schema}",
+        );
+    }
+}
+
 /// `htpasswd` bcrypt-hashes two Go strings, so a non-string member value
 /// aborts rendering — including through a destructured range and a helper
 /// include (prometheus-pushgateway's `basicAuthUsers`).

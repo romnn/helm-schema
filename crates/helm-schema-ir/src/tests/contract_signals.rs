@@ -34,6 +34,214 @@ fn signals_for_template(source: &str) -> ContractSchemaSignals {
         .into_schema_signals()
 }
 
+#[test]
+fn ranged_kind_dispatch_keeps_both_input_kinds() -> eyre::Result<()> {
+    use helm_schema_core::{
+        ContractRequirementImplication, ContractRequirementTarget, FailValueRequirement,
+    };
+
+    let source = indoc! {r#"
+        {{- range $key, $value := .Values.env }}
+        {{- if kindIs "string" $value }}
+        - name: {{ $key | quote }}
+          value: {{ $value | quote }}
+        {{- else if kindIs "map" $value }}
+        - {{ merge (dict "name" $key) $value | toYaml | nindent 2 }}
+        {{- else }}
+        {{- fail "expected string or map" }}
+        {{- end }}
+        {{- end }}
+    "#};
+    let defines = DefineIndex::new();
+    let signals = SymbolicIrContext::new(&defines)
+        .generate_contract_ir(source)
+        .finalize()
+        .into_schema_signals();
+    let evidence = signals
+        .evidence_for(&conditional_path("env"))
+        .ok_or_eyre("env evidence")?;
+    let member_requirements = evidence
+        .requirement_implications
+        .iter()
+        .filter(|implication| {
+            matches!(
+                implication.target,
+                ContractRequirementTarget::Members { .. }
+            )
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+    sim_assert_eq!(have: &member_requirements, want: &vec![
+        ContractRequirementImplication::new(
+            Vec::new(),
+            ContractRequirementTarget::Members {
+                allow_integer: false,
+            },
+            vec![FailValueRequirement::AnyOf(vec![
+                vec![FailValueRequirement::SchemaType("object".to_string())],
+                vec![FailValueRequirement::SchemaType("string".to_string())],
+            ])],
+        ),
+    ]);
+    Ok(())
+}
+
+fn assert_strict_cfg_hole_is_guarded(source: &str) -> eyre::Result<()> {
+    use helm_schema_core::{
+        ContractRequirementImplication, ContractRequirementTarget, FailValueRequirement,
+    };
+
+    let signals = signals_for_template(source);
+    let evidence = signals
+        .evidence_for(&conditional_path("cfg"))
+        .ok_or_eyre("cfg evidence")?;
+    sim_assert_eq!(
+        have: &evidence.requirement_implications,
+        want: &vec![ContractRequirementImplication::new(
+            vec![ConditionalGuard::Truthy {
+                path: conditional_path("enabled"),
+            }],
+            ContractRequirementTarget::Value,
+            vec![FailValueRequirement::SchemaTypeEvenNull(
+                "object".to_string(),
+            )],
+        )],
+    );
+    Ok(())
+}
+
+/// A strict hole on a container opened inside an `if` runs only in that arm.
+#[test]
+fn escaped_container_scopes_its_strict_hole() -> eyre::Result<()> {
+    assert_strict_cfg_hole_is_guarded(indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- if .Values.enabled }}
+          outer: {{ merge (dict "fixed" "x") .Values.cfg | toJson }}
+          {{- else }}
+          {{- end }}
+            leaf: fixed
+    "#})
+}
+
+/// A strict hole remains guarded when the owning control is two container levels below it.
+#[test]
+fn escaped_container_chain_scopes_its_strict_hole() -> eyre::Result<()> {
+    assert_strict_cfg_hole_is_guarded(indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- if .Values.enabled }}
+          outer: {{ $_ := merge (dict "fixed" "x") .Values.cfg }}
+            inner:
+          {{- else }}
+          {{- end }}
+              leaf: fixed
+    "#})
+}
+
+/// Reattaching post-region content does not reevaluate an adopted dynamic key.
+#[test]
+fn deferred_dynamic_key_keeps_its_strict_hole_guarded() -> eyre::Result<()> {
+    assert_strict_cfg_hole_is_guarded(indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+        {{ if .Values.enabled }}
+          {{ merge (dict "fixed" "x") .Values.cfg | toJson | quote }}:
+            inside: fixed
+        {{ else }}
+        {{ end }}
+            after: fixed
+    "#})
+}
+
+/// Nested branch rotations jointly scope a strict hole on their shared escaped item.
+#[test]
+fn double_rotation_scopes_escaped_strict_hole() -> eyre::Result<()> {
+    use helm_schema_core::{
+        ContractRequirementImplication, ContractRequirementTarget, FailValueRequirement,
+    };
+
+    let signals = signals_for_template(indoc! {r#"
+        env:
+        {{- if .Values.env }}
+        {{- if kindIs "map" .Values.env }}
+        - {{ merge (dict "name" "MERGED") .Values.env | toYaml | nindent 2 }}
+        {{- else }}
+        {{- toYaml .Values.env | nindent 0 }}
+        {{- end }}
+        {{- else }}
+        {{- toYaml (list) | nindent 0 }}
+        {{- end }}
+    "#});
+    let evidence = signals
+        .evidence_for(&conditional_path("env"))
+        .ok_or_eyre("env evidence")?;
+    sim_assert_eq!(
+        have: &evidence.requirement_implications,
+        want: &vec![ContractRequirementImplication::new(
+            vec![
+                ConditionalGuard::Truthy {
+                    path: conditional_path("env"),
+                },
+                ConditionalGuard::TypeIs {
+                    path: conditional_path("env"),
+                    schema_type: "object".to_string(),
+                },
+            ],
+            ContractRequirementTarget::Value,
+            vec![FailValueRequirement::SchemaTypeEvenNull(
+                "object".to_string(),
+            )],
+        )],
+    );
+    Ok(())
+}
+
+/// A sibling adopted from the first arm defers strict descendants into their own arm.
+#[test]
+fn sibling_adoption_uses_the_target_branch_window() -> eyre::Result<()> {
+    let signals = signals_for_template(indoc! {r#"
+        data:
+        {{- if .Values.a }}
+          key:
+            leaf: fixed
+        {{- else if .Values.b }}
+            extra:
+              inner: {{ required "inner" .Values.inner }}
+        {{- else }}
+          next: fixed
+        {{- end }}
+    "#});
+    let evidence = signals
+        .evidence_for(&conditional_path("inner"))
+        .ok_or_eyre("inner evidence")?;
+    sim_assert_eq!(
+        have: &evidence
+            .conditional_overlays
+            .iter()
+            .map(|overlay| overlay.guards.clone())
+            .collect::<Vec<_>>(),
+        want: &vec![vec![
+                ConditionalGuard::Truthy {
+                    path: conditional_path("b"),
+                },
+                ConditionalGuard::Not(Box::new(ConditionalGuard::Truthy {
+                    path: conditional_path("a"),
+                })),
+            ]],
+    );
+    Ok(())
+}
+
 fn signals_for_template_at_kubernetes_version(
     source: &str,
     kubernetes_version: &str,

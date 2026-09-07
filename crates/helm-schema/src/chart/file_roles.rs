@@ -79,7 +79,7 @@ impl LoadedChartCorpus {
         let mut loaded = BTreeMap::new();
         for chart in charts {
             let mut files = Vec::new();
-            for file in list_chart_files(&chart.chart_dir, include_tests)? {
+            for file in list_chart_files(chart, include_tests)? {
                 let mut bytes = Vec::new();
                 file.path.open_file()?.read_to_end(&mut bytes)?;
                 files.push(LoadedChartFile {
@@ -106,12 +106,13 @@ type ChartFileMap = BTreeMap<String, ChartFile>;
 
 #[tracing::instrument(skip_all)]
 pub(crate) fn list_chart_files(
-    chart_dir: &VfsPath,
+    chart: &ChartContext,
     include_tests: bool,
 ) -> EngineResult<Vec<ChartFile>> {
     let mut files = ChartFileMap::new();
+    let chart_dir = &chart.chart_dir;
 
-    collect_template_roles(chart_dir, include_tests, &mut files)?;
+    collect_template_roles(chart, include_tests, &mut files)?;
     collect_directory_roles(
         chart_dir,
         "crds",
@@ -125,11 +126,11 @@ pub(crate) fn list_chart_files(
 }
 
 fn collect_template_roles(
-    chart_dir: &VfsPath,
+    chart: &ChartContext,
     include_tests: bool,
     files: &mut ChartFileMap,
 ) -> EngineResult<()> {
-    let templates_dir = chart_dir.join("templates")?;
+    let templates_dir = chart.chart_dir.join("templates")?;
     if !templates_dir.is_dir()? {
         return Ok(());
     }
@@ -138,6 +139,10 @@ fn collect_template_roles(
     list_files_recursive(&templates_dir, include_tests, &mut paths)?;
 
     for path in paths {
+        // Helm does not register non-partial library templates, including their define blocks.
+        if chart.is_library && !path.filename().starts_with('_') {
+            continue;
+        }
         insert_role(files, path.clone(), FileRole::DefineIndexTemplate);
         if is_notes_template(&path) {
             insert_role(files, path.clone(), FileRole::NotesTemplate);

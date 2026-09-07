@@ -98,7 +98,7 @@ fn merge_layer_presence_belongs_to_the_combined_result() -> eyre::Result<()> {
         preferred:
           maxReplicaCount: 5
     "})?;
-    let no_dependency_defaults = serde_yaml::from_str("{}")?;
+    let no_runtime_defaults = crate::condition_encoding::RuntimeDefaultHints::default();
     let provider = provider();
     let provider_resolutions =
         crate::provider_resolution::ProviderSchemaResolutions::resolve(&signals, &provider);
@@ -106,13 +106,13 @@ fn merge_layer_presence_belongs_to_the_combined_result() -> eyre::Result<()> {
     let direct = crate::provider_requirement_synthesis::synthesized_required_source_implications(
         &signals,
         &values,
-        &no_dependency_defaults,
+        &no_runtime_defaults,
         &provider_resolutions,
     );
     let ranged =
         crate::provider_requirement_synthesis::synthesized_ranged_member_required_implications(
             &signals,
-            &no_dependency_defaults,
+            &no_runtime_defaults,
             &provider_resolutions,
         );
 
@@ -155,7 +155,7 @@ fn null_tolerant_provider_use_does_not_require_source() -> eyre::Result<()> {
         webhook:
           securePort: 10250
     "})?;
-    let no_dependency_defaults = serde_yaml::from_str("{}")?;
+    let no_runtime_defaults = crate::condition_encoding::RuntimeDefaultHints::default();
     let provider = provider();
     let provider_resolutions =
         crate::provider_resolution::ProviderSchemaResolutions::resolve(&signals, &provider);
@@ -164,7 +164,7 @@ fn null_tolerant_provider_use_does_not_require_source() -> eyre::Result<()> {
         crate::provider_requirement_synthesis::synthesized_required_source_implications(
             &signals,
             &values,
-            &no_dependency_defaults,
+            &no_runtime_defaults,
             &provider_resolutions,
         );
 
@@ -198,7 +198,7 @@ fn range_key_provider_presence_does_not_require_collection() -> eyre::Result<()>
     )]);
     let signals = ContractSchemaSignals::new(evidence, Vec::new());
     let values = serde_yaml::from_str("extraContainers: []\n")?;
-    let no_dependency_defaults = serde_yaml::from_str("{}")?;
+    let no_runtime_defaults = crate::condition_encoding::RuntimeDefaultHints::default();
     let provider = provider();
     let provider_resolutions =
         crate::provider_resolution::ProviderSchemaResolutions::resolve(&signals, &provider);
@@ -207,7 +207,7 @@ fn range_key_provider_presence_does_not_require_collection() -> eyre::Result<()>
         crate::provider_requirement_synthesis::synthesized_required_source_implications(
             &signals,
             &values,
-            &no_dependency_defaults,
+            &no_runtime_defaults,
             &provider_resolutions,
         );
 

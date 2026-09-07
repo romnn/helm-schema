@@ -1,0 +1,170 @@
+{{- define "grouped-argument-evaluation.dot-child" -}}
+{{- hasKey .child "key" -}}
+{{- end -}}
+{{- define "grouped-argument-evaluation.range-child" -}}
+{{- range $cfg := .Values.items -}}
+{{- hasKey $cfg.child "key" | quote -}}
+{{- end -}}
+{{- end -}}
+{{- define "grouped-argument-evaluation.range-with-override" -}}
+{{- range $cfg := .Values.items -}}
+{{- with $.Values.override -}}
+{{- $cfg = . -}}
+{{- end -}}
+{{- keys $cfg | join "," -}}
+{{- end -}}
+{{- end -}}
+{{- define "grouped-argument-evaluation.root-value" -}}
+{{- $.Values.a.b | quote -}}
+{{- end -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: test
+data:
+  {{- if eq .Values.mode "original" }}
+  result: {{ hasKey $.Values.probe "key" | quote }}
+  {{- else if eq .Values.mode "named" }}
+  {{- $cfg := .Values.probe }}
+  result: {{ hasKey $cfg.child "key" | quote }}
+  {{- else if eq .Values.mode "rebound" }}
+  {{- $ = .Values.probe }}
+  result: {{ hasKey $.child "key" | quote }}
+  {{- else if eq .Values.mode "helper-dot" }}
+  result: {{ include "grouped-argument-evaluation.dot-child" .Values.probe | quote }}
+  {{- else if eq .Values.mode "range-list" }}
+  {{- range $cfg := list .Values.probe }}
+  result: {{ hasKey $cfg.child "key" | quote }}
+  {{- end }}
+  {{- else if eq .Values.mode "helper-range" }}
+  result: {{ include "grouped-argument-evaluation.range-child" . | default "\"false\"" }}
+  {{- else if eq .Values.mode "with-range" }}
+  result: {{ include "grouped-argument-evaluation.range-with-override" . | quote }}
+  {{- else if eq .Values.mode "root-document" }}
+  result: {{ $.Values.a.b | quote }}
+  {{- else if eq .Values.mode "root-helper" }}
+  result: {{ include "grouped-argument-evaluation.root-value" . }}
+  {{- else if eq .Values.mode "range-assign-empty" }}
+  {{- $cfg := dict }}
+  {{- range $cfg = list }}{{- end }}
+  result: {{ keys $cfg | join "," | quote }}
+  {{- else if eq .Values.mode "range-assign-one" }}
+  {{- $cfg := dict }}
+  {{- range $cfg = list .Values.only }}{{- end }}
+  result: {{ keys $cfg | join "," | quote }}
+  {{- else if eq .Values.mode "range-assign-order" }}
+  {{- $cfg := dict }}
+  {{- range $cfg = list .Values.first .Values.last }}{{- end }}
+  result: {{ keys $cfg | join "," | quote }}
+  {{- else if eq .Values.mode "range-declare-shadow" }}
+  {{- $cfg := dict }}
+  {{- range $cfg := list .Values.first .Values.last }}{{- end }}
+  result: {{ keys $cfg | join "," | quote }}
+  {{- else if eq .Values.mode "range-assign-symbolic" }}
+  {{- range $stable := list .Values.stable }}
+  {{- $cfg := $.Values.seed }}
+  {{- range $cfg = $.Values.items }}{{- end }}
+  result: {{ printf "%s-%s" (keys $cfg | join ",") (keys $stable | join ",") | quote }}
+  {{- end }}
+  {{- else if eq .Values.mode "string-branch" }}
+  {{- $value := .Values.a }}
+  {{- if .Values.useB }}{{- $value = .Values.b }}{{- end }}
+  result: {{ b64enc $value | quote }}
+  {{- else if eq .Values.mode "default-branch" }}
+  {{- $value := dict }}
+  {{- if .Values.chooseP }}
+  {{- $value = .Values.p | default .Values.q }}
+  {{- else }}
+  {{- $value = .Values.q | default .Values.p }}
+  {{- end }}
+  result: {{ keys $value | join "," | quote }}
+  {{- else if eq .Values.mode "if-declare-shadow" }}
+  {{- $cfg := .Values.before }}
+  {{- if $cfg := .Values.after }}
+  inside: {{ keys $cfg | join "," | quote }}
+  {{- else }}
+  inside: {{ keys $cfg | join "," | quote }}
+  {{- end }}
+  result: {{ keys $cfg | join "," | quote }}
+  {{- else if eq .Values.mode "if-assign-header" }}
+  {{- $cfg := .Values.before }}
+  {{- if $cfg = .Values.after }}
+  inside: {{ keys $cfg | join "," | quote }}
+  {{- else }}
+  inside: {{ keys $cfg | join "," | quote }}
+  {{- end }}
+  result: {{ keys $cfg | join "," | quote }}
+  {{- else if eq .Values.mode "if-assign-no-else" }}
+  {{- $cfg := .Values.before }}
+  {{- if $cfg = .Values.after }}
+  inside: {{ keys $cfg | join "," | quote }}
+  {{- end }}
+  result: {{ keys $cfg | join "," | quote }}
+  {{- else if eq .Values.mode "with-shadow" }}
+  {{- $cfg := .Values.a }}
+  {{- with $cfg := .Values.b }}
+  inside: {{ . | quote }}
+  {{- else }}
+  inside: {{ keys $cfg | join "," | quote }}
+  {{- end }}
+  result: {{ keys $cfg | join "," | quote }}
+  {{- else if eq .Values.mode "with-assign-header" }}
+  {{- $cfg := .Values.before }}
+  {{- with $cfg = .Values.after }}
+  inside: {{ keys $cfg | join "," | quote }}
+  {{- else }}
+  inside: {{ keys $cfg | join "," | quote }}
+  {{- end }}
+  result: {{ keys $cfg | join "," | quote }}
+  {{- else if eq .Values.mode "range-declare-else" }}
+  {{- $cfg := .Values.before }}
+  {{- range $cfg := .Values.items }}
+  inside: {{ keys $cfg | join "," | quote }}
+  {{- else }}
+  inside: {{ keys $cfg | join "," | quote }}
+  {{- end }}
+  result: {{ keys $cfg | join "," | quote }}
+  {{- else if eq .Values.mode "escaped-interleaving" }}
+  {{- $cfg := .Values.before }}
+  parent:
+  {{- if .Values.enabled }}
+    selected: {{ keys $cfg | join "," | quote }}
+  {{- $cfg = .Values.after }}
+  direct: {{ keys $cfg | join "," | quote }}
+  {{- end }}
+  {{- else if eq .Values.mode "range-break" }}
+  {{- $cfg := dict }}
+  {{- range $index, $value := list .Values.first .Values.last }}
+  {{- $cfg = $value }}
+  {{- if $.Values.stop }}{{- break }}{{- end }}
+  {{- end }}
+  result: {{ keys $cfg | join "," | quote }}
+  {{- else if eq .Values.mode "range-continue" }}
+  {{- $cfg := dict }}
+  {{- range $value := list .Values.last }}
+  {{- $cfg = $value }}
+  {{- if $.Values.skipLast }}{{- continue }}{{- end }}
+  {{- $cfg = $.Values.after }}
+  {{- end }}
+  result: {{ keys $cfg | join "," | quote }}
+  {{- else if eq .Values.mode "range-approx-break-exact" }}
+  {{- range $item := list .Values.first .Values.last }}
+  {{- if eq (tpl $.Values.stop $) "yes" }}{{- break }}{{- end }}
+  result: {{ required "name is required" $item.name | quote }}
+  {{- end }}
+  {{- else if eq .Values.mode "range-approx-break-symbolic" }}
+  {{- range $item := .Values.items }}
+  {{- if eq (tpl $.Values.stop $) "yes" }}{{- break }}{{- end }}
+  result: {{ required "name is required" $item.name | quote }}
+  {{- end }}
+  {{- else if eq .Values.mode "range-choice" }}
+  {{- $cfg := dict }}
+  {{- $items := ternary (list .Values.a) (list .Values.b) .Values.pickA }}
+  {{- range $cfg = $items }}{{- end }}
+  result: {{ keys $cfg | join "," | quote }}
+  {{- else }}
+  {{- if .Values.rebind }}
+  {{- $ = .Values.probe }}
+  {{- end }}
+  result: {{ hasKey $.child "key" | quote }}
+  {{- end }}

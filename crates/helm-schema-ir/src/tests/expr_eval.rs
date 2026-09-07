@@ -1,13 +1,13 @@
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{EvalResult, SelectionPolarity, SelectionTruthSource};
-use crate::eval_env::EvalEnv;
+use crate::eval_env::{BindingDecision, BindingEvaluationMode, EvalEnv, LocalBinding};
 use crate::expr_eval::{
     apply_local_set_mutations_expr, bindings_for_helper_arg_with, direct_values_path, eval_expr,
     eval_exprs_effects,
 };
 use crate::helper_meta::HelperOutputMeta;
 use crate::observed_facts::HintGrade;
-use crate::scalar_value::ScalarValueDispatch;
+use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
 use helm_schema_ast::parse_expr_text;
 use helm_schema_ast::render_printf_string_sets;
 use helm_schema_ast::{TemplateExpr, parse_action_expressions};
@@ -82,6 +82,351 @@ fn grouped_map_argument_preserves_nil_conversion_boundary() {
     );
 }
 
+#[test]
+fn outer_grouping_overrides_direct_binding_provenance() {
+    let mut env = EvalEnv::default();
+    env.locals.insert(
+        "subject".to_string(),
+        LocalBinding::direct(values_path!("subject")),
+    );
+
+    let bare = eval_expr(&single_expr(r#"hasKey $subject "key""#), &env);
+    let grouped = eval_expr(&single_expr(r#"hasKey ($subject) "key""#), &env);
+
+    sim_assert_eq!(
+        have: bare
+            .effects
+            .observed_facts
+            .captures
+            .into_iter()
+            .map(|capture| capture.kind)
+            .collect::<BTreeSet<_>>(),
+        want: BTreeSet::from([
+            crate::eval_effect::CaptureKind::ValueType {
+                path: capture_path("subject"),
+                schema_type: "object".to_string(),
+                null_aborts: true,
+            },
+            crate::eval_effect::CaptureKind::AbsenceAborts {
+                path: capture_path("subject"),
+            },
+        ]),
+    );
+    sim_assert_eq!(
+        have: grouped
+            .effects
+            .observed_facts
+            .captures
+            .into_iter()
+            .map(|capture| capture.kind)
+            .collect::<BTreeSet<_>>(),
+        want: BTreeSet::from([crate::eval_effect::CaptureKind::ValueType {
+            path: capture_path("subject"),
+            schema_type: "object".to_string(),
+            null_aborts: false,
+        }]),
+    );
+}
+
+#[test]
+fn mixed_binding_modes_keep_values_paired_with_branch_conditions() {
+    let rebind = Predicate::truthy_path("rebind");
+    let mut env = EvalEnv::default();
+    env.locals.insert(
+        "cfg".to_string(),
+        LocalBinding::select(
+            BindingDecision::new(TruthCondition::exact(rebind.clone())),
+            LocalBinding::evaluated(values_path!("evaluated")),
+            LocalBinding::direct(values_path!("direct")),
+        ),
+    );
+
+    let result = eval_expr(&single_expr(r#"hasKey $cfg.child "key""#), &env);
+    let typed_leaf_conditions = result
+        .effects
+        .observed_facts
+        .captures
+        .into_iter()
+        .filter_map(|capture| match capture.kind {
+            crate::eval_effect::CaptureKind::ValueType {
+                path,
+                schema_type,
+                null_aborts,
+            } if schema_type == "object" && null_aborts => Some((
+                path,
+                capture.conjunction.contains(&rebind),
+                capture.conjunction.contains(&rebind.clone().negated()),
+            )),
+            _ => None,
+        })
+        .collect::<BTreeSet<_>>();
+
+    sim_assert_eq!(
+        have: typed_leaf_conditions,
+        want: BTreeSet::from([
+            (capture_path("direct.child"), false, true),
+            (capture_path("evaluated.child"), true, false),
+        ]),
+    );
+}
+
+#[test]
+fn strict_string_consumer_keeps_each_binding_leaf_under_its_decision() {
+    let use_b = Predicate::truthy_path("useB");
+    let mut env = EvalEnv::default();
+    env.locals.insert(
+        "value".to_string(),
+        LocalBinding::select(
+            BindingDecision::new(TruthCondition::exact(use_b.clone())),
+            LocalBinding::evaluated(values_path!("b")),
+            LocalBinding::evaluated(values_path!("a")),
+        ),
+    );
+
+    let result = eval_expr(&single_expr("b64enc $value"), &env);
+    let string_leaf_conditions = result
+        .effects
+        .observed_facts
+        .captures
+        .into_iter()
+        .filter_map(|capture| match capture.kind {
+            crate::eval_effect::CaptureKind::StringRequirement { path, .. } => Some((
+                path,
+                capture.conjunction.contains(&use_b),
+                capture.conjunction.contains(&use_b.clone().negated()),
+            )),
+            _ => None,
+        })
+        .collect::<BTreeSet<_>>();
+
+    sim_assert_eq!(
+        have: string_leaf_conditions,
+        want: BTreeSet::from([
+            (capture_path("a"), false, true),
+            (capture_path("b"), true, false),
+        ]),
+    );
+}
+
+#[test]
+fn type_test_keeps_each_selected_binding_leaf_under_its_decision() {
+    let use_b = Predicate::truthy_path("useB");
+    let mut env = EvalEnv::default();
+    env.locals.insert(
+        "value".to_string(),
+        LocalBinding::select(
+            BindingDecision::new(TruthCondition::exact(use_b.clone())),
+            LocalBinding::evaluated(values_path!("b")),
+            LocalBinding::evaluated(values_path!("a")),
+        ),
+    );
+
+    let result = eval_expr(&single_expr(r#"kindIs "string" $value"#), &env);
+    let string_a = Predicate::from(Guard::TypeIs {
+        path: capture_path("a"),
+        schema_type: "string".to_string(),
+    });
+    let string_b = Predicate::from(Guard::TypeIs {
+        path: capture_path("b"),
+        schema_type: "string".to_string(),
+    });
+    let expected = env.predicate_memo.normalize(Predicate::Or(vec![
+        Predicate::all(vec![use_b.clone(), string_b]),
+        Predicate::all(vec![use_b.negated(), string_a]),
+    ]));
+
+    sim_assert_eq!(have: result.truth.predicate().cloned(), want: Some(expected));
+}
+
+#[test]
+fn type_test_keeps_partial_selected_binding_truth_unresolved() {
+    let known = Predicate::truthy_path("known");
+    let mut env = EvalEnv::default();
+    env.locals.insert(
+        "value".to_string(),
+        LocalBinding::select(
+            BindingDecision::new(TruthCondition::from_subsets(
+                known.clone(),
+                Predicate::False,
+                false,
+            )),
+            LocalBinding::evaluated(values_path!("b")),
+            LocalBinding::evaluated(values_path!("a")),
+        ),
+    );
+
+    let result = eval_expr(&single_expr(r#"kindIs "string" $value"#), &env);
+    let string_b = Predicate::from(Guard::TypeIs {
+        path: capture_path("b"),
+        schema_type: "string".to_string(),
+    });
+
+    sim_assert_eq!(have: result.truth.predicate(), want: None);
+    sim_assert_eq!(
+        have: result.truth.when_true(),
+        want: env
+            .predicate_memo
+            .normalize(Predicate::all(vec![known.clone(), string_b.clone()])),
+    );
+    sim_assert_eq!(
+        have: result.truth.when_false(),
+        want: env
+            .predicate_memo
+            .normalize(Predicate::all(vec![known, string_b.negated()])),
+    );
+}
+
+#[test]
+fn type_test_follows_first_truthy_value_selection() {
+    let primary = capture_path("primary");
+    let primary_truthy = Predicate::truthy_path("primary");
+    let mut env = EvalEnv::default();
+    env.locals.insert(
+        "value".to_string(),
+        LocalBinding::evaluated(AbstractValue::FirstTruthy(vec![
+            values_path!("primary"),
+            AbstractValue::StringSet(BTreeSet::from(["fallback".to_string()])),
+        ])),
+    );
+
+    let result = eval_expr(&single_expr(r#"typeIs "string" $value"#), &env);
+    let expected = env.predicate_memo.normalize(Predicate::Or(vec![
+        primary_truthy.negated(),
+        Predicate::from(Guard::TypeIs {
+            path: primary,
+            schema_type: "string".to_string(),
+        }),
+    ]));
+
+    sim_assert_eq!(have: result.truth.predicate().cloned(), want: Some(expected));
+}
+
+#[test]
+fn default_composes_selected_primary_leaves_with_its_fallback() {
+    let use_b = Predicate::truthy_path("useB");
+    let mut env = EvalEnv::default();
+    env.locals.insert(
+        "value".to_string(),
+        LocalBinding::select(
+            BindingDecision::new(TruthCondition::exact(use_b.clone())),
+            LocalBinding::evaluated(values_path!("b")),
+            LocalBinding::evaluated(values_path!("a")),
+        ),
+    );
+
+    let result = eval_expr(
+        &single_expr(r#"kindIs "map" (default (dict) $value)"#),
+        &env,
+    );
+    let a_truthy = Predicate::truthy_path("a");
+    let b_truthy = Predicate::truthy_path("b");
+    let a_is_map = Predicate::from(Guard::TypeIs {
+        path: capture_path("a"),
+        schema_type: "object".to_string(),
+    });
+    let b_is_map = Predicate::from(Guard::TypeIs {
+        path: capture_path("b"),
+        schema_type: "object".to_string(),
+    });
+    let expected = env.predicate_memo.normalize(Predicate::Or(vec![
+        Predicate::all(vec![use_b.clone(), b_truthy.clone(), b_is_map]),
+        Predicate::all(vec![use_b.clone(), b_truthy.negated()]),
+        Predicate::all(vec![use_b.clone().negated(), a_truthy.clone(), a_is_map]),
+        Predicate::all(vec![use_b.negated(), a_truthy.negated()]),
+    ]));
+
+    sim_assert_eq!(have: result.truth.predicate().cloned(), want: Some(expected));
+}
+
+#[test]
+fn default_rebuilds_a_complete_composed_result_from_its_surviving_leaf() {
+    let result = eval_expr(
+        &single_expr(r#"kindIs "map" (default (dict) (ternary "selected" (dict "k" 1) true))"#),
+        &EvalEnv::default(),
+    );
+
+    sim_assert_eq!(
+        have: result.truth.predicate().cloned(),
+        want: Some(Predicate::False),
+    );
+}
+
+#[test]
+fn type_test_classifies_a_default_scalar_fallback_arm() {
+    let env = EvalEnv::default();
+    let result = eval_expr(
+        &single_expr(r#"kindIs "bool" (.Values.x | default false)"#),
+        &env,
+    );
+    let truthy = Predicate::truthy_path("x");
+    let expected = env.predicate_memo.normalize(Predicate::Or(vec![
+        truthy.clone().negated(),
+        Predicate::all(vec![
+            truthy,
+            Predicate::from(Guard::TypeIs {
+                path: capture_path("x"),
+                schema_type: "boolean".to_string(),
+            }),
+        ]),
+    ]));
+
+    sim_assert_eq!(have: result.truth.predicate().cloned(), want: Some(expected));
+}
+
+#[test]
+fn pristine_root_values_selector_records_direct_hosts_in_both_binding_modes() {
+    for mode in [
+        BindingEvaluationMode::Direct,
+        BindingEvaluationMode::Evaluated,
+    ] {
+        let mut env = EvalEnv {
+            root_fields: HashMap::from([("Values".to_string(), AbstractValue::values_root())]),
+            ..EvalEnv::default()
+        };
+        env.locals.insert(
+            String::new(),
+            LocalBinding::new(AbstractValue::RootContext, mode),
+        );
+
+        let result = eval_expr(&single_expr("$.Values.a.b"), &env);
+
+        sim_assert_eq!(have: result.value, want: Some(values_path!("a.b")));
+        sim_assert_eq!(
+            have: result.truth.predicate().cloned(),
+            want: Some(Predicate::truthy_path("a.b")),
+            "mode={mode:?}",
+        );
+        sim_assert_eq!(
+            have: result.scalar_dispatch,
+            want: Some(ScalarValueDispatch::identity(capture_path("a.b"))),
+            "mode={mode:?}",
+        );
+        sim_assert_eq!(
+            have: result
+                .effects
+                .observed_facts
+                .captures
+                .into_iter()
+                .filter_map(|capture| match capture.kind {
+                    crate::eval_effect::CaptureKind::MemberAccess { .. } => {
+                        Some(capture.conjunction)
+                    }
+                    _ => None,
+                })
+                .collect::<BTreeSet<_>>(),
+            want: BTreeSet::from([vec![
+                Predicate::from(Guard::TypeIs {
+                    path: capture_path("a"),
+                    schema_type: "object".to_string(),
+                })
+                .negated(),
+            ]
+            .into()]),
+            "mode={mode:?}",
+        );
+    }
+}
+
 fn dict(entries: &[(&str, AbstractValue)]) -> AbstractValue {
     AbstractValue::Dict(
         entries
@@ -89,6 +434,10 @@ fn dict(entries: &[(&str, AbstractValue)]) -> AbstractValue {
             .map(|(key, value)| ((*key).to_string(), value.clone()))
             .collect(),
     )
+}
+
+fn direct_binding(value: AbstractValue) -> LocalBinding {
+    LocalBinding::direct(value)
 }
 
 fn env_from_root_fields(root_fields: HashMap<String, AbstractValue>) -> EvalEnv {
@@ -149,7 +498,11 @@ fn helper_value_expression_uses_shared_expression_eval() {
         ),
     )]);
 
-    let env = EvalEnv::from_helper_context(Some(&bindings), None);
+    let env = EvalEnv::from_helper_context(
+        Some(&bindings),
+        None,
+        crate::eval_env::BindingEvaluationMode::Direct,
+    );
 
     sim_assert_eq!(
         have: eval_expr(&expr(".ctx.config.name | default \"x\""), &env)
@@ -164,7 +517,8 @@ fn helper_value_expression_uses_shared_expression_eval() {
 
 #[test]
 fn helper_argument_projection_uses_shared_expression_eval() {
-    let env = EvalEnv::from_helper_context(None, None);
+    let env =
+        EvalEnv::from_helper_context(None, None, crate::eval_env::BindingEvaluationMode::Direct);
     let bindings = bindings_for_helper_arg_with(
         Some(&expr(r#"dict "ctx" $ "config" .Values.serviceAccount"#)),
         None,
@@ -193,7 +547,8 @@ fn helper_argument_projection_uses_shared_expression_eval() {
 /// defaults for children selected inside the helper.
 #[test]
 fn defaulted_helper_root_descends_to_raw_member_paths() {
-    let env = EvalEnv::from_helper_context(None, None);
+    let env =
+        EvalEnv::from_helper_context(None, None, crate::eval_env::BindingEvaluationMode::Direct);
     let bindings = bindings_for_helper_arg_with(
         Some(&expr(
             r#"dict "Values" (.Values.dependency | default dict)"#,
@@ -227,7 +582,7 @@ fn defaulted_helper_root_descends_to_raw_member_paths() {
 fn grouped_selector_preserves_scalar_identity() {
     let result = eval_expr(
         &expr("(.Values.feature).mode"),
-        &EvalEnv::from_helper_context(None, None),
+        &EvalEnv::from_helper_context(None, None, crate::eval_env::BindingEvaluationMode::Direct),
     );
 
     sim_assert_eq!(
@@ -242,7 +597,11 @@ fn grouped_selector_preserves_scalar_identity() {
 fn bound_path_resolution_uses_shared_expression_eval() {
     let bindings = HashMap::from([("config".to_string(), values_path!("serviceAccount"))]);
 
-    let env = EvalEnv::from_helper_context(Some(&bindings), None);
+    let env = EvalEnv::from_helper_context(
+        Some(&bindings),
+        None,
+        crate::eval_env::BindingEvaluationMode::Direct,
+    );
     let path = eval_expr(&expr(".config.name"), &env)
         .value
         .as_ref()
@@ -266,11 +625,31 @@ fn direct_root_values_path_is_an_expression_eval_projection() {
     );
     sim_assert_eq!(
         have: direct_values_path_expr("$root.Values.Y"),
-        want: Some("Y".to_string())
+        want: None
     );
     sim_assert_eq!(
         have: direct_values_path_expr("((.Values.appVersions).airtype).global"),
         want: Some("appVersions.airtype.global".to_string())
+    );
+}
+
+#[test]
+fn named_root_alias_projects_values_only_from_its_typed_binding() {
+    let mut env = EvalEnv {
+        root_fields: HashMap::from([("Values".to_string(), AbstractValue::values_root())]),
+        ..EvalEnv::default()
+    };
+    env.locals.insert(
+        "root".to_string(),
+        LocalBinding::evaluated(AbstractValue::RootContext),
+    );
+
+    let result = eval_expr(&single_expr("$root.Values.Y"), &env);
+
+    sim_assert_eq!(have: result.value, want: Some(values_path!("Y")));
+    sim_assert_eq!(
+        have: result.scalar_dispatch,
+        want: Some(ScalarValueDispatch::identity(capture_path("Y"))),
     );
 }
 
@@ -292,7 +671,11 @@ fn set_default_chart_paths_ignores_unrelated_default_inside_set_rhs() {
     let exprs = parse_expr_text(
         r#"$_ := set .serviceAccount "name" (printf "%s" (.other | default "fallback"))"#,
     );
-    let env = EvalEnv::from_helper_context(None, Some(&values_path!("")));
+    let env = EvalEnv::from_helper_context(
+        None,
+        Some(&values_path!("")),
+        crate::eval_env::BindingEvaluationMode::Direct,
+    );
 
     sim_assert_eq!(
         have: eval_exprs_effects(&exprs, &env).chart_default_paths,
@@ -358,14 +741,14 @@ fn local_fragment_variable_effects_include_shallow_source_paths() {
     let mut env = EvalEnv::default();
     env.locals.insert(
         "nodeSelector".to_string(),
-        AbstractValue::Choice(
+        direct_binding(AbstractValue::Choice(
             [
                 values_path!("global.nodeSelector"),
                 values_path!("nodeSelector"),
             ]
             .into_iter()
             .collect(),
-        ),
+        )),
     );
 
     let result = eval_expr(&single_expr("$nodeSelector"), &env);
@@ -427,7 +810,9 @@ fn get_requires_its_values_backed_host_to_be_an_object() {
     let mut env = EvalEnv::default();
     env.locals.insert(
         "context".to_string(),
-        AbstractValue::JsonDecodedPath(helm_schema_core::ValuesPath::parse("contexts.*")),
+        direct_binding(AbstractValue::JsonDecodedPath(
+            helm_schema_core::ValuesPath::parse("contexts.*"),
+        )),
     );
     let result = eval_expr(&single_expr(r#"get $context "creds""#), &env);
 
@@ -532,17 +917,17 @@ fn set_call_updates_local_key_with_assigned_literal() {
     let mut env = EvalEnv::default();
     env.locals.insert(
         "config".to_string(),
-        dict(&[
+        direct_binding(dict(&[
             ("name", values_path!("serviceAccount.name")),
             ("annotations", values_path!("serviceAccount.annotations")),
-        ]),
+        ])),
     );
 
     assert!(apply_local_set_mutations_expr(&expr, &mut env));
 
     sim_assert_eq!(
-        have: env.locals.get("config"),
-        want: Some(&AbstractValue::Overlay {
+        have: env.locals.get("config").and_then(LocalBinding::value),
+        want: Some(AbstractValue::Overlay {
             entries: BTreeMap::from([(
                 "name".to_string(),
                 AbstractValue::StringSet(BTreeSet::from(["generated".to_string()])),
@@ -567,14 +952,14 @@ fn set_call_inside_throwaway_assignment_updates_local_key() {
     let mut env = EvalEnv::default();
     env.locals.insert(
         "config".to_string(),
-        dict(&[("name", values_path!("serviceAccount.name"))]),
+        direct_binding(dict(&[("name", values_path!("serviceAccount.name"))])),
     );
 
     assert!(apply_local_set_mutations_expr(&expr, &mut env));
 
     sim_assert_eq!(
-        have: env.locals.get("config"),
-        want: Some(&AbstractValue::Overlay {
+        have: env.locals.get("config").and_then(LocalBinding::value),
+        want: Some(AbstractValue::Overlay {
             entries: BTreeMap::from([(
                 "name".to_string(),
                 AbstractValue::StringSet(BTreeSet::from(["generated".to_string()])),
@@ -593,7 +978,7 @@ fn set_call_preserves_assigned_value_path() {
     let mut env = EvalEnv::default();
     env.locals.insert(
         "config".to_string(),
-        dict(&[("name", values_path!("serviceAccount.name"))]),
+        direct_binding(dict(&[("name", values_path!("serviceAccount.name"))])),
     );
 
     assert!(apply_local_set_mutations_expr(&expr, &mut env));
@@ -611,10 +996,10 @@ fn selector_on_local_dict_records_only_selected_child_reads() {
     let mut env = EvalEnv::default();
     env.locals.insert(
         "config".to_string(),
-        dict(&[
+        direct_binding(dict(&[
             ("name", values_path!("serviceAccount.name")),
             ("annotations", values_path!("serviceAccount.annotations")),
-        ]),
+        ])),
     );
 
     let result = eval_expr(&expr, &env);
@@ -719,10 +1104,10 @@ fn type_test_uses_the_structural_value_instead_of_its_influences() {
     let env = EvalEnv {
         locals: HashMap::from([(
             "obj".to_string(),
-            AbstractValue::Dict(BTreeMap::from([
+            direct_binding(AbstractValue::Dict(BTreeMap::from([
                 ("merge".to_string(), values_path!("service.merge")),
                 ("patch".to_string(), values_path!("service.patch")),
-            ])),
+            ]))),
         )]),
         ..EvalEnv::default()
     };
@@ -754,7 +1139,10 @@ fn invalid_kind_abstains_for_a_meta_selected_subject_identity() {
     };
     metadata.conjoin_branches(&BTreeSet::from([Predicate::truthy_path("enabled")]));
     let env = EvalEnv {
-        locals: HashMap::from([("selected".to_string(), values_path!("value"))]),
+        locals: HashMap::from([(
+            "selected".to_string(),
+            direct_binding(values_path!("value")),
+        )]),
         local_output_meta: HashMap::from([(
             "selected".to_string(),
             BTreeMap::from([(ValuesPath::parse("value"), metadata)]),
@@ -770,7 +1158,10 @@ fn invalid_kind_abstains_for_a_meta_selected_subject_identity() {
 #[test]
 fn invalid_kind_abstains_for_a_default_selected_subject_identity() {
     let env = EvalEnv {
-        locals: HashMap::from([("selected".to_string(), values_path!("value"))]),
+        locals: HashMap::from([(
+            "selected".to_string(),
+            direct_binding(values_path!("value")),
+        )]),
         local_default_paths: HashMap::from([(
             "selected".to_string(),
             BTreeSet::from([ValuesPath::parse("value")]),
@@ -943,7 +1334,9 @@ fn uniq_pipeline_preserves_local_list_items() {
     let mut env = EvalEnv::default();
     env.locals.insert(
         "pullSecrets".to_string(),
-        AbstractValue::List(vec![values_path!("image.pullSecrets.*")]),
+        direct_binding(AbstractValue::List(vec![values_path!(
+            "image.pullSecrets.*"
+        )])),
     );
     let result = eval_expr(&expr, &env);
 
@@ -1364,9 +1757,10 @@ fn serializer_output_does_not_retype_raw_input() {
     );
 
     let mut raw_env = EvalEnv::default();
-    raw_env
-        .locals
-        .insert("encoded".to_string(), values_path!("labels"));
+    raw_env.locals.insert(
+        "encoded".to_string(),
+        direct_binding(values_path!("labels")),
+    );
     let raw_result = eval_expr(&single_expr("$encoded | b64enc"), &raw_env);
     let raw_routes = raw_result
         .effects
@@ -1671,7 +2065,10 @@ fn unset_nil_behavior_distinguishes_direct_access_from_a_local_binding() {
     );
 
     let mut env = EvalEnv::default();
-    env.locals.insert("x".to_string(), values_path!("absent"));
+    env.locals.insert(
+        "x".to_string(),
+        LocalBinding::evaluated(values_path!("absent")),
+    );
     let local = eval_expr(&single_expr(r#"unset $x "k""#), &env);
     let local_failures = local
         .effects
@@ -1693,8 +2090,10 @@ fn unset_nil_behavior_distinguishes_direct_access_from_a_local_binding() {
 #[test]
 fn local_selector_truth_comes_from_the_selected_value() {
     let mut env = EvalEnv::default();
-    env.locals
-        .insert("plugin".to_string(), values_path!("plugins.*"));
+    env.locals.insert(
+        "plugin".to_string(),
+        direct_binding(values_path!("plugins.*")),
+    );
     env.local_truthy_reductions
         .insert("plugin".to_string(), Predicate::truthy_path("plugins.*"));
 
@@ -2006,7 +2405,10 @@ fn root_set_truth_predicates_feed_later_root_field_assignments() {
 fn root_values_merge_records_the_fallback_values_subtree() {
     let env = EvalEnv {
         dot: Some(AbstractValue::RootContext),
-        locals: HashMap::from([("defaults".to_string(), values_path!("_internal_defaults"))]),
+        locals: HashMap::from([(
+            "defaults".to_string(),
+            direct_binding(values_path!("_internal_defaults")),
+        )]),
         ..EvalEnv::default()
     };
     let result = eval_expr(
@@ -2073,9 +2475,9 @@ fn finite_selector_program_construction_stays_exact() {
     let env = EvalEnv {
         locals: HashMap::from([(
             "dep".to_string(),
-            AbstractValue::StringSet(BTreeSet::from([
-                "telemetry.v2.stackdriver.disableOutbound".to_string()
-            ])),
+            direct_binding(AbstractValue::StringSet(BTreeSet::from([
+                "telemetry.v2.stackdriver.disableOutbound".to_string(),
+            ]))),
         )]),
         ..EvalEnv::default()
     };
@@ -2140,7 +2542,10 @@ fn ternary_condition_discards_local_output_metadata_but_keeps_consumption_contra
         ..HelperOutputMeta::default()
     };
     let env = EvalEnv {
-        locals: HashMap::from([("flag".to_string(), values_path!("diagnosticMode.enabled"))]),
+        locals: HashMap::from([(
+            "flag".to_string(),
+            direct_binding(values_path!("diagnosticMode.enabled")),
+        )]),
         local_output_meta: HashMap::from([(
             "flag".to_string(),
             BTreeMap::from([(ValuesPath::parse("diagnosticMode.enabled"), metadata)]),

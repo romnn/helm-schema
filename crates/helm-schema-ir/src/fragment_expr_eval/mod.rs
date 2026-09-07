@@ -9,14 +9,14 @@ pub(crate) use context::FragmentEvalContext;
 
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::EvalResult;
-use crate::eval_env::EvalEnv;
+use crate::eval_env::{EvalEnv, LocalBinding};
 use crate::expr_eval::eval_expr;
 use crate::helper_meta::HelperOutputMeta;
 use bound_helper_resolver::{BoundHelperValueResolverParams, eval_expr_result_with_bound_helpers};
 
 pub(crate) fn context_value_from_outer_expr(
     expr: &TemplateExpr,
-    outer_locals: Option<&HashMap<String, AbstractValue>>,
+    outer_locals: Option<&HashMap<String, LocalBinding>>,
     outer_output_meta: Option<
         &HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
     >,
@@ -25,16 +25,12 @@ pub(crate) fn context_value_from_outer_expr(
 ) -> Option<AbstractValue> {
     if matches!(expr, TemplateExpr::Variable(var) if var.is_empty()) {
         if let Some(binding) = outer_locals.and_then(|locals| locals.get("")) {
-            return Some(binding.clone());
+            return binding.value();
         }
-        if let Some(bindings) = outer {
-            return Some(AbstractValue::Dict(
-                bindings
-                    .iter()
-                    .map(|(key, binding)| (key.clone(), binding.to_context_value()))
-                    .collect(),
-            ));
-        }
+        return Some(AbstractValue::RootContext);
+    }
+    if matches!(expr, TemplateExpr::Field(path) if path.is_empty()) && current_dot.is_none() {
+        return Some(AbstractValue::RootContext);
     }
 
     // An active with/range dot is the current context. Outside a nested
@@ -52,6 +48,7 @@ pub(crate) fn context_value_from_outer_expr(
     });
     let env = EvalEnv {
         dot,
+        dot_binding_mode: crate::eval_env::BindingEvaluationMode::Direct,
         root_fields: outer.cloned().unwrap_or_default(),
         locals: outer_locals.cloned().unwrap_or_default(),
         local_output_meta: outer_output_meta.cloned().unwrap_or_default(),
@@ -79,7 +76,7 @@ pub(crate) fn context_value_from_outer_expr(
 pub(crate) fn fragment_context_value(
     expr: &TemplateExpr,
     root_bindings: &HashMap<String, AbstractValue>,
-    template_bindings: &HashMap<String, AbstractValue>,
+    template_bindings: &HashMap<String, LocalBinding>,
     template_output_meta: &HashMap<
         String,
         BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>,
@@ -108,9 +105,9 @@ pub(crate) fn fragment_context_value(
 }
 
 pub(crate) fn locals_with_roots(
-    template_bindings: &HashMap<String, AbstractValue>,
+    template_bindings: &HashMap<String, LocalBinding>,
     root_bindings: &HashMap<String, AbstractValue>,
-) -> HashMap<String, AbstractValue> {
+) -> HashMap<String, LocalBinding> {
     let mut locals = template_bindings.clone();
     for (key, value) in root_bindings {
         // A template binding keeps its name: `$patch` is the range member
@@ -119,7 +116,7 @@ pub(crate) fn locals_with_roots(
         // to dot fields, which ride the dot/root-fields channels instead.
         locals
             .entry(key.clone())
-            .or_insert_with(|| value.to_context_value());
+            .or_insert_with(|| LocalBinding::direct(value.to_context_value()));
     }
     locals
 }

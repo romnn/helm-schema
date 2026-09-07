@@ -9,7 +9,8 @@ use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 
 use super::strict_operands::{
-    record_range_key_string_consumer_effects, record_string_consumer_effects,
+    record_evaluated_string_call_consumers, record_string_result_consumer,
+    record_string_result_consumer_paths,
 };
 use super::value_facts::{
     complete_string_set, identity_value_paths, serialization_payload_paths, value_paths,
@@ -84,7 +85,7 @@ pub(super) fn eval_printf(
                 .difference(&identity_paths)
                 .cloned(),
         );
-        effects.merge(result.effects);
+        effects.merge(std::mem::take(&mut result.effects));
         for path in &plain_slot_format_paths {
             effects
                 .local_output_meta
@@ -95,12 +96,7 @@ pub(super) fn eval_printf(
                 .plain_slot_string_format_paths
                 .insert(ValuesPath::parse(path));
         }
-        record_printf_argument_effects(
-            index == 0,
-            result.value.as_ref(),
-            &identity_paths,
-            &mut effects,
-        );
+        record_printf_argument_effects(index == 0, &result, &identity_paths, &mut effects);
         provenance_paths.extend(identity_paths);
         values.push(result.value);
     }
@@ -240,7 +236,7 @@ pub(super) fn record_total_conversion_effects(paths: BTreeSet<String>, effects: 
 /// becomes derived text for later stages.
 pub(super) fn record_printf_argument_effects(
     is_format: bool,
-    value: Option<&AbstractValue>,
+    operand: &EvalResult,
     identity_paths: &BTreeSet<String>,
     effects: &mut Effects,
 ) {
@@ -248,13 +244,14 @@ pub(super) fn record_printf_argument_effects(
         let raw: BTreeSet<String> = identity_paths
             .iter()
             .filter(|path| {
-                !effects
+                !operand
+                    .effects
                     .derived_text_paths
                     .contains(&helm_schema_core::ValuesPath::parse(path))
             })
             .cloned()
             .collect();
-        record_string_consumer_effects(value, &raw, effects);
+        record_string_result_consumer_paths(operand, &raw, effects);
     } else {
         effects.add_shape_erased_paths(identity_paths.clone());
     }
@@ -321,6 +318,16 @@ pub(super) fn eval_replace(
     subject.effects.merge(old.effects);
     subject.effects.merge(new.effects);
     let mut effects = subject.effects;
+    super::strict_operands::record_string_call_consumers(
+        "replace",
+        args,
+        env,
+        resolver,
+        &mut effects,
+    );
+    if let Some(piped) = &piped_for_facts {
+        super::strict_operands::record_string_result_consumer(piped, &mut effects);
+    }
     let old_values = value_strings(old.value.as_ref());
     let new_values = value_strings(new.value.as_ref());
     let (string_paths, raw_range_key_paths) =
@@ -345,15 +352,6 @@ pub(super) fn eval_replace(
             )
         })
     {
-        super::strict_operands::record_string_consumer_effects(
-            subject.value.as_ref(),
-            &string_paths,
-            &mut effects,
-        );
-        super::strict_operands::record_raw_range_key_string_consumer_paths(
-            &raw_range_key_paths,
-            &mut effects,
-        );
         return EvalResult::with_effects(Some(value), effects);
     }
     let subject_values = value_strings(subject.value.as_ref());
@@ -477,9 +475,7 @@ pub(super) fn eval_repeat(
 }
 
 /// `tpl` renders its first argument as a template against the given context.
-/// Statically the rendered output is the template argument's content, so the
-/// value transfers from the first argument (literal template text carries no
-/// attributable content and is dropped).
+/// Static programs execute through the resolver; unresolved programs retain their source flow.
 pub(super) fn eval_tpl(
     args: &[TemplateExpr],
     env: &EvalEnv,
@@ -488,14 +484,21 @@ pub(super) fn eval_tpl(
     let [template_expr, context_expr] = args else {
         return eval_all_args(args, env, resolver);
     };
-    let template = eval_expr_with_helper_calls(template_expr, env, resolver);
-    let mut effects = template.effects;
-    // The context argument's value AND effects are deliberately discarded:
-    // a context like `$` reads the whole values tree, and letting that read
-    // reach the call site stamps the context's map shape onto the rendered
-    // scalar (grafana's `name: {{ tpl .name $ }}` items were typed as
-    // objects this way).
-    let _context = eval_expr_with_helper_calls(context_expr, env, resolver);
+    let mut template = eval_expr_with_helper_calls(template_expr, env, resolver);
+    let context = eval_expr_with_helper_calls(context_expr, env, resolver);
+    let mut invocation_env = env.clone();
+    invocation_env
+        .root_fields
+        .extend(template.effects.root_set_mutations.clone());
+    invocation_env
+        .root_fields
+        .extend(context.effects.root_set_mutations.clone());
+    let rendered =
+        resolver.resolve_static_template(&template, context.value.as_ref(), &invocation_env);
+    // Program-source text is parsed as Go template code, not as the rendered YAML document.
+    template.effects.helper_text_captures.clear();
+    let context_effects = context.effects.execution_only();
+    let mut effects = Effects::default();
     let value = if expression_applies_to_yaml(template_expr) {
         // `tpl` re-renders the serialized YAML text: template-free content
         // round-trips unchanged and templated scalar leaves stay scalars,
@@ -508,14 +511,16 @@ pub(super) fn eval_tpl(
                 .iter()
                 .map(|path| helm_schema_core::ValuesPath::parse(path)),
         );
-        template.value
+        effects.merge(std::mem::take(&mut template.effects));
+        template.value.take()
     } else {
         // `tpl` type-asserts its template to a Go string: a raw values
         // subject (`tpl .Values.extraEnv $`, also through a `with`-bound
         // dot) carries the same runtime string contract as any other
         // string-only consumer.
         let subject_paths = identity_value_paths(template.value.as_ref());
-        record_string_consumer_effects(template.value.as_ref(), &subject_paths, &mut effects);
+        effects.merge(std::mem::take(&mut template.effects));
+        record_string_result_consumer(&template, &mut effects);
         if let Some(path) = template.value.as_ref().and_then(|value| match value {
             AbstractValue::ValuesPath(path) => Some(path.clone()),
             AbstractValue::OutputPath(path, meta) if meta.stringified => Some(path.clone()),
@@ -523,7 +528,6 @@ pub(super) fn eval_tpl(
         }) {
             effects.templated_text_identity_paths.insert(path);
         }
-        record_range_key_string_consumer_effects(template.value.as_ref(), &mut effects);
         // The rendered result is DERIVED TEXT: the raw argument is a Go
         // template PROGRAM, and constraints observed on the evaluated
         // output (a regex, an enum, a length) apply to the render, never
@@ -535,9 +539,16 @@ pub(super) fn eval_tpl(
                 .iter()
                 .map(|path| helm_schema_core::ValuesPath::parse(path)),
         );
-        template.value
+        template.value.take()
     }
     .and_then(rendered_content_value);
+    // Context evaluation can fail or mutate data, but its map does not render as tpl output.
+    effects.merge(context_effects);
+    if let Some(mut rendered) = rendered {
+        effects.merge(std::mem::take(&mut rendered.effects));
+        rendered.effects = effects;
+        return rendered;
+    }
     EvalResult::with_effects(value, effects)
 }
 
@@ -655,7 +666,7 @@ pub(super) fn eval_to_json_result(result: EvalResult) -> EvalResult {
 }
 
 fn eval_from_json_result(
-    result: EvalResult,
+    mut result: EvalResult,
     predicate_memo: &helm_schema_core::PredicateMemo,
 ) -> EvalResult {
     let payload_truth = result.json_payload_truth.clone();
@@ -671,14 +682,16 @@ fn eval_from_json_result(
             && paths
                 .iter()
                 .all(|path| effect_path_is_encoded(path, &result.effects.json_serialized_paths));
-    let mut effects = result.effects;
+    let mut effects = std::mem::take(&mut result.effects);
+    if !round_trips_json {
+        record_string_result_consumer_paths(&result, &paths, &mut effects);
+    }
     let value = if round_trips_json {
         result
             .value
             .as_ref()
             .and_then(AbstractValue::json_roundtrip_identity)
     } else {
-        record_string_consumer_effects(result.value.as_ref(), &paths, &mut effects);
         None
     };
     let mut decoded = EvalResult::with_effects(value, effects);
@@ -776,7 +789,7 @@ fn abstract_value_from_json(node: &serde_json::Value) -> Option<AbstractValue> {
     }
 }
 
-pub(super) fn eval_from_yaml_result(result: EvalResult) -> EvalResult {
+pub(super) fn eval_from_yaml_result(mut result: EvalResult) -> EvalResult {
     if let Some(folded) = literal_decoded_value(result.value.as_ref(), DecodeFormat::Yaml) {
         return EvalResult::with_effects(Some(folded), result.effects);
     }
@@ -808,17 +821,17 @@ pub(super) fn eval_from_yaml_result(result: EvalResult) -> EvalResult {
             && paths
                 .iter()
                 .all(|path| effect_path_is_encoded(path, &result.effects.yaml_serialized_paths));
-    let mut effects = result.effects;
     let string_input_paths = if round_trips_yaml {
         BTreeSet::new()
     } else {
         paths
             .iter()
-            .filter(|path| !effect_path_is_encoded(path, &effects.yaml_serialized_paths))
+            .filter(|path| !effect_path_is_encoded(path, &result.effects.yaml_serialized_paths))
             .cloned()
             .collect::<BTreeSet<_>>()
     };
-    record_string_consumer_effects(result.value.as_ref(), &string_input_paths, &mut effects);
+    let mut effects = std::mem::take(&mut result.effects);
+    record_string_result_consumer_paths(&result, &string_input_paths, &mut effects);
     effects.parsed_yaml_input_paths.extend(
         string_input_paths
             .iter()
@@ -940,20 +953,12 @@ pub(super) fn eval_trim_affix(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
-    let (affix, mut subject, piped_for_facts) = match (piped, args) {
+    let (affix, subject) = match (piped, args) {
         (None, [affix, subject]) => (
             eval_expr_with_helper_calls(affix, env, resolver),
             eval_expr_with_helper_calls(subject, env, resolver),
-            None,
         ),
-        (Some(subject), [affix]) => {
-            let piped_for_facts = subject.clone();
-            (
-                eval_expr_with_helper_calls(affix, env, resolver),
-                subject,
-                Some(piped_for_facts),
-            )
-        }
+        (Some(subject), [affix]) => (eval_expr_with_helper_calls(affix, env, resolver), subject),
         (None, _) => return eval_all_args(args, env, resolver),
         (Some(mut subject), _) => {
             merge_arg_effects(args, env, resolver, &mut subject.effects);
@@ -962,16 +967,11 @@ pub(super) fn eval_trim_affix(
     };
     let subject_dispatch = subject.scalar_dispatch.clone();
     let subject_effects = subject.effects.clone();
-    subject.effects.merge(affix.effects);
-    let mut effects = subject.effects;
+    let mut operands = [affix, subject];
+    let mut effects = Effects::default();
     let (string_paths, raw_range_key_paths) =
-        super::strict_operands::string_invocation_operand_facts(
-            function,
-            args,
-            piped_for_facts.as_ref(),
-            env,
-            resolver,
-        );
+        record_evaluated_string_call_consumers(function, &mut operands, 1, &mut effects);
+    let [affix, subject] = operands;
     // A single nonempty literal affix keeps a raw-identity subject's path
     // qualified by it as a lexical escape: trimming is the identity on
     // strings that do not contain the affix.
@@ -990,15 +990,6 @@ pub(super) fn eval_trim_affix(
             )
         })
     {
-        super::strict_operands::record_string_consumer_effects(
-            subject.value.as_ref(),
-            &string_paths,
-            &mut effects,
-        );
-        super::strict_operands::record_raw_range_key_string_consumer_paths(
-            &raw_range_key_paths,
-            &mut effects,
-        );
         let result = EvalResult::with_effects(Some(value), effects);
         return match scalar_dispatch {
             Some(dispatch) => {
@@ -1047,6 +1038,13 @@ pub(super) fn eval_regex_replace(
     subject.effects.merge(pattern.effects);
     subject.effects.merge(replacement.effects);
     let mut effects = subject.effects;
+    super::strict_operands::record_string_call_consumers(
+        function,
+        args,
+        env,
+        resolver,
+        &mut effects,
+    );
     let (string_paths, raw_range_key_paths) =
         super::strict_operands::string_invocation_operand_facts(
             function, args, None, env, resolver,
@@ -1074,15 +1072,6 @@ pub(super) fn eval_regex_replace(
             super::value_facts::regex_replace_transformed_value(value, &subject_effects, &escape)
         })
     {
-        super::strict_operands::record_string_consumer_effects(
-            subject.value.as_ref(),
-            &string_paths,
-            &mut effects,
-        );
-        super::strict_operands::record_raw_range_key_string_consumer_paths(
-            &raw_range_key_paths,
-            &mut effects,
-        );
         return EvalResult::with_effects(Some(value), effects);
     }
     let value = super::value_facts::derive_value_text(subject.value);

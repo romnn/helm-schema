@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
+use crate::eval_env::{BindingDecision, LocalBinding};
 use crate::helper_meta::HelperOutputMeta;
 use crate::scalar_value::{
     ScalarValueDispatch, TruthCondition, any_predicates_with_memo, conjoin_predicates_with_memo,
@@ -19,7 +20,7 @@ pub(super) fn joined_branch_outcomes(
         return entry.clone();
     }
 
-    let (fragment_values, traversal_advances) = join_fragment_values(outcomes);
+    let fragment_values = join_fragment_values(outcomes);
     SymbolicLocalState {
         range_domains: join_map(
             outcomes,
@@ -32,7 +33,6 @@ pub(super) fn joined_branch_outcomes(
             |values| join_if_equal(&values),
         ),
         fragment_values,
-        traversal_advances,
         default_paths: join_map(
             outcomes,
             |state| &state.default_paths,
@@ -171,6 +171,42 @@ pub(super) fn joined_scalar_dispatch_arms(
     Some(joined)
 }
 
+pub(super) fn joined_binding_decisions(
+    fallthrough: &SymbolicLocalState,
+    decisions: &[Option<std::rc::Rc<BindingDecision>>],
+    outcomes: &[SymbolicLocalState],
+) -> HashMap<String, LocalBinding> {
+    let fallthrough = outcomes.get(decisions.len()).unwrap_or(fallthrough);
+    let variables: BTreeSet<&String> = outcomes
+        .iter()
+        .flat_map(|state| state.fragment_values.keys())
+        .chain(fallthrough.fragment_values.keys())
+        .collect();
+    let mut joined = HashMap::new();
+    for variable in variables {
+        let mut binding = fallthrough
+            .fragment_values
+            .get(variable)
+            .cloned()
+            .unwrap_or_else(LocalBinding::unknown);
+        for (decision, outcome) in decisions.iter().zip(outcomes).rev() {
+            let outcome = outcome
+                .fragment_values
+                .get(variable)
+                .cloned()
+                .unwrap_or_else(LocalBinding::unknown);
+            binding = match decision {
+                Some(decision) => {
+                    LocalBinding::select(std::rc::Rc::clone(decision), outcome, binding)
+                }
+                None => outcome,
+            };
+        }
+        joined.insert(variable.clone(), binding);
+    }
+    joined
+}
+
 pub(super) fn joined_truthy_reduction_arms(
     entry: &SymbolicLocalState,
     arms: &[(TruthCondition, SymbolicLocalState)],
@@ -240,67 +276,31 @@ pub(super) fn joined_truthy_reduction_arms(
     Some(joined)
 }
 
-/// Join fragment values, keeping a guarded traversal's ADVANCED value when
-/// one branch stepped a local into a member (`$x = index $x $k` under a
-/// presence conjunct on the member) and every other branch left it at an
-/// ancestor: consumers of the advanced identity are presence-guarded on
-/// it, so the join stays a finite exact path instead of a choice.
-fn join_fragment_values(
-    outcomes: &[SymbolicLocalState],
-) -> (HashMap<String, AbstractValue>, BTreeSet<String>) {
+fn join_fragment_values(outcomes: &[SymbolicLocalState]) -> HashMap<String, LocalBinding> {
     let variables: BTreeSet<&String> = outcomes
         .iter()
         .flat_map(|state| state.fragment_values.keys())
         .collect();
     let mut joined = HashMap::new();
-    let mut advances = BTreeSet::new();
     for variable in variables {
-        let Some(values) = outcomes
+        let values = outcomes
             .iter()
-            .map(|state| state.fragment_values.get(variable))
-            .collect::<Option<Vec<_>>>()
-        else {
-            continue;
-        };
-        if let Some(advanced) = advanced_traversal_value(outcomes, variable, &values) {
-            joined.insert(variable.clone(), advanced);
-            advances.insert(variable.clone());
-            continue;
+            .filter_map(|state| state.fragment_values.get(variable))
+            .collect::<Vec<_>>();
+        let mut binding = LocalBinding::join_unconditioned(values);
+        if outcomes
+            .iter()
+            .any(|state| !state.fragment_values.contains_key(variable))
+        {
+            binding = LocalBinding::select(
+                BindingDecision::new(TruthCondition::Unknown),
+                binding,
+                LocalBinding::unknown(),
+            );
         }
-        if let Some(value) = join_value_choice(values) {
-            joined.insert(variable.clone(), value);
-        }
+        joined.insert(variable.clone(), binding);
     }
-    (joined, advances)
-}
-
-fn advanced_traversal_value(
-    outcomes: &[SymbolicLocalState],
-    variable: &str,
-    values: &[&AbstractValue],
-) -> Option<AbstractValue> {
-    let paths = values
-        .iter()
-        .map(|value| match value {
-            AbstractValue::ValuesPath(path) => Some(path),
-            _ => None,
-        })
-        .collect::<Option<Vec<_>>>()?;
-    let deepest = paths
-        .iter()
-        .copied()
-        .max_by_key(|path| path.segments().len())?;
-    if !paths
-        .iter()
-        .all(|path| *path == deepest || deepest.is_descendant_of(path))
-    {
-        return None;
-    }
-    let marked = outcomes
-        .iter()
-        .zip(&paths)
-        .any(|(state, path)| *path == deepest && state.traversal_advances.contains(variable));
-    marked.then(|| AbstractValue::ValuesPath(deepest.clone()))
+    joined
 }
 
 /// Join one per-variable local-state map across branch outcomes.

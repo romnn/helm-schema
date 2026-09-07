@@ -59,6 +59,7 @@ pub(super) fn eval_set_call(
                     let name = name.trim_start_matches('$');
                     env.locals
                         .get(name)
+                        .and_then(crate::eval_env::LocalBinding::value)
                         .and_then(|local| local.apply_to_path(&["Values".to_string()]))
                         .map(|old_values| (name.to_string(), old_values))
                 }
@@ -103,7 +104,8 @@ pub(super) fn eval_set_call(
                 .map(|key| (key.clone(), assigned_value.clone()))
                 .collect();
             value.with_overlay_entries(entries)
-        });
+        })
+        .and_then(|binding| binding.value());
     if let Some(target) = target {
         effects.add_local_set_mutation(target, keys, &assigned_value);
     } else if let Some((local, old_values)) = values_member_target {

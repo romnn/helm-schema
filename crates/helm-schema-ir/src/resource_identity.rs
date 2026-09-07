@@ -717,7 +717,7 @@ impl HelperOutputEvaluator {
                 }
             }
             // `with`/`range` branch bodies contribute unguarded.
-            NodeAction::With(_) => {
+            NodeAction::With => {
                 for child in children_with_field(node, "consequence") {
                     self.collect_body_parts(source, child, analysis_db, depth, parts);
                 }
@@ -730,7 +730,7 @@ impl HelperOutputEvaluator {
                     self.collect_body_parts(source, child, analysis_db, depth, parts);
                 }
             }
-            NodeAction::Range(_) => {
+            NodeAction::Range => {
                 for child in children_with_field(node, "body") {
                     self.collect_body_parts(source, child, analysis_db, depth, parts);
                 }

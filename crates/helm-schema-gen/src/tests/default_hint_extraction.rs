@@ -15,12 +15,12 @@ fn step2_default_negative_integer_literal() {
     );
 }
 
-/// Step 2: rooted `$.Values.X` and `$root.Values.X` forms (used inside
-/// ranges/withs where `.` is rebound) are recognised too — not just the
-/// plain `.Values.X` form.
+/// Rooted `$.Values.X` and a bound `$root.Values.X` alias are recognised
+/// inside ranges and `with` blocks where `.` is rebound.
 #[test]
 fn step2_default_rooted_values_paths_recognised() {
     let src = indoc! {r#"
+        {{- $root := $ }}
         {{- range .Values.servers }}
         name: {{ default "alertmanager" $.Values.alertmanager.nameOverride }}
         alias: {{ default "main" $root.Values.alertmanager.aliasOverride }}

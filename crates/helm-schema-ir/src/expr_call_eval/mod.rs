@@ -8,11 +8,12 @@ use helm_schema_core::{GuardDnf, GuardValue, Predicate, escape_regex_literal};
 
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{
-    Effects, EvalResult, SelectionPolarity, SelectionReachability, SelectionTruthSource,
+    Effects, EvalResult, ProvenOperand, ProvenOperands, SelectionPolarity, SelectionReachability,
+    SelectionTruthSource,
 };
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, direct_values_path, eval_expr_with_helper_calls};
-use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
+use crate::scalar_value::{ScalarValueDispatch, TruthCondition, conjoin_predicates_with_memo};
 
 use crate::function_semantics::{
     ArgumentEvaluationMode, CollectionShape, OutputSemantics, PredicateSemantics,
@@ -34,8 +35,9 @@ use collections::{
     eval_append, eval_coalesce, eval_concat, eval_default, eval_dict, eval_first_result,
     eval_last_result, eval_list, eval_merge, eval_nonempty_split, eval_omit, eval_pick, eval_pluck,
     eval_prepend, eval_regex_split, eval_reverse_result, eval_split_list,
-    is_nonempty_string_literal,
+    flattened_proven_operands, is_nonempty_string_literal,
 };
+pub(crate) use comparisons::selected_type_test_truth;
 use comparisons::{eval_comparison, eval_ternary, eval_type_is};
 use root_mutation::eval_set_call;
 use serialization::{
@@ -47,10 +49,9 @@ use serialization::{
 use strict_operands::{
     push_fail_capture, record_collection_item_kind_result, record_length_bearing_operand,
     record_length_bearing_result, record_operand_presence_result,
-    record_raw_range_key_string_consumer_paths, record_strict_kind_argument_result,
-    record_strict_kind_operands, record_strict_kind_result, record_strict_parser_invocation,
-    record_string_call_consumers, record_string_consumer_effects, record_string_transform_effects,
-    string_invocation_operand_facts,
+    record_strict_kind_argument_result, record_strict_kind_operands, record_strict_kind_result,
+    record_strict_parser_invocation, record_string_call_consumers, record_string_result_consumer,
+    record_string_transform_effects, string_invocation_operand_facts,
 };
 use traversal::{eval_dig, eval_index};
 use value_facts::{
@@ -137,11 +138,45 @@ fn eval_invocation(
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
+    let preserves_program_text = matches!(
+        invocation.function,
+        "include"
+            | "template"
+            | "tpl"
+            | "and"
+            | "or"
+            | "default"
+            | "coalesce"
+            | "ternary"
+            | "indent"
+            | "nindent"
+    );
+    let mut result = eval_invocation_value(invocation, env, resolver);
+    // Lexical constraints on a program's output survive only unchanged text or value selection.
+    if !preserves_program_text {
+        result.effects.helper_text_captures.clear();
+    }
+    result
+}
+
+fn eval_invocation_value(
+    invocation: CallInvocation<'_>,
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+) -> EvalResult {
     let CallInvocation {
         function,
         args,
         mut piped,
     } = invocation;
+    if crate::function_semantics::is_files_get(function) && args.len() == 1 && piped.is_none() {
+        let path = eval_expr_with_helper_calls(&args[0], env, resolver);
+        let mut result = resolver
+            .resolve_file_contents(&path, env)
+            .unwrap_or_else(EvalResult::none);
+        result.effects.merge(path.effects.execution_only());
+        return result;
+    }
     if !has_catalog_or_dispatch_exception(function) {
         return match piped {
             Some(piped) => eval_unknown_call(args, piped.result.effects, env, resolver),
@@ -150,6 +185,16 @@ fn eval_invocation(
     }
     let operand_count = args.len() + usize::from(piped.is_some());
     match function {
+        function
+            if function_semantics(function).output == OutputSemantics::NonEmptyString
+                && operand_count == 0 =>
+        {
+            return EvalResult::from_value_with_memo(
+                AbstractValue::Unknown,
+                env.predicate_memo.as_ref(),
+            )
+            .with_truth_with_memo(Predicate::True, env.predicate_memo.as_ref());
+        }
         function
             if matches!(
                 function,
@@ -277,6 +322,10 @@ fn eval_string_transform_invocation(
     }
     if piped_for_facts.is_none() && !function_semantics(function).is_total_stringification() {
         record_string_call_consumers(function, args, env, resolver, &mut effects);
+    } else if let Some(piped) = &piped_for_facts
+        && !function_semantics(function).is_total_stringification()
+    {
+        record_string_result_consumer(piped, &mut effects);
     }
     record_string_transform_effects(
         function,
@@ -343,6 +392,7 @@ fn eval_sequence_invocation(
                 argument,
                 &operand,
                 "array",
+                env,
                 &mut result.effects,
             );
         } else {
@@ -378,7 +428,14 @@ fn eval_direct_invocation(
             let operand = eval_expr_with_helper_calls(target, env, resolver);
             let mut effects = operand.effects.clone();
             effects.merge(eval_expr_with_helper_calls(key, env, resolver).effects);
-            record_strict_kind_argument_result(function, target, &operand, "object", &mut effects);
+            record_strict_kind_argument_result(
+                function,
+                target,
+                &operand,
+                "object",
+                env,
+                &mut effects,
+            );
             EvalResult::with_effects(operand.value, effects)
         }
         "default" if matches!(args, [_, _]) => {
@@ -679,6 +736,7 @@ fn eval_direct_invocation(
                 subject_expr,
                 &subject,
                 "object",
+                env,
                 &mut result.effects,
             );
             record_total_conversion_effects(
@@ -733,6 +791,7 @@ fn eval_direct_invocation(
                 arg,
                 &operand,
                 "object",
+                env,
                 &mut result.effects,
             );
             record_total_conversion_effects(
@@ -799,6 +858,7 @@ fn eval_direct_invocation(
         }
         "repeat" if args.len() == 2 => {
             let mut result = eval_repeat(args, env, resolver);
+            record_string_call_consumers("repeat", args, env, resolver, &mut result.effects);
             let (string_paths, raw_range_key_paths) =
                 string_invocation_operand_facts("repeat", args, None, env, resolver);
             record_string_transform_effects(
@@ -1027,29 +1087,23 @@ fn eval_piped_invocation(
             if function_semantics(function).output == OutputSemantics::Checksum
                 && args.is_empty() =>
         {
-            let (string_paths, raw_range_key_paths) =
-                string_invocation_operand_facts(function, args, Some(&current), env, resolver);
             // The digest shares no text or shape with its subject —
             // same erasure as the call form above.
+            let mut current = current;
             let subject_identities = identity_value_paths(current.value.as_ref());
-            let mut result = eval_unknown_call(args, current.effects, env, resolver);
+            let mut effects = std::mem::take(&mut current.effects);
+            record_string_result_consumer(&current, &mut effects);
+            let mut result = eval_unknown_call(args, effects, env, resolver);
             result
                 .effects
                 .add_shape_erased_paths(subject_identities.clone());
-            record_string_consumer_effects(
-                current.value.as_ref(),
-                &string_paths,
-                &mut result.effects,
-            );
             result
                 .effects
                 .clear_plain_slot_string_format_paths(&subject_identities);
-            record_raw_range_key_string_consumer_paths(&raw_range_key_paths, &mut result.effects);
             result
         }
         "printf" => {
             let piped_dispatch = current.scalar_dispatch.clone();
-            let mut effects = current.effects;
             let piped_scalar = piped_dispatch
                 .as_ref()
                 .and_then(ScalarValueDispatch::constant_value);
@@ -1057,10 +1111,12 @@ fn eval_piped_invocation(
             // hold the format plus any leading data arguments.
             let piped = identity_value_paths(current.value.as_ref());
             let token_initial_string_argument = token_initial_printf_string_argument(args);
+            let mut effects = Effects::default();
+            record_printf_argument_effects(false, &current, &piped, &mut effects);
+            effects.merge(current.effects);
             if token_initial_string_argument == Some(args.len()) {
                 conjoin_formatter_operand_selection(&piped, piped_dispatch.as_ref(), &mut effects);
             }
-            record_printf_argument_effects(false, current.value.as_ref(), &piped, &mut effects);
             let mut scalar_values = Vec::with_capacity(args.len());
             for (index, arg) in args.iter().enumerate() {
                 let mut result = eval_expr_with_helper_calls(arg, env, resolver);
@@ -1080,13 +1136,8 @@ fn eval_piped_invocation(
                             .and_then(ScalarValueDispatch::constant_value),
                     );
                 }
-                effects.merge(result.effects);
-                record_printf_argument_effects(
-                    index == 0,
-                    result.value.as_ref(),
-                    &identity_paths,
-                    &mut effects,
-                );
+                effects.merge(std::mem::take(&mut result.effects));
+                record_printf_argument_effects(index == 0, &result, &identity_paths, &mut effects);
             }
             scalar_values.push(piped_scalar);
             let dispatch = literal_printf_format(args)
@@ -1154,12 +1205,9 @@ fn eval_piped_invocation(
             let scalar_truth =
                 scalar_pattern_condition(function, args, current.scalar_dispatch.as_ref(), env);
             let piped = current.clone();
-            let (string_paths, raw_range_key_paths) =
-                string_invocation_operand_facts(function, args, Some(&current), env, resolver);
             let mut effects = current.effects;
             merge_arg_effects(args, env, resolver, &mut effects);
-            record_string_consumer_effects(current.value.as_ref(), &string_paths, &mut effects);
-            record_raw_range_key_string_consumer_paths(&raw_range_key_paths, &mut effects);
+            record_string_result_consumer(&piped, &mut effects);
             record_strict_parser_invocation(
                 function,
                 args,
@@ -1314,6 +1362,7 @@ fn eval_short_circuit_args(
 ) -> EvalResult {
     let mut effects = Effects::default();
     let mut values = Vec::new();
+    let mut proven_operands = ProvenOperands::default();
     let mut execution_predicates = BTreeSet::new();
     let mut operand_conditions = Vec::with_capacity(args.len());
     let mut constrained_env = env.clone();
@@ -1342,6 +1391,27 @@ fn eval_short_circuit_args(
             SelectionReachability::always(operand_reachability.truth_source())
         }
         .conjoin_predicates(execution_predicates.iter().cloned());
+        let flattened = flattened_proven_operands(
+            &result,
+            env.argument_evaluation_mode(arg),
+            env.predicate_memo.as_ref(),
+        );
+        proven_operands.has_unresolved |=
+            flattened.has_unresolved || !selection.has_proven_selection_condition();
+        for operand in flattened.known {
+            let Some(condition) = conjoin_predicates_with_memo(
+                operand.condition,
+                selection.proven_selected_subset(),
+                env.predicate_memo.as_ref(),
+            ) else {
+                continue;
+            };
+            proven_operands.known.push(ProvenOperand {
+                condition,
+                evaluation_mode: operand.evaluation_mode,
+                result: operand.result,
+            });
+        }
         conjoin_result_reachability(
             &mut result,
             &selection,
@@ -1399,6 +1469,7 @@ fn eval_short_circuit_args(
             .with_predicate_constraints(arg, previous_truthy);
     }
     let mut result = EvalResult::with_effects(AbstractValue::choice(values), effects);
+    result.proven_operands = Some(proven_operands);
     result.set_truth_condition_with_memo(
         combined_short_circuit_truth(
             &operand_conditions,
@@ -1577,7 +1648,7 @@ fn combined_short_circuit_truth(
     }
 }
 
-pub(super) fn conjoin_result_selection(result: &mut EvalResult, predicates: &BTreeSet<Predicate>) {
+pub(crate) fn conjoin_result_selection(result: &mut EvalResult, predicates: &BTreeSet<Predicate>) {
     if predicates.is_empty() {
         return;
     }
@@ -1612,6 +1683,17 @@ pub(super) fn conjoin_result_selection(result: &mut EvalResult, predicates: &BTr
     for row in &mut result.effects.helper_rendered {
         row.meta.conjoin_branches(predicates);
     }
+    result.effects.helper_text_captures = std::mem::take(&mut result.effects.helper_text_captures)
+        .into_iter()
+        .map(|mut capture| {
+            for predicate in predicates {
+                if !capture.conjunction.contains(predicate) {
+                    capture.conjunction.push(predicate.clone());
+                }
+            }
+            capture
+        })
+        .collect();
 }
 
 pub(super) fn conjoin_result_reachability(
@@ -1645,6 +1727,17 @@ fn scope_execution_effects(effects: &mut Effects, predicates: &BTreeSet<Predicat
             .condition
             .conjoined(&GuardDnf::from_conjunction(predicates.iter().cloned()));
     }
+    effects.helper_text_captures = std::mem::take(&mut effects.helper_text_captures)
+        .into_iter()
+        .map(|mut capture| {
+            for predicate in predicates {
+                if !capture.conjunction.contains(predicate) {
+                    capture.conjunction.push(predicate.clone());
+                }
+            }
+            capture
+        })
+        .collect();
     effects.observed_facts.captures = std::mem::take(&mut effects.observed_facts.captures)
         .into_iter()
         .map(|mut capture| {
@@ -1688,11 +1781,6 @@ fn eval_helper_call(
     {
         return result;
     }
-    if let Some(template_name) = args.first().and_then(template_base_path_suffix)
-        && let Some(result) = resolver.resolve_implicit_template_call(&template_name, args.get(1))
-    {
-        return result;
-    }
     if let Some(callee_expr) = args.first()
         && !matches!(callee_expr.deparen(), TemplateExpr::Literal(_))
     {
@@ -1717,37 +1805,6 @@ fn eval_helper_call(
     let mut effects = Effects::default();
     merge_arg_effects(args, env, resolver, &mut effects);
     EvalResult::with_effects(None, effects)
-}
-
-fn template_base_path_suffix(expr: &TemplateExpr) -> Option<String> {
-    let TemplateExpr::Call { function, args } = expr.deparen() else {
-        return None;
-    };
-    let (base, suffix_args) = args.split_first()?;
-    if function != "print" || suffix_args.is_empty() || !is_template_base_path(base) {
-        return None;
-    }
-
-    let mut suffix = String::new();
-    for arg in suffix_args {
-        let TemplateExpr::Literal(Literal::String(part) | Literal::RawString(part)) = arg.deparen()
-        else {
-            return None;
-        };
-        suffix.push_str(part);
-    }
-    (!suffix.is_empty()).then_some(suffix)
-}
-
-fn is_template_base_path(expr: &TemplateExpr) -> bool {
-    match expr.deparen() {
-        TemplateExpr::Field(path) => path.as_slice() == ["Template", "BasePath"],
-        TemplateExpr::Selector { operand, path } => {
-            path.as_slice() == ["Template", "BasePath"]
-                && matches!(operand.deparen(), TemplateExpr::Variable(name) if name.is_empty())
-        }
-        _ => false,
-    }
 }
 
 fn eval_all_args(

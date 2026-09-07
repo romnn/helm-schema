@@ -4,17 +4,16 @@ use helm_schema_ast::{Literal, TemplateExpr};
 
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{
-    Effects, EvalResult, SelectionPolarity, SelectionReachability, SelectionTruthSource,
+    Effects, EvalResult, ProvenOperand, ProvenOperands, SelectionPolarity, SelectionReachability,
+    SelectionTruthSource,
 };
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
-use crate::scalar_value::{ScalarValueDispatch, TruthCondition};
+use crate::function_semantics::ArgumentEvaluationMode;
+use crate::scalar_value::{ScalarValueDispatch, TruthCondition, conjoin_predicates_with_memo};
 use helm_schema_core::{GuardValue, Predicate, ValuesPath};
 
-use super::strict_operands::{
-    record_range_key_string_consumer_effects, record_raw_range_key_string_consumer_paths,
-    record_string_call_consumers, record_string_consumer_effects, string_invocation_operand_facts,
-};
+use super::strict_operands::{record_string_call_consumers, record_string_result_consumer};
 use super::value_facts::{identity_value_paths, split_transformed_value, value_strings};
 use super::{eval_all_args, eval_unknown_call, merge_arg_effects, merge_arg_values};
 
@@ -28,6 +27,7 @@ pub(super) fn eval_default(
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     let memo = env.predicate_memo.as_ref();
+    let primary_selection = primary.clone();
     let primary_dispatch = primary.scalar_dispatch.clone();
     let fallback_reachability = default_primary_selection_with_memo(&primary, memo);
     let primary_reachability = fallback_reachability.complement_with_memo(memo);
@@ -65,8 +65,11 @@ pub(super) fn eval_default(
     };
     let mut fallback_paths = BTreeSet::new();
     let mut fallback_dispatch = None;
+    let mut fallback_results = Vec::new();
     for fallback in fallback_args {
-        let mut result = eval_expr_with_helper_calls(fallback, env, resolver);
+        let evaluated = eval_expr_with_helper_calls(fallback, env, resolver);
+        fallback_results.push(evaluated.clone());
+        let mut result = evaluated;
         if fallback_reachability.is_never() {
             effects.merge(result.effects.execution_only());
             continue;
@@ -142,7 +145,12 @@ pub(super) fn eval_default(
     // both resolved, which is the ordered first-truthy selection; a missing
     // arm leaves only the other value, where the chain collapses to it (the
     // same result the unordered choice produced).
-    let result = EvalResult::with_effects(AbstractValue::first_truthy(values), effects);
+    let mut result = EvalResult::with_effects(AbstractValue::first_truthy(values), effects);
+    if let [fallback] = fallback_results.as_slice() {
+        if let Some(proven) = compose_default_proven_operands(&primary_selection, fallback, memo) {
+            result = rebuild_complete_default_result(result, proven);
+        }
+    }
     finish_default_dispatch(
         result,
         &fallback_reachability,
@@ -151,6 +159,168 @@ pub(super) fn eval_default(
         fallback_args,
         memo,
     )
+}
+
+fn rebuild_complete_default_result(mut result: EvalResult, proven: ProvenOperands) -> EvalResult {
+    if proven.has_unresolved
+        || proven.known.len() != 1
+        || proven.known[0].condition != Predicate::True
+    {
+        result.proven_operands = Some(proven);
+        return result;
+    }
+    let mut selected = *proven.known[0].result.clone();
+    let mut effects = result.effects.execution_only();
+    effects.merge(std::mem::take(&mut selected.effects));
+    selected.effects = effects;
+    selected.proven_operands = Some(proven);
+    selected
+}
+
+fn compose_default_proven_operands(
+    primary: &EvalResult,
+    fallback: &EvalResult,
+    memo: &helm_schema_core::PredicateMemo,
+) -> Option<ProvenOperands> {
+    if !has_proven_selection(primary) && !has_proven_selection(fallback) {
+        return None;
+    }
+    let primary = flattened_proven_operands(primary, ArgumentEvaluationMode::Evaluated, memo);
+    let fallback = flattened_proven_operands(fallback, ArgumentEvaluationMode::Evaluated, memo);
+    let mut known = Vec::new();
+    let mut has_unresolved = primary.has_unresolved;
+    for operand in primary.known {
+        let fallback_reachability =
+            default_primary_selection_for_proven_operand(&operand.result, &operand.condition, memo);
+        let primary_reachability = fallback_reachability.complement_with_memo(memo);
+        if fallback_reachability.exact_predicate().is_none() {
+            has_unresolved = true;
+        }
+        if let Some(condition) = conjoin_predicates_with_memo(
+            operand.condition.clone(),
+            primary_reachability.proven_selected_subset(),
+            memo,
+        ) {
+            let mut selected = *operand.result.clone();
+            let selected_paths = identity_value_paths(selected.value.as_ref());
+            selected.effects.add_default_paths(selected_paths);
+            selected.selection_reachability = Some(primary_reachability);
+            known.push(ProvenOperand {
+                condition,
+                evaluation_mode: ArgumentEvaluationMode::Evaluated,
+                result: Box::new(selected),
+            });
+        }
+        let Some(fallback_condition) = conjoin_predicates_with_memo(
+            operand.condition,
+            fallback_reachability.proven_selected_subset(),
+            memo,
+        ) else {
+            continue;
+        };
+        if fallback.has_unresolved {
+            has_unresolved = true;
+        }
+        for fallback_operand in &fallback.known {
+            let Some(condition) = conjoin_predicates_with_memo(
+                fallback_condition.clone(),
+                fallback_operand.condition.clone(),
+                memo,
+            ) else {
+                continue;
+            };
+            known.push(ProvenOperand {
+                condition,
+                evaluation_mode: ArgumentEvaluationMode::Evaluated,
+                result: fallback_operand.result.clone(),
+            });
+        }
+    }
+    Some(ProvenOperands {
+        known,
+        has_unresolved,
+    })
+}
+
+fn has_proven_selection(result: &EvalResult) -> bool {
+    let Some(proven) = &result.proven_operands else {
+        return false;
+    };
+    proven.has_unresolved
+        || proven.known.len() != 1
+        || proven.known[0].condition != Predicate::True
+        || has_proven_selection(&proven.known[0].result)
+}
+
+fn default_primary_selection_for_proven_operand(
+    result: &EvalResult,
+    selection: &Predicate,
+    memo: &helm_schema_core::PredicateMemo,
+) -> SelectionReachability {
+    let fallback = default_primary_selection_with_memo(result, memo);
+    if fallback.exact_predicate().is_some() {
+        return fallback;
+    }
+    result
+        .exact_input_identity_under(selection, memo)
+        .map_or(fallback, |path| {
+            SelectionReachability::exact(
+                Predicate::truthy_path(path).negated(),
+                SelectionTruthSource::RawInput,
+            )
+        })
+}
+
+pub(super) fn flattened_proven_operands(
+    result: &EvalResult,
+    evaluation_mode: ArgumentEvaluationMode,
+    memo: &helm_schema_core::PredicateMemo,
+) -> ProvenOperands {
+    fn visit(
+        result: &EvalResult,
+        condition: Predicate,
+        evaluation_mode: ArgumentEvaluationMode,
+        memo: &helm_schema_core::PredicateMemo,
+        flattened: &mut ProvenOperands,
+    ) {
+        let Some(proven) = &result.proven_operands else {
+            let mut result = result.clone();
+            result.proven_operands = None;
+            flattened.known.push(ProvenOperand {
+                condition,
+                evaluation_mode,
+                result: Box::new(result),
+            });
+            return;
+        };
+        if proven.has_unresolved {
+            flattened.has_unresolved = true;
+        }
+        for operand in &proven.known {
+            let Some(condition) =
+                conjoin_predicates_with_memo(condition.clone(), operand.condition.clone(), memo)
+            else {
+                continue;
+            };
+            visit(
+                &operand.result,
+                condition,
+                operand.evaluation_mode,
+                memo,
+                flattened,
+            );
+        }
+    }
+
+    let mut flattened = ProvenOperands::default();
+    visit(
+        result,
+        Predicate::True,
+        evaluation_mode,
+        memo,
+        &mut flattened,
+    );
+    flattened
 }
 
 fn literal_schema_type(expr: &TemplateExpr) -> Option<&'static str> {
@@ -750,13 +920,9 @@ pub(super) fn eval_split_list(
     // The subject must be a Go string at runtime whatever the split
     // produces: the literal-split fast path below is value refinement on
     // top of that contract, not a replacement for it.
-    record_string_consumer_effects(
-        result.value.as_ref(),
-        &identity_value_paths(result.value.as_ref()),
-        &mut result.effects,
-    );
-    let value = result.value.clone();
-    record_range_key_string_consumer_effects(value.as_ref(), &mut result.effects);
+    let mut effects = std::mem::take(&mut result.effects);
+    record_string_result_consumer(&result, &mut effects);
+    result.effects = effects;
     let Some(strings) = result.value.as_ref().map(AbstractValue::strings) else {
         let value = (!source_paths.is_empty()).then_some(AbstractValue::SplitList {
             source_paths,
@@ -868,10 +1034,7 @@ pub(super) fn eval_nonempty_split(
     subject.effects.merge(separator.effects);
     let mut effects = subject.effects;
     if let Some(piped) = piped_for_facts.as_ref() {
-        let (string_paths, raw_range_key_paths) =
-            string_invocation_operand_facts("split", args, Some(piped), env, resolver);
-        record_string_consumer_effects(piped.value.as_ref(), &string_paths, &mut effects);
-        record_raw_range_key_string_consumer_paths(&raw_range_key_paths, &mut effects);
+        record_string_result_consumer(piped, &mut effects);
     } else {
         record_string_call_consumers("split", args, env, resolver, &mut effects);
     }

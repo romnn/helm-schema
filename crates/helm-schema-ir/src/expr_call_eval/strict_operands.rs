@@ -10,17 +10,56 @@ use crate::scalar_value::ScalarValue;
 use helm_schema_core::{Predicate, ValuesPath};
 
 use super::serialization::record_total_conversion_effects;
-use super::value_facts::{identity_range_key_paths, identity_value_paths};
+use super::value_facts::{identity_range_key_paths, identity_value_paths, value_paths};
+
+fn record_proven_operand_effects(
+    operand: &EvalResult,
+    fallback_mode: ArgumentEvaluationMode,
+    effects: &mut Effects,
+    mut record: impl FnMut(&EvalResult, ArgumentEvaluationMode, &mut Effects),
+) {
+    let Some(proven) = &operand.proven_operands else {
+        record(operand, fallback_mode, effects);
+        return;
+    };
+    for leaf in &proven.known {
+        let mut leaf_effects = Effects::default();
+        record(&leaf.result, leaf.evaluation_mode, &mut leaf_effects);
+        leaf_effects.observed_facts.captures =
+            std::mem::take(&mut leaf_effects.observed_facts.captures)
+                .into_iter()
+                .filter(|capture| !strict_capture_is_implied(&leaf.condition, capture))
+                .map(|mut capture| {
+                    if leaf.condition != Predicate::True
+                        && !capture.conjunction.contains(&leaf.condition)
+                    {
+                        capture.conjunction.push(leaf.condition.clone());
+                    }
+                    capture
+                })
+                .collect();
+        effects.merge(leaf_effects);
+    }
+}
+
+fn strict_capture_is_implied(
+    condition: &Predicate,
+    capture: &crate::eval_effect::FailCapture,
+) -> bool {
+    let crate::eval_effect::CaptureKind::StringRequirement { .. } = &capture.kind else {
+        return false;
+    };
+    capture.requirement_is_implied_by(condition)
+}
 use crate::function_semantics::{
-    ArgumentEvaluationMode, argument_evaluation_mode, function_semantics,
-    strict_parser_operand_pattern,
+    ArgumentEvaluationMode, function_semantics, strict_parser_operand_pattern,
 };
 
 pub(super) fn record_string_transform_effects(
     function: &str,
     value: Option<&AbstractValue>,
     string_paths: &BTreeSet<String>,
-    raw_range_key_paths: &BTreeSet<String>,
+    _raw_range_key_paths: &BTreeSet<String>,
     effects: &mut Effects,
 ) {
     let influence_paths = value.map(AbstractValue::paths).unwrap_or_default();
@@ -56,8 +95,6 @@ pub(super) fn record_string_transform_effects(
         );
         return;
     }
-    record_string_consumer_effects(value, string_paths, effects);
-    record_raw_range_key_string_consumer_paths(raw_range_key_paths, effects);
     if matches!(function, "lower" | "upper") {
         for path in string_paths {
             let typed_path = helm_schema_core::ValuesPath::parse(path);
@@ -81,6 +118,103 @@ pub(super) fn record_string_transform_effects(
     if function == "b64enc" {
         effects.add_encoded_paths(influence_paths.iter().map(ValuesPath::encode).collect());
     }
+}
+
+pub(super) fn record_string_result_consumer(operand: &EvalResult, effects: &mut Effects) {
+    let source = effects.clone();
+    record_string_result_consumer_with_source(operand, &source, effects);
+}
+
+fn record_string_result_consumer_with_source(
+    operand: &EvalResult,
+    source: &Effects,
+    effects: &mut Effects,
+) {
+    record_string_operand_effects(operand, source, effects, |leaf, source, leaf_effects| {
+        let paths = identity_value_paths(leaf.value.as_ref());
+        record_string_consumer_effects_one(leaf.value.as_ref(), &paths, source, leaf_effects);
+        let range_key_paths = identity_range_key_paths(leaf.value.as_ref());
+        let raw_range_key_paths = range_key_paths
+            .iter()
+            .filter(|path| {
+                !source
+                    .derived_range_key_paths
+                    .contains(&helm_schema_core::ValuesPath::parse(path))
+            })
+            .cloned()
+            .collect();
+        record_raw_range_key_string_consumer_paths(&raw_range_key_paths, leaf_effects);
+    });
+}
+
+pub(super) fn record_string_result_consumer_paths(
+    operand: &EvalResult,
+    candidate_paths: &BTreeSet<String>,
+    effects: &mut Effects,
+) {
+    let source = effects.clone();
+    record_string_operand_effects(operand, &source, effects, |leaf, source, leaf_effects| {
+        let leaf_paths = value_paths(leaf.value.as_ref());
+        let paths = candidate_paths.intersection(&leaf_paths).cloned().collect();
+        record_string_consumer_effects_one(leaf.value.as_ref(), &paths, source, leaf_effects);
+    });
+}
+
+/// Records string contracts and facts from canonical, already-evaluated operands.
+pub(super) fn record_evaluated_string_call_consumers(
+    function: &str,
+    operands: &mut [EvalResult],
+    output_operand_index: usize,
+    effects: &mut Effects,
+) -> (BTreeSet<String>, BTreeSet<String>) {
+    let indices = function_semantics(function).string_operand_indices(operands.len());
+    let mut paths = BTreeSet::new();
+    let mut range_key_paths = BTreeSet::new();
+    let mut consumer_effects = Effects::default();
+    for &index in &indices {
+        let Some(operand) = operands.get(index) else {
+            continue;
+        };
+        paths.extend(identity_value_paths(operand.value.as_ref()));
+        let keys = identity_range_key_paths(operand.value.as_ref());
+        range_key_paths.extend(keys.into_iter().filter(|path| {
+            !operand
+                .effects
+                .derived_range_key_paths
+                .contains(&helm_schema_core::ValuesPath::parse(path))
+        }));
+        record_string_result_consumer_with_source(operand, &operand.effects, &mut consumer_effects);
+    }
+    for (index, operand) in operands.iter_mut().enumerate() {
+        let operand_effects = std::mem::take(&mut operand.effects);
+        effects.merge(if index == output_operand_index {
+            operand_effects
+        } else {
+            operand_effects.execution_only()
+        });
+    }
+    effects.merge(consumer_effects);
+    (paths, range_key_paths)
+}
+
+/// Visits the selected leaves of one already-evaluated string operand.
+/// A decision-free operand retains the caller's accumulated effect context.
+fn record_string_operand_effects(
+    operand: &EvalResult,
+    fallback_source: &Effects,
+    effects: &mut Effects,
+    mut record: impl FnMut(&EvalResult, &Effects, &mut Effects),
+) {
+    if operand.proven_operands.is_none() {
+        record(operand, fallback_source, effects);
+        return;
+    }
+    record_proven_operand_effects(
+        operand,
+        ArgumentEvaluationMode::Evaluated,
+        effects,
+        |leaf, _, leaf_effects| record(leaf, &leaf.effects, leaf_effects),
+    );
 }
 
 pub(super) fn string_invocation_operand_facts(
@@ -128,23 +262,36 @@ pub(super) fn record_string_call_consumers(
     resolver: &mut impl HelperCallValueResolver,
     effects: &mut Effects,
 ) {
-    let mut raw_range_key_paths = BTreeSet::new();
     for index in function_semantics(function).string_operand_indices(args.len()) {
         let Some(arg) = args.get(index) else {
             continue;
         };
         let operand = eval_expr_with_helper_calls(arg, env, resolver);
-        let paths = identity_value_paths(operand.value.as_ref());
-        record_string_consumer_effects(operand.value.as_ref(), &paths, effects);
-        let keys = identity_range_key_paths(operand.value.as_ref());
-        raw_range_key_paths.extend(keys.into_iter().filter(|path| {
-            !operand
-                .effects
-                .derived_range_key_paths
-                .contains(&helm_schema_core::ValuesPath::parse(path))
-        }));
+        record_proven_operand_effects(
+            &operand,
+            env.argument_evaluation_mode(arg),
+            effects,
+            |leaf, _, leaf_effects| {
+                let paths = identity_value_paths(leaf.value.as_ref());
+                record_string_consumer_effects_one(
+                    leaf.value.as_ref(),
+                    &paths,
+                    &leaf.effects,
+                    leaf_effects,
+                );
+                let raw_range_key_paths = identity_range_key_paths(leaf.value.as_ref())
+                    .into_iter()
+                    .filter(|path| {
+                        !leaf
+                            .effects
+                            .derived_range_key_paths
+                            .contains(&helm_schema_core::ValuesPath::parse(path))
+                    })
+                    .collect();
+                record_raw_range_key_string_consumer_paths(&raw_range_key_paths, leaf_effects);
+            },
+        );
     }
-    record_raw_range_key_string_consumer_paths(&raw_range_key_paths, effects);
 }
 
 pub(super) fn record_strict_parser_invocation(
@@ -165,8 +312,20 @@ pub(super) fn record_strict_parser_invocation(
         let Some((piped, piped_is_direct_values_path)) = piped else {
             return;
         };
-        if piped_is_direct_values_path || parser_operand_has_partitioned_identity(piped, false) {
-            record_strict_parser_result(piped, pattern, false, effects);
+        if piped.proven_operands.is_some()
+            || piped_is_direct_values_path
+            || parser_operand_has_partitioned_identity(piped, false)
+        {
+            record_proven_operand_effects(
+                piped,
+                ArgumentEvaluationMode::Evaluated,
+                effects,
+                |leaf, _, leaf_effects| {
+                    if parser_operand_has_partitioned_identity(leaf, false) {
+                        record_strict_parser_result(leaf, pattern, false, leaf_effects);
+                    }
+                },
+            );
         }
         return;
     }
@@ -175,8 +334,19 @@ pub(super) fn record_strict_parser_invocation(
     };
     let operand = eval_expr_with_helper_calls(arg, env, resolver);
     let total_string_preimage = function == "mustDateModify" && is_to_string_expression(arg);
-    if parser_operand_has_partitioned_identity(&operand, total_string_preimage) {
-        record_strict_parser_result(&operand, pattern, total_string_preimage, effects);
+    if operand.proven_operands.is_some()
+        || parser_operand_has_partitioned_identity(&operand, total_string_preimage)
+    {
+        record_proven_operand_effects(
+            &operand,
+            env.argument_evaluation_mode(arg),
+            effects,
+            |leaf, _, leaf_effects| {
+                if parser_operand_has_partitioned_identity(leaf, total_string_preimage) {
+                    record_strict_parser_result(leaf, pattern, total_string_preimage, leaf_effects);
+                }
+            },
+        );
     }
 }
 
@@ -425,14 +595,22 @@ fn parser_output_metas(
 /// consumed only on its selected arm, so its contract is captured as a
 /// conditional fail-class implication instead of an unconditional row
 /// contract.
-pub(super) fn record_string_consumer_effects(
+fn record_string_consumer_effects_one(
     value: Option<&AbstractValue>,
     paths: &BTreeSet<String>,
+    source: &Effects,
     effects: &mut Effects,
 ) {
     for path in paths {
-        let direct_identity = matches!(value, Some(AbstractValue::ValuesPath(identity)) if identity.encode() == *path);
-        let requirements = string_operand_requirements(value, effects, path);
+        let direct_identity = matches!(
+            value,
+            Some(AbstractValue::ValuesPath(identity)) if identity.encode() == *path
+        ) || matches!(
+            value,
+            Some(AbstractValue::OutputPath(identity, meta))
+                if identity.encode() == *path && meta.is_input_identity()
+        );
+        let requirements = string_operand_requirements(value, source, path);
         for (route, conjunction) in requirements {
             let capture = crate::eval_effect::FailCapture {
                 conjunction: Vec::new().into(),
@@ -539,32 +717,7 @@ fn string_operand_requirements(
     requirements
 }
 
-pub(super) fn record_range_key_string_consumer_effects(
-    value: Option<&AbstractValue>,
-    effects: &mut Effects,
-) {
-    let paths = identity_range_key_paths(value);
-    let raw_paths = paths
-        .iter()
-        .filter(|path| {
-            !effects
-                .derived_range_key_paths
-                .contains(&helm_schema_core::ValuesPath::parse(path))
-        })
-        .cloned()
-        .collect::<BTreeSet<_>>();
-    record_raw_range_key_string_consumer_paths(&raw_paths, effects);
-    effects.derived_range_key_paths.extend(
-        paths
-            .iter()
-            .map(|path| helm_schema_core::ValuesPath::parse(path)),
-    );
-}
-
-pub(super) fn record_raw_range_key_string_consumer_paths(
-    raw_paths: &BTreeSet<String>,
-    effects: &mut Effects,
-) {
+fn record_raw_range_key_string_consumer_paths(raw_paths: &BTreeSet<String>, effects: &mut Effects) {
     if !raw_paths.is_empty() {
         let capture = crate::eval_effect::FailCapture {
             conjunction: Vec::new().into(),
@@ -600,7 +753,7 @@ pub(super) fn record_strict_kind_operands(
 ) {
     for arg in args {
         let operand = eval_expr_with_helper_calls(arg, env, resolver);
-        record_strict_kind_argument_result(function, arg, &operand, schema_type, effects);
+        record_strict_kind_argument_result(function, arg, &operand, schema_type, env, effects);
     }
 }
 
@@ -609,17 +762,35 @@ pub(super) fn record_strict_kind_argument_result(
     arg: &TemplateExpr,
     operand: &EvalResult,
     schema_type: &str,
+    env: &EvalEnv,
     effects: &mut Effects,
 ) {
-    let evaluation_mode = argument_evaluation_mode(arg);
-    let nil_aborts = function_semantics(function).nil_aborts(evaluation_mode);
-    let receiver_guard = grouped_receiver_guard(evaluation_mode, operand);
-    record_strict_kind_result_under(
+    let fallback_mode = env.argument_evaluation_mode(arg);
+    let uses_binding_mode = matches!(arg, TemplateExpr::Variable(_))
+        || matches!(
+            arg,
+            TemplateExpr::Selector { operand, .. }
+                if matches!(operand.as_ref(), TemplateExpr::Variable(_))
+        );
+    record_proven_operand_effects(
         operand,
-        schema_type,
-        nil_aborts,
-        receiver_guard.as_slice(),
+        fallback_mode,
         effects,
+        |leaf, proven_mode, leaf_effects| {
+            let evaluation_mode = if uses_binding_mode {
+                proven_mode
+            } else {
+                fallback_mode
+            };
+            let outer = grouped_receiver_guard(evaluation_mode, leaf);
+            record_strict_kind_result_under(
+                leaf,
+                schema_type,
+                function_semantics(function).nil_aborts(evaluation_mode),
+                &outer,
+                leaf_effects,
+            );
+        },
     );
 }
 
@@ -629,7 +800,14 @@ pub(super) fn record_strict_kind_result(
     nil_aborts: bool,
     effects: &mut Effects,
 ) {
-    record_strict_kind_result_under(operand, schema_type, nil_aborts, &[], effects);
+    record_proven_operand_effects(
+        operand,
+        ArgumentEvaluationMode::Evaluated,
+        effects,
+        |leaf, _, leaf_effects| {
+            record_strict_kind_result_under(leaf, schema_type, nil_aborts, &[], leaf_effects);
+        },
+    );
 }
 
 fn record_strict_kind_result_under(
@@ -688,7 +866,14 @@ fn grouped_receiver_guard(
 /// aborts. The function catalog's `nil_aborts` facet decides which positions
 /// carry the claim.
 pub(super) fn record_operand_presence_result(operand: &EvalResult, effects: &mut Effects) {
-    record_operand_presence_result_under(operand, &[], effects);
+    record_proven_operand_effects(
+        operand,
+        ArgumentEvaluationMode::Evaluated,
+        effects,
+        |leaf, _, leaf_effects| {
+            record_operand_presence_result_under(leaf, &[], leaf_effects);
+        },
+    );
 }
 
 fn record_operand_presence_result_under(
@@ -728,6 +913,21 @@ fn record_operand_presence_result_under(
 /// against anything, so a missing or null operand renders while a present
 /// value of a different basic kind aborts.
 pub(super) fn record_comparable_kind_result(
+    operand: &EvalResult,
+    schema_type: &str,
+    effects: &mut Effects,
+) {
+    record_proven_operand_effects(
+        operand,
+        ArgumentEvaluationMode::Evaluated,
+        effects,
+        |leaf, _, leaf_effects| {
+            record_comparable_kind_result_one(leaf, schema_type, leaf_effects);
+        },
+    );
+}
+
+fn record_comparable_kind_result_one(
     operand: &EvalResult,
     schema_type: &str,
     effects: &mut Effects,
@@ -777,6 +977,26 @@ pub(super) fn record_comparable_kind_result(
     reason = "keeping this semantic operation together makes its state transitions easier to audit"
 )]
 pub(super) fn record_collection_item_kind_result(
+    operand: &EvalResult,
+    schema_type: &str,
+    pattern: Option<&str>,
+    effects: &mut Effects,
+) {
+    record_proven_operand_effects(
+        operand,
+        ArgumentEvaluationMode::Evaluated,
+        effects,
+        |leaf, _, leaf_effects| {
+            record_collection_item_kind_result_one(leaf, schema_type, pattern, leaf_effects);
+        },
+    );
+}
+
+#[expect(
+    clippy::too_many_lines,
+    reason = "keeping this semantic operation together makes its state transitions easier to audit"
+)]
+fn record_collection_item_kind_result_one(
     operand: &EvalResult,
     schema_type: &str,
     pattern: Option<&str>,
@@ -1170,6 +1390,15 @@ pub(super) fn record_length_bearing_operand(
 }
 
 pub(super) fn record_length_bearing_result(operand: &EvalResult, effects: &mut Effects) {
+    record_proven_operand_effects(
+        operand,
+        ArgumentEvaluationMode::Evaluated,
+        effects,
+        |leaf, _, leaf_effects| record_length_bearing_result_one(leaf, leaf_effects),
+    );
+}
+
+fn record_length_bearing_result_one(operand: &EvalResult, effects: &mut Effects) {
     for (path, shadow) in layered_strict_operand_identity_paths(operand) {
         for kind in ["boolean", "integer", "number"] {
             for mut conjunction in strict_operand_selection_conjunctions(operand, &path) {
@@ -1178,5 +1407,5 @@ pub(super) fn record_length_bearing_result(operand: &EvalResult, effects: &mut E
             }
         }
     }
-    record_operand_presence_result(operand, effects);
+    record_operand_presence_result_under(operand, &[], effects);
 }

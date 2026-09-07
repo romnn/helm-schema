@@ -14,6 +14,7 @@ use helm_schema_syntax::{Span, parse_go_template};
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::parse_literal_list_range_expr;
 use crate::eval_effect::{SelectionReachability, SelectionTruthReachability, SelectionTruthSource};
+use crate::eval_env::BindingDecision;
 use crate::helper_meta::merge_rendered_row_meta;
 use crate::node_eval::{NodeAction, control_header, else_if_pairs, node_action};
 use crate::scalar_value::{TruthCondition, any_predicates_with_memo, conjoin_predicates_with_memo};
@@ -97,6 +98,7 @@ impl Interpreter<'_> {
         let mut prior_reachability: Vec<SelectionTruthReachability> = Vec::new();
         let mut arms = Vec::new();
         let mut local_arm_states = Vec::new();
+        let mut binding_decisions = Vec::new();
         for (branch_index, (header, children)) in arm_specs.into_iter().enumerate() {
             self.locals = entry_locals.clone();
             self.rewind(entry_scope);
@@ -122,6 +124,11 @@ impl Interpreter<'_> {
                 &own_reachability,
                 predicate_memo.as_ref(),
             );
+            binding_decisions.push(header.is_some().then(|| {
+                BindingDecision::new(
+                    own_reachability.truth_condition_with_memo(predicate_memo.as_ref()),
+                )
+            }));
             if header.is_some() {
                 prior_reachability.push(own_reachability);
             }
@@ -161,6 +168,8 @@ impl Interpreter<'_> {
             .map(|(_, state)| state.clone())
             .collect::<Vec<_>>();
         self.locals.join_branch_outcomes(&entry_locals, &outcomes);
+        self.locals
+            .join_binding_decisions(&entry_locals, &binding_decisions, &outcomes);
         self.locals.join_scalar_dispatch_arms(
             &entry_locals,
             &local_arm_states,
@@ -180,11 +189,13 @@ impl Interpreter<'_> {
     ) -> Vec<(PathCondition, Vec<StringPart>)> {
         let entry_scope = self.mark_scope();
         let entry_locals = self.locals.clone();
-        let (own, _reachability) = self.activate_with(
+        self.locals.enter_local_scope();
+        let (own, reachability) = self.activate_with(
             control_header(text, action).as_ref(),
             action.start_byte(),
             0,
         );
+        let post_header_locals = self.locals.clone();
         let body_condition = own.clone().unwrap_or(Predicate::True);
         let consequence = children_with_field(action, "consequence");
         let body_arms = if body_condition == Predicate::False {
@@ -195,6 +206,8 @@ impl Interpreter<'_> {
         } else {
             self.inline_body_arms(&consequence, text)
         };
+        self.locals.exit_local_scope();
+        let consequence_locals = self.locals.clone();
         let mut arms = body_arms
             .into_iter()
             .map(|(condition, parts)| {
@@ -210,7 +223,7 @@ impl Interpreter<'_> {
             .collect::<Vec<_>>();
 
         self.rewind(entry_scope);
-        self.locals = entry_locals.clone();
+        self.locals = post_header_locals.clone();
         let alternative_condition = own.as_ref().map_or(Predicate::True, Predicate::negated);
         if alternative_condition != Predicate::True {
             self.push_predicate(alternative_condition.clone());
@@ -224,6 +237,8 @@ impl Interpreter<'_> {
         } else {
             self.inline_body_arms(&alternative, text)
         };
+        self.locals.exit_local_scope();
+        let alternative_locals = self.locals.clone();
         for (condition, parts) in alternative_arms {
             arms.push((
                 and_conditions_with_memo(
@@ -236,7 +251,19 @@ impl Interpreter<'_> {
         }
 
         self.rewind(entry_scope);
-        self.locals = entry_locals;
+        let outcomes = [consequence_locals, alternative_locals];
+        self.locals = entry_locals.clone();
+        self.locals.join_branch_outcomes(&entry_locals, &outcomes);
+        self.locals.join_binding_decisions(
+            &entry_locals,
+            &[
+                Some(BindingDecision::new(
+                    reachability.truth_condition_with_memo(self.db.predicate_memo().as_ref()),
+                )),
+                None,
+            ],
+            &outcomes,
+        );
         arms
     }
 
@@ -313,7 +340,7 @@ impl Interpreter<'_> {
                 .range_member_values
                 .insert(variable, AbstractValue::RangeKey(path));
         }
-        self.dot_stack.push(dot);
+        self.push_dot(dot, crate::eval_env::BindingEvaluationMode::Direct);
         self.loop_depth += 1;
         let mut arms = Vec::new();
         let body = children_with_field(node, "body");
@@ -686,7 +713,6 @@ impl Interpreter<'_> {
                     return Vec::new();
                 }
                 self.record_required_subjects(&exprs);
-                let _ = self.inline_static_file_fragments(&exprs);
                 let hole = self.eval_hole_exprs(&exprs);
                 self.absorb_hole_effects(&hole.effects, RenderedDemotion::None);
                 let defaulted = hole.effects.default_paths_with_local();
@@ -732,9 +758,9 @@ impl Interpreter<'_> {
                 self.eval_assignment_exprs(&exprs);
                 Vec::new()
             }
-            NodeAction::Range(_) => self.eval_inline_range(node, text),
+            NodeAction::Range => self.eval_inline_range(node, text),
             NodeAction::If(_) => self.eval_inline_control_action(node, text),
-            NodeAction::With(_) => self.eval_inline_with(node, text),
+            NodeAction::With => self.eval_inline_with(node, text),
             NodeAction::Output(None) | NodeAction::Assignment(None) | NodeAction::Suppressed => {
                 Vec::new()
             }

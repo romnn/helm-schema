@@ -1,10 +1,13 @@
 use crate::{TemplateExpr, TemplateHeader};
 
-/// Returns the variable defined by a single-variable range expression.
+/// Returns the variable bound by a single-variable range expression.
 #[must_use]
 pub fn range_variable_name_expr(expr: &TemplateExpr) -> Option<String> {
-    let TemplateExpr::VariableDefinition { name, .. } = expr.deparen() else {
-        return None;
+    let name = match expr.deparen() {
+        TemplateExpr::VariableDefinition { name, .. } | TemplateExpr::Assignment { name, .. } => {
+            name
+        }
+        _ => return None,
     };
     Some(name.trim_start_matches('$').to_string())
 }
@@ -34,6 +37,25 @@ pub fn range_header_from_source(
 #[must_use]
 pub fn range_has_destructured_variable_definition(node: tree_sitter::Node<'_>) -> bool {
     destructured_range_variables(node).len() >= 2
+}
+
+/// Reports whether a range header assigns existing variables with `=`.
+#[must_use]
+pub fn range_uses_assignment(node: tree_sitter::Node<'_>) -> bool {
+    let mut walker = node.walk();
+    let mut children = node.named_children(&mut walker);
+    let Some(definition) =
+        children.find(|child| matches!(child.kind(), "assignment" | "range_variable_definition"))
+    else {
+        return false;
+    };
+    if definition.kind() == "assignment" {
+        return true;
+    }
+    let mut definition_walker = definition.walk();
+    definition
+        .children(&mut definition_walker)
+        .any(|child| child.kind() == "=")
 }
 
 /// The KEY variable of a destructured range header (`$k` in
@@ -75,7 +97,7 @@ fn destructured_range_variables(node: tree_sitter::Node<'_>) -> Vec<tree_sitter:
     let mut walker = node.walk();
     let Some(definition) = node
         .named_children(&mut walker)
-        .find(|child| child.kind() == "range_variable_definition")
+        .find(|child| matches!(child.kind(), "assignment" | "range_variable_definition"))
     else {
         return Vec::new();
     };

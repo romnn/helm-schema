@@ -14,9 +14,10 @@ fn condition_cache_separates_selected_values_documents() -> eyre::Result<()> {
     let base = serde_yaml::from_str("feature: {}")?;
     let guarded = serde_yaml::from_str("feature: {enabled: true}")?;
     let absent = serde_yaml::Value::Null;
+    let runtime_defaults = crate::condition_encoding::RuntimeDefaultHints::default();
     let dependency_roots = BTreeSet::new();
     let absence = AbsenceDefaults {
-        deeper_stage: &absent,
+        runtime_defaults: &runtime_defaults,
         dependency_refill: &absent,
         dependency_roots: &dependency_roots,
     };

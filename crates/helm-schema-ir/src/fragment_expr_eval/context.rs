@@ -4,7 +4,7 @@ use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
-use crate::eval_env::EvalEnv;
+use crate::eval_env::{EvalEnv, LocalBinding};
 use crate::helper_meta::HelperOutputMeta;
 
 use super::bound_helper_resolver::{
@@ -24,7 +24,7 @@ impl<'a> FragmentEvalContext<'a> {
     pub(crate) fn fragment_value_from_expr(
         self,
         expr: &TemplateExpr,
-        locals: &HashMap<String, AbstractValue>,
+        locals: &HashMap<String, LocalBinding>,
         current_dot: Option<&AbstractValue>,
         seen: &mut HashSet<String>,
     ) -> Option<AbstractValue> {
@@ -34,7 +34,7 @@ impl<'a> FragmentEvalContext<'a> {
     pub(crate) fn fragment_value_from_expr_with_meta(
         self,
         expr: &TemplateExpr,
-        locals: &HashMap<String, AbstractValue>,
+        locals: &HashMap<String, LocalBinding>,
         local_output_meta: &HashMap<
             String,
             BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>,
@@ -42,8 +42,12 @@ impl<'a> FragmentEvalContext<'a> {
         current_dot: Option<&AbstractValue>,
         seen: &mut HashSet<String>,
     ) -> Option<AbstractValue> {
-        let env = EvalEnv::from_fragment_context(locals, current_dot)
-            .with_predicate_memo(std::rc::Rc::clone(self.analysis_db.predicate_memo()));
+        let env = EvalEnv::from_fragment_context(
+            locals,
+            current_dot,
+            crate::eval_env::BindingEvaluationMode::Direct,
+        )
+        .with_predicate_memo(std::rc::Rc::clone(self.analysis_db.predicate_memo()));
         let mut env = env;
         env.local_output_meta = local_output_meta.clone();
         let current_dot_helper = current_dot.map(AbstractValue::to_context_value);

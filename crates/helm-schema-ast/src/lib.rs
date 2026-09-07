@@ -22,7 +22,8 @@ pub use printf_eval::{
 };
 pub use range_structure::{
     range_destructured_key_variable, range_destructured_value_variable,
-    range_has_destructured_variable_definition, range_header_from_source, range_variable_name_expr,
+    range_has_destructured_variable_definition, range_header_from_source, range_uses_assignment,
+    range_variable_name_expr,
 };
 pub use resource_span::{KindBranchSource, ResourceSpan};
 pub use semver_constraint::{semver_constraint_match_pattern, semver_constraint_matches_version};
@@ -30,7 +31,7 @@ pub use template_action::contains_template_action;
 pub use tree_sitter_utils::{children_with_field, parse_expr_text, parse_go_template};
 pub use values_comments::extract_values_yaml_descriptions;
 
-use std::collections::HashMap;
+use std::collections::BTreeMap;
 
 /// Errors produced while parsing Helm template structure.
 #[derive(Debug, thiserror::Error)]
@@ -126,10 +127,19 @@ fn normalized_control_condition(raw: &str) -> Option<&str> {
         .or_else(|| text.strip_prefix("with "))
 }
 
-/// Index of helper/template file sources.
+/// The loader-established role of an indexed source.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum DefineSourceRole {
+    /// Executable Go-template source registered under its exact execution name.
+    Template,
+    /// Chart data available through `.Files`, without executable definitions.
+    FilesGet,
+}
+
+/// Index of executable templates and chart-file payloads.
 #[derive(Default, Debug, Clone)]
 pub struct DefineIndex {
-    files: HashMap<String, String>,
+    files: BTreeMap<(String, DefineSourceRole), String>,
 }
 
 impl DefineIndex {
@@ -139,27 +149,39 @@ impl DefineIndex {
         Self::default()
     }
 
-    /// Adds or replaces one logical chart file source.
+    /// Registers executable source under its exact template execution name.
     pub fn add_file_source(&mut self, path: &str, src: &str) {
-        self.files.retain(|existing_path, existing_src| {
-            !is_inline_source(existing_path, existing_src, src)
+        self.files.retain(|(existing_path, role), existing_src| {
+            *role != DefineSourceRole::Template
+                || !is_inline_source(existing_path, existing_src, src)
         });
-        self.files.insert(path.to_string(), src.to_string());
+        self.files.insert(
+            (path.to_string(), DefineSourceRole::Template),
+            src.to_string(),
+        );
     }
 
-    /// Returns the source registered at a logical chart path.
+    /// Registers chart data without exposing its text as executable template definitions.
+    pub fn add_files_get_source(&mut self, path: &str, src: &str) {
+        self.files.insert(
+            (path.to_string(), DefineSourceRole::FilesGet),
+            src.to_string(),
+        );
+    }
+
+    /// Returns a source in the selected execution or file-payload namespace.
     #[must_use]
-    pub fn get_file(&self, path: &str) -> Option<&str> {
-        self.files.get(path).map(std::string::String::as_str)
+    pub fn get_file(&self, path: &str, role: DefineSourceRole) -> Option<&str> {
+        self.files
+            .get(&(path.to_string(), role))
+            .map(String::as_str)
     }
 
     /// Iterates logical chart paths and sources in stable path order.
-    pub fn file_sources(&self) -> impl Iterator<Item = (&str, &str)> {
-        let mut entries: Vec<_> = self.files.iter().collect();
-        entries.sort_by_key(|(path, _)| *path);
-        entries
-            .into_iter()
-            .map(|(path, src)| (path.as_str(), src.as_str()))
+    pub fn file_sources(&self) -> impl Iterator<Item = (&str, &str, DefineSourceRole)> {
+        self.files
+            .iter()
+            .map(|((path, role), src)| (path.as_str(), src.as_str(), *role))
     }
 }
 

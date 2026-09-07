@@ -35,6 +35,84 @@ fn scalars_partial_scalars_and_mapping_key_actions() {
 }
 
 #[test]
+fn action_line_open_mapping_headers_are_structural() {
+    let source = indoc! {r#"
+        data:
+          {{ printf "%s" (default "chosen" .Values.key) }}:
+            inside: fixed
+        trimmed:
+          {{- printf "%s" "trimmed" -}}:
+            inside: fixed
+        inline:
+          {{ printf "%s" "closed" }}: fixed
+        free:
+          {{ printf "%s" "value" }}
+    "#};
+    let expected = indoc! {r#"
+        document 0 [0..214)
+        entry [0..5) open indent=0 key="data"
+          entry [8..57) open indent=2 key="{{ printf \"%s\" (default \"chosen\" .Values.key) }}"
+            entry [62..75) closed indent=4 key="inside" value="fixed"
+        entry [76..84) open indent=0 key="trimmed"
+          entry [87..117) open indent=2 key="{{- printf \"%s\" \"trimmed\" -}}"
+            entry [122..135) closed indent=4 key="inside" value="fixed"
+        entry [136..143) open indent=0 key="inline"
+          output [146..172) "{{ printf \"%s\" \"closed\" }}"
+          opaque action-line-text [172..179) ": fixed"
+        entry [180..185) open indent=0 key="free"
+          output [188..213) "{{ printf \"%s\" \"value\" }}"
+    "#};
+    assert_dump(source, expected);
+}
+
+#[test]
+fn multi_output_action_line_key_is_one_open_mapping_entry() {
+    let source = indoc! {r#"
+        data:
+          {{ printf "%s" "pre" }}-{{ default "fix" .Values.suffix }}:
+            inside: fixed
+        inline:
+          {{ "pre" }}-{{ "fix" }}: fixed
+    "#};
+    let expected = indoc! {r#"
+        document 0 [0..127)
+        entry [0..5) open indent=0 key="data"
+          entry [8..67) open indent=2 key="{{ printf \"%s\" \"pre\" }}-{{ default \"fix\" .Values.suffix }}"
+            entry [72..85) closed indent=4 key="inside" value="fixed"
+        entry [86..93) open indent=0 key="inline"
+          output [96..107) "{{ \"pre\" }}"
+          opaque action-line-text [107..108) "-"
+          output [108..119) "{{ \"fix\" }}"
+          opaque action-line-text [119..126) ": fixed"
+    "#};
+    assert_dump(source, expected);
+}
+
+#[test]
+fn dynamic_action_line_key_uses_terminal_indent_width() {
+    let source = indoc! {r#"
+        data:
+        {{ "chosen" | indent 2 }}:
+            inside: fixed
+        trimmed:
+        {{- "trimmed" | nindent 2 }}:
+            inside: fixed
+        root: fixed
+    "#};
+    let expected = indoc! {r#"
+        document 0 [0..120)
+        entry [0..5) open indent=0 key="data"
+          entry [6..32) open indent=2 key="{{ \"chosen\" | indent 2 }}"
+            entry [37..50) closed indent=4 key="inside" value="fixed"
+        entry [51..59) open indent=0 key="trimmed"
+          entry [60..89) open indent=2 key="{{- \"trimmed\" | nindent 2 }}"
+            entry [94..107) closed indent=4 key="inside" value="fixed"
+        entry [108..119) closed indent=0 key="root" value="fixed"
+    "#};
+    assert_dump(source, expected);
+}
+
+#[test]
 fn block_scalar_bodies_suppress_actions_and_comments() {
     let source = indoc! {r"
         data:

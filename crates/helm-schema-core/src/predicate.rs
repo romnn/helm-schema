@@ -311,6 +311,9 @@ impl PartialOrd for Predicate {
 
 impl Ord for Predicate {
     fn cmp(&self, other: &Self) -> Ordering {
+        if self == other {
+            return Ordering::Equal;
+        }
         predicate_kind_rank(self.kind())
             .cmp(&predicate_kind_rank(other.kind()))
             .then_with(|| match (self.kind(), other.kind()) {

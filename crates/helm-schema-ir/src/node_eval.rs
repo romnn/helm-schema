@@ -3,7 +3,7 @@
 //! actions with parsed headers/expressions, and the if-chain's
 //! else-if (header, body) pairs.
 
-use helm_schema_ast::{TemplateExpr, TemplateHeader, range_header_from_source};
+use helm_schema_ast::{TemplateExpr, TemplateHeader};
 
 use helm_schema_ast::parse_expr_text;
 
@@ -13,8 +13,8 @@ pub(crate) enum NodeAction {
     Suppressed,
     Assignment(Option<Vec<TemplateExpr>>),
     If(Option<TemplateHeader>),
-    With(Option<TemplateHeader>),
-    Range(Option<TemplateHeader>),
+    With,
+    Range,
     Output(Option<Vec<TemplateExpr>>),
     Descend,
 }
@@ -27,8 +27,8 @@ pub(crate) fn node_action(source: &str, node: tree_sitter::Node<'_>) -> NodeActi
             NodeAction::Assignment(parse_node_exprs(source, node))
         }
         "if_action" => NodeAction::If(control_header(source, node)),
-        "with_action" => NodeAction::With(control_header(source, node)),
-        "range_action" => NodeAction::Range(range_header_from_source(node, source)),
+        "with_action" => NodeAction::With,
+        "range_action" => NodeAction::Range,
         "template_action"
         | "dot"
         | "variable"

@@ -2,9 +2,10 @@
 //! node forest and the per-line open-slot chain index.
 //!
 //! Container structure is decided purely by the visible YAML lines (indent
-//! discipline); blank lines, comment lines, and lines that begin with a
-//! template action are transparent to layout. This is deliberate: Helm
-//! control actions routinely open a mapping entry in one branch and populate
+//! discipline); blank lines, comment lines, and standalone control/output
+//! actions are transparent to layout.
+//! This is deliberate: Helm control actions routinely open a mapping entry in
+//! one branch and populate
 //! it after `{{ end }}`, so control regions overlay the container structure
 //! instead of bracketing it. The open/close rules below are the layout
 //! semantics that helm-schema's attribution has always used (previously
@@ -311,9 +312,15 @@ impl<'src> Parser<'src> {
             })));
     }
 
-    /// A line whose first content is a template action: transparent to
-    /// layout; its tokens carry the structure (control regions, outputs).
+    /// A line whose first content is a template action.
+    ///
+    /// Output tokens forming a key before an empty structural value become
+    /// one typed open entry.
+    /// Other action lines remain transparent to YAML layout.
     fn process_action_line(&mut self, ls: usize, le: usize) {
+        if self.process_dynamic_mapping_header(ls, le) {
+            return;
+        }
         let mut pos = ls;
         while let Some(token) = self
             .tokens
@@ -328,6 +335,74 @@ impl<'src> Parser<'src> {
             self.handle_token_structural(token);
         }
         self.attach_gap_text(pos, le);
+    }
+
+    fn process_dynamic_mapping_header(&mut self, ls: usize, le: usize) -> bool {
+        let Some(first) = self.tokens.get(self.next_token).copied() else {
+            return false;
+        };
+        let TokenKind::Output { render_indent, .. } = first.kind else {
+            return false;
+        };
+        if first.span.end > le {
+            return false;
+        }
+        let prefix = self.source.get(ls..first.span.start).unwrap_or("");
+        if !prefix.trim().is_empty() {
+            return false;
+        }
+        let content = self.source.get(first.span.start..le).unwrap_or("");
+        let Some(colon) = structural_mapping_colon(content) else {
+            return false;
+        };
+        if !content.get(colon + 1..).unwrap_or("").trim().is_empty() {
+            return false;
+        }
+        let colon_start = first.span.start + colon;
+        let token_end = self
+            .tokens
+            .get(self.next_token..)
+            .unwrap_or_default()
+            .partition_point(|token| token.span.start < colon_start)
+            + self.next_token;
+        let Some(key_tokens) = self.tokens.get(self.next_token..token_end) else {
+            return false;
+        };
+        if key_tokens.is_empty()
+            || key_tokens.iter().any(|token| {
+                token.span.end > colon_start || !matches!(token.kind, TokenKind::Output { .. })
+            })
+            || self
+                .tokens
+                .get(token_end)
+                .is_some_and(|token| token.span.start < le)
+        {
+            return false;
+        }
+        let consumed_end = key_tokens
+            .iter()
+            .map(|token| token.span.end)
+            .max()
+            .unwrap_or(first.span.end);
+        let key_text = content.get(..colon).unwrap_or("").trim_end();
+        let key_end = first.span.start + key_text.len();
+        let indent = render_indent.unwrap_or(prefix.len());
+        self.pop(indent);
+        self.mark(indent, ls);
+        let key = self.parts_for_span(first.span.start, key_end);
+        self.next_token = token_end;
+        self.suppressed_until = self.suppressed_until.max(consumed_end);
+        let frame = self.push_frame(indent, true, false);
+        self.owners
+            .push(OwnerFrame::container(OwnerData::Entry(EntrySeed {
+                frame,
+                span: Span::new(first.span.start, le),
+                indent,
+                key,
+                value: None,
+                block: None,
+            })));
+        true
     }
 
     fn attach_gap_text(&mut self, start: usize, end: usize) {
@@ -349,7 +424,7 @@ impl<'src> Parser<'src> {
 
     fn handle_token_structural(&mut self, token: ActionToken) {
         match token.kind {
-            TokenKind::Output { expr_span } => self.attach(Node::Output(OutputAction {
+            TokenKind::Output { expr_span, .. } => self.attach(Node::Output(OutputAction {
                 span: token.span,
                 expr_span,
             })),

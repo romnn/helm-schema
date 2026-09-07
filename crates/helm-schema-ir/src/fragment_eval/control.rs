@@ -22,15 +22,30 @@ use helm_schema_core::{GuardValue, Predicate};
 use super::domain::{
     AbstractFragment, Guarded, PathCondition, Splice, SpliceMeta, and_conditions_with_memo,
 };
-use super::eval::{Adopted, ArmSpec, Contributions, Interpreter, NodeView};
+use super::eval::{
+    Adopted, AdoptionPlan, ArmSpec, Contributions, Interpreter, NodeView, ParentShape, ParentShell,
+    ParentShellArm, SourceWindow, branch_window,
+};
 
 /// Exact range sequences resolved from a statically known list iterable.
 /// Each alternative preserves one list's item order and bindings.
 pub(super) struct RangeIterations {
-    pub(super) alternatives: Vec<Vec<RangeIterationBinding>>,
+    pub(super) alternatives: Vec<RangeIterationAlternative>,
+    pub(super) has_unresolved: bool,
     /// A statically nonempty iterable promotes the body outcome at the
     /// join: bindings set in every iteration survive the region.
     pub(super) nonempty: bool,
+}
+
+pub(super) struct RangeIterationAlternative {
+    pub(super) truth: TruthCondition,
+    pub(super) items: Vec<RangeIterationBinding>,
+}
+
+/// State produced by evaluating a control header before any arm is selected.
+struct ControlHeaderTransition {
+    in_scope: crate::symbolic_local_state::SymbolicLocalState,
+    after_scope: crate::symbolic_local_state::SymbolicLocalState,
 }
 
 #[derive(PartialEq)]
@@ -56,13 +71,10 @@ impl Interpreter<'_> {
         escaped: Vec<DeferredNodes<'_>>,
     ) -> Contributions {
         if matches!(region.kind, ControlKind::Define | ControlKind::Block) {
-            // Define/block bodies render nothing at document scope (they are
-            // evaluated when included); escaped siblings adopted into the
-            // region are part of that suppressed body.
-            return Contributions::default();
+            return self.eval_suppressed_control_continuation(region, adopted, escaped);
         }
         let branch_nodes = branch_node_lists(region, adopted);
-        let (escaped_per_branch, escaped_after) = split_escaped(region, escaped);
+        let (mut escaped_per_branch, mut escaped_after) = split_escaped(region, escaped);
 
         let entry_locals = self.locals.clone();
         let entry_scope = self.mark_scope();
@@ -79,6 +91,7 @@ impl Interpreter<'_> {
             TruthCondition,
             crate::symbolic_local_state::SymbolicLocalState,
         )> = Vec::new();
+        let mut binding_decisions = Vec::new();
 
         let mut out = Contributions::default();
         let mut outcomes = Vec::new();
@@ -87,18 +100,26 @@ impl Interpreter<'_> {
         let mut prior_semantic_reachability: Vec<SelectionTruthReachability> = Vec::new();
         let mut has_unconditional_else = false;
         let mut promote_body_outcome = false;
+        let mut header_transition: Option<ControlHeaderTransition> = None;
+        let mut common_header_fallthrough = None;
 
         for (index, _branch) in region.branches.iter().enumerate() {
-            self.locals = entry_locals.clone();
+            self.locals = if index > 0 {
+                header_transition.as_ref().map_or_else(
+                    || entry_locals.clone(),
+                    |transition| transition.in_scope.clone(),
+                )
+            } else {
+                entry_locals.clone()
+            };
             self.rewind(entry_scope);
             if let Some(entry_root) = &entry_root {
                 self.restore_root_set_state(entry_root);
             }
 
             let mut arm_condition = Predicate::True;
-            // Later arms run under the negations of every earlier decoded
-            // condition (range alternatives decode no condition, so they
-            // stay unguarded like the current pipeline's range joins).
+            // Later arms run under the negations of every earlier decoded condition.
+            // A range else uses header truth instead of the body-only collection marker.
             for prior in &prior_conditions {
                 let negated = prior.negated();
                 self.push_predicate(negated.clone());
@@ -117,14 +138,34 @@ impl Interpreter<'_> {
             if matches!(arm, ArmSpec::Else) && index > 0 {
                 has_unconditional_else = true;
             }
-            let nodes = branch_nodes.get(index).map_or(&[][..], Vec::as_slice);
+            let nodes = branch_nodes.get(index).cloned().unwrap_or_default();
             // Header reads carry the region's site: the unique resource the
             // region intersects (none when it spans several documents).
             let region_site = self.region_site(region.span);
             let previous_site = std::mem::replace(&mut self.current_site, region_site);
-            let (own_condition, extra, iterations, own_reachability) =
-                self.activate_arm(&arm, nodes, region.span.start, index);
+            if index == 0 {
+                self.locals.enter_local_scope();
+            }
+            let (own_condition, extra, iterations, own_reachability, post_header_locals) =
+                self.activate_arm(&arm, &nodes, region.span.start, index);
             self.current_site = previous_site;
+            if !matches!(arm, ArmSpec::Else) {
+                let in_scope = post_header_locals.unwrap_or_else(|| self.locals.clone());
+                let mut after_scope = in_scope.clone();
+                after_scope.exit_local_scope();
+                if index == 0 {
+                    common_header_fallthrough = Some(after_scope.clone());
+                }
+                header_transition = Some(ControlHeaderTransition {
+                    in_scope,
+                    after_scope,
+                });
+            }
+            binding_decisions.push((!matches!(arm, ArmSpec::Else)).then(|| {
+                crate::eval_env::BindingDecision::new(
+                    own_reachability.truth_condition_with_memo(self.db.predicate_memo().as_ref()),
+                )
+            }));
             // The value-dispatch join needs mutually exclusive, total arm
             // conditions: an If arm whose header failed to decode (or a
             // with/range arm inside the chain) leaves later negations
@@ -142,7 +183,11 @@ impl Interpreter<'_> {
                     own.clone(),
                     self.db.predicate_memo().as_ref(),
                 );
-                if !matches!(arm, ArmSpec::Range { .. }) {
+                if matches!(arm, ArmSpec::Range { .. }) {
+                    if let Some(selection) = own_reachability.when_true().exact_predicate() {
+                        prior_conditions.push(selection);
+                    }
+                } else {
                     prior_conditions.push(own);
                 }
             }
@@ -181,11 +226,19 @@ impl Interpreter<'_> {
             if index == 0 && iterations.as_ref().is_some_and(|plan| plan.nonempty) {
                 promote_body_outcome = true;
             }
+            let arm_binding_kind = match &arm {
+                ArmSpec::Range { binding_kind, .. } => *binding_kind,
+                _ => crate::fragment_assignment::AssignmentKind::Declaration,
+            };
 
-            self.locals.enter_local_scope();
             if matches!(arm, ArmSpec::Range { .. }) {
                 self.loop_depth += 1;
             }
+            let current_escaped = escaped_per_branch
+                .get_mut(index)
+                .map(std::mem::take)
+                .unwrap_or_default();
+            let branch_steps = self.branch_steps(region, index, adopted, nodes, current_escaped);
             let mut contributions = if arm_condition == Predicate::False {
                 Contributions::default()
             } else {
@@ -212,12 +265,12 @@ impl Interpreter<'_> {
                                 .alternatives
                                 .split_first()
                                 .map_or((&[][..], &[][..]), |(first, rest)| {
-                                    (first.as_slice(), rest)
+                                    (first.items.as_slice(), rest)
                                 });
                             (0..first.len())
                                 .take_while(|&index| {
                                     rest.iter().all(|alternative| {
-                                        alternative.get(index) == first.get(index)
+                                        alternative.items.get(index) == first.get(index)
                                     })
                                 })
                                 .count()
@@ -227,20 +280,24 @@ impl Interpreter<'_> {
                         for alternative in &plan.alternatives {
                             self.locals = alternative_entry.clone();
                             let mut remaining = Predicate::True;
-                            let mut scalar_exit_states = Vec::new();
-                            for (item_index, item) in alternative.iter().enumerate() {
+                            let mut exit_outcomes = Vec::new();
+                            for (item_index, item) in alternative.items.iter().enumerate() {
                                 if remaining == Predicate::False {
                                     break;
                                 }
                                 if let Some((variable, binding)) = &item.variable {
-                                    self.locals
-                                        .fragment_values
-                                        .insert(variable.clone(), binding.clone());
+                                    self.locals.bind_direct_fragment_value(
+                                        arm_binding_kind,
+                                        variable.clone(),
+                                        binding.clone(),
+                                    );
                                 }
                                 if let Some((variable, ordinal)) = &item.key {
-                                    self.locals
-                                        .fragment_values
-                                        .insert(variable.clone(), ordinal.clone());
+                                    self.locals.bind_direct_fragment_value(
+                                        arm_binding_kind,
+                                        variable.clone(),
+                                        ordinal.clone(),
+                                    );
                                 }
                                 let item_scope = self.mark_scope();
                                 if item_index >= shared_items {
@@ -255,26 +312,19 @@ impl Interpreter<'_> {
                                     );
                                 }
                                 self.push_predicate(remaining.clone());
-                                self.dot_stack.push(Some(item.dot.clone()));
-                                let mut iteration = self.eval_node_list(nodes);
+                                self.push_dot(
+                                    Some(item.dot.clone()),
+                                    crate::eval_env::BindingEvaluationMode::Direct,
+                                );
+                                let mut iteration = self.eval_branch_steps(&branch_steps);
                                 self.rewind(item_scope);
-                                let break_condition = iteration.loop_control.break_condition();
-                                iteration.take_loop_control();
+                                let mut loop_control = iteration.take_loop_control();
+                                let break_condition = loop_control.break_condition();
+                                loop_control
+                                    .guard_all(&remaining, self.db.predicate_memo().as_ref());
                                 iteration.guard_all(&remaining, self.db.predicate_memo().as_ref());
                                 all.extend(iteration);
-                                if break_condition != Predicate::False {
-                                    scalar_exit_states.push((
-                                        TruthCondition::exact_with_memo(
-                                            and_conditions_with_memo(
-                                                remaining.clone(),
-                                                break_condition.clone(),
-                                                self.db.predicate_memo().as_ref(),
-                                            ),
-                                            self.db.predicate_memo().as_ref(),
-                                        ),
-                                        self.locals.clone(),
-                                    ));
-                                }
+                                exit_outcomes.append(&mut loop_control.breaks);
                                 remaining = if break_condition == Predicate::False {
                                     remaining
                                 } else if break_condition == Predicate::True {
@@ -288,45 +338,102 @@ impl Interpreter<'_> {
                                 };
                             }
                             if remaining != Predicate::False {
-                                scalar_exit_states.push((
-                                    TruthCondition::exact_with_memo(
-                                        remaining,
-                                        self.db.predicate_memo().as_ref(),
+                                exit_outcomes.push(
+                                    crate::symbolic_local_state::ControlOutcome::new(
+                                        TruthCondition::exact_with_memo(
+                                            remaining,
+                                            self.db.predicate_memo().as_ref(),
+                                        ),
+                                        self.locals.clone(),
                                     ),
-                                    self.locals.clone(),
-                                ));
+                                );
                             }
-                            if !scalar_exit_states.is_empty() {
-                                let mut scalar_join = self.locals.clone();
-                                scalar_join.join_scalar_dispatch_arms(
+                            if !exit_outcomes.is_empty() {
+                                self.locals.join_control_outcomes(
                                     &alternative_entry,
-                                    &scalar_exit_states,
-                                    true,
+                                    &exit_outcomes,
                                     self.db.predicate_memo().as_ref(),
                                 );
-                                self.locals.scalar_dispatches = scalar_join.scalar_dispatches;
                             }
-                            alternative_outcomes.push(self.locals.clone());
+                            alternative_outcomes.push(
+                                crate::symbolic_local_state::ControlOutcome::new(
+                                    alternative.truth.clone(),
+                                    self.locals.clone(),
+                                ),
+                            );
                         }
-                        self.locals = alternative_entry.clone();
-                        self.locals
-                            .join_branch_outcomes(&alternative_entry, &alternative_outcomes);
+                        if plan.has_unresolved {
+                            let unresolved =
+                                crate::symbolic_local_state::ControlOutcome::unresolved_from_changed(
+                                    &alternative_entry,
+                                    &alternative_outcomes,
+                                );
+                            alternative_outcomes.push(unresolved);
+                        }
+                        self.locals.join_control_outcomes(
+                            &alternative_entry,
+                            &alternative_outcomes,
+                            self.db.predicate_memo().as_ref(),
+                        );
                         all
                     }
-                    None => self.eval_node_list(nodes),
+                    None => self.eval_branch_steps(&branch_steps),
                 }
             };
-            // Escaped descendants of earlier siblings whose spans fall in
-            // this branch's window evaluate here, re-attached under their
-            // parent entry chain, so they carry this arm's condition.
-            for spec in escaped_per_branch.get(index).into_iter().flatten() {
-                self.eval_deferred(spec, &mut contributions);
+            let branch_residual = self.branch_step_residuals(&branch_steps);
+            let (later_branches, mut after) = split_escaped(region, branch_residual);
+            for (target, mut specs) in later_branches.into_iter().enumerate().skip(index + 1) {
+                escaped_per_branch[target].append(&mut specs);
+            }
+            escaped_after.append(&mut after);
+            for entry in adopted {
+                let start = entry.view.node.span_start();
+                let mut target = 0;
+                for (branch_index, branch) in region.branches.iter().enumerate() {
+                    if start >= branch.header.end {
+                        target = branch_index;
+                    }
+                }
+                if target != index {
+                    continue;
+                }
+                let Some(limit) = entry.view.window.end else {
+                    continue;
+                };
+                let mut chain = Vec::new();
+                let mut deferred = Vec::new();
+                collect_deferred(
+                    entry.view.node,
+                    SourceWindow {
+                        start: limit,
+                        end: entry.defer_window.end,
+                    },
+                    entry.view.omitted_control,
+                    &self.body_facts.adoption_plan,
+                    &self.evaluated_parent_shells,
+                    &mut chain,
+                    &mut deferred,
+                );
+                let (later_branches, mut after) = split_escaped(region, deferred);
+                for (target, mut specs) in later_branches.into_iter().enumerate().skip(index + 1) {
+                    escaped_per_branch[target].append(&mut specs);
+                }
+                escaped_after.append(&mut after);
             }
             if matches!(arm, ArmSpec::Range { .. }) {
                 self.loop_depth -= 1;
                 contributions.take_loop_control();
             }
             self.locals.exit_local_scope();
+            if matches!(arm, ArmSpec::Range { .. })
+                && iterations.is_none()
+                && let Some(transition) = &header_transition
+            {
+                self.locals.widen_changed_fragment_bindings(
+                    &transition.after_scope,
+                    crate::eval_env::BindingDecision::new(TruthCondition::Unknown),
+                );
+            }
             // A branch-local reassignment's truthiness holds only where the
             // arm RAN: stamping the arm condition makes the cross-branch
             // union the exact disjunction (the range-sentinel flag pattern:
@@ -374,139 +481,679 @@ impl Interpreter<'_> {
             self.restore_root_set_state(entry_root);
             self.join_root_set_arms(entry_root, &root_arm_states, has_unconditional_else);
         }
+        let binding_fallthrough = header_transition
+            .as_ref()
+            .map_or(&entry_locals, |transition| &transition.after_scope);
         if promote_body_outcome {
             // A statically nonempty exact range definitely ran its body:
             // bindings written there survive without an entry-state merge.
             outcomes.truncate(1);
         } else if !has_unconditional_else {
-            outcomes.push(entry_locals.clone());
+            outcomes.push(binding_fallthrough.clone());
         }
         if region.kind == ControlKind::If {
+            let common_entry = common_header_fallthrough.as_ref().unwrap_or(&entry_locals);
             self.apply_reassignment_exclusions(
-                &entry_locals,
+                common_entry,
                 &mut outcomes,
                 &arm_header_exprs,
                 region.span.start,
             );
-            self.apply_omission_exclusions(&entry_locals, &mut outcomes, &arm_header_exprs);
+            self.apply_omission_exclusions(common_entry, &mut outcomes, &arm_header_exprs);
         }
         self.locals.join_branch_outcomes(&entry_locals, &outcomes);
+        self.locals
+            .join_binding_decisions(binding_fallthrough, &binding_decisions, &outcomes);
         if region.kind == ControlKind::If {
             self.locals.join_truthy_reduction_arms(
-                &entry_locals,
+                binding_fallthrough,
                 &local_arm_states,
                 has_unconditional_else,
                 self.db.predicate_memo().as_ref(),
             );
             self.locals.join_scalar_dispatch_arms(
-                &entry_locals,
+                binding_fallthrough,
                 &local_arm_states,
                 has_unconditional_else,
                 self.db.predicate_memo().as_ref(),
             );
         }
+        out.loop_control.replace_states(&self.locals);
 
-        // Descendants of adopted or escaped nodes that start after the
-        // region end evaluate here, outside the branch scope, re-attached
-        // under their parent entry chain (source order: they follow
-        // `{{ end }}`).
-        let mut deferred_specs = escaped_after;
-        for entry in adopted {
-            let mut chain = Vec::new();
-            collect_deferred(
-                entry.view.node,
-                region.span.end,
-                entry.defer_upper,
-                &mut chain,
-                &mut deferred_specs,
+        // Descendants after the region evaluate outside its branch scope.
+        self.add_parent_alternatives(&mut escaped_after);
+        if !escaped_after.is_empty() {
+            let remaining = out.loop_control.exit_condition().negated();
+            let steps = source_ordered_branch_steps(
+                escaped_after
+                    .into_iter()
+                    .map(BranchStep::Deferred)
+                    .collect(),
             );
-        }
-        for spec in deferred_specs {
-            self.eval_deferred(&spec, &mut out);
+            out.extend(self.eval_branch_steps_with_remaining(&steps, remaining));
         }
         out
     }
 
-    /// Evaluate one deferred descendant batch and re-attach it under its
-    /// parent container chain, letting explicitly-indented output keep
-    /// floating past containers it does not render inside.
-    fn eval_deferred(&mut self, spec: &DeferredNodes<'_>, out: &mut Contributions) {
+    /// Suppresses a definition body while evaluating descendants after its closing action.
+    fn eval_suppressed_control_continuation<'n>(
+        &mut self,
+        region: &'n ControlRegion,
+        adopted: &[Adopted<'n>],
+        escaped: Vec<DeferredNodes<'n>>,
+    ) -> Contributions {
+        // A definition that opens a YAML container can make the CST adopt
+        // later executable actions beneath that container.
+        // The source window, rather than the CST parent, distinguishes the
+        // suppressed body from siblings after the closing action, and
+        // containers opened inside the definition cannot own those siblings.
+        let (_, mut after) = split_escaped(region, escaped);
+        for entry in adopted {
+            let Some(limit) = entry.view.window.end else {
+                continue;
+            };
+            let mut chain = Vec::new();
+            let mut deferred = Vec::new();
+            collect_deferred(
+                entry.view.node,
+                SourceWindow {
+                    start: limit,
+                    end: entry.defer_window.end,
+                },
+                entry.view.omitted_control,
+                &self.body_facts.adoption_plan,
+                &self.evaluated_parent_shells,
+                &mut chain,
+                &mut deferred,
+            );
+            let (_, mut continuation) = split_escaped(region, deferred);
+            after.append(&mut continuation);
+        }
+        for spec in &mut after {
+            spec.chain
+                .retain(|parent| parent.shape.start < region.span.start);
+        }
+        self.add_parent_alternatives(&mut after);
+        let steps = source_ordered_branch_steps(
+            after
+                .into_iter()
+                .map(|spec| {
+                    if spec.chain.is_empty() {
+                        let views = spec
+                            .nodes
+                            .into_iter()
+                            .map(|node| NodeView {
+                                node,
+                                window: spec.window,
+                                omitted_control: spec.omitted_control,
+                                control_cursor: 0,
+                            })
+                            .collect();
+                        BranchStep::Direct(views)
+                    } else {
+                        BranchStep::Deferred(spec)
+                    }
+                })
+                .collect(),
+        );
+        self.eval_branch_steps(&steps)
+    }
+
+    fn branch_steps<'n>(
+        &self,
+        region: &'n ControlRegion,
+        index: usize,
+        adopted: &[Adopted<'n>],
+        nodes: Vec<NodeView<'n>>,
+        escaped: Vec<DeferredNodes<'n>>,
+    ) -> Vec<BranchStep<'n>> {
+        if region.kind != ControlKind::If || index == 0 {
+            let mut steps = nodes
+                .into_iter()
+                .map(|node| BranchStep::Direct(vec![node]))
+                .collect::<Vec<_>>();
+            steps.extend(escaped.into_iter().map(BranchStep::Deferred));
+            return source_ordered_branch_steps(steps);
+        }
+        let Some(candidate) = adopted
+            .iter()
+            .filter(|candidate| branch_window(region, candidate.view.node.span_start()).0 < index)
+            .max_by_key(|candidate| candidate.view.node.span_start())
+        else {
+            let mut steps = nodes
+                .into_iter()
+                .map(|node| BranchStep::Direct(vec![node]))
+                .collect::<Vec<_>>();
+            steps.extend(escaped.into_iter().map(BranchStep::Deferred));
+            return source_ordered_branch_steps(steps);
+        };
+        let Some(shape) = self
+            .body_facts
+            .adoption_plan
+            .parent_shapes
+            .get(&candidate.view.node.span_start())
+            .copied()
+        else {
+            let mut steps = nodes
+                .into_iter()
+                .map(|node| BranchStep::Direct(vec![node]))
+                .collect::<Vec<_>>();
+            steps.extend(escaped.into_iter().map(BranchStep::Deferred));
+            return source_ordered_branch_steps(steps);
+        };
+        let parent = DeferredParent {
+            shape,
+            arms: self
+                .evaluated_parent_shells
+                .get(&shape.start)
+                .cloned()
+                .unwrap_or_default(),
+        };
+        let Some(branch) = region.branches.get(index) else {
+            let mut steps = nodes
+                .into_iter()
+                .map(|node| BranchStep::Direct(vec![node]))
+                .collect::<Vec<_>>();
+            steps.extend(escaped.into_iter().map(BranchStep::Deferred));
+            return source_ordered_branch_steps(steps);
+        };
+        let body_starts = branch
+            .body
+            .iter()
+            .map(Node::span_start)
+            .collect::<BTreeSet<_>>();
+        let mut steps = Vec::new();
+        let mut previous_was_deferred_output = false;
+        for view in nodes.iter().copied() {
+            // A control with no CST body cannot prove containment by itself.
+            // Require one governed sibling to fit the same deferred parent.
+            let empty_control_has_parent_evidence = match view.node {
+                Node::Control(control)
+                    if control.branches.iter().all(|branch| branch.body.is_empty()) =>
+                {
+                    nodes.iter().any(|candidate| {
+                        control.span.start < candidate.node.span_start()
+                            && candidate.node.span_start() < control.span.end
+                            && self.parent_contains_batch(&parent, &[candidate.node])
+                    })
+                }
+                _ => true,
+            };
+            let deferred = if matches!(
+                view.node,
+                Node::Opaque(opaque)
+                    if opaque.kind == helm_schema_syntax::OpaqueKind::ActionLineText
+            ) {
+                previous_was_deferred_output
+            } else {
+                body_starts.contains(&view.node.span_start())
+                    && empty_control_has_parent_evidence
+                    && self.parent_contains_batch(&parent, &[view.node])
+            };
+            previous_was_deferred_output = deferred && matches!(view.node, Node::Output(_));
+            match (steps.last_mut(), deferred) {
+                (Some(BranchStep::Direct(direct)), false) => direct.push(view),
+                (Some(BranchStep::Deferred(spec)), true) => spec.nodes.push(view.node),
+                (_, false) => steps.push(BranchStep::Direct(vec![view])),
+                (_, true) => {
+                    let (_, window) = branch_window(region, view.node.span_start());
+                    steps.push(BranchStep::Deferred(DeferredNodes {
+                        chain: vec![parent.clone()],
+                        resolved_chains: Vec::new(),
+                        nodes: vec![view.node],
+                        window,
+                        defer_end: window.end,
+                        omitted_control: Some(region.span.start),
+                    }));
+                }
+            }
+        }
+        steps.extend(escaped.into_iter().map(BranchStep::Deferred));
+        source_ordered_branch_steps(steps)
+    }
+
+    fn branch_step_residuals<'n>(&self, steps: &[BranchStep<'n>]) -> Vec<DeferredNodes<'n>> {
+        let mut residual = Vec::new();
+        for step in steps {
+            if let BranchStep::Deferred(spec) = step {
+                residual.extend(self.deferred_residual(spec));
+            }
+        }
+        residual
+    }
+
+    fn eval_branch_steps(&mut self, steps: &[BranchStep<'_>]) -> Contributions {
+        self.eval_branch_steps_with_remaining(steps, Predicate::True)
+    }
+
+    fn eval_branch_steps_with_remaining(
+        &mut self,
+        steps: &[BranchStep<'_>],
+        mut remaining: Predicate,
+    ) -> Contributions {
+        let mut out = Contributions::default();
+        for step in steps {
+            if remaining == Predicate::False {
+                break;
+            }
+            let local_entry = self.locals.clone();
+            let entry_scope = self.mark_scope();
+            self.push_predicate(remaining.clone());
+            let mut next = match step {
+                BranchStep::Direct(nodes) => self.eval_node_list(nodes),
+                BranchStep::Deferred(spec) => {
+                    let mut spec = spec.clone();
+                    self.add_parent_alternatives(std::slice::from_mut(&mut spec));
+                    let mut contributions = Contributions::default();
+                    self.eval_deferred(&spec, &mut contributions);
+                    contributions
+                }
+            };
+            self.rewind(entry_scope);
+            if remaining != Predicate::True {
+                self.locals.join_control_outcomes(
+                    &local_entry,
+                    &[
+                        crate::symbolic_local_state::ControlOutcome::new(
+                            TruthCondition::exact_with_memo(
+                                remaining.clone(),
+                                self.db.predicate_memo().as_ref(),
+                            ),
+                            self.locals.clone(),
+                        ),
+                        crate::symbolic_local_state::ControlOutcome::new(
+                            TruthCondition::exact_with_memo(
+                                remaining.clone().negated(),
+                                self.db.predicate_memo().as_ref(),
+                            ),
+                            local_entry.clone(),
+                        ),
+                    ],
+                    self.db.predicate_memo().as_ref(),
+                );
+            }
+            let exit_condition = next.loop_control.exit_condition();
+            next.guard_all(&remaining, self.db.predicate_memo().as_ref());
+            out.extend(next);
+            remaining = if exit_condition == Predicate::False {
+                remaining
+            } else if exit_condition == Predicate::True {
+                Predicate::False
+            } else {
+                and_conditions_with_memo(
+                    remaining,
+                    exit_condition.negated(),
+                    self.db.predicate_memo().as_ref(),
+                )
+            };
+        }
+        out
+    }
+
+    fn add_parent_alternatives(&self, deferred: &mut [DeferredNodes<'_>]) {
+        for spec in deferred {
+            spec.resolved_chains = self.resolve_parent_chains(spec);
+        }
+    }
+
+    fn resolve_parent_chains(&self, spec: &DeferredNodes<'_>) -> Vec<GuardedParentChain> {
+        let parents: Vec<DeferredParent> = spec
+            .chain
+            .iter()
+            .take_while(|parent| self.parent_contains_batch(parent, &spec.nodes))
+            .cloned()
+            .collect();
+        let mut pending = vec![(Predicate::True, parents, 0)];
+        let mut resolved = Vec::new();
+        while let Some((condition, mut parents, cursor)) = pending.pop() {
+            let Some(parent) = parents.get(cursor) else {
+                resolved.push(GuardedParentChain { condition, parents });
+                continue;
+            };
+            let parent_start = parent.shape.start;
+            let (selections, present) = self.parent_selections(parent.shape, spec);
+            if selections.len() == 1
+                && selections.first().is_some_and(|selection| {
+                    selection.condition == Predicate::True
+                        && selection
+                            .parents
+                            .first()
+                            .is_some_and(|parent| parent.shape.start == parent_start)
+                })
+            {
+                if let Some(selection) = selections.into_iter().next()
+                    && let Some(selected) = selection.parents.into_iter().next()
+                    && let Some(parent) = parents.get_mut(cursor)
+                {
+                    *parent = selected;
+                }
+                pending.push((condition, parents, cursor + 1));
+                continue;
+            }
+
+            let prefix = parents.get(..cursor).unwrap_or_default().to_vec();
+            for selection in selections {
+                let combined = self
+                    .db
+                    .predicate_memo()
+                    .normalize(Predicate::all(vec![condition.clone(), selection.condition]));
+                if combined == Predicate::False {
+                    continue;
+                }
+                let mut selected = prefix.clone();
+                selected.extend(
+                    selection
+                        .parents
+                        .into_iter()
+                        .take_while(|parent| self.parent_contains_batch(parent, &spec.nodes)),
+                );
+                let next = (selected.len() > prefix.len()).then_some(prefix.len() + 1);
+                pending.push((combined, selected, next.unwrap_or(prefix.len())));
+            }
+            let absent = self
+                .db
+                .predicate_memo()
+                .normalize(Predicate::all(vec![condition, present.negated()]));
+            if absent != Predicate::False {
+                let prefix_len = prefix.len();
+                pending.push((absent, prefix, prefix_len));
+            }
+        }
+        resolved.sort_by_key(|chain| {
+            std::cmp::Reverse(
+                chain
+                    .parents
+                    .iter()
+                    .map(|parent| parent.shape.start)
+                    .max()
+                    .unwrap_or(0),
+            )
+        });
+        resolved
+    }
+
+    fn parent_contains_batch(&self, parent: &DeferredParent, nodes: &[&Node]) -> bool {
+        let mut rendered = nodes
+            .iter()
+            .filter(|node| !matches!(node, Node::Comment(_) | Node::Opaque(_)));
+        let Some(first) = rendered.next() else {
+            return false;
+        };
+        std::iter::once(first)
+            .chain(rendered)
+            .all(|node| self.deferred_node_belongs_inside(node, parent))
+    }
+
+    fn deferred_node_belongs_inside(&self, node: &Node, parent: &DeferredParent) -> bool {
+        let rendered_indent = match node {
+            Node::Mapping(entry) => return entry.indent > parent.indent(),
+            Node::Sequence(item) => {
+                return item.indent > parent.indent()
+                    || (item.indent == parent.indent()
+                        && parent.shape.kind() == super::eval::ParentKind::Entry
+                        && parent.accepts_same_indent());
+            }
+            Node::Scalar(line) => return line.indent > parent.indent(),
+            Node::Control(region) => self.control_render_indent(region.span),
+            Node::Output(action) => Some(self.output_render_indent(action.span)),
+            Node::Comment(_) | Node::Opaque(_) => return true,
+        };
+        rendered_indent.is_some_and(|indent| {
+            indent > parent.indent()
+                || (indent == parent.indent()
+                    && parent.shape.kind() == super::eval::ParentKind::Entry
+                    && parent.accepts_same_indent())
+        })
+    }
+
+    fn parent_selections(
+        &self,
+        shape: ParentShape,
+        spec: &DeferredNodes<'_>,
+    ) -> (Vec<ParentSelection>, PathCondition) {
+        let plan = &self.body_facts.adoption_plan;
+        let candidates = plan.slot_members_through(&shape);
+        let deferred_start = spec
+            .nodes
+            .iter()
+            .map(|node| node.span_start())
+            .min()
+            .unwrap_or(usize::MAX);
+        let mut evaluated = Vec::new();
+        for (index, start) in candidates.iter().copied().enumerate() {
+            let Some(arms) = self.evaluated_parent_shells.get(&start) else {
+                continue;
+            };
+            let presence = self.db.predicate_memo().normalize(Predicate::Or(
+                arms.iter().map(|arm| arm.condition.clone()).collect(),
+            ));
+            if presence == Predicate::False {
+                continue;
+            }
+            let end = candidates.get(index + 1).copied().unwrap_or(deferred_start);
+            evaluated.push((start, end, presence, arms.clone()));
+        }
+
+        let mut selections = Vec::new();
+        let mut later = Predicate::False;
+        for (start, end, presence, arms) in evaluated.into_iter().rev() {
+            let condition = self.db.predicate_memo().normalize(Predicate::all(vec![
+                presence.clone(),
+                later.clone().negated(),
+            ]));
+            let mut parents = Vec::new();
+            if let Some(shape) = plan.parent_shapes.get(&start).copied() {
+                parents.push(DeferredParent { shape, arms });
+                for shape in plan.trailing_open_chain(start, end) {
+                    let Some(arms) = self.evaluated_parent_shells.get(&shape.start).cloned() else {
+                        break;
+                    };
+                    parents.push(DeferredParent { shape, arms });
+                }
+            }
+            if condition != Predicate::False && !parents.is_empty() {
+                selections.push(ParentSelection { condition, parents });
+            }
+            later = self
+                .db
+                .predicate_memo()
+                .normalize(Predicate::Or(vec![presence, later]));
+        }
+        selections.reverse();
+        (selections, later)
+    }
+
+    /// Evaluate one deferred descendant batch within its source window.
+    ///
+    /// Reattachment follows only parent shells whose headers rendered on the
+    /// same path.
+    /// Explicitly-indented output keeps floating past containers it does not
+    /// render inside.
+    fn eval_deferred<'n>(&mut self, spec: &DeferredNodes<'n>, out: &mut Contributions) {
         let views: Vec<NodeView<'_>> = spec
             .nodes
             .iter()
-            .map(|node| NodeView::plain(node))
+            .map(|node| NodeView {
+                node,
+                window: spec.window,
+                omitted_control: spec.omitted_control,
+                control_cursor: 0,
+            })
             .collect();
-        // A container can only hold strictly deeper content: chain entries
-        // at or below the deferred nodes' own content indent are
-        // structural-recovery artifacts (a trailing region hung under an
-        // escaped open entry), not real parents. Control nodes measure by
-        // their branch bodies (headers are conventionally unindented).
-        let node_indent = spec
-            .nodes
-            .iter()
-            .filter_map(|node| self.structural_content_indent(node))
-            .min();
-        let chain_parents: Vec<DeferredParent<'_>> = match node_indent {
-            Some(node_indent) => spec
-                .chain
-                .iter()
-                .copied()
-                .filter(|parent| parent.indent() < node_indent)
-                .collect(),
-            None => spec.chain.clone(),
-        };
         let mut contributions = self.eval_node_list(&views);
         let loop_control = contributions.take_loop_control();
-        let mut chain = chain_parents.iter().rev();
+        let chains = if spec.resolved_chains.is_empty() {
+            vec![GuardedParentChain {
+                condition: Predicate::True,
+                parents: spec
+                    .chain
+                    .iter()
+                    .take_while(|parent| self.parent_contains_batch(parent, &spec.nodes))
+                    .cloned()
+                    .collect(),
+            }]
+        } else {
+            spec.resolved_chains.clone()
+        };
+        for chain in chains {
+            let mut placed = self.place_deferred_under_chain(contributions.clone(), &chain.parents);
+            placed.guard_all(&chain.condition, self.db.predicate_memo().as_ref());
+            out.extend(placed);
+        }
+        out.loop_control.extend(loop_control);
+    }
+
+    fn deferred_residual<'n>(&self, spec: &DeferredNodes<'n>) -> Vec<DeferredNodes<'n>> {
+        let mut residual = Vec::new();
+        if let Some(window_end) = spec.window.end
+            && spec
+                .defer_end
+                .is_none_or(|defer_end| window_end < defer_end)
+        {
+            let residual_window = SourceWindow {
+                start: window_end,
+                end: spec.defer_end,
+            };
+            for node in &spec.nodes {
+                let mut chain = spec.chain.clone();
+                collect_deferred(
+                    node,
+                    residual_window,
+                    spec.omitted_control,
+                    &self.body_facts.adoption_plan,
+                    &self.evaluated_parent_shells,
+                    &mut chain,
+                    &mut residual,
+                );
+            }
+        }
+        residual
+    }
+
+    fn place_deferred_under_chain(
+        &mut self,
+        mut contributions: Contributions,
+        parents: &[DeferredParent],
+    ) -> Contributions {
+        let mut chain = parents.iter().rev();
         let Some(innermost) = chain.next() else {
-            out.extend(contributions);
-            return;
+            return contributions;
         };
         let mut value = contributions.take_floating_below(
             innermost.indent(),
             innermost.accepts_same_indent(),
             None,
-            super::eval::established_content_mark(self, innermost.children(), innermost.indent()),
+            innermost.shape.established_content_mark,
         );
         let mut floating = std::mem::take(&mut contributions.floating);
         value.extend(contributions.assemble());
-        let mut pending = *innermost;
+        let mut pending = innermost.clone();
         for parent in chain {
             let mut wrapper = Contributions::default();
-            self.wrap_deferred(pending, value, &mut wrapper);
+            (value, floating) = self.wrap_deferred(pending, value, floating);
+            wrapper.values = value;
             wrapper.floating = floating;
             let mut parent_value = wrapper.take_floating_below(
                 parent.indent(),
                 parent.accepts_same_indent(),
                 None,
-                super::eval::established_content_mark(self, parent.children(), parent.indent()),
+                parent.shape.established_content_mark,
             );
             floating = std::mem::take(&mut wrapper.floating);
             parent_value.extend(wrapper.assemble());
             value = parent_value;
-            pending = *parent;
+            pending = parent.clone();
         }
-        let mut re_attached = Contributions::default();
-        self.wrap_deferred(pending, value, &mut re_attached);
-        re_attached.floating = floating;
-        re_attached.loop_control = loop_control;
-        out.extend(re_attached);
+        (value, floating) = self.wrap_deferred(pending, value, floating);
+        let mut placed = Contributions::default();
+        placed.extend_guarded_fragment(value, self.db.predicate_memo().as_ref());
+        placed.floating.extend(floating);
+        placed
     }
 
-    /// Place already-assembled deferred content inside one container level.
+    /// Place deferred content under every live shell of one container level.
+    ///
+    /// The complement bypasses the container because a descendant may still
+    /// render when a conditional parent header does not.
     fn wrap_deferred(
         &mut self,
-        parent: DeferredParent<'_>,
+        parent: DeferredParent,
         value: Guarded<AbstractFragment>,
-        out: &mut Contributions,
-    ) {
-        match parent {
-            DeferredParent::Entry(entry) => {
-                let key = self.entry_key(&entry.key);
-                out.merge_entry(key, value);
-            }
-            DeferredParent::Item(_) => out.items.push(value),
+        floating: Vec<super::eval::FloatingOutput>,
+    ) -> (Guarded<AbstractFragment>, Vec<super::eval::FloatingOutput>) {
+        let mut grouped = BTreeMap::<usize, Vec<ParentShellArm>>::new();
+        for arm in parent.arms {
+            grouped.entry(arm.source_start).or_default().push(arm);
         }
+        let mut effective = Vec::new();
+        let mut present = Predicate::False;
+        for arms in grouped.into_values().rev() {
+            let group_presence = self.db.predicate_memo().normalize(Predicate::Or(
+                arms.iter().map(|arm| arm.condition.clone()).collect(),
+            ));
+            let available = present.clone().negated();
+            for mut arm in arms {
+                arm.condition = self
+                    .db
+                    .predicate_memo()
+                    .normalize(Predicate::all(vec![arm.condition, available.clone()]));
+                if arm.condition != Predicate::False {
+                    effective.push(arm);
+                }
+            }
+            present = self
+                .db
+                .predicate_memo()
+                .normalize(Predicate::Or(vec![group_presence, present]));
+        }
+        let mut wrapped = Guarded::empty();
+        let mut next_floating = Vec::new();
+        for arm in effective {
+            if !value.is_empty() {
+                let mut contribution = Contributions::default();
+                match arm.shell {
+                    ParentShell::Entry(key) => contribution.merge_entry(key, value.clone()),
+                    ParentShell::Item => contribution.items.push(value.clone()),
+                }
+                let mut assembled = contribution.assemble();
+                assembled.guard_all(&arm.condition, self.db.predicate_memo().as_ref());
+                wrapped.extend(assembled);
+            }
+            for mut output in floating.clone() {
+                output
+                    .value
+                    .guard_all(&arm.condition, self.db.predicate_memo().as_ref());
+                output
+                    .value
+                    .arms
+                    .retain(|(condition, _)| *condition != Predicate::False);
+                if !output.value.is_empty() {
+                    next_floating.push(output);
+                }
+            }
+        }
+        let absent = self.db.predicate_memo().normalize(present.negated());
+        if absent != Predicate::False {
+            let mut bypass = value;
+            bypass.guard_all(&absent, self.db.predicate_memo().as_ref());
+            bypass
+                .arms
+                .retain(|(condition, _)| *condition != Predicate::False);
+            wrapped.extend(bypass);
+            for mut output in floating {
+                output
+                    .value
+                    .guard_all(&absent, self.db.predicate_memo().as_ref());
+                output
+                    .value
+                    .arms
+                    .retain(|(condition, _)| *condition != Predicate::False);
+                if !output.value.is_empty() {
+                    next_floating.push(output);
+                }
+            }
+        }
+        (wrapped, next_floating)
     }
 
     fn classify_branch(&self, region: &ControlRegion, index: usize) -> ArmSpec {
@@ -524,6 +1171,7 @@ impl Interpreter<'_> {
             (ControlKind::Range, 0) => ArmSpec::Range {
                 header: None,
                 destructured: false,
+                binding_kind: crate::fragment_assignment::AssignmentKind::Declaration,
                 value_variable: None,
                 key_variable: None,
             },
@@ -548,6 +1196,7 @@ impl Interpreter<'_> {
         Contributions,
         Option<RangeIterations>,
         SelectionTruthReachability,
+        Option<crate::symbolic_local_state::SymbolicLocalState>,
     ) {
         match arm {
             ArmSpec::Else => (
@@ -559,32 +1208,42 @@ impl Interpreter<'_> {
                     SelectionTruthSource::RawInput,
                     self.db.predicate_memo().as_ref(),
                 ),
+                None,
             ),
             ArmSpec::If(header) => {
                 let (condition, truth) =
                     self.activate_if(header.as_ref(), region_start, branch_index);
-                (condition, Contributions::default(), None, truth)
+                (condition, Contributions::default(), None, truth, None)
             }
             ArmSpec::With(header) => {
                 let (condition, truth) =
                     self.activate_with(header.as_ref(), region_start, branch_index);
-                (condition, Contributions::default(), None, truth)
+                (condition, Contributions::default(), None, truth, None)
             }
             ArmSpec::Range {
                 header,
                 destructured,
+                binding_kind,
                 value_variable,
                 key_variable,
             } => {
-                let (condition, contributions, iterations, truth) = self.activate_range(
-                    header.as_ref(),
-                    *destructured,
-                    value_variable.as_deref(),
-                    key_variable.as_deref(),
-                    nodes,
-                    region_start,
-                );
-                (condition, contributions, iterations, truth)
+                let (condition, contributions, iterations, truth, post_header_locals) = self
+                    .activate_range(
+                        header.as_ref(),
+                        *destructured,
+                        *binding_kind,
+                        value_variable.as_deref(),
+                        key_variable.as_deref(),
+                        nodes,
+                        region_start,
+                    );
+                (
+                    condition,
+                    contributions,
+                    iterations,
+                    truth,
+                    Some(post_header_locals),
+                )
             }
         }
     }
@@ -663,7 +1322,18 @@ impl Interpreter<'_> {
                 context.condition_uses_truthiness_abstention(header.expr()),
             )
         };
-        let (helper_paths, evaluated_truth) = self.absorb_header_execution_effects(header.expr());
+        let header_binding = match header.expr() {
+            TemplateExpr::VariableDefinition { value, .. }
+            | TemplateExpr::Assignment { value, .. } => Some(value.as_ref()),
+            _ => None,
+        };
+        let (helper_paths, evaluated_truth) = if let Some(value) = header_binding {
+            let facts = self.control_header_value_facts(value);
+            self.eval_assignment_exprs(std::slice::from_ref(header.expr()));
+            facts
+        } else {
+            self.absorb_header_execution_effects(header.expr())
+        };
         let evaluated_truth = abstain_truth(evaluated_truth, truthiness_abstains);
         let evaluated_truth_is_unknown = evaluated_truth.when_true().exact_predicate().is_none();
         if let Some(exact) = evaluated_truth.when_true().exact_predicate() {
@@ -849,6 +1519,7 @@ impl Interpreter<'_> {
             .locals
             .fragment_values
             .get(name.trim_start_matches('$'))
+            .and_then(crate::eval_env::LocalBinding::value)
             .is_some_and(|value| {
                 matches!(
                     value,
@@ -880,7 +1551,7 @@ impl Interpreter<'_> {
         branch_index: usize,
     ) -> (Option<PathCondition>, SelectionTruthReachability) {
         let Some(header) = header else {
-            self.dot_stack.push(None);
+            self.push_dot(None, crate::eval_env::BindingEvaluationMode::Evaluated);
             return (
                 None,
                 SelectionTruthReachability::unknown(SelectionTruthSource::RawInput),
@@ -894,11 +1565,22 @@ impl Interpreter<'_> {
                 predicate,
                 faithful,
                 context.bound_output_paths_expr(header.expr()),
-                context.with_body_fragment_value_expr(header.expr()),
+                context.with_body_fragment_value_expr(header_range_source(header.expr())),
                 context.condition_uses_truthiness_abstention(header.expr()),
             )
         };
-        let (helper_paths, evaluated_truth) = self.absorb_header_execution_effects(header.expr());
+        let header_binding = match header.expr() {
+            TemplateExpr::VariableDefinition { value, .. }
+            | TemplateExpr::Assignment { value, .. } => Some(value.as_ref()),
+            _ => None,
+        };
+        let (helper_paths, evaluated_truth) = if let Some(value) = header_binding {
+            let facts = self.control_header_value_facts(value);
+            self.eval_assignment_exprs(std::slice::from_ref(header.expr()));
+            facts
+        } else {
+            self.absorb_header_execution_effects(header.expr())
+        };
         let evaluated_truth = abstain_truth(evaluated_truth, truthiness_abstains);
         let evaluated_truth_is_unknown = evaluated_truth.when_true().exact_predicate().is_none();
         if let Some(exact) = evaluated_truth.when_true().exact_predicate() {
@@ -953,14 +1635,7 @@ impl Interpreter<'_> {
                 self.push_control_read(&path.encode(), &[]);
             }
         }
-        if let TemplateExpr::VariableDefinition { name, .. } = header.expr()
-            && let Some(binding) = dot.as_ref()
-        {
-            self.locals
-                .fragment_values
-                .insert(name.trim_start_matches('$').to_string(), binding.clone());
-        }
-        self.dot_stack.push(dot);
+        self.push_dot(dot, crate::eval_env::BindingEvaluationMode::Evaluated);
         let semantic_truth = semantic_truth_reachability(
             evaluated_truth,
             &predicate,
@@ -978,6 +1653,7 @@ impl Interpreter<'_> {
         &mut self,
         header: Option<&TemplateHeader>,
         destructured: bool,
+        binding_kind: crate::fragment_assignment::AssignmentKind,
         value_variable: Option<&str>,
         key_variable: Option<&str>,
         nodes: &[NodeView<'_>],
@@ -987,33 +1663,95 @@ impl Interpreter<'_> {
         Contributions,
         Option<RangeIterations>,
         SelectionTruthReachability,
+        crate::symbolic_local_state::SymbolicLocalState,
     ) {
         let Some(header) = header else {
-            self.dot_stack.push(None);
+            let post_header_locals = self.locals.clone();
+            self.push_dot(None, crate::eval_env::BindingEvaluationMode::Direct);
             return (
                 None,
                 Contributions::default(),
                 None,
                 SelectionTruthReachability::unknown(SelectionTruthSource::RawInput),
+                post_header_locals,
             );
         };
+        let range_source = header_range_source(header.expr());
+        let range_subject = self.value_path_context().range_subject_expr(range_source);
+        let iterable_value = range_subject.value.clone();
+        let header_value_variable = value_variable
+            .map(str::to_string)
+            .or_else(|| helm_schema_ast::range_variable_name_expr(header.expr()));
+        let header_binding_variable = match header.expr() {
+            TemplateExpr::VariableDefinition { name, .. }
+            | TemplateExpr::Assignment { name, .. } => {
+                self.eval_assignment_exprs(std::slice::from_ref(header.expr()));
+                Some(name.trim_start_matches('$').to_string())
+            }
+            _ => {
+                let _ = self.absorb_header_execution_effects(header.expr());
+                None
+            }
+        };
+        if let Some(source) = &header_binding_variable {
+            if let Some(target) = &header_value_variable
+                && target != source
+            {
+                self.locals
+                    .bind_current_variable_state(binding_kind, source, target.clone());
+            }
+            if let Some(target) = key_variable
+                && target != source
+            {
+                self.locals
+                    .bind_current_variable_state(binding_kind, source, target.to_string());
+            }
+        } else {
+            let value = iterable_value.clone().unwrap_or(AbstractValue::Unknown);
+            if let Some(variable) = &header_value_variable {
+                self.locals.bind_fragment_value(
+                    binding_kind,
+                    variable.clone(),
+                    Some(value.clone()),
+                );
+            }
+            if let Some(variable) = key_variable {
+                self.locals
+                    .bind_fragment_value(binding_kind, variable.to_string(), Some(value));
+            }
+        }
+        let post_header_locals = self.locals.clone();
+        if binding_kind == crate::fragment_assignment::AssignmentKind::Declaration {
+            for variable in header_value_variable
+                .as_deref()
+                .into_iter()
+                .chain(key_variable)
+            {
+                self.locals.clear_current_binding(variable);
+            }
+        }
         if let Some((variable, literals)) = parse_literal_list_range_expr(header.expr()) {
-            self.locals.insert_range_domain(variable, literals);
+            if binding_kind == crate::fragment_assignment::AssignmentKind::Assignment {
+                self.locals.range_domains.insert(variable, literals);
+            } else {
+                self.locals.insert_range_domain(variable, literals);
+            }
         } else if let Some(variable) = key_variable
             && let Some(keys) = literal_dict_range_keys(header.expr())
         {
             // `range $k, $v := dict "a" … "b" …` iterates exactly the
             // literal keys: `$k`'s domain makes `get map $k` reads decode
             // to the finite member set.
-            self.locals.insert_range_domain(variable.to_string(), keys);
+            if binding_kind == crate::fragment_assignment::AssignmentKind::Assignment {
+                self.locals.range_domains.insert(variable.to_string(), keys);
+            } else {
+                self.locals.insert_range_domain(variable.to_string(), keys);
+            }
         }
-        let _ = self.absorb_header_execution_effects(header.expr());
-        let range_source = header_range_source(header.expr());
-        let range_subject = self.value_path_context().range_subject_expr(range_source);
-        let iterable_value = range_subject.value.clone();
         let range_is_statically_nonempty = iterable_value
             .as_ref()
             .is_some_and(AbstractValue::definitely_nonempty_iterable);
+        let exact_binding_truth = range_subject.truth_reachability.exact_predicate();
         let derived_range_condition = range_subject
             .input_identity
             .is_none()
@@ -1188,16 +1926,30 @@ impl Interpreter<'_> {
         // (per-item dots and item-variable bindings); other iterables run
         // the one symbolic iteration with the resolved item dot.
         let iterations = iterable_value.as_ref().and_then(|iterable| {
-            Self::exact_range_iterations(iterable, header, value_variable, key_variable)
+            Self::exact_range_iterations(
+                iterable,
+                &range_subject.output_meta,
+                range_subject.value_alternatives.as_ref(),
+                header,
+                value_variable,
+                key_variable,
+                self.db.predicate_memo().as_ref(),
+            )
         });
         let own_condition = Predicate::all(own);
         let truth = SelectionTruthReachability::exact_with_memo(
-            own_condition.clone(),
+            exact_binding_truth.unwrap_or_else(|| own_condition.clone()),
             SelectionTruthSource::RawInput,
             self.db.predicate_memo().as_ref(),
         );
         if let Some(iterations) = iterations {
-            return (Some(own_condition), extra, Some(iterations), truth);
+            return (
+                Some(own_condition),
+                extra,
+                Some(iterations),
+                truth,
+                post_header_locals,
+            );
         }
         if let Some(identity) = &member_identity {
             self.active_range_modes.push((
@@ -1226,11 +1978,13 @@ impl Interpreter<'_> {
             .member_value
             .clone()
             .map(|value| value.to_context_value());
-        if self.helper_scope
+        if (self.helper_scope
+            || binding_kind == crate::fragment_assignment::AssignmentKind::Assignment)
             && let Some((variable, binding)) =
                 helm_schema_ast::range_variable_name_expr(header.expr()).zip(dot.clone())
         {
-            self.locals.fragment_values.insert(variable, binding);
+            self.locals
+                .bind_direct_fragment_value(binding_kind, variable, binding);
         }
         // The value binding carries the member identity (`x.*`), while the
         // key binding retains its distinct collection-key provenance. This
@@ -1265,48 +2019,68 @@ impl Interpreter<'_> {
                 .range_member_values
                 .insert(variable.to_string(), AbstractValue::RangeKey(path));
         }
-        self.dot_stack.push(dot);
-        (Some(own_condition), extra, None, truth)
+        self.push_dot(dot, crate::eval_env::BindingEvaluationMode::Direct);
+        (Some(own_condition), extra, None, truth, post_header_locals)
     }
 
     fn exact_range_iterations(
         iterable: &AbstractValue,
+        output_meta: &BTreeMap<helm_schema_core::ValuesPath, crate::helper_meta::HelperOutputMeta>,
+        value_alternatives: Option<&crate::value_path_context::RangeValueAlternatives>,
         header: &TemplateHeader,
         value_variable: Option<&str>,
         key_variable: Option<&str>,
+        memo: &helm_schema_core::PredicateMemo,
     ) -> Option<RangeIterations> {
-        let alternatives = match iterable {
-            AbstractValue::List(items) => vec![
-                items
-                    .iter()
-                    .enumerate()
-                    .map(|(ordinal, item)| {
-                        (
-                            AbstractValue::StringSet(BTreeSet::from([ordinal.to_string()])),
-                            item.clone(),
-                        )
-                    })
-                    .collect::<Vec<_>>(),
-            ],
-            AbstractValue::Dict(entries) => vec![
-                entries
-                    .iter()
-                    .map(|(key, value)| {
-                        (
-                            AbstractValue::StringSet(BTreeSet::from([key.clone()])),
-                            value.clone(),
-                        )
-                    })
-                    .collect::<Vec<_>>(),
-            ],
-            AbstractValue::Choice(choices) => exact_iteration_alternatives(choices.iter())?,
-            // The selected candidate is one of the statically-known
-            // alternatives, so per-alternative exact iteration is the same
-            // over-approximation the unordered choice gets.
-            AbstractValue::FirstTruthy(candidates) => {
-                exact_iteration_alternatives(candidates.iter())?
+        let (alternatives, has_unresolved) = if let Some(proven) = value_alternatives {
+            let mut alternatives = Vec::new();
+            for alternative in &proven.known {
+                let items = exact_iteration_entries(&alternative.value)?;
+                alternatives.push((
+                    TruthCondition::exact_with_memo(alternative.condition.clone(), memo),
+                    items,
+                ));
             }
-            _ => return None,
+            (alternatives, proven.has_unresolved)
+        } else {
+            let alternatives = match iterable {
+                AbstractValue::List(items) => vec![(
+                    TruthCondition::exact_with_memo(Predicate::True, memo),
+                    items
+                        .iter()
+                        .enumerate()
+                        .map(|(ordinal, item)| {
+                            (
+                                AbstractValue::StringSet(BTreeSet::from([ordinal.to_string()])),
+                                item.clone(),
+                            )
+                        })
+                        .collect::<Vec<_>>(),
+                )],
+                AbstractValue::Dict(entries) => vec![(
+                    TruthCondition::exact_with_memo(Predicate::True, memo),
+                    entries
+                        .iter()
+                        .map(|(key, value)| {
+                            (
+                                AbstractValue::StringSet(BTreeSet::from([key.clone()])),
+                                value.clone(),
+                            )
+                        })
+                        .collect::<Vec<_>>(),
+                )],
+                AbstractValue::Choice(choices) => {
+                    exact_iteration_alternatives(choices.iter(), output_meta, memo)?
+                }
+                // The selected candidate is one of the statically-known
+                // alternatives, so per-alternative exact iteration is the same
+                // over-approximation the unordered choice gets.
+                AbstractValue::FirstTruthy(candidates) => {
+                    exact_iteration_alternatives(candidates.iter(), output_meta, memo)?
+                }
+                _ => return None,
+            };
+            (alternatives, false)
         };
         // A destructured header binds its declared value variable; a plain
         // `range $x := …` binds `$x` to the successive elements.
@@ -1315,19 +2089,21 @@ impl Interpreter<'_> {
             .or_else(|| range_variable_name_expr(header.expr()));
         let alternatives = alternatives
             .into_iter()
-            .map(|items| {
-                items
+            .map(|(truth, items)| {
+                let items = items
                     .into_iter()
                     .map(|(key, item)| RangeIterationBinding {
                         dot: item.clone(),
                         variable: variable.as_ref().map(|variable| (variable.clone(), item)),
                         key: key_variable.map(|variable| (variable.to_string(), key)),
                     })
-                    .collect()
+                    .collect();
+                RangeIterationAlternative { truth, items }
             })
             .collect();
         Some(RangeIterations {
             alternatives,
+            has_unresolved,
             nonempty: iterable.definitely_nonempty_iterable(),
         })
     }
@@ -1434,12 +2210,7 @@ fn branch_node_lists<'nodes>(
         .collect();
     for entry in adopted {
         let start = entry.view.node.span_start();
-        let mut target = 0;
-        for (index, branch) in region.branches.iter().enumerate() {
-            if start >= branch.header.end {
-                target = index;
-            }
-        }
+        let (target, _) = branch_window(region, start);
         if let Some(list) = lists.get_mut(target) {
             list.push(entry.view);
         }
@@ -1450,23 +2221,24 @@ fn branch_node_lists<'nodes>(
     lists
 }
 
-/// One container a deferred batch nests under. A sequence item is a
-/// container in its own right: content trailing an ill-nested region that
-/// opened the item still renders *inside* that item, so dropping the level
-/// would place the batch beside the sequence instead of in it (reloader's
-/// `resources:` after the branch-selected `- image:` line).
-#[derive(Clone, Copy)]
-pub(super) enum DeferredParent<'n> {
-    Entry(&'n helm_schema_syntax::MappingEntry),
-    Item(&'n helm_schema_syntax::SequenceItem),
+/// One source container whose evaluated shells may own a deferred batch.
+///
+/// Every shell retains its owning predicate, so reattachment can bypass a
+/// header that did not render without reevaluating it.
+/// A sequence item is a container in its own right: content trailing an
+/// ill-nested region that opened the item still renders *inside* that item,
+/// so dropping the level would place the batch beside the sequence instead
+/// of in it (reloader's `resources:` after the branch-selected `- image:`
+/// line).
+#[derive(Clone)]
+pub(super) struct DeferredParent {
+    shape: ParentShape,
+    arms: Vec<ParentShellArm>,
 }
 
-impl<'n> DeferredParent<'n> {
-    fn indent(self) -> usize {
-        match self {
-            Self::Entry(entry) => entry.indent,
-            Self::Item(item) => item.indent,
-        }
+impl DeferredParent {
+    fn indent(&self) -> usize {
+        self.shape.indent
     }
 
     /// Whether output rendered at the container's own indent belongs inside
@@ -1474,27 +2246,63 @@ impl<'n> DeferredParent<'n> {
     /// item never does, because its dash occupies that column — output there
     /// opens the NEXT item (zalando's `toYaml .Values.extraEnvs | indent 8`
     /// renders whole `env` entries, not content of the preceding one).
-    fn accepts_same_indent(self) -> bool {
-        match self {
-            Self::Entry(entry) => entry.value.is_none() && entry.block.is_none(),
-            Self::Item(_) => false,
-        }
-    }
-
-    fn children(self) -> &'n [helm_schema_syntax::Node] {
-        match self {
-            Self::Entry(entry) => &entry.children,
-            Self::Item(item) => &item.children,
-        }
+    fn accepts_same_indent(&self) -> bool {
+        self.shape.accepts_same_indent
     }
 }
 
-/// One batch of deferred descendants: the container chain they nest under
-/// (in document order, outermost first) and the deferred nodes themselves.
+/// One batch of deferred descendants in an exact source window.
+///
+/// The container chain is in document order, outermost first.
 #[derive(Clone)]
 pub(super) struct DeferredNodes<'n> {
-    chain: Vec<DeferredParent<'n>>,
+    chain: Vec<DeferredParent>,
+    resolved_chains: Vec<GuardedParentChain>,
     nodes: Vec<&'n Node>,
+    window: SourceWindow,
+    defer_end: Option<usize>,
+    omitted_control: Option<usize>,
+}
+
+/// Variants preserve source execution order.
+/// Deferred changes rendered placement only, not evaluation order.
+#[derive(Clone)]
+enum BranchStep<'n> {
+    Direct(Vec<NodeView<'n>>),
+    Deferred(DeferredNodes<'n>),
+}
+
+fn source_ordered_branch_steps<'n>(mut steps: Vec<BranchStep<'n>>) -> Vec<BranchStep<'n>> {
+    steps.sort_by_key(|step| match step {
+        BranchStep::Direct(nodes) => nodes
+            .first()
+            .map_or(usize::MAX, |view| view.node.span_start()),
+        BranchStep::Deferred(spec) => spec
+            .nodes
+            .first()
+            .map_or(usize::MAX, |node| node.span_start()),
+    });
+    let mut ordered = Vec::new();
+    for step in steps {
+        match (ordered.last_mut(), step) {
+            (Some(BranchStep::Direct(current)), BranchStep::Direct(mut next)) => {
+                current.append(&mut next);
+            }
+            (_, step) => ordered.push(step),
+        }
+    }
+    ordered
+}
+
+#[derive(Clone)]
+struct GuardedParentChain {
+    condition: PathCondition,
+    parents: Vec<DeferredParent>,
+}
+
+struct ParentSelection {
+    condition: PathCondition,
+    parents: Vec<DeferredParent>,
 }
 
 /// Assign escaped batches to branch windows by span: branch `i` owns
@@ -1530,73 +2338,168 @@ fn split_escaped<'n>(
             if !nodes.is_empty()
                 && let Some(branch) = per_branch.get_mut(index)
             {
+                let (_, branch_source_window) = branch_window(region, nodes[0].span_start());
+                let window = spec.window.intersect(branch_source_window);
+                if window.is_empty() {
+                    continue;
+                }
                 branch.push(DeferredNodes {
                     chain: spec.chain.clone(),
+                    resolved_chains: spec.resolved_chains.clone(),
                     nodes,
+                    window,
+                    defer_end: spec.defer_end,
+                    omitted_control: spec.omitted_control,
                 });
             }
         }
         if !past.is_empty() {
+            let window = spec.window.intersect(SourceWindow {
+                start: region.span.end,
+                end: spec.window.end,
+            });
             after.push(DeferredNodes {
                 chain: spec.chain,
+                resolved_chains: spec.resolved_chains,
                 nodes: past,
+                window,
+                defer_end: spec.defer_end,
+                omitted_control: spec.omitted_control,
             });
         }
     }
     (per_branch, after)
 }
 
-/// Collect descendants of an adopted node whose spans start at or beyond the
-/// adopting region's end (and below the enclosing bound, which the enclosing
-/// region's own deferral handles), with the mapping-entry chain above them.
+/// Collect descendants of an adopted node in a later source window with the
+/// mapping-entry chain above them.
+///
+/// Controls through the omitted boundary own their branch bodies separately
+/// and must not be revisited through the adopted chain.
 pub(super) fn collect_deferred<'n>(
     node: &'n Node,
-    limit: usize,
-    upper: Option<usize>,
-    chain: &mut Vec<DeferredParent<'n>>,
+    window: SourceWindow,
+    omitted_control: Option<usize>,
+    plan: &AdoptionPlan,
+    parent_shells: &HashMap<usize, Vec<ParentShellArm>>,
+    chain: &mut Vec<DeferredParent>,
     out: &mut Vec<DeferredNodes<'n>>,
 ) {
-    let in_window = |child: &Node| {
-        let start = child.span_start();
-        start >= limit && upper.is_none_or(|upper| start < upper)
-    };
+    if plan
+        .content_ends
+        .get(&node.span_start())
+        .is_some_and(|content_end| *content_end <= window.start)
+    {
+        return;
+    }
+    if matches!(node, Node::Control(region)
+        if omitted_control.is_some_and(|omitted| region.span.start <= omitted))
+    {
+        return;
+    }
     match node {
         Node::Mapping(entry) => {
-            chain.push(DeferredParent::Entry(entry));
-            let beyond: Vec<&Node> = entry.children.iter().filter(|c| in_window(c)).collect();
+            let Some(shape) = plan.parent_shapes.get(&entry.span.start).copied() else {
+                return;
+            };
+            let arms = parent_shells
+                .get(&entry.span.start)
+                .cloned()
+                .unwrap_or_default();
+            chain.push(DeferredParent { shape, arms });
+            let beyond = plan
+                .child_indexes
+                .get(&entry.span.start)
+                .into_iter()
+                .flat_map(|index| index.in_window(window))
+                .filter_map(|index| entry.children.get(index))
+                .collect::<Vec<_>>();
             if !beyond.is_empty() {
                 out.push(DeferredNodes {
                     chain: chain.clone(),
+                    resolved_chains: Vec::new(),
                     nodes: beyond,
+                    window,
+                    defer_end: window.end,
+                    omitted_control,
                 });
             }
-            for child in &entry.children {
-                if child.span_start() < limit {
-                    collect_deferred(child, limit, upper, chain, out);
-                }
+            for child in plan
+                .child_indexes
+                .get(&entry.span.start)
+                .into_iter()
+                .flat_map(|index| index.crossing(window.start))
+                .filter_map(|index| entry.children.get(index))
+            {
+                collect_deferred(
+                    child,
+                    window,
+                    omitted_control,
+                    plan,
+                    parent_shells,
+                    chain,
+                    out,
+                );
             }
             chain.pop();
         }
         Node::Sequence(item) => {
-            chain.push(DeferredParent::Item(item));
-            let beyond: Vec<&Node> = item.children.iter().filter(|c| in_window(c)).collect();
+            let Some(shape) = plan.parent_shapes.get(&item.span.start).copied() else {
+                return;
+            };
+            let arms = parent_shells
+                .get(&item.span.start)
+                .cloned()
+                .unwrap_or_default();
+            chain.push(DeferredParent { shape, arms });
+            let beyond = plan
+                .child_indexes
+                .get(&item.span.start)
+                .into_iter()
+                .flat_map(|index| index.in_window(window))
+                .filter_map(|index| item.children.get(index))
+                .collect::<Vec<_>>();
             if !beyond.is_empty() {
                 out.push(DeferredNodes {
                     chain: chain.clone(),
+                    resolved_chains: Vec::new(),
                     nodes: beyond,
+                    window,
+                    defer_end: window.end,
+                    omitted_control,
                 });
             }
-            for child in &item.children {
-                if child.span_start() < limit {
-                    collect_deferred(child, limit, upper, chain, out);
-                }
+            for child in plan
+                .child_indexes
+                .get(&item.span.start)
+                .into_iter()
+                .flat_map(|index| index.crossing(window.start))
+                .filter_map(|index| item.children.get(index))
+            {
+                collect_deferred(
+                    child,
+                    window,
+                    omitted_control,
+                    plan,
+                    parent_shells,
+                    chain,
+                    out,
+                );
             }
             chain.pop();
         }
         Node::Control(region) => {
             for branch in &region.branches {
                 for child in &branch.body {
-                    collect_deferred(child, limit, upper, chain, out);
+                    collect_deferred(
+                        child,
+                        window,
+                        omitted_control,
+                        plan,
+                        parent_shells,
+                        chain,
+                        out,
+                    );
                 }
             }
         }
@@ -1630,39 +2533,83 @@ fn header_range_source(expr: &TemplateExpr) -> &TemplateExpr {
 /// Per-alternative exact (key, item) iteration entries for alternatives
 /// that are ALL statically-known lists or dicts; any other alternative
 /// shape abstains.
+fn exact_iteration_entries(
+    alternative: &AbstractValue,
+) -> Option<Vec<(AbstractValue, AbstractValue)>> {
+    match alternative {
+        AbstractValue::List(items) => Some(
+            items
+                .iter()
+                .enumerate()
+                .map(|(ordinal, item)| {
+                    (
+                        AbstractValue::StringSet(BTreeSet::from([ordinal.to_string()])),
+                        item.clone(),
+                    )
+                })
+                .collect(),
+        ),
+        AbstractValue::Dict(entries) => Some(
+            entries
+                .iter()
+                .map(|(key, value)| {
+                    (
+                        AbstractValue::StringSet(BTreeSet::from([key.clone()])),
+                        value.clone(),
+                    )
+                })
+                .collect(),
+        ),
+        _ => None,
+    }
+}
+
 fn exact_iteration_alternatives<'v>(
     alternatives: impl Iterator<Item = &'v AbstractValue>,
-) -> Option<Vec<Vec<(AbstractValue, AbstractValue)>>> {
+    output_meta: &BTreeMap<helm_schema_core::ValuesPath, crate::helper_meta::HelperOutputMeta>,
+    memo: &helm_schema_core::PredicateMemo,
+) -> Option<Vec<(TruthCondition, Vec<(AbstractValue, AbstractValue)>)>> {
     let mut out = Vec::new();
     for alternative in alternatives {
-        match alternative {
-            AbstractValue::List(items) => out.push(
-                items
-                    .iter()
-                    .enumerate()
-                    .map(|(ordinal, item)| {
-                        (
-                            AbstractValue::StringSet(BTreeSet::from([ordinal.to_string()])),
-                            item.clone(),
-                        )
-                    })
-                    .collect(),
-            ),
-            AbstractValue::Dict(entries) => out.push(
-                entries
-                    .iter()
-                    .map(|(key, value)| {
-                        (
-                            AbstractValue::StringSet(BTreeSet::from([key.clone()])),
-                            value.clone(),
-                        )
-                    })
-                    .collect(),
-            ),
-            _ => return None,
-        }
+        let truth = exact_iteration_alternative_truth(alternative, output_meta, memo);
+        let items = exact_iteration_entries(alternative)?;
+        out.push((truth, items));
     }
     Some(out)
+}
+
+fn exact_iteration_alternative_truth(
+    alternative: &AbstractValue,
+    output_meta: &BTreeMap<helm_schema_core::ValuesPath, crate::helper_meta::HelperOutputMeta>,
+    memo: &helm_schema_core::PredicateMemo,
+) -> TruthCondition {
+    let paths = alternative.fragment_rendered_paths();
+    if paths.is_empty() {
+        return TruthCondition::Unknown;
+    }
+    let mut metadata = alternative.output_meta();
+    for (path, meta) in output_meta {
+        metadata.entry(path.clone()).or_default().merge(meta);
+    }
+    let mut branches = BTreeSet::new();
+    for path in paths {
+        let Some(meta) = metadata.get(&path) else {
+            return TruthCondition::Unknown;
+        };
+        if meta.predicates.is_empty() {
+            return TruthCondition::Unknown;
+        }
+        branches.extend(meta.predicates.iter().cloned());
+    }
+    TruthCondition::exact_with_memo(
+        predicate_any(
+            branches
+                .into_iter()
+                .map(|branch| Predicate::all(branch.into_iter().collect()))
+                .collect(),
+        ),
+        memo,
+    )
 }
 
 impl Interpreter<'_> {
@@ -1721,7 +2668,9 @@ impl Interpreter<'_> {
                     exclusions.push(self.reassignment_exclusion(header, marker));
                     fold_spellings = match (
                         fold_spellings,
-                        self.empty_fold_spellings(header, name, value, &entry_paths),
+                        value.value().and_then(|value| {
+                            self.empty_fold_spellings(header, name, &value, &entry_paths)
+                        }),
                     ) {
                         (Some(mut spellings), Some(arm_spellings)) => {
                             spellings.extend(arm_spellings);
@@ -1742,9 +2691,11 @@ impl Interpreter<'_> {
                 if let Some(outcome) = outcomes.get_mut(index)
                     && let Some(value) = outcome.fragment_values.get(name).cloned()
                 {
-                    let mut excluded = attach_reassignment_exclusion(&value, &exclusion);
+                    let mut excluded =
+                        value.map_values(|value| attach_reassignment_exclusion(&value, &exclusion));
                     if let Some(spellings) = &fold_spellings {
-                        excluded = attach_empty_fold_spellings(excluded, spellings);
+                        excluded = excluded
+                            .map_values(|value| attach_empty_fold_spellings(value, spellings));
                     }
                     outcome.fragment_values.insert(name.clone(), excluded);
                 }
@@ -2037,7 +2988,10 @@ fn attach_reassignment_exclusion(
 ) -> AbstractValue {
     match value {
         AbstractValue::ValuesPath(path) => {
-            let mut meta = crate::helper_meta::HelperOutputMeta::default();
+            let mut meta = crate::helper_meta::HelperOutputMeta {
+                input_identity: true,
+                ..Default::default()
+            };
             meta.capture_exclusions.extend(exclusion.iter().cloned());
             AbstractValue::OutputPath(path.clone(), meta)
         }

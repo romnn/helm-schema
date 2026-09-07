@@ -3,11 +3,12 @@ use std::collections::BTreeSet;
 use helm_schema_ast::TemplateExpr;
 use test_util::prelude::sim_assert_eq;
 
+use crate::eval_env::{BindingEvaluationMode, EvalEnv};
 use crate::expr_call_eval::{INTENTIONAL_DISPATCH_EXCEPTIONS, has_catalog_or_dispatch_exception};
 use crate::function_semantics::{
     ArgumentEvaluationMode, CollectionShape, NilBehavior, OutputSemantics, PredicateSemantics,
-    ProvenanceBehavior, StringOperands, argument_evaluation_mode, function_semantics,
-    strict_collection_item_pattern, strict_parser_operand_pattern,
+    ProvenanceBehavior, StringOperands, function_semantics, strict_collection_item_pattern,
+    strict_parser_operand_pattern,
 };
 
 const KNOWN_FUNCTIONS: &[&str] = &[
@@ -107,6 +108,7 @@ const KNOWN_FUNCTIONS: &[&str] = &[
     "upper",
     "urlParse",
     "urlquery",
+    "uuidv4",
     "values",
 ];
 
@@ -145,9 +147,10 @@ fn dispatcher_special_forms_are_catalogued_or_intentional_exceptions() {
 
 #[test]
 fn argument_evaluation_mode_preserves_grouping() {
+    let mut env = EvalEnv::default();
     let field = TemplateExpr::Field(vec!["Values".to_string(), "subject".to_string()]);
     sim_assert_eq!(
-        have: argument_evaluation_mode(&field),
+        have: env.argument_evaluation_mode(&field),
         want: ArgumentEvaluationMode::DirectLookup
     );
     let selector = TemplateExpr::Selector {
@@ -155,17 +158,47 @@ fn argument_evaluation_mode_preserves_grouping() {
         path: vec!["child".to_string()],
     };
     sim_assert_eq!(
-        have: argument_evaluation_mode(&selector),
+        have: env.argument_evaluation_mode(&selector),
         want: ArgumentEvaluationMode::GroupedReceiverLookup {
             selected_segments: 1
         }
     );
     sim_assert_eq!(
-        have: argument_evaluation_mode(&TemplateExpr::Parenthesized(Box::new(field))),
+        have: env.argument_evaluation_mode(&TemplateExpr::Parenthesized(Box::new(field))),
         want: ArgumentEvaluationMode::Evaluated
     );
     sim_assert_eq!(
-        have: argument_evaluation_mode(&TemplateExpr::Parenthesized(Box::new(selector))),
+        have: env.argument_evaluation_mode(&TemplateExpr::Parenthesized(Box::new(selector))),
+        want: ArgumentEvaluationMode::Evaluated
+    );
+
+    let root_selector = TemplateExpr::Selector {
+        operand: Box::new(TemplateExpr::Variable(String::new())),
+        path: vec!["child".to_string()],
+    };
+    sim_assert_eq!(
+        have: env.argument_evaluation_mode(&root_selector),
+        want: ArgumentEvaluationMode::DirectLookup
+    );
+
+    let local = TemplateExpr::Variable("member".to_string());
+    sim_assert_eq!(
+        have: env.argument_evaluation_mode(&local),
+        want: ArgumentEvaluationMode::DirectLookup
+    );
+    let local_selector = TemplateExpr::Selector {
+        operand: Box::new(local),
+        path: vec!["db".to_string()],
+    };
+    sim_assert_eq!(
+        have: env.argument_evaluation_mode(&local_selector),
+        want: ArgumentEvaluationMode::DirectLookup
+    );
+
+    let dot = TemplateExpr::Field(Vec::new());
+    env.dot_binding_mode = BindingEvaluationMode::Evaluated;
+    sim_assert_eq!(
+        have: env.argument_evaluation_mode(&dot),
         want: ArgumentEvaluationMode::Evaluated
     );
 }
@@ -183,6 +216,11 @@ fn overlapping_function_facets_are_intentional() {
     let integer = function_semantics("int");
     sim_assert_eq!(have: integer.output, want: OutputSemantics::TotalNumericCast);
     sim_assert_eq!(have: integer.provenance, want: ProvenanceBehavior::Preserve);
+
+    sim_assert_eq!(
+        have: function_semantics("uuidv4").output,
+        want: OutputSemantics::NonEmptyString
+    );
 
     let semver = function_semantics("semverCompare");
     sim_assert_eq!(have: semver.predicate, want: PredicateSemantics::String);

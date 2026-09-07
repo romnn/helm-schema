@@ -5,9 +5,10 @@ use test_util::prelude::sim_assert_eq;
 
 use crate::abstract_value::AbstractValue;
 use crate::analysis_db::IrAnalysisDb;
-use crate::eval_env::EvalEnv;
+use crate::eval_env::{BindingDecision, EvalEnv, LocalBinding};
 use crate::fragment_expr_eval::FragmentEvalContext;
 use crate::helper_meta::HelperOutputMeta;
+use crate::scalar_value::TruthCondition;
 use crate::{Guard, GuardValue};
 
 use super::*;
@@ -94,6 +95,44 @@ fn invalid_kind_guard_abstains_for_a_meta_selected_subject() {
     );
 }
 
+#[test]
+fn selected_binding_type_test_keeps_its_decision_condition() {
+    let use_b = Predicate::truthy_path("useB");
+    let mut context = condition_context(HashMap::new());
+    context.eval_env.locals.insert(
+        "selected".to_string(),
+        LocalBinding::select(
+            BindingDecision::new(TruthCondition::exact(use_b.clone())),
+            LocalBinding::evaluated(values_path!("b")),
+            LocalBinding::evaluated(values_path!("a")),
+        ),
+    );
+    let expression = parse_action_expressions(r#"{{ kindIs "string" $selected }}"#)
+        .into_iter()
+        .next()
+        .expect("condition expression");
+    let string_a = Predicate::from(Guard::TypeIs {
+        path: helm_schema_core::ValuesPath::parse("a"),
+        schema_type: "string".to_string(),
+    });
+    let string_b = Predicate::from(Guard::TypeIs {
+        path: helm_schema_core::ValuesPath::parse("b"),
+        schema_type: "string".to_string(),
+    });
+    let expected = context
+        .eval_env
+        .predicate_memo
+        .normalize(Predicate::Or(vec![
+            Predicate::all(vec![use_b.clone(), string_b]),
+            Predicate::all(vec![use_b.negated(), string_a]),
+        ]));
+
+    sim_assert_eq!(
+        have: context.condition_predicate_expr(&expression),
+        want: expected,
+    );
+}
+
 fn parse_condition_with_template_facts(
     text: &str,
     template_bindings: HashMap<String, AbstractValue>,
@@ -127,10 +166,13 @@ fn condition_context_with_defines(
     template_output_meta: HashMap<String, BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>>,
     defines: DefineIndex,
 ) -> ValuePathContext<'static> {
-    let pipeline_bound_locals = template_bindings.keys().cloned().collect();
-    let mut eval_env = EvalEnv::from_helper_context(None, None).without_helper_call_args();
-    eval_env.locals = template_bindings;
-    eval_env.pipeline_bound_locals = pipeline_bound_locals;
+    let mut eval_env =
+        EvalEnv::from_helper_context(None, None, crate::eval_env::BindingEvaluationMode::Direct)
+            .without_helper_call_args();
+    eval_env.locals = template_bindings
+        .into_iter()
+        .map(|(name, value)| (name, LocalBinding::evaluated(value)))
+        .collect();
     eval_env.local_output_meta = template_output_meta;
     let template_truthiness_abstentions = Box::leak(Box::new(BTreeSet::new()));
     let defines = Box::leak(Box::new(defines));
@@ -831,12 +873,14 @@ fn with_predicates_preserve_header_projection_semantics() {
 #[test]
 fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
     let mut defines = DefineIndex::new();
-    defines.add_file_source("files/profile-demo.yaml", "a: 1\n");
-    defines.add_file_source("files/profile-ambient.yaml", "b: 2\n");
+    defines.add_files_get_source("files/profile-demo.yaml", "a: 1\n");
+    defines.add_files_get_source("files/profile-ambient.yaml", "b: 2\n");
     defines.add_file_source("templates/other.yaml", "kind: ConfigMap\n");
     let defines = Box::leak(Box::new(defines));
     let analysis_db = Box::leak(Box::new(IrAnalysisDb::new(defines)));
-    let eval_env = EvalEnv::from_helper_context(None, None).without_helper_call_args();
+    let eval_env =
+        EvalEnv::from_helper_context(None, None, crate::eval_env::BindingEvaluationMode::Direct)
+            .without_helper_call_args();
     let context = ValuePathContext {
         helper_dispatch_depth: std::cell::Cell::new(0),
         eval_env,

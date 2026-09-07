@@ -214,6 +214,45 @@ pub(super) fn helper_claim_paths(effects: &Effects) -> std::collections::BTreeSe
     claims
 }
 
+fn header_value_facts(
+    hole: &HoleEval,
+    memo: &helm_schema_core::PredicateMemo,
+) -> (
+    std::collections::BTreeSet<String>,
+    crate::eval_effect::SelectionTruthReachability,
+) {
+    let truth_reachability =
+        crate::eval_effect::SelectionTruthReachability::from_condition_with_memo(
+            &hole.truth,
+            hole.truth_reachability.truth_source(),
+            memo,
+        );
+    let has_helper_claims = !hole.effects.helper_reads.is_empty()
+        || !hole.effects.helper_rendered.is_empty()
+        || !hole.effects.helper_dependency_rendered.is_empty();
+    let mut claims = if has_helper_claims {
+        helper_claim_paths(&hole.effects)
+    } else {
+        std::collections::BTreeSet::new()
+    };
+    if has_helper_claims {
+        claims.extend(
+            hole.effects
+                .observed_facts
+                .type_hints
+                .iter()
+                .filter(|(grade, _)| grade.intent != HintIntent::Tested)
+                .flat_map(|(_, hints)| hints.keys().map(helm_schema_core::ValuesPath::encode)),
+        );
+    }
+    let deepest = claims
+        .iter()
+        .filter(|path| !helm_schema_core::values_path_has_descendant(path, &claims))
+        .cloned()
+        .collect();
+    (deepest, truth_reachability)
+}
+
 /// Whether an ambient predicate belongs on one flowing path's assignment
 /// meta: truthiness conditions about a different flowing path of the same
 /// assignment describe that sibling's branch (unrelated paths keep the
@@ -259,12 +298,7 @@ impl Interpreter<'_> {
         crate::eval_effect::SelectionTruthReachability,
     ) {
         let hole = self.eval_hole_exprs_for_condition(expr);
-        let truth_reachability =
-            crate::eval_effect::SelectionTruthReachability::from_condition_with_memo(
-                &hole.truth,
-                hole.truth_reachability.truth_source(),
-                self.db.predicate_memo().as_ref(),
-            );
+        let facts = header_value_facts(&hole, self.db.predicate_memo().as_ref());
         let mut effects = hole.effects;
         effects.bound_output_paths.clear();
         let strict_paths: std::collections::BTreeSet<String> = effects
@@ -282,34 +316,20 @@ impl Interpreter<'_> {
             .shape_erased_paths
             .retain(|path| !strict_paths.contains(&path.encode()));
 
-        let has_helper_claims = !effects.helper_reads.is_empty()
-            || !effects.helper_rendered.is_empty()
-            || !effects.helper_dependency_rendered.is_empty();
-        let mut claims = if has_helper_claims {
-            helper_claim_paths(&effects)
-        } else {
-            std::collections::BTreeSet::new()
-        };
-        if has_helper_claims {
-            claims.extend(
-                effects
-                    .observed_facts
-                    .type_hints
-                    .iter()
-                    .filter(|(grade, _)| grade.intent != HintIntent::Tested)
-                    .flat_map(|(_, hints)| hints.keys().map(helm_schema_core::ValuesPath::encode)),
-            );
-        }
         self.absorb_hole_effects(&effects, RenderedDemotion::None);
+        facts
+    }
 
-        (
-            claims
-                .iter()
-                .filter(|path| !helm_schema_core::values_path_has_descendant(path, &claims))
-                .cloned()
-                .collect(),
-            truth_reachability,
-        )
+    /// Analyze a control-header value whose effects were already absorbed by assignment lowering.
+    pub(super) fn control_header_value_facts(
+        &mut self,
+        expr: &TemplateExpr,
+    ) -> (
+        std::collections::BTreeSet<String>,
+        crate::eval_effect::SelectionTruthReachability,
+    ) {
+        let hole = self.eval_hole_exprs_for_condition(expr);
+        header_value_facts(&hole, self.db.predicate_memo().as_ref())
     }
 
     /// Record every `required(message, subject)` guardrail in the
@@ -363,6 +383,7 @@ impl Interpreter<'_> {
         );
         let mut json_payload_truth = TruthCondition::Unknown;
         let mut scalar_dispatch = None;
+        let mut proven_operands = None;
         for expr in exprs {
             let result = document_result_from_expr(
                 expr,
@@ -380,6 +401,7 @@ impl Interpreter<'_> {
                 );
                 json_payload_truth = result.json_payload_truth.clone();
                 scalar_dispatch = result.scalar_dispatch.clone();
+                proven_operands = result.proven_operands.clone();
             }
             values.extend(result.value);
             effects.merge(result.effects);
@@ -391,13 +413,18 @@ impl Interpreter<'_> {
             truth_reachability,
             json_payload_truth,
             scalar_dispatch,
+            proven_operands,
         }
     }
 
     pub(super) fn hole_eval_env(&self, current_dot: Option<&AbstractValue>) -> EvalEnv {
-        let mut env = EvalEnv::from_helper_context(Some(&self.root_bindings), current_dot)
-            .without_helper_call_args()
-            .with_predicate_memo(std::rc::Rc::clone(self.db.predicate_memo()));
+        let mut env = EvalEnv::from_helper_context(
+            Some(&self.root_bindings),
+            current_dot,
+            self.current_dot_binding_mode(),
+        )
+        .without_helper_call_args()
+        .with_predicate_memo(std::rc::Rc::clone(self.db.predicate_memo()));
         // Locals (`$x`) and root bindings (`.x`) are distinct namespaces:
         // roots stay in `root_fields` so a helper-arg key never shadows a
         // same-named body local. Range VALUE variables resolve to member
@@ -405,14 +432,23 @@ impl Interpreter<'_> {
         // the same identity the range dot already carries, so member
         // consumers (`tpl $arg`) bind their contracts per member;
         // explicit fragment values shadow them where both exist.
-        env.locals = self.locals.range_member_values.clone();
+        env.locals = self
+            .locals
+            .range_member_values
+            .iter()
+            .map(|(name, value)| {
+                (
+                    name.clone(),
+                    crate::eval_env::LocalBinding::direct(value.clone()),
+                )
+            })
+            .collect();
         env.locals.extend(
             self.locals
                 .fragment_values
                 .iter()
                 .map(|(name, value)| (name.clone(), value.clone())),
         );
-        env.pipeline_bound_locals = self.locals.fragment_values.keys().cloned().collect();
         env.local_default_paths = self.locals.default_paths.clone();
         env.local_output_meta = self.locals.output_meta.clone();
         env.local_scalar_dispatches = self.locals.scalar_dispatches.clone();
@@ -490,11 +526,6 @@ impl Interpreter<'_> {
         self.observed_facts
             .values_root_helper_includes
             .extend(facts.values_root_helper_includes.iter().cloned());
-    }
-
-    pub(super) fn absorb_nested_observed_facts(&mut self, facts: &ObservedFacts) {
-        self.snapshot_pre_rewrite_strict_paths(facts);
-        self.observed_facts.absorb(facts);
     }
 
     fn snapshot_pre_rewrite_strict_paths(&mut self, facts: &ObservedFacts) {

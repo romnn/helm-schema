@@ -3,6 +3,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use helm_schema_ast::TemplateExpr;
 
 use crate::abstract_value::AbstractValue;
+use crate::eval_env::LocalBinding;
 use crate::expr_eval::apply_local_set_mutations_expr;
 use crate::fragment_expr_eval::FragmentEvalContext;
 
@@ -52,7 +53,7 @@ fn parsed_assignment_from_expr(
     }
 }
 
-fn shadow_fragment_value_keys(binding: AbstractValue, keys: BTreeSet<String>) -> AbstractValue {
+fn shadow_fragment_value_keys(binding: LocalBinding, keys: BTreeSet<String>) -> LocalBinding {
     if keys.is_empty() {
         return binding;
     }
@@ -60,24 +61,24 @@ fn shadow_fragment_value_keys(binding: AbstractValue, keys: BTreeSet<String>) ->
         .into_iter()
         .map(|key| (key, AbstractValue::Unknown))
         .collect();
-    match binding {
+    binding.map_values(|value| match value {
         AbstractValue::Overlay {
             mut entries,
             fallback,
         } => {
-            entries.extend(new_entries);
+            entries.extend(new_entries.clone());
             AbstractValue::Overlay { entries, fallback }
         }
         other => AbstractValue::Overlay {
-            entries: new_entries,
+            entries: new_entries.clone(),
             fallback: Box::new(other),
         },
-    }
+    })
 }
 
 fn local_set_mutation_target_and_keys_from_exprs(
     exprs: &[TemplateExpr],
-    local_bindings: &HashMap<String, AbstractValue>,
+    local_bindings: &HashMap<String, LocalBinding>,
     current_dot: Option<&AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
@@ -116,7 +117,7 @@ fn local_set_mutation_target_and_keys_from_exprs(
 
 pub(crate) fn apply_local_set_mutations_from_exprs(
     exprs: &[TemplateExpr],
-    local_bindings: &mut HashMap<String, AbstractValue>,
+    local_bindings: &mut HashMap<String, LocalBinding>,
     current_dot: Option<&AbstractValue>,
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
@@ -145,10 +146,14 @@ pub(crate) fn apply_local_set_mutations_from_exprs(
 
 fn apply_abstract_local_set_mutations_from_exprs(
     exprs: &[TemplateExpr],
-    local_bindings: &mut HashMap<String, AbstractValue>,
+    local_bindings: &mut HashMap<String, LocalBinding>,
     current_dot: Option<&AbstractValue>,
 ) -> bool {
-    let mut env = crate::eval_env::EvalEnv::from_fragment_context(local_bindings, current_dot);
+    let mut env = crate::eval_env::EvalEnv::from_fragment_context(
+        local_bindings,
+        current_dot,
+        crate::eval_env::BindingEvaluationMode::Direct,
+    );
     let mut applied = false;
     for expr in exprs {
         applied |= apply_local_set_mutations_expr(expr, &mut env);
@@ -157,10 +162,10 @@ fn apply_abstract_local_set_mutations_from_exprs(
         return false;
     }
 
-    let mut converted = HashMap::new();
-    for (name, value) in env.locals {
-        converted.insert(name, value.to_context_value());
-    }
-    *local_bindings = converted;
+    *local_bindings = env
+        .locals
+        .into_iter()
+        .map(|(name, binding)| (name, binding.map_values(|value| value.to_context_value())))
+        .collect();
     true
 }

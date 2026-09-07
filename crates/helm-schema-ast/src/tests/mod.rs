@@ -88,11 +88,11 @@ fn define_index_tracks_file_sources_deterministically() {
     idx.add_file_source("templates/a.yaml", "kind: Service\n");
 
     sim_assert_eq!(
-        have: idx.get_file("templates/z.yaml"),
+        have: idx.get_file("templates/z.yaml", crate::DefineSourceRole::Template),
         want: Some("kind: ConfigMap\n")
     );
     sim_assert_eq!(
-        have: idx.file_sources().map(|(path, _)| path).collect::<Vec<_>>(),
+        have: idx.file_sources().map(|(path, _, _)| path).collect::<Vec<_>>(),
         want: vec!["templates/a.yaml", "templates/z.yaml"]
     );
 }

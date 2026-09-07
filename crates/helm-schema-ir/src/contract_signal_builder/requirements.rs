@@ -576,8 +576,8 @@ pub(super) fn record_fail_conjunction(
             member_tests
                 .iter()
                 .map(|predicate| {
-                    requirements_from_negation(predicate, at)
-                        .filter(|required| !required.is_empty())
+                    let required = requirements_from_negation(predicate, at)?;
+                    (!required.is_empty()).then_some(required)
                 })
                 .collect::<Option<Vec<_>>>()
         };
@@ -1527,19 +1527,18 @@ pub(super) fn record_absence_abort_clause(
             // the clause fire outside the states the consumer runs in.
             return;
         };
-        // Any enclosing guard that talks about the OPERAND ITSELF may
-        // already exclude absence, and the clause cannot tell: a
-        // self-truthiness gate (`with .Values.x`, `if .Values.x`, `hasKey`)
-        // excludes it outright, while a DISJUNCTIVE selection that mentions
-        // the operand in one alternative excludes it only together with the
-        // sibling conjuncts that kill the other alternatives
-        // (cluster-autoscaler's `or $isAzure (and $isAws
-        // $awsCredentialsProvided) $isCivo` around the aws `b64enc` arm).
-        // Both cases abstain.
+        // A positive self-truthiness gate excludes absence, while a negative
+        // self-truthiness selection includes it and is redundant beside the
+        // explicit absence guard.
+        // More complex self-references still abstain because their behavior
+        // under absence is not encoded by this clause builder.
         if guard
             .value_paths()
             .contains(&helm_schema_core::ValuesPath::parse(path))
         {
+            if predicate_holds_when_path_is_absent(predicate, path) {
+                continue;
+            }
             return;
         }
         clause.push(guard);
@@ -1550,6 +1549,65 @@ pub(super) fn record_absence_abort_clause(
     ConditionalGuard::canonicalize_conjunction(&mut clause);
     if !terminal_clauses.contains(&clause) {
         terminal_clauses.push(clause);
+    }
+}
+
+fn predicate_holds_when_path_is_absent(predicate: &Predicate, path: &str) -> bool {
+    let target = helm_schema_core::ValuesPath::parse(path);
+    predicate_truth_when_path_is_absent(predicate, &target) == Some(true)
+}
+
+fn predicate_truth_when_path_is_absent(
+    predicate: &Predicate,
+    target: &helm_schema_core::ValuesPath,
+) -> Option<bool> {
+    match predicate.kind() {
+        helm_schema_core::PredicateKind::True => Some(true),
+        helm_schema_core::PredicateKind::False => Some(false),
+        helm_schema_core::PredicateKind::Guard(Guard::Not { path } | Guard::Absent { path })
+            if path == target =>
+        {
+            Some(true)
+        }
+        helm_schema_core::PredicateKind::Guard(Guard::Truthy { path } | Guard::With { path })
+            if path == target =>
+        {
+            Some(false)
+        }
+        helm_schema_core::PredicateKind::Not(inner) => {
+            predicate_truth_when_path_is_absent(inner, target).map(|value| !value)
+        }
+        helm_schema_core::PredicateKind::And(predicates) => {
+            let mut unknown = false;
+            for predicate in predicates {
+                match predicate_truth_when_path_is_absent(predicate, target) {
+                    Some(false) => return Some(false),
+                    Some(true) => {}
+                    None => unknown = true,
+                }
+            }
+            (!unknown).then_some(true)
+        }
+        helm_schema_core::PredicateKind::Or(predicates) => {
+            let mut unknown = false;
+            for predicate in predicates {
+                match predicate_truth_when_path_is_absent(predicate, target) {
+                    Some(true) => return Some(true),
+                    Some(false) => {}
+                    None => unknown = true,
+                }
+            }
+            (!unknown).then_some(false)
+        }
+        helm_schema_core::PredicateKind::Approximate {
+            sound_subset: Some(sound_subset),
+            ..
+        } => (predicate_truth_when_path_is_absent(sound_subset, target) == Some(true))
+            .then_some(true),
+        helm_schema_core::PredicateKind::Guard(_)
+        | helm_schema_core::PredicateKind::Approximate {
+            sound_subset: None, ..
+        } => None,
     }
 }
 

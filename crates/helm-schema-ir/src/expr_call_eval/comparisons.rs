@@ -5,12 +5,16 @@ use helm_schema_core::{Guard, GuardValue, Predicate, PredicateMemo};
 
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{
-    Effects, EvalResult, SelectionPolarity, SelectionReachability, SelectionTruthSource,
+    Effects, EvalResult, ProvenOperand, ProvenOperands, SelectionPolarity, SelectionReachability,
+    SelectionTruthSource,
 };
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::function_semantics::{ArgumentEvaluationMode, function_semantics, type_is_schema_type};
-use crate::scalar_value::{ScalarValueDispatch, TruthCondition, bool_predicate};
+use crate::scalar_value::{
+    ScalarValue, ScalarValueDispatch, TruthCondition, any_predicates_with_memo, bool_predicate,
+    conjoin_predicates_with_memo,
+};
 
 use super::collections::direct_raw_identity_path;
 use super::strict_operands::{record_comparable_kind_result, record_strict_kind_result};
@@ -71,6 +75,8 @@ pub(super) fn eval_ternary(
     // ternary's output slot.
     let mut values = Vec::new();
     let mut scalar_dispatches = Vec::new();
+    let mut proven_operands = Vec::new();
+    let exact_selector = condition_truth.predicate().is_some();
     for (index, arg) in args.iter().enumerate() {
         if !has_piped_condition && index == 2 {
             continue;
@@ -97,6 +103,17 @@ pub(super) fn eval_ternary(
                     .map(helm_schema_core::ValuesPath::encode)
                     .collect(),
             );
+            if exact_selector {
+                proven_operands.push(ProvenOperand {
+                    condition: if index == 0 {
+                        condition_truth.when_true()
+                    } else {
+                        condition_truth.when_false_with_memo(env.predicate_memo.as_ref())
+                    },
+                    evaluation_mode: ArgumentEvaluationMode::Evaluated,
+                    result: Box::new(result.clone()),
+                });
+            }
         }
         effects.merge(result.effects);
         if index < 2 {
@@ -107,7 +124,11 @@ pub(super) fn eval_ternary(
         }
     }
     effects.promote_tested_type_hints();
-    let result = EvalResult::with_effects(AbstractValue::choice(values), effects);
+    let mut result = EvalResult::with_effects(AbstractValue::choice(values), effects);
+    result.proven_operands = Some(ProvenOperands {
+        known: proven_operands,
+        has_unresolved: !exact_selector,
+    });
     if let [Some(when_true), Some(when_false)] = scalar_dispatches.as_slice()
         && let Some(dispatch) = ScalarValueDispatch::select_ternary_with_memo(
             &condition_truth,
@@ -136,16 +157,14 @@ pub(super) fn eval_type_is(
         let result = eval_expr_with_helper_calls(arg, env, resolver);
         if index == 1 {
             subject_paths = identity_value_paths(result.value.as_ref());
-            if function == "kindIs"
-                && type_name == Some("invalid")
-                && let Some(path) = result.exact_input_identity()
-            {
-                truth = TruthCondition::exact_with_memo(
-                    Predicate::invalid_kind_path(path),
+            if let Some(type_name) = type_name {
+                truth = selected_type_test_truth(
+                    &result,
+                    function,
+                    type_name,
+                    schema_type.as_deref(),
                     env.predicate_memo.as_ref(),
                 );
-            } else if let (Some(schema_type), Some(type_name)) = (&schema_type, type_name) {
-                truth = type_is_truth(&result, schema_type, type_name, env.predicate_memo.as_ref());
             }
         }
         effects.merge(result.effects);
@@ -185,21 +204,63 @@ fn literal_type_name(expr: &TemplateExpr) -> Option<&str> {
     Some(value)
 }
 
-fn type_is_truth(
+/// Evaluates one type test without separating a selected value from its decision.
+///
+/// Proven leaves contribute independent true and false subsets under their own selection.
+/// An unresolved remainder keeps both subsets partial instead of becoming a complement.
+pub(crate) fn selected_type_test_truth(
     result: &EvalResult,
-    schema_type: &str,
+    function: &str,
     type_name: &str,
+    schema_type: Option<&str>,
     memo: &PredicateMemo,
 ) -> TruthCondition {
-    if let Some(value) = result
-        .scalar_dispatch
-        .as_ref()
-        .and_then(ScalarValueDispatch::constant_value)
+    if let Some(proven) = &result.proven_operands
+        && (proven.has_unresolved
+            || proven.known.len() != 1
+            || proven.known[0].condition != Predicate::True)
     {
-        return TruthCondition::exact_with_memo(
-            bool_predicate(guard_value_schema_type(&value) == schema_type),
+        let mut when_true = Vec::new();
+        let mut when_false = Vec::new();
+        let mut complete = !proven.has_unresolved;
+        for operand in &proven.known {
+            let leaf_truth =
+                selected_type_test_truth(&operand.result, function, type_name, schema_type, memo);
+            complete &= leaf_truth.predicate().is_some();
+            if let Some(condition) = conjoin_predicates_with_memo(
+                operand.condition.clone(),
+                leaf_truth.when_true(),
+                memo,
+            ) {
+                when_true.push(condition);
+            }
+            if let Some(condition) = conjoin_predicates_with_memo(
+                operand.condition.clone(),
+                leaf_truth.when_false_with_memo(memo),
+                memo,
+            ) {
+                when_false.push(condition);
+            }
+        }
+        return TruthCondition::from_subsets_with_memo(
+            any_predicates_with_memo(when_true, memo),
+            any_predicates_with_memo(when_false, memo),
+            complete,
             memo,
         );
+    }
+    if function == "kindIs" && type_name == "invalid" {
+        return result
+            .exact_input_identity()
+            .map_or(TruthCondition::Unknown, |path| {
+                TruthCondition::exact_with_memo(Predicate::invalid_kind_path(path), memo)
+            });
+    }
+    let Some(schema_type) = schema_type else {
+        return TruthCondition::Unknown;
+    };
+    if let Some(dispatch) = &result.scalar_dispatch {
+        return scalar_dispatch_type_is(dispatch, schema_type, type_name, memo);
     }
     result
         .value
@@ -207,6 +268,81 @@ fn type_is_truth(
         .map_or(TruthCondition::Unknown, |value| {
             abstract_value_type_is(value, schema_type, type_name, memo)
         })
+}
+
+fn scalar_dispatch_type_is(
+    dispatch: &ScalarValueDispatch,
+    schema_type: &str,
+    type_name: &str,
+    memo: &PredicateMemo,
+) -> TruthCondition {
+    let mut when_true = Vec::new();
+    let mut when_false = Vec::new();
+    let mut complete = dispatch.complete;
+    for (condition, value) in &dispatch.arms {
+        let value_truth = scalar_value_type_is(value, schema_type, type_name, memo);
+        complete &= value_truth.predicate().is_some();
+        if let Some(predicate) =
+            conjoin_predicates_with_memo(condition.clone(), value_truth.when_true(), memo)
+        {
+            when_true.push(predicate);
+        }
+        if let Some(predicate) = conjoin_predicates_with_memo(
+            condition.clone(),
+            value_truth.when_false_with_memo(memo),
+            memo,
+        ) {
+            when_false.push(predicate);
+        }
+    }
+    TruthCondition::from_subsets_with_memo(
+        any_predicates_with_memo(when_true, memo),
+        any_predicates_with_memo(when_false, memo),
+        complete,
+        memo,
+    )
+}
+
+fn scalar_value_type_is(
+    value: &ScalarValue,
+    schema_type: &str,
+    type_name: &str,
+    memo: &PredicateMemo,
+) -> TruthCondition {
+    match value {
+        ScalarValue::Literal(value) => TruthCondition::exact_with_memo(
+            bool_predicate(guard_value_schema_type(value) == schema_type),
+            memo,
+        ),
+        ScalarValue::Identity(path) => input_identity_type_is(path, schema_type, type_name, memo),
+        ScalarValue::Rendered(_) | ScalarValue::PrintfStringIdentity(_) => {
+            TruthCondition::exact_with_memo(bool_predicate(schema_type == "string"), memo)
+        }
+        ScalarValue::SplitLength { .. } => {
+            TruthCondition::exact_with_memo(bool_predicate(schema_type == "integer"), memo)
+        }
+    }
+}
+
+fn input_identity_type_is(
+    path: &helm_schema_core::ValuesPath,
+    schema_type: &str,
+    type_name: &str,
+    memo: &PredicateMemo,
+) -> TruthCondition {
+    if path.segments().len() == 0 {
+        TruthCondition::exact_with_memo(bool_predicate(schema_type == "object"), memo)
+    } else if matches!(type_name, "int64" | "float64") {
+        values_numeric_type_truth(&path.encode(), type_name, memo)
+    } else {
+        TruthCondition::exact_with_memo(
+            Predicate::from(Guard::TypeIs {
+                path: path.clone(),
+                schema_type: schema_type.to_string(),
+            }),
+            memo,
+        )
+    }
 }
 
 fn abstract_value_type_is(
@@ -217,32 +353,10 @@ fn abstract_value_type_is(
 ) -> TruthCondition {
     match value {
         AbstractValue::ValuesPath(path) => {
-            if path.segments().len() == 0 {
-                TruthCondition::exact_with_memo(bool_predicate(schema_type == "object"), memo)
-            } else if matches!(type_name, "int64" | "float64") {
-                values_numeric_type_truth(&path.encode(), type_name, memo)
-            } else {
-                TruthCondition::exact_with_memo(
-                    Predicate::from(Guard::TypeIs {
-                        path: path.clone(),
-                        schema_type: schema_type.to_string(),
-                    }),
-                    memo,
-                )
-            }
+            input_identity_type_is(path, schema_type, type_name, memo)
         }
         AbstractValue::OutputPath(path, meta) if meta.is_input_identity() => {
-            if matches!(type_name, "int64" | "float64") {
-                values_numeric_type_truth(&path.encode(), type_name, memo)
-            } else {
-                TruthCondition::exact_with_memo(
-                    Predicate::from(Guard::TypeIs {
-                        path: path.clone(),
-                        schema_type: schema_type.to_string(),
-                    }),
-                    memo,
-                )
-            }
+            input_identity_type_is(path, schema_type, type_name, memo)
         }
         AbstractValue::JsonDecodedPath(path) => {
             json_decoded_numeric_type_truth(&path.encode(), schema_type, type_name, memo)
@@ -269,13 +383,78 @@ fn abstract_value_type_is(
             type_is_for_alternatives(choices.iter(), schema_type, type_name, memo)
         }
         AbstractValue::FirstTruthy(candidates) => {
-            type_is_for_alternatives(candidates.iter(), schema_type, type_name, memo)
+            type_is_for_first_truthy(candidates, schema_type, type_name, memo)
         }
         AbstractValue::Top
         | AbstractValue::Unknown
         | AbstractValue::RangeKey(_)
         | AbstractValue::OutputPath(_, _)
         | AbstractValue::Widened(_) => TruthCondition::Unknown,
+    }
+}
+
+fn type_is_for_first_truthy(
+    candidates: &[AbstractValue],
+    schema_type: &str,
+    type_name: &str,
+    memo: &PredicateMemo,
+) -> TruthCondition {
+    let mut remaining = Predicate::True;
+    let mut when_true = Vec::new();
+    let mut when_false = Vec::new();
+    let mut complete = !candidates.is_empty();
+    for (index, candidate) in candidates.iter().enumerate() {
+        if remaining == Predicate::False {
+            break;
+        }
+        let selected = if index + 1 == candidates.len() {
+            Some(remaining.clone())
+        } else {
+            let candidate_truth = abstract_value_truth(candidate, memo);
+            complete &= candidate_truth.predicate().is_some();
+            let selected =
+                conjoin_predicates_with_memo(remaining.clone(), candidate_truth.when_true(), memo);
+            remaining = conjoin_predicates_with_memo(
+                remaining,
+                candidate_truth.when_false_with_memo(memo),
+                memo,
+            )
+            .unwrap_or(Predicate::False);
+            selected
+        };
+        let Some(selected) = selected else {
+            continue;
+        };
+        let value_truth = abstract_value_type_is(candidate, schema_type, type_name, memo);
+        complete &= value_truth.predicate().is_some();
+        if let Some(predicate) =
+            conjoin_predicates_with_memo(selected.clone(), value_truth.when_true(), memo)
+        {
+            when_true.push(predicate);
+        }
+        if let Some(predicate) =
+            conjoin_predicates_with_memo(selected, value_truth.when_false_with_memo(memo), memo)
+        {
+            when_false.push(predicate);
+        }
+    }
+    TruthCondition::from_subsets_with_memo(
+        any_predicates_with_memo(when_true, memo),
+        any_predicates_with_memo(when_false, memo),
+        complete,
+        memo,
+    )
+}
+
+fn abstract_value_truth(value: &AbstractValue, memo: &PredicateMemo) -> TruthCondition {
+    if let Some(truthy) = value.static_truthiness() {
+        return TruthCondition::exact_with_memo(bool_predicate(truthy), memo);
+    }
+    match value {
+        AbstractValue::ValuesPath(path) | AbstractValue::JsonDecodedPath(path) => {
+            TruthCondition::exact_with_memo(Predicate::truthy_path(path.encode()), memo)
+        }
+        _ => TruthCondition::Unknown,
     }
 }
 

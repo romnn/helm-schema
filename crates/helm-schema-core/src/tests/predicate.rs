@@ -1,5 +1,6 @@
 use super::{Conjunction, Predicate};
 use crate::{Guard, GuardValue, ValuesPath};
+use std::cmp::Ordering;
 use std::hash::{DefaultHasher, Hash, Hasher};
 use test_util::prelude::sim_assert_eq;
 
@@ -18,6 +19,23 @@ fn recursive_contains_approximation(predicate: &Predicate) -> bool {
         | super::PredicateKind::False
         | super::PredicateKind::Guard(_) => false,
     }
+}
+
+#[test]
+fn ordering_equal_shared_predicate_dag_does_not_unfold_it() {
+    let mut predicate = Predicate::truthy_path("leaf");
+    for depth in 0..30 {
+        predicate = if depth % 2 == 0 {
+            Predicate::And(vec![predicate.clone(), predicate.clone()])
+        } else {
+            Predicate::Or(vec![predicate.clone(), predicate.clone()])
+        };
+    }
+
+    sim_assert_eq!(
+        have: predicate.cmp(&predicate.clone()),
+        want: Ordering::Equal
+    );
 }
 
 fn predicate_hash(predicate: &Predicate) -> u64 {

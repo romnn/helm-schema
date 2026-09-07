@@ -2,7 +2,7 @@ use super::{
     BTreeMap, BTreeSet, ConditionalGuard, ConditionalPathOverlay, EmissionClass, EmissionReport,
     GuardValue, LoweredConjunct, NestedGuardScope, PathSchemaResolver, ResolvedPathSchema,
     SchemaDocument, SchemaNode, Value, YamlValue, build_condition_clauses, common_prefix_len,
-    evaluate_guard_set_on_values, guard_encodes_fully,
+    guard_encodes_fully,
 };
 use helm_schema_core::ValuesPath;
 
@@ -295,11 +295,11 @@ pub(crate) fn append_terminal_clauses(
             condition,
             SchemaNode::foreign(Value::Bool(false)),
         );
-        // `deeper_stage` is the effective subtree when the document supplies
-        // no ancestor. A definitively false original formula makes the
-        // missing-ancestor companion unreachable; uncertainty stays open.
+        // A false formula on the runtime fallback hints makes the missing-ancestor
+        // companion unreachable under the existing approximation.
+        // Uncertainty stays open.
         if split_vacuous_ancestor
-            && evaluate_guard_set_on_values(guards, absence.deeper_stage) != Some(false)
+            && absence.runtime_defaults.evaluate_guard_hints(guards) != Some(false)
         {
             let path = ValuesPath::from_segments(
                 ancestor_segments

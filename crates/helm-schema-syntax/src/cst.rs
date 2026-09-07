@@ -43,7 +43,7 @@ impl<'src> TemplatedDocument<'src> {
     /// same source (avoids a second tree-sitter pass).
     #[must_use]
     pub fn parse_with_root(source: &'src str, root: tree_sitter::Node<'_>) -> Self {
-        let tokens = crate::actions::collect_action_tokens(root);
+        let tokens = crate::actions::collect_action_tokens(root, source);
         crate::parse::parse_document(source, tokens)
     }
 
@@ -121,9 +121,10 @@ pub struct MappingEntry {
     pub value: Option<ScalarParts>,
     /// Block-scalar header and suppressed body, for `key: |`-style entries.
     pub block: Option<BlockScalar>,
-    /// Whether the entry opened a container scope (empty, template, or
-    /// block-scalar value with a plain key). Closed or invalid-key entries
-    /// never adopt children.
+    /// Whether the entry opened a container scope.
+    ///
+    /// Empty action-line keys are structural entries.
+    /// Templated keys embedded in ordinary YAML text remain closed.
     pub opens_scope: bool,
     /// Nodes structurally nested below the mapping entry.
     pub children: Vec<Node>,

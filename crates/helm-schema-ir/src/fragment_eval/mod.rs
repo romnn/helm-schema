@@ -10,12 +10,12 @@
 //! projection inside expressions.
 
 mod assignments;
+mod capture_scope;
 mod control;
 mod domain;
 #[cfg(test)]
 mod dump;
 mod eval;
-mod files;
 mod hole_effects;
 mod holes;
 mod inline_regions;

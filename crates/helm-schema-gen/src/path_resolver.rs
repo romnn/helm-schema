@@ -57,7 +57,7 @@ impl IndependentBaseContract {
 pub(crate) struct PathSchemaResolver<'a> {
     schema_evidence_by_value_path: &'a BTreeMap<ValuesPath, ContractPathSchemaEvidence>,
     values_yaml_info: BTreeMap<ValuesPath, ValuesYamlPathInfo>,
-    dependency_default_paths: BTreeSet<ValuesPath>,
+    runtime_default_paths: BTreeSet<ValuesPath>,
     provider_resolutions: &'a ProviderSchemaResolutions,
 }
 
@@ -65,7 +65,7 @@ impl<'a> PathSchemaResolver<'a> {
     pub(crate) fn new(
         contract_signals: &'a ContractSchemaSignals,
         values_yaml_doc: &YamlValue,
-        dependency_values_yaml_doc: &YamlValue,
+        runtime_defaults: &crate::condition_encoding::RuntimeDefaultHints,
         provider_resolutions: &'a ProviderSchemaResolutions,
     ) -> Self {
         let values_yaml_info = build_values_yaml_path_info(
@@ -78,13 +78,10 @@ impl<'a> PathSchemaResolver<'a> {
         Self {
             schema_evidence_by_value_path: contract_signals.schema_evidence_by_value_path(),
             values_yaml_info,
-            dependency_default_paths: contract_signals
+            runtime_default_paths: contract_signals
                 .referenced_value_paths()
                 .iter()
-                .filter(|path| {
-                    crate::values_yaml::yaml_value_at_values_path(dependency_values_yaml_doc, path)
-                        .is_some()
-                })
+                .filter(|path| runtime_defaults.contains_path(path))
                 .cloned()
                 .collect(),
             provider_resolutions,
@@ -106,7 +103,7 @@ impl<'a> PathSchemaResolver<'a> {
         let Self {
             schema_evidence_by_value_path,
             values_yaml_info,
-            dependency_default_paths,
+            runtime_default_paths,
             provider_resolutions,
         } = self;
         schema_evidence_by_value_path
@@ -119,7 +116,7 @@ impl<'a> PathSchemaResolver<'a> {
                     value_path,
                     evidence,
                     values_yaml_info.get(value_path),
-                    dependency_default_paths.contains(value_path),
+                    runtime_default_paths.contains(value_path),
                     provider_resolutions,
                 )
             })
@@ -131,7 +128,7 @@ fn resolve_path_evidence(
     value_path: &ValuesPath,
     evidence: &ContractPathSchemaEvidence,
     values_yaml_info: Option<&ValuesYamlPathInfo>,
-    has_dependency_default: bool,
+    has_runtime_default: bool,
     provider_resolutions: &ProviderSchemaResolutions,
 ) -> ResolvedPathSchema {
     let path_segments = value_path
@@ -146,7 +143,7 @@ fn resolve_path_evidence(
         value_path,
         evidence,
         values_yaml_info,
-        has_dependency_default,
+        has_runtime_default,
         provider_resolutions,
     );
     let (structural_policy_inputs, _) =
@@ -255,7 +252,7 @@ fn build_path_schema_inputs(
     value_path: &ValuesPath,
     evidence: &ContractPathSchemaEvidence,
     values_yaml_info: Option<&ValuesYamlPathInfo>,
-    has_dependency_default: bool,
+    has_runtime_default: bool,
     provider_resolutions: &ProviderSchemaResolutions,
 ) -> (ValuePathSchemaInputs, Option<ProviderSchemaCandidate>) {
     let provider_schemas = provider_schemas_for_path_evidence(evidence, provider_resolutions);
@@ -267,7 +264,7 @@ fn build_path_schema_inputs(
         ValuesYamlPathFacts::absent,
         super::values_yaml::ValuesYamlPathInfo::facts,
     );
-    values_yaml_facts.has_dependency_default = has_dependency_default;
+    values_yaml_facts.has_runtime_default = has_runtime_default;
     let facts = ValuePathSchemaFacts::new(evidence.facts, values_yaml_facts);
     let values_yaml_schema = values_yaml_info
         .map(|path_info| path_info.schema.clone())

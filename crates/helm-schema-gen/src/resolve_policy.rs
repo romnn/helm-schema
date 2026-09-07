@@ -502,11 +502,9 @@ impl ResolvePolicy {
             && facts.contract.has_render_use
             && facts.contract.all_render_uses_self_guarded.holds()
             && is_object_or_array_schema(&merged);
-        // A parent-level null removes a dependency-owned override before
-        // the subchart coalesces its own default back in. That spelling is
-        // therefore safe when no unconditional parent consumer observes the
-        // transient deletion.
-        let dependency_default_tolerates_null = facts.values_yaml.has_dependency_default
+        // Runtime fallback hints retain permissive null handling where no
+        // unconditional consumer observes the input directly.
+        let runtime_default_tolerates_null = facts.values_yaml.has_runtime_default
             && !facts.contract.accepted_dependency_values_root_fragment
             && !facts.contract.has_unconditional_render_use;
         let nullable_scalar_without_strict_raw_consumer = is_scalar_like_schema(&merged)
@@ -515,7 +513,7 @@ impl ResolvePolicy {
         let resolved = if (preserve_explicit_null_default
             || nullable_scalar_without_strict_raw_consumer
             || self_guarded_structure_tolerates_null
-            || dependency_default_tolerates_null)
+            || runtime_default_tolerates_null)
             && !is_empty_schema(&merged)
         {
             add_null_schema(merged)

@@ -1711,11 +1711,9 @@ fn live_guarded_unset_provider_source_preserves_chart_default() {
     );
 }
 
-/// A dependency-owned default is restored by Helm's subchart coalescing even
-/// when the parent document omits the leaf. It must therefore not become a
-/// parent-level presence requirement.
+/// A deleted dependency provider source remains missing after coalescing.
 #[test]
-fn dependency_default_suppresses_parent_provider_source_presence() {
+fn dependency_default_does_not_suppress_provider_source_presence() {
     let source = indoc! {r"
         apiVersion: v1
         kind: Service
@@ -1730,21 +1728,22 @@ fn dependency_default_suppresses_parent_provider_source_presence() {
         child:
           port: 80
     "};
-    let schema =
-        schema_for_dependency_values_yaml(parse_ir(source), values_yaml, values_yaml, values_yaml);
+    let schema = schema_for_dependency_values_yaml(parse_ir(source), values_yaml, values_yaml);
     let instance = serde_json::json!({ "child": {} });
 
+    sim_assert_eq!(
+        have: &schema,
+        want: &schema_for_values_yaml(parse_ir(source), Some(values_yaml))
+    );
     assert!(
-        schema_accepts_instance(&schema, &instance),
-        "the dependency refills its provider source before rendering: schema={schema}"
+        !schema_accepts_instance(&schema, &instance),
+        "missing input renders a provider-invalid null: schema={schema}"
     );
 }
 
-/// Layered maps refill leaves only for the dependency's named entries. A
-/// parent may omit `containerPort` from an overridden built-in port, while a
-/// newly added enabled port still renders null without that leaf.
+/// Missing ranged provider sources render null for declared and new members alike.
 #[test]
-fn dependency_defaults_refill_named_ranged_provider_sources() {
+fn dependency_defaults_do_not_refill_named_ranged_provider_sources() {
     let source = indoc! {r"
         apiVersion: apps/v1
         kind: Deployment
@@ -1777,17 +1776,11 @@ fn dependency_defaults_refill_named_ranged_provider_sources() {
               enabled: true
               containerPort: 4317
     "};
-    let deeper_stage_values = indoc! {"
-        child:
-          ports:
-            otlp:
-              containerPort: 4317
-    "};
-    let schema = schema_for_dependency_values_yaml(
-        parse_ir(source),
-        composed_values,
-        deeper_stage_values,
-        composed_values,
+    let schema =
+        schema_for_dependency_values_yaml(parse_ir(source), composed_values, composed_values);
+    sim_assert_eq!(
+        have: &schema,
+        want: &schema_for_values_yaml(parse_ir(source), Some(composed_values))
     );
 
     for (instance, want, label) in [
@@ -1795,8 +1788,8 @@ fn dependency_defaults_refill_named_ranged_provider_sources() {
             serde_json::json!({ "child": { "ports": {
                 "otlp": { "enabled": true },
             } } }),
-            true,
-            "the dependency refills its named port",
+            false,
+            "a deleted declared port remains missing after coalescing",
         ),
         (
             serde_json::json!({ "child": { "ports": {
@@ -2777,7 +2770,7 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() -> eyre::Result<()>
     let resolved = crate::path_resolver::PathSchemaResolver::new(
         &schema_signals,
         &values_yaml,
-        &serde_yaml::Value::Null,
+        &crate::condition_encoding::RuntimeDefaultHints::default(),
         &provider_resolutions,
     )
     .resolve_all();
@@ -2905,7 +2898,7 @@ fn zalando_extra_envs_keeps_podspec_envvar_shape() -> eyre::Result<()> {
     let resolved = crate::path_resolver::PathSchemaResolver::new(
         &schema_signals,
         &values_yaml,
-        &serde_yaml::Value::Null,
+        &crate::condition_encoding::RuntimeDefaultHints::default(),
         &provider_resolutions,
     )
     .resolve_all();
@@ -4358,6 +4351,217 @@ fn branch_selected_sequence_items_keep_their_item_slot() -> eyre::Result<()> {
             "{label}: the item slot must reach ResourceRequirements typing"
         );
     }
+    Ok(())
+}
+
+/// An absent later item shell falls back to the earlier rendered sibling item.
+#[test]
+fn adjacent_conditional_sequence_items_keep_their_item_slot() -> eyre::Result<()> {
+    let src = indoc! {r"
+        apiVersion: apps/v1
+        kind: Deployment
+        metadata:
+          name: test
+        spec:
+          template:
+            spec:
+              containers:
+              {{ if .Values.a }}
+              - name: first
+              {{ else }}
+              - name: fallback
+              {{ end }}
+              {{ if .Values.b }}
+              - name: second
+              {{ end }}
+                resources:
+                  {{- toYaml .Values.resources | nindent 8 }}
+    "};
+
+    let signals = schema_signals_for(parse_ir(src));
+    let evidence = signals
+        .evidence_for(&helm_schema_core::ValuesPath::parse("resources"))
+        .ok_or_eyre("resolved `resources` evidence")?;
+    let slots: Vec<Vec<String>> = evidence
+        .provider_schema_uses
+        .iter()
+        .map(|use_| use_.path.0.clone())
+        .collect();
+    sim_assert_eq!(
+        have: slots,
+        want: vec![vec![
+            "spec".to_string(),
+            "template".to_string(),
+            "spec".to_string(),
+            "containers[*]".to_string(),
+            "resources".to_string(),
+        ]]
+    );
+    Ok(())
+}
+
+/// A nested fragment control does not adopt the preceding conditional item.
+#[test]
+fn nested_fragment_control_keeps_the_containers_provider_slot() {
+    let src = indoc! {r"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+          - name: main
+            image: busybox
+        {{- if .Values.sidecar }}
+          - name: sidecar
+            image: busybox
+        {{- else }}
+          - name: fallback
+            image: busybox
+          {{- if .Values.extraContainers }}
+            {{- tpl (toYaml .Values.extraContainers) . | nindent 2 }}
+          {{- end }}
+        {{- end -}}
+    "};
+    let values_yaml = indoc! {"
+        sidecar: false
+        extraContainers: []
+    "};
+    let signals = schema_signals_for(parse_ir(src));
+    let schema = generate_values_schema(
+        ValuesSchemaInput::new(&signals, &SharedObjectProvider)
+            .with_values_documents(&prepared_values_documents(Some(values_yaml))),
+    );
+
+    sim_assert_eq!(
+        have: schema.clone(),
+        want: serde_json::json!({
+            "$defs": {
+                "t": {
+                    "anyOf": [
+                        { "const": true },
+                        { "not": { "const": 0 }, "type": "number" },
+                        { "minLength": 1, "type": "string" },
+                        { "minItems": 1, "type": "array" },
+                        { "minProperties": 1, "type": "object" },
+                    ],
+                },
+            },
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "allOf": [{
+                "if": {
+                    "not": {
+                        "properties": {
+                            "sidecar": { "$ref": "#/$defs/t" },
+                        },
+                        "required": ["sidecar"],
+                        "type": "object",
+                    },
+                },
+                "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                        "extraContainers": {
+                            "anyOf": [
+                                {
+                                    "items": {
+                                        "additionalProperties": false,
+                                        "properties": {
+                                            "name": {
+                                                "anyOf": [
+                                                    { "pattern": "\\{\\{", "type": "string" },
+                                                    { "type": "string" },
+                                                ],
+                                            },
+                                        },
+                                        "type": "object",
+                                    },
+                                    "type": "array",
+                                },
+                                { "not": { "$ref": "#/$defs/t" } },
+                            ],
+                        },
+                    },
+                },
+            }],
+            "properties": {
+                "extraContainers": {},
+                "sidecar": {},
+            },
+            "type": "object",
+        }),
+        "the nested fragment keeps its provider contract outside the preceding item"
+    );
+    for (instance, want) in [
+        (
+            serde_json::json!({ "sidecar": false, "extraContainers": true }),
+            false,
+        ),
+        (
+            serde_json::json!({
+                "sidecar": false,
+                "extraContainers": [{ "name": "extra" }],
+            }),
+            true,
+        ),
+        (
+            serde_json::json!({ "sidecar": true, "extraContainers": true }),
+            true,
+        ),
+    ] {
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: want,
+            "instance={instance}; schema={schema}",
+        );
+    }
+}
+
+/// A later arm attaches main-container environment evidence to the earlier live item.
+#[test]
+fn later_arm_main_env_keeps_the_container_item_provider_slot() -> eyre::Result<()> {
+    let src = indoc! {r"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: test
+        spec:
+          containers:
+          - name: first
+          {{ if .Values.sidecar }}
+          - name: sidecar
+          {{ else if .Values.extraMainEnv }}
+            env:
+              - name: {{ .Values.mainEnvName }}
+          {{ end }}
+    "};
+
+    let signals = schema_signals_for(parse_ir(src));
+    let evidence = signals
+        .schema_evidence_by_value_path()
+        .get(&helm_schema_core::ValuesPath::parse("mainEnvName"))
+        .ok_or_eyre("resolved `mainEnvName` evidence")?;
+    let slots: BTreeSet<Vec<String>> = evidence
+        .provider_schema_uses
+        .iter()
+        .chain(
+            evidence
+                .conditional_overlays
+                .iter()
+                .flat_map(|overlay| &overlay.evidence.provider_schema_uses),
+        )
+        .map(|use_| use_.path.0.clone())
+        .collect();
+    let want = [vec![
+        "spec".to_string(),
+        "containers[*]".to_string(),
+        "env[*]".to_string(),
+        "name".to_string(),
+    ]]
+    .into_iter()
+    .collect();
+    sim_assert_eq!(have: slots, want: want);
     Ok(())
 }
 
