@@ -2973,3 +2973,15 @@ candidate-accepts/Helm-aborts cells must reach zero before A3's adjudication cou
 4. Treat the suite-speed reductions as a developer-experience signal, not a benchmark oracle.
    Criterion distributions and periodic same-host chart runs should decide regressions; full suites
    remain correctness gates.
+
+### A3 adjudication handoff closure — 2026-09-08
+
+The performance campaign's open A3 acceptance obligation is closed by schema-bug-hunt round 3.
+The corrected battery used an explicit clean candidate dump and live Helm v4.2.3 adjudication:
+715 flips, 197 matched Helm aborts, 509 matched pinned-Kubernetes rejections, nine matched
+unchanged unknown CRD documents, zero unresolved loosenings, zero candidate-accepts/Helm-aborts,
+and zero candidate-accepts/Kubernetes rejects. Evidence is
+`/private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round3-f77-evidence/differential-final-coverage.json`.
+F77 landed in `3db4fc44` with fixtures in `d171962e`; broader F78 work remains a correctness-
+campaign concern, but it no longer leaves the performance campaign's measured A3 false-acceptance
+set open. This append closes only that handoff and does not rewrite the historical scorecard above.

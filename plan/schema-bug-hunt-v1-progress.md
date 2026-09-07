@@ -33,10 +33,10 @@
 - Stable rounds and ledger advances are committed separately. Never push; preserve
   user-owned index state and unrelated work. A deferred family needs a concrete
   structural blocker and witness, and returns in the final sweep.
-- Reviewer routing correction from the user: OpenAI reviews use native Codex
-  subagents with `gpt-6-astra` at `high`; Anthropic reviews use `my-claude` with
-  Fable 5.1 at `xhigh`. This overrides the earlier CLI command and skill roster.
-  Do not launch `codex exec`.
+- Reviewer routing corrections from the user: OpenAI reviews use native Codex
+  subagents, normally `gpt-5.6-sol` at `xhigh`; a narrow design deadlock may use
+  one `gpt-6-astra` subagent. Anthropic reviews use `my-claude` with Fable 5.1
+  at `xhigh` under the latest user instruction. Do not launch `codex exec`.
 - User scheduling override: batch related major compiler fixes for one ensemble
   review and validation cycle; mechanical cleanups do not trigger new ensembles.
   Checkpoint repository changes promptly. The user explicitly requested committing
@@ -46,6 +46,16 @@
   them to improve the score. Separate independently ready work so one unresolved
   mechanism does not hold the entire batch. F74 now has its own isolated validation
   tree; F23/D3 remains active. Do not restart broad reviews for mechanical changes.
+- Performance-floor override from the user on 2026-09-07: correctness bought by a
+  structural fix may land with a measured slowdown in this campaign. Preserve and
+  report exact timings, remove pathological accidental work where practical, and do
+  not weaken a faithful schema merely to recover the old floor. Independent performance
+  optimization can follow after the corrected semantic model is stable.
+- Combined-batch landing override from the user on 2026-09-07: finish and commit the
+  already-started structural changes, adopt their clean fixtures, and record every
+  unmatched battery cell here instead of opening another redesign cycle. These cells
+  remain correctness debt and do not close their families. Do not start another family
+  in this session; run final gates, commit the ledger, then pause.
 
 ## Validation correction inherited from the performance campaign
 
@@ -79,6 +89,10 @@ zero candidate-accepts/Helm-aborts against `8fbcc732`.
   aborts. Both serialize as the same JSON number. Default: record this expressiveness
   limit, investigate the schema-validation boundary, and do not claim transport-independent
   integer rejection from file-based witnesses alone.
+- The combined round-4 battery found both false acceptances and false rejections outside
+  the focused witnesses. Apply the explicit landing override: retain the evidence, keep
+  the affected families open, and make the next campaign round start from those exact
+  cases rather than treating fixture movement as a correctness verdict.
 
 ## Round 0 — harness and baseline
 
@@ -1814,3 +1828,111 @@ Next: reproduce the adjacent/deeper shell, equal-indent sequence and dynamic-key
   fixture adoption, performance floor or final gates are claimed.
 
 Next: finish and land F51's decision owner, then port F78 by moving `Computed`/`Alternatives` into decision leaves and deleting the transient projections; first read `round3-f78.bQ1YHM/f78-groundwork/evaluated-value-ownership-checkpoint.md` beside the final F51 architecture handoff.
+
+### Round 4 landing checkpoint — combined structural semantics batch
+
+- Status: **implementation and fixtures landed; known unmatched battery cells retained
+  as follow-up debt by explicit user policy**. Code and focused regressions entered in
+  `0bed35bb`; clean generated fixtures and roster corrections are `07e087d8`; `a3f30fde`
+  isolates the reviewed candidate from unfinished D3/F23 work, and `43be4af0` deletes six
+  empty remnants from that isolation. Acceptance baseline is `f245c1e9`. No new family
+  was started after the landing decision.
+- Contract: preserve parsed grouping through strict calls; make branch and loop decisions
+  own values and Go evaluation boundaries; retain exact `and`/`or` operands; let an
+  unknown helper assignment widen rather than preserve a stale exact value; keep template
+  execution after inline `define`/`block`; attach escaped rendered nodes to their rendered
+  container; and classify zero-argument `uuidv4` as a structurally nonempty string. The
+  guard fast paths are exact equivalence/absorption rules, not heuristic caps.
+- Regression coverage: every retained mechanism has focused IR or generator coverage.
+  Full-schema equality plus acceptance matrices cover grouped whole arguments, grouped
+  selector receivers, branch/loop exits, direct and helper short-circuit strictness,
+  inline-definition continuation, rendered provider containment, and nonempty opaque
+  reassignment. Catalogue tests require the `uuidv4` semantic row and intentional facet
+  overlap. The final port passed the six focused semantic cases and two catalogue cases;
+  the final main-tree IR/generator suite passed 1,157/1,157.
+- Clean dump: `round4-combined-dump-final.20260907f` contains 198 artifacts from one
+  final candidate build: 156 chart schemas, 20 generator schemas, 18 IR fixtures and
+  four lean schemas. It moved 128 checked-in fixtures: 113 chart, eight generator, six
+  IR and one lean. The chart dump ran all 157 cases and exited 100 only because the fixed
+  `kubeshark` and `schema-registry` defaults correctly stopped satisfying the quarantine
+  failure expectation; both therefore leave `QUARANTINED_FALSE_REJECTIONS` but remain in
+  `UNADJUDICATED_INTAKE`. Final roster sizes are intake 100, quarantine 22 and known
+  values rejections four.
+- Validation deviation: an initial IR dump invoked `extractor_inline_fixtures`, which is
+  not the corpus dump lane, and exited 100 without producing artifacts. It was discarded.
+  The correct `helm-schema-ir --profile integration --test corpus` dump passed. No files
+  from the invalid run entered the adopted batch.
+- Landing correction: the first main integration attempt preserved the existing dirty
+  D3/F23 work beside the reviewed candidate. It exposed broad fixture drift and invalid
+  defaults, reaching 129 passes and 58 failures before cancellation. That was not a
+  landable combined tree. The D3/F23-only files and hunks were removed mechanically until
+  every analyzer source/test file matched the reviewed candidate; an immutable comparison
+  confirmed that no reviewed F17/F51/short-circuit/UUID/performance hunk or committed
+  baseline file was lost. A second integration run was intentionally interrupted after
+  183 passes only because six empty tracked test files still needed deletion. Both runs
+  are invalid final gates and are not reported as passes.
+- Final integration result: the completed integration-profile run executed 711 tests:
+  709 passed and exactly two failed. `chart_reaudit::airflow_worker_set_overrides_bind_strict_member_kinds`
+  accepts a scalar `workers.celery.sets.*.persistence` value that the existing regression
+  requires to reject. `extractor_inline_fixtures::split_path_helper_resolves_key_selected_by_helper`
+  loses the proved `auth.password` and `global.auth.password` default paths. These are
+  concrete follow-up witnesses for the retained F17/F51/shared-ownership work; they are
+  neither fixture mismatches nor waived successes. The run preceded only the semantics-
+  preserving `let...else` lint rewrite in `fd3affa7`; it was not rerun after that commit
+  because the user explicitly directed immediate recording and wrap-up.
+- Live adjudication: Helm v4.2.3 with Kubernetes 1.29.0 screened 2,401 acceptance changes
+  from the explicit candidate dump. One collapsed after exact Helm coalescence; 2,219
+  received a complete verdict: 62 tightenings matched Helm aborts, 50 matched Kubernetes
+  rejection, 1,888 loosenings matched rendered Kubernetes-valid documents, nine loosenings
+  retained unchanged-provider uncertainty, ten had provider uncertainty, 113 loosenings
+  accepted Kubernetes-invalid output, and 87 loosenings accepted inputs Helm aborts.
+  Evidence is `round4-battery-final.20260907f/coverage.json` and its adjacent 2,400
+  `schema-verdicts.json` files.
+- Known false acceptances: the 87 accepted/Helm-abort cells are `schema-registry` 36,
+  `jira` 26, `prometheus` 11, `falco` seven, `postgresql-ha` four, `kyverno` two and
+  `argo-workflows` one. They span F5 input-channel shape, F63 ranged-member document
+  shape, F6 `without` truth transport, F2 dynamic-key `hasKey`, nested range projection,
+  metadata/YAML token serialization and rendered-text preimages related to F13/F80.
+  The report carries every exact path and probe; none is waived or called matched.
+- Known false rejections: 180 tightenings reject a document Helm renders without a proved
+  Kubernetes violation. Counts by chart are `jira` 71, `postgresql-ha` 31, `influxdb`
+  13, `rabbitmq-cluster-operator` 10, `nginx` 10, `vector` nine,
+  `nginx-ingress-controller` nine, `nats` four, `datadog` four, `chartmuseum` four,
+  `postgresql` three, `redis-cluster` two, `clickhouse` two, and one each for `zookeeper`,
+  `redis`, `rabbitmq`, `phpmyadmin`, `mariadb-galera`, `kubernetes-event-exporter`,
+  `fluentd` and `etcd`. One further screened cell failed before schema-verdict evidence
+  serialization. These are future intake for the owning families; adopting the fixture
+  bytes records output, not correctness.
+- Soundness reviews: the combined F17/F51 mechanism review converged after four passes.
+  Final evidence is `round4-batched-review/combined-f17-f51-review4-brief.md`,
+  `sol-architecture-final-out.md` and `claude-combined-f17-f51-review4-out.md`. Review
+  corrections produced the Define/Block continuation, nested-helper protection, rendered
+  containment and binding-decision regressions now in the main suite. The final native
+  architecture audit approved the phase boundary; no additional review was started for
+  fixture adoption.
+- Performance: exact `Predicate::cmp`, duplicate-drop and single-conjunction union fast
+  paths removed the accidental multi-minute behavior without weakening the semantic model.
+  The complete 157-case chart dump took 95.244 seconds after rebuild. Final three-chart
+  protocol measurements are pending completion of validation builds and will be appended
+  without overlapping a build.
+- Gates and measured exits: `cargo check -p helm-schema-ir -p helm-schema-gen -p helm-schema`
+  exit 0; `cargo fmt --check` exit 0; focused regressions eight/eight; full IR/generator
+  1,157/1,157. `task test:integration` outer exit 201 (nextest exit 100), 709/711 with
+  the two named semantic failures. `task lint` outer exit 201 (Clippy exit 101): after
+  one direct `let...else` correction, the new analyzer code still reports a broad cleanup
+  set ending with 67 diagnostics in the IR test compilation unit, including large variants,
+  unchecked indexing, long functions and test-string style. Per the user's wrap-up order,
+  no suppression or cleanup campaign was started. `task lint:fc` was run, reached matrix
+  case 2/48, then was intentionally interrupted; outer exit 201, task signal exit 130.
+  `cargo nextest run --workspace`, `task test:all`, downstream luup2 and the final
+  three-chart timing protocol were not run after the final commit and are not claimed.
+  `task tokei:core` exit 0 reports 71,784 production Rust LOC, +4,187 from the 67,597
+  round-0 baseline. The frozen-document check and `git diff --check` exited 0 before the
+  final ledger write and are repeated immediately before its commit.
+- Family accounting: this checkpoint lands already-started F17, F51 and shared F78/A1
+  groundwork plus exact performance repairs. Direct focused witnesses are fixed, but the
+  families whose broader battery cells remain unmatched stay open. D3/F23 remains an
+  explicitly unfinished, documented candidate and is not present in the effective landed
+  source. This is a resumable implementation checkpoint, not a campaign-closing scorecard.
+
+Next: paused after the ledger commit per user direction; if the campaign resumes, first run `git status --short`, reproduce the two named integration reds, and read the 87 false-accept and 180 false-reject case evidence in `round4-battery-final.20260907f` before selecting the next owning family.
