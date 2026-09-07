@@ -3,11 +3,10 @@ use crate::{TemplateExpr, TemplateHeader};
 /// Returns the variable bound by a single-variable range expression.
 #[must_use]
 pub fn range_variable_name_expr(expr: &TemplateExpr) -> Option<String> {
-    let name = match expr.deparen() {
-        TemplateExpr::VariableDefinition { name, .. } | TemplateExpr::Assignment { name, .. } => {
-            name
-        }
-        _ => return None,
+    let (TemplateExpr::VariableDefinition { name, .. } | TemplateExpr::Assignment { name, .. }) =
+        expr.deparen()
+    else {
+        return None;
     };
     Some(name.trim_start_matches('$').to_string())
 }
