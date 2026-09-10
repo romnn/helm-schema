@@ -1923,3 +1923,73 @@ fn unknown_member_access_site_makes_the_exact_domain_incomplete() -> eyre::Resul
     sim_assert_eq!(have: completeness, want: vec![false]);
     Ok(())
 }
+
+/// A range-scoped dot handed to a strict Go parameter keeps the member's
+/// truthy-scoped kind requirement.
+///
+/// `hasKey` type-asserts its map parameter before any nil handling, so a
+/// range member reaches it strictly and the capture claims the kind even for
+/// null. The member's own truthiness selection already excuses that null, so
+/// the strict and nil-tolerant requirements state the same constraint here
+/// and the lowering must not abstain (airflow's `containerSecurityContext`
+/// over `workers.celery.sets[*].persistence`).
+#[test]
+fn strict_parameter_over_ranged_member_keeps_truthy_scoped_kind() -> eyre::Result<()> {
+    use helm_schema_core::{
+        ContractRequirementImplication, ContractRequirementTarget, FailValueRequirement,
+    };
+
+    let helpers = indoc! {r#"
+        {{- define "repro.containerSecurityContext" -}}
+        {{- range . }}
+        {{- if hasKey . "securityContexts" }}found{{ end }}
+        {{- end }}
+        {{- end }}
+    "#};
+    let source = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: test
+        data:
+          {{- range .Values.sets }}
+          {{- if .persistence }}
+          entry: {{ include "repro.containerSecurityContext" (list .persistence $.Values) | quote }}
+          {{- end }}
+          {{- end }}
+    "#};
+    let mut defines = DefineIndex::new();
+    defines.add_file_source("_helpers.tpl", helpers);
+    let signals = SymbolicIrContext::new(&defines)
+        .generate_contract_ir(source)
+        .finalize()
+        .into_schema_signals();
+    let evidence = signals
+        .evidence_for(&conditional_path("sets"))
+        .ok_or_eyre("sets evidence")?;
+    let member_requirements = evidence
+        .requirement_implications
+        .iter()
+        .filter(|implication| {
+            matches!(
+                implication.target,
+                ContractRequirementTarget::MembersAt { .. }
+            )
+        })
+        .cloned()
+        .collect::<Vec<_>>();
+
+    sim_assert_eq!(have: &member_requirements, want: &vec![
+        ContractRequirementImplication::new(
+            Vec::new(),
+            ContractRequirementTarget::MembersAt {
+                target_path: vec!["persistence".to_string()],
+                allow_integer: true,
+            },
+            vec![FailValueRequirement::TruthyImpliesSchemaType(
+                "object".to_string(),
+            )],
+        ),
+    ]);
+    Ok(())
+}

@@ -1310,11 +1310,15 @@ pub(super) fn record_value_requirement_capture(
         }
         let requirement = if self_truthy_selected {
             match requirement {
-                FailValueRequirement::SchemaType(schema_type) => {
+                // The selection excuses exactly the null the two type
+                // requirements disagree about, so a strict Go parameter and a
+                // nil-tolerant one impose the same constraint here.
+                FailValueRequirement::SchemaType(schema_type)
+                | FailValueRequirement::SchemaTypeEvenNull(schema_type) => {
                     FailValueRequirement::TruthyImpliesSchemaType(schema_type)
                 }
-                // Only the plain type requirement has a truthy-scoped form;
-                // a selection over any other requirement abstains as before.
+                // Only a type requirement has a truthy-scoped form; a
+                // selection over any other requirement abstains as before.
                 _ => return,
             }
         } else {
