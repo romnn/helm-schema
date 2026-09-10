@@ -1936,3 +1936,53 @@ Next: finish and land F51's decision owner, then port F78 by moving `Computed`/`
   source. This is a resumable implementation checkpoint, not a campaign-closing scorecard.
 
 Next: paused after the ledger commit per user direction; if the campaign resumes, first run `git status --short`, reproduce the two named integration reds, and read the 87 false-accept and 180 false-reject case evidence in `round4-battery-final.20260907f` before selecting the next owning family.
+
+### Existing-work-only landing sweep — 2026-09-10
+
+- Status: **no additional production patch is safe to land**. The user restricted this
+  sweep to F78/A1, F69, D3/F23 and the two residuals from the already-landed batch; no
+  new bug-hunt family was opened. Main stayed clean throughout the isolated audits.
+- Architecture contract: an evaluated template value must carry its runtime selection,
+  structural source and condition through assignments and helpers until the exact YAML
+  sink consumes it. F51's `BindingNode::{Value, Select, Unknown}` is now the one decision
+  owner. A candidate that restores `AbstractValue::Alternatives` plus a reconstructed
+  scalar-dispatch side channel would reintroduce two owners and is not a safe checkpoint.
+- F78/A1: deferred at the integration boundary, not for lack of local progress. The
+  preserved `round3-f78.bQ1YHM` checkpoint had zero isolated reds, but predates F51. Of
+  its 48 recorded files, only five match current main, 42 differ and one ownership test
+  file is absent. Its own measurement is 40 changed IR production files, +2,892/-929
+  and +1,921 production LOC. The required absorption makes `BindingNode::Value` own the
+  evaluated scalar program/source, keeps `BindingNode::Select` as the sole alternative
+  owner, exposes borrowed leaf traversal, and deletes the field/root/helper/mutation side
+  maps plus `FragmentSummary`'s `OnceCell` scalar projection. That is a structural
+  43-file migration requiring fresh integration evidence, not a bounded port. The
+  time-boxed copy is `round5-f78-port`; it contains no edits or patch and ran no tests.
+- F69: deferred behind that same ownership prerequisite. The retained terminal lowering
+  is unsound for `$tag := default .Chart.AppVersion .Values.tag` followed by
+  `not (typeIs "string" $tag)`: `eval_default` drops the unresolved chart fallback,
+  leaving the raw values identity, so the candidate rejects `tag: null` even though Helm
+  selects the string fallback. Landed `ProvenOperands` does not cover either operand in
+  this expression. Restricting the change to `kindIs` would restore the rejected terminal
+  eligibility special case. The existing `dig`, `len` and F69 tests depend on the same
+  production behavior and are not independently green test-only corrections. An isolated
+  current-HEAD application was stopped during compilation at the time box; no result or
+  patch is claimed.
+- D3/F23: deferred because no complete current-compatible artifact survives. The latest
+  historical source passed 516 focused tests and a release build, but never received a
+  final corpus dump, candidate-dump Helm battery, full gates, fixtures or commit. Its
+  later integration reached 129 passes and 58 failures before removal. Review-six diffs
+  depend on missing intermediate trees; `join-identity.diff` is an unreviewed dependent
+  optimization that does not apply to current main; `merge-proof.diff` is corrupt; and
+  `review3/tracked.diff` predates later corrections. Reconstructing the semantic chain on
+  the post-F51 owner would be new implementation, outside this sweep.
+- Residual verification: the already-recorded Airflow worker-set scalar acceptance remains
+  the F78 merge-layer ownership witness. The split-path helper regression was reproduced
+  alone: the IR retains `auth.password` and `global.auth.password` as source expressions
+  but attaches their uses at the root instead of `data.password`; the focused integration
+  test exits 100. Fixing either without the shared owner would add another placement or
+  metadata rescue path, so neither received a local exception.
+- Landing result: no source, test or fixture bytes changed. This ledger-only checkpoint
+  records why the apparently advanced candidates are not independently shippable and
+  prevents a future session from repeating the unsafe overlay attempt.
+
+Next: existing F78/A1 work only; first redesign `BindingNode::Value` to own the evaluated scalar program/source and delete `FragmentSummary`'s scalar `OnceCell`, then run `cargo nextest run -p helm-schema-ir -p helm-schema-gen` before revisiting F69 or the two residual integration witnesses.
