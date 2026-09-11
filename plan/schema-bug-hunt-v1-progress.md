@@ -1986,3 +1986,155 @@ Next: paused after the ledger commit per user direction; if the campaign resumes
   prevents a future session from repeating the unsafe overlay attempt.
 
 Next: existing F78/A1 work only; first redesign `BindingNode::Value` to own the evaluated scalar program/source and delete `FragmentSummary`'s scalar `OnceCell`, then run `cargo nextest run -p helm-schema-ir -p helm-schema-gen` before revisiting F69 or the two residual integration witnesses.
+
+### Round 6 — Airflow ranged-member landing, F78 step-1 landing, read-only analysis sweep — 2026-09-10/11
+
+- Status: two production landings plus the broadest read-only evidence sweep of the
+  campaign. Orchestration was one Fable session directing Opus 5 subagents in adversarial
+  pairs (analysis → challenge → isolated implementation → architecture review + second
+  challenge). Main stayed byte-identical to HEAD between landings; three stray probe edits
+  left on main by "read-only" agents were reverted and preserved as
+  `round6-*/stray-main-edit*.diff`. The Opus quota expired at 01:10 with fourteen agents
+  mid-task; their partial artifacts are listed below as evidence, not results.
+- Landed `b116eaa7` + `66d2dbfa` (Airflow, F51 evaluation-boundary lowering): the
+  2026-09-10 sweep filed `airflow_worker_set_overrides_bind_strict_member_kinds` as an F78
+  merge-layer witness. Bisection by `git archive` (`round6-f78/red-airflow.md`) shows it
+  entered at `ae8b2aa3` and `07e087d8` adopted an already-drifted fixture. Real Helm
+  confirms a `range`-bound bare dot DOES abort on nil, so `argument_evaluation_mode` was
+  right; the loss was in `contract_signal_builder/requirements.rs`: the truthy-scoped
+  ranged-member lowering converted only `SchemaType(T)` and `return`ed for the strictly
+  stronger `SchemaTypeEvenNull(T)`. Under the member's own truthiness selection the null
+  that distinguishes them is excluded, so both lower to `TruthyImpliesSchemaType(T)`
+  (+4 production LOC, test `strict_parameter_over_ranged_member_keeps_truthy_scoped_kind`).
+  Landing evidence `round6-airflow-evidence/{handoff,landing}.md`: fmt 0; IR+gen 1158/1158
+  exit 0; chart_reaudit 133/133 exit 0; one clean dump `round6-airflow-dump.20260910b`
+  (164 tests, 202 artifacts); round74 battery exit 0 but `flips_adjudicated: 0` — a
+  SECOND vacuity mode: the probe generator never synthesises a member of a collection that
+  is empty in defaults, so every constraint of this round was invisible to it. Targeted
+  adjudication (96 probes, Helm v4.2.3, `--kube-version 1.29.0`): 20 acceptance flips,
+  20 matched Helm aborts, 0 loosenings, 0 false rejections; 44 added-but-already-rejected
+  constraints all abort in Helm. Six fixtures adopted (airflow, dify,
+  prometheus-node-exporter, prometheus, kube-prometheus-stack, x509-certificate-exporter).
+  Post-adoption integration 710/711 (only the split-path red). Clippy unchanged at the
+  46 lib + 67 lib-test baseline. `task lint`, `task lint:fc`, `task test:all`, luup2 not run.
+- Pre-existing workspace red: `helm-schema tests::analysis::selected_string_contract_preserves_only_live_provider_preimages`
+  fails (`have: true, want: false`, bitnami-redis stringified provider use) on pristine
+  `66d2dbfa` AND on a `git archive` of `0a0441a9` in this environment
+  (`/Volumes/T7/dev/round6-red-diag/base-run.log`, exit 100). It predates this round. An
+  earlier isolated run reported the workspace suite green at `0a0441a9`, so the test is
+  suspected to depend on K8s schema-cache state (the cache-as-oracle antipattern); the
+  diagnosis agent was cut off before a verdict. On the F78 step-1 tree below the full
+  workspace unit suite is 1516/1516, so the test is green after that landing; the cause of
+  the flip was not isolated and the cache-dependence suspicion stands as an open item.
+- F78/A1 (this round's second landing, see the commit following this ledger entry):
+  design (`round6-f78/f78-design.md`) → challenge (`f78-challenge.md`: B1 three-state
+  `LeafSelection { Proven(Predicate), Unproven }`, B2 dispatch-equivalence test before any
+  `ScalarValueDispatch` deletion, B3 `default`/`coalesce` keep `FirstTruthy`, B4 step 8
+  deleted, M6 seam fixes first) → isolated implementation of steps 0/0.5/1
+  (`round6-f78-evidence/handoff.md`, `final.patch`): `BindingValue` payload on
+  `BindingNode::Value`, borrowed `LocalBinding::leaves()` with `LeafSelection`,
+  `BindingLeaves::proven()` order-preserving dedup, deletion of `LocalBindingProjection`
+  and `LocalBindingAlternative`; `exact_range_iterations` no longer abandons an exact
+  iteration when the proven lane abstains; split-path red and the chart-free case-H
+  witness (`loop_write_guarded_by_helper_output_keeps_each_candidate_key`) green. M6(a)
+  as specified was falsified by measurement (traefik `image.tag` lost its transform-aware
+  alternation → false rejection), so the landed value-lane rule is: proven lane whenever
+  anything is proven; otherwise the erased join, plus an explicit `Unknown` iff some
+  branch's VALUE is unmodelled (never merely because a decision's truth is inexact).
+  Architecture review (`architecture-review.md`): LAND WITH CORRECTIONS — the rule is a
+  mode switch, not a typed consequence; traefik was dodged, not fixed (the join erases
+  `BindingEvaluationMode`; `record_string_transform_effects` consumes the joined value with
+  no selection/boundary; `AbstractValue::Widened` is the shape of the real fix); C5-C7 are
+  the step-2 contract. Second challenge (`challenge2.md`): defects 3 and 4 (the
+  `record_selector_member_captures` `Values`-prefix fall-through, and `Unknown` pushed for
+  inexact decisions) fixed by 28 lines, corpus-neutral; 33 charts adjudicated safe against
+  Helm; the 15 large loosenings are the `nameOverride` false-rejection repair confirmed by
+  14 Helm+Kubernetes probes; headscale carries two categorical false rejections of its own
+  defaults (`/allOf/7`, `/allOf/108`) caused by the value-lane rule, NOT by the range
+  fall-through as the handoff claimed; spark's battery cell is a harness false positive
+  (pre-existing `port: null` re-keyed by the rename). Battery exit 100 on that spark cell;
+  candidate dump `round6-f78-dump.20260910` (164 tests, 202 artifacts); corrected-tree
+  corpus dump byte-identical. The challenger's pin for the deferred mixed-selection rule
+  (`mixed_selection_read_keeps_the_unproven_sibling_candidate`) is red by design and was NOT
+  landed; its source is preserved in `/Volumes/T7/dev/round6-f78-review`. Landing gates on
+  the final tree: fmt 0; `git diff --check` 0; workspace unit 1516/1516; clippy `error:`
+  count in `helm-schema-ir` 69 → 57 with no suppressions; integration profile 713/713 after
+  adopting 35 chart fixtures from `round6-f78-dump.20260910` plus three generator and
+  three IR corpus fixtures from `round6-f78-dump-genir.20260911` (same source state);
+  headscale and spark adopted as output with their regressions recorded above. `task
+  lint`, `task lint:fc`, `task test:all`, luup2 and the timing protocol not run. Not landed:
+  steps 2-9 (`EvalResult` owning a `LocalBinding`; `ScalarValueDispatch`, side maps and
+  the `FragmentSummary` OnceCell deletions), step 5, 7b, 8.
+- F69 (`round6-f69/f69-analysis.md`, `f69-challenge.md`): Helm matrix 15/15 —
+  abort ⟺ truthy(tag) ∧ ¬typeIs("string", tag); identical for `kindIs`/`typeIsLike`;
+  swapped operands have a different closed form. Main falsely rejects `0`, `false`, `[]`,
+  `{}` (live). Seam: `eval_default` (`collections.rs:61-64`, `:89-91`) pushes only
+  operands with a value, so an unresolved operand vanishes and `FirstTruthy` collapses to
+  the raw path. Challenger corrections: the analyzer already types `.Chart.Name/Version/
+  AppVersion` via `static_root_strings`; the missing FACT is that absent `.Chart.*` string
+  fields are Go's zero value `""` (`chart/discovery.rs:196-198`); then D1
+  (`unwrap_or(AbstractValue::Unknown)`) at BOTH operand positions; then the ordered
+  `FirstTruthy` case in the equality/pattern decode followed by DELETING the duplicate
+  default-selection injection at `collections.rs:106-118` (kyverno's rejection of
+  `namespaceOverride: "kube-system"` is a true Helm abort and pins that deletion). No A1
+  dependency (composition with the F78 patch verified 1160/1160). Implementation was cut
+  off mid-realignment (`/Volumes/T7/dev/round6-f69-impl`, no patch delivered).
+- D3/F23 (`round6-d3/d3-f23-analysis.md`, `d3-f23-challenge.md`): contracts confirmed with
+  corrections (`.Template.*` is read from the DOT; a directory aliased twice is two chart
+  instances, namespace from `values_prefix`; dependency activation is a declaration-based
+  fallback: absent `condition:`/`tags:` means enabled, a subchart's own `enabled: false`
+  deletes its scope, root `global.X` deletion leaves the subchart copy). The "land D3/F23
+  together" rule is ledger-only and superseded; the frozen plan ranks F23 alone first. F23
+  is ONE LINE at `emission_plan.rs:228-230` plus deletions (`PreparedValuesDocuments::
+  dependency`, `build_dependency_values_document`, `deeper_stage`); implementer handoff
+  `/Volumes/T7/dev/round6-f23-evidence/handoff.md`: contract proven through Helm's own
+  validator, fmt 0, units 1269/1270 (only the pre-existing red), clean dump produced,
+  integration/battery NOT run — patch not extracted before cut-off (code in
+  `/Volumes/T7/dev/round6-f23`). D3a: 40 lines, challenger-executed on the corpus
+  (graylog 12→0, redmine 1→0, milvus 35→2 default errors), to land BEFORE A1 in three
+  witnessed hunks; `.Files.Get` half and library-chart registration stay open;
+  implementer patches `/Volumes/T7/dev/round6-d3a-evidence/d3a-{1,2,combined}.patch` are
+  WIP (cut off before gates). D3b stays deferred (partial-marker contract re-derived:
+  `tpl` strips `<no value>`, `include` does not).
+- Battery triage (`round6-triage/triage.md`, `cells.json`, 430 cells) and per-family
+  analyses, all read-only, Helm-adjudicated, challengers cut off unless noted:
+  F31/F60 (`round6-f31`): the provider fact exists and is pushed back whole, then undone by
+  three later passes (type-dispatch union past the provider, undecoded `omit` retain
+  guards, overlay base unclosing); 40 of 95 cells are `.Capabilities…openshift`-gated —
+  whether the tri-state capability oracle already answers them authoritatively is the open
+  question; G1+G4+G6 (35 cells, gen-only) are the first batch. F13/F30/F40
+  (`round6-f13`): a `nindent` splice's YAML obligation comes from its structural SIBLINGS,
+  not from "under a block key" (14×3 Helm matrix); Helm's loader is YAML 1.1; four
+  mechanisms retire 38 of 49 cells, none A1-dependent. F9/F63 (`round6-f9`): the Go
+  field-selection rule (aborts on any non-map receiver; nil-through-unboxing is silent;
+  null map members are coalesced away); the fact is derived and then dropped by
+  `record_member_access_capture`'s ranged lane; three classification rules, +60 LOC,
+  12 of 24 cells; jira's 11 are a fact-survival defect (F77), not F9. F80/F43
+  (`round6-f80`): 88/88 false rejections; the `type` provably tracks the values.yaml
+  default (flip law) with no live sink; measured 88/88 fixed at 5 new false accepts owned
+  by the ranged-source fact; −180..−250 LOC. F6/F1/F44 (`round6-f6`): six constructs; a
+  new "two partial models of one context" seam (`"context" .` vs `$`,
+  `analysis_db.rs:1198-1208`), whose fix exposes 16 subchart-scoping false accepts in
+  schema-registry; `insecureImages` is a substring relation → abstain under F74. F35
+  (`round6-f35`): F35 proper is already fixed (trino); the 22 cells are escaped-container
+  guard loss in ill-nested regions (`branch_steps`, `control.rs:667-710`; ~18 lines),
+  re-file in cluster A2. F4 (`round6-f4`): 44/44 true false rejections under the F79
+  oracle; Helm's `fromYaml` never aborts; `MergeLayerTransform::ParsedMap` already exists
+  and is never reached for five paths (7-line fix) but un-masks 9 `commonAnnotations`
+  false rejections that need a 2-line companion in the same round.
+- Roster audit (`round6-plan/roster.md`, `roster.json`): 4/83 families fixed by the
+  plan's own definition (4.8%); 0% by battery-cell weight; the three named tracks own 12 of
+  380 cells; the top three unlanded families own 228. This supersedes any looser estimate.
+- Performance (`round6-perf/timings-66d2dbfa.md`): load never dropped below ~40, so the
+  protocol's paired A/B against the preserved round-3 binary was used (5 pairs/chart):
+  datadog 0.855 (≈6.90 s, −13.9%), airflow 1.119 (≈6.38 s, +12.5%), kube-prometheus-stack
+  1.440 (≈10.93 s, +45.2%, output +11.0%). Nothing pathological; quiet-window absolutes
+  still owed before any floor is reset.
+- Policy questions (open, recommendations only): F80 — withdraw declared-shape typing
+  wherever no live `ContractUse` can distinguish the shape, keep it only as the bounded
+  proxy for unmodelled sink grammars, exclude total `| quote` (recommend yes); F6 —
+  `Chart.yaml` annotations as a tagged structural evidence class (recommend yes); F73/F1
+  — keep root closure, carve out `global` structurally (recommend yes); make targeted-probe
+  adjudication mandatory for ranged-member rounds (recommend yes).
+
+Next: F69 first (no A1 dependency, live false rejections): re-create the isolated copy from HEAD, apply the challenger's amended three-hunk contract, and start with `cargo nextest run -p helm-schema-ir -p helm-schema-gen`; then extract and gate the F23 one-line patch from `/Volumes/T7/dev/round6-f23`.
