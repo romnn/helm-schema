@@ -26,13 +26,99 @@ pub(crate) struct BindingValueMetadata {
     pub(crate) output_meta: BTreeMap<helm_schema_core::ValuesPath, HelperOutputMeta>,
 }
 
-/// One proven binding value with its evaluation boundary.
+/// One evaluated Helm value with the boundary it crossed to reach a binding.
+///
+/// `value` is provenance and shape, `mode` is the Go evaluation boundary, and
+/// `metadata` holds the value facts that leaf owns. They travel as one payload
+/// because a transform can keep a source path while changing the value, so a
+/// consumer that reads one without the others reads a value that never existed.
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub(crate) struct LocalBindingAlternative {
-    pub(crate) condition: Predicate,
+pub(crate) struct BindingValue {
     pub(crate) value: AbstractValue,
     pub(crate) mode: BindingEvaluationMode,
     pub(crate) metadata: BindingValueMetadata,
+}
+
+/// How a leaf's selection is known.
+///
+/// A decision the interpreter could not decode still HAS branches: their
+/// leaves are candidates whose selection condition is not provable. That is
+/// distinct both from "selected exactly where this predicate holds" and from
+/// "no value at all", and collapsing it into either is how an undecidable
+/// guard used to delete the values it guards.
+#[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+pub(crate) enum LeafSelection {
+    /// The leaf is selected exactly where the predicate holds.
+    Proven(Predicate),
+    /// The leaf is one of the candidates; no selection condition is provable.
+    Unproven,
+}
+
+/// One reachable leaf of a binding, with the selection that reaches it.
+///
+/// A [`BindingValue`] is only reachable through this pair, so no consumer can
+/// observe a leaf value without the selection, the structural source and the
+/// evaluation boundary that produced it.
+pub(crate) struct BindingLeaf<'a> {
+    pub(crate) selection: LeafSelection,
+    pub(crate) value: &'a BindingValue,
+}
+
+/// Every reachable leaf of a binding, in decision order, plus whether some
+/// branch is unresolved (an `Unknown` node, or a decision whose truth is not
+/// exact).
+pub(crate) struct BindingLeaves<'a> {
+    pub(crate) known: Vec<BindingLeaf<'a>>,
+    pub(crate) has_unresolved: bool,
+    /// a branch whose VALUE is unmodeled (`BindingNode::Unknown`), as
+    /// distinct from a branch whose SELECTION is undecidable. Only the former
+    /// means the candidate set is incomplete: two known values under an
+    /// undecidable decision are still the only two values the chart can
+    /// select.
+    pub(crate) has_unknown_value: bool,
+}
+
+impl<'a> BindingLeaves<'a> {
+    /// The proven leaves in stable `(condition, value)` order, without
+    /// duplicates: two branches that select the same value under the same
+    /// condition are one alternative.
+    ///
+    /// Strict consumers walk this lane only, so a leaf whose selection is not
+    /// provable never becomes evidence for a requirement.
+    pub(crate) fn proven(&self) -> Vec<(&Predicate, &'a BindingValue)> {
+        let mut proven = Vec::new();
+        for leaf in &self.known {
+            if let LeafSelection::Proven(condition) = &leaf.selection {
+                proven.push((condition, leaf.value));
+            }
+        }
+        proven.sort_unstable();
+        proven.dedup();
+        proven
+    }
+}
+
+/// The selection of one branch of a decision, or `None` when the branch is
+/// provably unreachable under the enclosing selection.
+///
+/// A decision that proves nothing about a branch (`Predicate::False`, which
+/// is what an unknown or one-sided truth reports) leaves that branch's leaves
+/// as candidates instead of deleting them: the value still reaches the
+/// consumer, only its selection condition cannot be named.
+fn branch_selection(
+    selection: &LeafSelection,
+    branch: Predicate,
+    memo: &PredicateMemo,
+) -> Option<LeafSelection> {
+    if branch == Predicate::False {
+        return Some(LeafSelection::Unproven);
+    }
+    match selection {
+        LeafSelection::Proven(condition) => {
+            conjoin_predicates_with_memo(condition.clone(), branch, memo).map(LeafSelection::Proven)
+        }
+        LeafSelection::Unproven => Some(LeafSelection::Unproven),
+    }
 }
 
 /// One control decision shared by the bindings selected at that activation.
@@ -53,11 +139,9 @@ pub(crate) struct LocalBinding(Rc<BindingNode>);
 
 #[derive(Debug)]
 enum BindingNode {
-    Value {
-        value: AbstractValue,
-        mode: BindingEvaluationMode,
-        metadata: BindingValueMetadata,
-    },
+    /// Boxed because a leaf payload carries a whole `AbstractValue`: inline
+    /// it would set the size of every `Select` and `Unknown` node too.
+    Value(Box<BindingValue>),
     Select {
         decision: Rc<BindingDecision>,
         when_true: LocalBinding,
@@ -72,22 +156,7 @@ impl PartialEq for LocalBinding {
             return true;
         }
         match (self.0.as_ref(), other.0.as_ref()) {
-            (
-                BindingNode::Value {
-                    value: left_value,
-                    mode: left_mode,
-                    metadata: left_metadata,
-                },
-                BindingNode::Value {
-                    value: right_value,
-                    mode: right_mode,
-                    metadata: right_metadata,
-                },
-            ) => {
-                left_value == right_value
-                    && left_mode == right_mode
-                    && left_metadata == right_metadata
-            }
+            (BindingNode::Value(left), BindingNode::Value(right)) => left == right,
             (
                 BindingNode::Select {
                     decision: left_decision,
@@ -112,11 +181,6 @@ impl PartialEq for LocalBinding {
 
 impl Eq for LocalBinding {}
 
-pub(crate) struct LocalBindingProjection {
-    pub(crate) alternatives: BTreeSet<LocalBindingAlternative>,
-    pub(crate) has_unresolved: bool,
-}
-
 impl LocalBinding {
     pub(crate) fn direct(value: AbstractValue) -> Self {
         Self::new(value, BindingEvaluationMode::Direct)
@@ -135,11 +199,11 @@ impl LocalBinding {
         mode: BindingEvaluationMode,
         metadata: BindingValueMetadata,
     ) -> Self {
-        Self(Rc::new(BindingNode::Value {
+        Self(Rc::new(BindingNode::Value(Box::new(BindingValue {
             value,
             mode,
             metadata,
-        }))
+        }))))
     }
 
     pub(crate) fn unknown() -> Self {
@@ -168,67 +232,67 @@ impl LocalBinding {
         Self::select(decision, candidate, Self::unknown())
     }
 
-    pub(crate) fn projection(&self, memo: &PredicateMemo) -> LocalBindingProjection {
-        fn visit(
-            binding: &LocalBinding,
-            condition: Predicate,
+    /// Every leaf this binding can select, in decision order.
+    ///
+    /// A leaf is reported whether or not its selection is provable, so an
+    /// undecidable decision widens the result instead of deleting the values
+    /// it guards. Only a branch the enclosing selection proves unreachable is
+    /// dropped.
+    pub(crate) fn leaves(&self, memo: &PredicateMemo) -> BindingLeaves<'_> {
+        fn visit<'a>(
+            binding: &'a LocalBinding,
+            selection: LeafSelection,
             memo: &PredicateMemo,
-            projection: &mut LocalBindingProjection,
+            leaves: &mut BindingLeaves<'a>,
         ) {
             match binding.0.as_ref() {
-                BindingNode::Value {
-                    value,
-                    mode,
-                    metadata,
-                } => {
-                    projection.alternatives.insert(LocalBindingAlternative {
-                        condition,
-                        value: value.clone(),
-                        mode: *mode,
-                        metadata: metadata.clone(),
-                    });
-                }
+                BindingNode::Value(value) => leaves.known.push(BindingLeaf { selection, value }),
                 BindingNode::Select {
                     decision,
                     when_true,
                     when_false,
                 } => {
-                    let when_true_condition = conjoin_predicates_with_memo(
-                        condition.clone(),
-                        decision.truth.when_true(),
-                        memo,
-                    );
-                    let when_false_condition = conjoin_predicates_with_memo(
-                        condition,
+                    if let Some(selection) =
+                        branch_selection(&selection, decision.truth.when_true(), memo)
+                    {
+                        visit(when_true, selection, memo, leaves);
+                    }
+                    if let Some(selection) = branch_selection(
+                        &selection,
                         decision.truth.when_false_with_memo(memo),
                         memo,
-                    );
-                    if let Some(condition) = when_true_condition {
-                        visit(when_true, condition, memo, projection);
-                    }
-                    if let Some(condition) = when_false_condition {
-                        visit(when_false, condition, memo, projection);
+                    ) {
+                        visit(when_false, selection, memo, leaves);
                     }
                     if decision.truth.predicate().is_none() {
-                        projection.has_unresolved = true;
+                        leaves.has_unresolved = true;
                     }
                 }
-                BindingNode::Unknown => projection.has_unresolved = true,
+                BindingNode::Unknown => {
+                    leaves.has_unresolved = true;
+                    leaves.has_unknown_value = true;
+                }
             }
         }
 
-        let mut projection = LocalBindingProjection {
-            alternatives: BTreeSet::new(),
+        let mut leaves = BindingLeaves {
+            known: Vec::new(),
             has_unresolved: false,
+            has_unknown_value: false,
         };
-        visit(self, Predicate::True, memo, &mut projection);
-        projection
+        visit(
+            self,
+            LeafSelection::Proven(Predicate::True),
+            memo,
+            &mut leaves,
+        );
+        leaves
     }
 
     pub(crate) fn value(&self) -> Option<AbstractValue> {
         fn collect(binding: &LocalBinding, values: &mut Vec<AbstractValue>) {
             match binding.0.as_ref() {
-                BindingNode::Value { value, .. } => values.push(value.clone()),
+                BindingNode::Value(leaf) => values.push(leaf.value.clone()),
                 BindingNode::Select {
                     when_true,
                     when_false,
@@ -251,29 +315,29 @@ impl LocalBinding {
             .map_or_else(BTreeSet::new, |value| value.paths())
     }
 
-    pub(crate) fn with_overlay_entries(self, entries: BTreeMap<String, AbstractValue>) -> Self {
+    pub(crate) fn with_overlay_entries(&self, entries: &BTreeMap<String, AbstractValue>) -> Self {
         self.map_values(|value| value.with_overlay_entries(entries.clone()))
     }
 
-    pub(crate) fn map_values(self, mut map: impl FnMut(AbstractValue) -> AbstractValue) -> Self {
+    pub(crate) fn map_values(&self, mut map: impl FnMut(AbstractValue) -> AbstractValue) -> Self {
         fn map_node(
-            binding: LocalBinding,
+            binding: &LocalBinding,
             map: &mut impl FnMut(AbstractValue) -> AbstractValue,
         ) -> LocalBinding {
             match binding.0.as_ref() {
-                BindingNode::Value {
-                    value,
-                    mode,
-                    metadata,
-                } => LocalBinding::new_with_metadata(map(value.clone()), *mode, metadata.clone()),
+                BindingNode::Value(leaf) => LocalBinding::new_with_metadata(
+                    map(leaf.value.clone()),
+                    leaf.mode,
+                    leaf.metadata.clone(),
+                ),
                 BindingNode::Select {
                     decision,
                     when_true,
                     when_false,
                 } => LocalBinding::select(
                     Rc::clone(decision),
-                    map_node(when_true.clone(), map),
-                    map_node(when_false.clone(), map),
+                    map_node(when_true, map),
+                    map_node(when_false, map),
                 ),
                 BindingNode::Unknown => LocalBinding::unknown(),
             }
@@ -306,7 +370,7 @@ impl LocalBinding {
 
     pub(crate) fn has_evaluated_value(&self) -> bool {
         match self.0.as_ref() {
-            BindingNode::Value { mode, .. } => *mode == BindingEvaluationMode::Evaluated,
+            BindingNode::Value(leaf) => leaf.mode == BindingEvaluationMode::Evaluated,
             BindingNode::Select {
                 when_true,
                 when_false,
@@ -455,7 +519,7 @@ impl EvalEnv {
                 continue;
             };
             self.locals
-                .insert(name.clone(), value.with_overlay_entries(entries.clone()));
+                .insert(name.clone(), value.with_overlay_entries(entries));
             applied = true;
         }
         applied

@@ -1092,6 +1092,63 @@ fn helper_fail_header_uses_nested_include_rendered_truthiness() {
     );
 }
 
+/// A helper body with one exactly-rendered arm beside an unmodeled arm
+/// keeps that arm, and records that the arms do not cover the input domain.
+///
+/// This is the fact a conditioned scalar owner must reproduce: dropping the
+/// exact arm because a sibling branch is unknown would silently weaken every
+/// equality, pattern and truthiness query over the helper's output, and
+/// claiming completeness would strengthen them just as silently.
+#[test]
+fn exact_helper_arm_survives_an_unmodeled_sibling_branch() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "feature.mode" -}}
+            {{- if .Values.feature.enabled -}}
+            {{- print "enabled" -}}
+            {{- else -}}
+            {{- randAlphaNum 5 -}}
+            {{- end -}}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
+    let expr = single_expr(r#"include "feature.mode" .Values"#);
+    let mut seen = HashSet::new();
+
+    let result = helper_result_from_expr_with_fragment_locals(
+        &expr,
+        &HashMap::new(),
+        Some(&root_bindings),
+        None,
+        context,
+        &mut seen,
+    );
+
+    sim_assert_eq!(
+        have: result.scalar_dispatch.as_ref().map(|dispatch| (
+            dispatch
+                .arms
+                .iter()
+                .map(|(condition, value)| (condition.clone(), value.clone()))
+                .collect::<Vec<_>>(),
+            dispatch.complete,
+        )),
+        want: Some((
+            vec![(
+                Predicate::truthy_path("feature.enabled"),
+                ScalarValue::Rendered(vec![ScalarRenderPart::Text("enabled".to_string())]),
+            )],
+            false,
+        )),
+        "an exact arm must survive beside an unknown branch: {result:#?}"
+    );
+}
+
 #[test]
 fn print_literal_helper_arms_form_an_exact_scalar_dispatch() {
     let mut defines = DefineIndex::new();

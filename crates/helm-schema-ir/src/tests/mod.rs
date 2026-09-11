@@ -10,8 +10,10 @@ fn conditional_path(value: &str) -> helm_schema_core::ValuesPath {
     helm_schema_core::ValuesPath::parse(value)
 }
 
+mod binding_leaf_selection;
 mod contract;
 mod contract_signals;
+mod evaluated_value_ownership;
 mod expr_eval;
 mod expr_eval_helper_hooks;
 mod fragment_dict_config_guards;

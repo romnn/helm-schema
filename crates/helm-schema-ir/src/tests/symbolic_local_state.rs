@@ -2,7 +2,7 @@ use std::collections::{BTreeMap, BTreeSet, HashMap};
 
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::{GetBinding, GetBindingPlan};
-use crate::eval_env::{BindingDecision, BindingEvaluationMode, LocalBinding};
+use crate::eval_env::{BindingDecision, BindingEvaluationMode, LeafSelection, LocalBinding};
 use crate::fragment_assignment::AssignmentKind;
 use crate::helper_meta::HelperOutputMeta;
 use crate::scalar_value::{
@@ -19,10 +19,27 @@ fn unconditioned_binding_join_keeps_values_but_proves_no_mixed_mode_arm() {
     let unknown = LocalBinding::unknown();
 
     let joined = LocalBinding::join_unconditioned(vec![&direct, &evaluated, &unknown]);
-    let projection = joined.projection(&PredicateMemo::default());
+    let leaves = joined.leaves(&PredicateMemo::default());
 
-    sim_assert_eq!(have: projection.alternatives.is_empty(), want: true);
-    sim_assert_eq!(have: projection.has_unresolved, want: true);
+    // No arm is proven, but both values remain candidates: an unconditioned
+    // join knows which values can reach the consumer, only not when.
+    sim_assert_eq!(have: leaves.proven().is_empty(), want: true);
+    sim_assert_eq!(
+        have: leaves
+            .known
+            .iter()
+            .map(|leaf| (leaf.selection.clone(), leaf.value.value.clone(), leaf.value.mode))
+            .collect::<Vec<_>>(),
+        want: vec![
+            (LeafSelection::Unproven, values_path!("direct"), BindingEvaluationMode::Direct),
+            (
+                LeafSelection::Unproven,
+                values_path!("evaluated"),
+                BindingEvaluationMode::Evaluated,
+            ),
+        ],
+    );
+    sim_assert_eq!(have: leaves.has_unresolved, want: true);
     sim_assert_eq!(
         have: joined.paths(),
         want: BTreeSet::from([ValuesPath::parse("direct"), ValuesPath::parse("evaluated")]),
@@ -43,26 +60,34 @@ fn partial_binding_decision_keeps_proven_subsets_and_unresolved_remainder() {
         LocalBinding::evaluated(values_path!("evaluated")),
     );
 
-    let projection = binding.projection(&PredicateMemo::default());
+    let leaves = binding.leaves(&PredicateMemo::default());
 
     sim_assert_eq!(
-        have: projection.alternatives,
+        have: leaves
+            .proven()
+            .into_iter()
+            .map(|(condition, leaf)| (condition.clone(), leaf.clone()))
+            .collect::<BTreeSet<_>>(),
         want: BTreeSet::from([
-            crate::eval_env::LocalBindingAlternative {
-                condition: when_true,
-                value: values_path!("direct"),
-                mode: BindingEvaluationMode::Direct,
-                metadata: crate::eval_env::BindingValueMetadata::default(),
-            },
-            crate::eval_env::LocalBindingAlternative {
-                condition: when_false,
-                value: values_path!("evaluated"),
-                mode: BindingEvaluationMode::Evaluated,
-                metadata: crate::eval_env::BindingValueMetadata::default(),
-            },
+            (
+                when_true,
+                crate::eval_env::BindingValue {
+                    value: values_path!("direct"),
+                    mode: BindingEvaluationMode::Direct,
+                    metadata: crate::eval_env::BindingValueMetadata::default(),
+                },
+            ),
+            (
+                when_false,
+                crate::eval_env::BindingValue {
+                    value: values_path!("evaluated"),
+                    mode: BindingEvaluationMode::Evaluated,
+                    metadata: crate::eval_env::BindingValueMetadata::default(),
+                },
+            ),
         ]),
     );
-    sim_assert_eq!(have: projection.has_unresolved, want: true);
+    sim_assert_eq!(have: leaves.has_unresolved, want: true);
     sim_assert_eq!(
         have: binding.paths(),
         want: BTreeSet::from([ValuesPath::parse("direct"), ValuesPath::parse("evaluated")]),
@@ -85,6 +110,49 @@ fn unrelated_unknown_binding_decisions_do_not_compare_as_the_same_execution() {
     );
 
     sim_assert_eq!(have: first == second, want: false);
+}
+
+/// Independent undecidable decisions each keep their branches: every leaf
+/// stays a candidate and the traversal reports the unresolved remainder.
+///
+/// Nothing collapses two unrelated activations into one, so a nested pair
+/// exposes three candidates rather than the two a shared decision would.
+#[test]
+fn two_independent_unknown_decisions_expose_both_leaves_with_unresolved_remainder() {
+    let binding = LocalBinding::select(
+        BindingDecision::new(TruthCondition::Unknown),
+        LocalBinding::direct(values_path!("first")),
+        LocalBinding::select(
+            BindingDecision::new(TruthCondition::Unknown),
+            LocalBinding::direct(values_path!("second")),
+            LocalBinding::direct(values_path!("third")),
+        ),
+    );
+
+    let leaves = binding.leaves(&PredicateMemo::default());
+
+    sim_assert_eq!(have: leaves.proven().is_empty(), want: true);
+    sim_assert_eq!(
+        have: leaves
+            .known
+            .iter()
+            .map(|leaf| (leaf.selection.clone(), leaf.value.value.clone()))
+            .collect::<Vec<_>>(),
+        want: vec![
+            (LeafSelection::Unproven, values_path!("first")),
+            (LeafSelection::Unproven, values_path!("second")),
+            (LeafSelection::Unproven, values_path!("third")),
+        ],
+    );
+    sim_assert_eq!(have: leaves.has_unresolved, want: true);
+    sim_assert_eq!(
+        have: binding.paths(),
+        want: BTreeSet::from([
+            ValuesPath::parse("first"),
+            ValuesPath::parse("second"),
+            ValuesPath::parse("third"),
+        ]),
+    );
 }
 
 #[test]
@@ -110,13 +178,20 @@ fn symbolic_range_exit_widens_only_bindings_changed_by_the_iteration() {
     let cfg = positive_exit
         .fragment_values
         .get("cfg")
-        .map(|binding| binding.projection(&PredicateMemo::default()));
+        .map(|binding| binding.leaves(&PredicateMemo::default()));
+    // The widen proves no arm, and keeps the iterated value as a candidate.
     sim_assert_eq!(
-        have: cfg.as_ref().map(|projection| projection.alternatives.is_empty()),
+        have: cfg.as_ref().map(|leaves| leaves.proven().is_empty()),
         want: Some(true),
     );
     sim_assert_eq!(
-        have: cfg.as_ref().map(|projection| projection.has_unresolved),
+        have: cfg
+            .as_ref()
+            .map(|leaves| leaves.known.iter().map(|leaf| leaf.value.value.clone()).collect::<Vec<_>>()),
+        want: Some(vec![values_path!("items.*")]),
+    );
+    sim_assert_eq!(
+        have: cfg.as_ref().map(|leaves| leaves.has_unresolved),
         want: Some(true),
     );
     sim_assert_eq!(
@@ -149,10 +224,10 @@ fn local_binding_has_no_structural_alternative_cap() {
             binding,
         );
     }
-    let projection = binding.projection(&PredicateMemo::default());
+    let leaves = binding.leaves(&PredicateMemo::default());
 
-    sim_assert_eq!(have: projection.alternatives.len(), want: 129);
-    sim_assert_eq!(have: projection.has_unresolved, want: false);
+    sim_assert_eq!(have: leaves.proven().len(), want: 129);
+    sim_assert_eq!(have: leaves.has_unresolved, want: false);
 }
 
 fn state_with_scalar_arm_count(count: usize) -> SymbolicLocalState {
@@ -406,7 +481,7 @@ fn snapshot_restore_replaces_all_local_state_maps() {
     state = snapshot;
 
     sim_assert_eq!(
-        have: state.fragment_values.get("image").and_then(|binding| binding.value()),
+        have: state.fragment_values.get("image").and_then(LocalBinding::value),
         want: Some(values_path!("image"))
     );
     assert!(state.range_domains.is_empty());
@@ -436,7 +511,7 @@ fn local_scope_restores_shadowed_fragment_value() {
     state.exit_local_scope();
 
     sim_assert_eq!(
-        have: state.fragment_values.get("name").and_then(|binding| binding.value()),
+        have: state.fragment_values.get("name").and_then(LocalBinding::value),
         want: Some(values_path!("outer"))
     );
 }
@@ -459,7 +534,7 @@ fn local_scope_keeps_assignment_to_outer_fragment_value() {
     state.exit_local_scope();
 
     sim_assert_eq!(
-        have: state.fragment_values.get("name").and_then(|binding| binding.value()),
+        have: state.fragment_values.get("name").and_then(LocalBinding::value),
         want: Some(values_path!("assigned"))
     );
 }
@@ -534,7 +609,7 @@ fn fragment_assignment_replaces_outer_get_binding() {
 
     assert!(!state.get_bindings.contains_key("value"));
     sim_assert_eq!(
-        have: state.fragment_values.get("value").and_then(|binding| binding.value()),
+        have: state.fragment_values.get("value").and_then(LocalBinding::value),
         want: Some(values_path!("assigned"))
     );
 }
@@ -554,7 +629,7 @@ fn local_scope_restores_range_domain_shadowing_outer_binding() {
 
     assert!(!state.range_domains.contains_key("key"));
     sim_assert_eq!(
-        have: state.fragment_values.get("key").and_then(|binding| binding.value()),
+        have: state.fragment_values.get("key").and_then(LocalBinding::value),
         want: Some(values_path!("outer"))
     );
 }
@@ -732,7 +807,7 @@ fn branch_join_keeps_bindings_present_in_all_outcomes() {
     joined.join_branch_outcomes(&entry_snapshot, &[first, second]);
 
     sim_assert_eq!(
-        have: joined.fragment_values.get("name").and_then(|binding| binding.value()),
+        have: joined.fragment_values.get("name").and_then(LocalBinding::value),
         want: Some(AbstractValue::Choice(
             [
                 values_path!("first"),

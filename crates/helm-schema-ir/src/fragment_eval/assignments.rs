@@ -442,7 +442,7 @@ impl Interpreter<'_> {
                 if !binding.value().as_ref().is_some_and(is_context_copy) {
                     continue;
                 }
-                let updated = binding.clone().with_overlay_entries(entries.clone());
+                let updated = binding.with_overlay_entries(entries);
                 self.locals.fragment_values.insert(name.clone(), updated);
             }
         }

@@ -97,13 +97,12 @@ pub(super) fn eval_set_call(
     let value = target
         .as_ref()
         .and_then(|target| env.locals.get(target))
-        .cloned()
         .map(|value| {
             let entries = keys
                 .iter()
                 .map(|key| (key.clone(), assigned_value.clone()))
                 .collect();
-            value.with_overlay_entries(entries)
+            value.with_overlay_entries(&entries)
         })
         .and_then(|binding| binding.value());
     if let Some(target) = target {

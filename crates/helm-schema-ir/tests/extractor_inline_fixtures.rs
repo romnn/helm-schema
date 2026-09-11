@@ -14,6 +14,7 @@
 //!     helper) emit a value use for `X` even though `Values` is the
 //!     second selector segment, not the root.
 
+use color_eyre::eyre;
 use helm_schema_ast::DefineIndex;
 use helm_schema_ir::{ContractUse, Guard, GuardValue, SymbolicIrContext};
 use indoc::indoc;
@@ -438,6 +439,94 @@ fn split_path_helper_resolves_multisegment_key_to_leaf_only() {
         !password_sources.contains("global") && !password_sources.contains("global.auth"),
         "intermediate traversal prefixes are interpreter state, not rendered values: {ir:#?}"
     );
+}
+
+/// A range over a local whose value is a selection of two exact lists
+/// iterates BOTH lists exactly, so each alternative's members resolve.
+///
+/// The subject is one unconditional binding leaf holding an ordered choice,
+/// which is the shape a `splitList` over a branch-selected key produces. An
+/// alternative that is not itself a list must not abandon the whole exact
+/// iteration: the joined value still supplies one.
+#[test]
+fn range_over_selected_list_iterates_each_exact_alternative() -> eyre::Result<()> {
+    let template = indoc! {r#"
+        {{- $parts := splitList "." (ternary "a.b" "c.d.e" .Values.pick) -}}
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          joined: {{ range $parts }}{{ index $.Values . }}{{ end }}
+    "#};
+
+    let ir = generate(template, "");
+    let joined_sources: std::collections::BTreeSet<String> = ir
+        .iter()
+        .filter(|use_| use_.path.0 == ["data".to_string(), "joined".to_string()])
+        .map(|use_| use_.source_expr.encode())
+        .collect();
+
+    sim_assert_eq!(
+        have: joined_sources,
+        want: std::collections::BTreeSet::from([
+            "a".to_string(),
+            "b".to_string(),
+            "c".to_string(),
+            "d".to_string(),
+            "e".to_string(),
+        ]),
+        "each exactly iterable alternative must supply its members: {ir:#?}"
+    );
+    Ok(())
+}
+
+/// A loop-carried write guarded by a nested helper's output keeps every
+/// candidate the loop can select, so the outer read still resolves both keys.
+///
+/// This is the minimal form of `split_path_helper_resolves_key_selected_by_helper`:
+/// no `splitList`, no reversal, one member read per candidate. Its
+/// near-neighbours — an unguarded loop write, an `if` outside a loop, and a
+/// loop write guarded by a values path — all resolve both candidates, so this
+/// pins the boundary at "the guard is an evaluated helper output".
+#[test]
+fn loop_write_guarded_by_helper_output_keeps_each_candidate_key() -> eyre::Result<()> {
+    let helpers = indoc! {r#"
+        {{- define "test.read" -}}
+        {{- index $.context.Values .key -}}
+        {{- end -}}
+
+        {{- define "test.pickGuardedByHelper" -}}
+        {{- $key := "alpha" -}}
+        {{- range (list "alpha" "beta") -}}
+        {{- $probe := include "test.read" (dict "key" . "context" $.context) -}}
+        {{- if $probe -}}
+        {{- $key = . -}}
+        {{- end -}}
+        {{- end -}}
+        {{- printf "%s" $key -}}
+        {{- end -}}
+    "#};
+    let template = indoc! {r#"
+        {{- $key := include "test.pickGuardedByHelper" (dict "context" $) }}
+        {{- $password := include "test.read" (dict "key" $key "context" $) }}
+        apiVersion: v1
+        kind: Secret
+        data:
+          password: {{ $password | quote }}
+    "#};
+
+    let ir = generate(template, helpers);
+    let password_sources: std::collections::BTreeSet<String> = ir
+        .iter()
+        .filter(|use_| use_.path.0 == ["data".to_string(), "password".to_string()])
+        .map(|use_| use_.source_expr.encode())
+        .collect();
+
+    sim_assert_eq!(
+        have: password_sources,
+        want: std::collections::BTreeSet::from(["alpha".to_string(), "beta".to_string()]),
+        "a helper-output guard must not erase the loop's candidate keys: {ir:#?}"
+    );
+    Ok(())
 }
 
 #[test]

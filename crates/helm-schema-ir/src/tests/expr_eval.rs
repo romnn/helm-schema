@@ -170,6 +170,94 @@ fn mixed_binding_modes_keep_values_paired_with_branch_conditions() {
     );
 }
 
+/// The evaluation boundary a value crossed decides whether its structural
+/// source is also its runtime value.
+///
+/// Both reads name the same source path; only the boundary differs. A
+/// `Direct` leaf IS that path at runtime, so its truthiness and scalar are
+/// the path's. An `Evaluated` leaf recorded the path as provenance while a
+/// transform, `default` or helper output may have changed the value, so
+/// re-deriving a scalar from the source would claim a runtime value the
+/// expression never had.
+#[test]
+fn evaluated_leaf_scalar_is_not_rederived_from_its_structural_source() {
+    let mut direct_env = EvalEnv::default();
+    direct_env
+        .locals
+        .insert("cfg".to_string(), LocalBinding::direct(values_path!("cfg")));
+    let mut evaluated_env = EvalEnv::default();
+    evaluated_env.locals.insert(
+        "cfg".to_string(),
+        LocalBinding::evaluated(values_path!("cfg")),
+    );
+
+    let direct = eval_expr(&single_expr("$cfg"), &direct_env);
+    let evaluated = eval_expr(&single_expr("$cfg"), &evaluated_env);
+
+    sim_assert_eq!(
+        have: direct.truth,
+        want: TruthCondition::exact(Predicate::truthy_path("cfg")),
+    );
+    sim_assert_eq!(
+        have: direct.scalar_dispatch,
+        want: Some(ScalarValueDispatch::identity(capture_path("cfg"))),
+    );
+    sim_assert_eq!(have: evaluated.truth, want: TruthCondition::Unknown);
+    sim_assert_eq!(have: evaluated.scalar_dispatch, want: None);
+    // Provenance survives the boundary; only the runtime claim does not.
+    sim_assert_eq!(
+        have: evaluated.value.as_ref().map(AbstractValue::paths),
+        want: Some(BTreeSet::from([capture_path("cfg")])),
+    );
+}
+
+/// An undecidable decision keeps every leaf as a candidate of the value it
+/// reads, and proves no operand for the strict lane.
+///
+/// Both directions matter: erasing the candidates would delete values the
+/// chart can still select, while proving them would place a requirement on a
+/// branch nothing selected.
+#[test]
+fn unknown_decision_keeps_both_leaves_and_proves_no_strict_operand() {
+    let mut env = EvalEnv::default();
+    env.locals.insert(
+        "cfg".to_string(),
+        LocalBinding::select(
+            BindingDecision::new(TruthCondition::Unknown),
+            LocalBinding::direct(values_path!("first")),
+            LocalBinding::direct(values_path!("second")),
+        ),
+    );
+
+    let read = eval_expr(&single_expr("$cfg"), &env);
+    let proven = read
+        .proven_operands
+        .as_ref()
+        .map(|proven| (proven.known.len(), proven.has_unresolved));
+
+    sim_assert_eq!(
+        have: read.value.as_ref().map(AbstractValue::paths),
+        want: Some(BTreeSet::from([
+            capture_path("first"),
+            capture_path("second"),
+        ])),
+    );
+    sim_assert_eq!(have: proven, want: Some((0, true)));
+
+    let strict = eval_expr(&single_expr(r#"hasKey $cfg "key""#), &env);
+
+    sim_assert_eq!(
+        have: strict
+            .effects
+            .observed_facts
+            .captures
+            .into_iter()
+            .map(|capture| capture.kind)
+            .collect::<BTreeSet<_>>(),
+        want: BTreeSet::new(),
+    );
+}
+
 #[test]
 fn strict_string_consumer_keeps_each_binding_leaf_under_its_decision() {
     let use_b = Predicate::truthy_path("useB");

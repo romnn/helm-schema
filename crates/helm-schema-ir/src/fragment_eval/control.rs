@@ -383,7 +383,9 @@ impl Interpreter<'_> {
             let branch_residual = self.branch_step_residuals(&branch_steps);
             let (later_branches, mut after) = split_escaped(region, branch_residual);
             for (target, mut specs) in later_branches.into_iter().enumerate().skip(index + 1) {
-                escaped_per_branch[target].append(&mut specs);
+                if let Some(branch) = escaped_per_branch.get_mut(target) {
+                    branch.append(&mut specs);
+                }
             }
             escaped_after.append(&mut after);
             for entry in adopted {
@@ -416,7 +418,9 @@ impl Interpreter<'_> {
                 );
                 let (later_branches, mut after) = split_escaped(region, deferred);
                 for (target, mut specs) in later_branches.into_iter().enumerate().skip(index + 1) {
-                    escaped_per_branch[target].append(&mut specs);
+                    if let Some(branch) = escaped_per_branch.get_mut(target) {
+                        branch.append(&mut specs);
+                    }
                 }
                 escaped_after.append(&mut after);
             }
@@ -811,7 +815,7 @@ impl Interpreter<'_> {
                 continue;
             };
             let parent_start = parent.shape.start;
-            let (selections, present) = self.parent_selections(parent.shape, spec);
+            let (selections, present) = self.parent_selections(&parent.shape, spec);
             if selections.len() == 1
                 && selections.first().is_some_and(|selection| {
                     selection.condition == Predicate::True
@@ -908,11 +912,11 @@ impl Interpreter<'_> {
 
     fn parent_selections(
         &self,
-        shape: ParentShape,
+        shape: &ParentShape,
         spec: &DeferredNodes<'_>,
     ) -> (Vec<ParentSelection>, PathCondition) {
         let plan = &self.body_facts.adoption_plan;
-        let candidates = plan.slot_members_through(&shape);
+        let candidates = plan.slot_members_through(shape);
         let deferred_start = spec
             .nodes
             .iter()
@@ -969,7 +973,7 @@ impl Interpreter<'_> {
     /// same path.
     /// Explicitly-indented output keeps floating past containers it does not
     /// render inside.
-    fn eval_deferred<'n>(&mut self, spec: &DeferredNodes<'n>, out: &mut Contributions) {
+    fn eval_deferred(&mut self, spec: &DeferredNodes<'_>, out: &mut Contributions) {
         let views: Vec<NodeView<'_>> = spec
             .nodes
             .iter()
@@ -2032,18 +2036,20 @@ impl Interpreter<'_> {
         key_variable: Option<&str>,
         memo: &helm_schema_core::PredicateMemo,
     ) -> Option<RangeIterations> {
-        let (alternatives, has_unresolved) = if let Some(proven) = value_alternatives {
-            let mut alternatives = Vec::new();
-            for alternative in &proven.known {
-                let items = exact_iteration_entries(&alternative.value)?;
-                alternatives.push((
-                    TruthCondition::exact_with_memo(alternative.condition.clone(), memo),
-                    items,
-                ));
-            }
-            (alternatives, proven.has_unresolved)
+        // The proven lane refines the joined value when every alternative is
+        // exactly iterable; when it abstains, the joined value still carries
+        // the same alternatives as a `Choice`/`FirstTruthy` and iterates them
+        // below. Preferring an abstaining proven lane would abandon an exact
+        // iteration the value itself supplies. Either way the lane's
+        // unresolved remainder is a fact about the subject, not about which
+        // lane produced the entries, so it survives the fallback.
+        let has_unresolved = value_alternatives.is_some_and(|proven| proven.has_unresolved);
+        let proven_alternatives =
+            value_alternatives.and_then(|proven| exact_proven_iterations(proven, memo));
+        let alternatives = if let Some(alternatives) = proven_alternatives {
+            alternatives
         } else {
-            let alternatives = match iterable {
+            match iterable {
                 AbstractValue::List(items) => vec![(
                     TruthCondition::exact_with_memo(Predicate::True, memo),
                     items
@@ -2079,8 +2085,7 @@ impl Interpreter<'_> {
                     exact_iteration_alternatives(candidates.iter(), output_meta, memo)?
                 }
                 _ => return None,
-            };
-            (alternatives, false)
+            }
         };
         // A destructured header binds its declared value variable; a plain
         // `range $x := …` binds `$x` to the successive elements.
@@ -2272,7 +2277,7 @@ enum BranchStep<'n> {
     Deferred(DeferredNodes<'n>),
 }
 
-fn source_ordered_branch_steps<'n>(mut steps: Vec<BranchStep<'n>>) -> Vec<BranchStep<'n>> {
+fn source_ordered_branch_steps(mut steps: Vec<BranchStep<'_>>) -> Vec<BranchStep<'_>> {
     steps.sort_by_key(|step| match step {
         BranchStep::Direct(nodes) => nodes
             .first()
@@ -2335,10 +2340,10 @@ fn split_escaped<'n>(
             }
         }
         for (index, nodes) in buckets.into_iter().enumerate() {
-            if !nodes.is_empty()
+            if let Some(first) = nodes.first()
                 && let Some(branch) = per_branch.get_mut(index)
             {
-                let (_, branch_source_window) = branch_window(region, nodes[0].span_start());
+                let (_, branch_source_window) = branch_window(region, first.span_start());
                 let window = spec.window.intersect(branch_source_window);
                 if window.is_empty() {
                     continue;
@@ -2530,12 +2535,17 @@ fn header_range_source(expr: &TemplateExpr) -> &TemplateExpr {
     source
 }
 
+/// The exact `(key, item)` pairs one alternative iterates.
+type IterationEntries = Vec<(AbstractValue, AbstractValue)>;
+
+/// Per-alternative exact iteration entries, each under the truth of the
+/// alternative that supplies them.
+type IterationAlternatives = Vec<(TruthCondition, IterationEntries)>;
+
 /// Per-alternative exact (key, item) iteration entries for alternatives
 /// that are ALL statically-known lists or dicts; any other alternative
 /// shape abstains.
-fn exact_iteration_entries(
-    alternative: &AbstractValue,
-) -> Option<Vec<(AbstractValue, AbstractValue)>> {
+fn exact_iteration_entries(alternative: &AbstractValue) -> Option<IterationEntries> {
     match alternative {
         AbstractValue::List(items) => Some(
             items
@@ -2564,11 +2574,37 @@ fn exact_iteration_entries(
     }
 }
 
+/// Per-alternative exact entries for a range subject whose binding proved
+/// its selection conditions.
+///
+/// Abstains as a whole — including when nothing was proven — so the caller
+/// falls back to the joined iterable value. A binding whose selection is not
+/// provable still bounds the iterable, and an alternative that is not itself
+/// a list or dict (a `Choice` of lists, say) iterates exactly through that
+/// joined value.
+fn exact_proven_iterations(
+    proven: &crate::value_path_context::RangeValueAlternatives,
+    memo: &helm_schema_core::PredicateMemo,
+) -> Option<IterationAlternatives> {
+    if proven.known.is_empty() {
+        return None;
+    }
+    let mut alternatives = Vec::new();
+    for alternative in &proven.known {
+        let items = exact_iteration_entries(&alternative.value)?;
+        alternatives.push((
+            TruthCondition::exact_with_memo(alternative.condition.clone(), memo),
+            items,
+        ));
+    }
+    Some(alternatives)
+}
+
 fn exact_iteration_alternatives<'v>(
     alternatives: impl Iterator<Item = &'v AbstractValue>,
     output_meta: &BTreeMap<helm_schema_core::ValuesPath, crate::helper_meta::HelperOutputMeta>,
     memo: &helm_schema_core::PredicateMemo,
-) -> Option<Vec<(TruthCondition, Vec<(AbstractValue, AbstractValue)>)>> {
+) -> Option<IterationAlternatives> {
     let mut out = Vec::new();
     for alternative in alternatives {
         let truth = exact_iteration_alternative_truth(alternative, output_meta, memo);
