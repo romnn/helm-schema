@@ -260,7 +260,10 @@
         "kind": "PrometheusRule"
       },
       "source_expr": "commonLabels",
-      "stringified": true
+      "stringified": true,
+      "template_supplied_member_keys": [
+        "app.kubernetes.io/name"
+      ]
     },
     {
       "condition": [
@@ -485,7 +488,10 @@
         "api_version": "monitoring.coreos.com/v1",
         "kind": "PrometheusRule"
       },
-      "source_expr": "metrics.prometheusRule.additionalLabels"
+      "source_expr": "metrics.prometheusRule.additionalLabels",
+      "template_supplied_member_keys": [
+        "app.kubernetes.io/name"
+      ]
     },
     {
       "condition": [
@@ -668,6 +674,16 @@
         },
         {
           "helper_chain": [
+            "common.labels.standard"
+          ],
+          "span": {
+            "end": 830,
+            "start": 726
+          },
+          "template_path": "charts/common/templates/_labels.tpl"
+        },
+        {
+          "helper_chain": [
             "common.names.name"
           ],
           "span": {
@@ -675,10 +691,146 @@
             "start": 206
           },
           "template_path": "charts/common/templates/_names.tpl"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 729,
+            "start": 615
+          },
+          "template_path": "charts/common/templates/_tplvalues.tpl"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 774,
+            "start": 748
+          },
+          "template_path": "charts/common/templates/_tplvalues.tpl"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 817,
+            "start": 804
+          },
+          "template_path": "charts/common/templates/_tplvalues.tpl"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.merge"
+          ],
+          "span": {
+            "end": 1363,
+            "start": 1238
+          },
+          "template_path": "charts/common/templates/_tplvalues.tpl"
         }
       ],
       "resource": null,
       "source_expr": "nameOverride"
+    },
+    {
+      "condition": [
+        [
+          {
+            "path": "metrics.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "metrics.prometheusRule.enabled",
+            "type": "truthy"
+          },
+          {
+            "path": "nameOverride",
+            "type": "truthy"
+          },
+          {
+            "path": "nameOverride",
+            "type": "default"
+          }
+        ]
+      ],
+      "kind": "YamlSerialized",
+      "path": [
+        "metadata",
+        "labels",
+        "app.kubernetes.io/name"
+      ],
+      "provenance": [
+        {
+          "helper_chain": [
+            "common.labels.standard"
+          ],
+          "span": {
+            "end": 830,
+            "start": 726
+          },
+          "template_path": "charts/common/templates/_labels.tpl"
+        },
+        {
+          "helper_chain": [
+            "common.names.name"
+          ],
+          "span": {
+            "end": 282,
+            "start": 206
+          },
+          "template_path": "charts/common/templates/_names.tpl"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 729,
+            "start": 615
+          },
+          "template_path": "charts/common/templates/_tplvalues.tpl"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 774,
+            "start": 748
+          },
+          "template_path": "charts/common/templates/_tplvalues.tpl"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.render"
+          ],
+          "span": {
+            "end": 817,
+            "start": 804
+          },
+          "template_path": "charts/common/templates/_tplvalues.tpl"
+        },
+        {
+          "helper_chain": [
+            "common.tplvalues.merge"
+          ],
+          "span": {
+            "end": 1395,
+            "start": 1376
+          },
+          "template_path": "charts/common/templates/_tplvalues.tpl"
+        }
+      ],
+      "resource": {
+        "api_version": "monitoring.coreos.com/v1",
+        "kind": "PrometheusRule"
+      },
+      "source_expr": "nameOverride",
+      "stringified": true
     },
     {
       "condition": [

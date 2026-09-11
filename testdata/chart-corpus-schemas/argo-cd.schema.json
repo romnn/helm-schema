@@ -31032,67 +31032,6 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/3I"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "configs": {
-                "additionalProperties": {},
-                "description": "Argo Configs",
-                "properties": {
-                  "cm": {
-                    "description": "General Argo CD configuration. Any values you put under `.configs.cm` are passed to argocd-cm ConfigMap.\nRef: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "configs": {
-                "additionalProperties": {},
-                "description": "Argo Configs",
-                "properties": {
-                  "cm": {
-                    "description": "General Argo CD configuration. Any values you put under `.configs.cm` are passed to argocd-cm ConfigMap.\nRef: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml",
-                    "type": [
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "configs": {
-                "additionalProperties": {},
-                "description": "Argo Configs",
-                "properties": {
-                  "cm": {
-                    "description": "General Argo CD configuration. Any values you put under `.configs.cm` are passed to argocd-cm ConfigMap.\nRef: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml",
-                    "type": [
-                      "array",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/H"
@@ -35763,6 +35702,48 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/3I"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "configs": {
+                "additionalProperties": {},
+                "description": "Argo Configs",
+                "properties": {
+                  "cm": {
+                    "description": "General Argo CD configuration. Any values you put under `.configs.cm` are passed to argocd-cm ConfigMap.\nRef: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "configs": {
+                "additionalProperties": {},
+                "description": "Argo Configs",
+                "properties": {
+                  "cm": {
+                    "description": "General Argo CD configuration. Any values you put under `.configs.cm` are passed to argocd-cm ConfigMap.\nRef: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml",
+                    "type": [
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
     },
     {
       "if": {
@@ -56785,59 +56766,6 @@
           "then": false
         },
         {
-          "additionalProperties": {},
-          "properties": {
-            "cm": {
-              "allOf": [
-                {
-                  "if": {
-                    "$ref": "#/$defs/O"
-                  },
-                  "then": {
-                    "allOf": [
-                      {
-                        "additionalProperties": {},
-                        "properties": {
-                          "annotations": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/1"
-                              },
-                              {
-                                "type": "object"
-                              },
-                              {
-                                "type": "null"
-                              },
-                              {
-                                "type": "array"
-                              },
-                              {
-                                "$ref": "#/$defs/9"
-                              }
-                            ],
-                            "description": "Annotations to be added to argocd-cm configmap"
-                          }
-                        }
-                      },
-                      {
-                        "additionalProperties": {},
-                        "items": {},
-                        "type": [
-                          "array",
-                          "null",
-                          "object"
-                        ]
-                      }
-                    ]
-                  }
-                }
-              ],
-              "description": "General Argo CD configuration. Any values you put under `.configs.cm` are passed to argocd-cm ConfigMap.\nRef: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml"
-            }
-          }
-        },
-        {
           "if": {
             "allOf": [
               {
@@ -57023,6 +56951,46 @@
                 }
               ],
               "description": "ConfigMap for Config Management Plugins\nRef: https://argo-cd.readthedocs.io/en/stable/operator-manual/config-management-plugins/"
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "cm": {
+              "allOf": [
+                {
+                  "if": {
+                    "$ref": "#/$defs/O"
+                  },
+                  "then": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "annotations": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/1"
+                          },
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "array"
+                          },
+                          {
+                            "$ref": "#/$defs/9"
+                          }
+                        ],
+                        "description": "Annotations to be added to argocd-cm configmap"
+                      }
+                    }
+                  }
+                }
+              ],
+              "description": "General Argo CD configuration. Any values you put under `.configs.cm` are passed to argocd-cm ConfigMap.\nRef: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml"
             }
           }
         },
