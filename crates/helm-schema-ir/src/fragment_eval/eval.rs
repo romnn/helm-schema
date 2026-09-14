@@ -219,10 +219,7 @@ impl AdoptionPlan {
     pub(super) fn trailing_open_chain(&self, root_start: usize, end: usize) -> Vec<ParentShape> {
         let mut chain = Vec::new();
         let mut current = root_start;
-        loop {
-            let Some(children) = self.layout_children.get(&current) else {
-                break;
-            };
+        while let Some(children) = self.layout_children.get(&current) {
             let Some(child) = children.iter().rev().find(|child| {
                 child.start < end && !matches!(child.disposition, LayoutDisposition::Transparent)
             }) else {
@@ -269,11 +266,17 @@ impl ChildIndex {
         entries.sort_by_key(|child| child.start);
         let leaf_base = entries.len().next_power_of_two();
         let mut max_ends = vec![0; leaf_base * 2];
-        for (offset, child) in entries.iter().enumerate() {
-            max_ends[leaf_base + offset] = child.end;
+        for (leaf, child) in max_ends.iter_mut().skip(leaf_base).zip(&entries) {
+            *leaf = child.end;
         }
+        // Bottom-up: a node's stored end is the largest end in its subtree,
+        // which is the larger of its two children's.
         for node in (1..leaf_base).rev() {
-            max_ends[node] = max_ends[node * 2].max(max_ends[node * 2 + 1]);
+            let left = max_ends.get(node * 2).copied().unwrap_or(0);
+            let right = max_ends.get(node * 2 + 1).copied().unwrap_or(0);
+            if let Some(parent) = max_ends.get_mut(node) {
+                *parent = left.max(right);
+            }
         }
         Self {
             entries,
@@ -289,7 +292,9 @@ impl ChildIndex {
         let end = window.end.map_or(self.entries.len(), |end| {
             self.entries.partition_point(|child| child.start < end)
         });
-        self.entries[start..end]
+        self.entries
+            .get(start..end)
+            .unwrap_or_default()
             .iter()
             .map(|child| child.index)
             .collect()
@@ -311,7 +316,12 @@ impl ChildIndex {
         boundary: usize,
         crossing: &mut Vec<usize>,
     ) {
-        if start >= before || self.max_ends[node] <= boundary {
+        if start >= before
+            || self
+                .max_ends
+                .get(node)
+                .is_none_or(|max_end| *max_end <= boundary)
+        {
             return;
         }
         if end - start == 1 {
@@ -408,6 +418,16 @@ fn collect_adoptions(
     planned
 }
 
+/// What planning one node contributes to its `PlannedNode`, before the
+/// enclosing control start is resolved.
+struct PlannedExtent {
+    end: usize,
+    content_end: usize,
+    direct_control: Option<usize>,
+    can_defer: bool,
+    disposition: LayoutDisposition,
+}
+
 fn collect_adoption_node(
     source: &str,
     node: &Node,
@@ -416,165 +436,23 @@ fn collect_adoption_node(
     plan: &mut AdoptionPlan,
 ) -> PlannedNode {
     let start = node.span_start();
-    let owner_start = containers.last().map(|(start, _)| *start);
-    let (end, content_end, direct_control, can_defer, disposition) = match node {
-        Node::Mapping(entry) => {
-            containers.push((start, path.len()));
-            let children = collect_adoptions(source, &entry.children, path, containers, plan);
-            containers.pop();
-            plan.child_indexes.insert(start, ChildIndex::new(&children));
-            plan.layout_children
-                .insert(start, planned_children_in_source_order(&children));
-            let shape = ParentShape {
-                start,
-                slot: ParentSlot {
-                    owner_start,
-                    kind: ParentKind::Entry,
-                    indent: entry.indent,
-                },
-                indent: entry.indent,
-                accepts_same_indent: entry.value.is_none() && entry.block.is_none(),
-                established_content_mark: established_content_mark_from_source(
-                    source,
-                    &entry.children,
-                    entry.indent,
-                ),
-            };
-            plan.parent_shapes.insert(start, shape);
-            if entry.opens_scope {
-                plan.parent_slots.entry(shape.slot).or_default().push(start);
-            }
-            (
-                children
-                    .iter()
-                    .map(|child| child.end)
-                    .fold(mapping_own_end(entry), usize::max),
-                children
-                    .iter()
-                    .map(|child| child.content_end)
-                    .fold(mapping_own_end(entry), usize::max),
-                None,
-                true,
-                if entry.opens_scope {
-                    LayoutDisposition::OpenParent
-                } else {
-                    LayoutDisposition::Barrier
-                },
-            )
-        }
-        Node::Sequence(item) => {
-            containers.push((start, path.len()));
-            let children = collect_adoptions(source, &item.children, path, containers, plan);
-            containers.pop();
-            plan.child_indexes.insert(start, ChildIndex::new(&children));
-            plan.layout_children
-                .insert(start, planned_children_in_source_order(&children));
-            let opens_scope = item.value.is_none() && item.block.is_none();
-            let shape = ParentShape {
-                start,
-                slot: ParentSlot {
-                    owner_start,
-                    kind: ParentKind::Item,
-                    indent: item.indent,
-                },
-                indent: item.indent,
-                accepts_same_indent: false,
-                established_content_mark: established_content_mark_from_source(
-                    source,
-                    &item.children,
-                    item.indent,
-                ),
-            };
-            plan.parent_shapes.insert(start, shape);
-            if opens_scope {
-                plan.parent_slots.entry(shape.slot).or_default().push(start);
-            }
-            (
-                children
-                    .iter()
-                    .map(|child| child.end)
-                    .fold(sequence_own_end(item), usize::max),
-                children
-                    .iter()
-                    .map(|child| child.content_end)
-                    .fold(sequence_own_end(item), usize::max),
-                None,
-                true,
-                if opens_scope {
-                    LayoutDisposition::OpenParent
-                } else {
-                    LayoutDisposition::Barrier
-                },
-            )
-        }
-        Node::Control(region) => {
-            if let Some((container_start, depth)) = containers
-                .iter()
-                .find(|(start, _)| *start > region.span.start)
-            {
-                plan.controls
-                    .entry(*container_start)
-                    .or_default()
-                    .push(EscapedControl {
-                        control_start: region.span.start,
-                        path: path[*depth..].to_vec(),
-                    });
-            }
-            let mut end = region.span.end;
-            let mut content_end = 0;
-            for (branch_index, branch) in region.branches.iter().enumerate() {
-                let mut children = Vec::with_capacity(branch.body.len());
-                for (child_index, child) in branch.body.iter().enumerate() {
-                    path.push(NodePathStep::Branch {
-                        branch: branch_index,
-                        child: child_index,
-                    });
-                    children.push(collect_adoption_node(source, child, path, containers, plan));
-                    path.pop();
-                }
-                collect_crossing_priors(&children, plan);
-                end = children.iter().map(|child| child.end).fold(end, usize::max);
-                content_end = children
-                    .iter()
-                    .map(|child| child.content_end)
-                    .fold(content_end, usize::max);
-            }
-            (
-                end,
-                content_end,
-                Some(region.span.start),
-                false,
-                LayoutDisposition::Transparent,
-            )
-        }
-        Node::Output(action) => (
-            action.span.end,
-            action.span.end,
-            None,
-            false,
+    let PlannedExtent {
+        end,
+        content_end,
+        direct_control,
+        can_defer,
+        disposition,
+    } = match node {
+        Node::Mapping(entry) => plan_mapping_entry(source, entry, path, containers, plan),
+        Node::Sequence(item) => plan_sequence_item(source, item, path, containers, plan),
+        Node::Control(region) => plan_control_region(source, region, path, containers, plan),
+        Node::Output(action) => leaf_extent(action.span.end, LayoutDisposition::Barrier),
+        Node::Comment(comment) => leaf_extent(comment.span.end, LayoutDisposition::Transparent),
+        Node::Scalar(line) => leaf_extent(
+            scalar_parts_end(&line.content).max(line.span.end),
             LayoutDisposition::Barrier,
         ),
-        Node::Comment(comment) => (
-            comment.span.end,
-            comment.span.end,
-            None,
-            false,
-            LayoutDisposition::Transparent,
-        ),
-        Node::Scalar(line) => (
-            scalar_parts_end(&line.content).max(line.span.end),
-            scalar_parts_end(&line.content).max(line.span.end),
-            None,
-            false,
-            LayoutDisposition::Barrier,
-        ),
-        Node::Opaque(opaque) => (
-            opaque.span.end,
-            opaque.span.end,
-            None,
-            false,
-            LayoutDisposition::Transparent,
-        ),
+        Node::Opaque(opaque) => leaf_extent(opaque.span.end, LayoutDisposition::Transparent),
     };
     let control_start = direct_control.or_else(|| {
         plan.controls
@@ -589,6 +467,179 @@ fn collect_adoption_node(
         control_start,
         can_defer,
         disposition,
+    }
+}
+
+/// A node with no adoptable subtree: it ends where its own span ends and
+/// never defers.
+fn leaf_extent(end: usize, disposition: LayoutDisposition) -> PlannedExtent {
+    PlannedExtent {
+        end,
+        content_end: end,
+        direct_control: None,
+        can_defer: false,
+        disposition,
+    }
+}
+
+/// Plans a mapping entry: its children form an adoption slot keyed by the
+/// enclosing container, and the entry reaches as far as they do.
+fn plan_mapping_entry(
+    source: &str,
+    entry: &syntax::MappingEntry,
+    path: &mut Vec<NodePathStep>,
+    containers: &mut Vec<(usize, usize)>,
+    plan: &mut AdoptionPlan,
+) -> PlannedExtent {
+    let start = entry.span.start;
+    let owner_start = containers.last().map(|(start, _)| *start);
+    containers.push((start, path.len()));
+    let children = collect_adoptions(source, &entry.children, path, containers, plan);
+    containers.pop();
+    plan.child_indexes.insert(start, ChildIndex::new(&children));
+    plan.layout_children
+        .insert(start, planned_children_in_source_order(&children));
+    let shape = ParentShape {
+        start,
+        slot: ParentSlot {
+            owner_start,
+            kind: ParentKind::Entry,
+            indent: entry.indent,
+        },
+        indent: entry.indent,
+        accepts_same_indent: entry.value.is_none() && entry.block.is_none(),
+        established_content_mark: established_content_mark_from_source(
+            source,
+            &entry.children,
+            entry.indent,
+        ),
+    };
+    plan.parent_shapes.insert(start, shape);
+    if entry.opens_scope {
+        plan.parent_slots.entry(shape.slot).or_default().push(start);
+    }
+    PlannedExtent {
+        end: children
+            .iter()
+            .map(|child| child.end)
+            .fold(mapping_own_end(entry), usize::max),
+        content_end: children
+            .iter()
+            .map(|child| child.content_end)
+            .fold(mapping_own_end(entry), usize::max),
+        direct_control: None,
+        can_defer: true,
+        disposition: if entry.opens_scope {
+            LayoutDisposition::OpenParent
+        } else {
+            LayoutDisposition::Barrier
+        },
+    }
+}
+
+/// Plans a sequence item. An item that already carries its own value or
+/// block scalar opens no slot for later content to be adopted into.
+fn plan_sequence_item(
+    source: &str,
+    item: &syntax::SequenceItem,
+    path: &mut Vec<NodePathStep>,
+    containers: &mut Vec<(usize, usize)>,
+    plan: &mut AdoptionPlan,
+) -> PlannedExtent {
+    let start = item.span.start;
+    let owner_start = containers.last().map(|(start, _)| *start);
+    containers.push((start, path.len()));
+    let children = collect_adoptions(source, &item.children, path, containers, plan);
+    containers.pop();
+    plan.child_indexes.insert(start, ChildIndex::new(&children));
+    plan.layout_children
+        .insert(start, planned_children_in_source_order(&children));
+    let opens_scope = item.value.is_none() && item.block.is_none();
+    let shape = ParentShape {
+        start,
+        slot: ParentSlot {
+            owner_start,
+            kind: ParentKind::Item,
+            indent: item.indent,
+        },
+        indent: item.indent,
+        accepts_same_indent: false,
+        established_content_mark: established_content_mark_from_source(
+            source,
+            &item.children,
+            item.indent,
+        ),
+    };
+    plan.parent_shapes.insert(start, shape);
+    if opens_scope {
+        plan.parent_slots.entry(shape.slot).or_default().push(start);
+    }
+    PlannedExtent {
+        end: children
+            .iter()
+            .map(|child| child.end)
+            .fold(sequence_own_end(item), usize::max),
+        content_end: children
+            .iter()
+            .map(|child| child.content_end)
+            .fold(sequence_own_end(item), usize::max),
+        direct_control: None,
+        can_defer: true,
+        disposition: if opens_scope {
+            LayoutDisposition::OpenParent
+        } else {
+            LayoutDisposition::Barrier
+        },
+    }
+}
+
+/// Plans a control region. The region is layout-transparent: its branch
+/// bodies are planned in place, and a region that escapes an enclosing
+/// container records the CST path back to it.
+fn plan_control_region(
+    source: &str,
+    region: &ControlRegion,
+    path: &mut Vec<NodePathStep>,
+    containers: &mut Vec<(usize, usize)>,
+    plan: &mut AdoptionPlan,
+) -> PlannedExtent {
+    if let Some((container_start, depth)) = containers
+        .iter()
+        .find(|(start, _)| *start > region.span.start)
+    {
+        plan.controls
+            .entry(*container_start)
+            .or_default()
+            .push(EscapedControl {
+                control_start: region.span.start,
+                path: path.get(*depth..).unwrap_or_default().to_vec(),
+            });
+    }
+    let mut end = region.span.end;
+    let mut content_end = 0;
+    for (branch_index, branch) in region.branches.iter().enumerate() {
+        let mut children = Vec::with_capacity(branch.body.len());
+        for (child_index, child) in branch.body.iter().enumerate() {
+            path.push(NodePathStep::Branch {
+                branch: branch_index,
+                child: child_index,
+            });
+            children.push(collect_adoption_node(source, child, path, containers, plan));
+            path.pop();
+        }
+        collect_crossing_priors(&children, plan);
+        end = children.iter().map(|child| child.end).fold(end, usize::max);
+        content_end = children
+            .iter()
+            .map(|child| child.content_end)
+            .fold(content_end, usize::max);
+    }
+    PlannedExtent {
+        end,
+        content_end,
+        direct_control: Some(region.span.start),
+        can_defer: false,
+        disposition: LayoutDisposition::Transparent,
     }
 }
 
@@ -2409,6 +2460,141 @@ impl<'a> Interpreter<'a> {
             })
     }
 
+    /// The nodes one control region owns at this position.
+    ///
+    /// An embedded region adopts the escaped view itself: nodes that escaped
+    /// an ill-nested region still have spans inside it, so they belong to a
+    /// branch body with its guards and dot bindings, and the adopted view
+    /// stops at the next branch boundary. Every following sibling starting
+    /// before the region ends is adopted too, and `index` advances past it.
+    ///
+    /// In-scope evaluation is bounded by the innermost region end; deferral
+    /// hands descendants past this region (but within the enclosing bound)
+    /// back to this region, and the rest to the enclosing one. Later branch
+    /// and post-region descendants retain the same container chain without
+    /// reevaluating its eager holes.
+    fn adopt_region_siblings<'n>(
+        &self,
+        region: &ControlRegion,
+        view: NodeView<'n>,
+        embedded_cursor: Option<usize>,
+        nodes: &[NodeView<'n>],
+        index: &mut usize,
+    ) -> Vec<Adopted<'n>> {
+        let mut adopted = Vec::new();
+        if let Some(next_cursor) = embedded_cursor {
+            let (_, branch) = branch_window(region, view.node.span_start());
+            adopted.push(Adopted {
+                view: NodeView {
+                    node: view.node,
+                    window: SourceWindow {
+                        start: branch.start.max(view.window.start),
+                        end: Some(view.window.end.map_or_else(
+                            || branch.end.unwrap_or(region.span.end),
+                            |end| end.min(branch.end.unwrap_or(region.span.end)),
+                        )),
+                    },
+                    omitted_control: Some(region.span.start),
+                    control_cursor: next_cursor,
+                },
+                defer_window: view.window,
+            });
+        }
+        while let Some(next) = nodes.get(*index + 1) {
+            if next.node.span_start() >= region.span.end {
+                break;
+            }
+            let (_, branch) = branch_window(region, next.node.span_start());
+            let in_scope = SourceWindow {
+                start: branch.start.max(next.window.start),
+                end: Some(next.window.end.map_or_else(
+                    || branch.end.unwrap_or(region.span.end),
+                    |end| end.min(branch.end.unwrap_or(region.span.end)),
+                )),
+            };
+            adopted.push(Adopted {
+                view: NodeView {
+                    node: next.node,
+                    window: in_scope,
+                    omitted_control: Some(
+                        next.omitted_control
+                            .map_or(region.span.start, |omitted| omitted.max(region.span.start)),
+                    ),
+                    control_cursor: self.cursor_after_control(*next, region.span.start),
+                },
+                defer_window: next.window,
+            });
+            *index += 1;
+        }
+        adopted
+    }
+
+    /// Descendants of *earlier* siblings that escaped forward into the
+    /// region (a branch contributing to a container opened before it). They
+    /// belong to branch bodies too; their in-place evaluation was bounded at
+    /// the region start.
+    fn escaped_forward_descendants<'n>(
+        &self,
+        region: &ControlRegion,
+        nodes_by_start: &HashMap<usize, NodeView<'n>>,
+    ) -> Vec<super::control::DeferredNodes<'n>> {
+        let mut escaped = Vec::new();
+        for prior_start in self
+            .body_facts
+            .adoption_plan
+            .crossing_priors
+            .get(&region.span.start)
+            .into_iter()
+            .flatten()
+        {
+            let Some(prior) = nodes_by_start.get(prior_start) else {
+                continue;
+            };
+            let mut chain = Vec::new();
+            super::control::collect_deferred(
+                prior.node,
+                SourceWindow {
+                    start: region.span.start,
+                    end: prior.window.end,
+                },
+                prior.omitted_control,
+                &self.body_facts.adoption_plan,
+                &self.evaluated_parent_shells,
+                &mut chain,
+                &mut escaped,
+            );
+        }
+        escaped
+    }
+
+    /// Joins the executed and skipped local states for a node that ran under
+    /// a partial `remaining` condition: the node's effect on locals holds
+    /// exactly where `remaining` does.
+    fn join_remaining_outcomes(&mut self, local_entry: &SymbolicLocalState, remaining: &Predicate) {
+        let executed = self.locals.clone();
+        let skipped = local_entry.clone();
+        self.locals.join_control_outcomes(
+            local_entry,
+            &[
+                crate::symbolic_local_state::ControlOutcome::new(
+                    TruthCondition::exact_with_memo(
+                        remaining.clone(),
+                        self.db.predicate_memo().as_ref(),
+                    ),
+                    executed,
+                ),
+                crate::symbolic_local_state::ControlOutcome::new(
+                    TruthCondition::exact_with_memo(
+                        remaining.clone().negated(),
+                        self.db.predicate_memo().as_ref(),
+                    ),
+                    skipped,
+                ),
+            ],
+            self.db.predicate_memo().as_ref(),
+        );
+    }
+
     pub(super) fn eval_node_list(&mut self, nodes: &[NodeView<'_>]) -> Contributions {
         // The precomputed path identifies the outermost escaped container for each control.
         // Ordering that container at the control opener keeps its complete ancestor chain and
@@ -2455,141 +2641,34 @@ impl<'a> Interpreter<'a> {
             self.push_predicate(remaining.clone());
             let mut next = Contributions::default();
             let control = match view.node {
-                Node::Control(region) => Some((region, false, view.control_cursor)),
-                _ => embedded_controls[index]
-                    .map(|(region, next_cursor)| (region, true, next_cursor)),
-            };
-            if let Some((region, embedded, next_cursor)) = control {
-                // Re-adopt nodes that escaped an ill-nested region: their spans still lie inside
-                // the region, so they belong to a branch body with its guards and dot bindings.
-                // The adopted view stops at the next branch boundary.
-                // Later branch and post-region descendants retain the same
-                // container chain without reevaluating its eager holes.
-                let mut adopted = Vec::new();
-                if embedded {
-                    let (_, branch) = branch_window(region, view.node.span_start());
-                    adopted.push(Adopted {
-                        view: NodeView {
-                            node: view.node,
-                            window: SourceWindow {
-                                start: branch.start.max(view.window.start),
-                                end: Some(view.window.end.map_or_else(
-                                    || branch.end.unwrap_or(region.span.end),
-                                    |end| end.min(branch.end.unwrap_or(region.span.end)),
-                                )),
-                            },
-                            omitted_control: Some(region.span.start),
-                            control_cursor: next_cursor,
-                        },
-                        defer_window: view.window,
-                    });
-                }
-                while let Some(next) = nodes.get(index + 1) {
-                    if next.node.span_start() < region.span.end {
-                        // In-scope evaluation is bounded by the innermost
-                        // region end; deferral hands descendants past this
-                        // region (but within the enclosing bound) back to
-                        // this region, and the rest to the enclosing one.
-                        let (_, branch) = branch_window(region, next.node.span_start());
-                        let in_scope = SourceWindow {
-                            start: branch.start.max(next.window.start),
-                            end: Some(next.window.end.map_or_else(
-                                || branch.end.unwrap_or(region.span.end),
-                                |end| end.min(branch.end.unwrap_or(region.span.end)),
-                            )),
-                        };
-                        adopted.push(Adopted {
-                            view: NodeView {
-                                node: next.node,
-                                window: in_scope,
-                                omitted_control: Some(
-                                    next.omitted_control.map_or(region.span.start, |omitted| {
-                                        omitted.max(region.span.start)
-                                    }),
-                                ),
-                                control_cursor: self.cursor_after_control(*next, region.span.start),
-                            },
-                            defer_window: next.window,
-                        });
-                        index += 1;
-                    } else {
-                        break;
-                    }
-                }
-                // Descendants of *earlier* siblings that escaped forward
-                // into the region (a branch contributing to a container
-                // opened before it) belong to branch bodies too; their
-                // in-place evaluation was bounded at the region start.
-                let mut escaped = Vec::new();
-                for prior_start in self
-                    .body_facts
-                    .adoption_plan
-                    .crossing_priors
-                    .get(&region.span.start)
-                    .into_iter()
+                Node::Control(region) => Some((region, None)),
+                _ => embedded_controls
+                    .get(index)
+                    .copied()
                     .flatten()
-                {
-                    let Some(prior) = nodes_by_start.get(prior_start) else {
-                        continue;
-                    };
-                    let mut chain = Vec::new();
-                    super::control::collect_deferred(
-                        prior.node,
-                        SourceWindow {
-                            start: region.span.start,
-                            end: prior.window.end,
-                        },
-                        prior.omitted_control,
-                        &self.body_facts.adoption_plan,
-                        &self.evaluated_parent_shells,
-                        &mut chain,
-                        &mut escaped,
-                    );
-                }
+                    .map(|(region, next_cursor)| (region, Some(next_cursor))),
+            };
+            if let Some((region, embedded_cursor)) = control {
+                let adopted =
+                    self.adopt_region_siblings(region, *view, embedded_cursor, nodes, &mut index);
+                let escaped = self.escaped_forward_descendants(region, &nodes_by_start);
                 next.extend(self.eval_control(region, &adopted, escaped));
+            } else if let Node::Output(action) = view.node {
+                let consumed = self.eval_output_with_lookahead(action, nodes, index, &mut next);
+                index += consumed;
             } else {
-                match view.node {
-                    Node::Output(action) => {
-                        let consumed =
-                            self.eval_output_with_lookahead(action, nodes, index, &mut next);
-                        index += consumed;
-                    }
-                    _ => {
-                        // Evaluation stops at the next control sibling's start:
-                        // descendants escaping into that region evaluate inside
-                        // its branches instead of unguarded in place.
-                        let mut bounded = *view;
-                        if let Some(region_start) = evaluation_starts.get(index + 1).copied() {
-                            bounded.window = bounded.window.with_end(region_start);
-                        }
-                        next.extend(self.eval_node(bounded));
-                    }
+                // Evaluation stops at the next control sibling's start:
+                // descendants escaping into that region evaluate inside
+                // its branches instead of unguarded in place.
+                let mut bounded = *view;
+                if let Some(region_start) = evaluation_starts.get(index + 1).copied() {
+                    bounded.window = bounded.window.with_end(region_start);
                 }
+                next.extend(self.eval_node(bounded));
             }
             self.rewind(entry_scope);
             if remaining != Predicate::True {
-                let executed = self.locals.clone();
-                let skipped = local_entry.clone();
-                self.locals.join_control_outcomes(
-                    &local_entry,
-                    &[
-                        crate::symbolic_local_state::ControlOutcome::new(
-                            TruthCondition::exact_with_memo(
-                                remaining.clone(),
-                                self.db.predicate_memo().as_ref(),
-                            ),
-                            executed,
-                        ),
-                        crate::symbolic_local_state::ControlOutcome::new(
-                            TruthCondition::exact_with_memo(
-                                remaining.clone().negated(),
-                                self.db.predicate_memo().as_ref(),
-                            ),
-                            skipped,
-                        ),
-                    ],
-                    self.db.predicate_memo().as_ref(),
-                );
+                self.join_remaining_outcomes(&local_entry, &remaining);
             }
             let exit_condition = next.loop_control.exit_condition();
             next.guard_all(&remaining, self.db.predicate_memo().as_ref());

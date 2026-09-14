@@ -7,7 +7,6 @@ use crate::eval_effect::{Effects, EvalResult, ProvenOperand, ProvenOperands};
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::function_semantics::ArgumentEvaluationMode;
-use crate::helper_meta::HelperOutputMeta;
 use helm_schema_core::Predicate;
 
 use super::eval_all_args;
@@ -319,7 +318,7 @@ fn project_index_value(
                     }
                     for path in identity_value_paths(Some(value)) {
                         for conjunction in
-                            super::strict_operands::operand_selection_conjunctions(&effects, &path)
+                            super::strict_operands::operand_selection_conjunctions(effects, &path)
                         {
                             let capture = crate::eval_effect::FailCapture {
                                 conjunction,
@@ -342,7 +341,7 @@ fn project_index_value(
                                 effects
                                     .local_output_meta
                                     .entry(next_path.clone())
-                                    .or_insert_with(HelperOutputMeta::default)
+                                    .or_default()
                                     .suppress_predicate_path(base_path.clone());
                             }
                         }

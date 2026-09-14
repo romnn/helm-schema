@@ -82,10 +82,10 @@ impl BoundValueContext {
 }
 
 pub(crate) fn parse_literal_list_range_expr(expr: &TemplateExpr) -> Option<(String, Vec<String>)> {
-    let (name, value) = match expr.deparen() {
-        TemplateExpr::VariableDefinition { name, value }
-        | TemplateExpr::Assignment { name, value } => (name, value),
-        _ => return None,
+    let (TemplateExpr::VariableDefinition { name, value }
+    | TemplateExpr::Assignment { name, value }) = expr.deparen()
+    else {
+        return None;
     };
     let variable = name.trim_start_matches('$');
     if variable.is_empty() {

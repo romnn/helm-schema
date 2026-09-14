@@ -30,49 +30,8 @@ pub(super) fn eval_ternary(
 ) -> EvalResult {
     let mut effects = Effects::default();
     let has_piped_condition = piped_condition.is_some();
-    let condition_truth;
-    let condition_reachability;
-    if let Some((condition, _is_direct_values_path)) = piped_condition {
-        // Derived Boolean values carry no raw identity, so this records a
-        // contract only for direct selectors and aliases of direct selectors.
-        record_strict_kind_result(
-            &condition,
-            "boolean",
-            function_semantics("ternary").nil_aborts(ArgumentEvaluationMode::Evaluated),
-            &mut effects,
-        );
-        condition_truth = condition.truth.clone();
-        condition_reachability = SelectionReachability::from_condition_with_memo(
-            &condition_truth,
-            SelectionPolarity::Truthy,
-            SelectionTruthSource::RawInput,
-            env.predicate_memo.as_ref(),
-        );
-        effects.merge(condition.effects.consumed_as_predicate());
-    } else if let Some(condition_arg) = args.get(2) {
-        let condition = eval_expr_with_helper_calls(condition_arg, env, resolver);
-        record_strict_kind_result(
-            &condition,
-            "boolean",
-            function_semantics("ternary").nil_aborts(ArgumentEvaluationMode::Evaluated),
-            &mut effects,
-        );
-        condition_truth = condition.truth.clone();
-        condition_reachability = SelectionReachability::from_condition_with_memo(
-            &condition_truth,
-            SelectionPolarity::Truthy,
-            SelectionTruthSource::RawInput,
-            env.predicate_memo.as_ref(),
-        );
-        effects.merge(condition.effects.consumed_as_predicate());
-    } else {
-        condition_truth = TruthCondition::Unknown;
-        condition_reachability =
-            SelectionReachability::approximate(None, SelectionTruthSource::RawInput);
-    }
-    // The strict-kind capture and predicate contracts above describe
-    // consuming the condition. Its returned identity never reaches the
-    // ternary's output slot.
+    let (condition_truth, condition_reachability) =
+        eval_ternary_condition(args, piped_condition, env, resolver, &mut effects);
     let mut values = Vec::new();
     let mut scalar_dispatches = Vec::new();
     let mut proven_operands = Vec::new();
@@ -140,6 +99,51 @@ pub(super) fn eval_ternary(
         return result.with_scalar_dispatch_with_memo(dispatch, env.predicate_memo.as_ref());
     }
     result
+}
+
+/// Resolves the ternary's condition — piped, or the trailing third argument —
+/// into the truth condition and the reachability its two branch slots select
+/// on.
+///
+/// The strict-kind capture and predicate contracts recorded here describe
+/// CONSUMING the condition, so the condition's effects merge into `effects`
+/// while its returned identity never reaches the ternary's output slot.
+fn eval_ternary_condition(
+    args: &[TemplateExpr],
+    piped_condition: Option<(EvalResult, bool)>,
+    env: &EvalEnv,
+    resolver: &mut impl HelperCallValueResolver,
+    effects: &mut Effects,
+) -> (TruthCondition, SelectionReachability) {
+    let condition = match piped_condition {
+        Some((condition, _is_direct_values_path)) => condition,
+        None => match args.get(2) {
+            Some(condition_arg) => eval_expr_with_helper_calls(condition_arg, env, resolver),
+            None => {
+                return (
+                    TruthCondition::Unknown,
+                    SelectionReachability::approximate(None, SelectionTruthSource::RawInput),
+                );
+            }
+        },
+    };
+    // Derived Boolean values carry no raw identity, so this records a
+    // contract only for direct selectors and aliases of direct selectors.
+    record_strict_kind_result(
+        &condition,
+        "boolean",
+        function_semantics("ternary").nil_aborts(ArgumentEvaluationMode::Evaluated),
+        effects,
+    );
+    let truth = condition.truth.clone();
+    let reachability = SelectionReachability::from_condition_with_memo(
+        &truth,
+        SelectionPolarity::Truthy,
+        SelectionTruthSource::RawInput,
+        env.predicate_memo.as_ref(),
+    );
+    effects.merge(condition.effects.consumed_as_predicate());
+    (truth, reachability)
 }
 
 pub(super) fn eval_type_is(
@@ -217,8 +221,7 @@ pub(crate) fn selected_type_test_truth(
 ) -> TruthCondition {
     if let Some(proven) = &result.proven_operands
         && (proven.has_unresolved
-            || proven.known.len() != 1
-            || proven.known[0].condition != Predicate::True)
+            || !matches!(proven.known.as_slice(), [only] if only.condition == Predicate::True))
     {
         let mut when_true = Vec::new();
         let mut when_false = Vec::new();

@@ -4,7 +4,7 @@ use helm_schema_ast::{
     Literal, TemplateExpr, literal_printf_format, render_printf_scalar_values,
     token_initial_printf_string_argument,
 };
-use helm_schema_core::{GuardDnf, GuardValue, Predicate, escape_regex_literal};
+use helm_schema_core::{GuardDnf, GuardValue, Predicate, PredicateMemo, escape_regex_literal};
 
 use crate::abstract_value::AbstractValue;
 use crate::eval_effect::{
@@ -133,6 +133,37 @@ pub(crate) fn eval_call_with_helper_calls(
     )
 }
 
+/// The element-wise sequence functions, at the arity where the single
+/// operand IS the sequence. `uniq` keeps its own shape: it takes the
+/// sequence either piped or as its one argument.
+fn is_sequence_invocation(function: &str, args: &[TemplateExpr], piped: bool) -> bool {
+    matches!(
+        function,
+        "first" | "last" | "initial" | "rest" | "compact" | "reverse" | "deepCopy" | "mustDeepCopy"
+    ) && args.len() + usize::from(piped) == 1
+        || matches!(function, "uniq" | "mustUniq") && (piped || args.len() == 1)
+}
+
+/// A string transform taking its subject from the pipe, or in the argument
+/// shape where the subject is the transform's own operand. The excluded
+/// fixed-arity forms carry the subject as a trailing argument and have
+/// dedicated evaluators.
+fn is_string_transform_invocation(function: &str, args: &[TemplateExpr], piped: bool) -> bool {
+    function_semantics(function).is_string_transform()
+        && (piped
+            || !matches!(
+                (function, args.len()),
+                ("repeat", 2)
+                    | (
+                        "regexReplaceAll"
+                            | "mustRegexReplaceAll"
+                            | "regexReplaceAllLiteral"
+                            | "mustRegexReplaceAllLiteral",
+                        3
+                    )
+            ))
+}
+
 fn eval_invocation(
     invocation: CallInvocation<'_>,
     env: &EvalEnv,
@@ -161,21 +192,7 @@ fn eval_invocation(
             )
             .with_truth_with_memo(Predicate::True, env.predicate_memo.as_ref());
         }
-        function
-            if matches!(
-                function,
-                "first"
-                    | "last"
-                    | "initial"
-                    | "rest"
-                    | "compact"
-                    | "reverse"
-                    | "deepCopy"
-                    | "mustDeepCopy"
-            ) && operand_count == 1
-                || matches!(function, "uniq" | "mustUniq")
-                    && (piped.is_some() || args.len() == 1) =>
-        {
+        function if is_sequence_invocation(function, args, piped.is_some()) => {
             return eval_sequence_invocation(function, args, piped.take(), env, resolver);
         }
         "eq" | "ne" if operand_count >= 2 => {
@@ -221,21 +238,7 @@ fn eval_invocation(
                 resolver,
             );
         }
-        function
-            if function_semantics(function).is_string_transform()
-                && (piped.is_some()
-                    || !matches!(
-                        (function, args.len()),
-                        ("repeat", 2)
-                            | (
-                                "regexReplaceAll"
-                                    | "mustRegexReplaceAll"
-                                    | "regexReplaceAllLiteral"
-                                    | "mustRegexReplaceAllLiteral",
-                                3
-                            )
-                    )) =>
-        {
+        function if is_string_transform_invocation(function, args, piped.is_some()) => {
             return eval_string_transform_invocation(
                 function,
                 args,
@@ -351,21 +354,18 @@ fn eval_sequence_invocation(
         // `copystructure` walks the operand with reflection and faults on a zero value, but any
         // non-nil kind copies, so the operand carries a presence claim and no kind claim at all.
         record_operand_presence_result(&operand, &mut result.effects);
+    } else if let Some(argument) = argument {
+        record_strict_kind_argument_result(
+            function,
+            argument,
+            &operand,
+            "array",
+            env,
+            &mut result.effects,
+        );
     } else {
-        if let Some(argument) = argument {
-            record_strict_kind_argument_result(
-                function,
-                argument,
-                &operand,
-                "array",
-                env,
-                &mut result.effects,
-            );
-        } else {
-            let nil_aborts =
-                function_semantics(function).nil_aborts(ArgumentEvaluationMode::Evaluated);
-            record_strict_kind_result(&operand, "array", nil_aborts, &mut result.effects);
-        }
+        let nil_aborts = function_semantics(function).nil_aborts(ArgumentEvaluationMode::Evaluated);
+        record_strict_kind_result(&operand, "array", nil_aborts, &mut result.effects);
     }
     result
 }
@@ -1320,6 +1320,18 @@ pub(crate) fn eval_pipeline_with_helper_calls(
     current
 }
 
+/// Every values path an operand's decision mentions, in either polarity: the
+/// paths whose state the surrounding selection or execution predicate is
+/// allowed to speak about.
+fn decided_value_paths(truth: &TruthCondition, memo: &PredicateMemo) -> BTreeSet<String> {
+    truth
+        .when_true()
+        .value_paths()
+        .union(&truth.when_false_with_memo(memo).value_paths())
+        .map(helm_schema_core::ValuesPath::encode)
+        .collect()
+}
+
 fn eval_short_circuit_args(
     args: &[TemplateExpr],
     previous_truthy: bool,
@@ -1386,16 +1398,7 @@ fn eval_short_circuit_args(
             } else {
                 "or operand selection"
             },
-            operand_truth
-                .when_true()
-                .value_paths()
-                .union(
-                    &operand_truth
-                        .when_false_with_memo(env.predicate_memo.as_ref())
-                        .value_paths(),
-                )
-                .map(helm_schema_core::ValuesPath::encode)
-                .collect(),
+            decided_value_paths(&operand_truth, env.predicate_memo.as_ref()),
         );
         if let Some(value) = result.value {
             values.push(value);
@@ -1416,16 +1419,7 @@ fn eval_short_circuit_args(
             } else {
                 "or operand execution"
             },
-            operand_truth
-                .when_true()
-                .value_paths()
-                .union(
-                    &operand_truth
-                        .when_false_with_memo(env.predicate_memo.as_ref())
-                        .value_paths(),
-                )
-                .map(helm_schema_core::ValuesPath::encode)
-                .collect(),
+            decided_value_paths(&operand_truth, env.predicate_memo.as_ref()),
         );
         if next_condition != Predicate::True {
             execution_predicates.insert(next_condition);

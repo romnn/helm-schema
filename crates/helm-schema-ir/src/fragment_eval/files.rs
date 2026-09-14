@@ -114,44 +114,17 @@ impl Interpreter<'_> {
         request: &StaticTemplateProgram,
     ) -> (Guarded<AbstractFragment>, Option<AbstractValue>) {
         let db = self.db;
-        let token: String;
-        let source_path: &str;
-        let source: &str;
-        let selection_predicate: Option<Predicate>;
-        let values_default_path: Option<&str>;
-        let textual_program: bool;
-        match &request.source {
-            StaticTemplateSource::File { path } => {
-                let Some(file_source) = db.file_source(path) else {
-                    return (Guarded::empty(), None);
-                };
-                token = format!("file:{path}");
-                source_path = path;
-                source = file_source;
-                selection_predicate = None;
-                values_default_path = None;
-                textual_program = false;
-            }
-            StaticTemplateSource::ValuesDefault { path, program } => {
-                token = format!("values-default:{path}:{program}");
-                source_path = path;
-                source = program;
-                selection_predicate = Some(Predicate::from(Guard::Eq {
-                    path: helm_schema_core::ValuesPath::parse(path),
-                    value: GuardValue::string(program),
-                }));
-                values_default_path = Some(path);
-                textual_program = true;
-            }
-            StaticTemplateSource::Constructed { program } => {
-                token = format!("constructed:{program}");
-                source_path = "@tpl";
-                source = program;
-                selection_predicate = None;
-                values_default_path = None;
-                textual_program = true;
-            }
-        }
+        let Some(ResolvedTemplateProgram {
+            token,
+            source_path,
+            source,
+            selection_predicate,
+            values_default_path,
+            textual_program,
+        }) = resolve_static_template_source(&request.source, db)
+        else {
+            return (Guarded::empty(), None);
+        };
         if self.inline_files.iter().any(|entry| entry == &token) {
             return (Guarded::empty(), None);
         }
@@ -220,6 +193,58 @@ impl Interpreter<'_> {
         } else {
             (fragment, None)
         }
+    }
+}
+
+/// One static template program's text plus the call-site facts its nested
+/// walk needs.
+struct ResolvedTemplateProgram<'a> {
+    /// Recursion token: a program already on the inline stack is not re-entered.
+    token: String,
+    source_path: &'a str,
+    source: &'a str,
+    /// Scopes the nested walk to the states that select this program.
+    selection_predicate: Option<Predicate>,
+    /// The values path whose default supplied the program, when one did.
+    values_default_path: Option<&'a str>,
+    /// A textual program projects a value; a file contributes a fragment.
+    textual_program: bool,
+}
+
+/// Resolves a request's source to its program text. A file request whose
+/// path the analysis db does not hold resolves to nothing.
+fn resolve_static_template_source<'a>(
+    source: &'a StaticTemplateSource,
+    db: &'a crate::analysis_db::IrAnalysisDb,
+) -> Option<ResolvedTemplateProgram<'a>> {
+    match source {
+        StaticTemplateSource::File { path } => Some(ResolvedTemplateProgram {
+            token: format!("file:{path}"),
+            source_path: path,
+            source: db.file_source(path)?,
+            selection_predicate: None,
+            values_default_path: None,
+            textual_program: false,
+        }),
+        StaticTemplateSource::ValuesDefault { path, program } => Some(ResolvedTemplateProgram {
+            token: format!("values-default:{path}:{program}"),
+            source_path: path,
+            source: program,
+            selection_predicate: Some(Predicate::from(Guard::Eq {
+                path: helm_schema_core::ValuesPath::parse(path),
+                value: GuardValue::string(program),
+            })),
+            values_default_path: Some(path),
+            textual_program: true,
+        }),
+        StaticTemplateSource::Constructed { program } => Some(ResolvedTemplateProgram {
+            token: format!("constructed:{program}"),
+            source_path: "@tpl",
+            source: program,
+            selection_predicate: None,
+            values_default_path: None,
+            textual_program: true,
+        }),
     }
 }
 

@@ -77,12 +77,22 @@ impl Interpreter<'_> {
         action: tree_sitter::Node<'_>,
         text: &str,
     ) -> Vec<(PathCondition, Vec<StringPart>)> {
-        if action.kind() == "range_action" {
-            return self.eval_inline_range(action, text);
+        match action.kind() {
+            "range_action" => self.eval_inline_range(action, text),
+            "with_action" => self.eval_inline_with(action, text),
+            _ => self.eval_inline_if(action, text),
         }
-        if action.kind() == "with_action" {
-            return self.eval_inline_with(action, text);
-        }
+    }
+
+    /// Evaluate an inline `{{ if }}…{{ else if }}…{{ else }}…{{ end }}`
+    /// region inside a scalar: every arm renders under its own condition
+    /// conjoined with the negation of each prior arm's, and the arms' local
+    /// states join back into the entry state.
+    fn eval_inline_if(
+        &mut self,
+        action: tree_sitter::Node<'_>,
+        text: &str,
+    ) -> Vec<(PathCondition, Vec<StringPart>)> {
         let predicate_memo = std::rc::Rc::clone(self.db.predicate_memo());
 
         let mut arm_specs = vec![(

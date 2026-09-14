@@ -188,6 +188,104 @@ pub(crate) fn drop_default_guard_subsumed_duplicates(uses: &mut Vec<ContractUse>
     uses.retain(|_| keep.next().unwrap_or(true));
 }
 
+/// Clears the keep flag of every row in one render-site bucket that a
+/// strictly stronger row of the same bucket subsumes.
+///
+/// A witness must carry provenance, agree on provenance with the row it
+/// subsumes, hold a superset of its predicates, and add either the source
+/// path's own truthiness or truthy parents of it.
+fn mark_bucket_subsumed_rows(
+    uses: &[ContractUse],
+    indices: &[usize],
+    predicates_by_index: &[Vec<usize>],
+    predicate_id_by_value: &HashMap<Predicate, usize>,
+    keep: &mut [bool],
+) {
+    let empty_predicates = BTreeSet::new();
+    // Posting lists stay immutable while rows are marked so a removed row
+    // remains available as a witness for later rows.
+    let postings = {
+        let mut postings: HashMap<usize, Vec<usize>> = HashMap::new();
+        for &index in indices {
+            for &predicate_id in predicates_by_index
+                .get(index)
+                .map(Vec::as_slice)
+                .unwrap_or_default()
+            {
+                postings.entry(predicate_id).or_default().push(index);
+            }
+        }
+        postings
+    };
+    let Some(first_index) = indices.first().copied() else {
+        return;
+    };
+    let Some(source_path) = uses
+        .get(first_index)
+        .map(|contract_use| &contract_use.source_expr)
+    else {
+        return;
+    };
+    let self_truthy = Predicate::from(Guard::Truthy {
+        path: source_path.clone(),
+    });
+    let self_truthy_id = predicate_id_by_value.get(&self_truthy).copied();
+
+    for &index in indices {
+        let Some(contract_use) = uses.get(index) else {
+            continue;
+        };
+        let predicates = contract_predicates(contract_use).unwrap_or(&empty_predicates);
+        let predicate_ids = predicates_by_index
+            .get(index)
+            .map(Vec::as_slice)
+            .unwrap_or_default();
+        let has_self_truthy =
+            self_truthy_id.is_some_and(|id| predicate_ids.binary_search(&id).is_ok());
+        if predicates.iter().any(
+            |predicate| matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(Guard::Default { path }) if path == source_path),
+        ) {
+            continue;
+        }
+
+        let candidates = if predicate_ids.is_empty() {
+            self_truthy_id
+                .and_then(|id| postings.get(&id))
+                .map(Vec::as_slice)
+                .unwrap_or_default()
+        } else {
+            predicate_ids
+                .iter()
+                .filter_map(|id| postings.get(id))
+                .min_by_key(|posting| posting.len())
+                .map(Vec::as_slice)
+                .unwrap_or_default()
+        };
+        let subsumed = candidates
+            .iter()
+            .filter_map(|&other_index| {
+                uses.get(other_index)
+                    .zip(predicates_by_index.get(other_index))
+            })
+            .filter(|(_, other_predicate_ids)| other_predicate_ids.len() > predicate_ids.len())
+            .any(|(other, other_predicate_ids)| {
+                !other.provenance.is_empty()
+                    && ((contract_use.provenance.is_empty() && contract_use.resource.is_some())
+                        || other.provenance == contract_use.provenance)
+                    && sorted_predicate_ids_are_subset(predicate_ids, other_predicate_ids)
+                    && ((!has_self_truthy
+                        && self_truthy_id
+                            .is_some_and(|id| other_predicate_ids.binary_search(&id).is_ok()))
+                        || contract_predicates(other).is_some_and(|other_predicates| {
+                            extra_predicates_are_truthy_parents(predicates, other_predicates)
+                        }))
+            });
+        if subsumed && let Some(flag) = keep.get_mut(index) {
+            *flag = false;
+        }
+    }
+}
+
 #[tracing::instrument(skip_all)]
 pub(crate) fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) {
     // Subsumption only compares rows sharing one render site.
@@ -236,89 +334,13 @@ pub(crate) fn drop_self_truthy_subsumed_duplicates(uses: &mut Vec<ContractUse>) 
         if indices.len() < 2 {
             continue;
         }
-
-        // Posting lists stay immutable while rows are marked so a removed row
-        // remains available as a witness for later rows.
-        let postings = {
-            let mut postings: HashMap<usize, Vec<usize>> = HashMap::new();
-            for &index in indices {
-                for &predicate_id in predicates_by_index
-                    .get(index)
-                    .map(Vec::as_slice)
-                    .unwrap_or_default()
-                {
-                    postings.entry(predicate_id).or_default().push(index);
-                }
-            }
-            postings
-        };
-        let Some(first_index) = indices.first().copied() else {
-            continue;
-        };
-        let Some(source_path) = uses
-            .get(first_index)
-            .map(|contract_use| &contract_use.source_expr)
-        else {
-            continue;
-        };
-        let self_truthy = Predicate::from(Guard::Truthy {
-            path: source_path.clone(),
-        });
-        let self_truthy_id = predicate_id_by_value.get(&self_truthy).copied();
-
-        for &index in indices {
-            let Some(contract_use) = uses.get(index) else {
-                continue;
-            };
-            let predicates = contract_predicates(contract_use).unwrap_or(&empty_predicates);
-            let predicate_ids = predicates_by_index
-                .get(index)
-                .map(Vec::as_slice)
-                .unwrap_or_default();
-            let has_self_truthy =
-                self_truthy_id.is_some_and(|id| predicate_ids.binary_search(&id).is_ok());
-            if predicates.iter().any(
-                |predicate| matches!(predicate.kind(), helm_schema_core::PredicateKind::Guard(Guard::Default { path }) if path == source_path),
-            ) {
-                continue;
-            }
-
-            let candidates = if predicate_ids.is_empty() {
-                self_truthy_id
-                    .and_then(|id| postings.get(&id))
-                    .map(Vec::as_slice)
-                    .unwrap_or_default()
-            } else {
-                predicate_ids
-                    .iter()
-                    .filter_map(|id| postings.get(id))
-                    .min_by_key(|posting| posting.len())
-                    .map(Vec::as_slice)
-                    .unwrap_or_default()
-            };
-            let subsumed = candidates
-                .iter()
-                .filter_map(|&other_index| {
-                    uses.get(other_index)
-                        .zip(predicates_by_index.get(other_index))
-                })
-                .filter(|(_, other_predicate_ids)| other_predicate_ids.len() > predicate_ids.len())
-                .any(|(other, other_predicate_ids)| {
-                    !other.provenance.is_empty()
-                        && ((contract_use.provenance.is_empty() && contract_use.resource.is_some())
-                            || other.provenance == contract_use.provenance)
-                        && sorted_predicate_ids_are_subset(predicate_ids, other_predicate_ids)
-                        && ((!has_self_truthy
-                            && self_truthy_id
-                                .is_some_and(|id| other_predicate_ids.binary_search(&id).is_ok()))
-                            || contract_predicates(other).is_some_and(|other_predicates| {
-                                extra_predicates_are_truthy_parents(predicates, other_predicates)
-                            }))
-                });
-            if subsumed && let Some(flag) = keep.get_mut(index) {
-                *flag = false;
-            }
-        }
+        mark_bucket_subsumed_rows(
+            uses,
+            indices,
+            &predicates_by_index,
+            &predicate_id_by_value,
+            &mut keep,
+        );
     }
 
     let mut index = 0;

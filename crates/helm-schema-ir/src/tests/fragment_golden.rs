@@ -6,8 +6,10 @@
 
 use crate::SymbolicIrContext;
 use crate::fragment_eval::dump_document;
+use color_eyre::eyre;
 use helm_schema_ast::DefineIndex;
 use indoc::indoc;
+use std::fmt::Write as _;
 use test_util::prelude::sim_assert_eq;
 
 fn assert_fragment_dump(source: &str, helpers: &str, expected: &str) {
@@ -65,7 +67,7 @@ fn branchy_mapping_merges_guarded_entry_arms() {
 /// An embedded control scopes only the entries inside its source window.
 #[test]
 fn embedded_control_preserves_before_inside_after_order() {
-    let source = indoc! {r#"
+    let source = indoc! {r"
         item:
           before: {{ .Values.before }}
           {{- if .Values.outer }}
@@ -77,7 +79,7 @@ fn embedded_control_preserves_before_inside_after_order() {
             after: {{ .Values.branchAfter }}
           {{- end }}
           after: {{ .Values.after }}
-    "#};
+    "};
     let expected = indoc! {r#"
         when always:
           mapping:
@@ -112,14 +114,14 @@ fn embedded_control_preserves_before_inside_after_order() {
 /// Nested controls jointly scope a container that escapes both regions.
 #[test]
 fn nested_embedded_controls_conjoin_their_conditions() {
-    let source = indoc! {r#"
+    let source = indoc! {r"
         {{- if .Values.outer }}
         {{- if .Values.inner }}
         - {{ .Values.value }}
         {{- end }}
         {{- end }}
-    "#};
-    let expected = indoc! {r#"
+    "};
+    let expected = indoc! {r"
         when always:
           sequence:
             item:
@@ -128,7 +130,7 @@ fn nested_embedded_controls_conjoin_their_conditions() {
         reads:
           outer [truthy(outer)]
           inner [truthy(inner), truthy(outer)]
-    "#};
+    "};
     assert_fragment_dump(source, "", expected);
 }
 
@@ -174,14 +176,14 @@ fn double_rotation_adopts_the_shared_escaped_item_once() {
 
 /// A shared escaped container advances through a wide control chain once per control.
 #[test]
-fn shared_container_advances_through_wide_control_chain() {
+fn shared_container_advances_through_wide_control_chain() -> eyre::Result<()> {
     let mut source = String::new();
     for index in 0..64 {
-        source.push_str(&format!("{{{{- if .Values.g{index} }}}}\n"));
+        writeln!(source, "{{{{- if .Values.g{index} }}}}")?;
     }
     source.push_str("- name: fixed\n");
     for index in 0..128 {
-        source.push_str(&format!("  child{index}: fixed\n"));
+        writeln!(source, "  child{index}: fixed")?;
     }
     for _ in 0..64 {
         source.push_str("{{- else }}\n{{- end }}\n");
@@ -196,9 +198,10 @@ fn shared_container_advances_through_wide_control_chain() {
         guards.join(" && "),
     );
     for index in 0..128 {
-        expected.push_str(&format!(
+        write!(
+            expected,
             "          key \"child{index}\":\n            when always:\n              scalar [text{{\"fixed\"}}]\n"
-        ));
+        )?;
     }
     expected.push_str("reads:\n");
     for index in 0..64 {
@@ -206,10 +209,11 @@ fn shared_container_advances_through_wide_control_chain() {
             .map(|guard| format!("truthy(g{guard})"))
             .collect::<Vec<_>>();
         read_guards.sort();
-        expected.push_str(&format!("  g{index} [{}]\n", read_guards.join(", ")));
+        writeln!(expected, "  g{index} [{}]", read_guards.join(", "))?;
     }
 
     assert_fragment_dump(&source, "", &expected);
+    Ok(())
 }
 
 /// Sibling adoption does not re-enter the control that performed it.
@@ -252,7 +256,7 @@ fn sibling_adoption_advances_the_owned_control_boundary() {
 /// Deferred branch content does not re-enter an already-owned outer control.
 #[test]
 fn deferred_branch_carries_the_owned_control_boundary() {
-    let source = indoc! {r#"
+    let source = indoc! {r"
         data:
         {{- if .Values.a }}
           key:
@@ -263,7 +267,7 @@ fn deferred_branch_carries_the_owned_control_boundary() {
         {{- else }}
               x: {{ .Values.x }}
         {{- end }}
-    "#};
+    "};
     let expected = indoc! {r#"
         when always:
           mapping:
@@ -295,7 +299,7 @@ fn deferred_branch_carries_the_owned_control_boundary() {
 /// A post-region child follows a conditional parent only on paths that render its header.
 #[test]
 fn deferred_child_bypasses_an_absent_parent_shell() {
-    let source = indoc! {r#"
+    let source = indoc! {r"
         data:
         {{- if .Values.enabled }}
           parent:
@@ -303,7 +307,7 @@ fn deferred_child_bypasses_an_absent_parent_shell() {
         {{- else }}
         {{- end }}
             after: {{ .Values.after }}
-    "#};
+    "};
     let expected = indoc! {r#"
         when always:
           mapping:
@@ -333,7 +337,7 @@ fn deferred_child_bypasses_an_absent_parent_shell() {
 /// Deferred content falls back through adjacent conditional mapping shells in source order.
 #[test]
 fn deferred_child_uses_the_latest_rendered_adjacent_mapping_shell() {
-    let source = indoc! {r#"
+    let source = indoc! {r"
         data:
         {{ if .Values.a }}
           first:
@@ -342,7 +346,7 @@ fn deferred_child_uses_the_latest_rendered_adjacent_mapping_shell() {
           second:
         {{ end }}
             after: fixed
-    "#};
+    "};
     let expected = indoc! {r#"
         when always:
           mapping:
@@ -374,7 +378,7 @@ fn deferred_child_uses_the_latest_rendered_adjacent_mapping_shell() {
 /// Deferred content retains the earlier arm's trailing open mapping chain.
 #[test]
 fn deferred_child_uses_each_arm_trailing_open_mapping_chain() {
-    let source = indoc! {r#"
+    let source = indoc! {r"
         data:
         {{ if .Values.x }}
           first:
@@ -383,7 +387,7 @@ fn deferred_child_uses_each_arm_trailing_open_mapping_chain() {
           second:
         {{ end }}
               after: fixed
-    "#};
+    "};
     let expected = indoc! {r#"
         when always:
           mapping:
@@ -495,7 +499,7 @@ fn later_arm_child_uses_an_earlier_open_sibling_shell() {
 /// Equal-indent items remain inside each arm's trailing open mapping shell.
 #[test]
 fn deferred_item_uses_each_arm_trailing_open_mapping_chain() {
-    let source = indoc! {r#"
+    let source = indoc! {r"
         containers:
         {{ if .Values.x }}
         - name: a
@@ -505,7 +509,7 @@ fn deferred_item_uses_each_arm_trailing_open_mapping_chain() {
           envFrom:
         {{ end }}
           - name: {{ .Values.entryName }}
-    "#};
+    "};
     let expected = indoc! {r#"
         when always:
           mapping:
@@ -871,7 +875,7 @@ fn dynamic_action_line_key_uses_its_rendered_indent() {
 
 /// Adjacent embedded controls retain independent source windows at scale.
 #[test]
-fn adjacent_embedded_controls_use_independent_crossing_sets() {
+fn adjacent_embedded_controls_use_independent_crossing_sets() -> eyre::Result<()> {
     let mut source = "data:\n".to_string();
     let mut expected = indoc! {r#"
         when always:
@@ -883,17 +887,20 @@ fn adjacent_embedded_controls_use_independent_crossing_sets() {
     .to_string();
     let mut reads = "reads:\n".to_string();
     for index in 0..64 {
-        source.push_str(&format!(
+        write!(
+            source,
             "{{{{- if .Values.g{index} }}}}\n  item{index}:\n    leaf{index}: fixed\n{{{{- else }}}}\n{{{{- end }}}}\n"
-        ));
-        expected.push_str(&format!(
+        )?;
+        write!(
+            expected,
             "          key \"item{index}\":\n            when truthy(g{index}):\n              mapping:\n                key \"leaf{index}\":\n                  when always:\n                    scalar [text{{\"fixed\"}}]\n"
-        ));
-        reads.push_str(&format!("  g{index} [truthy(g{index})]\n"));
+        )?;
+        writeln!(reads, "  g{index} [truthy(g{index})]")?;
     }
     expected.push_str(&reads);
 
     assert_fragment_dump(&source, "", &expected);
+    Ok(())
 }
 
 /// A range rendering scalar items splices the iterated list at the container
