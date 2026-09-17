@@ -32,11 +32,36 @@ pub(crate) struct BindingValueMetadata {
 /// `metadata` holds the value facts that leaf owns. They travel as one payload
 /// because a transform can keep a source path while changing the value, so a
 /// consumer that reads one without the others reads a value that never existed.
+/// The fields are private for exactly that reason: a consumer reaches them
+/// through the leaf, never apart from it.
 #[derive(Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
 pub(crate) struct BindingValue {
-    pub(crate) value: AbstractValue,
-    pub(crate) mode: BindingEvaluationMode,
-    pub(crate) metadata: BindingValueMetadata,
+    value: AbstractValue,
+    mode: BindingEvaluationMode,
+    metadata: BindingValueMetadata,
+}
+
+impl BindingValue {
+    /// The leaf's provenance and shape, exactly as the binding recorded it.
+    ///
+    /// The transform program in [`Self::metadata`] is NOT folded in here:
+    /// stamping it onto the value (`AbstractValue::with_output_meta`) turns a
+    /// raw values path into an `OutputPath` that claims input identity, and
+    /// every requirement lane then reads a derivation the chart never made
+    /// (a `toString` local lost its stringified placement, a `typeIs` over
+    /// `default .x .y` lost the fail validator on `y`). Consumers that need
+    /// the program read it beside the value, through the metadata.
+    pub(crate) fn value(&self) -> &AbstractValue {
+        &self.value
+    }
+
+    pub(crate) fn mode(&self) -> BindingEvaluationMode {
+        self.mode
+    }
+
+    pub(crate) fn metadata(&self) -> &BindingValueMetadata {
+        &self.metadata
+    }
 }
 
 /// How a leaf's selection is known.
@@ -95,6 +120,40 @@ impl<'a> BindingLeaves<'a> {
         proven.sort_unstable();
         proven.dedup();
         proven
+    }
+
+    /// The value lane: every value this read can select, in decision order,
+    /// joined as one choice, with `Unknown` appended iff some branch's VALUE
+    /// is unmodelled.
+    ///
+    /// A leaf whose selection is not provable is still a value the chart
+    /// produces, so deleting it narrows the read to a claim the chart never
+    /// made; scoping an obligation by a selection nobody proved is the
+    /// opposite error, which is why the strict lanes walk [`Self::proven`]
+    /// instead. An undecidable DECISION over known values adds no third
+    /// value: both branches are already candidates here.
+    ///
+    /// The join erases each leaf's selection, boundary and transform program
+    /// by construction; a consumer that needs those walks `known`.
+    pub(crate) fn joined_value(&self) -> Option<AbstractValue> {
+        let mut values = Vec::with_capacity(self.known.len() + usize::from(self.has_unknown_value));
+        for leaf in &self.known {
+            values.push(leaf.value.value().clone());
+        }
+        if self.has_unknown_value {
+            values.push(AbstractValue::Unknown);
+        }
+        AbstractValue::choice(values)
+    }
+
+    /// Whether any candidate crossed the Go evaluation boundary, including an
+    /// unmodelled branch whose boundary cannot be named.
+    pub(crate) fn has_evaluated_candidate(&self) -> bool {
+        self.has_unknown_value
+            || self
+                .known
+                .iter()
+                .any(|leaf| leaf.value.mode() == BindingEvaluationMode::Evaluated)
     }
 }
 
@@ -289,29 +348,15 @@ impl LocalBinding {
         leaves
     }
 
-    pub(crate) fn value(&self) -> Option<AbstractValue> {
-        fn collect(binding: &LocalBinding, values: &mut Vec<AbstractValue>) {
-            match binding.0.as_ref() {
-                BindingNode::Value(leaf) => values.push(leaf.value.clone()),
-                BindingNode::Select {
-                    when_true,
-                    when_false,
-                    ..
-                } => {
-                    collect(when_true, values);
-                    collect(when_false, values);
-                }
-                BindingNode::Unknown => values.push(AbstractValue::Unknown),
-            }
-        }
-
-        let mut values = Vec::new();
-        collect(self, &mut values);
-        AbstractValue::choice(values)
+    /// The condition-erased join of every reachable leaf: the same value
+    /// lane a read of this binding reports, so a context built from bindings
+    /// and a read of one binding cannot disagree.
+    pub(crate) fn value(&self, memo: &PredicateMemo) -> Option<AbstractValue> {
+        self.leaves(memo).joined_value()
     }
 
-    pub(crate) fn paths(&self) -> BTreeSet<helm_schema_core::ValuesPath> {
-        self.value()
+    pub(crate) fn paths(&self, memo: &PredicateMemo) -> BTreeSet<helm_schema_core::ValuesPath> {
+        self.value(memo)
             .map_or_else(BTreeSet::new, |value| value.paths())
     }
 
@@ -366,18 +411,6 @@ impl LocalBinding {
             );
         }
         joined
-    }
-
-    pub(crate) fn has_evaluated_value(&self) -> bool {
-        match self.0.as_ref() {
-            BindingNode::Value(leaf) => leaf.mode == BindingEvaluationMode::Evaluated,
-            BindingNode::Select {
-                when_true,
-                when_false,
-                ..
-            } => when_true.has_evaluated_value() || when_false.has_evaluated_value(),
-            BindingNode::Unknown => true,
-        }
     }
 }
 
@@ -485,16 +518,22 @@ impl EvalEnv {
         locals: &HashMap<String, LocalBinding>,
         current_dot: Option<&AbstractValue>,
         dot_binding_mode: BindingEvaluationMode,
+        predicate_memo: &Rc<PredicateMemo>,
     ) -> Self {
         Self {
             dot: current_dot.cloned(),
             dot_binding_mode,
             root_fields: locals
                 .iter()
-                .filter_map(|(name, binding)| binding.value().map(|value| (name.clone(), value)))
+                .filter_map(|(name, binding)| {
+                    binding
+                        .value(predicate_memo)
+                        .map(|value| (name.clone(), value))
+                })
                 .collect(),
             locals: locals.clone(),
             allow_field_root_lookup: false,
+            predicate_memo: Rc::clone(predicate_memo),
             ..Self::default()
         }
     }

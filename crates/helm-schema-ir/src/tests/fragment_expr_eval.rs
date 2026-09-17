@@ -17,6 +17,12 @@ use crate::helper_meta::HelperOutputMeta;
 use crate::scalar_value::{ScalarRenderPart, ScalarValue, ScalarValueDispatch, TruthCondition};
 use test_util::prelude::sim_assert_eq;
 
+/// A context read outside any analysis has no shared memo; each such read
+/// normalises its own predicates.
+fn fresh_memo() -> std::rc::Rc<helm_schema_core::PredicateMemo> {
+    std::rc::Rc::new(helm_schema_core::PredicateMemo::new())
+}
+
 fn conditional_path(value: &str) -> helm_schema_core::ValuesPath {
     helm_schema_core::ValuesPath::parse(value)
 }
@@ -786,7 +792,7 @@ fn outer_expr_bare_dot_preserves_root_context_identity() {
     let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
 
     sim_assert_eq!(
-        have: context_value_from_outer_expr(&expr, None, None, Some(&root_bindings), None),
+        have: context_value_from_outer_expr(&expr, None, None, Some(&root_bindings), None, &fresh_memo()),
         want: Some(AbstractValue::RootContext)
     );
 }
@@ -796,7 +802,7 @@ fn outer_expr_bare_dot_keeps_the_implicit_values_root() {
     let expr = single_expr(".");
 
     sim_assert_eq!(
-        have: context_value_from_outer_expr(&expr, None, None, Some(&HashMap::new()), None),
+        have: context_value_from_outer_expr(&expr, None, None, Some(&HashMap::new()), None, &fresh_memo()),
         want: Some(AbstractValue::RootContext)
     );
 }
@@ -1996,7 +2002,7 @@ fn outer_expr_root_variable_preserves_root_context_identity() {
     let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
 
     sim_assert_eq!(
-        have: context_value_from_outer_expr(&expr, None, None, Some(&root_bindings), None),
+        have: context_value_from_outer_expr(&expr, None, None, Some(&root_bindings), None, &fresh_memo()),
         want: Some(AbstractValue::RootContext)
     );
 }
@@ -2008,7 +2014,7 @@ fn outer_expr_fragment_local_selector_uses_shared_expression_eval() {
     let bindings = direct_local_bindings(&fragment_locals);
 
     sim_assert_eq!(
-        have: context_value_from_outer_expr(&expr, Some(&bindings), None, None, None),
+        have: context_value_from_outer_expr(&expr, Some(&bindings), None, None, None, &fresh_memo()),
         want: Some(AbstractValue::Dict(BTreeMap::from([(
             "name".to_string(),
             values_path!("serviceAccount.name"),
@@ -2502,6 +2508,7 @@ fn json_serialized_helper_preserves_structured_root_value_for_decoding() {
             None,
             None,
             None,
+            &fresh_memo(),
         ),
         want: Some(AbstractValue::Dict(BTreeMap::from([(
             "doc".to_string(),

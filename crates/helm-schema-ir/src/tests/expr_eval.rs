@@ -1014,7 +1014,10 @@ fn set_call_updates_local_key_with_assigned_literal() {
     assert!(apply_local_set_mutations_expr(&expr, &mut env));
 
     sim_assert_eq!(
-        have: env.locals.get("config").and_then(LocalBinding::value),
+        have: env
+            .locals
+            .get("config")
+            .and_then(|binding| binding.value(env.predicate_memo.as_ref())),
         want: Some(AbstractValue::Overlay {
             entries: BTreeMap::from([(
                 "name".to_string(),
@@ -1046,7 +1049,10 @@ fn set_call_inside_throwaway_assignment_updates_local_key() {
     assert!(apply_local_set_mutations_expr(&expr, &mut env));
 
     sim_assert_eq!(
-        have: env.locals.get("config").and_then(LocalBinding::value),
+        have: env
+            .locals
+            .get("config")
+            .and_then(|binding| binding.value(env.predicate_memo.as_ref())),
         want: Some(AbstractValue::Overlay {
             entries: BTreeMap::from([(
                 "name".to_string(),

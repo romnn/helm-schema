@@ -193,9 +193,13 @@ fn chart_static_root_strings(chart: &ChartYaml) -> BTreeMap<Vec<String>, String>
         ("Icon", chart.icon.as_ref()),
         ("Type", chart.chart_type.as_ref()),
     ] {
-        if let Some(value) = value {
-            strings.insert(vec!["Chart".to_string(), field.to_string()], value.clone());
-        }
+        // Helm reads these through `chart.Metadata`'s Go `string` fields, so
+        // an absent key renders as the zero value `""` and still satisfies
+        // `typeIs "string"`. Dropping it would make the read unresolved.
+        strings.insert(
+            vec!["Chart".to_string(), field.to_string()],
+            value.cloned().unwrap_or_default(),
+        );
     }
     for (key, value) in chart.annotations.as_ref().into_iter().flatten() {
         strings.insert(

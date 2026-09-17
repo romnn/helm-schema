@@ -12,7 +12,7 @@ use helm_schema_core::{Predicate, ValuesPath};
 use super::serialization::record_total_conversion_effects;
 use super::value_facts::{identity_range_key_paths, identity_value_paths, value_paths};
 
-fn record_proven_operand_effects(
+pub(super) fn record_proven_operand_effects(
     operand: &EvalResult,
     fallback_mode: ArgumentEvaluationMode,
     effects: &mut Effects,
@@ -972,10 +972,6 @@ fn record_comparable_kind_result_one(
     }
 }
 
-#[expect(
-    clippy::too_many_lines,
-    reason = "keeping this semantic operation together makes its state transitions easier to audit"
-)]
 pub(super) fn record_collection_item_kind_result(
     operand: &EvalResult,
     schema_type: &str,

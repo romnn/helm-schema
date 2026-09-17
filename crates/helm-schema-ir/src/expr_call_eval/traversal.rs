@@ -355,7 +355,24 @@ fn project_index_value(
     AbstractValue::choice(values)
 }
 
+/// Records that `get`'s map parameter must host members wherever it is read.
+///
+/// The obligation belongs to ONE selected value, so it walks the operand's
+/// leaves: a leaf whose selection is not provable still contributes its value
+/// to the read, but nothing the chart can be held to. bjw-s `common` binds
+/// `$values := .Values.service` and then overwrites it from `.ObjectValues`,
+/// so the whole-operand read placed the overwritten-away branch's
+/// `service.ports` on every document — a service literally named `ports`.
 pub(super) fn record_member_host_access(operand: &EvalResult, effects: &mut Effects) {
+    super::strict_operands::record_proven_operand_effects(
+        operand,
+        ArgumentEvaluationMode::Evaluated,
+        effects,
+        |leaf, _, leaf_effects| record_member_host_access_one(leaf, leaf_effects),
+    );
+}
+
+fn record_member_host_access_one(operand: &EvalResult, effects: &mut Effects) {
     for (path, shadow) in layered_strict_operand_identity_paths(operand) {
         for mut conjunction in strict_operand_selection_conjunctions(operand, &path) {
             conjunction.extend(shadow.iter().cloned());
@@ -455,36 +472,49 @@ pub(super) fn path_segment_options(
 ) -> Option<Vec<PathSegmentOption>> {
     match expr.deparen() {
         TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
-            Some(vec![PathSegmentOption {
-                segments: vec![value.clone()],
-                integer_index: false,
-            }])
+            member_segment_options(std::iter::once(value.clone()))
         }
         TemplateExpr::Literal(Literal::Int(value)) => Some(vec![PathSegmentOption {
             segments: vec![value.to_string()],
             integer_index: true,
         }]),
-        _ => {
-            let strings = evaluated_value
+        // An evaluated key selects exactly ONE member: `index`/`get` treat
+        // the string atomically, so a dotted key stays a single (escaped)
+        // segment.
+        _ => member_segment_options(
+            evaluated_value
                 .map(AbstractValue::strings)
-                .unwrap_or_default();
-            if strings.is_empty() {
-                None
-            } else {
-                // An evaluated key selects exactly ONE member: `index`/`get`
-                // treat the string atomically, so a dotted key stays a
-                // single (escaped) segment.
-                let mut options = Vec::new();
-                for value in strings {
-                    options.push(PathSegmentOption {
-                        segments: vec![value.clone()],
-                        integer_index: false,
-                    });
-                }
-                options.sort_by(|left, right| left.segments.cmp(&right.segments));
-                options.dedup();
-                Some(options)
-            }
-        }
+                .unwrap_or_default()
+                .into_iter(),
+        ),
     }
+}
+
+/// The member each candidate key selects, or `None` when no candidate names a
+/// member this analyzer can represent.
+///
+/// The empty key is dropped rather than appended, because `ValuesPath` has no
+/// spelling for a member named `""` and appending nothing yields the RECEIVER
+/// — a `get`/`index` that selects no member would otherwise come back as the
+/// map itself, and every later read would navigate and constrain the map's own
+/// path. bjw-s `common` reaches this with `$result := ""` surviving into the
+/// key candidates of `get .Values.service (include "…service.primary" .)`,
+/// where the collapse claimed a service literally named `ports`.
+fn member_segment_options(keys: impl Iterator<Item = String>) -> Option<Vec<PathSegmentOption>> {
+    let mut options = Vec::new();
+    for key in keys {
+        if key.is_empty() {
+            continue;
+        }
+        options.push(PathSegmentOption {
+            segments: vec![key],
+            integer_index: false,
+        });
+    }
+    if options.is_empty() {
+        return None;
+    }
+    options.sort_by(|left, right| left.segments.cmp(&right.segments));
+    options.dedup();
+    Some(options)
 }

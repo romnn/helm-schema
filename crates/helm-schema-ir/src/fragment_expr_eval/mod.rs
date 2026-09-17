@@ -2,8 +2,10 @@ mod bound_helper_resolver;
 mod context;
 
 use std::collections::{BTreeMap, HashMap, HashSet};
+use std::rc::Rc;
 
 use helm_schema_ast::TemplateExpr;
+use helm_schema_core::PredicateMemo;
 
 pub(crate) use context::FragmentEvalContext;
 
@@ -22,10 +24,11 @@ pub(crate) fn context_value_from_outer_expr(
     >,
     outer: Option<&HashMap<String, AbstractValue>>,
     current_dot: Option<&AbstractValue>,
+    predicate_memo: &Rc<PredicateMemo>,
 ) -> Option<AbstractValue> {
     if matches!(expr, TemplateExpr::Variable(var) if var.is_empty()) {
         if let Some(binding) = outer_locals.and_then(|locals| locals.get("")) {
-            return binding.value();
+            return binding.value(predicate_memo);
         }
         return Some(AbstractValue::RootContext);
     }
@@ -53,6 +56,7 @@ pub(crate) fn context_value_from_outer_expr(
         locals: outer_locals.cloned().unwrap_or_default(),
         local_output_meta: outer_output_meta.cloned().unwrap_or_default(),
         allow_field_root_lookup: true,
+        predicate_memo: Rc::clone(predicate_memo),
         ..EvalEnv::default()
     };
     let result = eval_expr(expr, &env);
@@ -92,6 +96,7 @@ pub(crate) fn fragment_context_value(
         Some(template_output_meta),
         Some(root_bindings),
         current_dot_fragment,
+        fragment_context.analysis_db.predicate_memo(),
     )
     .or_else(|| {
         fragment_context.fragment_value_from_expr_with_meta(

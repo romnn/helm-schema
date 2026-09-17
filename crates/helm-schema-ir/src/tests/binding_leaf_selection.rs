@@ -9,10 +9,9 @@ use crate::eval_effect::CaptureKind;
 use crate::eval_env::{BindingDecision, BindingEvaluationMode, EvalEnv, LocalBinding};
 use crate::expr_eval::eval_expr;
 use crate::scalar_value::TruthCondition;
-use color_eyre::eyre;
 use helm_schema_ast::{TemplateExpr, parse_action_expressions};
 use helm_schema_core::Predicate;
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use test_util::prelude::sim_assert_eq;
 
 fn single_expr(action: &str) -> TemplateExpr {
@@ -58,7 +57,7 @@ fn member_host_captures(result: &crate::eval_effect::EvalResult) -> usize {
 /// `first.child`, or something the analyzer cannot model" into "this member
 /// IS `first.child`", which is a closed claim the chart never made.
 #[test]
-fn selector_read_of_an_unresolved_binding_keeps_the_unknown_remainder() -> eyre::Result<()> {
+fn selector_read_of_an_unresolved_binding_keeps_the_unknown_remainder() {
     let mut env = EvalEnv::default();
     env.locals.insert(
         "cfg".to_string(),
@@ -81,13 +80,109 @@ fn selector_read_of_an_unresolved_binding_keeps_the_unknown_remainder() -> eyre:
         want: Some(true),
         "the member read must record the same remainder: {member:#?}",
     );
-    Ok(())
+}
+
+/// A read whose decision proves one arm reports that arm plus the
+/// unresolved remainder, and does NOT attribute the unprovable sibling's
+/// identity.
+///
+/// `Partial { when_true: truthy(flag), when_false: False }` is what
+/// `or .Values.flag (include "unknown" .)` produces: the decision names WHEN
+/// the true arm is taken and can say nothing about the other. Naming the
+/// sibling anyway does not widen the read, it TIGHTENS it: a fragment sink
+/// consumes the value lane as a conjunction, so every identity in the join
+/// is bound at the document position it reaches and two identities reaching
+/// incompatible positions on mutually exclusive arms become one obligation
+/// no document satisfies. `Unknown` says the same "something else can reach
+/// here" without minting an obligation the chart never made.
+#[test]
+fn mixed_selection_read_reports_the_proven_arm_and_the_unresolved_remainder() {
+    let mut env = EvalEnv::default();
+    env.locals.insert(
+        "cfg".to_string(),
+        LocalBinding::select(
+            BindingDecision::new(TruthCondition::Partial {
+                when_true: Predicate::truthy_path("flag"),
+                when_false: Predicate::False,
+            }),
+            LocalBinding::direct(values_path!("proven")),
+            LocalBinding::direct(values_path!("unproven")),
+        ),
+    );
+
+    let read = eval_expr(&single_expr("$cfg"), &env);
+
+    sim_assert_eq!(
+        have: read.value.as_ref().map(AbstractValue::paths),
+        want: Some(BTreeSet::from([capture_path("proven")])),
+        "the unprovable sibling contributes width, not identity: {read:#?}",
+    );
+    sim_assert_eq!(
+        have: read.value.as_ref().map(records_unresolved_width),
+        want: Some(true),
+        "the remainder the decision cannot name is still recorded: {read:#?}",
+    );
+}
+
+/// The same rule where the two arms wrap ONE values path at incompatible
+/// document positions: the join must not co-assert both.
+///
+/// This is longhorn's `$imagePullSecrets` and airflow's `image_pull_secrets`
+/// in miniature. Both append `dict "name" <item>` on the arm their `kindIs
+/// "string"` test selects and the item itself on the other, so the list the
+/// sink receives places the SAME values path either at
+/// `imagePullSecrets[*].name` (a string) or at `imagePullSecrets[*]` (a
+/// `LocalObjectReference`). Joining both identities makes the sink demand
+/// both of one value, which only `null` satisfies — and `helm template`
+/// renders `imagePullSecrets: [{}]` for either chart without complaint, so
+/// that obligation is a false rejection, not a discovered constraint.
+#[test]
+fn a_proven_arm_does_not_co_assert_a_sibling_binding_of_the_same_path() {
+    let mut env = EvalEnv::default();
+    env.locals.insert(
+        "secrets".to_string(),
+        LocalBinding::select(
+            BindingDecision::new(TruthCondition::Partial {
+                when_true: Predicate::truthy_path("named"),
+                when_false: Predicate::False,
+            }),
+            LocalBinding::direct(AbstractValue::Dict(BTreeMap::from([(
+                "name".to_string(),
+                values_path!("pullSecrets"),
+            )]))),
+            LocalBinding::direct(values_path!("pullSecrets")),
+        ),
+    );
+
+    let read = eval_expr(&single_expr("$secrets"), &env);
+    let alternatives = read
+        .value
+        .as_ref()
+        .map(|value| match value {
+            AbstractValue::Choice(choices) => choices.iter().cloned().collect::<BTreeSet<_>>(),
+            other => BTreeSet::from([other.clone()]),
+        })
+        .unwrap_or_default();
+
+    sim_assert_eq!(
+        have: alternatives.contains(&values_path!("pullSecrets")),
+        want: false,
+        "the bare item binding is not co-asserted with the wrapped one: {read:#?}",
+    );
+    sim_assert_eq!(
+        have: alternatives.contains(&AbstractValue::Dict(BTreeMap::from([(
+            "name".to_string(),
+            values_path!("pullSecrets"),
+        )]))),
+        want: true,
+        "the proven arm's binding is still reported: {read:#?}",
+    );
 }
 
 /// The strict lane must scope its obligation by the proven arm's condition
 /// and place nothing on the unprovable sibling.
 #[test]
-fn mixed_selection_proves_only_the_decidable_arm() -> eyre::Result<()> {
+fn mixed_selection_proves_only_the_decidable_arm() {
     let mut env = EvalEnv::default();
     env.locals.insert(
         "cfg".to_string(),
@@ -134,7 +229,6 @@ fn mixed_selection_proves_only_the_decidable_arm() -> eyre::Result<()> {
         want: true,
         "every strict obligation is scoped by the proven arm: {scoped:#?}",
     );
-    Ok(())
 }
 
 /// A `Values`-rooted selector read of a local that holds a plain values path
@@ -147,7 +241,7 @@ fn mixed_selection_proves_only_the_decidable_arm() -> eyre::Result<()> {
 /// a bare values path, which is why the pre-patch code recorded nothing
 /// here.
 #[test]
-fn values_rooted_selector_on_a_values_path_root_records_no_member_obligation() -> eyre::Result<()> {
+fn values_rooted_selector_on_a_values_path_root_records_no_member_obligation() {
     let mut env = EvalEnv::default();
     env.locals.insert(
         String::new(),
@@ -161,14 +255,12 @@ fn values_rooted_selector_on_a_values_path_root_records_no_member_obligation() -
         want: 0,
         "a Values-rooted read of a values-path root records no member host: {read:#?}",
     );
-    Ok(())
 }
 
 /// The same read with a `Direct` boundary, which is the other arm of the
 /// fall-through the refactor introduced.
 #[test]
-fn values_rooted_direct_selector_on_a_values_path_root_records_no_member_obligation()
--> eyre::Result<()> {
+fn values_rooted_direct_selector_on_a_values_path_root_records_no_member_obligation() {
     let mut env = EvalEnv::default();
     env.locals
         .insert("ctx".to_string(), LocalBinding::direct(values_path!("sub")));
@@ -180,5 +272,4 @@ fn values_rooted_direct_selector_on_a_values_path_root_records_no_member_obligat
         want: 0,
         "a Values-rooted read of a values-path local records no member host: {read:#?}",
     );
-    Ok(())
 }

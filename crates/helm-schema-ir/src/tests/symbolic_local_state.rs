@@ -28,7 +28,7 @@ fn unconditioned_binding_join_keeps_values_but_proves_no_mixed_mode_arm() {
         have: leaves
             .known
             .iter()
-            .map(|leaf| (leaf.selection.clone(), leaf.value.value.clone(), leaf.value.mode))
+            .map(|leaf| (leaf.selection.clone(), leaf.value.value().clone(), leaf.value.mode()))
             .collect::<Vec<_>>(),
         want: vec![
             (LeafSelection::Unproven, values_path!("direct"), BindingEvaluationMode::Direct),
@@ -41,7 +41,7 @@ fn unconditioned_binding_join_keeps_values_but_proves_no_mixed_mode_arm() {
     );
     sim_assert_eq!(have: leaves.has_unresolved, want: true);
     sim_assert_eq!(
-        have: joined.paths(),
+        have: joined.paths(&PredicateMemo::default()),
         want: BTreeSet::from([ValuesPath::parse("direct"), ValuesPath::parse("evaluated")]),
     );
 }
@@ -66,30 +66,24 @@ fn partial_binding_decision_keeps_proven_subsets_and_unresolved_remainder() {
         have: leaves
             .proven()
             .into_iter()
-            .map(|(condition, leaf)| (condition.clone(), leaf.clone()))
+            .map(|(condition, leaf)| (condition.clone(), leaf.value().clone(), leaf.mode()))
             .collect::<BTreeSet<_>>(),
         want: BTreeSet::from([
             (
                 when_true,
-                crate::eval_env::BindingValue {
-                    value: values_path!("direct"),
-                    mode: BindingEvaluationMode::Direct,
-                    metadata: crate::eval_env::BindingValueMetadata::default(),
-                },
+                values_path!("direct"),
+                BindingEvaluationMode::Direct,
             ),
             (
                 when_false,
-                crate::eval_env::BindingValue {
-                    value: values_path!("evaluated"),
-                    mode: BindingEvaluationMode::Evaluated,
-                    metadata: crate::eval_env::BindingValueMetadata::default(),
-                },
+                values_path!("evaluated"),
+                BindingEvaluationMode::Evaluated,
             ),
         ]),
     );
     sim_assert_eq!(have: leaves.has_unresolved, want: true);
     sim_assert_eq!(
-        have: binding.paths(),
+        have: binding.paths(&PredicateMemo::default()),
         want: BTreeSet::from([ValuesPath::parse("direct"), ValuesPath::parse("evaluated")]),
     );
 }
@@ -136,7 +130,7 @@ fn two_independent_unknown_decisions_expose_both_leaves_with_unresolved_remainde
         have: leaves
             .known
             .iter()
-            .map(|leaf| (leaf.selection.clone(), leaf.value.value.clone()))
+            .map(|leaf| (leaf.selection.clone(), leaf.value.value().clone()))
             .collect::<Vec<_>>(),
         want: vec![
             (LeafSelection::Unproven, values_path!("first")),
@@ -146,7 +140,7 @@ fn two_independent_unknown_decisions_expose_both_leaves_with_unresolved_remainde
     );
     sim_assert_eq!(have: leaves.has_unresolved, want: true);
     sim_assert_eq!(
-        have: binding.paths(),
+        have: binding.paths(&PredicateMemo::default()),
         want: BTreeSet::from([
             ValuesPath::parse("first"),
             ValuesPath::parse("second"),
@@ -187,7 +181,7 @@ fn symbolic_range_exit_widens_only_bindings_changed_by_the_iteration() {
     sim_assert_eq!(
         have: cfg
             .as_ref()
-            .map(|leaves| leaves.known.iter().map(|leaf| leaf.value.value.clone()).collect::<Vec<_>>()),
+            .map(|leaves| leaves.known.iter().map(|leaf| leaf.value.value().clone()).collect::<Vec<_>>()),
         want: Some(vec![values_path!("items.*")]),
     );
     sim_assert_eq!(
@@ -195,7 +189,7 @@ fn symbolic_range_exit_widens_only_bindings_changed_by_the_iteration() {
         want: Some(true),
     );
     sim_assert_eq!(
-        have: positive_exit.fragment_values.get("cfg").map(LocalBinding::paths),
+        have: positive_exit.fragment_values.get("cfg").map(|binding| binding.paths(&PredicateMemo::default())),
         want: Some(BTreeSet::from([ValuesPath::parse("items.*")])),
     );
     sim_assert_eq!(
@@ -481,7 +475,7 @@ fn snapshot_restore_replaces_all_local_state_maps() {
     state = snapshot;
 
     sim_assert_eq!(
-        have: state.fragment_values.get("image").and_then(LocalBinding::value),
+        have: state.fragment_values.get("image").and_then(|binding| binding.value(&PredicateMemo::default())),
         want: Some(values_path!("image"))
     );
     assert!(state.range_domains.is_empty());
@@ -511,7 +505,7 @@ fn local_scope_restores_shadowed_fragment_value() {
     state.exit_local_scope();
 
     sim_assert_eq!(
-        have: state.fragment_values.get("name").and_then(LocalBinding::value),
+        have: state.fragment_values.get("name").and_then(|binding| binding.value(&PredicateMemo::default())),
         want: Some(values_path!("outer"))
     );
 }
@@ -534,7 +528,7 @@ fn local_scope_keeps_assignment_to_outer_fragment_value() {
     state.exit_local_scope();
 
     sim_assert_eq!(
-        have: state.fragment_values.get("name").and_then(LocalBinding::value),
+        have: state.fragment_values.get("name").and_then(|binding| binding.value(&PredicateMemo::default())),
         want: Some(values_path!("assigned"))
     );
 }
@@ -609,7 +603,7 @@ fn fragment_assignment_replaces_outer_get_binding() {
 
     assert!(!state.get_bindings.contains_key("value"));
     sim_assert_eq!(
-        have: state.fragment_values.get("value").and_then(LocalBinding::value),
+        have: state.fragment_values.get("value").and_then(|binding| binding.value(&PredicateMemo::default())),
         want: Some(values_path!("assigned"))
     );
 }
@@ -629,7 +623,7 @@ fn local_scope_restores_range_domain_shadowing_outer_binding() {
 
     assert!(!state.range_domains.contains_key("key"));
     sim_assert_eq!(
-        have: state.fragment_values.get("key").and_then(LocalBinding::value),
+        have: state.fragment_values.get("key").and_then(|binding| binding.value(&PredicateMemo::default())),
         want: Some(values_path!("outer"))
     );
 }
@@ -807,7 +801,7 @@ fn branch_join_keeps_bindings_present_in_all_outcomes() {
     joined.join_branch_outcomes(&entry_snapshot, &[first, second]);
 
     sim_assert_eq!(
-        have: joined.fragment_values.get("name").and_then(LocalBinding::value),
+        have: joined.fragment_values.get("name").and_then(|binding| binding.value(&PredicateMemo::default())),
         want: Some(AbstractValue::Choice(
             [
                 values_path!("first"),

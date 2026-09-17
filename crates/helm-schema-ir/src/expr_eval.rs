@@ -577,15 +577,15 @@ fn local_binding_result(var: &str, binding: &LocalBinding, env: &EvalEnv) -> Eva
     for (condition, leaf) in leaves.proven() {
         let alternative_result = local_value_result(
             var,
-            Some(leaf.value.clone()),
+            Some(leaf.value().clone()),
             None,
-            leaf.mode == BindingEvaluationMode::Evaluated,
-            Some(&leaf.metadata),
+            leaf.mode() == BindingEvaluationMode::Evaluated,
+            Some(leaf.metadata()),
             env,
         );
         proven_operands.push(ProvenOperand {
             condition: condition.clone(),
-            evaluation_mode: match leaf.mode {
+            evaluation_mode: match leaf.mode() {
                 BindingEvaluationMode::Direct => {
                     crate::function_semantics::ArgumentEvaluationMode::DirectLookup
                 }
@@ -595,21 +595,28 @@ fn local_binding_result(var: &str, binding: &LocalBinding, env: &EvalEnv) -> Eva
             },
             result: Box::new(alternative_result),
         });
-        proven_values.push(leaf.value.clone());
+        proven_values.push(leaf.value().clone());
     }
-    // Two views over one owner. The proven lane above carries the
-    // alternatives whose selection the decision tree can prove; strict
-    // consumers scope their obligations by those conditions, so the value
-    // lane reports exactly what they proved plus the unresolved remainder.
+    // Two lanes over one traversal. Strict consumers walk the proven lane
+    // above and scope their obligations by its conditions.
     //
-    // With nothing proven at all the read still HAS candidate values, and
-    // reporting only `Unknown` there deletes the construct that reads them
-    // (a helper whose returned local was selected under an undecidable
-    // guard rendered nothing at all). Fall back to the owner's
-    // condition-erased join over every leaf, which is what the fragment
-    // context already does for the same bindings.
+    // The value lane below reports the candidates the read can select, but
+    // it may not widen a DECIDED read with its unprovable siblings. A
+    // fragment sink consumes this lane as a conjunction: every identity in
+    // the join is bound at the document position it reaches, and two
+    // identities that reach INCOMPATIBLE positions on mutually exclusive
+    // arms then become one unsatisfiable obligation. longhorn's
+    // `$imagePullSecrets` appends `dict "name" .` on the `kindIs "string"`
+    // arm and the item itself on the other, so joining both binds
+    // `global.imagePullSecrets[*]` to LocalObjectReference AND to
+    // `LocalObjectReference.name` at once — only `null` survives, while
+    // `helm template` renders `[{}]` happily. Until the sink lane consumes
+    // the proven lane directly, a read that proved ANY arm reports what it
+    // proved plus the unresolved remainder; a read that proved nothing still
+    // reports every candidate, because there the alternatives are all the
+    // chart states there are.
     let value = if proven_values.is_empty() {
-        binding.value()
+        leaves.joined_value()
     } else {
         if leaves.has_unresolved {
             proven_values.push(AbstractValue::Unknown);
@@ -624,7 +631,7 @@ fn local_binding_result(var: &str, binding: &LocalBinding, env: &EvalEnv) -> Eva
         var,
         value,
         None,
-        binding_has_evaluated_alternative(binding),
+        leaves.has_evaluated_candidate(),
         None,
         env,
     );
@@ -669,11 +676,11 @@ fn selected_leaf_value(
     if path.first().is_some_and(|segment| segment == "Values") {
         let (_, tail) = path.split_first()?;
         let tail = crate::abstract_value::resolve_root_values_methods(tail)?;
-        if let Some(values) = bound_values_member(&leaf.value, env) {
+        if let Some(values) = bound_values_member(leaf.value(), env) {
             return Some((values.apply_to_path(tail)?, BindingEvaluationMode::Direct));
         }
     }
-    Some((env.value_at_path(&leaf.value, path)?, leaf.mode))
+    Some((env.value_at_path(leaf.value(), path)?, leaf.mode()))
 }
 
 /// Record the member-host obligations a selector read places on one PROVEN
@@ -693,13 +700,13 @@ fn record_selector_member_captures(
         let Some(tail) = crate::abstract_value::resolve_root_values_methods(tail) else {
             return;
         };
-        if let Some(values) = bound_values_member(&leaf.value, env) {
-            if let Some(base) = values.direct_values_identity() {
-                let mut segments = base.segments().cloned().collect::<Vec<_>>();
-                let accessed_from = segments.len();
-                segments.extend(tail.iter().cloned().map(helm_schema_core::Segment::from));
-                record_member_access_captures(&segments, accessed_from, outer, env, effects);
-            }
+        if let Some(values) = bound_values_member(leaf.value(), env)
+            && let Some(base) = values.direct_values_identity()
+        {
+            let mut segments = base.segments().cloned().collect::<Vec<_>>();
+            let accessed_from = segments.len();
+            segments.extend(tail.iter().cloned().map(helm_schema_core::Segment::from));
+            record_member_access_captures(&segments, accessed_from, outer, env, effects);
         }
         // a `Values`-rooted read of a leaf with no bound `Values`
         // member records nothing. Falling through would navigate the leaf's
@@ -708,10 +715,10 @@ fn record_selector_member_captures(
         // names.
         return;
     }
-    let Some(base) = leaf.value.direct_values_identity() else {
+    let Some(base) = leaf.value().direct_values_identity() else {
         return;
     };
-    match leaf.mode {
+    match leaf.mode() {
         BindingEvaluationMode::Evaluated => {
             record_grouped_member_access_captures(&base.encode(), path, false, outer, env, effects);
         }
@@ -731,10 +738,10 @@ fn local_selector_result(
     env: &EvalEnv,
 ) -> EvalResult {
     let leaves = binding.leaves(env.predicate_memo.as_ref());
-    let mut selected = Vec::new();
     let mut proven_operands = Vec::new();
     let mut member_effects = Effects::default();
-    let mut has_evaluated_selection = false;
+    // The strict lane: only a leaf whose selection is provable can carry a
+    // member obligation, and only under its own condition.
     for (condition, leaf) in leaves.proven() {
         let outer = if *condition == Predicate::True {
             Vec::new()
@@ -746,13 +753,12 @@ fn local_selector_result(
             continue;
         };
         let selected_paths = value.fragment_source_paths();
-        has_evaluated_selection |= mode == BindingEvaluationMode::Evaluated;
         let alternative_result = local_value_result(
             var,
             Some(value),
             Some(&selected_paths),
             mode == BindingEvaluationMode::Evaluated,
-            Some(&leaf.metadata),
+            Some(leaf.metadata()),
             env,
         );
         proven_operands.push(ProvenOperand {
@@ -767,31 +773,22 @@ fn local_selector_result(
                     }
                 }
             },
-            result: Box::new(alternative_result.clone()),
+            result: Box::new(alternative_result),
         });
-        selected.extend(alternative_result.value);
     }
-    if selected.is_empty() {
-        // Nothing proven: the member the chart can still select is what this
-        // expression reads, and reporting no value at all would delete the
-        // construct reading it. The candidates bound the value lane only —
-        // the strict lane above walks proven leaves, so no obligation is
-        // scoped by a selection nobody proved.
-        for leaf in &leaves.known {
-            if let Some((value, _)) = selected_leaf_value(leaf.value, path, env) {
-                selected.push(value);
-            }
-        }
-        // an unmodeled branch means the candidates above are not the
-        // whole value set, so the read must still record that width. An
-        // undecidable DECISION over known values does not: both values are
-        // candidates and there is no third one. This is the same rule
-        // `LocalBinding::value()` applies, which is what the whole-binding
-        // read falls back to.
-        if leaves.has_unknown_value {
-            selected.push(AbstractValue::Unknown);
-        }
-    } else if leaves.has_unresolved {
+    // The value lane: the member of every candidate, by the same rule the
+    // whole-binding read applies. An undecidable guard leaves a leaf's
+    // selection unnameable, not its member unread.
+    let mut selected = Vec::new();
+    let mut has_evaluated_selection = leaves.has_unknown_value;
+    for leaf in &leaves.known {
+        let Some((value, mode)) = selected_leaf_value(leaf.value, path, env) else {
+            continue;
+        };
+        has_evaluated_selection |= mode == BindingEvaluationMode::Evaluated;
+        selected.push(value);
+    }
+    if leaves.has_unknown_value {
         selected.push(AbstractValue::Unknown);
     }
     let value = AbstractValue::choice(selected);
@@ -803,7 +800,7 @@ fn local_selector_result(
         var,
         value,
         Some(&selected_paths),
-        has_evaluated_selection || leaves.has_unresolved,
+        has_evaluated_selection,
         None,
         env,
     );
@@ -813,10 +810,6 @@ fn local_selector_result(
         has_unresolved: leaves.has_unresolved,
     });
     result
-}
-
-fn binding_has_evaluated_alternative(binding: &LocalBinding) -> bool {
-    binding.has_evaluated_value()
 }
 
 fn local_value_result(

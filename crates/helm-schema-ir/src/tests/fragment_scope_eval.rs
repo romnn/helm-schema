@@ -71,6 +71,7 @@ fn apply_local_set_mutations(
         .iter()
         .map(|(name, value)| (name.clone(), LocalBinding::direct(value.clone())))
         .collect();
+    let predicate_memo = std::rc::Rc::clone(context.analysis_db.predicate_memo());
     let changed = apply_local_set_mutations_from_exprs(
         &parse_expr_text(text),
         &mut bindings,
@@ -80,7 +81,7 @@ fn apply_local_set_mutations(
     );
     *local_bindings = bindings
         .into_iter()
-        .filter_map(|(name, binding)| binding.value().map(|value| (name, value)))
+        .filter_map(|(name, binding)| binding.value(&predicate_memo).map(|value| (name, value)))
         .collect();
     changed
 }

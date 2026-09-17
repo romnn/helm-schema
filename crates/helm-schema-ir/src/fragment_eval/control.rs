@@ -1523,7 +1523,7 @@ impl Interpreter<'_> {
             .locals
             .fragment_values
             .get(name.trim_start_matches('$'))
-            .and_then(crate::eval_env::LocalBinding::value)
+            .and_then(|binding| binding.value(self.db.predicate_memo()))
             .is_some_and(|value| {
                 matches!(
                     value,
@@ -2671,7 +2671,7 @@ impl Interpreter<'_> {
             .fragment_values
             .iter()
             .filter_map(|(name, value)| {
-                let paths = value.paths();
+                let paths = value.paths(self.db.predicate_memo());
                 (!paths.is_empty()).then_some((name, paths))
             })
             .collect();
@@ -2694,7 +2694,7 @@ impl Interpreter<'_> {
                 // fallback) both mean the raw entry value no longer
                 // reaches downstream consumers on that arm. A guarded
                 // traversal advance INTO a member keeps its own machinery.
-                let paths = value.paths();
+                let paths = value.paths(self.db.predicate_memo());
                 let advanced_into_member = paths
                     .iter()
                     .any(|path| entry_paths.iter().any(|entry| path.is_descendant_of(entry)));
@@ -2704,7 +2704,7 @@ impl Interpreter<'_> {
                     exclusions.push(self.reassignment_exclusion(header, marker));
                     fold_spellings = match (
                         fold_spellings,
-                        value.value().and_then(|value| {
+                        value.value(self.db.predicate_memo()).and_then(|value| {
                             self.empty_fold_spellings(header, name, &value, &entry_paths)
                         }),
                     ) {

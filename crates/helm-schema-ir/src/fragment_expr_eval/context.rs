@@ -42,13 +42,12 @@ impl<'a> FragmentEvalContext<'a> {
         current_dot: Option<&AbstractValue>,
         seen: &mut HashSet<String>,
     ) -> Option<AbstractValue> {
-        let env = EvalEnv::from_fragment_context(
+        let mut env = EvalEnv::from_fragment_context(
             locals,
             current_dot,
             crate::eval_env::BindingEvaluationMode::Direct,
-        )
-        .with_predicate_memo(std::rc::Rc::clone(self.analysis_db.predicate_memo()));
-        let mut env = env;
+            self.analysis_db.predicate_memo(),
+        );
         env.local_output_meta = local_output_meta.clone();
         let current_dot_helper = current_dot.map(AbstractValue::to_context_value);
         let result = eval_expr_result_with_bound_helpers(

@@ -122,8 +122,12 @@ pub(crate) fn apply_local_set_mutations_from_exprs(
     context: FragmentEvalContext<'_>,
     seen: &mut HashSet<String>,
 ) -> bool {
-    let abstract_applied =
-        apply_abstract_local_set_mutations_from_exprs(exprs, local_bindings, current_dot);
+    let abstract_applied = apply_abstract_local_set_mutations_from_exprs(
+        exprs,
+        local_bindings,
+        current_dot,
+        context.analysis_db.predicate_memo(),
+    );
     if abstract_applied {
         return true;
     }
@@ -148,11 +152,13 @@ fn apply_abstract_local_set_mutations_from_exprs(
     exprs: &[TemplateExpr],
     local_bindings: &mut HashMap<String, LocalBinding>,
     current_dot: Option<&AbstractValue>,
+    predicate_memo: &std::rc::Rc<helm_schema_core::PredicateMemo>,
 ) -> bool {
     let mut env = crate::eval_env::EvalEnv::from_fragment_context(
         local_bindings,
         current_dot,
         crate::eval_env::BindingEvaluationMode::Direct,
+        predicate_memo,
     );
     let mut applied = false;
     for expr in exprs {

@@ -1212,6 +1212,7 @@ fn resolve_bound_helper_call(
             Some(&params.eval_env.local_output_meta),
             params.outer_bindings,
             params.current_dot,
+            &params.eval_env.predicate_memo,
         )
     });
 

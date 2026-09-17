@@ -763,7 +763,7 @@ impl ValuePathContext<'_> {
             .locals
             .get(name)
             .or_else(|| self.eval_env.locals.get(name.trim_start_matches('$')))?
-            .value()?;
+            .value(self.eval_env.predicate_memo.as_ref())?;
         let AbstractValue::RangeKey(path) = binding else {
             return None;
         };
@@ -791,7 +791,7 @@ impl ValuePathContext<'_> {
             .locals
             .get(name)
             .or_else(|| self.eval_env.locals.get(name.trim_start_matches('$')))?
-            .value()?;
+            .value(self.eval_env.predicate_memo.as_ref())?;
         let AbstractValue::RangeKey(path) = binding else {
             return None;
         };
@@ -1589,7 +1589,7 @@ impl ValuePathContext<'_> {
                     .locals
                     .get(name)
                     .or_else(|| self.eval_env.locals.get(name.trim_start_matches('$')))?
-                    .value()?
+                    .value(self.eval_env.predicate_memo.as_ref())?
                 else {
                     return None;
                 };

@@ -199,13 +199,68 @@ fn chart_metadata_becomes_segmented_static_root_strings() -> eyre::Result<()> {
                 "7".to_string(),
             ),
             (
+                vec!["Chart".to_string(), "Description".to_string()],
+                String::new(),
+            ),
+            (
+                vec!["Chart".to_string(), "Home".to_string()],
+                String::new(),
+            ),
+            (
+                vec!["Chart".to_string(), "Icon".to_string()],
+                String::new(),
+            ),
+            (
                 vec!["Chart".to_string(), "Name".to_string()],
                 "root".to_string(),
+            ),
+            (
+                vec!["Chart".to_string(), "Type".to_string()],
+                String::new(),
             ),
             (
                 vec!["Chart".to_string(), "Version".to_string()],
                 "0.1.0".to_string(),
             ),
+        ])
+    );
+
+    Ok(())
+}
+
+/// `chart.Metadata`'s Go `string` fields have no absent state: Helm v4.2.3
+/// renders every unset key as `""` and answers `typeIs "string"` with `true`
+/// for each of them (`helm-chart-fields.log`).
+#[test]
+fn absent_chart_string_fields_are_the_go_zero_value() -> eyre::Result<()> {
+    let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {r"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
+    )?;
+
+    let charts = discover_chart_contexts(&chart_dir)?;
+    let root = charts.first().ok_or_eyre("discover root chart")?;
+    let absent = ["AppVersion", "Description", "Home", "Icon", "Type"]
+        .into_iter()
+        .map(|field| {
+            let key = vec!["Chart".to_string(), field.to_string()];
+            let value = root.static_root_strings.get(&key).cloned();
+            (field, value)
+        })
+        .collect::<BTreeMap<_, _>>();
+    sim_assert_eq!(
+        have: absent,
+        want: BTreeMap::from([
+            ("AppVersion", Some(String::new())),
+            ("Description", Some(String::new())),
+            ("Home", Some(String::new())),
+            ("Icon", Some(String::new())),
+            ("Type", Some(String::new())),
         ])
     );
 

@@ -423,8 +423,8 @@ impl Interpreter<'_> {
             &template_bindings,
             current_dot.as_ref(),
             self.current_dot_binding_mode(),
-        )
-        .with_predicate_memo(std::rc::Rc::clone(self.db.predicate_memo()));
+            self.db.predicate_memo(),
+        );
         for expr in exprs {
             let mutation_expr = match expr {
                 TemplateExpr::VariableDefinition { value, .. }
@@ -439,7 +439,11 @@ impl Interpreter<'_> {
                 let Some(binding) = self.locals.fragment_values.get(name) else {
                     continue;
                 };
-                if !binding.value().as_ref().is_some_and(is_context_copy) {
+                if !binding
+                    .value(self.db.predicate_memo())
+                    .as_ref()
+                    .is_some_and(is_context_copy)
+                {
                     continue;
                 }
                 let updated = binding.with_overlay_entries(entries);
