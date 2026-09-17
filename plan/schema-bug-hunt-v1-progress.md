@@ -2245,4 +2245,27 @@ Next: F69 first (no A1 dependency, live false rejections): re-create the isolate
   `strict_operands.rs` and `tests/binding_leaf_selection.rs`. Several are cleared inside the
   unlanded candidates above.
 
-Next: unblock the F78 candidate — from `/Volumes/T7/dev/round7-f78`, reproduce `airflow: imagePullSecrets <- empty object item` with a compiled jsonschema prober, scope the member-host obligation to the selection that reads the member, then re-dump into `/Volumes/T7/dev/round7-final/dump2` and re-run the battery from the main repo with `--run-ignored all`.
+- LANDED after the blocker was cleared: `99186513` (mechanism) and `90076933` (fixtures). The
+  two false rejections were attributed to item A's value lane in `local_binding_result`, not to
+  F69 hunk 1: reverting hunk 1 left both rejections byte-identical, reverting the one value-lane
+  line removed both. The rejecting keyword was `type` on the array item, because the same values
+  path `imagePullSecrets[*]` was bound to two Kubernetes sinks at once
+  (`allOf[LocalObjectReference, LocalObjectReference.name]`), leaving only `null`; a fragment
+  sink consumes the value lane as a CONJUNCTION, so joining unprovable siblings into a decided
+  read made two identities on mutually exclusive arms one unsatisfiable obligation. The read now
+  reports the proven arm plus `Unknown` for the remainder whenever any arm is proven, and every
+  candidate when nothing is, derived from `LeafSelection` alone. Item A's
+  `mixed_selection_read_keeps_the_unproven_sibling_candidate` had pinned the defective
+  behaviour and was rewritten; the new witness is
+  `a_proven_arm_does_not_co_assert_a_sibling_binding_of_the_same_path`. F69 hunk 1 (absent
+  `.Chart.*` strings are `""`) rode along and is now landed; hunks 2 and 3 are NOT.
+  Gates on the landed tree: `cargo fmt --check` 0; `cargo nextest run --workspace` 1519/1519;
+  `cargo nextest run --workspace --profile integration` 713/713 exit 0; one clean dump
+  `/Volumes/T7/dev/round7-final/dump2` (202 artifacts, all lanes, one build); round-74 battery
+  exit 0 with `--run-ignored all` from the main repo, zero unmatched flips. Only two fixtures
+  moved: headscale 8 errors -> 6 (the round-6 false rejections removed) and vault ($defs
+  renumbering, no acceptance flip); the other 154 chart fixtures are byte-identical to
+  `126736c3`. Not run: `task lint`, `task lint:fc`, `task test:all`, luup2, `task tokei:core`,
+  the timing protocol.
+
+Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir diagnostics, then take the F4 companion candidate (`/Volumes/T7/dev/round7-f4b-evidence/f4-alt-final.patch`, the `lower.rs` all-or-nothing collect) through its red test, one clean dump and the battery with `--run-ignored all` from the main repo.
