@@ -2138,3 +2138,111 @@ Next: existing F78/A1 work only; first redesign `BindingNode::Value` to own the 
   adjudication mandatory for ranged-member rounds (recommend yes).
 
 Next: F69 first (no A1 dependency, live false rejections): re-create the isolated copy from HEAD, apply the challenger's amended three-hunk contract, and start with `cargo nextest run -p helm-schema-ir -p helm-schema-gen`; then extract and gate the F23 one-line patch from `/Volumes/T7/dev/round6-f23`.
+
+### Round 7 — F78 correction, lint debt, and five parallel candidates — 2026-09-17/18
+
+- Status: one production landing (`126736c3`, the helm-schema-ir clippy debt) plus a fully
+  measured F78/A1 correction candidate that is BLOCKED on two new false rejections found by
+  the battery. Nothing else landed. Main is clean; every candidate lives in its own
+  `git archive` copy under `/Volumes/T7/dev/round7-*` with its patch and handoff.
+- Evidence hygiene: macOS purged `/private/tmp/helm-schema-bug-hunt-v1.9y9aAk/round6-*`
+  (files older than three days) during this round. Fourteen round-6 documents were recovered
+  from agent transcripts into `/Volumes/T7/dev/round6-recovered/`; `f78-design.md` and the
+  round-6 architecture review are lost. All round-7 evidence is on the external drive.
+- F78/A1 item A (candidate `/Volumes/T7/dev/round7-f78`, patch
+  `round7-f78-evidence/itemA-final.patch`, 17 files): the five reds that blocked the previous
+  session were NOT caused by the candidate lane. Two independent agents reached the same
+  verdict by the same discriminating experiment: the WIP's `BindingValue::observed()`
+  re-applied the leaf `output_meta` program at the binding read, while the transform already
+  reached consumers through `effects.local_output_meta`; `with_output_meta` then retyped a raw
+  `ValuesPath` leaf into `OutputPath{input_identity}`, which is exactly the flag the strict
+  lanes use to keep constraining the input. Removing `observed()` makes all five green with the
+  candidate lane unchanged. The final tree makes `LocalBinding::leaves(memo)` the only read
+  (`proven()`, `joined_value()`, per-leaf `value()/mode()/metadata()`), deletes `observed()`,
+  `candidates()` and the private join traversal, and carries R1 (the two headscale false
+  rejections landed in round 6) on the `get m ""` abstention plus proven-leaf
+  `record_member_host_access`. Measured: ir+gen 1170/1170; workspace unit 1517/1517;
+  `extractor_inline_fixtures` 27/27; headscale back to the baseline's 6 errors with the same
+  failing-arm multiset (HEAD carries 8); `cargo fmt --check` 0.
+- BLOCKER (why it did not land): one clean dump of that candidate
+  (`/Volumes/T7/dev/round7-final/dump`, 202 artifacts, all lanes, one build) was adjudicated by
+  the round-74 battery from the main repo with `ADJUDICATE_WITH_HELM=1` and baseline
+  `126736c3`. Exit 100 with exactly two failures: `airflow: imagePullSecrets <- empty object
+  item` and `longhorn: global.imagePullSecrets <- empty object item`, both "tightening rejects a
+  document Helm renders without a proved Kubernetes violation". Log
+  `/Volumes/T7/dev/round7-final/battery3.log`. Per AGENTS.md no fixture was adopted and the
+  candidate was not committed. The suspected seam is the proven-leaf
+  `record_member_host_access`: a member-host obligation on an array item is asserted where the
+  selection does not prove the member is read.
+- Two battery operating facts worth keeping: the round-74 maintenance test is `#[ignore]`d, so
+  it needs `--run-ignored all` (a plain run reports "0 tests run", exit 4 — a silent vacuity
+  mode); and it reads baseline fixtures with `git show`, so it must run from the real
+  repository, never from a `git archive` copy.
+- The candidate's full integration profile is 701/713 with 12 failures, all fixture drift: ten
+  chart fixtures (airflow, gitea, headscale, longhorn, nats, netbox, openebs, schema_registry,
+  traefik, vault) plus the generator and IR corpus lanes. Adoption waits on the blocker.
+- F69 (`/Volumes/T7/dev/round7-f69`, hunks in `round7-f69-evidence`): hunk 1 (absent `.Chart.*`
+  string fields are Go's zero value `""`, `chart/discovery.rs`) and hunk 2 (D1 at both
+  `eval_default` operand positions) are green and Helm-verified 15/15 against the closed form
+  `abort <=> truthy(tag) AND NOT typeIs("string", tag)`; the four live false rejections (`0`,
+  `false`, `[]`, `{}`) are gone. They MUST NOT land without hunk 3: with hunks 1+2 alone the
+  kyverno witness accepts `namespaceOverride: "kube-system"`, a true Helm abort, because the
+  ordered selection then lives in the value while the equality decode still reads it from
+  `HelperOutputMeta.predicates`. Hunk 3's exact obstacle: `AbstractValue::selection_chain_identity_paths`
+  breaks at the first non-identity candidate and returns only the resolved prefix, so the
+  ordered decode treats the last resolved path as the terminal fallback and drops its `truthy`
+  conjunct. R0 must make that truncation visible before the `meta.conjoin_branches` injection at
+  `collections.rs:106-118` can be deleted. The hunk-3 agent reached 1284/1284 on the unit suite
+  before the model quota ended the round; no hunk-3 patch is claimed.
+- F23 + D3a (`/Volumes/T7/dev/round7-d3f23`, `batch-final.patch`, 34 files, −91 production LOC):
+  all four hunks green, re-derived onto HEAD with zero fuzz, `cargo nextest run --workspace`
+  1521/1521, contracts re-verified against Helm v4.2.3 (absent `condition:`/`tags:` means
+  enabled; a subchart's own `enabled: false` removes its whole values scope; a deleted root
+  `global.X` leaves the subchart copy intact). Every baseline disagreement with Helm on the
+  witness charts is repaired, and the D3a corpus controls reproduce exactly: graylog 12 -> 0,
+  redmine 1 -> 0, milvus 35 -> 2 default-values errors. Not landed: 41 corpus fixtures move and
+  none is adjudicated, and the batch was measured before tonight's F78 candidate, so it needs
+  its own dump plus battery on top of whatever lands first. `vruntime` R2 (a merge inside a
+  subchart template) remains a false acceptance on both binaries.
+- B6 escaped-container guard loss (`/Volumes/T7/dev/round7-b6-evidence/b6.patch`, 3 files):
+  `branch_steps` decided deferral node by node while `adopt_region_siblings` already used the
+  AST-span containment test, so the two phases disagreed about what belongs together; the fix
+  takes the rule count from two to one, +24/-6 inside one function. Ten chart-free regressions
+  pin it, including two byte-identical controls; `cargo fmt --check` 0 and zero new lint
+  diagnostics. Not landed: 16 corpus fixtures move and 14 are unadjudicated, and the workspace
+  and integration suites never got CPU. Separate open witness recorded: `w/H-contiguous`, where
+  an escapee that does fit the parent still loses the arm guard inside `eval_deferred`.
+- F4 label-map projection (`/Volumes/T7/dev/round7-f4-evidence/f4-primary-only.patch`): the
+  primary fix is proven — `bound_helper_resolver.rs` abstained per call on a non-values operand,
+  so the bitnami `common.tplvalues.merge` label paths never reached the existing
+  `MergeLayerTransform::ParsedMap` fact; per-operand skip retires all 44 cells (Helm renders all
+  14 operand shapes; the pinned bundle accepts 12; `{unknown: true}` stays rejected) with zero
+  tightenings on the three charts. BLOCKED: it un-masks 9 false rejections at `commonAnnotations`
+  in etcd/mariadb/influxdb (`0`, `false`, `[]` render under Helm and pass the pinned bundle).
+  The witness is etcd `preupgrade-hook-job.yaml:14-16`, the chart's only unguarded
+  `commonAnnotations` use, whose third operand is a literal dict. Two candidate companions at
+  the falsy escape (`resolve_policy.rs:471`) are inert. A second, independent attempt
+  (`/Volumes/T7/dev/round7-f4b-evidence/f4-alt-final.patch`) located the real seam and is the
+  better candidate: `has_referenced_descendants` never flips, but
+  `all_render_uses_falsy_tolerant` does, because `fragment_eval/lower.rs` collects
+  `AbstractValue::MergedLayers` identities with `collect::<Option<Vec<_>>>()` and so discards
+  `merge_layers` for the WHOLE merge as soon as one layer lacks an identity - exactly what the
+  primary fix creates (etcd's literal `$defaultAnnotations` dict beside two values operands).
+  The `TypeIs object` predicate still reached the row through `meta.conjoin_branches`, a second
+  parallel projection of the same fact, so member typing looked right while the falsy base
+  escape was withdrawn. Changing the collect to `Vec<Option<ValuesPath>>` (+12 LOC) retires all
+  9 regressions and lets the falsy-escape special case be DELETED outright (`resolve_policy.rs`
+  returns to HEAD). Still blocked: one red (`indexed_merge_operand_keeps_parsed_map_layer_domain`,
+  a lost tightening from the older whole-layer `shadowed_by()` approximation, not a false
+  rejection) and unestablished drift (40 of 157 fixtures differ, 18 attributable to the
+  companion, no HEAD control dump). Filed: `abstract_value.rs:527` carries the same
+  all-or-nothing collect for binding metadata.
+- Lint: `task lint` = `cargo lint --workspace --all-features` (a cargo alias; plain
+  `cargo clippy` uses a different feature set and reports fewer diagnostics). `126736c3` cleared
+  38 diagnostics in nine IR files by restructuring, with no suppressions. HEAD still reports 19
+  errors and 5 warnings, all in `helm-schema-ir` and concentrated in `expr_call_eval/collections.rs`,
+  `fragment_eval/control.rs`, `symbolic_local_state/mod.rs`, `expr_eval.rs`,
+  `strict_operands.rs` and `tests/binding_leaf_selection.rs`. Several are cleared inside the
+  unlanded candidates above.
+
+Next: unblock the F78 candidate — from `/Volumes/T7/dev/round7-f78`, reproduce `airflow: imagePullSecrets <- empty object item` with a compiled jsonschema prober, scope the member-host obligation to the selection that reads the member, then re-dump into `/Volumes/T7/dev/round7-final/dump2` and re-run the battery from the main repo with `--run-ignored all`.
