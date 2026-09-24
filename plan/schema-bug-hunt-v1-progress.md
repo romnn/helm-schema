@@ -2269,3 +2269,51 @@ Next: F69 first (no A1 dependency, live false rejections): re-create the isolate
   the timing protocol.
 
 Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir diagnostics, then take the F4 companion candidate (`/Volumes/T7/dev/round7-f4b-evidence/f4-alt-final.patch`, the `lower.rs` all-or-nothing collect) through its red test, one clean dump and the battery with `--run-ignored all` from the main repo.
+
+### Round 8 — pre-registration: parallel land-readying of the round-7 candidates — 2026-09-24
+
+- Status at 15:55 UTC: nothing landed yet this round. HEAD `8e5eca4c`, main clean. Ten
+  subagents run in `git clone`s under `/Volumes/T7/dev/round8-<track>` (clones, not archives,
+  so each track runs the round-74 battery itself: it reads baselines with `git show`), each
+  with its own target dir and evidence under `/Volumes/T7/dev/round8-<track>-evidence/`.
+  Shared protocol: `/Volumes/T7/dev/round8/PROTOCOL.md` (baseline `8e5eca4c`, one clean dump,
+  battery with `--run-ignored all` and `ADJUDICATE_WITH_HELM=1`, checkpoint patch after every
+  green step, HEAD control dump `/Volumes/T7/dev/round7-final/dump2`).
+- Tracks: `lint` (task lint + lint:fc on HEAD, restructuring only); `f4` (primary + companion
+  re-derived onto HEAD, the `indexed_merge_operand_keeps_parsed_map_layer_domain` red to be
+  adjudicated, drift attributed against dump2); `b6`; `d3f23` (F23 + D3a as one batch); `f69`
+  (hunks 2+3 together, R0 truncation witness first); `f31` (cluster G), `f13` (cluster F), `f9`
+  (cluster H) restarted from their round-7 handoffs with the Helm matrices re-run first; plus a
+  read-only design review and a read-only planner (`/Volumes/T7/dev/round8/next-families.md`).
+- Design review (`/Volumes/T7/dev/round8/design-review-wave1.md`, 367 lines) BEFORE any dump:
+  - F4 companion: do not land as patched. `MergeLayer { path, transform }` cannot represent a
+    literal layer, and `f4-alt-final.patch` drops identity-less layers and renumbers
+    `position`; `shadowed_by()` then hides the literal from later layers, so a values layer
+    preceded by a literal becomes "always wins". Exact only when every dropped layer is
+    lower-precedence than every kept one; `external-dns/templates/deployment.yaml:257`
+    (`merge $defaultSelector .podAffinityTerm`, literal first) is predicted to flip to a false
+    rejection. `abstract_value.rs:527-561` is the same all-or-nothing and a second projection
+    of the same fact (`via_binding: true`, joined by `merge_exact_fact`). Named change, both
+    sites: omit identity-less layers only when no identity-bearing layer follows, otherwise
+    keep HEAD's abstention; literal-first chart-free test first. Real typed fact to file or
+    do: `MergeLayerSource { Values{path,transform}, Literal{keys}, Opaque }`.
+  - B6: land with a named change. Span containment is right, but "two rules to one" is not
+    accurate: `eval_node_list` has a second geometry (`escaped_control`, a region embedded in
+    a prior container view) that `branch_steps` still decides node by node. Key the group on
+    `Node::Control(r)` or `escaped_control(view)` and absorb siblings with
+    `span_start < r.span.end`; witness first. `w/H-contiguous` is a different defect: the
+    guard is lost in placement (`control.rs:976-1008` -> `place_deferred_under_chain` /
+    `wrap_deferred` / `resolve_parent_chains`), not in grouping.
+  - F23 + D3a: land as designed. Central claim re-verified (a parent-and-subchart key deleted
+    with `--set kid.grp=null` aborts, so the deletion survives the subchart stage; the deleted
+    "deeper-stage" document modelled Helm 3). Three representations deleted, no heuristic
+    added, phases separate. Correction to the brief: `condition:`/`tags:`/`enabled`/`global`
+    handling is NOT changed by any production hunk, only pinned by the new tests.
+  - Landing order: F23 + D3a, then B6, then F4.
+- Quota (work account, weekly window resets 22:59 UTC): 83 % all / 83 % Fable at 15:27 UTC,
+  87 % / 90 % at 15:50 UTC. The user's instruction is to spend the remaining window today; the
+  orchestrator model is cut first, so every track checkpoints to disk and this section is the
+  recovery point. Owed gates unchanged: `task lint`, `task lint:fc`, `task test:all`, luup2,
+  `task tokei:core`, the timing protocol.
+
+Next: land in the review's order as each track reports (dump + battery from the track's own clone, fixtures adopted from that one dump, gates re-run on main), then record every unfinished track's exact witness and blocker from its `handoff.md`.
