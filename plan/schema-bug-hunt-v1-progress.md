@@ -2315,5 +2315,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   orchestrator model is cut first, so every track checkpoints to disk and this section is the
   recovery point. Owed gates unchanged: `task lint`, `task lint:fc`, `task test:all`, luup2,
   `task tokei:core`, the timing protocol.
+- Planner (`/Volumes/T7/dev/round8/next-families.md`, 490 lines): state table for every
+  family with citations, six cold-start briefs, and 14 doubtful round-6 claims. Ranked next:
+  D5 (block-scalar body inside a control region; kube-starrocks still rejects every document
+  at HEAD, one literal `false` among 117 `allOf` arms in dump2; openldap-stack-ha likewise),
+  F6 (d)+(c) validateValues aggregator (`without` absent from the catalogue; (a) excluded as
+  Chart.yaml policy), F5/F54 rangeable domain (8 cells), A3 membership/emptiness (F2/F45/F66,
+  4 cells), F70+F36 strict-parameter presence (0 cells, airflow ~60 sites), F31-G2 guarded
+  `omit` (10 cells; G3's 40 cells to be recorded NOT-A-BUG as sound abstention). Honest
+  weight: after waves 1-2 the unowned battery residue is ~27 cells. Corrections to carry:
+  F35 is fixed at HEAD (plan entry stale); F47 probably landed unrecorded in round 4; F34 may
+  already be covered by the int-cast region subset; F72's traefik claim is TRUE (helm 4.2.3,
+  verified today) and should be re-measured after F4 + F13(i) rather than fixed; triage's
+  jira -> F23 attribution is doubtful (root-chart paths; the F80 region collapse at
+  statefulset.yaml:136 is likelier); the F80 analysis's "measured ceiling" is an unfilled
+  placeholder. Wave 3 launched on D5, F6 (d)+(c) and F5/F54 at 16:05 UTC.
 
 Next: land in the review's order as each track reports (dump + battery from the track's own clone, fixtures adopted from that one dump, gates re-run on main), then record every unfinished track's exact witness and blocker from its `handoff.md`.
