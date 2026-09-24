@@ -2346,5 +2346,25 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   inventory was stale: the `expr_eval.rs`, `strict_operands.rs` and `binding_leaf_selection.rs`
   diagnostics no longer fired on `8e5eca4c`; the real HEAD inventory was 12 IR-lib errors, 2 in
   the IR inline-fixture tests and 21 in helm-schema-gen tests.
+- POLICY (user decision, 2026-09-24 ~17:40 UTC): the generated schema must satisfy BOTH
+  `helm template`/`install` (the coalesced values document) AND `helm lint`, whose values rule
+  (`lint/rules/values.go:62-68` in v4.2.3) validates the raw, un-coalesced root `values.yaml`.
+  Found by the d3f23 track: the F23 + D3a candidate newly fails `helm lint` on apisix, datadog
+  and signoz-signoz while `helm template` passes. Consequence: the root `values.yaml` is a
+  second must-accept document through the same mechanism that keeps the chart's own defaults
+  accepted; every withdrawn constraint stays diagnosable and is recorded per chart.
+- Also found by d3f23 (`/Volumes/T7/dev/round8-d3f23-evidence/`): the CLI test harness validated
+  the ROOT `values.yaml` only, not the coalesced document; `tests/common/chart_instances.rs` is
+  now a port of Helm v4.2.3 `ProcessDependencies` + `CoalesceValues`, byte-equal to real Helm
+  on 155/158 corpus charts (istiod `1` vs `1.0`; cert-manager and common cannot render). The
+  round-74 battery probes over root-only defaults too (`emission_profile_harness::read_root_defaults`),
+  so after F23 nearly every probe on a dependency chart flips (airflow past 1,900 Helm runs);
+  it is being moved onto the same coalescing port. Newly exposed pre-existing false rejection:
+  kyverno `grafana=null` (deleting `grafana` makes the `grafana.enabled` condition absent,
+  which ENABLES the subchart, which refills `configMapName`; Helm renders, both schemas
+  reject) — quarantined with its witness. Six charts leave `QUARANTINED_FALSE_REJECTIONS`
+  (dify, graylog, oncall, redmine, spinnaker, weblate). `vruntime` R2 stays a false acceptance
+  on both binaries (`witness/README.txt`). Two true tightenings match Helm aborts (phpmyadmin
+  `db.bundleTestDB=true` + `mariadb.image=null`; the cli fixture `kid.global=null`).
 
 Next: land in the review's order as each track reports (dump + battery from the track's own clone, fixtures adopted from that one dump, gates re-run on main), then record every unfinished track's exact witness and blocker from its `handoff.md`.
