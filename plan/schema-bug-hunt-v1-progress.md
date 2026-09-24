@@ -2367,4 +2367,30 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   on both binaries (`witness/README.txt`). Two true tightenings match Helm aborts (phpmyadmin
   `db.bundleTestDB=true` + `mariadb.image=null`; the cli fixture `kid.global=null`).
 
-Next: land in the review's order as each track reports (dump + battery from the track's own clone, fixtures adopted from that one dump, gates re-run on main), then record every unfinished track's exact witness and blocker from its `handoff.md`.
+- d3f23 state at 18:30 UTC (quota at 99 %): `final.patch` (61 files, crates only) applies to
+  main `1af8e8f1`; unit 1525/1525 on the rebased clone `/Volumes/T7/dev/round8-d3f23-b`;
+  `helm lint` contract implemented as `helm-schema-gen/src/uncoalesced_root.rs`
+  (`UncoalescedRootGate`, applied where the emission plan appends conditional constraints;
+  withdrawals recorded in `EmissionReport::uncoalesced_root_withdrawals`), fed by
+  `PreparedValuesDocuments::with_uncoalesced_root`; the Helm coalescer exists once as
+  `test_util::helm_values::coalesce_chart_values`, used by the CLI harness and by the battery
+  (`read_coalesced_defaults`). Red-first regression
+  `uncoalesced_root_document::a_dependency_default_missing_from_the_root_values_stays_accepted`;
+  kyverno pinned as `SemanticCase::quarantined_false_rejection` in `chart_reaudit.rs` (fails
+  once fixed). Lint-failing pointers were `required` metricsPort at `/operator` (datadog),
+  `required` containerPort at `/clickhouse/zookeeper/metrics` (signoz), `required`
+  secureMetricsPort at `/frr-k8s/prometheus` (metallb), `if`/`then:false` absence arms at
+  `/etcd` (apisix) — all keys declared only by a subchart's values.yaml. Precision cost:
+  the fixture's `kid.grp=null` (a Helm abort) is now accepted, indistinguishable from the
+  lint document. NOT done: final dump (`dump-final/`, was running), drift + adoption,
+  coalesced battery, whole-corpus lint sweep, per-chart withdrawal counts, `task lint`,
+  `task lint:fc`, integration profile. Exact resume commands: `handoff.md` §"20:20".
+- The other tracks had not reported when the weekly window closed; each has numbered
+  checkpoints and a `handoff.md` under `/Volumes/T7/dev/round8-<track>-evidence/` (b6 with the
+  reviewer's keying applied; f4 with the literal-first rule pending; f69 at checkpoint 5 with
+  the `conjoin_branches` injection deleted and 7 reds, continued by a second agent; f31, f13,
+  f9, d5, f6, f5 with matrices and pre-build patches). Their clones `/Volumes/T7/dev/round8-<track>`
+  and the exclusive target dirs from `PROTOCOL.md` §7 are reusable. Partial copies to delete:
+  `/Volumes/T7/dev/round8-{f4,b6,d3f23,f69,f9,f13,f31}/target` (killed `cp -R`).
+
+Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
