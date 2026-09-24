@@ -2330,5 +2330,21 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   jira -> F23 attribution is doubtful (root-chart paths; the F80 region collapse at
   statefulset.yaml:136 is likelier); the F80 analysis's "measured ceiling" is an unfilled
   placeholder. Wave 3 launched on D5, F6 (d)+(c) and F5/F54 at 16:05 UTC.
+- LANDED `0d172bc4` (lint track, `/Volumes/T7/dev/round8-lint-evidence/final.patch`, 14 files,
+  +450/-465, no behaviour change, fixtures byte-identical): the remaining clippy debt cleared by
+  restructuring, no suppressions. `eval_default` reuses `value_path_context::literal_guard_value`
+  (duplicate literal-to-guard `match` deleted); the range arm payload is a named `RangeArm`
+  (`activate_range` 8 -> 3 parameters); `activate_if`/`activate_with` share
+  `Interpreter::eval_condition_header`; `widen_changed_fragment_bindings` lost its always-Unknown
+  decision parameter; multi-scenario tests split (+4 tests). Gates measured in the clone on the
+  tree main is byte-identical to (`git diff HEAD` equality checked): `cargo fmt --check` 0;
+  `cargo nextest run --workspace` 1520/1520; integration profile 717 passed, 24 skipped, exit 0;
+  `task lint` exit 101 with ONE residual, `clippy::too_many_lines` 101/100 at
+  `fragment_eval/control.rs:604` `branch_steps`, left for B6 which rewrites that function
+  (`branch_steps-optional.patch` alongside makes lint exit 0 if B6 does not land);
+  `task lint:ast-grep` 0 with 3 pre-existing warnings; `task lint:fc` NOT run. The pre-landing
+  inventory was stale: the `expr_eval.rs`, `strict_operands.rs` and `binding_leaf_selection.rs`
+  diagnostics no longer fired on `8e5eca4c`; the real HEAD inventory was 12 IR-lib errors, 2 in
+  the IR inline-fixture tests and 21 in helm-schema-gen tests.
 
 Next: land in the review's order as each track reports (dump + battery from the track's own clone, fixtures adopted from that one dump, gates re-run on main), then record every unfinished track's exact witness and blocker from its `handoff.md`.
