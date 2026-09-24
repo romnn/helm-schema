@@ -2392,5 +2392,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   f9, d5, f6, f5 with matrices and pre-build patches). Their clones `/Volumes/T7/dev/round8-<track>`
   and the exclusive target dirs from `PROTOCOL.md` §7 are reusable. Partial copies to delete:
   `/Volumes/T7/dev/round8-{f4,b6,d3f23,f69,f9,f13,f31}/target` (killed `cp -R`).
+- PAUSED by the user at 99 % of the weekly window (2026-09-24 ~18:50 UTC). All agents were
+  stopped mid-step, so each clone `/Volumes/T7/dev/round8-<track>` may hold edits newer than
+  its last checkpoint: on resume, run `git diff --stat` in the clone before trusting
+  `<track>-evidence/checkpoint-N.patch`. The d3f23 detached chain (`run-rest.sh`:
+  drift -> adoption -> coalesced battery; `lint-final/run.sh`: corpus lint sweep) keeps running
+  without any model; its completion markers are `step-adopt.done`, `step-battery.done`,
+  `lint-final/done` under `/Volumes/T7/dev/round8-d3f23-evidence/`.
 
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
