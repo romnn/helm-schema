@@ -11,6 +11,7 @@ use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
 use crate::function_semantics::ArgumentEvaluationMode;
 use crate::scalar_value::{ScalarValueDispatch, TruthCondition, conjoin_predicates_with_memo};
+use crate::value_path_context::literal_guard_value;
 use helm_schema_core::{GuardValue, Predicate, ValuesPath};
 
 use super::strict_operands::{record_string_call_consumers, record_string_result_consumer};
@@ -50,12 +51,7 @@ pub(super) fn eval_default(
     // Helm-empty input selects the fallback and renders — so the fallback's
     // kind types only the truthy arm and must not close the base against
     // Helm-empty inputs.
-    if let Some(schema_type) = fallback_args
-        .first()
-        .map(TemplateExpr::deparen)
-        .filter(|expr| matches!(expr, TemplateExpr::Literal(_)))
-        .and_then(literal_schema_type)
-    {
+    if let Some(schema_type) = fallback_args.first().and_then(literal_schema_type) {
         effects.add_fallback_type_hints(primary_paths.clone(), schema_type);
     }
     let mut values = if fallback_reachability.is_always() {
@@ -121,14 +117,7 @@ pub(super) fn eval_default(
             // itself to spell the fallback arm. Floats abstain (their
             // file-vs-`--set` channels compare differently).
             if let [fallback] = fallback_args {
-                meta.default_fallback = match fallback.deparen() {
-                    TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
-                        Some(GuardValue::string(value.clone()))
-                    }
-                    TemplateExpr::Literal(Literal::Bool(value)) => Some(GuardValue::Bool(*value)),
-                    TemplateExpr::Literal(Literal::Int(value)) => Some(GuardValue::Int(*value)),
-                    _ => None,
-                };
+                meta.default_fallback = literal_guard_value(fallback);
             }
         }
     }
@@ -146,10 +135,10 @@ pub(super) fn eval_default(
     // arm leaves only the other value, where the chain collapses to it (the
     // same result the unordered choice produced).
     let mut result = EvalResult::with_effects(AbstractValue::first_truthy(values), effects);
-    if let [fallback] = fallback_results.as_slice() {
-        if let Some(proven) = compose_default_proven_operands(&primary_selection, fallback, memo) {
-            result = rebuild_complete_default_result(result, proven);
-        }
+    if let [fallback] = fallback_results.as_slice()
+        && let Some(proven) = compose_default_proven_operands(&primary_selection, fallback, memo)
+    {
+        result = rebuild_complete_default_result(result, proven);
     }
     finish_default_dispatch(
         result,
@@ -162,14 +151,15 @@ pub(super) fn eval_default(
 }
 
 fn rebuild_complete_default_result(mut result: EvalResult, proven: ProvenOperands) -> EvalResult {
-    if proven.has_unresolved
-        || proven.known.len() != 1
-        || proven.known[0].condition != Predicate::True
-    {
-        result.proven_operands = Some(proven);
-        return result;
-    }
-    let mut selected = *proven.known[0].result.clone();
+    let mut selected = match proven.known.as_slice() {
+        [only] if !proven.has_unresolved && only.condition == Predicate::True => {
+            *only.result.clone()
+        }
+        _ => {
+            result.proven_operands = Some(proven);
+            return result;
+        }
+    };
     let mut effects = result.effects.execution_only();
     effects.merge(std::mem::take(&mut selected.effects));
     selected.effects = effects;
@@ -246,10 +236,14 @@ fn has_proven_selection(result: &EvalResult) -> bool {
     let Some(proven) = &result.proven_operands else {
         return false;
     };
-    proven.has_unresolved
-        || proven.known.len() != 1
-        || proven.known[0].condition != Predicate::True
-        || has_proven_selection(&proven.known[0].result)
+    match proven.known.as_slice() {
+        [only] => {
+            proven.has_unresolved
+                || only.condition != Predicate::True
+                || has_proven_selection(&only.result)
+        }
+        _ => true,
+    }
 }
 
 fn default_primary_selection_for_proven_operand(
@@ -324,7 +318,7 @@ pub(super) fn flattened_proven_operands(
 }
 
 fn literal_schema_type(expr: &TemplateExpr) -> Option<&'static str> {
-    match expr {
+    match expr.deparen() {
         TemplateExpr::Literal(Literal::String(_) | Literal::RawString(_)) => Some("string"),
         TemplateExpr::Literal(Literal::Int(_)) => Some("integer"),
         TemplateExpr::Literal(Literal::Float(_)) => Some("number"),

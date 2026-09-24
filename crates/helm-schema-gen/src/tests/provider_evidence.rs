@@ -4441,62 +4441,7 @@ fn nested_fragment_control_keeps_the_containers_provider_slot() {
 
     sim_assert_eq!(
         have: schema.clone(),
-        want: serde_json::json!({
-            "$defs": {
-                "t": {
-                    "anyOf": [
-                        { "const": true },
-                        { "not": { "const": 0 }, "type": "number" },
-                        { "minLength": 1, "type": "string" },
-                        { "minItems": 1, "type": "array" },
-                        { "minProperties": 1, "type": "object" },
-                    ],
-                },
-            },
-            "$schema": "http://json-schema.org/draft-07/schema#",
-            "additionalProperties": false,
-            "allOf": [{
-                "if": {
-                    "not": {
-                        "properties": {
-                            "sidecar": { "$ref": "#/$defs/t" },
-                        },
-                        "required": ["sidecar"],
-                        "type": "object",
-                    },
-                },
-                "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                        "extraContainers": {
-                            "anyOf": [
-                                {
-                                    "items": {
-                                        "additionalProperties": false,
-                                        "properties": {
-                                            "name": {
-                                                "anyOf": [
-                                                    { "pattern": "\\{\\{", "type": "string" },
-                                                    { "type": "string" },
-                                                ],
-                                            },
-                                        },
-                                        "type": "object",
-                                    },
-                                    "type": "array",
-                                },
-                                { "not": { "$ref": "#/$defs/t" } },
-                            ],
-                        },
-                    },
-                },
-            }],
-            "properties": {
-                "extraContainers": {},
-                "sidecar": {},
-            },
-            "type": "object",
-        }),
+        want: expected_nested_fragment_control_schema(),
         "the nested fragment keeps its provider contract outside the preceding item"
     );
     for (instance, want) in [
@@ -4522,6 +4467,65 @@ fn nested_fragment_control_keeps_the_containers_provider_slot() {
             "instance={instance}; schema={schema}",
         );
     }
+}
+
+fn expected_nested_fragment_control_schema() -> serde_json::Value {
+    serde_json::json!({
+        "$defs": {
+            "t": {
+                "anyOf": [
+                    { "const": true },
+                    { "not": { "const": 0 }, "type": "number" },
+                    { "minLength": 1, "type": "string" },
+                    { "minItems": 1, "type": "array" },
+                    { "minProperties": 1, "type": "object" },
+                ],
+            },
+        },
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "allOf": [{
+            "if": {
+                "not": {
+                    "properties": {
+                        "sidecar": { "$ref": "#/$defs/t" },
+                    },
+                    "required": ["sidecar"],
+                    "type": "object",
+                },
+            },
+            "then": {
+                "additionalProperties": {},
+                "properties": {
+                    "extraContainers": {
+                        "anyOf": [
+                            {
+                                "items": {
+                                    "additionalProperties": false,
+                                    "properties": {
+                                        "name": {
+                                            "anyOf": [
+                                                { "pattern": "\\{\\{", "type": "string" },
+                                                { "type": "string" },
+                                            ],
+                                        },
+                                    },
+                                    "type": "object",
+                                },
+                                "type": "array",
+                            },
+                            { "not": { "$ref": "#/$defs/t" } },
+                        ],
+                    },
+                },
+            },
+        }],
+        "properties": {
+            "extraContainers": {},
+            "sidecar": {},
+        },
+        "type": "object",
+    })
 }
 
 /// A later arm attaches main-container environment evidence to the earlier live item.

@@ -2171,12 +2171,12 @@ fn constant_selected_default_type_test_matches_its_explicit_branch() {
           name: test
         {{- end }}
     "#};
-    let reference = indoc! {r#"
+    let reference = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
           name: test
-    "#};
+    "};
 
     sim_assert_eq!(
         have: schema_for_values_yaml(parse_ir(source), None),

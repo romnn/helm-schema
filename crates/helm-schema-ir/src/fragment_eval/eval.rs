@@ -740,7 +740,7 @@ fn collect_control_facts(
         }
         "range_action" => {
             let arms = vec![
-                ArmSpec::Range {
+                ArmSpec::Range(RangeArm {
                     header: range_header_from_source(node, source),
                     destructured: range_has_destructured_variable_definition(node),
                     binding_kind: if helm_schema_ast::range_uses_assignment(node) {
@@ -752,7 +752,7 @@ fn collect_control_facts(
                         node, source,
                     ),
                     key_variable: helm_schema_ast::range_destructured_key_variable(node, source),
-                },
+                }),
                 ArmSpec::Else,
             ];
             out.insert(
@@ -1385,14 +1385,18 @@ pub(super) struct ParentShellArm {
 pub(super) enum ArmSpec {
     If(Option<TemplateHeader>),
     With(Option<TemplateHeader>),
-    Range {
-        header: Option<TemplateHeader>,
-        destructured: bool,
-        binding_kind: crate::fragment_assignment::AssignmentKind,
-        value_variable: Option<String>,
-        key_variable: Option<String>,
-    },
+    Range(RangeArm),
     Else,
+}
+
+/// A `range` arm's header and the variables it binds.
+#[derive(Clone)]
+pub(super) struct RangeArm {
+    pub(super) header: Option<TemplateHeader>,
+    pub(super) destructured: bool,
+    pub(super) binding_kind: crate::fragment_assignment::AssignmentKind,
+    pub(super) value_variable: Option<String>,
+    pub(super) key_variable: Option<String>,
 }
 
 #[derive(Clone, Copy)]

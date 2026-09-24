@@ -332,6 +332,28 @@ impl Interpreter<'_> {
         header_value_facts(&hole, self.db.predicate_memo().as_ref())
     }
 
+    /// Evaluate an `if` / `with` header for its execution effects and value
+    /// facts. A binding header (`$x := …`, `$x = …`) lowers as an assignment
+    /// and its bound value supplies the facts; any other header absorbs its
+    /// own execution effects.
+    pub(super) fn eval_condition_header(
+        &mut self,
+        expr: &TemplateExpr,
+    ) -> (
+        std::collections::BTreeSet<String>,
+        crate::eval_effect::SelectionTruthReachability,
+    ) {
+        match expr {
+            TemplateExpr::VariableDefinition { value, .. }
+            | TemplateExpr::Assignment { value, .. } => {
+                let facts = self.control_header_value_facts(value);
+                self.eval_assignment_exprs(std::slice::from_ref(expr));
+                facts
+            }
+            _ => self.absorb_header_execution_effects(expr),
+        }
+    }
+
     /// Record every `required(message, subject)` guardrail in the
     /// expressions: rendering fails under the ambient predicates whenever a
     /// subject resolving to exactly one values path is Helm-empty. Member

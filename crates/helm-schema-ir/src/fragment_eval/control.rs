@@ -24,7 +24,7 @@ use super::domain::{
 };
 use super::eval::{
     Adopted, AdoptionPlan, ArmSpec, Contributions, Interpreter, NodeView, ParentShape, ParentShell,
-    ParentShellArm, SourceWindow, branch_window,
+    ParentShellArm, RangeArm, SourceWindow, branch_window,
 };
 
 /// Exact range sequences resolved from a statically known list iterable.
@@ -227,7 +227,7 @@ impl Interpreter<'_> {
                 promote_body_outcome = true;
             }
             let arm_binding_kind = match &arm {
-                ArmSpec::Range { binding_kind, .. } => *binding_kind,
+                ArmSpec::Range(range) => range.binding_kind,
                 _ => crate::fragment_assignment::AssignmentKind::Declaration,
             };
 
@@ -433,10 +433,8 @@ impl Interpreter<'_> {
                 && iterations.is_none()
                 && let Some(transition) = &header_transition
             {
-                self.locals.widen_changed_fragment_bindings(
-                    &transition.after_scope,
-                    crate::eval_env::BindingDecision::new(TruthCondition::Unknown),
-                );
+                self.locals
+                    .widen_changed_fragment_bindings(&transition.after_scope);
             }
             // A branch-local reassignment's truthiness holds only where the
             // arm RAN: stamping the arm condition makes the cross-branch
@@ -1172,13 +1170,13 @@ impl Interpreter<'_> {
         match (region.kind, index) {
             (ControlKind::If, 0) => ArmSpec::If(None),
             (ControlKind::With, 0) => ArmSpec::With(None),
-            (ControlKind::Range, 0) => ArmSpec::Range {
+            (ControlKind::Range, 0) => ArmSpec::Range(RangeArm {
                 header: None,
                 destructured: false,
                 binding_kind: crate::fragment_assignment::AssignmentKind::Declaration,
                 value_variable: None,
                 key_variable: None,
-            },
+            }),
             _ => ArmSpec::Else,
         }
     }
@@ -1224,23 +1222,9 @@ impl Interpreter<'_> {
                     self.activate_with(header.as_ref(), region_start, branch_index);
                 (condition, Contributions::default(), None, truth, None)
             }
-            ArmSpec::Range {
-                header,
-                destructured,
-                binding_kind,
-                value_variable,
-                key_variable,
-            } => {
-                let (condition, contributions, iterations, truth, post_header_locals) = self
-                    .activate_range(
-                        header.as_ref(),
-                        *destructured,
-                        *binding_kind,
-                        value_variable.as_deref(),
-                        key_variable.as_deref(),
-                        nodes,
-                        region_start,
-                    );
+            ArmSpec::Range(range) => {
+                let (condition, contributions, iterations, truth, post_header_locals) =
+                    self.activate_range(range, nodes, region_start);
                 (
                     condition,
                     contributions,
@@ -1326,18 +1310,7 @@ impl Interpreter<'_> {
                 context.condition_uses_truthiness_abstention(header.expr()),
             )
         };
-        let header_binding = match header.expr() {
-            TemplateExpr::VariableDefinition { value, .. }
-            | TemplateExpr::Assignment { value, .. } => Some(value.as_ref()),
-            _ => None,
-        };
-        let (helper_paths, evaluated_truth) = if let Some(value) = header_binding {
-            let facts = self.control_header_value_facts(value);
-            self.eval_assignment_exprs(std::slice::from_ref(header.expr()));
-            facts
-        } else {
-            self.absorb_header_execution_effects(header.expr())
-        };
+        let (helper_paths, evaluated_truth) = self.eval_condition_header(header.expr());
         let evaluated_truth = abstain_truth(evaluated_truth, truthiness_abstains);
         let evaluated_truth_is_unknown = evaluated_truth.when_true().exact_predicate().is_none();
         if let Some(exact) = evaluated_truth.when_true().exact_predicate() {
@@ -1573,18 +1546,7 @@ impl Interpreter<'_> {
                 context.condition_uses_truthiness_abstention(header.expr()),
             )
         };
-        let header_binding = match header.expr() {
-            TemplateExpr::VariableDefinition { value, .. }
-            | TemplateExpr::Assignment { value, .. } => Some(value.as_ref()),
-            _ => None,
-        };
-        let (helper_paths, evaluated_truth) = if let Some(value) = header_binding {
-            let facts = self.control_header_value_facts(value);
-            self.eval_assignment_exprs(std::slice::from_ref(header.expr()));
-            facts
-        } else {
-            self.absorb_header_execution_effects(header.expr())
-        };
+        let (helper_paths, evaluated_truth) = self.eval_condition_header(header.expr());
         let evaluated_truth = abstain_truth(evaluated_truth, truthiness_abstains);
         let evaluated_truth_is_unknown = evaluated_truth.when_true().exact_predicate().is_none();
         if let Some(exact) = evaluated_truth.when_true().exact_predicate() {
@@ -1655,11 +1617,7 @@ impl Interpreter<'_> {
     )]
     fn activate_range(
         &mut self,
-        header: Option<&TemplateHeader>,
-        destructured: bool,
-        binding_kind: crate::fragment_assignment::AssignmentKind,
-        value_variable: Option<&str>,
-        key_variable: Option<&str>,
+        range: &RangeArm,
         nodes: &[NodeView<'_>],
         region_start: usize,
     ) -> (
@@ -1669,7 +1627,11 @@ impl Interpreter<'_> {
         SelectionTruthReachability,
         crate::symbolic_local_state::SymbolicLocalState,
     ) {
-        let Some(header) = header else {
+        let destructured = range.destructured;
+        let binding_kind = range.binding_kind;
+        let value_variable = range.value_variable.as_deref();
+        let key_variable = range.key_variable.as_deref();
+        let Some(header) = range.header.as_ref() else {
             let post_header_locals = self.locals.clone();
             self.push_dot(None, crate::eval_env::BindingEvaluationMode::Direct);
             return (
@@ -1702,13 +1664,13 @@ impl Interpreter<'_> {
                 && target != source
             {
                 self.locals
-                    .bind_current_variable_state(binding_kind, source, target.clone());
+                    .bind_current_variable_state(binding_kind, source, target);
             }
             if let Some(target) = key_variable
                 && target != source
             {
                 self.locals
-                    .bind_current_variable_state(binding_kind, source, target.to_string());
+                    .bind_current_variable_state(binding_kind, source, target);
             }
         } else {
             let value = iterable_value.clone().unwrap_or(AbstractValue::Unknown);
@@ -2402,97 +2364,9 @@ pub(super) fn collect_deferred<'n>(
     {
         return;
     }
-    match node {
-        Node::Mapping(entry) => {
-            let Some(shape) = plan.parent_shapes.get(&entry.span.start).copied() else {
-                return;
-            };
-            let arms = parent_shells
-                .get(&entry.span.start)
-                .cloned()
-                .unwrap_or_default();
-            chain.push(DeferredParent { shape, arms });
-            let beyond = plan
-                .child_indexes
-                .get(&entry.span.start)
-                .into_iter()
-                .flat_map(|index| index.in_window(window))
-                .filter_map(|index| entry.children.get(index))
-                .collect::<Vec<_>>();
-            if !beyond.is_empty() {
-                out.push(DeferredNodes {
-                    chain: chain.clone(),
-                    resolved_chains: Vec::new(),
-                    nodes: beyond,
-                    window,
-                    defer_end: window.end,
-                    omitted_control,
-                });
-            }
-            for child in plan
-                .child_indexes
-                .get(&entry.span.start)
-                .into_iter()
-                .flat_map(|index| index.crossing(window.start))
-                .filter_map(|index| entry.children.get(index))
-            {
-                collect_deferred(
-                    child,
-                    window,
-                    omitted_control,
-                    plan,
-                    parent_shells,
-                    chain,
-                    out,
-                );
-            }
-            chain.pop();
-        }
-        Node::Sequence(item) => {
-            let Some(shape) = plan.parent_shapes.get(&item.span.start).copied() else {
-                return;
-            };
-            let arms = parent_shells
-                .get(&item.span.start)
-                .cloned()
-                .unwrap_or_default();
-            chain.push(DeferredParent { shape, arms });
-            let beyond = plan
-                .child_indexes
-                .get(&item.span.start)
-                .into_iter()
-                .flat_map(|index| index.in_window(window))
-                .filter_map(|index| item.children.get(index))
-                .collect::<Vec<_>>();
-            if !beyond.is_empty() {
-                out.push(DeferredNodes {
-                    chain: chain.clone(),
-                    resolved_chains: Vec::new(),
-                    nodes: beyond,
-                    window,
-                    defer_end: window.end,
-                    omitted_control,
-                });
-            }
-            for child in plan
-                .child_indexes
-                .get(&item.span.start)
-                .into_iter()
-                .flat_map(|index| index.crossing(window.start))
-                .filter_map(|index| item.children.get(index))
-            {
-                collect_deferred(
-                    child,
-                    window,
-                    omitted_control,
-                    plan,
-                    parent_shells,
-                    chain,
-                    out,
-                );
-            }
-            chain.pop();
-        }
+    let (parent_start, children) = match node {
+        Node::Mapping(entry) => (entry.span.start, &entry.children),
+        Node::Sequence(item) => (item.span.start, &item.children),
         Node::Control(region) => {
             for branch in &region.branches {
                 for child in &branch.body {
@@ -2507,9 +2381,53 @@ pub(super) fn collect_deferred<'n>(
                     );
                 }
             }
+            return;
         }
-        _ => {}
+        _ => return,
+    };
+    let Some(shape) = plan.parent_shapes.get(&parent_start).copied() else {
+        return;
+    };
+    let arms = parent_shells
+        .get(&parent_start)
+        .cloned()
+        .unwrap_or_default();
+    chain.push(DeferredParent { shape, arms });
+    let beyond = plan
+        .child_indexes
+        .get(&parent_start)
+        .into_iter()
+        .flat_map(|index| index.in_window(window))
+        .filter_map(|index| children.get(index))
+        .collect::<Vec<_>>();
+    if !beyond.is_empty() {
+        out.push(DeferredNodes {
+            chain: chain.clone(),
+            resolved_chains: Vec::new(),
+            nodes: beyond,
+            window,
+            defer_end: window.end,
+            omitted_control,
+        });
     }
+    for child in plan
+        .child_indexes
+        .get(&parent_start)
+        .into_iter()
+        .flat_map(|index| index.crossing(window.start))
+        .filter_map(|index| children.get(index))
+    {
+        collect_deferred(
+            child,
+            window,
+            omitted_control,
+            plan,
+            parent_shells,
+            chain,
+            out,
+        );
+    }
+    chain.pop();
 }
 
 /// Structural range-body shape read off the CST (replacing the line scans

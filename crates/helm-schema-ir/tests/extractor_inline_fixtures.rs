@@ -14,7 +14,6 @@
 //!     helper) emit a value use for `X` even though `Values` is the
 //!     second selector segment, not the root.
 
-use color_eyre::eyre;
 use helm_schema_ast::DefineIndex;
 use helm_schema_ir::{ContractUse, Guard, GuardValue, SymbolicIrContext};
 use indoc::indoc;
@@ -449,7 +448,7 @@ fn split_path_helper_resolves_multisegment_key_to_leaf_only() {
 /// alternative that is not itself a list must not abandon the whole exact
 /// iteration: the joined value still supplies one.
 #[test]
-fn range_over_selected_list_iterates_each_exact_alternative() -> eyre::Result<()> {
+fn range_over_selected_list_iterates_each_exact_alternative() {
     let template = indoc! {r#"
         {{- $parts := splitList "." (ternary "a.b" "c.d.e" .Values.pick) -}}
         apiVersion: v1
@@ -476,7 +475,6 @@ fn range_over_selected_list_iterates_each_exact_alternative() -> eyre::Result<()
         ]),
         "each exactly iterable alternative must supply its members: {ir:#?}"
     );
-    Ok(())
 }
 
 /// A loop-carried write guarded by a nested helper's output keeps every
@@ -488,7 +486,7 @@ fn range_over_selected_list_iterates_each_exact_alternative() -> eyre::Result<()
 /// loop write guarded by a values path — all resolve both candidates, so this
 /// pins the boundary at "the guard is an evaluated helper output".
 #[test]
-fn loop_write_guarded_by_helper_output_keeps_each_candidate_key() -> eyre::Result<()> {
+fn loop_write_guarded_by_helper_output_keeps_each_candidate_key() {
     let helpers = indoc! {r#"
         {{- define "test.read" -}}
         {{- index $.context.Values .key -}}
@@ -526,7 +524,6 @@ fn loop_write_guarded_by_helper_output_keeps_each_candidate_key() -> eyre::Resul
         want: std::collections::BTreeSet::from(["alpha".to_string(), "beta".to_string()]),
         "a helper-output guard must not erase the loop's candidate keys: {ir:#?}"
     );
-    Ok(())
 }
 
 #[test]

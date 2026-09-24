@@ -1399,7 +1399,7 @@ fn with_guarded_quote_into_string_sink_accepts_any_input() {
 /// Affix transforms enforce the catalogue's string contract on both operands.
 #[test]
 fn trim_affix_catalog_requires_string_affix_and_subject() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -1407,8 +1407,8 @@ fn trim_affix_catalog_requires_string_affix_and_subject() {
         data:
           prefix: {{ trimPrefix .Values.prefix .Values.subject | quote }}
           suffix: {{ .Values.tail | trimSuffix .Values.suffix | quote }}
-    "#};
-    let reference = indoc! {r#"
+    "};
+    let reference = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -1418,7 +1418,7 @@ fn trim_affix_catalog_requires_string_affix_and_subject() {
           prefix-subject: {{ trim .Values.subject | quote }}
           suffix-affix: {{ trim .Values.suffix | quote }}
           suffix-subject: {{ trim .Values.tail | quote }}
-    "#};
+    "};
 
     let schema = schema_for(parse_ir(src));
     sim_assert_eq!(have: &schema, want: &schema_for(parse_ir(reference)));

@@ -45,8 +45,20 @@ fn check_status(extra_args: &[&str], want_success: bool) -> eyre::Result<()> {
     Ok(())
 }
 
+fn check_mode(mode: &str, values: &str, want_success: bool) -> eyre::Result<()> {
+    check_status(
+        &[
+            "--set-string",
+            &format!("mode={mode}"),
+            "--set-json",
+            values,
+        ],
+        want_success,
+    )
+}
+
 #[test]
-fn direct_and_evaluated_binding_selectors_keep_distinct_nil_boundaries() -> eyre::Result<()> {
+fn direct_root_selector_keeps_its_nil_boundary() -> eyre::Result<()> {
     check_case(&["--set-string", "mode=original"], false)?;
     check_case(
         &["--set-string", "mode=original", "--set-json", "probe=null"],
@@ -65,7 +77,11 @@ fn direct_and_evaluated_binding_selectors_keep_distinct_nil_boundaries() -> eyre
         ],
         false,
     )?;
+    Ok(())
+}
 
+#[test]
+fn named_binding_selector_keeps_its_nil_boundary() -> eyre::Result<()> {
     check_case(&["--set-string", "mode=named"], true)?;
     check_case(
         &["--set-string", "mode=named", "--set-json", "probe=null"],
@@ -108,7 +124,11 @@ fn direct_and_evaluated_binding_selectors_keep_distinct_nil_boundaries() -> eyre
         ],
         true,
     )?;
+    Ok(())
+}
 
+#[test]
+fn rebound_root_selector_keeps_its_nil_boundary() -> eyre::Result<()> {
     check_case(&["--set-string", "mode=rebound"], true)?;
     check_case(
         &["--set-string", "mode=rebound", "--set-json", "probe=null"],
@@ -602,8 +622,9 @@ fn symbolic_range_assignment_uses_the_runtime_last_member() -> eyre::Result<()> 
     Ok(())
 }
 
+/// Consumers of a branch-selected local follow the decision that owns each value.
 #[test]
-fn decision_owned_consumers_and_control_exits_match_helm() -> eyre::Result<()> {
+fn decision_owned_consumers_match_helm() -> eyre::Result<()> {
     for (mode, values, want) in [
         (
             "string-branch",
@@ -625,6 +646,16 @@ fn decision_owned_consumers_and_control_exits_match_helm() -> eyre::Result<()> {
             r#"{"chooseP":false,"p":"fallback","q":{"k":1}}"#,
             true,
         ),
+    ] {
+        check_mode(mode, values, want)?;
+    }
+    Ok(())
+}
+
+/// `if` / `with` header declarations shadow, and header assignments write through.
+#[test]
+fn control_header_bindings_match_helm() -> eyre::Result<()> {
+    for (mode, values, want) in [
         (
             "if-declare-shadow",
             r#"{"before":"wrong","after":{}}"#,
@@ -664,6 +695,16 @@ fn decision_owned_consumers_and_control_exits_match_helm() -> eyre::Result<()> {
             r#"{"before":{},"after":"wrong"}"#,
             false,
         ),
+    ] {
+        check_mode(mode, values, want)?;
+    }
+    Ok(())
+}
+
+/// Range exits, `break` / `continue`, and escaped interleavings keep assignment order.
+#[test]
+fn control_exits_match_helm() -> eyre::Result<()> {
+    for (mode, values, want) in [
         ("range-declare-else", r#"{"before":{},"items":[]}"#, false),
         ("range-declare-else", r#"{"before":{},"items":[{}]}"#, true),
         (
@@ -718,15 +759,7 @@ fn decision_owned_consumers_and_control_exits_match_helm() -> eyre::Result<()> {
             true,
         ),
     ] {
-        check_status(
-            &[
-                "--set-string",
-                &format!("mode={mode}"),
-                "--set-json",
-                values,
-            ],
-            want,
-        )?;
+        check_mode(mode, values, want)?;
     }
     Ok(())
 }

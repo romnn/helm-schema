@@ -166,8 +166,7 @@ fn symbolic_range_exit_widens_only_bindings_changed_by_the_iteration() {
         LocalBinding::direct(values_path!("items.*")),
     );
 
-    positive_exit
-        .widen_changed_fragment_bindings(&entry, BindingDecision::new(TruthCondition::Unknown));
+    positive_exit.widen_changed_fragment_bindings(&entry);
 
     let cfg = positive_exit
         .fragment_values

@@ -13,7 +13,8 @@ mod condition_predicate;
 mod path_resolution;
 
 pub(crate) use condition_predicate::{
-    guard_value_is_truthy, predicate_any, stringified_equality_preimage, value_has_key,
+    guard_value_is_truthy, literal_guard_value, predicate_any, stringified_equality_preimage,
+    value_has_key,
 };
 
 #[derive(Clone, Debug, PartialEq, Eq)]

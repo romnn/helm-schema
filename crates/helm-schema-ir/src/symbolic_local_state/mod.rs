@@ -255,11 +255,12 @@ impl SymbolicLocalState {
         }
     }
 
-    pub(crate) fn widen_changed_fragment_bindings(
-        &mut self,
-        entry: &Self,
-        decision: std::rc::Rc<crate::eval_env::BindingDecision>,
-    ) {
+    /// Widen every fragment binding this state changed relative to `entry`
+    /// into an unresolved choice between the changed value and an unknown
+    /// alternative: the exit of a loop whose iteration count is not exact
+    /// may or may not have run the body that changed it.
+    pub(crate) fn widen_changed_fragment_bindings(&mut self, entry: &Self) {
+        let decision = crate::eval_env::BindingDecision::new(TruthCondition::Unknown);
         for (variable, binding) in &mut self.fragment_values {
             if entry.fragment_values.get(variable) == Some(binding) {
                 continue;
@@ -456,12 +457,12 @@ impl SymbolicLocalState {
         &mut self,
         kind: AssignmentKind,
         source: &str,
-        target: String,
+        target: &str,
     ) {
         let binding = self.variable_state(source);
-        self.record_binding_shadow(kind, &target);
-        self.clear_variable(&target);
-        self.restore_variable_state(&target, binding);
+        self.record_binding_shadow(kind, target);
+        self.clear_variable(target);
+        self.restore_variable_state(target, binding);
     }
 
     pub(crate) fn insert_range_domain(&mut self, variable: String, literals: Vec<String>) {

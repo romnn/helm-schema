@@ -63,7 +63,7 @@ fn single_root_field(expr: &TemplateExpr) -> Option<&str> {
 /// The typed guard value of a plain scalar literal. Floats abstain: their
 /// file-vs-`--set` numeric channels compare differently, so an equality
 /// target would overstate what the analysis knows.
-fn literal_guard_value(expr: &TemplateExpr) -> Option<GuardValue> {
+pub(crate) fn literal_guard_value(expr: &TemplateExpr) -> Option<GuardValue> {
     match expr.deparen() {
         TemplateExpr::Literal(Literal::String(value) | Literal::RawString(value)) => {
             Some(GuardValue::string(value.clone()))

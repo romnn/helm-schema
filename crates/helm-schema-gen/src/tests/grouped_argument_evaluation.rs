@@ -77,23 +77,66 @@ fn grouped_selector_argument_keeps_receiver_and_final_lookup_boundaries() {
           whole: {{ hasKey ((.Values.whole).subject) "key" | quote }}
     "#};
     let schema = schema_for(parse_ir(src));
-    let expected = serde_json::json!({
+    let expected = expected_grouped_selector_argument_schema();
+
+    sim_assert_eq!(have: &schema, want: &expected);
+
+    for (instance, want) in [
+        (serde_json::json!({}), true),
+        (serde_json::json!({ "parent": null, "whole": null }), true),
+        (serde_json::json!({ "parent": { "marker": 1 } }), false),
+        (
+            serde_json::json!({ "parent": { "marker": 1, "subject": null } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "parent": { "subject": "wrong" } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "parent": { "subject": {} }, "whole": { "subject": "wrong" } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "parent": { "subject": {} }, "whole": { "marker": 1 } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "parent": { "subject": {} }, "whole": { "subject": null } }),
+            true,
+        ),
+        (
+            serde_json::json!({ "parent": { "subject": {} }, "whole": { "subject": {} } }),
+            true,
+        ),
+    ] {
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: want,
+            "instance={instance}; schema={schema}",
+        );
+    }
+}
+
+fn expected_grouped_selector_argument_schema() -> serde_json::Value {
+    let parent_is_present = serde_json::json!({ "not": { "anyOf": [
+        { "not": {
+            "properties": { "parent": {} },
+            "required": ["parent"],
+            "type": "object",
+        } },
+        {
+            "properties": { "parent": { "enum": [null] } },
+            "required": ["parent"],
+            "type": "object",
+        },
+    ] } });
+    serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "allOf": [
             {
-                "if": { "not": { "anyOf": [
-                    { "not": {
-                        "properties": { "parent": {} },
-                        "required": ["parent"],
-                        "type": "object",
-                    } },
-                    {
-                        "properties": { "parent": { "enum": [null] } },
-                        "required": ["parent"],
-                        "type": "object",
-                    },
-                ] } },
+                "if": parent_is_present.clone(),
                 "then": { "allOf": [
                     root_property_schema(
                         "parent",
@@ -151,18 +194,7 @@ fn grouped_selector_argument_keeps_receiver_and_final_lookup_boundaries() {
                             "type": "object",
                         },
                     ] },
-                    { "not": { "anyOf": [
-                        { "not": {
-                            "properties": { "parent": {} },
-                            "required": ["parent"],
-                            "type": "object",
-                        } },
-                        {
-                            "properties": { "parent": { "enum": [null] } },
-                            "required": ["parent"],
-                            "type": "object",
-                        },
-                    ] } },
+                    parent_is_present,
                 ] },
                 "then": false,
             },
@@ -178,45 +210,7 @@ fn grouped_selector_argument_keeps_receiver_and_final_lookup_boundaries() {
             },
         },
         "type": "object",
-    });
-
-    sim_assert_eq!(have: &schema, want: &expected);
-
-    for (instance, want) in [
-        (serde_json::json!({}), true),
-        (serde_json::json!({ "parent": null, "whole": null }), true),
-        (serde_json::json!({ "parent": { "marker": 1 } }), false),
-        (
-            serde_json::json!({ "parent": { "marker": 1, "subject": null } }),
-            false,
-        ),
-        (
-            serde_json::json!({ "parent": { "subject": "wrong" } }),
-            false,
-        ),
-        (
-            serde_json::json!({ "parent": { "subject": {} }, "whole": { "subject": "wrong" } }),
-            false,
-        ),
-        (
-            serde_json::json!({ "parent": { "subject": {} }, "whole": { "marker": 1 } }),
-            true,
-        ),
-        (
-            serde_json::json!({ "parent": { "subject": {} }, "whole": { "subject": null } }),
-            true,
-        ),
-        (
-            serde_json::json!({ "parent": { "subject": {} }, "whole": { "subject": {} } }),
-            true,
-        ),
-    ] {
-        sim_assert_eq!(
-            have: schema_accepts_instance(&schema, &instance),
-            want: want,
-            "instance={instance}; schema={schema}",
-        );
-    }
+    })
 }
 
 /// Range-member variables retain direct lookup nil behavior at map arguments.
@@ -287,6 +281,46 @@ fn rebound_root_selector_preserves_receiver_and_leaf_boundaries() {
           rebound: {{ hasKey $.child "key" | quote }}
     "#};
     let schema = schema_for(parse_ir(src));
+    let expected = expected_rebound_root_selector_schema();
+
+    sim_assert_eq!(have: &schema, want: &expected);
+
+    for (instance, want) in [
+        (serde_json::json!({}), false),
+        (serde_json::json!({ "original": {} }), true),
+        (serde_json::json!({ "original": null }), false),
+        (serde_json::json!({ "original": "wrong" }), false),
+        (serde_json::json!({ "original": {}, "rebound": null }), true),
+        (
+            serde_json::json!({ "original": {}, "rebound": "wrong" }),
+            false,
+        ),
+        (
+            serde_json::json!({ "original": {}, "rebound": { "marker": 1 } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "original": {}, "rebound": { "child": null } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "original": {}, "rebound": { "child": "wrong" } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "original": {}, "rebound": { "child": {} } }),
+            true,
+        ),
+    ] {
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: want,
+            "instance={instance}; schema={schema}",
+        );
+    }
+}
+
+fn expected_rebound_root_selector_schema() -> serde_json::Value {
     let mut properties = serde_json::Map::new();
     properties.insert(
         "original".to_string(),
@@ -311,7 +345,7 @@ fn rebound_root_selector_preserves_receiver_and_leaf_boundaries() {
             "type": "object",
         },
     ] } });
-    let expected = expected_values_schema(
+    expected_values_schema(
         properties,
         vec![
             serde_json::json!({
@@ -370,43 +404,7 @@ fn rebound_root_selector_preserves_receiver_and_leaf_boundaries() {
             }),
         ],
         false,
-    );
-
-    sim_assert_eq!(have: &schema, want: &expected);
-
-    for (instance, want) in [
-        (serde_json::json!({}), false),
-        (serde_json::json!({ "original": {} }), true),
-        (serde_json::json!({ "original": null }), false),
-        (serde_json::json!({ "original": "wrong" }), false),
-        (serde_json::json!({ "original": {}, "rebound": null }), true),
-        (
-            serde_json::json!({ "original": {}, "rebound": "wrong" }),
-            false,
-        ),
-        (
-            serde_json::json!({ "original": {}, "rebound": { "marker": 1 } }),
-            false,
-        ),
-        (
-            serde_json::json!({ "original": {}, "rebound": { "child": null } }),
-            false,
-        ),
-        (
-            serde_json::json!({ "original": {}, "rebound": { "child": "wrong" } }),
-            false,
-        ),
-        (
-            serde_json::json!({ "original": {}, "rebound": { "child": {} } }),
-            true,
-        ),
-    ] {
-        sim_assert_eq!(
-            have: schema_accepts_instance(&schema, &instance),
-            want: want,
-            "instance={instance}; schema={schema}",
-        );
-    }
+    )
 }
 
 /// A named pipeline binding preserves the same evaluated-receiver boundary as root rebinding.
@@ -823,6 +821,40 @@ fn branch_root_reassignment_joins_value_and_mode_per_arm() {
           result: {{ hasKey $.child "key" | quote }}
     "#};
     let schema = schema_for(parse_ir(src));
+    let expected = expected_branch_root_reassignment_schema();
+
+    sim_assert_eq!(have: &schema, want: &expected);
+
+    for (instance, want) in [
+        (serde_json::json!({ "rebind": true }), true),
+        (serde_json::json!({ "rebind": true, "probe": null }), true),
+        (
+            serde_json::json!({ "rebind": true, "probe": "wrong" }),
+            false,
+        ),
+        (serde_json::json!({ "rebind": true, "probe": {} }), false),
+        (
+            serde_json::json!({ "rebind": true, "probe": { "child": null } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "rebind": true, "probe": { "child": "wrong" } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "rebind": true, "probe": { "child": {} } }),
+            true,
+        ),
+    ] {
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: want,
+            "instance={instance}; schema={schema}",
+        );
+    }
+}
+
+fn expected_branch_root_reassignment_schema() -> serde_json::Value {
     let rebind_is_truthy = serde_json::json!({
         "properties": { "rebind": { "$ref": "#/$defs/t" } },
         "required": ["rebind"],
@@ -840,7 +872,7 @@ fn branch_root_reassignment_joins_value_and_mode_per_arm() {
             "type": "object",
         },
     ] } });
-    let expected = expected_values_schema(
+    expected_values_schema(
         serde_json::Map::from_iter([
             (
                 "probe".to_string(),
@@ -894,37 +926,7 @@ fn branch_root_reassignment_joins_value_and_mode_per_arm() {
             }),
         ],
         true,
-    );
-
-    sim_assert_eq!(have: &schema, want: &expected);
-
-    for (instance, want) in [
-        (serde_json::json!({ "rebind": true }), true),
-        (serde_json::json!({ "rebind": true, "probe": null }), true),
-        (
-            serde_json::json!({ "rebind": true, "probe": "wrong" }),
-            false,
-        ),
-        (serde_json::json!({ "rebind": true, "probe": {} }), false),
-        (
-            serde_json::json!({ "rebind": true, "probe": { "child": null } }),
-            false,
-        ),
-        (
-            serde_json::json!({ "rebind": true, "probe": { "child": "wrong" } }),
-            false,
-        ),
-        (
-            serde_json::json!({ "rebind": true, "probe": { "child": {} } }),
-            true,
-        ),
-    ] {
-        sim_assert_eq!(
-            have: schema_accepts_instance(&schema, &instance),
-            want: want,
-            "instance={instance}; schema={schema}",
-        );
-    }
+    )
 }
 
 #[test]
@@ -1000,14 +1002,14 @@ fn with_join_keeps_direct_range_member_conditional_on_fallthrough() {
 
 #[test]
 fn pristine_root_values_selector_keeps_host_contract_in_document_and_helper() {
-    let document = indoc! {r#"
+    let document = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
           name: test
         data:
           result: {{ $.Values.a.b | quote }}
-    "#};
+    "};
     let helpers = indoc! {r#"
         {{- define "test.rootValue" -}}
         {{- $.Values.a.b | quote -}}
@@ -1197,7 +1199,7 @@ fn symbolic_range_exit_keeps_exact_zero_and_widens_only_the_changed_binding() {
 
 #[test]
 fn conditional_local_string_consumer_uses_only_the_selected_binding_leaf() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- $value := .Values.a -}}
         {{- if .Values.useB -}}
         {{- $value = .Values.b -}}
@@ -1208,8 +1210,8 @@ fn conditional_local_string_consumer_uses_only_the_selected_binding_leaf() {
           name: test
         data:
           encoded: {{ b64enc $value | quote }}
-    "#};
-    let reference = indoc! {r#"
+    "};
+    let reference = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -1220,7 +1222,7 @@ fn conditional_local_string_consumer_uses_only_the_selected_binding_leaf() {
           {{- else }}
           encoded: {{ b64enc .Values.a | quote }}
           {{- end }}
-    "#};
+    "};
     let schema = schema_for(parse_ir(src));
     let expected = schema_for(parse_ir(reference));
 
@@ -1472,7 +1474,7 @@ fn helper_short_circuit_else_keeps_its_strict_nil_boundary() {
 /// `tpl` constrains only the local value selected by its binding decision.
 #[test]
 fn conditional_local_tpl_uses_only_the_selected_binding_leaf() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- $value := .Values.a -}}
         {{- if .Values.useB -}}
         {{- $value = .Values.b -}}
@@ -1483,8 +1485,8 @@ fn conditional_local_tpl_uses_only_the_selected_binding_leaf() {
           name: test
         data:
           rendered: {{ tpl $value . | quote }}
-    "#};
-    let reference = indoc! {r#"
+    "};
+    let reference = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -1495,7 +1497,7 @@ fn conditional_local_tpl_uses_only_the_selected_binding_leaf() {
           {{- else }}
           rendered: {{ tpl .Values.a . | quote }}
           {{- end }}
-    "#};
+    "};
     let schema = schema_for(parse_ir(src));
     let expected = schema_for(parse_ir(reference));
 
@@ -1557,12 +1559,44 @@ fn deferred_nested_tpl_retains_its_immediate_truthiness_gate() {
         {{- end -}}
     "#};
     let schema = schema_for(parse_ir_with_helpers(src, helpers));
+    let expected = expected_deferred_nested_tpl_schema();
+
+    sim_assert_eq!(have: &schema, want: &expected);
+    for (instance, want) in [
+        (serde_json::json!({ "direct": false, "key": "URL" }), true),
+        (serde_json::json!({ "direct": false }), false),
+        (
+            serde_json::json!({ "direct": false, "key": "URL", "url": "value" }),
+            true,
+        ),
+        (
+            serde_json::json!({ "direct": false, "key": "URL", "url": {} }),
+            true,
+        ),
+        (
+            serde_json::json!({ "direct": false, "key": "URL", "url": { "x": 1 } }),
+            false,
+        ),
+        (
+            serde_json::json!({ "direct": true, "url": { "x": 1 } }),
+            true,
+        ),
+    ] {
+        sim_assert_eq!(
+            have: schema_accepts_instance(&schema, &instance),
+            want: want,
+            "instance={instance}; schema={schema}",
+        );
+    }
+}
+
+fn expected_deferred_nested_tpl_schema() -> serde_json::Value {
     let mut properties = serde_json::Map::new();
     for path in ["direct", "key", "url"] {
         properties.insert(path.to_string(), serde_json::json!({}));
     }
     let missing_key = navigated_host_condition(&["key"]);
-    let expected = expected_values_schema(
+    expected_values_schema(
         properties,
         vec![
             serde_json::json!({
@@ -1604,35 +1638,7 @@ fn deferred_nested_tpl_retains_its_immediate_truthiness_gate() {
             }),
         ],
         true,
-    );
-
-    sim_assert_eq!(have: &schema, want: &expected);
-    for (instance, want) in [
-        (serde_json::json!({ "direct": false, "key": "URL" }), true),
-        (serde_json::json!({ "direct": false }), false),
-        (
-            serde_json::json!({ "direct": false, "key": "URL", "url": "value" }),
-            true,
-        ),
-        (
-            serde_json::json!({ "direct": false, "key": "URL", "url": {} }),
-            true,
-        ),
-        (
-            serde_json::json!({ "direct": false, "key": "URL", "url": { "x": 1 } }),
-            false,
-        ),
-        (
-            serde_json::json!({ "direct": true, "url": { "x": 1 } }),
-            true,
-        ),
-    ] {
-        sim_assert_eq!(
-            have: schema_accepts_instance(&schema, &instance),
-            want: want,
-            "instance={instance}; schema={schema}",
-        );
-    }
+    )
 }
 
 /// A known non-empty opaque result replaces the local's prior value.
@@ -1797,7 +1803,7 @@ fn conditional_local_specialized_string_consumers_use_proven_leaves() {
         "$value | fromYaml | toJson",
         "printf $value \"x\"",
     ] {
-        let src = indoc! {r#"
+        let src = indoc! {r"
             {{- $value := .Values.a -}}
             {{- if .Values.useB -}}
             {{- $value = .Values.b -}}
@@ -1808,9 +1814,9 @@ fn conditional_local_specialized_string_consumers_use_proven_leaves() {
               name: test
             data:
               rendered: {{ __EXPRESSION__ | quote }}
-        "#}
+        "}
         .replace("__EXPRESSION__", expression);
-        let reference = indoc! {r#"
+        let reference = indoc! {r"
             apiVersion: v1
             kind: ConfigMap
             metadata:
@@ -1821,7 +1827,7 @@ fn conditional_local_specialized_string_consumers_use_proven_leaves() {
               {{- else }}
               rendered: {{ __FALSE_EXPRESSION__ | quote }}
               {{- end }}
-        "#}
+        "}
         .replace(
             "__TRUE_EXPRESSION__",
             &expression.replace("$value", ".Values.b"),
@@ -1842,7 +1848,7 @@ fn conditional_local_specialized_string_consumers_use_proven_leaves() {
 /// A selected trim affix preserves the chosen local leaf's string contract.
 #[test]
 fn conditional_local_trim_affix_uses_proven_leaves() {
-    let src = indoc! {r#"
+    let src = indoc! {r"
         {{- $value := .Values.a -}}
         {{- if .Values.useB -}}
         {{- $value = .Values.b -}}
@@ -1853,8 +1859,8 @@ fn conditional_local_trim_affix_uses_proven_leaves() {
           name: test
         data:
           rendered: {{ trimPrefix $value .Values.subject | quote }}
-    "#};
-    let reference = indoc! {r#"
+    "};
+    let reference = indoc! {r"
         apiVersion: v1
         kind: ConfigMap
         metadata:
@@ -1866,10 +1872,10 @@ fn conditional_local_trim_affix_uses_proven_leaves() {
           {{- else }}
           affix: {{ trim .Values.a | quote }}
           {{- end }}
-    "#};
+    "};
     let schema = schema_for(parse_ir(src));
 
-    sim_assert_eq!(have: &schema, want: &schema_for(parse_ir(&reference)));
+    sim_assert_eq!(have: &schema, want: &schema_for(parse_ir(reference)));
 
     for (instance, want) in [
         (
@@ -3022,9 +3028,10 @@ fn guarded_traversal_retains_ancestor_and_child_binding_exits() {
     }
 }
 
-/// Later-arm placement preserves assignment order across deferred and direct output.
+/// Later-arm placement preserves assignment order across deferred and direct
+/// output when the deferred node reads before the reassignment.
 #[test]
-fn later_arm_deferred_and_direct_nodes_keep_assignment_order() {
+fn later_arm_deferred_read_before_assignment_keeps_assignment_order() {
     let read_before_assignment = indoc! {r#"
         {{- $cfg := .Values.before -}}
         apiVersion: v1
@@ -3080,7 +3087,12 @@ fn later_arm_deferred_and_direct_nodes_keep_assignment_order() {
             "instance={instance}; schema={schema}",
         );
     }
+}
 
+/// Later-arm placement preserves assignment order across deferred and direct
+/// output when the reassignment precedes the deferred read.
+#[test]
+fn later_arm_assignment_before_deferred_read_keeps_assignment_order() {
     let assignment_before_read = indoc! {r#"
         {{- $cfg := .Values.before -}}
         apiVersion: v1
