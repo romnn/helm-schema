@@ -3445,4 +3445,38 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   per-chart version structurally (the kube-version agent was told not to read env). `die`
   before `receipt init` writes a fresh error file.
 
+- 01:50 — **B6+L1 rebased with both datadog residuals handled — but the stack must land
+  together** (`round8-b6-land-evidence/final.patch` = `git diff 4b14adc7`, 14 files, production
+  +220/−72 all in `fragment_eval/{control,eval,files,hole_effects}.rs`; B6+L1 alone +126/−64;
+  `task lint` 0 on this tree, `lint:fc` 0, unit 1567/1567). Both of sol's diagnoses were wrong
+  for this tree: residual (i) reproduces WITHOUT B6 — the union read is the condition read of
+  `if not (empty $securityContext)`; `activate_if` charged every path of the local's decoded
+  disjunction to the whole guard; now `control.rs` `enter_arm_condition`: a header that tests
+  only locals reads no values path itself (`header_tests_only_locals`), and under an AnyOf guard
+  a path's read is charged only to the alternatives that name it when each excludes or implies
+  the others (`alternatives_deciding`, exact BDD entailment), else the whole guard stays (a
+  first cut narrowed `Guard::Or` and broke `local_default_alias_render_applies_provider_schema_
+  to_fallback_path`; entailment fixed it); residual (ii): `merge_entry`/`repair_valueless_
+  mapping_header` is not the owner — B6's grouping itself restores the linux splice (without it
+  the per-view `branch_steps` loop evaluates the linux `securityContext:` escapee after the
+  region's local scope has closed; IR dumps `w2.base.ir.txt` vs `w2.cand.ir.txt`). Helm/K8s
+  matrices (`w/*.final.matrix.txt`, `dd/res1.final.matrix.txt`, `dd/blockers.final.matrix.txt`):
+  privateActionRunner/hostProfiler dormant `capabilities` `""`/`"x"` now accepted (K8s
+  accepts), rejected when the container is on (K8s rejects); w2/w2nm linux `sc.runAsUser: "x"`
+  now rejected (base accepted, K8s rejects). Tests: IR `local_condition_reads.rs` (four incl.
+  two controls), `escaped_container_guards::escapee_local_read_keeps_only_the_arm_that_bound_
+  the_member`, `contract::target_system_arms_keep_both_security_context_rows`, public gen
+  `tests/security_context_target_system.rs`; red logs `res1-red.log`, `res2-red-{ir,gen}.log`.
+  WORSE than base with B6+L1 alone (Helm-adjudicated): 11 datadog cells + w2* `{add:[NET_RAW]}`
+  — L2's (traceAgent/initContainers `{add:[SYS_ADMIN]}`, systemProbe `{drop:[ALL]}`), n4's
+  (securityAgent `""`/`"x"`/`false`/`[]`), and a NEW separate defect: the datadog `agent`
+  container's `if not (empty $securityContext)` decodes as approximate because the
+  `MAX_STAMPED_GUARDS=6` bound drops the local's truthiness (`symbolic_local_state/mod.rs:
+  309-374`; witnesses `w/w2ag4`, `min/e/v5`) — linux `runAsUser: x` accepted on base and cand,
+  K8s rejects; filed as its own item. A probe with L2's `expr_eval.rs` hunk fixes every L2 cell
+  and the agent cells but re-breaks the dormant par/hp cells that n4 fixes via residual (i).
+  → **L2+n4 stacking agent launched** (`round8-stack`: predicted base = 4f candidate + F4+MLS r5
+  + B6+L1, then L2 + n4 rebased per astra §C; `final-stack.patch` = the B6+L1+L2+n4 landing
+  unit).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
