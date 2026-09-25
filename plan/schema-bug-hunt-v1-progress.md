@@ -3224,4 +3224,48 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   acceptance-safe opening; compose each `Choice` arm before joining) + the overwrite-mode
   hygiene item.
 
+- 00:35 — **Cross-vendor challenge of the process (user request), results in `round8/`.**
+  `design-defs-naming-astra.md` (`20260925T214228-74b00e21`): measured on the F23 patch (59
+  fixtures, 3,994,857 changed lines): cycle-aware content-hash names remove 1,158,406 lines
+  (29.0%; cilium 14,616 → 448, openebs 580,761 → 461,935 — the rest is real change, array
+  reorder and hash propagation), first-reference PATH names remove 1.3% and blow the shipped
+  size (openebs 8.78 MB full paths, 7.47 MB shortened `values.foo@items…`); hash names cost
+  +200 KB on openebs (4.14 → 4.35 MB compact). The corpus has 168 cyclic `$defs` components in
+  127 charts, all through `helm-double-quoted-safe`/`helm-single-quoted-safe`; the pinned
+  Kubernetes bundle has no `definitions` table, so OpenAPI type names exist only where
+  provider provenance survives (`provider_definitions.rs:194/556`). Recommendation: ONE
+  minimized graph, readable names (provider/source names where provenance supports, 12-hex
+  content-hash prefix otherwise, named Helm helpers as identity boundaries) in fixtures, short
+  names only at the shipping boundary as a bijective rename proven by parsed equality after
+  inverse renaming; extraction profitability must not depend on name length; +250–450 net
+  production LOC; land right after F23 as a naming-only commit. `process-review-sol.md`
+  (`20260925T215920-61e01b7f`) and `process-review-astra.md` (`20260925T215920-4e3d78ce`):
+  the 17 self-audit items are confirmed in diagnosis; corrections — (a) the new witness gate
+  covers 21/83 families and is itself a model of Helm (Rust composition, `--set` vs `-f`, no
+  packaged dependencies/`import-values`), so report coverage beside closures; (b) a Helm cache
+  needs chart tree + ordered args + transport + binary + release/capabilities in its key, not
+  (chart, values, version); (c) validating a new gate with the old gate is insufficient —
+  replay frozen positive AND negative witnesses against both; (d) sccache helps builds only,
+  not Helm/linker/RAM contention. Defects I MISSED: the approximate Rust composition decides
+  whether Helm is consulted at all (`schema_emission_profiles.rs:1723`, `helm_values.rs:22`); a
+  failed reverse composition silently becomes `{}` (`emission_profile_harness.rs:81`); the
+  runners are not fail-closed (dump exit recorded then adoption proceeds; adoption skips
+  missing files; `sweep-e.done` written regardless; the sweep ran beside the lock); no
+  immutable acceptance receipt (tree hash, baseline, corpus hash, tool versions, artifact
+  manifest, gate exits); the sweep's "template" column loads the schema so it is not a
+  schema-free control, and the four oversized pretty dumps make Helm refuse the schema in
+  those rows; three charts `.helmignore` the schema; guard sampling caps (24 arms / 8 pairs,
+  52,528 arms skipped) are counted, not proven harmless; any non-successful render is a
+  "matched tightening" (`:1824`) regardless of cause; defaults-relative exceptions can
+  transfer an allowance between resources of one type; `next-families.md` is a second status
+  authority. Ranked plan (both agree): tonight — freeze one candidate on the ACTUAL HEAD with a
+  receipt (done: the round-4f chain), make the runners fail-closed with a manifest and the
+  sweep under the lock and on the writer's bytes, produce a reviewable fixture diff; next —
+  stable readable naming as its own proven landing, exact witness rows with Helm-derived
+  documents + roster migration, changed-chart selection over a persistent raw Helm evidence
+  store (raw evidence separate from adjudication policy), the lint sweep as one Rust
+  integration test, manifests/worktrees/sccache last. NOT tonight: Helm cache, Rust sweep,
+  worktree migration, more broad design rounds. Steady-state target after migration:
+  25–45 min per landing (1.3–2.4 verified landings/hour), with a 10–15 min generation floor.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
