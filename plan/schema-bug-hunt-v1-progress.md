@@ -2399,5 +2399,35 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   drift -> adoption -> coalesced battery; `lint-final/run.sh`: corpus lint sweep) keeps running
   without any model; its completion markers are `step-adopt.done`, `step-battery.done`,
   `lint-final/done` under `/Volumes/T7/dev/round8-d3f23-evidence/`.
+- Resumed 2026-09-24 23:40 UTC on the fresh weekly window (Opus subagents only). d3f23's
+  detached chain finished: dump 164/164, 41 chart fixtures adopted into `round8-d3f23-b`,
+  corpus `helm lint` sweep zero new failures (156 charts); its coalesced battery exited 100
+  only on `datadog: operator.datadogCRDs <- <scalar>: Helm coalescence failed` — the
+  adjudicator treats Helm's `warning: cannot overwrite table with non table` as a failed run,
+  while `coalesceTablesFullKey` only warns, keeps the user's scalar and renders on; with
+  coalesced defaults the generator now probes subchart-owned tables, so the adjudicator must
+  decide by exit code + render validation. In progress with a fresh agent.
+- B6 (round8-b6-evidence, `final.patch` on `fab306d2`): code complete. `branch_steps` groups a
+  region with every later sibling whose span starts inside it, keyed on `Node::Control(r)` or
+  `escaped_control(view)` exactly as `eval_node_list`; the third spelling of the containment
+  scan and four copies of the all-Direct fallback (`direct_branch_steps`) deleted; +49/-37
+  production lines; `branch_steps` now under `too_many_lines`, so `task lint` is 0 on that tree.
+  Ten regressions in `src/tests/escaped_container_guards.rs` (7 red-first, 3 controls; two
+  round-7 claims corrected: the define lane was also broken, the range case was already
+  correct). The design review's "embedded geometry" cannot occur: a region embedded in an open
+  view V closes as V's child (`close_container`), never as a later sibling — corpus probe shows
+  zero embedded-owner absorptions (`probe-embedded.log`); keying kept, no byte changes.
+  `w/H-contiguous` diagnosed, not fixed: `b:` reaches `branch_steps` through `escaped`, is
+  appended alone at `control.rs:722`, and `eval_deferred` never pushes the arm guard; the fix
+  needs the containment fact on the second input list plus a chain merge (option B, parser
+  keeps `escaped`, is the end state). Gates: fmt 0, lint 0, unit 1530/1530, dump 202, battery
+  exit 0 (27 flips, 0 tightenings). 16 fixtures move, 14 adopted-ready (Helm-confirmed
+  loosenings), 2 HELD: loki (`loki.storage.swift.{connect_timeout,max_retries,request_timeout}`
+  REJECT while Helm renders — L1: `| default` literal type hints inside a tpl-evaluated `with`
+  are emitted unguarded, HEAD identical on witness `w3/lk3`) and datadog
+  (`agents.containers.traceAgent.securityContext.capabilities.add <- [SYS_ADMIN]` REJECT while
+  Helm renders — L2: merge attribution types `.securityContext.capabilities` as a whole
+  `SecurityContext`, HEAD identical on `w3/dd3`). Both are pre-existing defects B6 makes
+  reachable; B6 lands after L1 (b6 agent) and L2 (new `round8-l2` track) are fixed.
 
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
