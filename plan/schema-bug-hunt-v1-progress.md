@@ -3185,4 +3185,43 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   pending; decision so far: commit the readable form, shorten refs only as a size-driven writer
   fallback rung after pretty→compact.
 
+- 00:20 — **Frozen-witness gate built** (`round8-gate-evidence/final.patch`, `git diff --cached
+  9813acac` on the predicted base; clone `round8-gate`): catalog `crates/helm-schema/tests/common/
+  family_witnesses.rs` (astra's row types + `SetPair`/`SetValue` generating both the JSON overlay
+  and the `--set` spelling, `SizeObligation` rows, `CAMPAIGN_FAMILIES` = 83, `unfrozen` notes;
+  `Family` reused from the roster and extended to F0–F80/D3/D4/D5/B6/L1/L2/Unfiled with
+  `FromStr`); runner `tests/family_witnesses.rs` (adopted fixture only, compiled once per chart,
+  sparse overlay → `coalesce_chart_values`, one `sim_assert_eq!` per failing row in a narrow
+  `catch_unwind` then one `eyre` error; known-open rows FAIL on unexpected fixes, `Fixed` rows
+  fail on regression; same-document/opposite-oracle rows are conflicts that block closure — F5
+  has four: `--set 0/-1` renders, the same numbers via `-f` abort; digest pin over chart tree +
+  kube version + transport/overrides + oracle; F74 rows re-serialize through the shipping writer
+  against `HELM_MAX_CHART_FILE_BYTES`, now re-exported as `helm_schema::output::…` — the only
+  production change); nextest default filter `not kind(test) or binary_id(=helm-schema::
+  family_witnesses)`. 12 gate tests (both regression directions, both unexpected-fix directions,
+  activation context, null/list composition, dependency activation checked against Helm
+  `.Values | toJson`, transport conflicts, closure rule, size obligation, digest invalidation,
+  registration). 130 audit rows seeded (125 verdict + 18 size; 91 values files); offline verdicts
+  match the audit's Helm-with-schema verdicts on 121/123. Gates: fmt 0, unit 1563/1563, gate
+  12/12 (~8 s), `public_surface` 15/15, lint 201 on the B6 residual only. **Scorecard: families
+  CLOSED 4/83 (F17, F74, F77, F79)**; 21 frozen, 62 without a row. New findings: (a) nginx,
+  mariadb and bitnami-postgresql `.helmignore` `values.schema.json`, so Helm never loads a
+  schema for them — the audit's nginx verdicts were vacuous (rows re-based on the fixture's own
+  verdict); a CLI diagnostic is owed; (b) with the compact shipped schema loaded, Helm REJECTS
+  openebs's own defaults at `/loki: false schema` (KnownFalseRejection filed, family to
+  attribute) and accepts kube-prometheus-stack's; (c) Helm refuses the oncall schema outright:
+  the `rabbitmq.ldap.uri` `pattern` (a `\u0000` URI pattern, same in airflow) is not a valid Go
+  regexp — the jsonschema crate compiles it, so it is invisible offline → a new obligation
+  ("Helm loads the schema") and a production fix (track `regexp`, fresh Opus agent launched:
+  origin classification of every Go-rejected pattern across the 156 fixtures and the bundles,
+  emitter fix, RE2-compatibility test). Unfrozen: F23 oncall `adminPasswordKey=null`, oncall
+  and airflow defaults (blocked on (c)). Follow-ups D4 (live Helm variant; needs `--set`/`-f`
+  transport, dependency context, `.helmignore` check), D5 (roster migration), D6 (deep
+  toggles), policy decisions F1/F73/F80 and the F5 transport conflict. Landing: test-only +
+  one re-export, no fixtures — lands right after the F23 chain (unit + gate + adjudicator
+  suites, no battery).
+- 00:22 — **MLS round 5 launched** (fresh Opus, `round8-mls`): sol's two landing changes (w10
+  acceptance-safe opening; compose each `Choice` arm before joining) + the overwrite-mode
+  hygiene item.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
