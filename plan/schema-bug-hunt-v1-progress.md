@@ -3349,4 +3349,28 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `QUARANTINED_FALSE_REJECTIONS` in the candidate (`round8-d3f23-e`, test roster only; the
   `UNADJUDICATED_INTAKE` entry stays) before the integration step compiles it.
 
+- 01:05 — **F6 finishing done** (`round8-f6-land-evidence/final.patch` = `git diff e5b04af6`,
+  F6 alone on BASE 5838c9cf + witness commit e5b04af6; the only rebase conflict was the tail
+  of `fail_validators.rs`, resolved by keeping every F69/witness test and appending F6's). The
+  owed change: ONE trim-aware text function `node_eval::rendered_text(node, source,
+  BodyTrims)` (deleting `text_edge_trims` and `inline_regions::trimmed_template_text`), define
+  trims carried `DefineBlock` → `CachedDefineBody` → `ParsedHelperBody`, ONE walker
+  `helper_literal_chains` (deleting `collect_dispatch`, `raw_empty`), the `some_nonempty ==
+  True` join fast path, ONE typed `ListOperation { None, Append, Prepend, Compact, Without }`
+  on `FunctionSemantics` replacing the name lists in `assignments.rs`; +180/−181 for the change
+  (net −1; tokei code +37, comments −28), F6 total +399/−106 over the witness commit. 45-cell
+  Helm matrix (`matrix/matrix.jsonl`); five red-first tests (`red-final.log` 5 FAIL on
+  checkpoint-1 production, `green-final.log` 83/83) plus five kept guards and two IR
+  `ListOperation` tests. Gates: fmt 0, unit 1577/1577, lint 0 except the B6 residual, ast-grep
+  0. CLI probes base(witness)→cand: never worse on any cell, nine cells fixed; bitnami-redis
+  gains one validator clause matching Helm on the four cells base got wrong; schema-registry
+  and postgresql-ha identical; headscale gains two bitnami-postgresql clauses matching Helm.
+  Open: F46 (evaluated helper output ignores the define's own trims — needs the new
+  `ParsedHelperBody.trims` fact); evaluator dispatch still keys append/prepend/compact by name
+  (routing through the classification exposed an existing `append` range-accumulation false
+  rejection in aws-ebs-csi-driver `controller.topologySpreadConstraints`, base has it too —
+  deferred until that bug is fixed); `compact_then_append_include` false rejection in the
+  local-binding lane; F6(c) dotted string paths and the kafka polarity lane not attempted.
+  **F6 is land-ready pending dump/battery** (F6+D5 bundle candidate).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
