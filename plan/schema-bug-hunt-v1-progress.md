@@ -2677,5 +2677,25 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (`round8-d3f23-evidence/run-landing.sh`: dump → withdrawals → battery ‖ sweep with
   dependency-only toggles → integration; markers `sweep.done`, `landing.done`, log
   `landing.log`), no agent tokens.
+- Cross-vendor verdicts, fifth batch: gpt-6-sol `20260925T151651-57b1b77d` on F9 unified —
+  land with one named change (the early return for key-concretized ranged reads at
+  `requirements.rs:2197` still drops the `incomplete` half before the shared union; keep the
+  multiple-keys check; complementary-opaque-arms test on `m.a`); union-then-resolve sound in
+  both lanes; `MemberState` an exact split; the per-member `handled_kinds` widening a lossy
+  but never-rejecting projection (a keyed kind-exception target is the precise follow-up);
+  the `complete_domain` per-site rule kept for this patch, the argo-cd `and`-operand read a
+  separate defect in short-circuit operand execution (`expr_call_eval/mod.rs:1411`). A fresh
+  agent applies the change. gpt-6-sol `20260925T151651-b41e52f5` on the reworked F13 — do NOT
+  land: composed tokens can reject valid YAML (` #` admitted but a later `: ` in the same
+  commented value rejected — `tag: "x # a: b"` renders; `repo: "nginx #"` comments out the
+  colon so `tag: ""` is valid but `empty_aborts` rejects; a preceding splice can quote the
+  rest of the line), `PlainTokenEdges::meet` drops `empty_aborts` when one path is spliced
+  twice (`image: {{ .x }}:{{ .x }}`), and a mixed arm tested on a DIFFERENT path
+  (`ternary (toYaml .x) .x .useYaml`) still gets the serialized claim. Smallest safe route:
+  abstain from composed-token claims when earlier dynamic text can change quote/flow/comment
+  context, delete `meet` and emit distinct occurrence requirements, emit serialized
+  continuation only for arms proven serialized (abstain for mixed arms until the per-value
+  model); `BlockContinuation`/`StructuralSiblings` judged reasonable. F13 is last in the
+  landing queue and gets a fresh agent for that rework.
 
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
