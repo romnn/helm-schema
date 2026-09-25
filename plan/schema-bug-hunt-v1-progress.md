@@ -2718,5 +2718,29 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `abstract_value_type_is`; nested `default` never narrows the inner terminal's row. The
   d3f23 landing chain restarted on `round8-d3f23-d` = `f7be7ba5` + `checkpoint-25.patch`
   (68 files, clean apply), runner `run-final9-d.sh`, battery baseline `f7be7ba5`.
+- n4 done (`round8-n4-evidence`, `final.patch` on F4, +297/-69; 16:00 UTC): one fact owned at
+  lowering — a member read of a selection chain (`$m := x | default dict … $m.a`,
+  `(x | default dict).a`, helper dict-bound dots) projects the receiver's recorded selection
+  meta onto the member row through ONE `HelperOutputMeta::for_selected_member` (four
+  `apply_to_path` arms folded; L2's `expr_eval.rs` Selector hunk absorbed, L2's remainder
+  stackable); the member-host obligation rides the same fact (`record_selected_candidate_member_captures`
+  replaces F4's `first_truthy_member_hosts`); `ContractValuePathFacts.has_descendant_reads_outside_own_truthiness`
+  (per path: an ancestor is proved truthy by Truthy/With/Range on it or a descendant,
+  Default/TypeIs-object on it; And any, Or all) consumed by `resolve_policy.rs` 373/473 — the
+  row-based veto scoped by the row's own guards, kept because member-host captures are
+  incomplete for Choice/merged dots (bitnami renderPullSecrets); (a) the imgproxy regression was
+  base insertion: `schema_tree.rs` synthesized descendant carriers with `unknown_object()`,
+  both sites now untyped (astra's trace agreed). Seven red-first tests (`gen/src/tests/defaulted_member_reads.rs`
+  ×5, `member_carriers.rs`, ir `contract.rs`) + four adjudicated updates; fmt 0; unit
+  1544/1544; lint red only on `branch_steps`. Datadog stacked (n4+B6+L2): otelAgent /
+  processAgent / securityAgent `""`/`"x"`/`false`/`[]` now ACCEPT (Helm 0, K8s ok); two
+  residuals on the B6-stack critical path: (i) privateActionRunner/hostProfiler `""`/`"x"`
+  still REJECT because B6's grouped region attaches the escapee `if $addedCapabilities` read
+  under the group's union condition instead of its own arm's (`dd/datadog.stacked.rows`) —
+  owner B6; (ii) `agent` `""`/`false`/`[]` flip REJECT→ACCEPT while Kubernetes rejects — the
+  old rejection was the unconditional declared type, the structural source (literal-first
+  `merge` securityContext) abstains = F4's residual, i.e. the `MergeLayerSource` typed fact.
+  A fresh `mls` agent implements `MergeLayerSource { Values, Literal{keys}, Opaque }` on top of
+  F4 checkpoint-22 with the datadog `agent` and external-dns witnesses.
 
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
