@@ -2884,4 +2884,22 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   F31: predicted base commit, `final.patch` (base 7c6a2f6e, review fix applied) rebased,
   fmt/unit/lint, lock-taking runner `run-f9.sh`).
 
+- 21:55 — **F31 landing prep done** (`round8-f31-land`, BASE `631a2d12` = main + d3f23 `final.patch`;
+  `git apply --3way` merged all 21 files, no conflicts — the only drift was d3f23's
+  `has_dependency_default` → `has_runtime_default` rename in `path_resolver.rs`; production
+  +232/−100 over BASE; the eight `provider_text_splices.rs` tests green, six red with the F31
+  production files reverted (`red-rebase.log`); fmt 0, unit 1559/1559, `task lint` 201 on the B6
+  residual only, lint excluding helm-schema-ir 0; `adopt_fixtures.py` on `dump-final-8` adopts 0
+  files, so BASE's fixtures equal the F23 dump). Roster: 94 F31 probes (graylog 7, redmine 87);
+  the battery fails on entries it no longer observes ("no longer fail; remove them") and on any
+  unlisted new false acceptance, so prune-then-rerun. Attribution caveat recorded: a roster entry
+  can drop out because BASE accepts its defaults, not because F31 fixed it. Runner
+  `run-f31.sh dump|battery|integration|sweep` refuses to run unless HEAD is BASE. The chain is
+  queued detached behind `chain-e.done` and the heavy lock.
+- 21:57 — gpt-6-sol review of MergeLayerSource round 3 started (`20260925T195649-4c1e1987`):
+  mergo contract exactness, the DIRECTION of the `Choice` rule (intersection / merge-wins
+  trades a false rejection — w5 `altLit.a=5` — for a false acceptance; the abstain convention
+  says union, or per-arm shadowing under the branch's `.Values` guard), first-literal-only,
+  generator shape, `mergeOverwrite`, design size.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
