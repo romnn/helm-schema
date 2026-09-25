@@ -3298,4 +3298,29 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   readable vs readable; the one-time fixture regeneration is scheduled by the orchestrator
   under the lock after F23 lands.
 
+- 00:55 — **Track `regexp` done** (`round8-regexp-evidence/final.patch`, `git diff fc509585`;
+  production Δ0 LOC): Helm 4.2.3 refused the compact airflow and oncall schemas at the
+  metaschema check (`invalid escape sequence: \u` in `config.api.base_url` / `rabbitmq.ldap.uri`
+  `pattern`; santhosh-tekuri jsonschema v6.0.2 calls plain `regexp.Compile`). Offender sweep
+  with a Go checker over 3,696 corpus patterns + 282 bundle + 337 owned: exactly two offenders,
+  both from helm-schema's own emitter — `URL_PARSE_PATTERN` (`helm-schema-ir/src/
+  function_semantics.rs:574`) spelled its control-byte classes `\u0000`/`\u001F`/`\u007F`
+  (Go `url.Parse` rejects CTL bytes; NUL is reachable from YAML). Fix: `\x00`/`\x1F`/`\x7F`
+  (same code points in ECMA-262 and RE2; the accepted language is unchanged — eight control-byte
+  cases verified against Go `url.Parse`). Oracle: `regex::Regex::new` accepts `\uHHHH`, so a
+  `test_util::go_regexp::go_regexp_rejection` walker over the `regex_syntax` AST rejects
+  Rust-only syntax (self-tested against 31 Go verdicts; agrees with Go on all 3,696 corpus
+  patterns). Tests red on BASE: `strict_pattern_dialect::catalogued_strict_patterns_compile_
+  under_go_regexp` (ir), `operand_kind_contracts::url_parse_operand_pattern_compiles_under_go_
+  regexp` (gen, oncall/airflow template shapes), corpus gate
+  `schema_dialect_hygiene::owned_schema_patterns_compile_under_go_regexp` (+ an ignored variant
+  running the Go toolchain). After the fix Helm loads both schemas and validates the defaults
+  (exit 0). Gates: fmt 0, unit 1556/1556, lint 0 except the B6 residual, targeted integration
+  6/6. Two fixtures move (airflow, oncall: escape respelling + minimizer member re-sort;
+  equality modulo `allOf` member order verified → 0 flips expected). Recorded, out of scope:
+  chart-authored `regexMatch` patterns whose meaning differs between Go and ECMA without Helm
+  refusing them (`\s` in kube-prometheus-stack/vault/zalando, `.` generally); `\p{…}` class
+  names not compared against Go's tables. **Landing: bundled into the F31 chain** (separable by
+  fixture diff).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
