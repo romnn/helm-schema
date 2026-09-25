@@ -2787,5 +2787,32 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Under cross-vendor review (`20260925T18*`). B6-stack datadog residuals now: (i) grouped-region
   escapee condition, (ii) the windows/else fragment join — both fragment_eval, one fresh agent
   after F4 + MLS lands.
+- d3f23 round 4d (18:40 UTC): the lint-gate gap is closed by a better rule than the one I
+  relayed — `floor_failure` also judges the floor with the tables an override would CREATE
+  (every table the coalesced defaults supply, created empty, along the constraint's anchor,
+  guard parents and `then` member parents), which catches both shapes (falco `tlsserver.notlsport`
+  where the override sets a sibling key; `k8s-metacollector.grafana` where an absence guard is
+  already true only because the parent table is missing) and deletes the old anchor-only
+  special case; all 11 sweep rows lint 0 / template 0 with the final code; withdrawal records
+  19,895 (4,569 Conditioned + 15,326 Withdrawn). Battery rules (test code): a baseline that
+  rejects a probe at exactly the (instance path, schema path) set it rejects the chart's own
+  defaults with is uninformative → `UninformativeBaselineFalseAcceptance(Rejection)` checked
+  against the typed roster `tests/common/known_false_acceptances.rs` (chart, probe path, value,
+  rejection, family; unlisted fails, no-longer-failing fails "remove it"); a built-in API the
+  pinned bundle records as absent upstream (`.not-found` via the capability oracle) is a
+  violation (spinnaker's removed APIs); a document without string apiVersion/kind is a
+  violation; two adjudicator defects fixed (a comments-only document is YAML null and is
+  skipped like Kubernetes does — the 12 spinnaker `rbac.create`/`kubeConfig.enabled` cells;
+  violations keyed by resource type + instance path + schema path, not name, so a rename
+  probe inherits the defaults' own violation). Roster: 175 probes in 21 groups — Helm aborts
+  46 (F13 20, F6 19, F5 4, F4 2, unfiled 1), Kubernetes rejects 129 (F31 94, F30 10, F9 4,
+  unfiled 21 incl. 19 spinnaker removed APIs). Predicted battery: 5,113 matched, 175 roster,
+  52 CRD-uncertain (dify HTTPRoute 6, graylog MongoDBCommunity 34, oncall cert-manager Issuer
+  12). Decision: the 52 must become decisions — pin those three CRD schemas into the offline
+  bundle (F79) so the landed battery is green, not "exit 100 by design". Gates: fmt 0; unit
+  1551/1551; lint/lint:fc red only on `branch_steps`; dump 0 (`dump-final-8`, 60 fixtures,
+  37 schemas differ from dump-final-7, identical 5,345-flip screen). The corrected sweep runs
+  on dump-final-8 (`lint-final6/`, marker `sweep-e.done`); battery and integration wait for the
+  CRD pinning.
 
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
