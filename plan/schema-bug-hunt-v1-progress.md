@@ -2539,5 +2539,32 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   same question independently (`agentmux` run `20260925T121155-8e33560e`); a second sol run
   (`20260925T121226-597697b1`) covers the exact `helm lint -f` withdrawal class and the
   battery's defaults-relative loosening rule; astra run `20260925T121133-680cc20f` covers F69.
+- Cross-vendor verdicts (agentmux transcripts under
+  `/Users/roman/Library/Application Support/com.romnn.agentmux/runs/`): gpt-6-sol
+  `20260925T121226-597697b1` on the lint gate and the battery rule — the "every guard false on
+  the floor counts as activated" rule is OVER-broad (a guard can supply the conclusion's own key:
+  root `kid: {}`, dependency `kid.p: true`, clause "if kid.p then require kid.p" never rejects a
+  lint document yet is withdrawn); the gate can UNDER-withdraw for a hasKey-strict clause over
+  a root-declared null (`kid: {enabled: false, p: null}` + override `enabled: true`); most
+  withdrawals can be replaced by the presence-conditional encoding `if (G ∧ P) then T` with P
+  = `required` per level, keeping T's checks whenever the dependency key is present and
+  withdrawing only pure presence requirements; and the defaults-relative loosening rule is
+  UNSOUND as implemented because the validator returns `Invalid` on one known violation and
+  discards uncertainty — uncertainty must travel with violations, structured resource identity
+  with multiplicity, new/changed uncertain resources never matched. All sent to the d3f23
+  track for one more cycle. gpt-6-astra `20260925T121133-680cc20f` on F69: the creation-time
+  projection is a defensible intermediate (the transport refactor is 400–800 lines, an F51
+  item) but repeated paths disagree (`a | default b | default a` conjoins both occurrences of
+  `a` into one row = `truthy(a) ∧ ¬truthy(a)`; type sources overwrite) — OR per path, conjoin
+  once, one identity-eligibility rule, agreement matrix; `selection_chain_identity_paths` still
+  truncates and must be named as a prefix API. gpt-6-sol `20260925T121155-8e33560e` on the
+  serialization model: same diagnosis as the Fable design (the lost fact is which rendering
+  reached the slot under which branch), different representation (`AbstractValue::RenderedText`
+  + `SourceToSink` on `ContractUse`, +460..+710 then −160..−300 over four steps, deletions
+  scoped more conservatively: keep eager failure effects, `partial_text`, the fromYaml
+  round-trip recognition, retire `used_as_serialized` last); order B6+L1+L2 together, F13
+  revised before the migration, F4 independent, F31 held (its flag — since deleted in the
+  rework — was the bridge). The representation choice (OutputPath meta flag vs RenderedText
+  value) is next round's decision; both documents are on disk.
 
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
