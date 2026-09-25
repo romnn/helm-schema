@@ -2501,5 +2501,43 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   de-quarantined charts; redmine 2,059 cells carry the defaults' NetworkPolicy `port: null`), 2
   probe-specific with Helm rendering — the rule is being changed to judge a loosening relative to
   the defaults' own render errors and to require a PROVED Kubernetes violation.
+- 2026-09-25 12:20 UTC. More candidates parked land-ready pending review changes: F31/F60
+  (`round8-f31-evidence`, +268/-53; corrections: F60's headline was already fixed at HEAD and
+  `type: emptyDir` + `defaultMode` is a key-name domain obligation left open; the round-7 G1
+  patch rejected `"{}"`/`"null"` strings Helm renders; kubeshark's default was a live false
+  rejection via `{{ print "- " . }}`; sealed-secrets `service.annotations: "x"` aborts in Helm
+  and HEAD accepts it) — review `/Volumes/T7/dev/round8/design-review-f31.md`: text preimage
+  must be TOTAL (`replicas: "3"` through tplvalues.render predicted to become a false
+  rejection), `provider_parses_string_text` must not be a post-construction flag applied by
+  rewriting emitted JSON, G4's fixed-object unclose is to be DELETED (closure already sound),
+  `print` routed through printf's data-operand lane. F6 (d) (`round8-f6-evidence`: per-local
+  `nonempty_text_elements` fact through list/append/without/compact/join, sequential literal
+  `if` chains; 7 red-first + 3 mutation-verified guards; unit 1536/1536; (c) not attempted;
+  kafka witness open on the all-or-nothing fact) — review `design-review-f6.md`: replace the
+  `truthy_reductions` equality with `TextListElements { some_nonempty, no_empty_element }`,
+  trims from token kinds, merge with `inline_regions.rs:889-905`; follow-ups: the single-chain
+  walker checks no trims, four hand-kept append-family lists disagree. F69 (`round8-f69-evidence`,
+  `final.patch` on `7c6a2f6e`): hunks 2+3 with ONE decoder (`first_truthy_selections` +
+  `selection_identity`) feeding the ordered lowering, the typeOf decode and `summary.rs`; the
+  injection deleted; BUT `commit_first_truthy_selections` writes the selection onto per-path
+  metadata once at `eval_default` because ~92 operand sites discard the value (consumer-site
+  commits alone left 11 false rejections); 10 red-first tests; unit 1535/1535; only open-webui
+  moves (matches Helm); kyverno byte-identical — under a Fable challenge (`round8-f69x`) and
+  a gpt-6-astra consultation on whether "one decoder, two carriers" is a single owner.
+- Architecture: `/Volumes/T7/dev/round8/design-serialization-meta.md` (Fable, 471 lines). The
+  fact lost by the path-keyed OR-ed serialization sets is PER VALUE ("this toYaml call's result
+  serializes these leaves"); the arm predicate is already on the value (`OutputPath.meta.predicates`),
+  only the transform is not. Five flattening sites (P1 `eval_to_yaml_result`, P2 `eval_ternary`
+  union, P3 four boundary loops + `HelperOutputMeta::merge`, P4 `splice_row_meta` omitting
+  `yaml_serialized` so the if/else spelling has the same defect as the ternary, P5
+  `LowerScope::splice`). Target: one constructor `AbstractValue::serialized(self,
+  SerializationTransform{Yaml,TemplatedYaml,Json})`, flags live on the value or nowhere;
+  deletes the three `Effects` path sets, three `LowerScope` fields, four boundary loops, the
+  toYaml `is_structurally_rendered_yaml_value` gate, `promote_tested_type_hints`, F13's arm scan,
+  F31's `provider_parses_string_text`; ≈ +135/-215 over four landable steps; recommended order
+  L2 -> F4+n4 -> B6+L1 -> F13 -> F31 (minus its flag) -> steps 1-4. gpt-6-sol is answering the
+  same question independently (`agentmux` run `20260925T121155-8e33560e`); a second sol run
+  (`20260925T121226-597697b1`) covers the exact `helm lint -f` withdrawal class and the
+  battery's defaults-relative loosening rule; astra run `20260925T121133-680cc20f` covers F69.
 
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
