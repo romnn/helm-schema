@@ -3509,4 +3509,29 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   re-run finishes, without the lock; the load allows it and the sweep would otherwise hold the
   lock for hours.
 
+- 02:05 — **Battery oracle Kubernetes version: one owner** (`round8-kubever-evidence/final.patch`
+  on BASE 39f3b7a9 = main + 4f candidate; test infrastructure only). Helm checks only the ROOT
+  `Chart.yaml` `kubeVersion` before reading any values (`pkg/action/action.go:287-291`); under
+  1.29.0 okteto (`>=1.33.0-0`) and jupyterhub (`>=1.32.0-0`) abort every coalesce and render
+  (`chart requires kubeVersion … incompatible`), so both requirements are structural, no table
+  entry needed. New `crates/helm-schema/tests/common/kubernetes_version.rs`:
+  `PINNED_KUBERNETES_VERSIONS = ["1.29.0", "1.33.0"]`, `chart_kubernetes_version(chart_dir)` reads
+  the root `Chart.yaml` (or `Chart.template.yaml`), no constraint → 1.29.0, else the first pinned
+  version the constraint admits via the analyzer's own `semver_constraint_matches_version`; an
+  undecidable or unsatisfiable constraint is an error, never a guess; no env vars; one bounded
+  fallback keyed by the exact constraint text `>=1.21.x-0` (jira, wildcard the evaluator cannot
+  decide; Helm-verified). `PinnedHelmChart::prepare` passes it to `coalesce_in`, `run_helm` and
+  the YAML decoder. Placed in helm-schema's `tests/common` (not `test_util`: a `test-util` →
+  `helm-schema-ast` dependency would be a cycle). Verified against a 47-chart constraint
+  matrix (only okteto/jupyterhub refuse 1.29.0). Tests: two red with the version forced to
+  1.29.0, two guards, four owner tests incl. `corpus_charts_render_under_the_version_their_
+  manifest_admits`. Gates: fmt 0, `-p helm-schema` 115/115, adjudicator suites 64/64, lint
+  clean except the B6 residual. Integration points: the gate's `KUBERNETES_VERSIONS` constant
+  and the sweep/runner `kv` rules can be deleted in favour of the owner. **Open (production):**
+  corpus schemas for okteto and jupyterhub are generated against the v1.29 bundle — a version
+  Helm refuses to render for them — and the offline validator has no 1.33 bundle, so an API can
+  be wrongly "not served" in their renders; the shared semver evaluator lacks wildcards
+  (fixing it changes prometheus' `>= 1.27.x` guards → its own dump/battery round). Lands as a
+  test-only commit right after F23 with the gate.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
