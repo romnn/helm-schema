@@ -2767,5 +2767,25 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   a typed KNOWN-FALSE-ACCEPTANCE roster (chart, path, value, verdicts, family) that fails when
   fixed; removed-API kinds and documents without apiVersion/kind are decidable rejections
   under F79; CRD-absent kinds stay uncertain and listed. One more cycle on the same fresh agent.
+- MergeLayerSource done (`round8-mls-evidence`, `final.patch` on F4 checkpoint-22 rebased to
+  `f7be7ba5`; `final-f4-plus-mls.patch`; 18:05 UTC): core `MergeLayerSource { Values(MergeLayer),
+  Literal { keys }, Opaque }`, `MergeLayersUse` requires a Values position, `shadowed_by()`
+  returns earlier values layers and `template_shadowed_keys()` the keys earlier literals write
+  (`None` past an opaque layer); ONE classifier `AbstractValue::merge_layer_sources` read by
+  `collect_output_meta` and the `MergedLayers` arm of `lower.rs`; the generator skips layers
+  after an opaque one, opens literal keys in the whole-payload arm, skips per-key arms for them;
+  a sprig `merge` keeps its order only when a literal shadows a later values operand; a leak
+  fix in `lower.rs`. DELETED `merge_layer_list` (all three abstentions), the identity/transform
+  recomputation, the root-path all-or-nothing check, the hand-written serde; +263/-169 (net +94).
+  Helm/kubeconform: external-dns `labelSelector` 5/""/[x] REJECT→ACCEPT (both accept), F4's
+  literal-first `tier: 5` ACCEPT, `runAsUser: x` now REJECT; one sound over-acceptance (a
+  deep-merged literal key opened whole). Five red-first gen tests; unit 1560/1560. Corrections:
+  the datadog `agent` `securityContext` is UNTYPED on base and candidate — the
+  `if eq .targetSystem "windows"`/else fragment join drops the linux `toYaml` splice
+  (witnesses `w/w2`, `w/w2nm`), a separate fragment-join defect, not the merge; n4's patch does
+  not compile on `f7be7ba5` (`expr_eval.rs:782` `unwrap_or_default` on `SelectionChainIdentities`).
+  Under cross-vendor review (`20260925T18*`). B6-stack datadog residuals now: (i) grouped-region
+  escapee condition, (ii) the windows/else fragment join — both fragment_eval, one fresh agent
+  after F4 + MLS lands.
 
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
