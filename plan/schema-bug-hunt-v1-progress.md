@@ -3144,4 +3144,45 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   keys in fixtures, short keys in the shipped file, proven a pure rename by a bijection test
   (user). The rename lands as one content-neutral commit right after F23.
 
+- 00:05 (09-26) — **d3f23 round 4f done** (`round8-d3f23-e`; `final.patch` 130 files /
+  `final-code-only.patch` 70; `checkpoint-28.patch`). Three blockers, each red-first: (1) the
+  lint gate — the review's `*`-anchor shape never reaches the gate (13 range-body variants
+  tried); the member contracts arrive root-anchored with the member condition inside `then`,
+  so `create_override_tables` (`uncoalesced_root.rs:~455`) now creates every member table the
+  coalesced defaults hold under a ranged segment, and `member_requirements_the_floor_lacks`
+  (`:~303`) turns a member-required key the floor lacks and the dependency supplies into a
+  deciding path (`kid.entries.alpha.p`); witness `witness/r4f/ranged`: `helm lint -f` with the 4e
+  schema exit 1 ("missing property 'p'"), with 4f exit 0, `helm template` exit 0; a new member
+  `beta` without `p` is still rejected on the coalesced document; (2) the battery —
+  `ProfileSchemas::screens_a_flip` + `rejects_for_a_new_reason`: a double rejection is a flip
+  when the candidate has a violation `(instance_path, keyword, detail)` the baseline lacks
+  (schema paths deliberately not compared: moved arms would flag every double rejection);
+  adjudicated as a tightening; (3) `ViolationKey` gains `keyword` + `detail` (missing property
+  for `required`, unexpected names for `additionalProperties`, else the scalar value or
+  container type), used by both the Kubernetes defaults comparison and the uninformative-
+  baseline check; `error_locations` deleted. Tests: `lint_gate::a_dependency_supplied_member_
+  decides_a_member_requirement`, `::an_override_created_member_decides_a_ranged_requirement`,
+  `schema_emission_profiles::a_new_rejection_behind_a_baseline_rejection_is_adjudicated`,
+  `::a_different_missing_property_is_evidence_against_a_baseline_rejecting_its_defaults`,
+  `helm_adjudication::a_different_invalid_value_is_a_new_violation`. Gates: fmt 0, unit
+  1553/1553, adjudicator suites 56/56, `lint_gate` 8/8, `task lint` 201 on the B6 residual only.
+  Old-vs-new CLI over the 61 dependency charts: 59 identical, openebs and signoz-signoz move
+  (new presence-conditioned arms on named members — loosenings only). Roster re-scored with the
+  extended key: no entry changes. Follow-ups recorded: deciding paths include guard paths
+  unrelated to the failing branch (`witness/r4f/precision-note.txt`); `.Files.Get` phantom
+  helper.
+- 00:08 — **Round-4f chain launched** on `round8-d3f23-e` with the F69/F54 witness patch applied
+  on top (clean apply; 134 files vs f7be7ba5): `run-final11-f.sh unit → dump (dump-final-9) →
+  battery (battery-final-6, baseline f7be7ba5) → integration → sweep (lint-final7)`, each step
+  under the heavy lock, marker `chain-f.done`. The stale 4e lint sweep was killed at 94/156
+  charts. Landing plan on green: commit F23+D3a (mechanism+tests, fixtures) and the witness fix
+  as separate commits; witness-caused flips = set difference against `battery-final-5`.
+- 00:00 — **Process self-audit** written (`round8/process-self-audit.md`, 17 items incl. sccache
+  configured only as a C/C++ launcher — 98 clones recompiling the workspace from scratch, 141 GB
+  of target dirs) and sent to gpt-6-sol (`20260925T215920-61e01b7f`, orchestration habits) and
+  gpt-6-astra (`20260925T215920-4e3d78ce`, xhigh, minimal verification pipeline) for adversarial
+  challenge, at the user's request. Fixture-naming design (astra `20260925T214228-74b00e21`)
+  pending; decision so far: commit the readable form, shorten refs only as a size-driven writer
+  fallback rung after pretty→compact.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
