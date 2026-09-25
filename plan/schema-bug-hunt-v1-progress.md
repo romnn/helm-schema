@@ -3268,4 +3268,34 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   worktree migration, more broad design rounds. Steady-state target after migration:
   25–45 min per landing (1.3–2.4 verified landings/hour), with a 10–15 min generation floor.
 
+- 00:45 — **MergeLayerSource round 5 done** (`round8-mls-evidence/final.patch` on 906e1ee0,
+  `final-f4-plus-mls.patch` apply-checks clean on main 4ba84594; production +651/−235 raw, tokei
+  core +317 over base = +53 over r4). `LiteralKey` is now the SET of effects a member can have
+  across the branches the schema cannot tell apart `{absent, unclassified, replaces, merges}`;
+  composition is per branch then unioned key by key (no cartesian blow-up), the unclassified
+  rule "unclassified followed by y = {unclassified} ∪ y" fixes w10 without the rejected
+  `¬Truthy` guard; `join_literal_keys`/`join_literal_member` deleted; the overwrite mode is
+  stored once on `MergeLayersUse`. 18 witness matrices (`w/*.r5.matrix.txt`, base/r4/r5; new
+  w13 branch-chosen literal followed by another literal): NO cell got stricter; r5 accepts all
+  four new w10 cells and the w13 flag arm; remaining Kubernetes-accepts/r5-rejects cells are
+  only the pre-existing w2m/w2t/w2v capability cells (unmerged-arm condition + `default list`
+  loosening, base rejects too); new false acceptances by design: w8 `{drop:5}` (object case),
+  w13 no-flag `cm1.tier={a:b}`. Tests red on r4 (`red-check-r5.log`): gen
+  `unclassified_literal_member_colliding_with_a_later_literal_opens_the_values_member`,
+  `alternative_literal_arms_compose_with_later_literals_before_joining`; IR
+  `merge_layer_sources_keep_the_effect_of_every_alternative_literal`; core
+  `template_shadowed_keys_compose_each_alternative_before_joining`. Gates: fmt 0, unit
+  1576/1576, `public_surface` 11/11, lint 0 except the B6 residual, ast-grep 0. Expected drift:
+  IR dump (new `MergeLayersUse` wire shape), schema only in the accept direction. Recorded:
+  object-case precision for w8; a lone unclassified non-empty scalar keeps its typing; under
+  `mergeOverwrite` a map member followed by an unclassified one keeps the map projection.
+  **F4+MLS is land-ready pending its dump/battery** (after F31 and F9 per the landing order).
+- 00:47 — **Stable readable `$defs` naming implementer launched** (fresh Opus, `round8-naming`,
+  target `round7-f4b`): astra's E2–E7 — red-first naming tests, extraction frozen on private
+  ids, one focused module for canonical hashing + simultaneous rename (deleting the ordinal
+  route from the fixture path), truthful provider labels only, the writer's third fallback
+  rung (compact+short names, bijective, typed error if still oversized), corpus tests compare
+  readable vs readable; the one-time fixture regeneration is scheduled by the orchestrator
+  under the lock after F23 lands.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
