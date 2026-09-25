@@ -3131,4 +3131,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   serialization; no new interner. F74 therefore stays a LANDED family pending the CLI-path
   verification below; the gate agent was told to evaluate the F74 row through the writer.
 
+- 23:45 — **F74 verified closed in production**: the CLI's default writer (MLS r3 debug build)
+  writes openebs at 4,698,446 bytes and milvus at 2,386,646 (limit 5,242,880) — the audit's F74
+  rows measured the pretty corpus fixtures, which the CLI never ships. `next-families.md` F74 →
+  landed again; open follow-up (small): serialize oversized fixtures through the shipping
+  writer + a disk-size gate in `corpus_integrity.rs` (astra's list, items 1–3).
+- 23:47 — **Fixture-naming design requested** (user observation: every dump scrambles the
+  base-62 ordinal `$defs` names, so fixture diffs are unreadable — the F23 fixture patch was
+  ~1.9M/2.2M lines; inlining is out at 60,812 refs). gpt-6-astra (`20260925T214228-74b00e21`)
+  measures churn and size for: Merkle content-hash names, Kubernetes OpenAPI names for provider
+  defs, stable path identifiers as the key (user), and two naming policies — readable stable
+  keys in fixtures, short keys in the shipped file, proven a pure rename by a bijection test
+  (user). The rename lands as one content-neutral commit right after F23.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
