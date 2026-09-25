@@ -2566,5 +2566,26 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   revised before the migration, F4 independent, F31 held (its flag — since deleted in the
   rework — was the bridge). The representation choice (OutputPath meta flag vs RenderedText
   value) is next round's decision; both documents are on disk.
+- Cross-vendor verdicts, second batch: gpt-6-astra `20260925T123257-a901d436` traced the n4
+  imgproxy regression to base insertion — `schema_tree.rs:1527` `SchemaNode::unknown_object()`
+  materializes a missing intermediate (`r.sdb`) to host a descendant once `r` is guarded-only
+  (`BaseOwner::Empty` via `overlay_lowering.rs:437-446`, `base_schema.rs:132`), and
+  `declared_default.rs:61` then unions `const: null`; the declared `sdb: {}`/null seed used to
+  route insertion through `untyped_member_host()` (`schema_tree.rs:1189`). Rule: a descendant
+  constrains its parent only where a navigation of the parent can execute on a Helm-falsy
+  parent; keep the predicates on the member-host obligation, emitted through the guarded
+  root-conjoined lane; smallest correction ~10–25 LOC (untyped synthetic carriers, remove the
+  descendant-existence veto at `resolve_policy.rs:473`). Sent to the n4 track. gpt-6-sol
+  `20260925T123257-0c7885b7` on F4: DO NOT land as designed — `meta.stringified` is read from
+  path-OR-merged metadata (a Choice of a stringified arm and a parsed-map arm sees both flags,
+  does not abstain, falls through to Identity), the `TypeIs object` falsy tolerance does not
+  exclude the empty map (belongs on the parsed-map merge's provenance), and binding metadata
+  requires >1 retained layer while direct lowering accepts one; prefix rule sound for both
+  `merge` and `mergeOverwrite`. Sent to the F4 track. gpt-6-sol `20260925T123553-76caa657` on
+  the reworked F31: land with a named change — `"3 # note: hello"` at a replicas slot is a
+  reproducible false rejection (mapping opener sees the colon in the comment), and
+  `!schema_allows_type` is false on an unconstrained `{}` slot (`schema_excludes_type` is
+  right); `ValueKind::StringText` accepted as a bounded bridge the migration deletes. Sent to
+  the F31 track. D5 and the B6+L1+L2 stack sent for cross-vendor review (`20260925T13*`).
 
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
