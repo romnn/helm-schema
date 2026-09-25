@@ -2902,4 +2902,37 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   says union, or per-arm shadowing under the branch's `.Values` guard), first-literal-only,
   generator shape, `mergeOverwrite`, design size.
 
+- 22:15 — **Independent challenge (user-supplied gpt-6-sol review of the landed work), verified.**
+  Both frozen witnesses it names are OPEN in main AND in the F23 candidate (`dump-final-8`), checked
+  with Helm v4.2.3 by hand: (1) cilium `--set clustermesh.config.enabled=true` renders without a
+  schema (exit 0) and the candidate rejects `/clustermesh/config/clusters: got array, want null or
+  object` — `_helpers.tpl:49-66` partitions by `kindIs "map"` / `else if kindIs "slice"` / else
+  `fail`, and the schema CONJOINS the arms (`object|null` ∧ `array|null` under `allOf`); with the
+  toggle on, `clusters: null` aborts, so the exact answer under the guard is `anyOf[object, array]`.
+  The F69 commit (`f7be7ba5`) landed a mechanism (ordered default selection), not this witness.
+  (2) promtail `--set networkPolicy.enabled=true --set networkPolicy.k8sApi.cidrs=xyz` aborts
+  (`range can't iterate over xyz`; `=3` and `=true` abort earlier at `len`; `""` and `null`
+  abort too) and the candidate ACCEPTS the string: the guarded `cidrs` node carries `not number`,
+  `not boolean`, `not integer` but no `not string` and no array/object requirement. The F5/F54
+  commit fixed the root-context fact, not this witness. Consequences: (a) the "landed" label in
+  `next-families.md` has meant "mechanism commit landed", not "every frozen witness verified
+  fixed" — F69 and F5/F54 are mechanism-only and the campaign figure (11.6% weighted) overstates;
+  strict verified closures are lower (sol: 4/83 ≈ 5%); from now on both figures are reported and
+  a family is closed only when its witnesses pass; (b) the round-74 battery adjudicates FLIPS
+  only — a false rejection present in both baseline and candidate is never adjudicated, and
+  value-class cells (`=xyz`) are never generated — a structural blind spot; (c) the F78
+  `joined_value()` reservation (erases selection/mode/transform meta beside path-indexed facts) is
+  the serialization-meta design's motivation and stands. Actions: an Opus implementer fixes both
+  witnesses structurally on the predicted base (`round8-witness`: kindIs/typeIs partition arms
+  must union with a `fail` else-arm as complement; `len`+`range` operand obligations conjoined
+  under the guard), red-first tests, no dump; gpt-6-sol audits EVERY landed/partial/closed family's
+  frozen witnesses against the candidate with real Helm runs (`round8-witness-audit/audit.md`);
+  gpt-6-astra designs the frozen-witness gate (typed witness table evaluated against the on-disk
+  fixture, family state derived from it, known-open rows that fail when they silently pass) and a
+  toggle/value-class probe extension for the battery. Also running: gpt-6-sol pre-landing review
+  of the F23 code (`20260925T200840-7bcb1555`), gpt-6-astra landing/interaction plan for all
+  parked patches (`20260925T200909-8a0dcc4c`), gpt-6-sol B6+L1+L2+n4 finishing plan
+  (`20260925T200927-26593e78`), gpt-6-astra wave-3 triage (`20260925T200944-bf6460f3`), gpt-6-sol
+  MLS round 3 (`20260925T195649-4c1e1987`).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
