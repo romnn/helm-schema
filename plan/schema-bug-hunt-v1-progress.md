@@ -2587,5 +2587,24 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `!schema_allows_type` is false on an unconstrained `{}` slot (`schema_excludes_type` is
   right); `ValueKind::StringText` accepted as a bounded bridge the migration deletes. Sent to
   the F31 track. D5 and the B6+L1+L2 stack sent for cross-vendor review (`20260925T13*`).
+- 13:25 UTC: the 5-hour session window cut seven implementers (d3f23, f69, f69x, f4, n4, f31,
+  f9); all resumed from their transcripts at 14:40 UTC after the reset. d3f23's superseded
+  lint sweep was killed by path and its stale `heavy.lock` removed. Cross-vendor verdicts,
+  third batch: gpt-6-sol `20260925T131656-b44e10d9` on D5 — do NOT land as submitted: `else`
+  removes the branch owner and re-pushes it above the open block with the region's ORIGINAL
+  opener span (`parse.rs:463`, `:503`), so the body can start at a pre-header opener
+  (counter-example in the transcript); and a widened body containing a whole region is
+  evaluated twice (`holes.rs:1184` + adoption `eval.rs:2981/3005`, extra candidate
+  `domain.rs:91`). Corrections: earliest live opener at or after `block.header.end`, else the
+  deeper line; skip adoption only when the opener is a body hole whose region ends within the
+  body; branch-rotation and suffix-after-`end` regressions. gpt-6-sol `20260925T131657-64723d5a`
+  on B6+L1+L2 — B6 land with a named change (two agreeing scans: extract `owned_sibling_end`
+  shared with `adopt_region_siblings`, `eval.rs:2507`); L1 land with a named change (a
+  values-default `tpl` program adds `Eq(config, program)` only to the nested interpreter,
+  `files.rs:138/163/229`, so the outer grading can keep a numeric hint from the default
+  program after `config` is overridden — pass the selection predicate into
+  `absorb_scoped_type_hints`); L2 land as designed; the embedded-geometry refutation confirmed
+  from the parser; datadog attribution confirmed n4-class; the serialization plan's step 5
+  qualified (other consumers iterate all metadata, so L2's hunk is not dead after unification).
 
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
