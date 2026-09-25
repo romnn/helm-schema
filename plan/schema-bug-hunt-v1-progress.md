@@ -3043,4 +3043,31 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   list, seeded with the audit's 130 rows and an F74 size-obligation row kind) on the predicted
   base in `round8-gate`.
 
+- 23:20 — **MergeLayerSource round 4 done** (`round8-mls-evidence/final.patch` on 906e1ee0,
+  `final-f4-plus-mls.patch` on c2b753b9, apply-checks clean on main; production +598/−239 raw,
+  tokei core +134 over r3 = +264 over base). All five review changes, each red on the r3 tree
+  (`red-check-r4.log`, 7/7): `LiteralKey::Unclassified`, `MergeLayerSource::Literal { keys,
+  overwrite }`, `template_shadowed_keys` composes every literal ahead of the use in precedence
+  order (`compose_beneath`); `common_literal_keys` deleted → `join_literal_keys` UNION (Replaces
+  > Merges > Unclassified > absent); `MergedLayers { layers, overwrite }` (flattening ORs the
+  flag, errs toward accepting); `OpaqueScalar { zero }` for direct number/bool/nil `dict`
+  literals; `merged_member_schema` returns `{}` on projection failure. 17 witness matrices
+  (`w/*.r4.matrix.txt`, base/r3/r4; new w9, w9b, w10, w11, w11b, w11c, w12): the w5 branch guard
+  cannot be emitted per arm (`$alt` is an unguarded `Choice` by the time the generator sees it)
+  so the arms are unioned; r4 is worse than base only on three cells that are false ACCEPTANCES
+  by design of the named changes (w5 `altLit.b=5`, `flag,altLit.a=5`; w12 `lb.bogus=1`);
+  remaining literal-merge false rejection: w10 `m3.tier=5` (unclassified values scalar member;
+  proposed: type the member only under `TypeIs(p, object) ∨ ¬Truthy(p)`; base rejects too).
+  Gates: fmt 0, unit 1574/1574, lint 0 except the B6 residual, `lint:ast-grep` 0. Recorded not
+  done: join-then-compose for a Choice literal followed by another literal on the same key;
+  `OpaqueScalar` covers direct `dict` literals only; the OR of the overwrite flag across mixed
+  modes. → gpt-6-sol follow-up review requested on its own round-3 session.
+- 23:22 — **B6+L1 landing agent launched** (fresh Opus, clone `round8-b6-land`, target
+  `round7-b6`): rebase `round8-b6-evidence/final.patch` on the predicted base (lint must be exit
+  0 with it), then residual (i) (ownership predicate: escaped contributions under the union of
+  the group arms containing their source span) and residual (ii) (`merge_entry` /
+  `repair_valueless_mapping_header`: continuation per guarded arm before equal-key coalescing),
+  per `plan-b6-stack-finishing-sol.md`, red-first IR tests, Helm matrices on w2/w2nm/w2v and
+  the datadog cells. L2+n4 stack on F4+MLS+B6 afterwards.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
