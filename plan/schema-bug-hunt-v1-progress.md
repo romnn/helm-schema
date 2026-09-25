@@ -3403,4 +3403,31 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `lint:fc`, ast-grep, the Go pattern gate), (4); and a small Opus agent fixes the adjudicator to
   take the chart's pinned Kubernetes version from one owner (red-first on okteto's defaults).
 
+- 01:35 — **D5 finishing done** (`round8-d5-land-evidence/final.patch` = `git diff f0605cc2`,
+  BASE = main + 4f candidate; production +55/−10: `parse.rs` `extend_block_body` keeps "opener
+  at/after the block header" as its own condition, `cst.rs` `BlockScalar::contains_region`
+  keeps "region fully inside the body" separate, both `eval.rs` adoption skips kept). The four
+  empty expectations were derived by hand from Helm 4.2.3 (`helm/*.log`) BEFORE comparing with
+  the generator: the two suffix tests (truthy `["\n  a=1", "\n  suffix"]`, falsy
+  `["\n  suffix"]`, no suffix-less arm) matched exactly; the syntax test's CST layout was
+  adopted after the run. Red before the review corrections (`red.log`), red on BASE production
+  for the suffix tests (`red-base.log`), 12/12 `block_*` green. Gates: fmt 0, unit 1559/1559,
+  lint 0 except the B6 residual, ast-grep 0, `chart_corpus` for kube-starrocks and
+  openldap-stack-ha green in dump mode (their `values.yaml` validate). Quarantine list: BASE's
+  minus those two only. **Decision (orchestrator): accept the rotation IR pin** — with `a`
+  truthy the generator keeps the else-branch line `note: plain` in the note text (Helm renders
+  `"\ntail\n"`) and has no candidate when `a` is falsy (Helm `"plain\ntail"`); BASE produces
+  the same, the parser lays out lines without knowing their `else` branch — a pre-existing
+  layout residual with no schema impact here, documented in the test's comment and filed as a
+  new family candidate ("block-scalar layout ignores else-branch membership"), not D5-sized.
+  De-quarantine probing (444 probes with and without the schema): every D5-owned cell agrees
+  with Helm. Recorded, not fixed: (a) required-from-typed-sink rejections (11 kube-starrocks +
+  2 openldap: deleting `starrocks.timeZone`, the FE/BE spec fields, `global.ldapPort`/
+  `sslLdapPort` renders a null into non-nullable CRD/Service fields — sink-justified under §3,
+  identical in BASE; caveat: a real API server prunes such nulls); (b) Helm keeps `null` for
+  `del <subchart>.enabled`, so the installed schema rejects what the protocol's null-deletion
+  composition accepts; (c) **false acceptance**: kube-starrocks `operator.starrocksOperator.log:
+  []` makes `toYaml | nindent 8` inside the args list a YAML parse error in Helm and the schema
+  constrains nothing → gate row. **D5 is land-ready** (F6+D5 bundle pending dump/battery).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
