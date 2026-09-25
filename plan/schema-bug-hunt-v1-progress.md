@@ -3384,4 +3384,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   00:56) runs to completion, then the battery re-runs on the final tree (rule: prune → re-run)
   and the sweep follows, both under the lock.
 
+- 01:25 — **F31 + regexp landing prep done** (`round8-f31-land2`, BASE 993a447d = main + the frozen
+  4f candidate, hash-verified 6184197206… modulo `plan/`; `checkpoint-1.patch` = `git diff
+  BASE`, 36 files): F31 applied with no conflicts (the 4e→4f drift touches no F31 file), regexp
+  applied cleanly incl. the airflow/oncall fixtures; red check 6 FAIL / 2 controls with F31's
+  production reverted, 8/8 after; fmt 0, unit 1566/1566, lint 0 except the B6 residual, regexp
+  corpus gate 4/4 incl. the Go toolchain test; `task lint:fc` not run (load); tokei +129.
+  Roster: graylog F31 7 probes, redmine F31 87 — the battery is expected to report them as no
+  longer failing → prune → re-run. `landing.env` for runner v2 written; chain command in
+  `handoff.md`. **Runner v2 defects found on first use:** (1) a roster prune after the dump
+  forces a full re-dump (receipt freezes the whole tree); (2) `KUBE_VERSION_OVERRIDES` reaches
+  only the sweep — the battery's Helm oracle hard-codes `--kube-version 1.29.0`
+  (`helm_adjudication.rs:205`), so every okteto/jupyterhub render "aborts" and their tightenings
+  are always "matched" — a silent oracle hole that predates round 8; (3) no lint gate in the
+  chain; (4) a `die` before `receipt init`. → runner agent resumed for (1) two-level freeze
+  (generation inputs vs test-only), (2) explicit `battery_kube_overrides_applied: false` until
+  the Rust fix lands, (3) a `lint` step (fmt, `task lint` with the named residual only,
+  `lint:fc`, ast-grep, the Go pattern gate), (4); and a small Opus agent fixes the adjudicator to
+  take the chart's pinned Kubernetes version from one owner (red-first on okteto's defaults).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
