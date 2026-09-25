@@ -3430,4 +3430,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   []` makes `toYaml | nindent 8` inside the args list a YAML parse error in Helm and the schema
   constrains nothing → gate row. **D5 is land-ready** (F6+D5 bundle pending dump/battery).
 
+- 01:45 — **Runner v2 round 2 done** (`round8/runner/`, 7 test files green on fakes; zsh 226
+  lines, `landing.py` 364): two-level freeze — `generation_inputs` (everything outside
+  `**/tests/**`) vs `full_tree`; a test-only roster prune re-runs the battery without a re-dump
+  and marks unit/lint/integration/sweep stale with the changed path as the reason; a
+  non-test change refuses every step until a new dump; test-only edits that change the expected
+  artifact set or an adopted fixture still force a re-dump (accepted gap: test helper code can
+  change what the dump generates — the re-run integration step catches it). New `lint` step
+  (fmt, `task lint`, `task lint:fc`, ast-grep, the dialect-hygiene nextest with ≥1 test) with
+  the accepted residual only when `ACCEPTED_LINT_RESIDUAL` names the sole located diagnostic;
+  since that residual is a compile error clippy never reaches dependent crates, so the receipt
+  records `coverage=partial`. Receipt records `battery_kube_overrides_applied: false`; the env
+  plumbing (`SCHEMA_ADJUDICATION_KUBE_VERSION*`) is to be DELETED once the Rust oracle owns the
+  per-chart version structurally (the kube-version agent was told not to read env). `die`
+  before `receipt init` writes a fresh error file.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
