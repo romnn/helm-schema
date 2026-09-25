@@ -2987,4 +2987,60 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   the round-4f tree with a git rebase (F31 and F9 apply cleanly), then re-run. The F23 round-4e
   integration run continues to completion for the record.
 
+- 22:50 — **F23+D3a round 4e integration profile green** (741/741, 1,424 s, exit 0) — recorded; the
+  landing still waits for round 4f (see 22:25).
+- 22:55 — **Cross-vendor planning batch (read-only), results copied to `/Volumes/T7/dev/round8/`:**
+  `plan-landing-order-astra.md` (`20260925T200909-8a0dcc4c`, xhigh): pairwise interaction matrix
+  for all eight parked patches; seven acceptance cycles F23 → F31 → F9 (retarget onto landed F31)
+  → F4+MLS (combined patch, after the round-4 review) → B6+L1+L2+n4 with both datadog residuals
+  → F6+D5 (bundle conditional on attribution) → F13 alone; serialization-meta AFTER the landings;
+  exact rebase instructions per pair (n4: `Option<SelectionChainIdentities>` + `into_paths()`,
+  keep F9's `by_host`/`MemberHostTarget`, L2's expr_eval hunk subsumed but its three tests kept;
+  F13 must call `plain_scalar_structural_exclusions(PlainTokenEdges::WHOLE, true)` and reuse
+  `TEXT_OPENS_*`); rule F: audit all 176 roster entries before the next battery (an entry can
+  disappear because the baseline moved, not because it was fixed).
+  `plan-b6-stack-finishing-sol.md` (`20260925T200927-26593e78`): residual (i) = fix the
+  ownership predicate — attach each escaped contribution under the union of the group arms that
+  contain its source span, conjoined with its branch condition (`control.rs:604/:799/:1091`,
+  `owned_sibling_end` `eval.rs:3409`), not n4's veto; residual (ii) = `Contributions::merge_entry`
+  (`eval.rs:986`) coalesces both arms' `securityContext` keys and
+  `repair_valueless_mapping_header` (`eval.rs:1075`) can only attach the linux `toYaml`
+  continuation to an EMPTY header, which the windows child made non-empty → repair continuation
+  per guarded arm before equal-key coalescing; tests and Helm cells named.
+  `plan-wave3-triage-astra.md` (`20260925T200944-bf6460f3`): classification of every untouched /
+  analyzed family, 15 mechanism clusters W1–W15 ordered by yield/size (W1 membership/emptiness
+  F2/F45/F66; W2 builtin operand contracts F10/F18/F33/F49/F68; W3 strict presence
+  F36/F53/F70; W4 comparison operands F34/F65/F75; W5 execution conditions
+  F7/F8/F29/F42/F59; …), top-five implementation contracts with seams (file:line), Helm cells
+  and tests; closures without a fix (F35 proper, F37 dup of F39, F24 umbrella, Spark
+  attribution, Spinnaker removed APIs, F5 integer-channel residual); a witness-only sweep is the
+  first step after the parked landings.
+  `design-witness-gate-astra.md` (`20260925T201243-8db1d062`, xhigh): the battery already
+  generates boolean/value-class probes (premise corrected) but Helm is called only inside
+  `before != after` (`schema_emission_profiles.rs:1721`), so both-reject / both-accept defects are
+  invisible, the roster matches by value-class suffix without activation context
+  (`known_false_acceptances.rs:51`) and retires entries by observation (`:187`); design of the
+  FROZEN-WITNESS GATE (`tests/common/family_witnesses.rs` catalog + `tests/family_witnesses.rs`
+  runner: Fixed / KnownFalseRejection / KnownFalseAcceptance rows that fail on regression AND on
+  silent fixes, coalesced via `coalesce_chart_values`, nextest default-profile wiring, live Helm
+  variant integration-only, roster migration, deep toggle/anchor probes); metric: families
+  CLOSED / 83 with no partial credit.
+- 22:57 — **Independent Helm audit (gpt-6-sol, `20260925T201356-fe948b20`,
+  `/Volumes/T7/dev/round8-witness-audit/audit.md`, 130 rows): strict verified closures 3/83
+  (3.6%) — F17, F77, F79.** F5/F54, F69, F74 are mechanism-only (witnesses open); F51 and F78
+  partial; F1/F73/F80 policy labels leave false rejections. New findings: (a) **F74 is open**:
+  openebs 9.39 MiB, oncall 8.01, kube-prometheus-stack 8.16 in the candidate — Helm refuses a
+  `values.schema.json` above 5 MiB; main is worse (11.15 / 8.38 / 8.43, four files over), so
+  this is pre-existing, not an F23 regression; (b) cilium `clusters: null` with the toggle on
+  aborts in Helm (`unknown type invalid`) and the candidate accepts it (F69 false acceptance
+  beside the false rejection); (c) F51 eck-stack defaults rejected; (d) F78 datadog non-map
+  `operator.datadogAgent` accepted though Helm aborts; (e) **catalogue correction**: the F5
+  claim that Helm rejects every integer passed to `range` is wrong — `--set n=0`/`-1` render
+  (Go 1.22 `range` over int); the same numbers through JSON `-f` become float64 and abort;
+  promtail's integer still aborts at `len`. `next-families.md`: F5/F54, F69, F74 relabelled
+  **partial**; weighted figure 7.9%; the strict figure (3/83) is the one reported from now on
+  until the gate replaces both. A fresh Opus agent builds the gate (steps D1–D3, D7 of astra's
+  list, seeded with the audit's 130 rows and an F74 size-obligation row kind) on the predicted
+  base in `round8-gate`.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
