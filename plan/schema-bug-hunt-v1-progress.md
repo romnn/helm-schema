@@ -2935,4 +2935,22 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (`20260925T200927-26593e78`), gpt-6-astra wave-3 triage (`20260925T200944-bf6460f3`), gpt-6-sol
   MLS round 3 (`20260925T195649-4c1e1987`).
 
+- 22:15 — **F23+D3a battery GREEN** on the final tree (`battery-final-5.log`: PASS, 2,444 s, exit 0;
+  baseline f7be7ba5, candidate `dump-final-8`, Helm-adjudicated, roster 176). Integration profile
+  started 22:03. The `helm lint` sweep is at 587 rows / 85 of 156 charts (large charts now).
+  Remaining landing gates: integration exit 0, sweep classification (rows flagged by the raw
+  awk gate where the base template already aborts chart-side — e.g. kyverno
+  `reportsServer.enabled` → `fail "Image tags must be strings"` — are not false rejections), and
+  the gpt-6-sol pre-landing code review.
+- 22:16 — **F9 landing prep done** (`round8-f9-land`, BASE `b54e5fde` = main + d3f23 `final.patch`;
+  F9 `final.patch` applied with no conflicts — the only base drift in F9's files is d3f23's removal
+  of `resolve_implicit_template_call` and the `lint_gate` test module; +1163/−160; fmt 0, unit
+  1582/1582, `task lint` 201 on the B6 residual only; red-first after rebase: 23 FAIL / 8 controls
+  PASS with the seven production files reverted, 31/31 green re-applied). Roster: five F9 probes
+  (dify, graylog, redmine ×2, weblate `<- null` deletions), all KubernetesRejects, none removed
+  yet. Runner `run-f9.sh`; chain queued detached behind the F31 chain's `chain.done`. Post-chain
+  note from the agent: ranged-member flips need the targeted member probes
+  (`round8-f9-evidence/member-probes/member_probe.py`) because the probe generator skips empty
+  collections.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
