@@ -1473,6 +1473,12 @@ fn truth_for_value_with_memo(
                 memo,
             )
         }
+        // Helm's root context always carries its built-in objects
+        // (`Values`, `Release`, `Chart`, ...), so it is a non-empty map and
+        // always truthy: `with $dot := .` rebinds without gating its body.
+        Some(AbstractValue::RootContext) => {
+            TruthCondition::exact_with_memo(helm_schema_core::Predicate::True, memo)
+        }
         _ => TruthCondition::Unknown,
     }
 }

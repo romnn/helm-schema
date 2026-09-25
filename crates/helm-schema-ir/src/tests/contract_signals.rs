@@ -1993,3 +1993,244 @@ fn strict_parameter_over_ranged_member_keeps_truthy_scoped_kind() -> eyre::Resul
     ]);
     Ok(())
 }
+
+fn value_requirements_for(
+    signals: &ContractSchemaSignals,
+    path: &str,
+) -> eyre::Result<Vec<helm_schema_core::ContractRequirementImplication>> {
+    let evidence = signals
+        .evidence_for(&conditional_path(path))
+        .ok_or_eyre("ranged path evidence")?;
+    Ok(evidence
+        .requirement_implications
+        .iter()
+        .filter(|implication| {
+            implication.target == helm_schema_core::ContractRequirementTarget::Value
+        })
+        .cloned()
+        .collect())
+}
+
+fn unconditional_iterable_requirement() -> Vec<helm_schema_core::ContractRequirementImplication> {
+    vec![helm_schema_core::ContractRequirementImplication::new(
+        Vec::new(),
+        helm_schema_core::ContractRequirementTarget::Value,
+        vec![helm_schema_core::FailValueRequirement::Iterable {
+            allow_integer: true,
+        }],
+    )]
+}
+
+#[test]
+fn range_under_root_rebinding_with_keeps_the_plain_range_contract() -> eyre::Result<()> {
+    // Helm's root context always carries its built-in objects, so
+    // `with $dot := .` never gates its body (falco `services.yaml`).
+    let rebound = signals_for_template(indoc! {r"
+        {{- with $dot := . }}
+        {{- range $service := $dot.Values.services }}
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: {{ $service.name }}
+        {{- end }}
+        {{- end }}
+    "});
+    let plain = signals_for_template(indoc! {r"
+        {{- range $service := .Values.services }}
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: {{ $service.name }}
+        {{- end }}
+    "});
+    let rebound_evidence = rebound
+        .evidence_for(&conditional_path("services"))
+        .ok_or_eyre("rebound services evidence")?;
+    let plain_evidence = plain
+        .evidence_for(&conditional_path("services"))
+        .ok_or_eyre("plain services evidence")?;
+    sim_assert_eq!(have: rebound_evidence, want: plain_evidence);
+    sim_assert_eq!(
+        have: value_requirements_for(&rebound, "services")?,
+        want: unconditional_iterable_requirement()
+    );
+    Ok(())
+}
+
+#[test]
+fn range_under_dollar_rebinding_with_keeps_the_plain_range_contract() -> eyre::Result<()> {
+    let signals = signals_for_template(indoc! {r"
+        {{- with $root := $ }}
+        {{- range $root.Values.items }}
+        ---
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: item
+        {{- end }}
+        {{- end }}
+    "});
+    sim_assert_eq!(
+        have: value_requirements_for(&signals, "items")?,
+        want: unconditional_iterable_requirement()
+    );
+    Ok(())
+}
+
+#[test]
+fn guarded_range_under_root_rebinding_keeps_its_overlay() -> eyre::Result<()> {
+    let rebound = signals_for_template(indoc! {r"
+        {{- with $dot := . }}
+        {{- if $dot.Values.enabled }}
+        {{- range $service := $dot.Values.services }}
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: {{ $service.name }}
+        {{- end }}
+        {{- end }}
+        {{- end }}
+    "});
+    let plain = signals_for_template(indoc! {r"
+        {{- if .Values.enabled }}
+        {{- range $service := .Values.services }}
+        ---
+        apiVersion: v1
+        kind: Service
+        metadata:
+          name: {{ $service.name }}
+        {{- end }}
+        {{- end }}
+    "});
+    let rebound_evidence = rebound
+        .evidence_for(&conditional_path("services"))
+        .ok_or_eyre("rebound services evidence")?;
+    let plain_evidence = plain
+        .evidence_for(&conditional_path("services"))
+        .ok_or_eyre("plain services evidence")?;
+    sim_assert_eq!(have: rebound_evidence, want: plain_evidence);
+    sim_assert_eq!(
+        have: value_requirements_for(&rebound, "services")?,
+        want: vec![helm_schema_core::ContractRequirementImplication::new(
+            vec![ConditionalGuard::Truthy {
+                path: conditional_path("enabled"),
+            }],
+            helm_schema_core::ContractRequirementTarget::Value,
+            vec![helm_schema_core::FailValueRequirement::Iterable {
+                allow_integer: true,
+            }],
+        )]
+    );
+    sim_assert_eq!(
+        have: conditional_overlays_for(&rebound)
+            .into_iter()
+            .map(|overlay| (overlay.target_value_path, overlay.guards))
+            .filter(|(path, _)| path == &conditional_path("services"))
+            .collect::<Vec<_>>(),
+        want: vec![(
+            conditional_path("services"),
+            vec![ConditionalGuard::Truthy {
+                path: conditional_path("enabled"),
+            }],
+        )]
+    );
+    Ok(())
+}
+
+fn signals_with_helpers(helpers: &str, source: &str) -> ContractSchemaSignals {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source("templates/_helpers.tpl", helpers);
+    SymbolicIrContext::new(&defines)
+        .generate_contract_ir(source)
+        .finalize()
+        .into_schema_signals()
+}
+
+#[test]
+fn range_under_list_packed_root_with_keeps_the_plain_range_contract() -> eyre::Result<()> {
+    // zabbix `zabbix.postgresAccess.variables`: the helper rebinds the
+    // packed root with `with index . 1`, which never gates its body.
+    let signals = signals_with_helpers(
+        indoc! {r#"
+            {{- define "services" -}}
+            {{- with index . 1 }}
+            {{- range $service := .Values.services }}
+            ---
+            apiVersion: v1
+            kind: Service
+            metadata:
+              name: {{ $service.name }}
+            {{- end }}
+            {{- end }}
+            {{- end -}}
+        "#},
+        indoc! {r#"
+            {{- include "services" (list $ . "server") }}
+        "#},
+    );
+    sim_assert_eq!(
+        have: value_requirements_for(&signals, "services")?,
+        want: unconditional_iterable_requirement()
+    );
+    Ok(())
+}
+
+#[test]
+fn range_inside_included_define_keeps_iterable_domain() -> eyre::Result<()> {
+    let signals = signals_with_helpers(
+        indoc! {r#"
+            {{- define "services" -}}
+            {{- range $service := .Values.services }}
+            ---
+            apiVersion: v1
+            kind: Service
+            metadata:
+              name: {{ $service.name }}
+            {{- end }}
+            {{- end -}}
+        "#},
+        indoc! {r#"
+            {{- include "services" . }}
+        "#},
+    );
+    sim_assert_eq!(
+        have: value_requirements_for(&signals, "services")?,
+        want: unconditional_iterable_requirement()
+    );
+    Ok(())
+}
+
+#[test]
+fn range_over_member_of_dict_packed_argument_keeps_iterable_domain() -> eyre::Result<()> {
+    // bitnami `common.images.renderPullSecrets`, reached through
+    // `dict "images" (list .Values.image)`: the one-element list literal
+    // iterates exactly, so the inner range operand is `image.pullSecrets`.
+    let signals = signals_with_helpers(
+        indoc! {r#"
+            {{- define "pullSecrets" -}}
+            {{- range .images -}}
+            {{- range .pullSecrets }}
+            - name: {{ if kindIs "map" . }}{{ .name }}{{ else }}{{ . }}{{ end }}
+            {{- end -}}
+            {{- end -}}
+            {{- end -}}
+        "#},
+        indoc! {r#"
+            apiVersion: v1
+            kind: Pod
+            metadata:
+              name: test
+            spec:
+              imagePullSecrets:
+              {{- include "pullSecrets" (dict "images" (list .Values.image) "context" $) | nindent 2 }}
+        "#},
+    );
+    sim_assert_eq!(
+        have: value_requirements_for(&signals, "image.pullSecrets")?,
+        want: unconditional_iterable_requirement()
+    );
+    Ok(())
+}
