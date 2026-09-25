@@ -2697,5 +2697,26 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   continuation only for arms proven serialized (abstain for mixed arms until the per-value
   model); `BlockContinuation`/`StructuralSiblings` judged reasonable. F13 is last in the
   landing queue and gets a fresh agent for that rework.
+- LANDED `f7be7ba5`: F69 hunks 2 + 3 as shape B (`round8-f69x-evidence/final.patch`, 12 files,
+  production +235/-69, tests +515; no fixture bytes). Hunk 2: both `eval_default` operands fall
+  back to `AbstractValue::Unknown`. Hunk 3: `selection_chain_identity_paths` →
+  `SelectionChainIdentities::{Complete, Prefix}` with the identity rule once in
+  `selection_identity` (silent truncation deleted; a prefix API kept for
+  `inline_regions.rs:475`); the typeOf decode validates the chain before the metadata
+  shortcut, abstains on Prefix / derived-text / predicate-carrying candidates and accumulates
+  repeated paths; FirstTruthy lowering orders path-less candidates by the chain (derived-text
+  candidates end the ordering); `summary.rs` `StructuralDispatch::{Known, Unknown, Abstain}`
+  omits a guarded opaque arm only when disjoint from every scalar arm, overlap abstains and is
+  cached; the reachability lane keeps its primary-side write and applies the same
+  derived-text exclusion (`input_identity_candidate`). Tests red-first on `7c6a2f6e` (gen
+  `fail_validators.rs` ×8, ir `fragment_golden.rs` ×2 incl. the 12-key agreement matrix,
+  `expr_eval.rs`, `fragment_expr_eval.rs`, `abstract_value.rs`, `condition_predicate.rs`).
+  Gates on the tree main is byte-identical to: fmt 0; unit 1540/1540; lint and lint:fc red
+  only on `branch_steps`; dump 164/164, 202 artifacts, 0 movers; integration 717/717. Helm:
+  15/15 in four spellings, kyverno 9/9, `[a,b,a]` 15 rows, nested 10 rows, the three astra
+  cases. Follow-ups: F51/F78 value ownership; exact `kindOf/typeOf` over literal tails via
+  `abstract_value_type_is`; nested `default` never narrows the inner terminal's row. The
+  d3f23 landing chain restarted on `round8-d3f23-d` = `f7be7ba5` + `checkpoint-25.patch`
+  (68 files, clean apply), runner `run-final9-d.sh`, battery baseline `f7be7ba5`.
 
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
