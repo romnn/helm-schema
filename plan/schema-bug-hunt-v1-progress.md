@@ -2862,4 +2862,26 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   F31/F60 identified for pruning once the battery reports them matched. No heavy step until the
   F23 chain releases the lock.
 
+- 21:50 — (clock note: the times in this round's entries are Europe/Berlin local, two hours ahead
+  of UTC, despite earlier "UTC" labels.) **MergeLayerSource round 3 done**
+  (`round8-mls-evidence/final.patch` on 906e1ee0, `final-f4-plus-mls.patch` on c2b753b9; production
+  +363/−170, tokei core +130): map-valued literal keys are exact under mergo's rule —
+  `LiteralKey { Replaces, Merges(BTreeMap<String, LiteralKey>) }`, a merged member's schema is
+  `anyOf[{not:{type:object}}, nested members projected]`, `Choice` keeps what both arms guarantee
+  (merge wins over replace), only the FIRST literal ahead of the use shadows (w8: an earlier
+  literal's map member decides a later literal's list member). Ten witness matrices (`w/*.r3.matrix.txt`,
+  base/mls1/r2/r3): r3 is never worse than base on any cell in either direction; w1
+  `labelSelector` 5/""/[x] ACCEPT, `{matchLabels:{a:5}}` and `{matchExpressions:5}` REJECT
+  (Kubernetes rejects after the deep merge); w7 two-level literal; w8 first-literal rule.
+  `mergeOverwrite` stays under the merge rule (never claims more shadowing than overwrite does; a
+  per-function rule would thread the function through ~58 sites). Tests: four red-first gen tests
+  (`fragment_projection.rs`), IR classifier test, core wire-shape test; unit 1566/1566, fmt 0, lint 0.
+  Recorded residuals: w5 branch-dependent literal (schema carries no branch guard), w5 empty literal
+  under `mergeOverwrite`, base-identical w2m/w2t/w2v capability cells (skip-merge condition
+  untracked; n4 area), w3, w6, number/bool literal members stay typed. Next: cross-vendor review
+  (gpt-6-sol) of round 3, then the F4+MLS dump/battery after F31 and F9.
+- 21:52 — **F9 landing prep launched** (fresh Opus agent, clone `round8-f9-land`, same recipe as
+  F31: predicted base commit, `final.patch` (base 7c6a2f6e, review fix applied) rebased,
+  fmt/unit/lint, lock-taking runner `run-f9.sh`).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
