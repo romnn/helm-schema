@@ -3102,4 +3102,33 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   isolated mechanically as the set difference against `battery-final-5`'s flip list; separate
   commits on landing).
 
+- 23:40 — **Cross-vendor verdicts, seventh batch.** gpt-6-sol on MLS round 4 (follow-up on
+  `20260925T195649-4c1e1987`, saved as `round8/review-mls-round4-sol.md`): land with two named
+  changes — (1) w10 unclassified-member collision: OPEN the affected values member when an
+  unclassified preceding member collides with a later replacement (NOT the proposed
+  `TypeIs(p, object) ∨ ¬Truthy(p)` guard: `baseTier` defaults to `""`, so `¬Truthy` would
+  enable the rejecting typing); test `baseTier=""` and `"a"`; (2) compose each `Choice` arm with
+  the subsequent literals BEFORE joining effects (or widen a disputed key to Replaces), covering
+  Merges-vs-Unclassified and Unclassified-vs-absent (`abstract_value.rs:2037` join then
+  `contract_use.rs:214` composition can miss an arm where a later literal replaces the key).
+  Hygiene, not a condition: store the overwrite mode once on the use rather than per literal
+  (`abstract_value.rs:1595`). w5 guard loss recorded (belongs at the control-flow join). +264
+  LOC over base judged defensible. → MLS round 5 queued for the next free implementer slot.
+  gpt-6-astra on F74 (`20260925T212149-b5feadab`, `round8/analysis-f74-size-astra.md`): **the
+  F74 reopening confused pretty fixtures with shipping bytes.** Helm's limit is 5,242,880 bytes
+  inclusive (`loader/archive/archive.go:42`, checked at `directory.go:103` / `archive.go:131`;
+  oversize aborts chart loading). The CLI writer (`output_pipeline/format.rs:67`) already falls
+  back to compact JSON; compact sizes are openebs 4,142,100 / oncall 3,658,802 /
+  kube-prometheus-stack 3,967,995 bytes — all under the limit; the corpus dump path
+  (`chart_corpus.rs:231`) pretty-prints unconditionally, which is what the audit measured (and
+  milvus, 5.76 MiB pretty, is the fourth). Structure is already heavily shared (6,474 `$defs`,
+  zero exact duplicate arms; the F74 minifier is content-exact); the only material structural
+  deletion left is vacuous `additionalProperties: {}` (13,488 occurrences, −351 KB). Fix list:
+  (1) small — unify fixture serialization with the writer + a disk-size gate in
+  `corpus_integrity.rs` (red: four fixtures); (2) small — gate generated output at the writer
+  boundary with a typed error for unshippable compact output; (3) medium — pinned Helm loading
+  test of generated files; (4) optional — omit vacuous `additionalProperties: {}` at final
+  serialization; no new interner. F74 therefore stays a LANDED family pending the CLI-path
+  verification below; the gate agent was told to evaluate the F74 row through the writer.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
