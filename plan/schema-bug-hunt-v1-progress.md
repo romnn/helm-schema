@@ -2953,4 +2953,38 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (`round8-f9-evidence/member-probes/member_probe.py`) because the probe generator skips empty
   collections.
 
+- 22:25 — **Cross-vendor verdicts, sixth batch.** gpt-6-sol on MLS round 3
+  (`20260925T195649-4c1e1987`): do NOT land; five named changes — (1) `Choice` must join shadow
+  effects by the UNION of the arms with Replaces winning over Merges (`abstract_value.rs:1961`
+  intersects; w5 `altLit.a=5` / `flag,altLit.b=5` are observed false rejections; the test at
+  `fragment_projection.rs:2048` pins the wrong verdicts), (2) projection failure must abstain
+  (`member_projection.rs:451` `open_members` → `None` on combinator members, `:505` restores the
+  unprojected object typing), (3) non-zero number / `true` literal members Replace (the evaluator
+  discards numbers/bools at `expr_eval.rs:893`, `collections.rs:690`), (4) compose multiple
+  preceding literals in order, distinguishing absent from present-but-unclassified keys
+  (`contract_use.rs:147`), (5) carry merge vs `mergeOverwrite` to literal classification
+  (`collections.rs:1307`; `overwriteEmptyLit` false rejection). Evidence note: Helm v4.2.3 pins
+  mergo v1.0.1. → MLS round 4 dispatched (fresh Opus agent, `round8-mls`). gpt-6-sol pre-landing
+  review of the F23+D3a code (`20260925T200840-7bcb1555`): do NOT land yet — (1) the lint gate
+  can reject a `helm lint -f` document at a RANGED (`*`) path: root `kid.entries: {}`, dependency
+  default `kid.entries.alpha: {enabled: false, p: 80}`, override `kid.entries.alpha.enabled=true`
+  renders but the synthetic floor (`uncoalesced_root.rs:273`, `:378`;
+  `conditional_constraints.rs:91`) never creates the override-created member under `*` and keeps a
+  conditional requirement for `p`; (2) the battery adjudicates a probe only when the screened
+  acceptance booleans differ (`schema_emission_profiles.rs:1723`), so a candidate rejection
+  behind a baseline rejection — a NEW error — is invisible; (3) "uninformative baseline"
+  (`emission_profile_harness.rs:177`) and the Kubernetes defaults comparison
+  (`helm_adjudication.rs:551`) compare paths without the violated assertion's detail, so
+  distinct violations collide. Its objection to Kubernetes-rejects as a matched tightening is a
+  brief error on my side (that IS the contract) and stands as is. Follow-ups recorded: the gate
+  conditions on every differing guard path (`uncoalesced_root.rs:190`/`:148`, precision loss);
+  `.Files.Get` text scanned for `define` (`analysis_db.rs:53`, pre-existing). No style
+  violations found beyond one two-sentence comment line (`helm_adjudication.rs:164`).
+  **Decision: F23+D3a does not land tonight.** Round 4f dispatched (fresh Opus agent, clone
+  `round8-d3f23-e`, target `round7-f13`): ranged-path floor, structured-violation flip
+  detection, discriminating `ViolationKey`, all red-first. The queued F31 and F9 chains are
+  CANCELLED (their predicted base and their battery code would both be stale); they re-base on
+  the round-4f tree with a git rebase (F31 and F9 apply cleanly), then re-run. The F23 round-4e
+  integration run continues to completion for the record.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
