@@ -2742,5 +2742,30 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `merge` securityContext) abstains = F4's residual, i.e. the `MergeLayerSource` typed fact.
   A fresh `mls` agent implements `MergeLayerSource { Values, Literal{keys}, Opaque }` on top of
   F4 checkpoint-22 with the datadog `agent` and external-dns witnesses.
+- d3f23 landing chain (16:45 UTC, `round8-d3f23-d` = `f7be7ba5` + 4c code): dump 0 (202
+  artifacts, 60 fixtures adopted), withdrawals 0 (16,084 records: 1,401 Conditioned, 14,683
+  Withdrawn; 1,031 fewer whole withdrawals than round 4 on the same charts), integration 0,
+  battery exit 100: 5,345 flips, 5,103 matched, 242 unmatched — ALL on the six de-quarantined
+  charts (redmine 137, graylog 42, spinnaker 34, oncall 17, dify 8, weblate 4). Attribution
+  (`battery-final-4/attribution.md`): 0 introduced by the candidate (0 false rejections: all
+  10 tightenings match Helm aborts); 157 REAL but PRE-EXISTING false acceptances (111 Kubernetes
+  rejects + 46 Helm aborts) that were unmeasurable because the baseline rejected those charts'
+  entire defaults (mechanisms: values through toYaml/tplvalues/renderSecurityContext into typed
+  fields, `fullnameOverride: "3"` unquoted in `metadata.name`, toYaml of a string where a list is
+  expected, bitnami `fail` helpers, null deletions; HEAD accepts the same classes on nginx);
+  85 uncertain (CRD kinds absent from the bundle 52: MongoDBCommunity 34, cert-manager Issuer
+  12, HTTPRoute 6; APIs removed before 1.29 19, all spinnaker; documents without apiVersion 14).
+  The lint-withdrawal hypothesis was REFUTED by experiment (gate disabled: all 242 still
+  accepted). Partial lint sweep (85/156 charts, corrected gate `$4!=$7`): 11 genuine
+  `helm lint -f` false rejections (falco 5, metallb 3, argo-cd 2, jira 1) — an override enables
+  a dependency and sets a dependency-only boolean below it, and a kept `required` clause
+  demands members only the dependency defaults supply; present since round 3 (no earlier sweep
+  toggled dependency-only guards). Decisions: fix the gate (every guard not true on the lint
+  document counts as override-activated; presence-condition every clause under it); battery
+  rule — a flip whose baseline rejection equals the baseline's rejection of the chart's own
+  defaults is uninformative and is adjudicated on the candidate alone, the remainder goes into
+  a typed KNOWN-FALSE-ACCEPTANCE roster (chart, path, value, verdicts, family) that fails when
+  fixed; removed-API kinds and documents without apiVersion/kind are decidable rejections
+  under F79; CRD-absent kinds stay uncertain and listed. One more cycle on the same fresh agent.
 
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
