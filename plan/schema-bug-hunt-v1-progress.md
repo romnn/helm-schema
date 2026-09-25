@@ -2606,5 +2606,35 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `absorb_scoped_type_hints`); L2 land as designed; the embedded-geometry refutation confirmed
   from the parser; datadog attribution confirmed n4-class; the serialization plan's step 5
   qualified (other consumers iterate all metadata, so L2's hunk is not dead after unification).
+- F69 decision (15:00 UTC): variant A (`round8-f69-evidence/final.patch`, +263/-70) is NOT
+  landable — the Fable challenger (`round8-f69x-evidence/verdict.md`) measured a contract loss
+  in the `typeOf` spelling (`$tag := default TAIL .Values.tag` + `ne (typeOf $tag) "string"`
+  accepts 1/1.5/true/["a"]/{"a":"b"}, all Helm aborts; the Variable branch routes to
+  `selection_chain_type_sources`, which returns `None` on any non-identity candidate, and the R0
+  tests asserted render rows only) and showed its "one decoder" re-derives the existing
+  reachability lane's primary-side write (`default_primary_selection_with_memo`,
+  `collections.rs:389-459` + `conjoin_result_reachability`) — two decoders writing one carrier.
+  Shape B (`round8-f69x-evidence/final.patch`, +149/-43 over 6 files, tests +515) is the
+  candidate: hunk 2 unchanged; `selection_chain_identity_paths` → `SelectionChainIdentities
+  { paths, complete }` with the identity rule once in `selection_identity` (silent truncation
+  deleted; a prefix API kept for `inline_regions.rs:475`); the eval-branch typeOf decode
+  abstains on an incomplete chain or a derived-text candidate and accumulates a branch per
+  repeated occurrence; FirstTruthy lowering keeps raw-path candidates on the metadata lane
+  (one writer), a path-less candidate takes `¬truthy(prior raw paths)`, derived-text
+  candidates end the ordering, literals unconditional; guarded `Opaque` = omitted unknown arm;
+  one eligibility rule shared by the reachability lane, lowering and the type decoder. Helm
+  15/15 in four spellings, kyverno 9/9, `[a,b,a]` 15 rows and nested 10 rows; ten red-first
+  tests incl. an 11-key agreement matrix; unit 1536/1536; corpus CLI sweep 156/156
+  byte-identical (0 movers; variant A's open-webui move was an out-of-contract `dig`
+  tightening). Follow-ups: F51/F78 evaluated-value ownership (delete the metadata selection
+  carrier, 400–800 lines); route `eq/ne (typeOf|kindOf X) T` through `abstract_value_type_is`
+  for exact literal/dict tails; let `default_primary_selection_with_memo` accept `dig`-style
+  identity `OutputPath`s. Variant A's reusable findings (ordered scalar-parts lane,
+  guarded-opaque summary rule, dex derived-text masking) are in its handoff. Shape B is running
+  its dump (to confirm zero movers), integration and `lint:fc` under the lock; gpt-6-astra
+  reviews it (`20260925T145240-b7bfbbc4`). F31 and F6 (d) are parked land-ready after their
+  cross-vendor fixes (F31: comment-before-colon abstention, `schema_excludes_type`; F6:
+  `TextListElements { some_nonempty, no_empty_element, len }`, `text_edge_trims` from token
+  kinds replacing two text checks, the analysis test pins three Helm-confirmed clauses).
 
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
