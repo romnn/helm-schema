@@ -2828,4 +2828,38 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `with_output_meta` points at the path-keyed `HelperOutputMeta` second owner (serialization
   design). A fresh agent reworks it (`round8-mls`).
 
+- 21:20 UTC — **MergeLayerSource round 2 done** (`round8-mls-evidence/final.patch`, +286/−169):
+  `MergeLayerSource::Literal { replaced_keys }` carries only the keys the literal writes in EVERY
+  render with a non-empty string/list value; `Choice` = intersection; map-valued and empty literal
+  values no longer shadow (`literal_layer_replaced_keys` / `replaces_merge_member`); six red-first
+  tests; unit 1564/1564, fmt 0, lint 0. Witness w6 (values-vs-values `hasKey` shadow over-acceptance)
+  recorded, not fixed. Verdict: the conservative choice for MAP-valued literal keys is a false
+  REJECTION (w1 `labelSelector: 5`/`""`/`[x]` render valid because mergo ignores a non-map source
+  over a map destination; three w2m cells reject that the base accepts). Round 3 dispatched on the
+  same agent: recursive projection with mergo's escape (non-map values member under a map-valued
+  literal key → accepted, map → projected with the literal's nested replaced keys shadowing),
+  per-function rule for `mergeOverwrite`, red-first tests, no dump.
+- 21:18 UTC — **d3f23 round 4e done** (CRD pinning; test infrastructure only): the adjudicator
+  validates custom resources against the pinned catalog schema for the exact group/kind/version
+  (`OfflineKubernetesValidator::with_crd_catalog`, bundle `testdata/provider-bundle/crds-catalog-cache`);
+  `mongodbcommunity_v1.json` added (HTTPRoute and cert-manager Issuer were already pinned); kinds
+  without a pinned schema stay uncertain. Re-judged the 52 CRD-uncertain renders: 51 matched, 1 new
+  violation (graylog `mongodb.community.version <- null` — MongoDBCommunity `/spec/version` null)
+  added to the roster as F9 (roster 176). No generated schema changed (graylog/dify/oncall
+  `chart_corpus` green). Test `a_pinned_crd_schema_decides_a_crd_resource` (red-first). Gates: fmt 0,
+  unit 1551/1551, adjudicator suites 53/53, `task lint` 201 on the B6 residual only. Patches:
+  `final.patch` (130 files, `git diff f7be7ba5`), `final-code-only.patch` (70). Predicted battery:
+  5,340 adjudicated = 5,164 matched + 176 roster + 0 uncertain.
+- 21:21 UTC — **F23+D3a landing chain launched** under the heavy lock
+  (`run-final10-e.sh battery; integration` on `dump-final-8`; no re-dump needed: integration green on
+  the final tree proves the adopted fixtures equal the final build's output, so the candidate dump is
+  byte-identical). The corrected `helm lint` sweep (`run-sweep-e.sh`, 443/… rows) is still running
+  beside it; gate = `lint-final6/new-lint-failures.txt` empty.
+- 21:24 UTC — **F31 landing prep launched** (fresh Opus agent, clone `round8-f31-land`): predicted
+  base = main + d3f23 `final.patch` committed locally (battery baseline), F31 `final.patch`
+  (base 7c6a2f6e) rebased on it, fmt/unit/lint, runner `run-f31.sh dump|battery|integration|sweep`
+  (lock-taking, baseline = predicted base, sweep control = `dump-final-8`), roster entries for
+  F31/F60 identified for pruning once the battery reports them matched. No heavy step until the
+  F23 chain releases the lock.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
