@@ -1,5 +1,6 @@
 use std::collections::{BTreeMap, BTreeSet, HashMap};
 
+use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_ast::{DefineIndex, parse_action_expressions};
 use test_util::prelude::sim_assert_eq;
 
@@ -914,4 +915,31 @@ fn files_get_printf_condition_decodes_to_finite_name_disjunction() {
             ],
         }]),
     );
+}
+
+/// `kindOf (default TAIL .Values.tag)` describes `tag` only where `tag` is
+/// truthy and the tail everywhere else. The path-keyed source map cannot
+/// spell a literal or a constructed tail, so the decode abstains instead of
+/// claiming `TypeIs(tag)` for the states that select the tail (Helm renders
+/// `tag: 0` with a string tail and aborts with a map tail; ground truth
+/// `round8-f69x-evidence/probe/helm-typeof.log`).
+///
+/// RED on 7c6a2f6e: `selection_chain_identity_paths` silently truncated
+/// the chain to `[tag]`, and the decode read `tag` as the terminal fallback.
+#[test]
+fn type_descriptor_over_a_truncated_selection_chain_abstains() -> eyre::Result<()> {
+    for tail in [r#""lit""#, r#"(dict "k" "v")"#] {
+        let text = format!(r#"{{{{ ne (kindOf (default {tail} .Values.tag)) "string" }}}}"#);
+        let expr = parse_action_expressions(&text)
+            .into_iter()
+            .next()
+            .ok_or_eyre("condition expression")?;
+        let context = condition_context(HashMap::new());
+        assert!(
+            !context.condition_lowering_is_faithful(&expr),
+            "tail {tail}: {:#?}",
+            context.condition_predicate_expr(&expr),
+        );
+    }
+    Ok(())
 }

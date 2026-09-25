@@ -2635,3 +2635,69 @@ fn selected_yaml_serializer_keeps_each_provider_route() {
         );
     }
 }
+
+/// A helper body `.Values.a | default .Values.b | default .Release.Namespace`
+/// lowers `b` under `¬truthy(a)` alone and the unresolved tail as an opaque
+/// arm under `¬truthy(a) ∧ ¬truthy(b)`. The two overlap, so `b`'s arm is
+/// not exact there: the structural pass abstains and caches that, so the
+/// deferred scalar projection (which reads only the arms it can render)
+/// cannot rebuild an exact dispatch from `a` and `b`. kyverno's
+/// `default .Release.Namespace .Values.namespaceOverride` keeps its
+/// dispatch: the head's `truthy` arm and the tail's `¬truthy` arm are
+/// disjoint, so the tail is an omitted unknown arm.
+#[test]
+fn overlapping_unknown_arm_abstains_from_the_helper_dispatch_for_good() {
+    let mut defines = DefineIndex::new();
+    defines.add_file_source(
+        "<inline:0>",
+        indoc! {r#"
+            {{- define "nested.ns" -}}
+            {{ .Values.a | default .Values.b | default .Release.Namespace }}
+            {{- end -}}
+            {{- define "kyverno.namespace" -}}
+            {{ default .Release.Namespace .Values.namespaceOverride }}
+            {{- end -}}
+        "#},
+    );
+    let analysis_db = IrAnalysisDb::new(&defines);
+    let context = helper_context(&analysis_db);
+    let root_bindings = HashMap::from([("Values".to_string(), values_path!(""))]);
+    let env = EvalEnv::from_helper_context(
+        Some(&root_bindings),
+        None,
+        crate::eval_env::BindingEvaluationMode::Direct,
+    );
+    let summarize = |name: &str| {
+        let mut seen = HashSet::new();
+        analysis_db.summarize_bound_helper_call(
+            name,
+            None,
+            Some(&root_bindings),
+            None,
+            &env,
+            context,
+            &mut seen,
+        )
+    };
+
+    let nested = summarize("nested.ns");
+    sim_assert_eq!(
+        have: nested.summary.scalar_dispatch.get().map(Option::is_none),
+        want: Some(true),
+        "abstention is cached before any consumer asks: {:#?}",
+        nested.summary
+    );
+    sim_assert_eq!(have: nested.summary.scalar_dispatch(&analysis_db).is_none(), want: true);
+
+    let kyverno = summarize("kyverno.namespace");
+    let dispatch = kyverno.summary.scalar_dispatch(&analysis_db).cloned();
+    sim_assert_eq!(
+        have: dispatch.as_ref().map(|dispatch| (dispatch.complete, dispatch.arms.len())),
+        want: Some((false, 1)),
+        "the head's exact arm survives beside the omitted tail: {dispatch:#?}"
+    );
+    sim_assert_eq!(
+        have: dispatch.and_then(|dispatch| dispatch.arms.into_iter().next().map(|(condition, _)| condition)),
+        want: Some(Predicate::truthy_path("namespaceOverride")),
+    );
+}

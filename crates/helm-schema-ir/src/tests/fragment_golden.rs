@@ -1073,3 +1073,144 @@ fn opaque_taint_and_inline_region_arms() {
     "#};
     assert_fragment_dump(source, "", expected);
 }
+
+/// kyverno's `default .Release.Namespace .Values.namespaceOverride`: the
+/// head renders under its own truthiness (its per-path metadata says so),
+/// and the unresolved tail is an opaque arm under the head's falsiness —
+/// the chain's order is the only record of the states that reach it.
+///
+/// RED on 7c6a2f6e: the tail was dropped from the chain, so the fragment
+/// had no arm at all for the falsy states.
+#[test]
+fn unresolved_default_tail_lowers_under_the_prior_falsiness() {
+    let source = indoc! {r"
+        ns: {{ default .Release.Namespace .Values.namespaceOverride }}
+    "};
+    let expected = indoc! {r#"
+        when always:
+          mapping:
+            key "ns":
+              when truthy(namespaceOverride):
+                splice namespaceOverride scalar defaulted
+              when !(truthy(namespaceOverride)):
+                opaque
+    "#};
+    assert_fragment_dump(source, "", expected);
+}
+
+/// The agreement matrix for `default` chains: every arm condition below is
+/// what the two carriers together say — a raw-path candidate's own
+/// selection rides its per-path metadata (written by the `default`
+/// evaluation's reachability lane: `truthy` for the primary, the prior
+/// paths' falsiness for a fallback, a disjunction of branches for a path
+/// that occurs twice), and a candidate with no path takes the prior paths'
+/// falsiness from the chain's order. Helm rows for the repeated and nested
+/// shapes: `round8-f69x-evidence/probe/helm-aba-nested-v4.2.3.log`.
+///
+/// A transformed head (`toString`, `printf`, a lexical transform) is not
+/// selected by its raw truthiness, so it ends the exact ordering and the
+/// tail stays an unconditional opaque arm — sound, and the dispatch then
+/// abstains instead of claiming the head. A transformed MIDDLE candidate
+/// (`printf "%.0s"`, no formatter dispatch, the raw path kept with the
+/// transform in effects) leaves the final fallback under an approximate
+/// marker rather than the raw paths' falsiness (`printfMiddle`; Helm
+/// reaches `c` for `a: "", b: "x"`). Literal candidates keep their
+/// unconditional text arm. The repeated chain lowers `a`'s branches once
+/// per occurrence (pre-existing; the dispatch abstains on the overlap).
+#[test]
+fn default_chain_arms_follow_the_selection_order() {
+    let source = indoc! {r#"
+        two: {{ default .Values.b .Values.a }}
+        unknownTail: {{ default .Release.Name .Values.a }}
+        literalTail: {{ default "lit" .Values.a }}
+        unknownHead: {{ default .Values.a .Release.Name }}
+        repeated: {{ .Values.a | default .Values.b | default .Values.a }}
+        nested: {{ default .Values.c (default .Values.b .Values.a) }}
+        stringifiedHead: {{ .Values.a | toString | default .Values.b }}
+        printfHead: {{ printf "%s" .Values.a | default .Release.Name }}
+        lowerHead: {{ .Values.a | lower | default .Release.Name }}
+        dictTail: {{ default (dict "k" "v") .Values.a }}
+        unknownMiddle: {{ .Values.a | default .Release.Name | default .Values.b }}
+        printfMiddle: {{ .Values.a | default (printf "%.0s" .Values.b) | default .Values.c }}
+    "#};
+    let expected = indoc! {r#"
+        when always:
+          mapping:
+            key "two":
+              when truthy(a):
+                splice a scalar defaulted
+              when !(truthy(a)):
+                splice b scalar
+            key "unknownTail":
+              when truthy(a):
+                splice a scalar defaulted
+              when !(truthy(a)):
+                opaque
+            key "literalTail":
+              when truthy(a):
+                splice a scalar defaulted
+              when always:
+                scalar [text{"lit"}]
+            key "unknownHead":
+              when always:
+                opaque
+              when approximate():
+                splice a scalar
+            key "repeated":
+              when truthy(a):
+                splice a scalar defaulted
+              when (!(truthy(a)) && !(truthy(b))):
+                splice a scalar defaulted
+              when !(truthy(a)):
+                splice b scalar defaulted
+              when truthy(a):
+                splice a scalar defaulted
+              when (!(truthy(a)) && !(truthy(b))):
+                splice a scalar defaulted
+            key "nested":
+              when truthy(a):
+                splice a scalar defaulted
+              when !(truthy(a)):
+                splice b scalar defaulted
+              when (!(truthy(a)) && !(truthy(b))):
+                splice c scalar
+            key "stringifiedHead":
+              when always:
+                splice a scalar defaulted
+              when approximate(a):
+                splice b scalar
+            key "printfHead":
+              when !(matches(a ~ ^$)):
+                splice a scalar defaulted
+              when always:
+                opaque
+            key "lowerHead":
+              when always:
+                splice a scalar defaulted
+              when always:
+                opaque
+            key "dictTail":
+              when truthy(a):
+                splice a scalar defaulted
+              when !(truthy(a)):
+                mapping:
+                  key "k":
+                    when always:
+                      scalar [text{"v"}]
+            key "unknownMiddle":
+              when truthy(a):
+                splice a scalar defaulted
+              when !(truthy(a)):
+                opaque
+              when approximate(a):
+                splice b scalar
+            key "printfMiddle":
+              when truthy(a):
+                splice a scalar defaulted
+              when !(truthy(a)):
+                splice b scalar defaulted
+              when approximate(a, b):
+                splice c scalar
+    "#};
+    assert_fragment_dump(source, "", expected);
+}

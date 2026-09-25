@@ -173,23 +173,25 @@ pub(crate) fn eval_bound_helper_fragment(
     let contributions = interpreter.eval_node_list(&roots);
     let root = contributions.assemble();
     let predicate_memo = db.predicate_memo().as_ref();
-    let structural_scalar_dispatch = scalar_dispatch_from_fragment(&root, predicate_memo);
-    let (scalar_dispatch, deferred_scalar_projection) = if structural_scalar_dispatch
-        .as_ref()
-        .is_some_and(|dispatch| dispatch.complete)
-    {
-        (OnceCell::from(structural_scalar_dispatch), None)
-    } else {
-        (
-            OnceCell::new(),
-            Some(DeferredScalarProjection {
-                helper_name: name.to_string(),
-                resolution: resolution.clone(),
-                seen: seen.clone(),
-                structural: structural_scalar_dispatch,
-            }),
-        )
+    let deferred = |structural| {
+        Some(DeferredScalarProjection {
+            helper_name: name.to_string(),
+            resolution: resolution.clone(),
+            seen: seen.clone(),
+            structural,
+        })
     };
+    let (scalar_dispatch, deferred_scalar_projection) =
+        match scalar_dispatch_from_fragment(&root, predicate_memo) {
+            StructuralDispatch::Known(dispatch) if dispatch.complete => {
+                (OnceCell::from(Some(dispatch)), None)
+            }
+            StructuralDispatch::Known(dispatch) => (OnceCell::new(), deferred(Some(dispatch))),
+            StructuralDispatch::Unknown => (OnceCell::new(), deferred(None)),
+            // The projection reads only the arms it can render, so it would
+            // rebuild the overlapping scalar arms as an exact dispatch.
+            StructuralDispatch::Abstain => (OnceCell::from(None), None),
+        };
     let json_payload_truth = interpreter
         .json_payload_truth_outputs
         .first()
@@ -331,45 +333,84 @@ fn merge_scalar_dispatch_candidates(
     Some(ScalarValueDispatch { arms, complete })
 }
 
+/// The structural pass's scalar reading of a helper body.
+enum StructuralDispatch {
+    /// Every arm the pass kept renders scalar text; the dispatch may still
+    /// omit unknown arms (`complete` is then false).
+    Known(ScalarValueDispatch),
+    /// An arm the pass cannot read at all; the deferred scalar projection
+    /// may still find a dispatch.
+    Unknown,
+    /// An unknown arm whose states overlap a scalar arm's: no scalar reading
+    /// of this body is exact, and the deferred projection must not rebuild
+    /// one from the arms it can read.
+    Abstain,
+}
+
 fn scalar_dispatch_from_fragment(
     fragment: &Guarded<AbstractFragment>,
     predicate_memo: &PredicateMemo,
-) -> Option<ScalarValueDispatch> {
+) -> StructuralDispatch {
     let mut states = Vec::new();
+    // A guarded opaque arm is an unknown arm the dispatch omits, provided
+    // its states are disjoint from every scalar arm's: the scalar arms
+    // then stay exact under their own conditions and the dispatch records
+    // that it does not cover every state. An arm condition can be broader
+    // than the arm's real selection (a nested `default`'s middle candidate
+    // renders under the head's falsiness alone), so an unknown arm that
+    // overlaps it means the scalar arm is not exact either. An
+    // unconditional opaque arm leaves no exact arm at all.
+    let mut omitted = Vec::new();
     for (condition, node) in &fragment.arms {
         let rendered = match node {
             AbstractFragment::Scalar(scalar) if !scalar.suppressed => {
-                scalar_render_contribution(&scalar.parts)?
+                scalar_render_contribution(&scalar.parts)
             }
             AbstractFragment::Splice(splice) => {
-                scalar_render_contribution(&[StringPart::Splice(splice.clone())])?
+                scalar_render_contribution(&[StringPart::Splice(splice.clone())])
+            }
+            AbstractFragment::Opaque(_) if *condition != Predicate::True => {
+                omitted.push(condition.clone());
+                continue;
             }
             AbstractFragment::Mapping(_)
             | AbstractFragment::Sequence(_)
             | AbstractFragment::Scalar(_)
-            | AbstractFragment::Opaque(_) => return None,
+            | AbstractFragment::Opaque(_) => None,
+        };
+        let Some(rendered) = rendered else {
+            return StructuralDispatch::Unknown;
         };
         states.push((condition.clone(), rendered));
     }
     if states.is_empty() || states.len() > MAX_SCALAR_DISPATCH_STATES {
-        return None;
+        return StructuralDispatch::Unknown;
     }
     for (index, (left, _)) in states.iter().enumerate() {
         if states.iter().skip(index + 1).any(|(right, _)| {
             conjoin_predicates_with_memo(left.clone(), right.clone(), predicate_memo).is_some()
         }) {
-            return None;
+            return StructuralDispatch::Unknown;
         }
     }
-    let complete = TruthCondition::any_with_memo(
-        states.iter().map(|(condition, _)| {
-            TruthCondition::from_predicate_with_memo(condition.clone(), predicate_memo)
-        }),
-        predicate_memo,
-    )
-    .predicate()
-        == Some(&Predicate::True);
-    Some(ScalarValueDispatch {
+    for unknown in &omitted {
+        if states.iter().any(|(condition, _)| {
+            conjoin_predicates_with_memo(unknown.clone(), condition.clone(), predicate_memo)
+                .is_some()
+        }) {
+            return StructuralDispatch::Abstain;
+        }
+    }
+    let complete = omitted.is_empty()
+        && TruthCondition::any_with_memo(
+            states.iter().map(|(condition, _)| {
+                TruthCondition::from_predicate_with_memo(condition.clone(), predicate_memo)
+            }),
+            predicate_memo,
+        )
+        .predicate()
+            == Some(&Predicate::True);
+    StructuralDispatch::Known(ScalarValueDispatch {
         arms: merge_scalar_dispatch_states(states, predicate_memo)
             .into_iter()
             .map(|(condition, rendered)| (condition, ScalarValue::Rendered(rendered)))

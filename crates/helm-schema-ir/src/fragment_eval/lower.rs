@@ -336,18 +336,63 @@ pub(crate) fn lower_value(
             }
             out
         }
-        // The rendered fragment is the SELECTED candidate's; the unordered
-        // union of the candidate arms over-approximates that soundly, the
-        // same lowering the plain choice gets.
+        // The rendered fragment is the SELECTED candidate's. A raw-path
+        // candidate's arms already carry its selection through its per-path
+        // metadata, which the `default` evaluation records and which
+        // survives every operand boundary, so they lower as they are. A
+        // candidate the metadata cannot name — an unresolved or transformed
+        // tail — is reached only where every earlier raw-path candidate is
+        // falsy, and takes that condition from the chain's order: kyverno's
+        // `default .Release.Namespace .Values.namespaceOverride` keeps its
+        // unresolved tail as an opaque arm under `¬truthy(namespaceOverride)`
+        // instead of an unconditional arm that would erase the head's exact
+        // arm from the dispatch. Such a candidate ends the exact ordering;
+        // later candidates keep the conjunction spelled so far, which still
+        // over-approximates soundly. Literal candidates keep one
+        // unconditional text arm. A raw-path candidate the expression
+        // rendered as derived text before `default` tested it (`tpl`, a
+        // lexical transform) is selected by that text, not by its raw
+        // truthiness, so it spells no falsiness for later candidates.
         AbstractValue::FirstTruthy(candidates) => {
             let mut strings = BTreeSet::new();
             let mut out = Guarded::empty();
+            let mut prior_falsy: Vec<Predicate> = Vec::new();
+            let mut ordered = true;
             for candidate in candidates {
                 if let AbstractValue::StringSet(members) = candidate {
                     strings.extend(members.iter().cloned());
-                } else {
-                    out.extend(lower_value(candidate, kind, scope));
+                    ordered = false;
+                    continue;
                 }
+                let lowered = lower_value(candidate, kind, scope);
+                if let Some(path) = candidate.selection_identity() {
+                    out.extend(lowered);
+                    if ordered && !scope.derived_text_paths.contains(path) {
+                        prior_falsy.push(Predicate::truthy_path(path.encode()).negated());
+                    } else {
+                        ordered = false;
+                    }
+                    continue;
+                }
+                // A transformed fallback with rows of its own may already
+                // carry the prior falsiness on those rows (the `default`
+                // evaluation records it there), so an arm's own conjuncts
+                // join the order's once.
+                for (condition, node) in lowered.arms {
+                    let mut conjuncts = prior_falsy.clone();
+                    let own = match condition.kind() {
+                        helm_schema_core::PredicateKind::True => Vec::new(),
+                        helm_schema_core::PredicateKind::And(items) => items.to_vec(),
+                        _ => vec![condition],
+                    };
+                    for conjunct in own {
+                        if !conjuncts.contains(&conjunct) {
+                            conjuncts.push(conjunct);
+                        }
+                    }
+                    out.arms.push((Predicate::all(conjuncts), node));
+                }
+                ordered = false;
             }
             if !strings.is_empty() {
                 out.arms.push((

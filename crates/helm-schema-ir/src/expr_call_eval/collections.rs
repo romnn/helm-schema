@@ -54,10 +54,15 @@ pub(super) fn eval_default(
     if let Some(schema_type) = fallback_args.first().and_then(literal_schema_type) {
         effects.add_fallback_type_hints(primary_paths.clone(), schema_type);
     }
+    // An operand the evaluator could not resolve is still an ORDERED
+    // alternative of the selection. Dropping it collapses the chain to the
+    // other operand's identity, and a later type or equality test then
+    // claims that operand's exact semantics for the states where Helm
+    // selects the arm we could not resolve.
     let mut values = if fallback_reachability.is_always() {
         Vec::new()
     } else {
-        primary.value.into_iter().collect::<Vec<_>>()
+        vec![primary.value.unwrap_or(AbstractValue::Unknown)]
     };
     let mut fallback_paths = BTreeSet::new();
     let mut fallback_dispatch = None;
@@ -82,9 +87,7 @@ pub(super) fn eval_default(
         fallback_dispatch = result.scalar_dispatch.clone();
         fallback_paths.extend(identity_value_paths(result.value.as_ref()));
         effects.merge(result.effects);
-        if let Some(value) = result.value {
-            values.push(value);
-        }
+        values.push(result.value.unwrap_or(AbstractValue::Unknown));
     }
     if let Some(primary_path) = primary_identity {
         let overlaps_fallback = fallback_paths.remove(&primary_path);
@@ -130,10 +133,10 @@ pub(super) fn eval_default(
             meta.input_identity = true;
         }
     }
-    // `values` holds the primary first and the fallback second exactly when
-    // both resolved, which is the ordered first-truthy selection; a missing
-    // arm leaves only the other value, where the chain collapses to it (the
-    // same result the unordered choice produced).
+    // `values` holds the primary first and the fallback second, which is the
+    // ordered first-truthy selection; an operand with no resolved value keeps
+    // its position as an explicit unknown alternative so the chain still
+    // spells both arms.
     let mut result = EvalResult::with_effects(AbstractValue::first_truthy(values), effects);
     if let [fallback] = fallback_results.as_slice()
         && let Some(proven) = compose_default_proven_operands(&primary_selection, fallback, memo)
@@ -438,9 +441,17 @@ fn default_primary_selection_with_memo(
                 },
             )
         }
+        // A candidate rendered as derived text before `default` tested it
+        // (`printf "%.0s" .Values.b`, which has no formatter dispatch) is
+        // selected by that text, not by its raw truthiness — the exclusion
+        // `input_identity_candidate` applies to a single primary.
         AbstractValue::FirstTruthy(candidates) => candidates
             .iter()
-            .map(AbstractValue::direct_values_identity)
+            .map(|candidate| {
+                candidate
+                    .direct_values_identity()
+                    .filter(|path| !result.effects.derived_text_paths.contains(path))
+            })
             .collect::<Option<Vec<_>>>()
             .map(|paths| {
                 SelectionReachability::exact(

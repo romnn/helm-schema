@@ -2753,3 +2753,36 @@ fn merge_of_values_paths_forms_ordered_layers() {
         literal_operand.value
     );
 }
+
+/// `.Values.a | default (printf "%.0s" .Values.b) | default .Values.c`:
+/// `%.0s` has no formatter dispatch, so the middle candidate stays the raw
+/// path `b` with the transform recorded only as derived text. Its rendered
+/// text is always empty, so Helm reaches `c` whenever `a` is falsy —
+/// `a: "", b: "x", c: "tail"` renders `tail`
+/// (`round8-f69x-evidence/probe/helm-named-changes-v4.2.3.log`). The
+/// reachability lane therefore cannot guard `c` by `b`'s raw falsiness.
+///
+/// RED before the derived-text exclusion in
+/// `default_primary_selection_with_memo`'s chain branch: `c` carried
+/// `¬truthy(a) ∧ ¬truthy(b)`.
+#[test]
+fn transformed_middle_candidate_leaves_the_final_fallback_approximate() {
+    let result = eval_expr(
+        &single_expr(r#".Values.a | default (printf "%.0s" .Values.b) | default .Values.c"#),
+        &EvalEnv::default(),
+    );
+    let branches = result
+        .effects
+        .local_output_meta
+        .get(&ValuesPath::parse("c"))
+        .map(|meta| meta.predicates.clone())
+        .unwrap_or_default();
+    sim_assert_eq!(
+        have: branches
+            .iter()
+            .flatten()
+            .any(|predicate| *predicate == Predicate::truthy_path("b").negated()),
+        want: false,
+        "c must not be guarded by b's raw falsiness: {branches:#?}"
+    );
+}

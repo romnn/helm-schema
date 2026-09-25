@@ -473,6 +473,7 @@ impl Interpreter<'_> {
     ) {
         let Some(chain) = iterable_value
             .and_then(crate::abstract_value::AbstractValue::selection_chain_identity_paths)
+            .map(crate::abstract_value::SelectionChainIdentities::into_paths)
         else {
             return;
         };

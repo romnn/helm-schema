@@ -3319,3 +3319,409 @@ fn required_over_coalesce_rejects_only_the_all_falsy_state() {
         );
     }
 }
+
+/// `kindOf (default TAIL .Values.tag)` compared with `"string"`: Helm
+/// aborts exactly on `truthy(tag) ∧ ¬string(tag)`, because every
+/// Helm-falsy input selects the tail (the literal `"lit"`, or the release
+/// namespace the analyzer cannot resolve), which is a string. Ground truth
+/// `round8-f69x-evidence/probe/helm-typeof.log` (`kindof-call-lit`, 15/15)
+/// and `round8-f69-evidence/helm-groundtruth.log` (`kindof_unres`).
+///
+/// RED on 7c6a2f6e for the literal tail: the type-descriptor decode read
+/// the chain through `AbstractValue::selection_chain_identity_paths`,
+/// which silently stopped at the literal and handed back `[tag]`, so the
+/// decode treated `tag` as the terminal fallback, dropped its `truthy`
+/// conjunct and claimed `TypeIs(tag, string)` for every state — rejecting
+/// `0`, `false`, `[]` and `{}`, which Helm renders.
+#[test]
+fn type_descriptor_over_a_truncated_default_chain_admits_every_helm_falsy_primary() {
+    let rows = [
+        (serde_json::json!({}), "absent"),
+        (serde_json::json!({ "tag": null }), "null"),
+        (serde_json::json!({ "tag": "" }), "empty string"),
+        (serde_json::json!({ "tag": 0 }), "0"),
+        (serde_json::json!({ "tag": false }), "false"),
+        (serde_json::json!({ "tag": [] }), "empty list"),
+        (serde_json::json!({ "tag": {} }), "empty map"),
+        (serde_json::json!({ "tag": "x" }), "string"),
+        (serde_json::json!({ "tag": "  " }), "blank string"),
+        (serde_json::json!({ "tag": "0" }), "string zero"),
+    ];
+    for tail in [r#""lit""#, ".Release.Namespace"] {
+        let source = format!(
+            indoc! {r#"
+                {{{{- if ne (kindOf (default {tail} .Values.tag)) "string" -}}}}
+                {{{{- fail "expected string" -}}}}
+                {{{{- end -}}}}
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: probe
+                data:
+                  tag: {{{{ default {tail} .Values.tag | quote }}}}
+            "#},
+            tail = tail
+        );
+        let schema = schema_for_values_yaml(parse_ir(&source), None);
+        for (instance, label) in &rows {
+            assert!(
+                schema_accepts_instance(&schema, instance),
+                "tail {tail} {label}: Helm renders instance={instance}; schema={schema}"
+            );
+        }
+    }
+}
+
+/// `$tag := default .Release.Namespace .Values.tag` guarded by `typeIs` /
+/// `kindIs "string"`: Helm aborts exactly on `truthy(tag) ∧ ¬string(tag)`,
+/// because every Helm-falsy input selects the release namespace, a string
+/// the analyzer cannot resolve. Ground truth
+/// `round7-f69-evidence/helm-groundtruth.log` and
+/// `round8-f69x-evidence/probe/helm-typeof.log` (`typeis-var-unres`).
+///
+/// RED on 7c6a2f6e: `eval_default` dropped the unresolved fallback, so the
+/// binding collapsed to the bare `tag` path and the type test claimed
+/// `TypeIs(tag, string)` for every state, rejecting `0`, `false`, `[]` and
+/// `{}`.
+#[test]
+fn default_over_an_unresolved_fallback_admits_every_helm_falsy_primary() {
+    for test in [r#"typeIs "string" $tag"#, r#"kindIs "string" $tag"#] {
+        let source = format!(
+            indoc! {r#"
+                {{{{- $tag := default .Release.Namespace .Values.tag -}}}}
+                {{{{- if not ({test}) -}}}}
+                {{{{- fail "expected string" -}}}}
+                {{{{- end -}}}}
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: probe
+                data:
+                  tag: {{{{ $tag | quote }}}}
+            "#},
+            test = test
+        );
+        let schema = schema_for_values_yaml(parse_ir(&source), None);
+        assert_string_type_matrix(&schema, test);
+    }
+}
+
+/// `$tag := default TAIL .Values.tag` tested through `ne (typeOf $tag)
+/// "string"`, for a literal string tail and for the unresolved release
+/// namespace: the same Helm matrix as the `typeIs` spelling
+/// (`round8-f69x-evidence/probe/helm-typeof.log`, `typeof-var-lit` and
+/// `typeof-var-unres`, 15/15 each).
+///
+/// GREEN on 7c6a2f6e: the bound local's type-descriptor decode reads the
+/// head's selection from its per-path metadata, which the `default`
+/// evaluation records and which every later read of the local sees. This
+/// pins that the exact decode survives: the round-8 candidate that routed
+/// the decode through the chain alone abstained on the tail and accepted
+/// the five Helm aborts (`round8-f69x-evidence/probe/`, `final` column).
+#[test]
+fn bound_default_chain_type_descriptor_keeps_the_truthy_rejection() {
+    for tail in [r#""lit""#, ".Release.Namespace"] {
+        let source = format!(
+            indoc! {r#"
+                {{{{- $tag := default {tail} .Values.tag -}}}}
+                {{{{- if ne (typeOf $tag) "string" -}}}}
+                {{{{- fail "expected string" -}}}}
+                {{{{- end -}}}}
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: probe
+                data:
+                  tag: {{{{ $tag | quote }}}}
+            "#},
+            tail = tail
+        );
+        let schema = schema_for_values_yaml(parse_ir(&source), None);
+        assert_string_type_matrix(&schema, tail);
+    }
+}
+
+/// The Helm matrix for `abort ⟺ truthy(tag) ∧ ¬string(tag)`: every
+/// Helm-falsy input and every string renders; every truthy non-string
+/// aborts.
+fn assert_string_type_matrix(schema: &serde_json::Value, label: &str) {
+    let rows = [
+        (serde_json::json!({}), true, "absent"),
+        (serde_json::json!({ "tag": null }), true, "null"),
+        (serde_json::json!({ "tag": "" }), true, "empty string"),
+        (serde_json::json!({ "tag": 0 }), true, "0"),
+        (serde_json::json!({ "tag": false }), true, "false"),
+        (serde_json::json!({ "tag": [] }), true, "empty list"),
+        (serde_json::json!({ "tag": {} }), true, "empty map"),
+        (serde_json::json!({ "tag": "x" }), true, "string"),
+        (serde_json::json!({ "tag": 1 }), false, "1"),
+        (serde_json::json!({ "tag": 1.5 }), false, "1.5"),
+        (serde_json::json!({ "tag": true }), false, "true"),
+        (serde_json::json!({ "tag": ["a"] }), false, "list"),
+        (serde_json::json!({ "tag": { "a": "b" } }), false, "map"),
+        (serde_json::json!({ "tag": "  " }), true, "blank string"),
+        (serde_json::json!({ "tag": "0" }), true, "string zero"),
+    ];
+    for (instance, want, row) in &rows {
+        assert!(
+            schema_accepts_instance(schema, instance) == *want,
+            "{label} {row}: instance={instance}; want accepts={want}; schema={schema}"
+        );
+    }
+}
+
+/// kyverno's `{{- if eq (include "kyverno.namespace" .) "kube-system" -}}
+/// {{- fail … -}}` over `{{ default .Release.Namespace .Values.namespaceOverride }}`.
+/// Helm aborts exactly when the override is the truthy literal
+/// `kube-system`; every Helm-falsy override selects the release namespace,
+/// which the analyzer cannot resolve, so only the truthy arm decodes
+/// (`round8-f69-evidence/adjudication-kyverno.log`, the real chart).
+///
+/// GREEN on 7c6a2f6e only by accident: the dropped unresolved fallback left
+/// the head alone, and the missing arm happened to read as an incomplete
+/// dispatch. RED with the unresolved fallback kept as a chain candidate but
+/// lowered as an unconditional opaque arm (round 7, `f69-hunk3.patch`;
+/// round 8, `checkpoint-5-injection-deleted-7-red.patch`): the dispatch
+/// vanished and `kube-system` was accepted. The ordered lowering keeps the
+/// tail as an opaque arm under `¬truthy(namespaceOverride)`, which the
+/// dispatch records as an omitted unknown arm.
+#[test]
+fn unresolved_default_fallback_keeps_the_kyverno_namespace_rejection() {
+    let helpers = indoc! {r#"
+        {{- define "kyverno.namespace" -}}
+        {{ default .Release.Namespace .Values.namespaceOverride }}
+        {{- end -}}
+    "#};
+    let source = indoc! {r#"
+        {{- if eq (include "kyverno.namespace" .) "kube-system" -}}
+        {{- fail "Kyverno cannot be installed in namespace kube-system." -}}
+        {{- end -}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe
+    "#};
+    let schema = schema_for_values_yaml(parse_ir_with_helpers(source, helpers), None);
+    for (instance, want, label) in [
+        (serde_json::json!({}), true, "absent"),
+        (
+            serde_json::json!({ "namespaceOverride": null }),
+            true,
+            "null",
+        ),
+        (
+            serde_json::json!({ "namespaceOverride": "" }),
+            true,
+            "empty string",
+        ),
+        (serde_json::json!({ "namespaceOverride": 0 }), true, "0"),
+        (
+            serde_json::json!({ "namespaceOverride": false }),
+            true,
+            "false",
+        ),
+        (
+            serde_json::json!({ "namespaceOverride": [] }),
+            true,
+            "empty list",
+        ),
+        (
+            serde_json::json!({ "namespaceOverride": {} }),
+            true,
+            "empty map",
+        ),
+        (
+            serde_json::json!({ "namespaceOverride": "other" }),
+            true,
+            "other namespace",
+        ),
+        (
+            serde_json::json!({ "namespaceOverride": "kube-system" }),
+            false,
+            "kube-system aborts",
+        ),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance) == want,
+            "{label}: instance={instance}; want accepts={want}; schema={schema}"
+        );
+    }
+}
+
+/// `kindOf (.Values.a | default .Values.b | default .Values.a)`: the chain
+/// is `[a, b, a]` — `a` describes the value where `a` is truthy AND where
+/// both are falsy, `b` where `a` is falsy and `b` truthy. Every row from
+/// Helm v4.2.3 (`round8-f69x-evidence/probe/helm-aba-nested-v4.2.3.log`,
+/// `kindof-aba`): a falsy `a` with no `b` falls back to `a` itself, whose
+/// kind is `invalid` (nil), `float64`, `bool`, `slice` or `map` — an abort
+/// — or `string` for `""`.
+///
+/// RED on 7c6a2f6e: the path-keyed decode OVERWROTE `a`'s first-occurrence
+/// branch with its terminal one, so `a: 1` (Helm aborts) was accepted.
+#[test]
+fn repeated_default_chain_type_descriptor_keeps_every_occurrence() {
+    let source = indoc! {r#"
+        {{- if ne (kindOf (.Values.a | default .Values.b | default .Values.a)) "string" -}}
+        {{- fail "expected string" -}}
+        {{- end -}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe
+        data:
+          v: {{ .Values.a | default .Values.b | default .Values.a | quote }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(source), None);
+    let rows = [
+        (serde_json::json!({ "a": 1 }), false),
+        (serde_json::json!({ "a": 0, "b": "x" }), true),
+        (serde_json::json!({ "a": 0 }), false),
+        (serde_json::json!({ "a": "" }), true),
+        (serde_json::json!({}), false),
+        (serde_json::json!({ "a": false, "b": 5 }), false),
+        (serde_json::json!({ "a": "x", "b": 5 }), true),
+        (serde_json::json!({ "a": "x" }), true),
+        (serde_json::json!({ "b": "y" }), true),
+        (serde_json::json!({ "b": 5 }), false),
+        (serde_json::json!({ "a": true, "b": "y" }), false),
+        (serde_json::json!({ "a": [], "b": "y" }), true),
+        (serde_json::json!({ "a": {} }), false),
+        (serde_json::json!({ "a": [] }), false),
+        (serde_json::json!({ "a": null, "b": "y" }), true),
+    ];
+    for (instance, want) in &rows {
+        assert!(
+            schema_accepts_instance(&schema, instance) == *want,
+            "instance={instance}; want accepts={want}; schema={schema}"
+        );
+    }
+}
+
+/// Nested defaults flatten to one ordered chain: `default .Values.c
+/// (default .Values.b .Values.a)` is `[a, b, c]`, so `kindOf` describes `a`
+/// where `a` is truthy, `b` where only `a` is falsy, and `c` where both are.
+/// Helm v4.2.3 rows from `round8-f69x-evidence/probe/helm-aba-nested-v4.2.3.log`
+/// (`kindof-nested`); an all-falsy chain reaches a nil `c`, whose kind is
+/// `invalid`.
+#[test]
+fn nested_default_chain_type_descriptor_follows_the_flattened_order() {
+    let source = indoc! {r#"
+        {{- if ne (kindOf (default .Values.c (default .Values.b .Values.a))) "string" -}}
+        {{- fail "expected string" -}}
+        {{- end -}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe
+        data:
+          v: {{ default .Values.c (default .Values.b .Values.a) | quote }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(source), None);
+    let rows = [
+        (serde_json::json!({ "a": 1 }), false),
+        (serde_json::json!({ "a": 0, "b": "x" }), true),
+        (serde_json::json!({ "a": 0, "b": 0, "c": "x" }), true),
+        (serde_json::json!({ "a": 0, "b": 0, "c": "" }), true),
+        (serde_json::json!({ "a": 0, "b": 0, "c": 5 }), false),
+        (serde_json::json!({ "a": 0, "b": 0 }), false),
+        (serde_json::json!({ "a": 0, "b": 5 }), false),
+        (serde_json::json!({}), false),
+        (serde_json::json!({ "a": "" }), false),
+        (serde_json::json!({ "a": "x", "b": 5, "c": 5 }), true),
+    ];
+    for (instance, want) in &rows {
+        assert!(
+            schema_accepts_instance(&schema, instance) == *want,
+            "instance={instance}; want accepts={want}; schema={schema}"
+        );
+    }
+}
+
+/// `ne (kindOf (default (printf "%s" .Values.b) .Values.a)) "string"`: the
+/// formatted fallback is always a string (`%!s(bool=false)` for `b:
+/// false`), so Helm renders every Helm-falsy `a`
+/// (`round8-f69x-evidence/probe/helm-named-changes-v4.2.3.log`, `kp-*`).
+///
+/// RED before the chain validated first: the formatter fallback embeds
+/// `b`'s metadata under `¬truthy(a)`, and the metadata shortcut of the
+/// type-descriptor decode handed that to the raw comparison as
+/// `¬truthy(a) ∧ ¬string(b)`, rejecting `a: "", b: false`.
+#[test]
+fn formatted_default_fallback_type_descriptor_admits_every_helm_render_row() {
+    let source = indoc! {r#"
+        {{- if ne (kindOf (default (printf "%s" .Values.b) .Values.a)) "string" -}}
+        {{- fail "expected string" -}}
+        {{- end -}}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe
+        data:
+          v: {{ default (printf "%s" .Values.b) .Values.a | quote }}
+    "#};
+    let schema = schema_for_values_yaml(parse_ir(source), None);
+    for instance in [
+        serde_json::json!({ "a": "", "b": false }),
+        serde_json::json!({ "a": "", "b": 5 }),
+        serde_json::json!({ "a": "x" }),
+        serde_json::json!({}),
+        serde_json::json!({ "a": 0 }),
+    ] {
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "Helm renders instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A helper returning `.Values.a | default .Values.b | default TAIL` with
+/// an unresolved tail (`.Release.Namespace`) or an explicitly unknown one
+/// (`lookup … | toJson`), compared with `""`: when `a` and `b` are both
+/// falsy Helm renders the tail, never the empty string
+/// (`round8-f69x-evidence/probe/helm-nested-unknown-v4.2.3.log`), so no
+/// input aborts.
+///
+/// RED before the dispatch proved its omitted unknown arm disjoint: `b`'s
+/// arm renders under `¬truthy(a)` alone (the nested `default` never
+/// narrows the inner terminal), the tail's opaque arm under
+/// `¬truthy(a) ∧ ¬truthy(b)` overlapped it and was dropped, and the
+/// deferred scalar projection rebuilt an exact dispatch that claimed
+/// `b`'s empty string for `a: "", b: ""`.
+#[test]
+fn nested_default_with_an_unknown_tail_does_not_claim_the_empty_string() {
+    let helpers = indoc! {r#"
+        {{- define "h.ns" -}}
+        {{ .Values.a | default .Values.b | default .Release.Namespace }}
+        {{- end -}}
+        {{- define "h.lookup" -}}
+        {{ .Values.a | default .Values.b | default (lookup "v1" "Namespace" "" "kube-system" | toJson) }}
+        {{- end -}}
+    "#};
+    for helper in ["h.ns", "h.lookup"] {
+        let source = format!(
+            indoc! {r#"
+                {{{{- if eq (include "{helper}" .) "" -}}}}
+                {{{{- fail "empty" -}}}}
+                {{{{- end -}}}}
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: probe
+            "#},
+            helper = helper
+        );
+        let schema = schema_for_values_yaml(parse_ir_with_helpers(&source, helpers), None);
+        for instance in [
+            serde_json::json!({}),
+            serde_json::json!({ "a": "", "b": "" }),
+            serde_json::json!({ "a": 0, "b": 0 }),
+            serde_json::json!({ "a": "", "b": "x" }),
+            serde_json::json!({ "a": "x" }),
+        ] {
+            assert!(
+                schema_accepts_instance(&schema, &instance),
+                "{helper}: Helm renders instance={instance}; schema={schema}"
+            );
+        }
+    }
+}

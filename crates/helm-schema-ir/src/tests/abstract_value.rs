@@ -368,3 +368,42 @@ fn merged_layers_constructor_flattens_nested_precedence_order() {
         ])),
     );
 }
+
+/// The chain decode reports whether the identity prefix is the whole chain:
+/// a literal, unresolved or transformed tail is not a raw path, so the last
+/// returned path is the terminal fallback only for a `Complete` chain. The
+/// range captures use the ordered prefix either way (each path under the
+/// earlier paths' falsiness is sound); the path-keyed `typeOf` decode must
+/// abstain on an incomplete chain instead of handing the tail's states to
+/// the last path.
+#[test]
+fn selection_chain_identity_paths_report_a_truncated_chain() {
+    let chain = |candidates| AbstractValue::FirstTruthy(candidates);
+    let parsed = |name: &str| helm_schema_core::ValuesPath::parse(name);
+    sim_assert_eq!(
+        have: chain(vec![path("a"), path("b"), path("c")]).selection_chain_identity_paths(),
+        want: Some(SelectionChainIdentities::Complete {
+            paths: vec![parsed("a"), parsed("b"), parsed("c")],
+        }),
+    );
+    for tail in [
+        AbstractValue::Unknown,
+        string("lit"),
+        join(vec![path("b"), path("c")]),
+    ] {
+        sim_assert_eq!(
+            have: chain(vec![path("a"), tail]).selection_chain_identity_paths(),
+            want: Some(SelectionChainIdentities::Prefix {
+                paths: vec![parsed("a")],
+            }),
+        );
+    }
+    sim_assert_eq!(
+        have: chain(vec![AbstractValue::Unknown, path("a")]).selection_chain_identity_paths(),
+        want: None,
+    );
+    sim_assert_eq!(
+        have: path("a").selection_chain_identity_paths(),
+        want: None,
+    );
+}

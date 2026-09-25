@@ -75,6 +75,27 @@ pub(crate) enum AbstractValue {
     Widened(BTreeSet<ValuesPath>),
 }
 
+/// The raw-path prefix of a first-truthy selection chain, in selection
+/// order (see [`AbstractValue::selection_chain_identity_paths`]). The
+/// variant decides what the last path means.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub(crate) enum SelectionChainIdentities {
+    /// Every candidate is a raw path: the last one is the terminal
+    /// fallback, selected whenever it is reached.
+    Complete { paths: Vec<ValuesPath> },
+    /// A candidate that is not a raw path follows: the last path is
+    /// selected by its own truthiness like every other prefix path.
+    Prefix { paths: Vec<ValuesPath> },
+}
+
+impl SelectionChainIdentities {
+    pub(crate) fn into_paths(self) -> Vec<ValuesPath> {
+        match self {
+            Self::Complete { paths } | Self::Prefix { paths } => paths,
+        }
+    }
+}
+
 impl AbstractValue {
     /// Number of leaf alternatives a structural consumer would copy while
     /// descending this value.
@@ -1239,29 +1260,47 @@ impl AbstractValue {
         }
     }
 
-    /// The ordered candidate paths of a selection chain whose candidates
-    /// are raw path identities. An [`Self::OutputPath`] qualifies only when
-    /// its metadata proves structural input identity; transformed outputs
-    /// have different truthiness and cannot be named by the raw path. A
-    /// non-identity candidate therefore stops the decode, while a literal
-    /// tail is tolerated because no later candidate needs its negation.
-    pub(crate) fn selection_chain_identity_paths(&self) -> Option<Vec<ValuesPath>> {
+    /// The ordered raw-path identities a selection chain starts with. The
+    /// decode stops at the first candidate that is not a raw path (see
+    /// [`Self::selection_identity`]) and says so through the variant: the
+    /// prefix is still ordered — each path is selected by its own
+    /// truthiness once every earlier path is falsy — but only a
+    /// [`SelectionChainIdentities::Complete`] chain names its terminal
+    /// fallback. A consumer that would hand the terminal's states to the
+    /// last path must abstain on a prefix, because those states select the
+    /// literal or unresolved tail instead.
+    pub(crate) fn selection_chain_identity_paths(&self) -> Option<SelectionChainIdentities> {
         let Self::FirstTruthy(candidates) = self else {
             return None;
         };
         let mut paths = Vec::new();
         for candidate in candidates {
-            match candidate {
-                Self::ValuesPath(path) | Self::JsonDecodedPath(path) => {
-                    paths.push(path.clone());
-                }
-                Self::OutputPath(path, meta) if meta.is_input_identity() => {
-                    paths.push(path.clone());
-                }
-                _ => break,
+            match candidate.selection_identity() {
+                Some(path) => paths.push(path.clone()),
+                None => break,
             }
         }
-        (!paths.is_empty()).then_some(paths)
+        if paths.is_empty() {
+            return None;
+        }
+        if paths.len() == candidates.len() {
+            Some(SelectionChainIdentities::Complete { paths })
+        } else {
+            Some(SelectionChainIdentities::Prefix { paths })
+        }
+    }
+
+    /// The raw path whose truthiness selects this value as a first-truthy
+    /// candidate, when the value IS that path. An [`Self::OutputPath`]
+    /// qualifies only when its metadata proves structural input identity;
+    /// transformed outputs have different truthiness and cannot be named by
+    /// the raw path.
+    pub(crate) fn selection_identity(&self) -> Option<&ValuesPath> {
+        match self {
+            Self::ValuesPath(path) | Self::JsonDecodedPath(path) => Some(path),
+            Self::OutputPath(path, meta) if meta.is_input_identity() => Some(path),
+            _ => None,
+        }
     }
 
     #[expect(

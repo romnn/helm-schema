@@ -2,7 +2,7 @@ use std::collections::BTreeSet;
 
 use helm_schema_ast::{Literal, TemplateExpr};
 
-use crate::abstract_value::AbstractValue;
+use crate::abstract_value::{AbstractValue, SelectionChainIdentities};
 use crate::expr_eval::eval_expr;
 use crate::function_semantics::{
     function_semantics, go_type_descriptor_spellings, go_type_schema_type,
@@ -3012,12 +3012,39 @@ impl ValuePathContext<'_> {
             return Some(sources);
         }
 
-        let value = eval_expr(subject, self.expression_eval_env()).value?;
+        let result = eval_expr(subject, self.expression_eval_env());
+        let value = result.value?;
         let value_meta = value.output_meta();
-        if !value_meta.is_empty() {
-            return Some(value_meta);
+        if !matches!(value, AbstractValue::FirstTruthy(_)) {
+            return (!value_meta.is_empty()).then_some(value_meta);
         }
-        let paths = value.selection_chain_identity_paths()?;
+        // A selection chain decodes from its order, never from the
+        // metadata its candidates happen to embed (a formatter fallback
+        // carries its operand's metadata under the head's falsiness, which
+        // says nothing about the formatted text's type). A path-keyed map
+        // cannot spell the states that select a literal or unresolved
+        // tail, and handing them to the last path would type the wrong
+        // value, so only a complete chain decodes; a candidate rendered as
+        // derived text before `default` tested it is selected by that
+        // text, not by its raw truthiness, and a candidate whose metadata
+        // already carries branch predicates is not its raw path's value on
+        // every input — both abstain.
+        let SelectionChainIdentities::Complete { paths } =
+            value.selection_chain_identity_paths()?
+        else {
+            return None;
+        };
+        if paths.iter().any(|path| {
+            result.effects.derived_text_paths.contains(path)
+                || value_meta
+                    .get(path)
+                    .is_some_and(|meta| !meta.predicates.is_empty())
+        }) {
+            return None;
+        }
+        // A path that occurs more than once (`.Values.a | default .Values.b
+        // | default .Values.a`) describes the value in every occurrence's
+        // states, so each occurrence adds a branch.
         let mut sources = std::collections::BTreeMap::new();
         let mut prior_falsy = Vec::new();
         for (index, path) in paths.iter().enumerate() {
@@ -3025,9 +3052,11 @@ impl ValuePathContext<'_> {
             if index + 1 < paths.len() {
                 selected.push(Predicate::truthy_path(path.encode()));
             }
-            let mut meta = value_meta.get(path).cloned().unwrap_or_default();
-            meta.predicates.insert(selected.into_iter().collect());
-            sources.insert(path.clone(), meta);
+            sources
+                .entry(path.clone())
+                .or_insert_with(|| value_meta.get(path).cloned().unwrap_or_default())
+                .predicates
+                .insert(selected.into_iter().collect());
             prior_falsy.push(Predicate::truthy_path(path.encode()).negated());
         }
         Some(sources)
