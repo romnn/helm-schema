@@ -2814,5 +2814,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   37 schemas differ from dump-final-7, identical 5,345-flip screen). The corrected sweep runs
   on dump-final-8 (`lint-final6/`, marker `sweep-e.done`); battery and integration wait for the
   CRD pinning.
+- Cross-vendor verdict on MergeLayerSource (gpt-6-sol `20260925T183420-3909108d`): do NOT land
+  yet — `Literal { keys }` does not establish that a literal supplies those keys in every
+  render: Sprig/Mergo fills an EMPTY destination value from a later operand
+  (`merge (dict "tier" "") .Values.labels` does not shadow `tier`; `mergo@v1.0.2/merge.go:208`);
+  `Choice` unions literal keys where only the intersection is guaranteed
+  (`abstract_value.rs:1578`); a deep-merged literal key opened whole loses the values operand's
+  nested constraints (w1 `matchLabels: {a: 5}` REJECT→ACCEPT, Kubernetes rejects). Sound shape:
+  keys that REPLACE whole vs keys that MERGE recursively (`LiteralKey { Replaces | Merges(..) }`),
+  intersection across alternatives, uncertain keys kept constrained; ordering in
+  `collections.rs:1322` still interprets operands through `unique_path` (fold-preserving
+  policy, not a consequence of the sources); the reverted `TypeIs` conjoin is load-bearing;
+  `with_output_meta` points at the path-keyed `HelperOutputMeta` second owner (serialization
+  design). A fresh agent reworks it (`round8-mls`).
 
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
