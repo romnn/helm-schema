@@ -2636,5 +2636,24 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   cross-vendor fixes (F31: comment-before-colon abstention, `schema_excludes_type`; F6:
   `TextListElements { some_nonempty, no_empty_element, len }`, `text_edge_trims` from token
   kinds replacing two text checks, the analysis test pins three Helm-confirmed clauses).
+- Cross-vendor verdicts, fourth batch: gpt-6-astra `20260925T145240-b7bfbbc4` on F69 shape B —
+  land with named changes (156/156 byte-identical confirmed independently; the primary-side
+  write is the reachability lane's own): the derived-text exclusion must also apply in the
+  reachability lane's `FirstTruthy` branch (`collections.rs:441-459`; `a | default (printf
+  "%.0s" b) | default c` leaves `c` guarded by a wrong `¬truthy(b)`, Helm returns `c`); the
+  type decoder returns metadata before checking completeness/derived text (`ne (kindOf
+  (default (printf "%s" b) a)) "string"` yields a wrong `¬truthy(a) ∧ ¬string(b)`); guarded
+  opaque arms are not necessarily disjoint from retained arms (`[a, b, Unknown]`); optional
+  `Complete | Prefix` enum. gpt-6-sol `20260925T145314-e25fe4c6` on F6 (d) — land with one
+  named change: the old single-chain walker runs first and accepts untrimmed whitespace, so
+  one trim-aware walker is needed now (collect trimmed text and ordered chains once; delete
+  `collect_dispatch` after callers move); plus a sound `some_nonempty == True` fast path for
+  `join`, and one typed list-operation classification in `function_semantics` replacing the
+  four disagreeing append-family name lists; the whole-fact branch join is the right
+  conservative join. Token discipline adopted at 15:10 UTC (protocol §10): sequential
+  landings, one fresh agent per landing step, no polling, at most four active implementers,
+  cross-vendor reviews retained (they cost the Codex budget). F4 (checkpoint 22: all three
+  sol changes coded red-first) and D5 (checkpoint 6: both corrections coded, four tests with
+  empty expectations) paused with resume lists.
 
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
