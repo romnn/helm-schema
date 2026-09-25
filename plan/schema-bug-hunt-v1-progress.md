@@ -3479,4 +3479,34 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   + B6+L1, then L2 + n4 rebased per astra §C; `final-stack.patch` = the B6+L1+L2+n4 landing
   unit).
 
+- 02:00 — **Stable readable `$defs` naming, code complete** (`round8-naming-evidence/final.patch`
+  on BASE bd1ba409; tokei +300; unit 1567/1567, fmt 0, lint 0 except the B6 residual, ast-grep
+  0). One module `helm-schema-json-schema-minify/src/naming.rs` (`content_digest`,
+  `content_names`, frequency-ranked base-62 `shipping_definition_names`, one simultaneous
+  `rename_definitions`) used by both the fixture path and the shipping rung;
+  `compact_definition_names`, `rewrite_generated_references` and the gen ordinal loop deleted.
+  Names: `h<12hex>` for minifier definitions, `providerSchema_<12hex>` / `providerShared_
+  <12hex>` for provider ordinals, `providerSource_*` kept. Departures from astra, with reasons:
+  the digest looks THROUGH references to minifier definitions (a subtree hashes the same
+  inline or extracted, so extraction elsewhere never renames it); every pre-existing definition
+  (named Helm helpers, provider definitions, caller names) is hashed by its literal name
+  (editing a helper does not rename callers; a provider body change does); no `DefinitionNaming`
+  enum — the writer is a LADDER: pretty+readable → compact+readable (`--compact` starts here)
+  → compact+short, each rung only when the previous exceeds 5,242,880 bytes, and a typed
+  `CliError::SchemaExceedsHelmFileLimit` if rung 3 is still over; rung 3 renames every root
+  definition (bijection of the same graph; abstains on non-local/unresolved/percent-encoded
+  refs). Extraction decisions still run on private planning ids (byte-identical to BASE).
+  Shipped sizes on this tree: openebs 4,916,004 (rung 2), milvus 2,602,387, kube-prometheus-
+  stack 4,462,564 (`helm lint` exit 0), oncall 4,190,659 (Helm refuses the invalid Go-regexp
+  pattern — the regexp track's fix). Tests: 11 in `minify/src/tests/naming.rs` (four red on
+  BASE: unrelated insertion, body edit, description edit, helper cycle), gen `unrelated_
+  provider_definition_keeps_existing_definition_names` (red on BASE), three ladder tests +
+  the typed error in `output_pipeline/tests/format.rs`. Open risk: provider names ~11 bytes
+  longer per reference may move an extraction at the 16 KiB shared-payload threshold or a
+  break-even point, so the old→new comparison may not be an exact rename everywhere —
+  `prove_rename.py` names any such definition. **Scheduling exception (§9):** the one-time
+  naming dump runs beside the F23 sweep (3 helm-lint processes) as soon as the F23 battery
+  re-run finishes, without the lock; the load allows it and the sweep would otherwise hold the
+  lock for hours.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
