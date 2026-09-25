@@ -3323,4 +3323,30 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   names not compared against Go's tables. **Landing: bundled into the F31 chain** (separable by
   fixture diff).
 
+- 01:00 — **Fail-closed landing runner v2 written** (`/Volumes/T7/dev/round8/runner/`:
+  `run-landing.sh` 146 lines, `sweep-one.sh`, `landing.py` 293 lines, `gen_overrides.py`,
+  five shell test files green on fakes): dump first, then freeze (receipt refuses later steps
+  after any tracked/untracked edit or a tampered dump file); dump classification aborts on
+  anything but fixture-lane mismatches (panic, timeout, build error, missing/extra artifact,
+  ambiguous gen case); artifact manifest (sha256) checked against the expected set derived
+  from the clone; adoption covers all lanes incl. the four lean profiles and final-output, tags
+  changed/format-only/new; lock owner = pid+step+start+token, never removes a foreign lock,
+  `status`; sweep under the lock, installs the SHIPPED bytes (pretty ≤ 5,242,880 else compact),
+  schema-free `helm template` control per row, `.tgz` schemas stripped, rows == charts ×
+  overrides, gate exit 3 computed in Python; `finalize` makes the receipt read-only. Bugs found
+  in the old tooling: the adopter's `include_str!` regex missed rustfmt-split calls (the two
+  zalando gen cases were "AMBIGUOUS" and skipped every round — they happen to match today);
+  the IR stem regex collapsed non-alphanumeric runs; zsh read `$BASELINE:testdata` as a `:t`
+  modifier (silent "no baseline"). Dropped: the d3f23-specific `withdrawals` step and the
+  `dump2` drift comparison. Not handled: `.helmignore`d schemas. Used from the next chain (F31).
+- 01:02 — **Round-4f dump: one non-mismatch failure, adjudicated.** `chart_corpus okteto`
+  panicked with "the false rejection is fixed — adjudicate the new fixture and remove it from
+  QUARANTINED_FALSE_REJECTIONS" (the old runner adopted past it; runner v2 would have
+  aborted). Helm 4.2.3 (`--kube-version 1.33.0`): okteto defaults render without a schema
+  (exit 0), the candidate schema accepts them (exit 0), main's rejects them (`'allOf' failed`)
+  → a fixed false rejection of a chart's own defaults (attributable to the witness De Morgan
+  fix or the 4f gate — the fixture diff will say). `okteto` removed from
+  `QUARANTINED_FALSE_REJECTIONS` in the candidate (`round8-d3f23-e`, test roster only; the
+  `UNADJUDICATED_INTAKE` entry stays) before the integration step compiles it.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
