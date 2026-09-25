@@ -2655,5 +2655,27 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   cross-vendor reviews retained (they cost the Codex budget). F4 (checkpoint 22: all three
   sol changes coded red-first) and D5 (checkpoint 6: both corrections coded, four tests with
   empty expectations) paused with resume lists.
+- d3f23 round 4c code complete and green (15:25 UTC; `round8-d3f23-c`, `checkpoint-25.patch`):
+  battery soundness — `compare_with_defaults` pairs each probe document one-to-one with an
+  identical defaults document, validates every unpaired document completely, compares
+  structured `ViolationKey {apiVersion, kind, namespace, name, instance_path, schema_path}`
+  as a multiset, keeps `{new_violations, inherited_violations, uncertain}` together; verdict
+  order: new violation → `CandidateAcceptsKubernetesRejects` / `TighteningMatchedKubernetesRejection`;
+  any uncertainty → `LooseningWithUncertainKubernetes` (UNMATCHED); else matched
+  (`MatchedDefaultsViolations` when it inherits, `MatchedKubernetesValidation` otherwise);
+  `validate_differential`, `UnchangedUnknown`, `defaults_violations`, the
+  `...UnchangedKubernetesUncertainty` verdict and `record_new_violations` deleted; red-first
+  against the 4a adjudicator (`witness/r4/red-battery-4c-on-4a.txt`). Lint gate — A1 presence
+  conditioning: a clause that fails lint is emitted as `if G then (if P then T)` with P requiring
+  each deciding path present and non-null, withdrawn only when an Absent guard sits on a
+  deciding path (red-first: `kid.mode=bogus`, a Helm abort, is rejected again while
+  `helm lint -f` exits 0; CLI test `a_dependency_value_check_survives_the_lint_gate`); A2 root
+  nulls kept on the lint floor (unit `a_root_null_the_lint_document_keeps_decides`); A3
+  `LintWithdrawal {anchor, document, deciding_paths, outcome: Conditioned | Withdrawn}`.
+  Gates: fmt 0; unit 1535/1535; `task lint` and `lint:fc` red only on B6's `branch_steps`.
+  The heavy steps run as an orchestrator-driven detached chain
+  (`round8-d3f23-evidence/run-landing.sh`: dump → withdrawals → battery ‖ sweep with
+  dependency-only toggles → integration; markers `sweep.done`, `landing.done`, log
+  `landing.log`), no agent tokens.
 
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
