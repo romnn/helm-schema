@@ -3070,4 +3070,36 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   per `plan-b6-stack-finishing-sol.md`, red-first IR tests, Helm matrices on w2/w2nm/w2v and
   the datadog cells. L2+n4 stack on F4+MLS+B6 afterwards.
 
+- 23:35 — **Witness track done: F69 and F54 headline witnesses fixed structurally**
+  (`round8-witness-evidence/final.patch`, `git diff 0cf0e8d8` on the predicted base; production
+  +44/−30). W1 (F69, cilium `clusters`): the IR was already right (`FailCapture [Truthy(enabled),
+  ¬TypeIs(clusters,array), ¬TypeIs(clusters,object)]`); `record_fail_conjunction`
+  (`contract_signal_builder/requirements.rs:~545`) lowered the negated tests into one flat
+  conjunction — a `fail` fires only when EVERY test holds, so the schema must require ANY ONE
+  negated test (De Morgan); the single-path lane now collects one alternative per test and
+  combines once (flat or `AnyOf`), the member-scope lane's separate `combine` closure is
+  deleted, and the `contradictory` check became a `tautology` check (a `[SchemaType s]` beside
+  `[NotSchemaType s]` covers everything → capture dropped). `kindIs`, `typeIs "map[string]…"`,
+  `eq (kindOf X) "map"`, `eq (typeOf X) …` all decode to the same guards. W2 (F54, promtail
+  `cidrs`): a bare `if len X` decoded to `Approximate { sound_subset: None }` and
+  `record_fail_conjunction` gives up on approximate conjuncts, silently dropping the `range`
+  operand requirement; now `"len" => decoded_condition_predicate(subject)`
+  (`condition_predicate.rs`, +11) — `len` + `range` give exactly list | map | `""` (Helm
+  matrix: `""` RENDERS because `len ""` is 0; null aborts at `len of nil pointer`; ints/floats/
+  bools abort at `len`). Tests (private, red on BASE `red.log`): `fail_validators.rs::
+  kind_dispatch_else_fail_accepts_every_dispatched_kind` (4 spellings × 7 cells),
+  `range_contracts.rs::len_guarded_range_rejects_non_iterable_strings` (9 cells). Gates: fmt 0,
+  unit 1553/1553, lint 0 except the B6 residual, ast-grep 0. CLI re-probe: cilium accepts
+  default/list/map with the toggle on and rejects a string; promtail rejects `"xyz"`, accepts
+  `""`/list/map; `networkPolicy.metrics.cidrs` fixed by the same change. Expected drift: cilium
+  `allOf` → `anyOf`; promtail `if len` rows gain an exact guard (`metrics.namespaceSelector=
+  "xyz"` with cidrs set is now rejected through the NetworkPolicy schema — Helm renders,
+  Kubernetes rejects → matched); any chart with `if len X` or several fail tests on one path.
+  Open (pre-existing): cilium `clusters` null/absent with the toggle on is accepted while Helm
+  aborts (the Value-position `SchemaType` lowering allows null and leaves absence open);
+  `X | len` pipeline spelling still approximate. **Plan:** bundle this patch into the round-4f
+  chain (one dump/battery/integration/sweep for F23+D3a+4f+witness; witness-caused flips are
+  isolated mechanically as the set difference against `battery-final-5`'s flip list; separate
+  commits on landing).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
