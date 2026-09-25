@@ -2429,5 +2429,28 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Helm renders — L2: merge attribution types `.securityContext.capabilities` as a whole
   `SecurityContext`, HEAD identical on `w3/dd3`). Both are pre-existing defects B6 makes
   reachable; B6 lands after L1 (b6 agent) and L2 (new `round8-l2` track) are fixed.
+- LANDED `8b535000` (mechanism + tests) and `7c6a2f6e` (fixtures): F5/F54 rangeable domain,
+  track `round8-f5-evidence` (`final.patch`, `range-matrix.txt`, `flips.txt`, `probes/`).
+  Contract (Helm 4.2.3, 5 body shapes x 12 value shapes x `-f`/`--set`): nil, list and map
+  render; "", string, bool and float abort; integers depend on the channel (`-f` parses them as
+  float64 and aborts; `--set 0` renders except under `$k,$v`; n>0 renders unless the body
+  selects a member) — HEAD's `Iterable{allow_integer: !destructured}` is right under the
+  integer-channel policy. The planner brief was wrong twice: schema-registry `image.pullSecrets`
+  already carried `null|integer|array|object` (its `<- 0` cell is the integer-channel policy,
+  like `extraDeploy`), and `lowerable_range_outer_guards` never ran for falco. Real mechanism: a
+  `with $dot := .` header evaluates to `AbstractValue::RootContext`, whose
+  `truth_for_value_with_memo` was `Unknown`, so the header became an unusable
+  `Approximate{paths:{}}` predicate and every body row was dropped; the fix is one typed arm
+  (root context exactly `True`, `static_truthiness()` already said so), 6 production lines,
+  also covering `with $root := $` and zabbix's `with index . 1`. Tests in
+  `src/tests/contract_signals.rs`: 4 red-first (`range_under_root_rebinding_with_keeps_the_plain_range_contract`,
+  `..._dollar_rebinding_...`, `..._list_packed_root_...`, `guarded_range_under_root_rebinding_keeps_its_overlay`)
+  + 2 controls; red check logged. Gates on the tree main is byte-identical to: fmt 0; lint 201
+  only on B6's `branch_steps`; unit 1526/1526; integration 717/717 exit 0; dump 202
+  (byte-identical before/after rebase); battery exit 0, 30 flips all adjudicated (25 Helm
+  abort, 5 Kubernetes rejection, 0 unmatched); targeted ranged-member probes with pinned-bundle
+  checks; dify loosening (six `if`-guarded serviceMonitor keys gain `null`) renders. Fixtures:
+  dify, falco, jira, zabbix. Open under policy: `services <- 0`, `keys <- 0`,
+  `pullSecrets <- 0`, `extraDeploy <- 0` (integer channel).
 
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
