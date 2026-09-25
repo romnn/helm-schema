@@ -3373,4 +3373,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   local-binding lane; F6(c) dotted string paths and the kafka polarity lane not attempted.
   **F6 is land-ready pending dump/battery** (F6+D5 bundle candidate).
 
+- 01:10 — **Round-4f battery: exit 100 for exactly one reason** (`battery-final-6.log`, 2,773 s):
+  `KNOWN_FALSE_ACCEPTANCES entries that no longer fail; remove them: ["graylog:
+  mongodb.community.version <- null deletion [depth 3] (KubernetesRejects, F9)"]` — the
+  candidate now REJECTS that probe (a matched tightening; attribution to the 4f member-table
+  rule or the witness fix via the fixture diff at landing). No unmatched flip, no uncertain
+  cell, no unlisted false acceptance. The entry is pruned from the candidate's roster; the
+  candidate is re-frozen (`candidate-4f.patch`, 136 files vs f7be7ba5, includes the okteto
+  quarantine removal). The chain driver was stopped before its sweep; integration (started
+  00:56) runs to completion, then the battery re-runs on the final tree (rule: prune → re-run)
+  and the sweep follows, both under the lock.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
