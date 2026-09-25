@@ -2452,5 +2452,54 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   checks; dify loosening (six `if`-guarded serviceMonitor keys gain `null`) renders. Fixtures:
   dify, falco, jira, zabbix. Open under policy: `services <- 0`, `keys <- 0`,
   `pullSecrets <- 0`, `extraDeploy <- 0` (integer channel).
+- Parked land-ready (all holding their dump/battery for the F23 + D3a landing, which changes the
+  harness): L2 (`round8-l2-evidence`, +12 lines: the `TemplateExpr::Selector` arm in
+  `expr_eval.rs` cleared the receiver's `output_paths` but not `local_output_meta` /
+  `local_source_paths`, so `Effects::output_value_paths()` still emitted the receiver at the render
+  site and typed `.securityContext.capabilities` as a whole SecurityContext; both channels now keep
+  only `AbstractValue::paths` of the selected value; 3 red-first tests in `src/tests/contract.rs`;
+  fmt 0, lint 0, unit 1533/1533). L1 (in `round8-b6-evidence`, `final.patch` = B6 + L1: tpl
+  programs were walked with `helper_scope = true`, so `hint_scope_is_unconditional` graded every
+  hint Unconditional and no call site re-scoped them; `absorb_scoped_type_hints` is now the one
+  grading rule for helpers and textual programs; red-first `tpl_program_default_hint_binds_only_under_the_call_site_guard`;
+  unit 1536/1536; loki's swift paths accept). n4 class (L2's witness `w/n4`, re-diagnosed by the
+  L1 agent: `dict` is no literal fallback so no hint exists; the `object` type comes from the
+  declared default plus the `x.a` descendant; the IR rows are guarded; the generator keeps a
+  default-guarded row's declared type path-wide (`contract_rows.rs:646-652`,
+  `contract_normalization.rs:246/561`) and `resolve_policy.rs` disables the falsy escape for
+  paths with referenced descendants even when every descendant read is under the default's
+  truthy arm) — assigned to the F4 track (same owner as the falsy escape); it blocks datadog's
+  fixture and therefore the B6 + L1 + L2 stack. D5 (`round8-d5-evidence`: `parse.rs::extend_block_body`
+  started the body at the first deeper line, dropping a column-0 `{{- if }}` opener that opened
+  after an empty `key: |` header, so `holes.rs` evaluated the branches unguarded including an
+  unconditional `fail`; the body now starts at the outermost region still open above the block's
+  owner on the parser's own owner stack, +16/-3; red-first tests in the syntax crate (`tests/golden.rs`)
+  and IR (`fragment_golden.rs`); kube-starrocks and openldap-stack-ha leave
+  `QUARANTINED_FALSE_REJECTIONS`; qdrant's Q1 is a separate defect; unit 1529/1529). F9/F63
+  (`round8-f9-evidence`: ranged lane unions member accesses per parent, 19 red-first + 8 controls,
+  unit 1552/1552, cilium/milvus tightenings match Helm aborts) and F13/F30/F40
+  (`round8-f13-evidence`: 17 files, +580/-97, 19 witness tightenings all Helm aborts) — both
+  under the wave-2 design review (`/Volumes/T7/dev/round8/design-review-wave2.md`): F13 must
+  delete `ComposedPlainTokenSafe` (duplicates `PlainScalarSafe`, the lanes disagree on ` #`),
+  stop keying the serialized-to-text switch on bitnami's exact `typeIs "string"` spelling
+  (counter-witness `ternary (toYaml .x) .x (kindIs "map" .x)`), and use one absence convention;
+  F9 must make the existing `MemberAccessConditions` the one owner and delete
+  `RangedMemberAccess` plus the plain lane's per-capture subset loop. Both in rework.
+- d3f23 final (`round8-d3f23-evidence`, 107 files = 65 code + 42 fixtures, applies to `fab306d2`):
+  my datadog diagnosis was half wrong — `operator.datadogCRDs <- false` is a REAL Helm abort
+  (`coalesceDeps`, `coalesce.go:118-119`, non-table subchart scope), while a scalar over a nested
+  default table only warns (`coalesce.go:350`); the adjudicator now decides by exit code in both
+  cases (`HelmProbe.values: Option`, red-first `scalar_overrides_of_subchart_tables_are_adjudicated_by_helm_exit`).
+  New gap: `helm lint -f` coalesces overrides into the root document, so an override that enables
+  a dependency activates guards without the subchart defaults (signoz witness); the gate gained a
+  "floor" check (coalesced defaults restricted to root-declared members under a lint projection).
+  Withdrawals 6,894 over 37 charts (root 1,655, floor 5,239; falco 1,086, openebs 676, oncall 674)
+  — under independent design review before landing. Gates: fmt 0, unit 1525/1525, integration
+  729/729, confirmation dump 202/202 byte-identical, lint sweep 261 rows 0 new failures / 15
+  fixed; `task lint` and `lint:fc` red only on B6's `branch_steps`. Battery exit 100: 5,340 flips,
+  2,969 of 2,971 unmatched are inherited (baseline rejected its own defaults on the six
+  de-quarantined charts; redmine 2,059 cells carry the defaults' NetworkPolicy `port: null`), 2
+  probe-specific with Helm rendering — the rule is being changed to judge a loosening relative to
+  the defaults' own render errors and to require a PROVED Kubernetes violation.
 
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
