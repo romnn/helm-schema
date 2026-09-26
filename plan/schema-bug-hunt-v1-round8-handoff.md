@@ -115,9 +115,10 @@ gates only, drop the stray mongodbcommunity hunk), regexp (`round8-regexp-eviden
   review `review-k8s-provider-astra.md`, clone `round8-k8s` (BASE 22813ad1), `round8-k8s-evidence/handoff.md`.
 - Frontend rendered-layout refactor (replaces D5): brief `brief-frontend-rendered-layout-astra.md`
   (commits 1.1–4.3, witness ledger A1–A15), audit `audit-line-heuristics-astra.md`, design
-  `design-d5-rendered-layout-sol.md`; clone `round8-frontend`, target `round8-frontend-target`,
-  evidence `round8-frontend-evidence/` (phase 1 gates `gates-c1.1.txt`; agent still running at
-  hand-off, no handoff yet). D5 itself is superseded (`round8-d5-evidence`, `round8-d5-land-evidence`).
+  `design-d5-rendered-layout-sol.md`; clone `round8-frontend`, target `round8-frontend-target`.
+  Phase 1 DONE, unreviewed: `round8-frontend-evidence/final.patch` (sha bf518fea…, HEAD 83927a5b,
+  five commits 1.1–1.5, 0 fixtures moved, +101 LOC), `handoff.md`; conflicts with F9 and W4;
+  one open phase-2/3 finding (ledger 18:25). Next: Codex review, then the runner chain. D5 itself is superseded (`round8-d5-evidence`, `round8-d5-land-evidence`).
 - Go validator helper for the battery: DONE, unreviewed — `round8-govalidate-evidence/final.patch`
   (sha ca58d80d…, on candidate + coalescer), `handoff.md`; design `design-go-validator-helper-sol.md`.
   Two open items before it can land: (a) NEW DEFECT — the emitted airflow and oncall schemas do not

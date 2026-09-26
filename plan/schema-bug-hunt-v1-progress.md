@@ -4414,4 +4414,28 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   load and 2 h 53 m serial), integration 0 (17:54–18:08, legacy 14 min), sweep started 18:08
   (roster frozen by `sweep-plan`, 6 workers). Receipt `round8-d3f23-landing/receipt.json`.
 
+- 18:25 — **Frontend phase 1 hand-back (all 22 reparse sites retired, 0 fixtures moved, +101
+  LOC).** `round8-frontend-evidence/final.patch` (sha bf518fea…), `handoff.md`; clone
+  `round8-frontend` branch `frontend-phase1`, BASE 0af345b5 (main 79cab5e0 + candidate-4f) →
+  HEAD 83927a5b, five commits per the brief: 1.1 3546103e (syntax keeps every action with kind,
+  delimiter kinds and `ActionId`; AST lowers from the kept tree — `node_expressions`,
+  `TemplateHeader::from_node`, `ParsedActions`; equivalence on all 8,239 corpus templates: 0
+  differences), 1.2 9ddbbb80 (holes/assignments read lowered expressions; inline regions
+  evaluate their own node; one reparse the audit missed at `assignments.rs:241`), 1.3 f65c99ad
+  (`SourceActions`/`region_node`/`starting_in`/`IdentitySource`/`collect_span_parts` retired;
+  inline kind arms store the parsed condition; `parse_control`, `decode_guard` and two
+  `analysis_db` reparses deleted; narrowing: kind arms inside called helpers record no branch
+  source — no corpus template has that shape), 1.4 25366773 (trimming from parsed delimiter
+  kinds; A12 witness: `{{-3}}` is `{{` + literal `-3`, was a false acceptance, red→green
+  `negative_literal_output_does_not_trim_the_preceding_text`), 1.5 83927a5b (control brackets
+  render no expressions by parsed kind; A13 red→green `compact_else_if_bracket_in_a_block_scalar_
+  reads_only_its_condition`). Recovery: an `if`/`with` without a condition gets no header (0 of
+  71,928 corpus nodes affected). Gates: fmt 0 per commit, unit 1561/1561, corpus lanes green at
+  every commit (cli 157/157, ir 1/1, gen 23/23), lint residual only, clippy 0; not run: lint:fc,
+  ast-grep, dialect hygiene, integration, dump/battery/sweep. Conflicts: F9 (`eval.rs` broadly),
+  W4 (`inline_regions.rs` lost its `text` parameter); `control.rs` untouched. Open finding for
+  phase 2/3: on a content line `key: {{ .Values.x }}{{else}}` guards x's row under `!flag`
+  while Helm renders x only when `flag` is truthy (`scratch/probe3-1.4.log`, a13-inline).
+  Next: Codex review, then the runner chain on 83927a5b (after landing 2).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
