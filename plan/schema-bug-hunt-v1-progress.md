@@ -3671,4 +3671,30 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   deployment.yaml:39`). Gates: fmt 0, unit 1559/1559, lint 0 except the B6 residual. **D5 is
   land-ready** (own dump/battery, separate from F6).
 
+- 04:10 — **Kube-version owner v2 done** (`round8-kubever-evidence/final.patch` = `git diff
+  39f3b7a9`, v1+v2; test infrastructure + pinned evidence): `OfflineKubernetesValidator::new(cache,
+  kubernetes_version)` uses exactly that version's strict bundle, no fallback; every chart-based
+  caller passes `chart.kubernetes_version()`; `compare_with_defaults` errors on a version
+  mismatch; the round-74 battery builds its validator from the prepared chart; without evidence
+  for the version, lookups and the "not served" check return Uncertain. Minimal 1.33 evidence:
+  23 schema files vendored under `testdata/provider-bundle/kubernetes-json-schema-cache/default/
+  v1.33.0-standalone-strict/` through the provider's own fetch-on-miss path from yannh revision
+  `a6f9a32d…`, byte-verified, provenance + sha256 in `kubernetes-v1.33.0-standalone-strict.
+  provenance`; coverage = every built-in kind okteto/jupyterhub render by default plus reachable
+  kinds (APIService, autoscaling/v2 HPA, PriorityClass) and the capability-probe kinds; no `$ref`s;
+  all 23 exist in 1.29 too, so no fixture bytes move. Deviation from the review: NO negative
+  records vendored — the only absent lookup is the CustomResourceDefinition schema (yannh does
+  not publish it; every cluster serves it) and recording those 404s made okteto's six CRDs falsely
+  "not served" → they stay Uncertain. Tests: four red against the 1.29-only validator, two red
+  without the 1.33 files (jupyterhub defaults Valid; okteto defaults Uncertain on exactly the six
+  CRDs). Gates: fmt 0, `-p helm-schema` 115/115, adjudicator suites 70/70, lint 0 except the B6
+  residual. **New oracle defect found (pre-existing, affects every battery run so far):** the
+  1.29 bundle DOES record the CRD 404s, so every rendered CustomResourceDefinition at 1.29 is
+  judged "not served" and a probe that adds CRDs gets false violations read as a MATCHED
+  TIGHTENING — a false rejection silently accepted. → v3 requested: delete the two records
+  red-first, make "kinds every cluster serves without a published schema" structural, and list
+  the battery verdicts that relied on it for targeted re-adjudication. Base note: its BASE commit
+  carries the empty `mongodbcommunity_v1.json` (from the truncated candidate patch); the patch
+  leaves that file out; the candidate has the content.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
