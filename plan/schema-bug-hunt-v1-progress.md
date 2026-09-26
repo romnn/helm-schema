@@ -3534,4 +3534,27 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (fixing it changes prometheus' `>= 1.27.x` guards → its own dump/battery round). Lands as a
   test-only commit right after F23 with the gate.
 
+- 03:05 — **Second F23 battery run failed for a DIFFERENT reason — root cause found.** Run 2
+  (`battery-final-6.log`, 4,319 s, exit 100): "accepted cells whose changed resources Kubernetes
+  could not decide" for graylog (`fullnameOverride`, `mongodb.affinity`, …) and okteto
+  "accepted-but-Helm-aborting cells exceed the pre-registered allowance" + "false acceptances
+  behind an uninformative baseline missing from KNOWN_FALSE_ACCEPTANCES (okteto: defaults
+  (HelmAborts), …)". Cause 1: the old runner's post-dump `git checkout -q -- testdata …` (00:10)
+  restored the INDEX version of the intent-to-add pinned CRD schema
+  `testdata/provider-bundle/crds-catalog-cache/default/mongodbcommunity.mongodb.com/
+  mongodbcommunity_v1.json` — an empty blob — so the file became 0 bytes; run 1 had already
+  loaded it, run 2 found it empty and every MongoDBCommunity render became undecidable. The
+  truncated file then went into `candidate-4f.patch` (01:05) and into the five clones built
+  from it (f31-land2, kubever, w1, w4, stack); restored from `round8-d3f23-d` (30,648 bytes,
+  parses) in all six trees and staged for real in `-e`; the running agents were told; no other
+  staged file is empty. Cause 2: with okteto out of `QUARANTINED_FALSE_REJECTIONS`, the battery
+  judges its cells strictly, and the adjudicator's hard-coded `--kube-version 1.29.0` makes
+  every okteto render "abort" (chart requires ≥1.33.0) — the oracle hole the kube-version owner
+  fixes. Applied `round8-kubever-evidence/final.patch` (test-only) into the candidate; refrozen
+  `candidate-4f.patch` (137 files, sha f1c12acad882a0f6). Third battery launched beside the
+  running sweep (§9 exception, no lock; `battery-final-7`). Lesson for runner v2: never `git
+  checkout` over intent-to-add paths; the manifest must hash staged new files' worktree content.
+  Naming dump done meanwhile (202 artifacts, 164/164, 1,035 s); the naming agent adopts and
+  proves the rename (turn 2).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
