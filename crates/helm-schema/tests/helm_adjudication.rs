@@ -18,10 +18,17 @@ use test_util::prelude::sim_assert_eq;
 #[path = "common/helm_adjudication.rs"]
 mod helm_adjudication;
 
+#[path = "common/helm_cache_policy.rs"]
+mod helm_cache_policy;
+
+#[path = "common/helm_invocation.rs"]
+mod helm_invocation;
+
 #[path = "common/kubernetes_version.rs"]
 mod kubernetes_version;
 
 use helm_adjudication::{KubernetesVerdict, OfflineKubernetesValidator, PinnedHelmChart};
+use helm_invocation::{Outcome, stage_totals};
 use kubernetes_version::chart_kubernetes_version;
 
 fn write_chart(root: &Path, name: &str, values: &str) -> eyre::Result<()> {
@@ -56,21 +63,158 @@ fn unchanged_unknown_resources_pair_with_their_defaults() -> eyre::Result<()> {
     )?;
     let chart = PinnedHelmChart::prepare(root.path())?;
     let probe = chart.adjudicate(&json!({}))?;
-    let mut validator = OfflineKubernetesValidator::new(cache.path());
+    let validator = OfflineKubernetesValidator::new(cache.path())?;
     assert!(matches!(
         validator.validate(&probe.rendered.stdout)?,
         KubernetesVerdict::Uncertain(_)
     ));
-    let unchanged = validator.compare_with_defaults(&chart, &probe.rendered.stdout)?;
+    let unchanged = validator.compare_with_defaults(&chart, &probe)?;
     assert!(
         unchanged.uncertain.is_empty() && unchanged.new_violations.is_empty(),
         "{unchanged:?}"
     );
     let changed = chart.adjudicate(&json!({"token": "changed"}))?;
     sim_assert_eq!(
-        have: validator.compare_with_defaults(&chart, &changed.rendered.stdout)?.uncertain,
+        have: validator.compare_with_defaults(&chart, &changed)?.uncertain,
         want: vec!["document 0: example.test/v1/Unknown sample: pinned resource schema not found".to_string()],
     );
+    Ok(())
+}
+
+/// Every Helm child a probe runs is measured under its stage, beside its outputs.
+#[test]
+fn every_helm_child_is_recorded_under_its_stage() -> eyre::Result<()> {
+    let root = tempfile::tempdir()?;
+    let cache = tempfile::tempdir()?;
+    write_chart(root.path(), "measured", "token: original\n")?;
+    write_configmap_schema(cache.path())?;
+    fs::write(
+        root.path().join("templates/configmap.yaml"),
+        indoc! {r"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: measured
+        data:
+          token: {{ .Values.token }}
+    "},
+    )?;
+    let chart = PinnedHelmChart::prepare(root.path())?;
+    let probe = chart.adjudicate(&json!({"token": "changed"}))?;
+    OfflineKubernetesValidator::new(cache.path())?.compare_with_defaults(&chart, &probe)?;
+    let records = chart.invocations();
+    let stages: Vec<(String, usize)> = stage_totals(&records)
+        .into_iter()
+        .map(|(stage, totals)| (stage, totals.invocations))
+        .collect();
+    sim_assert_eq!(
+        have: stages,
+        want: vec![
+            ("coalesce".to_string(), 2),
+            ("control".to_string(), 1),
+            ("decode".to_string(), 2),
+            ("render".to_string(), 1),
+        ],
+    );
+    eyre::ensure!(
+        records.iter().all(|record| record.max_rss_bytes > 0),
+        "every child reports its own peak memory: {records:?}"
+    );
+    sim_assert_eq!(
+        have: chart.peak_child_rss(),
+        want: records.iter().map(|record| record.max_rss_bytes).max().unwrap_or(0),
+    );
+    eyre::ensure!(
+        probe.evidence_dir.join("render.invocation.json").is_file()
+            && probe
+                .evidence_dir
+                .join("decode/decode.invocation.json")
+                .is_file(),
+        "measurements are retained beside the outputs"
+    );
+    Ok(())
+}
+
+/// A chart that reads the clock never replays its renders, while its
+/// coalescence and decoding, which run fixed templates, stay replayable.
+#[test]
+fn only_renders_of_a_nondeterministic_chart_bypass_replay() -> eyre::Result<()> {
+    let root = tempfile::tempdir()?;
+    let cache = tempfile::tempdir()?;
+    write_chart(root.path(), "clock", "token: original\n")?;
+    write_configmap_schema(cache.path())?;
+    fs::write(
+        root.path().join("templates/configmap.yaml"),
+        indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: clock
+        data:
+          token: {{ .Values.token }}
+          year: {{ now | date "2006" | quote }}
+    "#},
+    )?;
+    let chart = PinnedHelmChart::prepare(root.path())?;
+    let probe = chart.adjudicate(&json!({"token": "changed"}))?;
+    OfflineKubernetesValidator::new(cache.path())?.compare_with_defaults(&chart, &probe)?;
+    let mut outcomes = BTreeMap::new();
+    for record in chart.invocations() {
+        outcomes.insert(record.stage, record.outcome);
+    }
+    let bypass = Outcome::Bypassed("templates/configmap.yaml: calls date (and 1 more)".to_string());
+    sim_assert_eq!(
+        have: outcomes,
+        want: BTreeMap::from([
+            ("coalesce".to_string(), Outcome::Executed),
+            ("control".to_string(), bypass.clone()),
+            ("decode".to_string(), Outcome::Executed),
+            ("render".to_string(), bypass),
+        ]),
+    );
+    Ok(())
+}
+
+/// Compiled schemas are shared by bundle content, never by location: a
+/// bundle with the same content elsewhere reuses them, and a bundle with
+/// different content compiles its own. A bundle that changes afterwards is
+/// reported.
+#[test]
+fn compiled_schemas_are_shared_by_bundle_content() -> eyre::Result<()> {
+    let strict = json!({"type": "object", "properties": {
+        "apiVersion": {"const": "v1"}, "kind": {"const": "ConfigMap"},
+        "metadata": {"properties": {"name": {"type": "string"}}}
+    }});
+    let [original, copy, different] = [
+        tempfile::tempdir()?,
+        tempfile::tempdir()?,
+        tempfile::tempdir()?,
+    ];
+    write_cached_schema(original.path(), "configmap-v1.json", &strict)?;
+    write_cached_schema(copy.path(), "configmap-v1.json", &strict)?;
+    let loose = json!({"properties": {
+        "apiVersion": {"const": "v1"}, "kind": {"const": "ConfigMap"}
+    }});
+    write_cached_schema(different.path(), "configmap-v1.json", &loose)?;
+    let original = OfflineKubernetesValidator::new(original.path())?;
+    let copy_validator = OfflineKubernetesValidator::new(copy.path())?;
+    let different = OfflineKubernetesValidator::new(different.path())?;
+    let document = br"{apiVersion: v1, kind: ConfigMap, metadata: {name: 1}}";
+    assert!(matches!(
+        original.validate(document)?,
+        KubernetesVerdict::Invalid(_)
+    ));
+    // The copy can no longer compile anything itself; it judges by the
+    // schema compiled for the identical original.
+    fs::remove_dir_all(copy.path())?;
+    fs::create_dir(copy.path())?;
+    assert!(matches!(
+        copy_validator.validate(document)?,
+        KubernetesVerdict::Invalid(_)
+    ));
+    sim_assert_eq!(have: different.validate(document)?, want: KubernetesVerdict::Valid);
+    assert!(original.verify_bundles_unchanged().is_ok());
+    assert!(copy_validator.verify_bundles_unchanged().is_err());
     Ok(())
 }
 
@@ -97,8 +241,8 @@ fn duplicate_documents_pair_with_multiplicity() -> eyre::Result<()> {
         )?;
         let chart = PinnedHelmChart::prepare(root.path())?;
         let probe = chart.adjudicate(&json!({"copies": overlay}))?;
-        let comparison = OfflineKubernetesValidator::new(cache.path())
-            .compare_with_defaults(&chart, &probe.rendered.stdout)?;
+        let comparison =
+            OfflineKubernetesValidator::new(cache.path())?.compare_with_defaults(&chart, &probe)?;
         sim_assert_eq!(have: comparison.uncertain.len(), want: uncertain);
     }
     Ok(())
@@ -128,8 +272,8 @@ fn a_changed_resource_violation_is_new_beside_an_unchanged_unknown() -> eyre::Re
     )?;
     let chart = PinnedHelmChart::prepare(root.path())?;
     let probe = chart.adjudicate(&json!({"token": true}))?;
-    let mut validator = OfflineKubernetesValidator::new(cache.path());
-    let comparison = validator.compare_with_defaults(&chart, &probe.rendered.stdout)?;
+    let validator = OfflineKubernetesValidator::new(cache.path())?;
+    let comparison = validator.compare_with_defaults(&chart, &probe)?;
     assert!(
         comparison.uncertain.is_empty() && comparison.inherited_violations.is_empty(),
         "{comparison:?}"
@@ -170,9 +314,9 @@ fn defaults_violations_are_keyed_by_resource_not_position() -> eyre::Result<()> 
     "#},
     )?;
     let chart = PinnedHelmChart::prepare(root.path())?;
-    let mut validator = OfflineKubernetesValidator::new(cache.path());
+    let validator = OfflineKubernetesValidator::new(cache.path())?;
     let probe = chart.adjudicate(&json!({"extra": true}))?;
-    let comparison = validator.compare_with_defaults(&chart, &probe.rendered.stdout)?;
+    let comparison = validator.compare_with_defaults(&chart, &probe)?;
     assert!(
         comparison.new_violations.is_empty() && comparison.uncertain.is_empty(),
         "{comparison:?}"
@@ -206,8 +350,8 @@ fn a_different_invalid_value_is_a_new_violation() -> eyre::Result<()> {
     )?;
     let chart = PinnedHelmChart::prepare(root.path())?;
     let probe = chart.adjudicate(&json!({"token": 5}))?;
-    let comparison = OfflineKubernetesValidator::new(cache.path())
-        .compare_with_defaults(&chart, &probe.rendered.stdout)?;
+    let comparison =
+        OfflineKubernetesValidator::new(cache.path())?.compare_with_defaults(&chart, &probe)?;
     assert!(
         comparison.inherited_violations.is_empty() && comparison.uncertain.is_empty(),
         "{comparison:?}"
@@ -241,8 +385,8 @@ fn a_renamed_resource_inherits_the_defaults_violations() -> eyre::Result<()> {
     )?;
     let chart = PinnedHelmChart::prepare(root.path())?;
     let probe = chart.adjudicate(&json!({"name": "renamed"}))?;
-    let comparison = OfflineKubernetesValidator::new(cache.path())
-        .compare_with_defaults(&chart, &probe.rendered.stdout)?;
+    let comparison =
+        OfflineKubernetesValidator::new(cache.path())?.compare_with_defaults(&chart, &probe)?;
     assert!(
         comparison.new_violations.is_empty() && comparison.uncertain.is_empty(),
         "{comparison:?}"
@@ -270,12 +414,12 @@ fn inexact_documents_stay_uncertain() -> eyre::Result<()> {
     )?;
     let chart = PinnedHelmChart::prepare(root.path())?;
     let probe = chart.adjudicate(&json!({}))?;
-    let mut validator = OfflineKubernetesValidator::new(cache.path());
+    let validator = OfflineKubernetesValidator::new(cache.path())?;
     assert!(matches!(
         validator.validate(&probe.rendered.stdout)?,
         KubernetesVerdict::Uncertain(_)
     ));
-    let comparison = validator.compare_with_defaults(&chart, &probe.rendered.stdout)?;
+    let comparison = validator.compare_with_defaults(&chart, &probe)?;
     sim_assert_eq!(have: comparison.uncertain.len(), want: 1);
     Ok(())
 }
@@ -320,7 +464,7 @@ fn coalescence_preserves_null_ownership_before_render_mutation() -> eyre::Result
     let probe = chart.adjudicate(&overlay)?;
     sim_assert_eq!(have: probe.values.as_ref().ok_or_eyre("Helm aborted coalescence")?.as_json(), want: &expected);
     eyre::ensure!(
-        probe.rendered.status.success(),
+        probe.rendered.success(),
         "{}",
         String::from_utf8_lossy(&probe.rendered.stderr)
     );
@@ -369,7 +513,7 @@ fn packed_dependencies_are_sanitized_recursively_without_changing_sources() -> e
     let chart = PinnedHelmChart::prepare(root.path())?;
     let probe = chart.adjudicate(&json!({}))?;
     eyre::ensure!(
-        probe.rendered.status.success(),
+        probe.rendered.success(),
         "{}",
         String::from_utf8_lossy(&probe.rendered.stderr)
     );
@@ -377,12 +521,9 @@ fn packed_dependencies_are_sanitized_recursively_without_changing_sources() -> e
     sim_assert_eq!(have: fs::read(&archive)?, want: original);
     sim_assert_eq!(have: fs::read_to_string(root.path().join("values.schema.json"))?, want: "false");
     assert!(!root.path().join("Chart.yaml").exists());
-    let evidence = probe
-        .evidence_dir
-        .parent()
-        .ok_or_eyre("probe has no evidence root")?;
-    assert!(!evidence.join("render/charts/child").exists());
-    let render = archive_files(&fs::read(evidence.join("render/charts/child.tgz"))?)?;
+    let render_tree = &chart.render_tree().path;
+    assert!(!render_tree.join("charts/child").exists());
+    let render = archive_files(&fs::read(render_tree.join("charts/child.tgz"))?)?;
     assert!(!render.contains_key(Path::new("child/values.schema.json")));
     assert!(
         !render
@@ -395,12 +536,63 @@ fn packed_dependencies_are_sanitized_recursively_without_changing_sources() -> e
             .ok_or_eyre("missing nested archive")?,
     )?;
     assert!(!grandchild.contains_key(Path::new("grandchild/values.schema.json")));
-    let coalesce = archive_files(&fs::read(evidence.join("coalesce/charts/child.tgz"))?)?;
+    let coalesce = archive_files(&fs::read(
+        chart.coalesce_tree().path.join("charts/child.tgz"),
+    )?)?;
     assert!(
         !coalesce
             .keys()
             .any(|path| path.starts_with("child/templates"))
     );
+    Ok(())
+}
+
+/// Preparation hashes and repacks only chart content: two preparations of
+/// the same chart from copies with different timestamps, made at different
+/// times, yield identical trees and archive bytes.
+#[test]
+fn preparation_is_independent_of_timestamps_and_preparation_time() -> eyre::Result<()> {
+    let child = tempfile::tempdir()?;
+    write_chart(child.path(), "child", "childDefault: 3\n")?;
+    fs::write(
+        child.path().join("templates/config.yaml"),
+        "kind: ConfigMap\n",
+    )?;
+    let mut prepared = Vec::new();
+    for (index, mtime) in [(0_u64, 1_000_000_000_u64), (1, 1_700_000_000)] {
+        let root = tempfile::tempdir()?;
+        write_chart(root.path(), "parent", "{}")?;
+        fs::create_dir_all(root.path().join("charts/local/templates"))?;
+        write_chart(&root.path().join("charts/local"), "local", "leaf: 1\n")?;
+        pack_chart(child.path(), &root.path().join("charts/child.tgz"), "child")?;
+        let time = std::time::UNIX_EPOCH + std::time::Duration::from_secs(mtime);
+        for file in [
+            "Chart.yaml",
+            "values.yaml",
+            "charts/child.tgz",
+            "charts/local/values.yaml",
+        ] {
+            fs::File::options()
+                .write(true)
+                .open(root.path().join(file))?
+                .set_modified(time)?;
+        }
+        if index == 1 {
+            // Archive headers carry whole seconds; a later preparation must not differ.
+            std::thread::sleep(std::time::Duration::from_millis(1100));
+        }
+        let chart = PinnedHelmChart::prepare(root.path())?;
+        let archive = fs::read(chart.render_tree().path.join("charts/child.tgz"))?;
+        prepared.push((
+            chart.render_tree().sha256.clone(),
+            chart.coalesce_tree().sha256.clone(),
+            archive,
+        ));
+    }
+    let [first, second] = prepared.as_slice() else {
+        eyre::bail!("expected two preparations");
+    };
+    sim_assert_eq!(have: second, want: first);
     Ok(())
 }
 
@@ -439,7 +631,7 @@ fn render_abort_keeps_the_exact_document_and_evidence() -> eyre::Result<()> {
     let chart = PinnedHelmChart::prepare(root.path())?;
     let probe = chart.adjudicate(&json!({"unknown": null}))?;
     sim_assert_eq!(have: probe.values.as_ref().ok_or_eyre("Helm aborted coalescence")?.as_json(), want: &json!({"unknown": null}));
-    assert!(!probe.rendered.status.success());
+    assert!(!probe.rendered.success());
     assert!(
         fs::read_to_string(probe.evidence_dir.join("render.stderr"))?.contains("intentional abort")
     );
@@ -454,7 +646,7 @@ fn offline_validator_distinguishes_invalid_resources_from_missing_schemas() -> e
         "metadata": {"type": "object", "required": ["name"], "properties": {"name": {"type": "string"}}}
     }, "required": ["apiVersion", "kind", "metadata"]});
     write_cached_schema(cache.path(), "configmap-v1.json", &schema)?;
-    let mut validator = OfflineKubernetesValidator::new(cache.path());
+    let validator = OfflineKubernetesValidator::new(cache.path())?;
     let valid = json!({"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "valid"}});
     sim_assert_eq!(have: validator.validate(&serde_json::to_vec(&valid)?)?, want: KubernetesVerdict::Valid);
 
@@ -492,7 +684,7 @@ fn unresolved_schema_references_do_not_fetch_or_prove_validity() -> eyre::Result
         "configmap-v1.json",
         &json!({"properties": {"apiVersion": {"const": "v1"}, "kind": {"const": "ConfigMap"}}, "allOf": [{"$ref": "https://invalid.example.test/not-cached.json"}]}),
     )?;
-    let mut validator = OfflineKubernetesValidator::new(cache.path());
+    let validator = OfflineKubernetesValidator::new(cache.path())?;
     let document =
         json!({"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "unknown"}});
     let KubernetesVerdict::Uncertain(errors) =
@@ -521,7 +713,7 @@ fn helm_yaml_decoding_preserves_boolean_keys_octal_scalars_and_unicode_boundarie
         "configmap-v1.json",
         &json!({"const": expected}),
     )?;
-    let mut validator = OfflineKubernetesValidator::new(cache.path());
+    let validator = OfflineKubernetesValidator::new(cache.path())?;
     let source = indoc! {"
         ---
         apiVersion: v1
@@ -561,7 +753,7 @@ fn helm_yaml_decoding_preserves_boolean_keys_octal_scalars_and_unicode_boundarie
 #[test]
 fn helm_yaml_decoder_errors_remain_uncertain() -> eyre::Result<()> {
     let cache = tempfile::tempdir()?;
-    let mut validator = OfflineKubernetesValidator::new(cache.path());
+    let validator = OfflineKubernetesValidator::new(cache.path())?;
     // Helm fromYaml reports sequence roots through its Error member.
     let source = "[one, two]";
     let KubernetesVerdict::Uncertain(errors) = validator.validate(source.as_bytes())? else {
@@ -598,7 +790,7 @@ fn raw_document_transport_preserves_unicode_line_breaks() -> eyre::Result<()> {
           ps: |
             before{ps}    after
     ", nel = '\u{85}', ls = '\u{2028}', ps = '\u{2029}'};
-    let mut validator = OfflineKubernetesValidator::new(cache.path());
+    let validator = OfflineKubernetesValidator::new(cache.path())?;
     // A values-file round trip folds these characters before fromYaml can read the document.
     sim_assert_eq!(have: validator.validate(source.as_bytes())?, want: KubernetesVerdict::Valid);
     Ok(())
@@ -616,7 +808,7 @@ fn kubernetes_document_framing_preserves_unicode_yaml_and_physical_boundaries() 
             "metadata": {"properties": {"name": {"type": "string"}}}
         }}),
     )?;
-    let mut validator = OfflineKubernetesValidator::new(cache.path());
+    let validator = OfflineKubernetesValidator::new(cache.path())?;
     let lines = [
         "# comment",
         "apiVersion: v1",
@@ -679,7 +871,7 @@ fn integers_that_helm_normalization_can_round_remain_uncertain() -> eyre::Result
         "configmap-v1.json",
         &json!({"const": expected}),
     )?;
-    let mut validator = OfflineKubernetesValidator::new(cache.path());
+    let validator = OfflineKubernetesValidator::new(cache.path())?;
     let source = indoc! {"
         apiVersion: v1
         kind: ConfigMap
@@ -722,7 +914,7 @@ fn schema_identity_must_match_the_exact_resource_group() -> eyre::Result<()> {
         "spec": {"properties": {"replicas": {"type": "integer"}}}
     }});
     write_cached_schema(cache.path(), "deployment-apps-v1.json", &schema)?;
-    let mut validator = OfflineKubernetesValidator::new(cache.path());
+    let validator = OfflineKubernetesValidator::new(cache.path())?;
     // The inference provider's short filename fallback must not establish schema ownership.
     let custom = json!({"apiVersion": "apps.example.test/v1", "kind": "Deployment", "metadata": {"name": "custom"}, "spec": {"replicas": "many"}});
     sim_assert_eq!(have: validator.validate(&serde_json::to_vec(&custom)?)?, want: KubernetesVerdict::Uncertain(vec!["document 0: apps.example.test/v1/Deployment custom: original schema does not prove exact identity apps.example.test/v1/Deployment".to_string()]));
@@ -770,7 +962,7 @@ fn schema_identity_metadata_must_be_complete_and_consistent() -> eyre::Result<()
     ] {
         let cache = tempfile::tempdir()?;
         write_cached_schema(cache.path(), "configmap-v1.json", &schema)?;
-        let mut validator = OfflineKubernetesValidator::new(cache.path());
+        let validator = OfflineKubernetesValidator::new(cache.path())?;
         let verdict = validator.validate(&serde_json::to_vec(&resource)?)?;
         if proves_identity {
             assert!(
@@ -820,7 +1012,7 @@ fn packed_dependencies_preserve_the_parent_ignore_boundary() -> eyre::Result<()>
     let chart = PinnedHelmChart::prepare(root.path())?;
     let probe = chart.adjudicate(&json!({}))?;
     eyre::ensure!(
-        probe.rendered.status.success(),
+        probe.rendered.success(),
         "{}",
         String::from_utf8_lossy(&probe.rendered.stderr)
     );
@@ -855,7 +1047,7 @@ fn template_exclusions_only_apply_to_actual_chart_roots() -> eyre::Result<()> {
     let chart = PinnedHelmChart::prepare(root.path())?;
     let probe = chart.adjudicate(&json!({}))?;
     eyre::ensure!(
-        probe.rendered.status.success(),
+        probe.rendered.success(),
         "{}",
         String::from_utf8_lossy(&probe.rendered.stderr)
     );
@@ -893,7 +1085,7 @@ fn pinned_violations(name: &str, template: &str) -> eyre::Result<KubernetesVerdi
     let probe = chart.adjudicate(&json!({}))?;
     let cache =
         test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache");
-    OfflineKubernetesValidator::new(&cache).validate(&probe.rendered.stdout)
+    OfflineKubernetesValidator::new(&cache)?.validate(&probe.rendered.stdout)
 }
 
 /// A built-in API group version the pinned v1.29 server no longer serves is a
@@ -951,8 +1143,8 @@ fn a_document_without_api_version_or_kind_is_a_violation() -> eyre::Result<()> {
     let chart = PinnedHelmChart::prepare(root.path())?;
     let probe = chart.adjudicate(&json!({}))?;
     let cache = tempfile::tempdir()?;
-    let comparison = OfflineKubernetesValidator::new(cache.path())
-        .compare_with_defaults(&chart, &probe.rendered.stdout)?;
+    let comparison =
+        OfflineKubernetesValidator::new(cache.path())?.compare_with_defaults(&chart, &probe)?;
     assert!(
         comparison.new_violations.is_empty() && comparison.uncertain.is_empty(),
         "{comparison:?}"
@@ -971,9 +1163,11 @@ fn a_pinned_crd_schema_decides_a_crd_resource() -> eyre::Result<()> {
         let chart = PinnedHelmChart::prepare(root.path())?;
         let probe = chart.adjudicate(&json!({}))?;
         let bundle = test_util::workspace_testdata().join("provider-bundle");
-        OfflineKubernetesValidator::new(&bundle.join("kubernetes-json-schema-cache"))
-            .with_crd_catalog(&bundle.join("crds-catalog-cache"))
-            .validate(&probe.rendered.stdout)
+        OfflineKubernetesValidator::with_crd_catalog(
+            &bundle.join("kubernetes-json-schema-cache"),
+            &bundle.join("crds-catalog-cache"),
+        )?
+        .validate(&probe.rendered.stdout)
     };
     let issuer = |spec: &str| {
         formatdoc! {"
@@ -1031,7 +1225,7 @@ fn rendered_kubernetes_version(kube_version: Option<&str>) -> eyre::Result<Strin
     )?;
     let probe = PinnedHelmChart::prepare(root.path())?.adjudicate(&json!({}))?;
     eyre::ensure!(
-        probe.rendered.status.success(),
+        probe.rendered.success(),
         "{}",
         String::from_utf8_lossy(&probe.rendered.stderr)
     );
@@ -1140,11 +1334,7 @@ fn okteto_defaults_render_under_the_version_its_manifest_admits() -> eyre::Resul
         have: (probe.values.is_some(), String::from_utf8_lossy(&probe.rendered.stderr).into_owned()),
         want: (true, String::new()),
     );
-    eyre::ensure!(
-        probe.rendered.status.success(),
-        "{}",
-        probe.evidence_dir.display()
-    );
+    eyre::ensure!(probe.rendered.success(), "{}", probe.evidence_dir.display());
     Ok(())
 }
 
