@@ -500,7 +500,11 @@ pub(super) fn record_fail_conjunction(
 
     let mut outer_guards = Vec::new();
     let mut member_tests: Vec<&Predicate> = Vec::new();
-    let mut requirements = Vec::new();
+    // One alternative per failing test: the fail fires only where EVERY
+    // test holds, so validity is the DISJUNCTION of their negations. The
+    // arms of an `if`/`else if`/`else fail` chain over one path are such
+    // tests (cilium's dict-or-list `clustermesh.config.clusters`).
+    let mut alternatives: Vec<Vec<FailValueRequirement>> = Vec::new();
     let mut test_paths: BTreeSet<String> = BTreeSet::new();
     for predicate in conjunction {
         if let helm_schema_core::PredicateKind::Guard(Guard::Range { path }) = predicate.kind() {
@@ -545,7 +549,7 @@ pub(super) fn record_fail_conjunction(
             if let Some(required) =
                 requirements_from_negation(predicate, &path).filter(|required| !required.is_empty())
             {
-                requirements.extend(required);
+                alternatives.push(required);
                 test_paths.insert(path);
                 continue;
             }
@@ -581,21 +585,8 @@ pub(super) fn record_fail_conjunction(
                 })
                 .collect::<Option<Vec<_>>>()
         };
-        // The fail fires only when EVERY member test holds, so validity is
-        // the DISJUNCTION of their negations: one satisfied negation keeps
-        // the member. A single test lowers flat; several become one AnyOf
-        // (traefik's legacy-hostPath-or-typed local plugins).
-        let combine = |mut alternatives: Vec<Vec<FailValueRequirement>>| {
-            if alternatives.len() == 1 {
-                alternatives.remove(0)
-            } else {
-                alternatives.sort();
-                alternatives.dedup();
-                vec![FailValueRequirement::AnyOf(alternatives)]
-            }
-        };
         if let Some(required) = requirements_at(scope) {
-            requirements.extend(combine(required));
+            alternatives.extend(required);
             test_paths.insert(scope.clone());
         } else {
             let field_path = {
@@ -633,11 +624,11 @@ pub(super) fn record_fail_conjunction(
             member_field = Some(helm_schema_core::split_value_path(
                 &field_path[scope.len() + 1..],
             ));
-            requirements.extend(combine(required));
+            alternatives.extend(required);
             test_paths.insert(field_path);
         }
     }
-    if requirements.is_empty() || test_paths.len() != 1 {
+    if alternatives.is_empty() || test_paths.len() != 1 {
         // No single-path test survived. When the WHOLE conjunction lowers
         // to conditional guards — mutual exclusions and other cross-path
         // validator formulas — it becomes a document-level terminal
@@ -678,20 +669,32 @@ pub(super) fn record_fail_conjunction(
         };
         path
     };
-    // A test whose requirements contradict (a type-dispatch arm's own
-    // partition conjunct joins the test on the same path) can never fire;
-    // its arm would encode as a tautology, so it is dropped as noise.
-    let contradictory = requirements.iter().any(|requirement| {
-        matches!(
-            requirement,
-            FailValueRequirement::SchemaType(schema_type)
-                if requirements
-                    .contains(&FailValueRequirement::NotSchemaType(schema_type.clone()))
-        )
-    });
-    if contradictory {
+    // Tests whose negations cover every value (a type-dispatch arm's own
+    // partition conjunct joins the test on the same path) can never fire
+    // together; the arm would encode as a tautology, so it is dropped as
+    // noise.
+    let tautology = alternatives
+        .iter()
+        .any(|alternative| match alternative.as_slice() {
+            [FailValueRequirement::SchemaType(schema_type)] => {
+                alternatives.contains(&vec![FailValueRequirement::NotSchemaType(
+                    schema_type.clone(),
+                )])
+            }
+            _ => false,
+        });
+    if tautology {
         return;
     }
+    // A single test lowers flat; several become one AnyOf (traefik's
+    // legacy-hostPath-or-typed local plugins).
+    alternatives.sort();
+    alternatives.dedup();
+    let requirements = if alternatives.len() == 1 {
+        alternatives.remove(0)
+    } else {
+        vec![FailValueRequirement::AnyOf(alternatives)]
+    };
     let implication = ContractRequirementImplication::new(
         outer_guards,
         ranged

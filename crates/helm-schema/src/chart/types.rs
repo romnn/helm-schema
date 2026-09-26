@@ -5,6 +5,12 @@ use vfs::VfsPath;
 pub struct ChartContext {
     pub chart_dir: VfsPath,
     pub values_prefix: Vec<String>,
+    /// Helm's template namespace for this chart: the root chart's name
+    /// followed by one `charts/<dependency key>` segment per dependency
+    /// edge, with the alias when a dependency is aliased. Helm registers
+    /// every template under `<namespace>/<chart-relative path>` and reports
+    /// `<namespace>/templates` as `.Template.BasePath`.
+    pub template_namespace: String,
     pub is_library: bool,
     /// Exact scalar fields Helm exposes through this chart's `.Chart` root.
     pub static_root_strings: BTreeMap<Vec<String>, String>,

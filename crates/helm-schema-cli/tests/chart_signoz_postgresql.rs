@@ -1,13 +1,13 @@
 //! Full-schema and values-validation regressions for the `SigNoz PostgreSQL` chart.
 
+#[path = "common/chart_instances.rs"]
+mod chart_instances;
 #[path = "common/helm_samples.rs"]
 mod helm_samples;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
 #[path = "common/values_validation.rs"]
 mod values_validation;
-#[path = "common/values_yaml.rs"]
-mod values_yaml;
 
 use color_eyre::eyre;
 

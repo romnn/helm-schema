@@ -135,20 +135,6 @@ impl HelperCallValueResolver for BoundHelperValueResolver<'_, '_, '_, '_> {
             },
         )
     }
-
-    fn resolve_implicit_template_call(
-        &mut self,
-        suffix: &str,
-        arg: Option<&TemplateExpr>,
-    ) -> Option<EvalResult> {
-        let name = self
-            .params
-            .context
-            .analysis_db
-            .implicit_template_name(suffix)?
-            .to_string();
-        self.resolve_helper_call(&name, arg)
-    }
 }
 
 impl BoundHelperValueResolver<'_, '_, '_, '_> {

@@ -88,18 +88,19 @@ pub(crate) fn build_condition_clauses_cached(
 /// What a values document reads where it supplies nothing itself.
 #[derive(Clone, Copy)]
 pub(crate) struct AbsenceDefaults<'a> {
-    /// The composed defaults MINUS everything the parent chart's own
-    /// values.yaml declares: exactly the paths whose value a parent-level
-    /// document supplies from a DEEPER coalesce stage when the key is
-    /// missing. A missing parent-owned key was null-deleted and reads as
-    /// nil; a missing dependency-owned key reads as the subchart's
-    /// declared default.
-    pub deeper_stage: &'a YamlValue,
-    /// The dependency charts' own composed defaults, without that
-    /// subtraction: what helm hands a DELETED dependency values root
-    /// (`coalesceDeps` recreates the table and coalesces the subchart's
-    /// values into it, while the parent's defaults for that root went with
-    /// the deletion).
+    /// The values a RENDER-TIME merge inside the templates supplies at
+    /// paths the coalesced document omits, and nothing else. The schema
+    /// validates the coalesced document, in which every declared default
+    /// has already been applied, so a key missing from it was null-deleted
+    /// and reads nil no matter which chart declared it — the subchart's own
+    /// default does not resurrect it (helm v4.2.3). A key covered here is
+    /// the one exception: `mustMergeOverwrite`-style merges run after
+    /// coalescing, so they refill what the document dropped.
+    pub runtime_defaults: &'a YamlValue,
+    /// The dependency charts' own composed defaults: what helm hands a
+    /// DELETED dependency values root (`coalesceDeps` recreates the table
+    /// and coalesces the subchart's values into it, while the parent's
+    /// defaults for that root went with the deletion).
     pub dependency_refill: &'a YamlValue,
     /// The values roots those dependency charts own.
     pub dependency_roots: &'a BTreeSet<Vec<String>>,
@@ -116,7 +117,7 @@ fn build_single_condition_fragment(
     absence: AbsenceDefaults<'_>,
     polarity: ConditionPolarity,
 ) -> Option<SchemaNode> {
-    let subchart_defaults_doc = absence.deeper_stage;
+    let runtime_defaults_doc = absence.runtime_defaults;
     let dependency_roots = absence.dependency_roots;
     match guard {
         ConditionalGuard::Truthy { path } | ConditionalGuard::With { path } => {
@@ -141,43 +142,40 @@ fn build_single_condition_fragment(
             } else {
                 helm_truthy_condition_schema()
             };
-            // A missing parent-owned key was null-deleted and reads as
-            // nil — Helm-falsy — while a missing dependency-owned key
-            // reads as the subchart's own declared default.
+            // A missing key was null-deleted and reads as nil — Helm-falsy
+            // — unless a render-time merge refills it.
             build_default_aware_leaf_condition_fragment(
                 path,
                 ancestor_segments,
                 truthy,
-                yaml_value_at_path(subchart_defaults_doc, path).is_some_and(yaml_value_is_truthy),
+                yaml_value_at_path(runtime_defaults_doc, path).is_some_and(yaml_value_is_truthy),
             )
         }
         ConditionalGuard::Eq { path, value } => build_default_aware_leaf_condition_fragment(
             path,
             ancestor_segments,
             guard_value_enum_schema(value)?,
-            match yaml_value_at_path(subchart_defaults_doc, path) {
+            match yaml_value_at_path(runtime_defaults_doc, path) {
                 Some(default) => guard_value_matches_optional_yaml(value, Some(default)),
                 None => matches!(value, GuardValue::Null),
             },
         ),
-        // A missing parent-owned key reads as nil, which differs from
-        // every non-null literal; a dependency-owned key reads as its
-        // subchart default (cilium's kvstoreMode membership rejects a
-        // document whose null-deletion left the mode nil).
+        // A missing key reads as nil, which differs from every non-null
+        // literal (cilium's kvstoreMode membership rejects a document whose
+        // null-deletion left the mode nil); a refilled one reads its merge.
         ConditionalGuard::NotEq { path, value } => build_default_aware_leaf_condition_fragment(
             path,
             ancestor_segments,
             guard_value_enum_schema(value).map(SchemaNode::not)?,
-            match yaml_value_at_path(subchart_defaults_doc, path) {
+            match yaml_value_at_path(runtime_defaults_doc, path) {
                 Some(default) => !guard_value_matches_optional_yaml(value, Some(default)),
                 None => !matches!(value, GuardValue::Null),
             },
         ),
         // The member key is an OPAQUE property name (it may contain dots),
         // so it becomes a literal `required` entry below the segmented
-        // collection path. A missing parent-owned collection reads as
-        // nil, which holds no keys; a dependency-owned one holds exactly
-        // the subchart default's keys.
+        // collection path. A missing collection reads as nil, which holds
+        // no keys; a refilled one holds exactly the merged default's keys.
         ConditionalGuard::HasKey { path, key } => build_default_aware_leaf_condition_fragment(
             path,
             ancestor_segments,
@@ -186,7 +184,7 @@ fn build_single_condition_fragment(
                 "required": [key],
             })),
             matches!(
-                yaml_value_at_path(subchart_defaults_doc, path),
+                yaml_value_at_path(runtime_defaults_doc, path),
                 Some(YamlValue::Mapping(mapping))
                     if mapping.contains_key(YamlValue::String(key.clone()))
             ),
@@ -196,9 +194,8 @@ fn build_single_condition_fragment(
         // the coercion provably parses into the claimed region (jenkins'
         // `"5"` replicas abort like `5`; a mixed-sign region also collects
         // every unparsable spelling through the complement lane). A
-        // missing parent-owned key reads as nil and coerces to 0, so it
-        // satisfies the region exactly when 0 does; a dependency-owned
-        // key coerces its subchart default.
+        // missing key reads as nil and coerces to 0, so it satisfies the
+        // region exactly when 0 does; a refilled one coerces its merge.
         ConditionalGuard::IntGt { path, bound } => build_default_aware_leaf_condition_fragment(
             path,
             ancestor_segments,
@@ -207,7 +204,7 @@ fn build_single_condition_fragment(
                 *bound,
                 Some(int_region_string_preimage(true, *bound)),
             ),
-            absent_coerced_int(subchart_defaults_doc, path) > *bound,
+            absent_coerced_int(runtime_defaults_doc, path) > *bound,
         ),
         ConditionalGuard::IntLt { path, bound } => build_default_aware_leaf_condition_fragment(
             path,
@@ -217,7 +214,7 @@ fn build_single_condition_fragment(
                 *bound,
                 Some(int_region_string_preimage(false, *bound)),
             ),
-            absent_coerced_int(subchart_defaults_doc, path) < *bound,
+            absent_coerced_int(runtime_defaults_doc, path) < *bound,
         ),
         ConditionalGuard::Absent { path } => {
             let segments = path
@@ -229,20 +226,24 @@ fn build_single_condition_fragment(
                 return None;
             }
             // Helm validates the COALESCED values — the same document the
-            // templates render from — so a missing PARENT-owned key means
-            // the render reads nil: coalescing already filled every
-            // parent-declared default, and the only way such a key goes
-            // missing is the user's explicit `null` deleting it (helm
-            // null-deletion). A missing DEPENDENCY-owned key instead
-            // reads as the subchart's declared default, which fills at
-            // the subchart's own coalesce stage — only a non-null default
-            // rescues it from absence. The explicit-null arm covers every
-            // ownership: a surviving literal null reads as nil. `Absent`
-            // deliberately counts null as absent — the nil-safe selector
-            // lanes (`(.Values.x).leaf`) render at null exactly like at a
-            // missing key. Strict key-presence (Sprig `hasKey`/`dig`
-            // observability, where a present nil is PRESENT) is the
-            // separate `HasKey` guard.
+            // templates render from — so a missing key means the render
+            // reads nil, whichever chart declared a default for it:
+            // coalescing already filled every declared default, and the
+            // only way such a key goes missing is the user's explicit
+            // `null` deleting it. That deletion also survives the SUBCHART
+            // stage, because helm coalesces the subchart's own values into
+            // the parent's table with the deletion already recorded there
+            // (helm v4.2.3 `coalesceValues`; verified by rendering a
+            // parent/subchart pair with `--set kid.grp=null` under every
+            // declaration split). Only a render-time merge inside the
+            // templates refills such a key, and those are `runtime_defaults`.
+            // The explicit-null arm covers the surviving-null spelling, for
+            // keys no chart declares a default for. `Absent` deliberately
+            // counts null as absent — the nil-safe selector lanes
+            // (`(.Values.x).leaf`) render at null exactly like at a missing
+            // key. Strict key-presence (Sprig `hasKey`/`dig` observability,
+            // where a present nil is PRESENT) is the separate `HasKey`
+            // guard.
             // That deletion sticks below a dependency root too, but only
             // while the root SURVIVES: deleting the root hands the whole
             // subtree back to the subchart's defaults. The arms therefore
@@ -258,8 +259,8 @@ fn build_single_condition_fragment(
                 arm_segments,
                 SchemaNode::enum_values(vec![Value::Null]),
             )?;
-            let subchart_default_fills = matches!(yaml_value_at_path(subchart_defaults_doc, path), Some(value) if !matches!(value, YamlValue::Null));
-            let deleted = if subchart_default_fills {
+            let runtime_default_fills = matches!(yaml_value_at_path(runtime_defaults_doc, path), Some(value) if !matches!(value, YamlValue::Null));
+            let deleted = if runtime_default_fills {
                 explicit_null
             } else {
                 let missing = SchemaNode::not(build_required_condition_fragment(
@@ -295,7 +296,7 @@ fn build_single_condition_fragment(
                 path,
                 ancestor_segments,
                 SchemaNode::type_named(schema_type),
-                match yaml_value_at_path(subchart_defaults_doc, path) {
+                match yaml_value_at_path(runtime_defaults_doc, path) {
                     Some(default) => matches_yaml_schema_type(default, schema_type),
                     None => schema_type == "null",
                 },
@@ -303,7 +304,7 @@ fn build_single_condition_fragment(
         }
         ConditionalGuard::MatchesPattern { path, pattern } => {
             let ecma_pattern = crate::path_resolver::ecma_compatible_pattern(pattern)?;
-            let absent_matches = yaml_value_at_path(subchart_defaults_doc, path)
+            let absent_matches = yaml_value_at_path(runtime_defaults_doc, path)
                 .and_then(YamlValue::as_str)
                 .is_some_and(|value| {
                     regex::Regex::new(pattern).is_ok_and(|regex| regex.is_match(value))
@@ -342,7 +343,7 @@ fn build_single_condition_fragment(
                     ]
                 })),
                 declared_collection_contains_member_equals(
-                    yaml_value_at_path(subchart_defaults_doc, path),
+                    yaml_value_at_path(runtime_defaults_doc, path),
                     member,
                     value,
                 ),
@@ -365,16 +366,15 @@ fn build_single_condition_fragment(
                     ]
                 })),
                 declared_collection_contains_truthy_member(
-                    yaml_value_at_path(subchart_defaults_doc, path),
+                    yaml_value_at_path(runtime_defaults_doc, path),
                     member,
                 ),
             )
         }
         // Sprig `has` over a values list: false on nil, abort on
         // non-lists, so the guard holds exactly for arrays carrying the
-        // literal. A missing parent-owned key reads as nil (never a
-        // member); a dependency-owned key reads as its subchart default
-        // list.
+        // literal. A missing key reads as nil (never a member); a refilled
+        // one reads its merged list.
         ConditionalGuard::ContainsEquals { path, value } => {
             build_default_aware_leaf_condition_fragment(
                 path,
@@ -383,10 +383,7 @@ fn build_single_condition_fragment(
                     "type": "array",
                     "contains": guard_value_enum_schema(value)?.into_value(),
                 })),
-                declared_list_contains_value(
-                    yaml_value_at_path(subchart_defaults_doc, path),
-                    value,
-                ),
+                declared_list_contains_value(yaml_value_at_path(runtime_defaults_doc, path), value),
             )
         }
         // A non-collection value never iterates, so the "at most one
@@ -399,7 +396,7 @@ fn build_single_condition_fragment(
                 "maxProperties": 1,
                 "maxItems": 1,
             })),
-            match yaml_value_at_path(subchart_defaults_doc, path) {
+            match yaml_value_at_path(runtime_defaults_doc, path) {
                 Some(YamlValue::Mapping(mapping)) => mapping.len() <= 1,
                 Some(YamlValue::Sequence(items)) => items.len() <= 1,
                 _ => true,
@@ -416,7 +413,7 @@ fn build_single_condition_fragment(
                     "minProperties": bound.max(&0),
                 })),
                 matches!(
-                    yaml_value_at_path(subchart_defaults_doc, path),
+                    yaml_value_at_path(runtime_defaults_doc, path),
                     Some(YamlValue::Mapping(mapping))
                         if *bound <= 0
                             || usize::try_from(*bound).is_ok_and(|bound| mapping.len() >= bound)
@@ -843,11 +840,11 @@ fn decimal_default_int_value(value: Option<&YamlValue>) -> Option<i64> {
 }
 
 /// The Sprig `int` coercion of the value the render reads when `path` is
-/// missing from the validated document: the subchart default for
-/// dependency-owned paths, nil (0) otherwise. Non-decimal defaults
-/// coerce to 0 like every unparsable spelling.
-fn absent_coerced_int(subchart_defaults_doc: &YamlValue, path: &ValuesPath) -> i64 {
-    decimal_default_int_value(yaml_value_at_path(subchart_defaults_doc, path)).unwrap_or(0)
+/// missing from the validated document: the render-time merge's value
+/// where one refills it, nil (0) otherwise. Non-decimal defaults coerce
+/// to 0 like every unparsable spelling.
+fn absent_coerced_int(runtime_defaults_doc: &YamlValue, path: &ValuesPath) -> i64 {
+    decimal_default_int_value(yaml_value_at_path(runtime_defaults_doc, path)).unwrap_or(0)
 }
 
 /// A leaf condition over the COALESCED values document helm validates.
@@ -979,15 +976,23 @@ fn build_required_condition_fragment(
 /// The raw input path is missing or null before any chart-authored values
 /// reconstruction supplies a fallback.
 pub(crate) fn input_path_absent_condition(value_path: &ValuesPath) -> Option<SchemaNode> {
+    input_path_present_condition(value_path, &[]).map(SchemaNode::not)
+}
+
+/// `value_path`, relative to `ancestor_segments`, holds a non-null value.
+pub(crate) fn input_path_present_condition(
+    value_path: &ValuesPath,
+    ancestor_segments: &[String],
+) -> Option<SchemaNode> {
     let segments = value_path
         .segments()
         .map(helm_schema_core::Segment::encode_component)
         .collect::<Vec<_>>();
-    let present_non_null = build_required_condition_fragment(
-        &segments,
+    let relative_segments = strip_ancestor_prefix(&segments, ancestor_segments)?;
+    build_required_condition_fragment(
+        &relative_segments,
         SchemaNode::not(SchemaNode::enum_values(vec![Value::Null])),
-    )?;
-    Some(SchemaNode::not(present_non_null))
+    )
 }
 
 pub(crate) fn evaluate_guard_set_on_values(

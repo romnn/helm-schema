@@ -8,8 +8,6 @@ use test_util::prelude::sim_assert_eq;
 mod chart_instances;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
-#[path = "common/values_yaml.rs"]
-mod values_yaml;
 
 #[test]
 fn datadog_image_tag_accepts_non_strings() -> eyre::Result<()> {

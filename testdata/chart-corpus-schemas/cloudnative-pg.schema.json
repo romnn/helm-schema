@@ -1417,47 +1417,6 @@
   "allOf": [
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "monitoring": {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/13"
-                  },
-                  {
-                    "type": "object"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "monitoring"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/1f"
-          },
-          {
-            "properties": {
-              "monitoring": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "monitoring"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
         "$ref": "#/$defs/u"
       },
       "then": {
@@ -2318,6 +2277,62 @@
           },
           {
             "$ref": "#/$defs/l"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "monitoring": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/13"
+                  },
+                  {
+                    "type": "object"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "monitoring"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/1f"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "monitoring": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                },
+                "required": [
+                  "monitoring"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "properties": {
+                    "monitoring": {}
+                  },
+                  "required": [
+                    "monitoring"
+                  ],
+                  "type": "object"
+                }
+              }
+            ]
           }
         ]
       },

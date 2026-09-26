@@ -68,13 +68,29 @@ pub(crate) fn discover_chart_contexts_with_budget(
 ) -> EngineResult<Vec<ChartContext>> {
     let mut out = Vec::new();
     let chart_yaml = read_chart_yaml(root_chart_dir)?;
-    discover_chart_contexts_inner(root_chart_dir, &chart_yaml, &[], &[], load_budget, &mut out)?;
+    // Helm names the root of the template namespace after the chart, so a
+    // nameless chart falls back to its directory the same way a nameless
+    // dependency does.
+    let namespace = chart_yaml
+        .name
+        .clone()
+        .unwrap_or_else(|| root_chart_dir.filename());
+    discover_chart_contexts_inner(
+        root_chart_dir,
+        &chart_yaml,
+        &namespace,
+        &[],
+        &[],
+        load_budget,
+        &mut out,
+    )?;
     Ok(out)
 }
 
 fn discover_chart_contexts_inner(
     chart_dir: &VfsPath,
     chart_yaml: &ChartYaml,
+    template_namespace: &str,
     parent_prefix: &[String],
     dependency_activation_chain: &[ChartDependencyActivation],
     load_budget: LoadBudget,
@@ -84,11 +100,21 @@ fn discover_chart_contexts_inner(
         .chart_type
         .as_deref()
         .is_some_and(|chart_type| chart_type.eq_ignore_ascii_case("library"));
-    let static_root_strings = chart_static_root_strings(chart_yaml);
+    let mut static_root_strings = chart_static_root_strings(chart_yaml);
+    // `.Template.BasePath` is per chart, not per file: Helm reports the
+    // executing chart's own `templates` directory for every file it owns,
+    // whatever subdirectory that file lives in. Binding it here lets the
+    // ordinary constant folding resolve `include (print $.Template.BasePath
+    // "/x.yaml")` to that chart's own template.
+    static_root_strings.insert(
+        vec!["Template".to_string(), "BasePath".to_string()],
+        format!("{template_namespace}/templates"),
+    );
 
     out.push(ChartContext {
         chart_dir: chart_dir.clone(),
         values_prefix: parent_prefix.to_vec(),
+        template_namespace: template_namespace.to_string(),
         is_library,
         static_root_strings,
         dependency_activation_chain: dependency_activation_chain.to_vec(),
@@ -155,6 +181,10 @@ fn discover_chart_contexts_inner(
             });
 
         for dependency_metadata in dependency_metadata {
+            let child_namespace = format!(
+                "{template_namespace}/charts/{}",
+                dependency_metadata.values_key
+            );
             let mut prefix = parent_prefix.to_vec();
             prefix.push(dependency_metadata.values_key);
 
@@ -170,6 +200,7 @@ fn discover_chart_contexts_inner(
             discover_chart_contexts_inner(
                 &sub_dir,
                 &sub_chart_yaml,
+                &child_namespace,
                 &prefix,
                 &chain,
                 load_budget,

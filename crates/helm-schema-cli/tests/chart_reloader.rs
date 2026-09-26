@@ -14,8 +14,6 @@ use color_eyre::eyre;
 mod chart_instances;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
-#[path = "common/values_yaml.rs"]
-mod values_yaml;
 
 #[test]
 fn reloader_pod_monitor_tls_config_accepts_the_map_helm_renders() -> eyre::Result<()> {

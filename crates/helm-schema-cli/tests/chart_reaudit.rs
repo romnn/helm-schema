@@ -19,14 +19,17 @@ use test_util::prelude::sim_assert_eq;
 mod chart_instances;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
-#[path = "common/values_yaml.rs"]
-mod values_yaml;
 
 struct SemanticCase {
     label: &'static str,
     overrides: Value,
     accepted: bool,
     rejected_path: Option<&'static str>,
+    /// Helm renders this case but the generator rejects it. The case pins the
+    /// defect like `QUARANTINED_FALSE_REJECTIONS` in `chart_corpus.rs`: it
+    /// fails once the rejection disappears, and the landing fix must flip it
+    /// to [`SemanticCase::accepted`].
+    quarantined: bool,
 }
 
 impl SemanticCase {
@@ -36,6 +39,7 @@ impl SemanticCase {
             overrides,
             accepted: true,
             rejected_path: None,
+            quarantined: false,
         }
     }
 
@@ -45,6 +49,21 @@ impl SemanticCase {
             overrides,
             accepted: false,
             rejected_path: Some(rejected_path),
+            quarantined: false,
+        }
+    }
+
+    fn quarantined_false_rejection(
+        label: &'static str,
+        rejected_path: &'static str,
+        overrides: Value,
+    ) -> Self {
+        Self {
+            label,
+            overrides,
+            accepted: false,
+            rejected_path: Some(rejected_path),
+            quarantined: true,
         }
     }
 }
@@ -98,10 +117,18 @@ fn assert_chart_cases(chart: &str, cases: Vec<SemanticCase>) -> eyre::Result<()>
                     || error.instance_path.starts_with(&path_prefix)
                     || rejected_path.starts_with(&error_prefix)
             }) {
-                failures.push(format!(
-                    "{} should be rejected at {rejected_path}; new errors were: {additional_errors:#?}",
-                    case.label
-                ));
+                if case.quarantined {
+                    failures.push(format!(
+                        "{}: the quarantined false rejection at {rejected_path} is fixed; \
+                         make the case accepted",
+                        case.label
+                    ));
+                } else {
+                    failures.push(format!(
+                        "{} should be rejected at {rejected_path}; new errors were: {additional_errors:#?}",
+                        case.label
+                    ));
+                }
             }
         }
     }
@@ -4884,7 +4911,7 @@ fn dependency_owned_deletions_bind_under_a_surviving_root() -> eyre::Result<()> 
             ),
             SemanticCase::rejected(
                 "the refilled root drops the parent's own keys for it",
-                "",
+                "/grafana",
                 json!({ "grafana": null }),
             ),
             SemanticCase::accepted(
@@ -4896,8 +4923,17 @@ fn dependency_owned_deletions_bind_under_a_surviving_root() -> eyre::Result<()> 
     assert_chart_cases(
         "kyverno",
         vec![
-            SemanticCase::accepted(
+            // Helm v4.2.3 RENDERS `--set grafana=null`: deleting `grafana`
+            // leaves the `grafana.enabled` condition absent, an absent
+            // condition enables the dependency, and the enabled grafana
+            // subchart refills its own `configMapName` default
+            // (`{{ include "kyverno.fullname" . }}-grafana`, a `tpl` input).
+            // The generator rejects that refilled string at
+            // `/grafana/configMapName` on both the pre-F23 and the F23
+            // schema; the root-only instances used to hide it.
+            SemanticCase::quarantined_false_rejection(
                 "a deleted root whose every read is subchart-declared refills",
+                "/grafana/configMapName",
                 json!({ "grafana": null }),
             ),
             SemanticCase::rejected(

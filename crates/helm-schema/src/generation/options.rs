@@ -7,7 +7,8 @@ use crate::provider_builder::ProviderOptions;
 
 pub use helm_schema_gen::{
     ConditionalAnchors, EmissionClassKind, EmissionPolicy, EmissionPolicyDelta, EmissionReport,
-    EmissionSelection, InvalidEmissionPolicy, ResolvedEmissionPolicy, SchemaProfile,
+    EmissionSelection, InvalidEmissionPolicy, LintDocument, LintOutcome, LintWithdrawal,
+    ResolvedEmissionPolicy, SchemaProfile,
 };
 
 /// Inputs and analysis policy for generating one chart schema.

@@ -40,6 +40,7 @@ mod helper_projection;
 mod int_cast_preimages;
 mod iterable_lanes;
 mod kind_partition_matrix;
+mod lint_gate;
 mod member_access_contracts;
 mod member_carriers;
 mod member_serialized_shapes;
@@ -187,7 +188,7 @@ pub(crate) fn prepared_values_documents(values_yaml: Option<&str>) -> PreparedVa
     let composed = values_yaml
         .and_then(|source| serde_yaml::from_str(source).ok())
         .unwrap_or(serde_yaml::Value::Null);
-    PreparedValuesDocuments::new(composed, serde_yaml::Value::Null, serde_yaml::Value::Null)
+    PreparedValuesDocuments::new(composed, serde_yaml::Value::Null)
 }
 
 fn schema_for_values_yaml(source: impl SchemaSignalSource, values_yaml: Option<&str>) -> Value {
@@ -198,20 +199,18 @@ fn schema_for_values_yaml(source: impl SchemaSignalSource, values_yaml: Option<&
     )
 }
 
-/// Schema for a chart with dependencies: the composed defaults, the
-/// deeper-stage defaults a missing key reads instead of nil (the subchart
-/// declarations the parent's own values.yaml does not repeat), and the
-/// defaults helm refills a DELETED dependency values root with.
+/// Schema for a chart with dependencies: the composed defaults, and the
+/// defaults helm refills a DELETED dependency values root with. A key
+/// missing INSIDE a surviving root needs no third document — helm validates
+/// the coalesced values, so it reads nil however it was declared.
 fn schema_for_dependency_values_yaml(
     source: impl SchemaSignalSource,
     values_yaml: &str,
-    deeper_stage_yaml: &str,
     refill_yaml: &str,
 ) -> Value {
     let schema_signals = source.into_schema_signals();
     let documents = PreparedValuesDocuments::new(
         serde_yaml::from_str(values_yaml).unwrap_or(serde_yaml::Value::Null),
-        serde_yaml::from_str(deeper_stage_yaml).unwrap_or(serde_yaml::Value::Null),
         serde_yaml::from_str(refill_yaml).unwrap_or(serde_yaml::Value::Null),
     );
     generate_values_schema(

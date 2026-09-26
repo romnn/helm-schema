@@ -4134,34 +4134,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/11"
-          },
-          {
-            "$ref": "#/$defs/1O"
-          },
-          {
-            "$ref": "#/$defs/p"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "provider": {
-            "additionalProperties": {},
-            "properties": {
-              "webhook": {
-                "$ref": "#/$defs/2Y"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "properties": {
               "txtPrefix": {
                 "$ref": "#/$defs/t"
@@ -4915,6 +4887,75 @@
         "properties": {
           "provider": {
             "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/11"
+          },
+          {
+            "$ref": "#/$defs/1O"
+          },
+          {
+            "$ref": "#/$defs/p"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "provider": {
+              "properties": {
+                "webhook": {
+                  "properties": {
+                    "image": {
+                      "properties": {
+                        "repository": {
+                          "not": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "repository"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "image"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "webhook"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "provider"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "additionalProperties": {},
+          "properties": {
+            "provider": {
+              "additionalProperties": {},
+              "properties": {
+                "webhook": {
+                  "$ref": "#/$defs/2Y"
+                }
+              }
+            }
           }
         }
       }

@@ -92,7 +92,7 @@ fn define_index_tracks_file_sources_deterministically() {
         want: Some("kind: ConfigMap\n")
     );
     sim_assert_eq!(
-        have: idx.file_sources().map(|(path, _)| path).collect::<Vec<_>>(),
+        have: idx.file_sources().map(|(path, ..)| path).collect::<Vec<_>>(),
         want: vec!["templates/a.yaml", "templates/z.yaml"]
     );
 }

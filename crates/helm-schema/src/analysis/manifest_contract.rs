@@ -261,11 +261,11 @@ impl<'a> DefineCorpus<'a> {
             for path in defines.define_source_paths(name) {
                 let owner = charts
                     .iter()
-                    .map(normalized_chart_dir)
-                    .filter(|dir| file_in_dir(path, dir))
-                    .max_by_key(String::len);
-                if let Some(owner) = &owner {
-                    owner_dirs.insert(owner.clone());
+                    .map(|chart| chart.template_namespace.as_str())
+                    .filter(|namespace| template_in_namespace(path, namespace))
+                    .max_by_key(|namespace| namespace.len());
+                if let Some(owner) = owner {
+                    owner_dirs.insert(owner.to_string());
                 }
             }
             if defines.define_body(name).is_some() {
@@ -281,7 +281,7 @@ impl<'a> DefineCorpus<'a> {
 
     /// Define names whose every known owner lies inside `dir` (or is `dir`
     /// itself). A name with no known owner is never "solely owned" — its
-    /// defining file sits outside every chart directory.
+    /// defining file is not a template of any chart in the tree.
     fn names_owned_solely_under(&self, dir: &str) -> std::collections::BTreeSet<String> {
         self.facts
             .iter()
@@ -297,15 +297,16 @@ impl<'a> DefineCorpus<'a> {
     }
 }
 
-/// Define-index paths are chart-relative while chart dirs carry a leading
-/// slash; compare both without it and on directory boundaries.
-fn normalized_chart_dir(chart: &chart::ChartContext) -> String {
-    chart.chart_dir.as_str().trim_start_matches('/').to_string()
-}
-
-fn file_in_dir(file: &str, dir: &str) -> bool {
-    let file = file.trim_start_matches('/');
-    dir.is_empty() || file == dir || file.starts_with(&format!("{dir}/"))
+/// Whether a define-index path is one of the namespace's own templates.
+///
+/// Template names and chart namespaces nest the same way Helm nests them
+/// (`root`, `root/charts/kid`, `root/charts/kid/charts/grandkid`), so the
+/// owning chart is the longest namespace that prefixes the name on a
+/// segment boundary. A `.Files.Get` payload is keyed by its chart-relative
+/// path and belongs to no namespace.
+fn template_in_namespace(path: &str, namespace: &str) -> bool {
+    path.strip_prefix(namespace)
+        .is_some_and(|rest| rest.starts_with('/'))
 }
 
 pub(crate) fn optional_dependency_helpers_for_chart(
@@ -333,7 +334,7 @@ pub(crate) fn optional_dependency_helpers_for_chart(
         if activation_sets.is_empty() {
             continue;
         }
-        let helper_names = corpus.names_owned_solely_under(&normalized_chart_dir(dependency));
+        let helper_names = corpus.names_owned_solely_under(&dependency.template_namespace);
         if helper_names.is_empty() {
             continue;
         }

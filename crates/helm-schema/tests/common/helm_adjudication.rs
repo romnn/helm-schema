@@ -2,6 +2,7 @@
 
 use std::cell::OnceCell;
 use std::collections::BTreeMap;
+use std::fmt;
 use std::fs;
 use std::io::Read as _;
 use std::path::{Component, Path, PathBuf};
@@ -12,11 +13,16 @@ use flate2::Compression;
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
 use helm_schema::output::LoadBudget;
-use helm_schema_core::{ResourceRef, YamlPath};
-use helm_schema_k8s::{K8sSchemaProvider as _, KubernetesJsonSchemaProvider, ProviderLookupResult};
+use helm_schema_core::{ApiPresenceQuery, ResourceRef, YamlPath};
+use helm_schema_k8s::{
+    CrdsCatalogSchemaProvider, K8sSchemaProvider, KubernetesJsonSchemaProvider,
+    ProviderLookupResult, is_k8s_builtin_group,
+};
 use indoc::indoc;
 use serde::Deserialize as _;
 use serde_json::Value;
+
+use crate::kubernetes_version::chart_kubernetes_version;
 
 /// Values obtained from template-free Helm execution, before chart mutation.
 pub(crate) struct CoalescedValues(Value);
@@ -28,7 +34,8 @@ impl CoalescedValues {
 }
 
 pub(crate) struct HelmProbe {
-    pub(crate) values: CoalescedValues,
+    /// `None` when Helm aborts while coalescing values, e.g. on a non-table subchart scope.
+    pub(crate) values: Option<CoalescedValues>,
     pub(crate) rendered: Output,
     pub(crate) evidence_dir: PathBuf,
 }
@@ -38,7 +45,10 @@ pub(crate) struct PinnedHelmChart {
     evidence_dir: PathBuf,
     render_chart: PathBuf,
     coalesce_chart: PathBuf,
+    /// The `--kube-version` both executions run under.
+    kubernetes_version: &'static str,
     control_documents: OnceCell<Result<Vec<Value>, String>>,
+    defaults_evaluation: OnceCell<Vec<(Value, Vec<ViolationKey>)>>,
 }
 
 impl PinnedHelmChart {
@@ -74,6 +84,7 @@ impl PinnedHelmChart {
             render_chart.join("Chart.yaml").is_file(),
             "chart has no manifest"
         );
+        let kubernetes_version = chart_kubernetes_version(&render_chart)?;
         fs::create_dir_all(coalesce_chart.join("templates"))?;
         fs::write(
             coalesce_chart.join("templates/adjudication-values.yaml"),
@@ -90,15 +101,33 @@ impl PinnedHelmChart {
             evidence_dir,
             render_chart,
             coalesce_chart,
+            kubernetes_version,
             control_documents: OnceCell::new(),
+            defaults_evaluation: OnceCell::new(),
         })
     }
 
     /// Both executions read the same saved overlay, including when rendering aborts.
     pub(crate) fn adjudicate(&self, overlay: &Value) -> eyre::Result<HelmProbe> {
         let evidence_dir = self.new_case()?;
-        let values = coalesce_in(&self.coalesce_chart, &evidence_dir, overlay)?;
-        let rendered = run_helm(&self.render_chart, &evidence_dir, "render")?;
+        let values = coalesce_in(
+            &self.coalesce_chart,
+            &evidence_dir,
+            overlay,
+            self.kubernetes_version,
+        )?;
+        let rendered = run_helm(
+            &self.render_chart,
+            &evidence_dir,
+            "render",
+            self.kubernetes_version,
+        )?;
+        // Rendering coalesces the same values first, so it cannot survive a coalescence abort.
+        eyre::ensure!(
+            values.is_some() || !rendered.status.success(),
+            "Helm rendered values it could not coalesce; evidence={}",
+            evidence_dir.display()
+        );
         Ok(HelmProbe {
             values,
             rendered,
@@ -146,18 +175,27 @@ fn require_pinned_helm() -> eyre::Result<()> {
     Ok(())
 }
 
-fn coalesce_in(chart: &Path, case: &Path, overlay: &Value) -> eyre::Result<CoalescedValues> {
+/// Returns `None` when Helm aborts before values reach templates.
+///
+/// Helm v4.2.3 `coalesceDeps` (pkg/chart/common/util/coalesce.go:118-119) aborts with "type
+/// mismatch on <subchart>" when a subchart scope is not a table.
+/// A non-table over a nested default table only prints "cannot overwrite table with non
+/// table" (coalesce.go:350), keeps the user's value and continues, so that warning never
+/// decides a verdict.
+fn coalesce_in(
+    chart: &Path,
+    case: &Path,
+    overlay: &Value,
+    kubernetes_version: &str,
+) -> eyre::Result<Option<CoalescedValues>> {
     fs::write(
         case.join("values.json"),
         serde_json::to_vec_pretty(overlay)?,
     )?;
-    let output = run_helm(chart, case, "coalesce")?;
-    eyre::ensure!(
-        output.status.success(),
-        "Helm coalescence failed; evidence={}: {}",
-        case.display(),
-        String::from_utf8_lossy(&output.stderr)
-    );
+    let output = run_helm(chart, case, "coalesce", kubernetes_version)?;
+    if !output.status.success() {
+        return Ok(None);
+    }
     let mut documents = serde_yaml::Deserializer::from_slice(&output.stdout);
     let document = Value::deserialize(documents.next().ok_or_eyre("missing values dump")?)?;
     eyre::ensure!(
@@ -174,14 +212,20 @@ fn coalesce_in(chart: &Path, case: &Path, overlay: &Value) -> eyre::Result<Coale
         case.join("coalesced.json"),
         serde_json::to_vec_pretty(&values)?,
     )?;
-    Ok(CoalescedValues(values))
+    Ok(Some(CoalescedValues(values)))
 }
 
-fn run_helm(chart: &Path, case: &Path, stage: &str) -> eyre::Result<Output> {
+fn run_helm(
+    chart: &Path,
+    case: &Path,
+    stage: &str,
+    kubernetes_version: &str,
+) -> eyre::Result<Output> {
     let output = Command::new("helm")
         .args(["template", "adjudication"])
         .arg(chart)
-        .args(["--kube-version", "1.29.0", "--skip-schema-validation", "-f"])
+        .args(["--kube-version", kubernetes_version])
+        .args(["--skip-schema-validation", "-f"])
         .arg(case.join("values.json"))
         .output()
         .wrap_err_with(|| format!("run Helm {stage}; evidence={}", case.display()))?;
@@ -364,68 +408,141 @@ fn copy_chart_archive(
 #[derive(Debug, PartialEq, Eq)]
 pub(crate) enum KubernetesVerdict {
     Valid,
-    UnchangedUnknown(Vec<String>),
-    Invalid(Vec<String>),
+    Invalid(Vec<KubernetesViolation>),
     Uncertain(Vec<String>),
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
-struct ResourceIdentity {
-    api_version: String,
-    kind: String,
-    namespace: Option<String>,
-    name: String,
+/// A violated assertion of a validated document, independent of the
+/// document's position in a render and of its name, which a probe may change
+/// without changing what the document violates. A values document has no
+/// `api_version` or `kind`.
+#[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) struct ViolationKey {
+    pub(crate) api_version: String,
+    pub(crate) kind: String,
+    /// Pointer to the violating value.
+    pub(crate) instance_path: String,
+    /// Keyword location of the violated assertion.
+    pub(crate) schema_path: String,
+    /// The violated keyword.
+    pub(crate) keyword: String,
+    /// What tells violations of one assertion apart: the property a
+    /// `required` misses, the properties `additionalProperties` rejects,
+    /// else the offending value when it is a scalar and its type when not.
+    pub(crate) detail: String,
 }
 
-impl ResourceIdentity {
-    fn from_document(document: &Value) -> Option<Self> {
-        let metadata = document.get("metadata")?.as_object()?;
-        let namespace = match metadata.get("namespace") {
-            None => None,
-            Some(Value::String(value)) => Some(value.clone()),
-            Some(_) => return None,
+impl ViolationKey {
+    pub(crate) fn new(
+        api_version: &str,
+        kind: &str,
+        error: &jsonschema::ValidationError<'_>,
+    ) -> Self {
+        let detail = match error.kind() {
+            jsonschema::error::ValidationErrorKind::Required { property } => property.to_string(),
+            jsonschema::error::ValidationErrorKind::AdditionalProperties { unexpected } => {
+                unexpected.join(", ")
+            }
+            _ => match error.instance().as_ref() {
+                Value::Object(_) => "object".to_string(),
+                Value::Array(_) => "array".to_string(),
+                scalar => scalar.to_string(),
+            },
         };
-        let identity = Self {
-            api_version: document.get("apiVersion")?.as_str()?.to_string(),
-            kind: document.get("kind")?.as_str()?.to_string(),
-            namespace,
-            name: metadata.get("name")?.as_str()?.to_string(),
-        };
-        (!identity.api_version.is_empty() && !identity.kind.is_empty() && !identity.name.is_empty())
-            .then_some(identity)
+        Self {
+            api_version: api_version.to_string(),
+            kind: kind.to_string(),
+            instance_path: error.instance_path().to_string(),
+            schema_path: error.schema_path().to_string(),
+            keyword: error.kind().keyword().to_string(),
+            detail,
+        }
     }
 }
 
-fn index_resources(documents: &[Value]) -> BTreeMap<ResourceIdentity, Option<Value>> {
-    let mut index = BTreeMap::new();
-    let mut pending: Vec<_> = documents.iter().collect();
-    while let Some(document) = pending.pop() {
-        if let Some(identity) = ResourceIdentity::from_document(document) {
-            // A duplicate cannot be paired unambiguously, even when both copies are equal.
-            index
-                .entry(identity)
-                .and_modify(|entry| *entry = None)
-                .or_insert_with(|| Some(document.clone()));
-        }
-        if document.get("apiVersion").and_then(Value::as_str) == Some("v1")
-            && document.get("kind").and_then(Value::as_str) == Some("List")
-            && let Some(items) = document.get("items").and_then(Value::as_array)
-        {
-            pending.extend(items);
+impl fmt::Display for ViolationKey {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(
+            formatter,
+            "{}: {} {} at {}",
+            self.instance_path, self.keyword, self.detail, self.schema_path
+        )
+    }
+}
+
+/// One schema violation of a rendered resource.
+#[derive(Debug, PartialEq, Eq)]
+pub(crate) struct KubernetesViolation {
+    /// Position in the rendered stream, such as `document 2/items/0`.
+    pub(crate) location: String,
+    pub(crate) namespace: Option<String>,
+    pub(crate) name: Option<String>,
+    pub(crate) key: ViolationKey,
+    pub(crate) message: String,
+}
+
+impl KubernetesViolation {
+    /// A document without a string apiVersion and kind.
+    fn unidentified(location: &str) -> Self {
+        Self {
+            location: location.to_string(),
+            namespace: None,
+            name: None,
+            key: ViolationKey {
+                api_version: String::new(),
+                kind: String::new(),
+                instance_path: String::new(),
+                schema_path: "/required".to_string(),
+                keyword: "required".to_string(),
+                detail: "apiVersion, kind".to_string(),
+            },
+            message: "a resource needs a string apiVersion and kind".to_string(),
         }
     }
-    index
+}
+
+impl fmt::Display for KubernetesViolation {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let key = &self.key;
+        let name = self.name.as_deref().unwrap_or("<unnamed>");
+        match &self.namespace {
+            Some(namespace) => write!(
+                formatter,
+                "{}: {}/{} {namespace}/{name}: {}: {}",
+                self.location, key.api_version, key.kind, key.instance_path, self.message
+            ),
+            None => write!(
+                formatter,
+                "{}: {}/{} {name}: {}: {}",
+                self.location, key.api_version, key.kind, key.instance_path, self.message
+            ),
+        }
+    }
+}
+
+/// A probe render judged against the chart's defaults render.
+#[derive(Debug, Default)]
+pub(crate) struct DefaultsComparison {
+    /// Violations of new or changed documents beyond what the unpaired
+    /// defaults documents carry.
+    pub(crate) new_violations: Vec<KubernetesViolation>,
+    /// Violations of new or changed documents that the unpaired defaults
+    /// documents carry too, counted with multiplicity.
+    pub(crate) inherited_violations: Vec<KubernetesViolation>,
+    /// New or changed documents whose validity could not be decided.
+    pub(crate) uncertain: Vec<String>,
 }
 
 #[derive(Default)]
 struct ResourceEvidence {
-    invalid: Vec<String>,
+    invalid: Vec<KubernetesViolation>,
     uncertain: Vec<String>,
-    unchanged: Vec<String>,
 }
 
 pub(crate) struct OfflineKubernetesValidator {
     provider: KubernetesJsonSchemaProvider,
+    /// The pinned CRD catalog that decides non-built-in kinds, if any.
+    crds: Option<CrdsCatalogSchemaProvider>,
     validators: BTreeMap<(String, String), Result<jsonschema::Validator, String>>,
 }
 
@@ -435,62 +552,121 @@ impl OfflineKubernetesValidator {
             provider: KubernetesJsonSchemaProvider::new("v1.29.0-standalone-strict")
                 .with_cache_dir(cache)
                 .with_allow_download(false),
+            crds: None,
             validators: BTreeMap::new(),
         }
     }
 
-    /// A proven violation is decisive even when another resource lacks a schema.
-    pub(crate) fn validate(&mut self, rendered: &[u8]) -> eyre::Result<KubernetesVerdict> {
-        Ok(self.validate_documents(&Self::decode(rendered)?, &BTreeMap::new()))
+    /// Also judges CRD kinds by the schemas pinned in the CRD catalog cache
+    /// `cache`.
+    pub(crate) fn with_crd_catalog(mut self, cache: &Path) -> Self {
+        self.crds = Some(
+            CrdsCatalogSchemaProvider::new()
+                .with_cache_dir(cache)
+                .with_allow_download(false),
+        );
+        self
     }
 
-    fn validate_documents(
-        &mut self,
-        documents: &[Value],
-        unchanged: &BTreeMap<ResourceIdentity, Value>,
-    ) -> KubernetesVerdict {
+    /// A proven violation is decisive even when another resource lacks a schema.
+    pub(crate) fn validate(&mut self, rendered: &[u8]) -> eyre::Result<KubernetesVerdict> {
         let mut evidence = ResourceEvidence::default();
-        for (index, document) in documents.iter().enumerate() {
-            if document.is_null() {
-                continue;
+        for (index, document) in Self::decode(rendered)?.iter().enumerate() {
+            if !document.is_null() {
+                self.validate_document(document, &format!("document {index}"), &mut evidence);
             }
-            self.validate_document(
-                document,
-                &format!("document {index}"),
-                unchanged,
-                &mut evidence,
-            );
         }
-        if !evidence.invalid.is_empty() {
+        Ok(if !evidence.invalid.is_empty() {
             KubernetesVerdict::Invalid(evidence.invalid)
         } else if !evidence.uncertain.is_empty() {
             KubernetesVerdict::Uncertain(evidence.uncertain)
-        } else if !evidence.unchanged.is_empty() {
-            KubernetesVerdict::UnchangedUnknown(evidence.unchanged)
         } else {
             KubernetesVerdict::Valid
-        }
+        })
     }
 
-    pub(crate) fn validate_differential(
+    /// Judges `rendered` against the chart's defaults render, which a schema
+    /// must accept even when it violates Kubernetes.
+    ///
+    /// A probe document equal to a still unpaired defaults document is
+    /// unchanged and needs no proof. Every other document must be validated
+    /// completely; its violations are inherited only as far as the unpaired
+    /// defaults documents carry the same ones, counted with multiplicity. A
+    /// failed defaults render leaves no baseline, so every document is new.
+    pub(crate) fn compare_with_defaults(
         &mut self,
         chart: &PinnedHelmChart,
         rendered: &[u8],
-    ) -> eyre::Result<KubernetesVerdict> {
-        let Ok(control) = chart.control_documents() else {
-            return self.validate(rendered);
-        };
-        let documents = Self::decode(rendered)?;
-        let mut unchanged = BTreeMap::new();
-        let controls = index_resources(control);
-        for (identity, document) in index_resources(&documents) {
-            if let Some(document) = document
-                && controls.get(&identity).and_then(Option::as_ref) == Some(&document)
-            {
-                unchanged.insert(identity, document);
+    ) -> eyre::Result<DefaultsComparison> {
+        let defaults = self.defaults_evaluation(chart);
+        let mut unpaired: Vec<&(Value, Vec<ViolationKey>)> = defaults.iter().collect();
+        let mut changed = ResourceEvidence::default();
+        for (index, document) in Self::decode(rendered)?.iter().enumerate() {
+            if document.is_null() {
+                continue;
+            }
+            // A decoder error or a rounded number hides what the document was.
+            let comparable = document.get("Error").is_none() && !has_inexact_number(document);
+            let pair = unpaired
+                .iter()
+                .position(|(default, _)| comparable && default == document);
+            match pair {
+                Some(position) => {
+                    unpaired.remove(position);
+                }
+                None => {
+                    self.validate_document(document, &format!("document {index}"), &mut changed);
+                }
             }
         }
-        Ok(self.validate_documents(&documents, &unchanged))
+        let mut allowed = BTreeMap::<&ViolationKey, usize>::new();
+        for (_, keys) in &unpaired {
+            for key in keys {
+                *allowed.entry(key).or_default() += 1;
+            }
+        }
+        let mut comparison = DefaultsComparison {
+            uncertain: changed.uncertain,
+            ..DefaultsComparison::default()
+        };
+        for violation in changed.invalid {
+            match allowed.get_mut(&violation.key) {
+                Some(remaining) if *remaining > 0 => {
+                    *remaining -= 1;
+                    comparison.inherited_violations.push(violation);
+                }
+                _ => comparison.new_violations.push(violation),
+            }
+        }
+        Ok(comparison)
+    }
+
+    /// The defaults render's documents with their violations, computed once
+    /// per chart.
+    fn defaults_evaluation<'c>(
+        &mut self,
+        chart: &'c PinnedHelmChart,
+    ) -> &'c [(Value, Vec<ViolationKey>)] {
+        chart.defaults_evaluation.get_or_init(|| {
+            let Ok(control) = chart.control_documents() else {
+                return Vec::new();
+            };
+            let mut evaluated = Vec::new();
+            for document in control {
+                if document.is_null() {
+                    continue;
+                }
+                let mut evidence = ResourceEvidence::default();
+                self.validate_document(document, "defaults", &mut evidence);
+                let keys = evidence
+                    .invalid
+                    .into_iter()
+                    .map(|violation| violation.key)
+                    .collect();
+                evaluated.push((document.clone(), keys));
+            }
+            evaluated
+        })
     }
 
     fn decode(rendered: &[u8]) -> eyre::Result<Vec<Value>> {
@@ -498,6 +674,15 @@ impl OfflineKubernetesValidator {
         let documents = yaml_documents(source)?;
         if documents.is_empty() {
             return Ok(Vec::new());
+        }
+        // A document of comments alone parses as null: Kubernetes' decoder
+        // skips it, where Helm's `fromYaml` would read it as `{}`.
+        let mut empty = Vec::new();
+        for document in &documents {
+            empty.push(matches!(
+                serde_yaml::from_str::<serde_yaml::Value>(document),
+                Ok(serde_yaml::Value::Null)
+            ));
         }
         let case = prepare_yaml_decoder()?;
         let chart = case.join("chart");
@@ -514,7 +699,7 @@ impl OfflineKubernetesValidator {
             case.join("values.json"),
             serde_json::to_vec(&serde_json::json!({"documents": filenames}))?,
         )?;
-        let output = run_helm(&chart, &case, "decode")?;
+        let output = run_helm(&chart, &case, "decode", chart_kubernetes_version(&chart)?)?;
         eyre::ensure!(
             output.status.success(),
             "Helm YAML decoding failed; evidence={}: {}",
@@ -526,8 +711,13 @@ impl OfflineKubernetesValidator {
             .pointer("/data/documents")
             .and_then(Value::as_str)
             .ok_or_eyre("Helm YAML decoder did not return documents")?;
-        let decoded = serde_json::from_str(json)?;
+        let mut decoded: Vec<Value> = serde_json::from_str(json)?;
         fs::write(case.join("documents.json"), json)?;
+        for (document, empty) in decoded.iter_mut().zip(empty) {
+            if empty {
+                *document = Value::Null;
+            }
+        }
         Ok(decoded)
     }
 
@@ -535,7 +725,6 @@ impl OfflineKubernetesValidator {
         &mut self,
         document: &Value,
         location: &str,
-        unchanged: &BTreeMap<ResourceIdentity, Value>,
         evidence: &mut ResourceEvidence,
     ) {
         if let Some(error) = document.get("Error") {
@@ -550,16 +739,15 @@ impl OfflineKubernetesValidator {
             ));
             return;
         }
-        let Some(api_version) = document.get("apiVersion").and_then(Value::as_str) else {
+        // A document without a string apiVersion and kind is no resource
+        // Kubernetes can accept, such as the `{}` an empty list item renders.
+        let (Some(api_version), Some(kind)) = (
+            document.get("apiVersion").and_then(Value::as_str),
+            document.get("kind").and_then(Value::as_str),
+        ) else {
             evidence
-                .uncertain
-                .push(format!("{location}: no concrete apiVersion"));
-            return;
-        };
-        let Some(kind) = document.get("kind").and_then(Value::as_str) else {
-            evidence
-                .uncertain
-                .push(format!("{location}: no concrete kind"));
+                .invalid
+                .push(KubernetesViolation::unidentified(location));
             return;
         };
         if api_version == "v1"
@@ -567,44 +755,100 @@ impl OfflineKubernetesValidator {
             && let Some(items) = document.get("items").and_then(Value::as_array)
         {
             for (index, item) in items.iter().enumerate() {
-                self.validate_document(
-                    item,
-                    &format!("{location}/items/{index}"),
-                    unchanged,
-                    evidence,
-                );
+                self.validate_document(item, &format!("{location}/items/{index}"), evidence);
             }
         }
         let key = (api_version.to_string(), kind.to_string());
+        let group = api_version.split_once('/').map_or("", |(group, _)| group);
         let validator = self
             .validators
             .entry(key)
-            .or_insert_with(|| compile_resource_validator(&self.provider, api_version, kind));
+            .or_insert_with(|| match &self.crds {
+                Some(crds) if !is_k8s_builtin_group(group) => {
+                    compile_crd_validator(crds, api_version, kind)
+                }
+                _ => compile_resource_validator(&self.provider, api_version, kind),
+            });
         let name = document
             .pointer("/metadata/name")
             .and_then(Value::as_str)
-            .unwrap_or("<unnamed>");
-        let resource = format!("{location}: {api_version}/{kind} {name}");
+            .map(str::to_string);
+        let namespace = document
+            .pointer("/metadata/namespace")
+            .and_then(Value::as_str)
+            .map(str::to_string);
         match validator {
             Ok(validator) => {
                 for error in validator.iter_errors(document) {
-                    evidence
-                        .invalid
-                        .push(format!("{resource}: {}: {error}", error.instance_path()));
+                    evidence.invalid.push(KubernetesViolation {
+                        location: location.to_string(),
+                        namespace: namespace.clone(),
+                        name: name.clone(),
+                        key: ViolationKey::new(api_version, kind, &error),
+                        message: error.to_string(),
+                    });
                 }
             }
             Err(error) => {
-                let reason = format!("{resource}: {error}");
-                if ResourceIdentity::from_document(document)
-                    .is_some_and(|identity| unchanged.get(&identity) == Some(document))
+                // The bundle records a built-in group's kind as absent
+                // upstream: the pinned server does not serve it. Any other
+                // missing schema, a CRD's above all, stays undecided.
+                let query = ApiPresenceQuery::Resource {
+                    api_version: api_version.to_string(),
+                    kind: kind.to_string(),
+                };
+                if self
+                    .provider
+                    .capability_has_query_at_primary_version(&query)
+                    == Some(false)
                 {
-                    evidence.unchanged.push(reason);
-                } else {
-                    evidence.uncertain.push(reason);
+                    evidence.invalid.push(KubernetesViolation {
+                        location: location.to_string(),
+                        namespace,
+                        name,
+                        key: ViolationKey {
+                            api_version: api_version.to_string(),
+                            kind: kind.to_string(),
+                            instance_path: "/apiVersion".to_string(),
+                            schema_path: "/served".to_string(),
+                            keyword: "served".to_string(),
+                            detail: String::new(),
+                        },
+                        message: format!(
+                            "{api_version}/{kind} is not served by the pinned Kubernetes version"
+                        ),
+                    });
+                    return;
                 }
+                let name = name.as_deref().unwrap_or("<unnamed>");
+                evidence
+                    .uncertain
+                    .push(format!("{location}: {api_version}/{kind} {name}: {error}"));
             }
         }
     }
+}
+
+/// A CRD catalog schema carries no identity of its own; the catalog
+/// addresses it by exact group, kind and version, which is its identity. The
+/// provider hands out the document root with the `ObjectMeta` typing every
+/// custom resource's `metadata` gets, and the document has no references to
+/// lose. It is a structural `OpenAPI` schema, judged under the corpus's Draft 7.
+fn compile_crd_validator(
+    crds: &CrdsCatalogSchemaProvider,
+    api_version: &str,
+    kind: &str,
+) -> Result<jsonschema::Validator, String> {
+    let resource = ResourceRef::concrete(api_version.to_string(), kind.to_string());
+    let ProviderLookupResult::Found { schema, .. } = crds.lookup(&resource, &YamlPath::default())
+    else {
+        return Err("pinned CRD schema not found".to_string());
+    };
+    jsonschema::options()
+        .with_retriever(NoRemoteSchemas)
+        .with_draft(jsonschema::Draft::Draft7)
+        .build(schema.schema())
+        .map_err(|error| format!("pinned CRD schema did not compile: {error}"))
 }
 
 fn compile_resource_validator(

@@ -3106,6 +3106,77 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/q"
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "reloader": {
+              "properties": {
+                "deployment": {
+                  "properties": {
+                    "env": {
+                      "properties": {
+                        "secret": {
+                          "not": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "secret"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "env"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "deployment"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "reloader"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "additionalProperties": {},
+          "properties": {
+            "reloader": {
+              "additionalProperties": {},
+              "properties": {
+                "deployment": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "env": {
+                      "additionalProperties": {},
+                      "description": "Support for extra environment variables.",
+                      "properties": {
+                        "secret": {
+                          "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any.",
+                          "type": "object"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/o"
@@ -3956,36 +4027,6 @@
         "properties": {
           "namespace": {
             "$ref": "#/$defs/1R"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/q"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "reloader": {
-            "additionalProperties": {},
-            "properties": {
-              "deployment": {
-                "additionalProperties": {},
-                "properties": {
-                  "env": {
-                    "additionalProperties": {},
-                    "description": "Support for extra environment variables.",
-                    "properties": {
-                      "secret": {
-                        "description": "secret supports Key value pair as environment variables. It gets the values based on keys from default reloader secret if any.",
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
           }
         }
       }
@@ -5642,28 +5683,6 @@
             ]
           },
           "then": false
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "deployment": {
-              "additionalProperties": {},
-              "properties": {
-                "hostUsers": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "type": "boolean"
-                      },
-                      "then": {
-                        "type": "boolean"
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
         },
         {
           "additionalProperties": {},

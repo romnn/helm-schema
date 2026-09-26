@@ -1719,11 +1719,6 @@ fn eval_helper_call(
     {
         return result;
     }
-    if let Some(template_name) = args.first().and_then(template_base_path_suffix)
-        && let Some(result) = resolver.resolve_implicit_template_call(&template_name, args.get(1))
-    {
-        return result;
-    }
     if let Some(callee_expr) = args.first()
         && !matches!(callee_expr.deparen(), TemplateExpr::Literal(_))
     {
@@ -1748,37 +1743,6 @@ fn eval_helper_call(
     let mut effects = Effects::default();
     merge_arg_effects(args, env, resolver, &mut effects);
     EvalResult::with_effects(None, effects)
-}
-
-fn template_base_path_suffix(expr: &TemplateExpr) -> Option<String> {
-    let TemplateExpr::Call { function, args } = expr.deparen() else {
-        return None;
-    };
-    let (base, suffix_args) = args.split_first()?;
-    if function != "print" || suffix_args.is_empty() || !is_template_base_path(base) {
-        return None;
-    }
-
-    let mut suffix = String::new();
-    for arg in suffix_args {
-        let TemplateExpr::Literal(Literal::String(part) | Literal::RawString(part)) = arg.deparen()
-        else {
-            return None;
-        };
-        suffix.push_str(part);
-    }
-    (!suffix.is_empty()).then_some(suffix)
-}
-
-fn is_template_base_path(expr: &TemplateExpr) -> bool {
-    match expr.deparen() {
-        TemplateExpr::Field(path) => path.as_slice() == ["Template", "BasePath"],
-        TemplateExpr::Selector { operand, path } => {
-            path.as_slice() == ["Template", "BasePath"]
-                && matches!(operand.deparen(), TemplateExpr::Variable(name) if name.is_empty())
-        }
-        _ => false,
-    }
 }
 
 fn eval_all_args(

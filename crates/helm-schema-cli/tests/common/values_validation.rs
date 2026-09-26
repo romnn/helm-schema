@@ -2,28 +2,6 @@ use color_eyre::eyre::{self, WrapErr};
 use serde_json::Value;
 use test_util::prelude::sim_assert_eq;
 
-/// Delete null-valued map keys along MAP chains only. Helm's coalescing
-/// treats lists atomically — a list value replaces wholesale and its
-/// members (including nulls and null-valued keys inside them) reach the
-/// template verbatim — so recursion must stop at arrays.
-fn drop_nulls(v: &Value) -> Value {
-    match v {
-        Value::Object(map) => {
-            let mut out = serde_json::Map::new();
-            for (k, v) in map {
-                if v.is_null() {
-                    continue;
-                }
-                out.insert(k.clone(), drop_nulls(v));
-            }
-            Value::Object(out)
-        }
-        Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) | Value::Array(_) => {
-            v.clone()
-        }
-    }
-}
-
 /// Validate a JSON value against a JSON schema.
 ///
 /// Returns a list of human-readable validation error strings.
@@ -40,11 +18,14 @@ pub fn validate_json_against_schema(instance: &Value, schema: &Value) -> Vec<Str
         .collect()
 }
 
+/// The chart's coalesced default values: what Helm hands the schema when the
+/// user supplies nothing.
 pub fn values_yaml_as_json_for_path(chart_relative_path: &str) -> eyre::Result<Value> {
-    let values_yaml = crate::values_yaml::read_values_yaml_for_path(chart_relative_path)
-        .wrap_err("read values.yaml")?;
-    let values_json: Value = serde_yaml::from_str(&values_yaml).wrap_err("parse values.yaml")?;
-    Ok(drop_nulls(&values_json))
+    crate::chart_instances::with_override(
+        chart_relative_path,
+        Value::Object(serde_json::Map::new()),
+    )
+    .wrap_err("coalesce chart defaults")
 }
 
 pub fn assert_values_json_validates(values_json: &Value, schema: &Value) {

@@ -12,8 +12,6 @@ use color_eyre::eyre;
 mod chart_instances;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
-#[path = "common/values_yaml.rs"]
-mod values_yaml;
 
 #[test]
 fn cilium_spire_images_accept_strings_under_active_guards() -> eyre::Result<()> {

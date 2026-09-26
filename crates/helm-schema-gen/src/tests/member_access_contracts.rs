@@ -1066,9 +1066,8 @@ fn overlaid_range_members_keep_their_member_contracts() {
     }
 }
 
-/// The parent's own values.yaml declares only the `parentOnly` hosts, so
-/// the subchart declarations are what a missing key reads instead of nil,
-/// and only they come back when a root is deleted whole.
+/// The parent's own values.yaml declares the `parentOnly` hosts; only the
+/// subchart declarations come back when a root is deleted whole.
 fn dependency_owned_values_yaml() -> &'static str {
     indoc! {"
         sub:
@@ -1151,20 +1150,15 @@ fn dependency_owned_host_schema() -> Value {
     contract.push_pathless_dependency_fragment("other");
     contract.push_pathless_dependency_fragment("gated");
     contract.push_pathless_dependency_fragment("refilled");
-    schema_for_dependency_values_yaml(
-        contract,
-        dependency_owned_values_yaml(),
-        subchart_yaml,
-        subchart_yaml,
-    )
+    schema_for_dependency_values_yaml(contract, dependency_owned_values_yaml(), subchart_yaml)
 }
 
 /// A navigated host under a DEPENDENCY values root binds while that root
 /// survives: a deletion INSIDE a present root sticks through every later
 /// merge stage and reaches the consumer as nil, whoever declared the key
-/// (measured against helm v4.2.3 on a parent/subchart pair). A key the
-/// subchart itself declares still fills at its own coalesce stage when the
-/// parent-level document simply omits it.
+/// (measured against helm v4.2.3 on a parent/subchart pair, under every
+/// declaration split — parent-only, subchart-only, both, and under an
+/// alias).
 #[test]
 fn dependency_owned_hosts_bind_while_their_root_survives() {
     let schema = dependency_owned_host_schema();
@@ -1176,9 +1170,14 @@ fn dependency_owned_hosts_bind_while_their_root_survives() {
             "a deletion inside a present root sticks and aborts",
         ),
         (
+            // Corrected against helm v4.2.3: `--set sub.subDeclared=null`
+            // renders a coalesced document WITHOUT the key and aborts on
+            // `.enabled`. The subchart's own default does not resurrect it,
+            // because helm coalesces the subchart's values into a parent
+            // table that already recorded the deletion.
             serde_json::json!({ "sub": { "subDeclared": null } }),
-            true,
-            "an omitted subchart-declared host reads its own default",
+            false,
+            "a deleted subchart-declared host reads nil like any other",
         ),
         (
             serde_json::json!({ "gated": { "parentOnly": null } }),

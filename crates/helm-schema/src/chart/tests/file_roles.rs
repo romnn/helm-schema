@@ -84,6 +84,7 @@ fn loaded_chart_corpus_owns_the_classified_source_snapshot() -> eyre::Result<()>
     let chart = ChartContext {
         chart_dir,
         values_prefix: Vec::new(),
+        template_namespace: "demo".to_string(),
         is_library: false,
         static_root_strings: BTreeMap::new(),
         dependency_activation_chain: Vec::new(),

@@ -12,6 +12,8 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use vfs::VfsPath;
 
+use crate::helm_adjudication::ViolationKey;
+
 const MAX_PROBES_PER_CHART: usize = 50_000;
 const MAX_THIRD_LEVEL_DELETIONS_PER_CHART: usize = 2_048;
 const MAX_GUARD_STATE_PAIRS_PER_CHART: usize = 8;
@@ -157,21 +159,68 @@ impl ProfileSchemas {
         (self.full.is_valid(&instance), self.lean.is_valid(&instance))
     }
 
+    /// Whether screening proposes `probe` for adjudication: the profiles
+    /// disagree on it, or the candidate rejects it for an assertion the
+    /// baseline does not violate, which would hide a new false rejection
+    /// behind an old one.
+    pub(crate) fn screens_a_flip(&self, probe: &ProbeInstance) -> bool {
+        let instance = self.compose(probe);
+        let before = self.full.is_valid(&instance);
+        let after = self.lean.is_valid(&instance);
+        if before != after {
+            return true;
+        }
+        !after
+            && rejects_for_a_new_reason(
+                &violations(&self.full, &instance),
+                &violations(&self.lean, &instance),
+            )
+    }
+
     pub(crate) fn coalesced_errors(
         &self,
         values: &crate::helm_adjudication::CoalescedValues,
-    ) -> (Vec<String>, Vec<String>) {
-        let baseline = self
-            .full
-            .iter_errors(values.as_json())
-            .map(|error| format!("{}: {error}", error.instance_path()))
-            .collect();
-        let candidate = self
-            .lean
-            .iter_errors(values.as_json())
-            .map(|error| format!("{}: {error}", error.instance_path()))
-            .collect();
-        (baseline, candidate)
+    ) -> (Vec<ViolationKey>, Vec<ViolationKey>) {
+        self.errors(values.as_json())
+    }
+
+    /// Judges the screened composition of `overlay` when Helm produced no coalesced document.
+    pub(crate) fn override_errors(
+        &self,
+        overlay: &Value,
+    ) -> (Vec<ViolationKey>, Vec<ViolationKey>) {
+        self.errors(&self.compose(&ProbeInstance::SparseOverride(overlay.clone())))
+    }
+
+    /// Whether the baseline rejects the judged document with exactly the
+    /// violations it rejects the chart's own coalesced defaults with. Such a
+    /// rejection constrains nothing the probe changed, so it is no evidence
+    /// about the probe. The judged document is Helm's coalesced values, or
+    /// the screened composition of `overlay` without them.
+    pub(crate) fn baseline_rejects_it_as_its_defaults(
+        &self,
+        values: Option<&crate::helm_adjudication::CoalescedValues>,
+        overlay: &Value,
+    ) -> bool {
+        let defaults = violations(&self.full, &self.defaults);
+        if defaults.is_empty() {
+            return false;
+        }
+        let judged = match values {
+            Some(values) => violations(&self.full, values.as_json()),
+            None => violations(
+                &self.full,
+                &self.compose(&ProbeInstance::SparseOverride(overlay.clone())),
+            ),
+        };
+        judged.into_iter().collect::<BTreeSet<_>>() == defaults.into_iter().collect()
+    }
+
+    fn errors(&self, instance: &Value) -> (Vec<ViolationKey>, Vec<ViolationKey>) {
+        (
+            violations(&self.full, instance),
+            violations(&self.lean, instance),
+        )
     }
 
     pub(crate) fn assert_monotone<'a>(
@@ -273,11 +322,14 @@ pub(crate) fn profile_session(
     ))
 }
 
-pub(crate) fn read_root_defaults(chart_relative_path: &str) -> eyre::Result<Value> {
-    let path = chart_path(chart_relative_path).join("values.yaml");
-    let source =
-        std::fs::read_to_string(&path).wrap_err_with(|| format!("read {}", path.display()))?;
-    serde_yaml::from_str(&source).wrap_err_with(|| format!("parse {}", path.display()))
+/// The chart's coalesced default values: what Helm hands the templates when
+/// the user supplies nothing. Schemas validate this document, so probes
+/// compose over it rather than over the root `values.yaml` alone.
+pub(crate) fn read_coalesced_defaults(chart_relative_path: &str) -> eyre::Result<Value> {
+    test_util::helm_values::coalesce_chart_values(
+        &chart_path(chart_relative_path),
+        Value::Object(Map::new()),
+    )
 }
 
 pub(crate) fn read_json_fixture(
@@ -640,6 +692,31 @@ fn synthesized_guard_witness_candidates(
     }
     let omitted = total.saturating_sub(candidates.len());
     (candidates, omitted)
+}
+
+/// The violations `validator` reports on a values document.
+fn violations(validator: &Validator, instance: &Value) -> Vec<ViolationKey> {
+    validator
+        .iter_errors(instance)
+        .map(|error| ViolationKey::new("", "", &error))
+        .collect()
+}
+
+/// Whether `candidate` holds a violation of an assertion that `baseline`
+/// does not violate at the same value. Two schemas place one assertion at
+/// different keyword locations, so the violated keyword and its detail
+/// identify it.
+pub(crate) fn rejects_for_a_new_reason(
+    baseline: &[ViolationKey],
+    candidate: &[ViolationKey],
+) -> bool {
+    candidate.iter().any(|violation| {
+        !baseline.iter().any(|known| {
+            known.instance_path == violation.instance_path
+                && known.keyword == violation.keyword
+                && known.detail == violation.detail
+        })
+    })
 }
 
 fn compose_assignments(defaults: &Value, assignments: &[(&Vec<String>, &Value)]) -> Value {
