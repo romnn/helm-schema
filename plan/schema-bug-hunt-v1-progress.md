@@ -3557,4 +3557,68 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Naming dump done meanwhile (202 artifacts, 164/164, 1,035 s); the naming agent adopts and
   proves the rename (turn 2).
 
+- 03:20 — **Cross-vendor verdicts, eighth batch** (eight read-only runs, all saved in `round8/`):
+  `review-naming-impl-astra.md` (`20260926T002344-57f1ccd6`, xhigh): land with C1–C5 — fail-closed
+  shipping rename (`$dynamicRef`, fragment-only `$id` at `minify/lib.rs:~512` dangles); provider
+  spelling still reaches extraction costs (16 KiB check `provider_definitions.rs:~229`,
+  profitability `lib.rs:~216/~342`: a core moves 16,380→16,392 bytes, a two-use candidate from
+  −7 to +5) → private handles through planning; delete the unreachable general-cycle fallback
+  whose cache is traversal-order-dependent; explicit key sorting; type-sensitive
+  `prove_rename.py`; the ladder itself is correct (limit inclusive with newline, rungs, typed
+  error). → the naming agent applies C1–C4 and re-dumps (its first dump is stale).
+  `review-b6-l1-sol.md` (`20260926T002401-aa4a2597`): both re-diagnoses CONFIRMED (sol's plan
+  was wrong for this tree); the AnyOf narrowing is conditionally sound but
+  `header_tests_only_locals` (`control.rs:~2517`) is a syntax walk that lets `get`/`index`
+  through a local holding values → replace with the evaluator's read/effect provenance + a
+  dynamic-lookup counterexample; `MAX_STAMPED_GUARDS` is a heuristic boundary; tighten the
+  contract test; do not land the stack before (a) L2+n4 stacked, (b) the header gate replaced,
+  (c) the stamped-truthiness repair with the `agent`/w2ag4 regression.
+  `review-f6-final-sol.md` (`20260926T002426-502d8e1d`): land with named changes — route
+  `compact`/`append`/`prepend` through `function_semantics(function).list` after guarding
+  `record_strict_kind_argument_result` (`strict_operands.rs:~760`: a definitively `List`
+  operand's array kind is known; don't descend into its raw members — the aws-ebs-csi-driver
+  bug); the fast-path test is a Helm pin, not proof; F6+D5 may share a battery only with
+  per-patch isolation evidence. `review-d5-final-sol.md` (`20260926T002441-f5dd9996`): land
+  with named changes — REMOVE the Helm-contradicting rotation IR golden (reverses my 01:35
+  decision: a green golden blessing a wrong answer violates AGENTS.md), narrow the CST golden
+  to the header/body invariant; the 13 requiredness rejections are sink-justified; the
+  subchart-`enabled` null probes are a protocol composition defect; `log: []` is F13
+  (`toYaml | nindent` into a block sequence), not a new family; separate D5/F6 batteries.
+  `review-test-infra-bundle-astra.md` (`20260926T002522-bd4c6ea1`): gate — BLOCKING: an
+  unusable fixture becomes an ordinary `Rejects` (`family_witnesses.rs:~294/~314`) and F79's
+  row does not exercise the adjudicator defect it names → **4/83 is not defensible; report
+  3/83 (+F74 only)** until fixed; policy targets (F1/F73/F80) need an unresolved state that
+  blocks closure; share the version owner. Kube-version owner approved, BLOCKING: the
+  validator must follow the render version — a 1.33 render validated against the 1.29 bundle
+  can be falsely (in)valid incl. "not served" (`helm_adjudication.rs:~550/~800`) → Uncertain
+  without evidence + a minimal pinned 1.33 subset; Helm checks the root constraint before
+  template evaluation (comment fix). Regexp approved; the `regex_syntax` walker misses Go's
+  nested-repeat multiplication (`(?:a{1000}){2}`) → the Go-toolchain test stays required in
+  the lint gate; two moved fixtures need a dump/battery per AGENTS.md. Landing order F23 →
+  kube-version → regexp → gate. `design-max-stamped-guards-astra.md` (`20260926T002535-ac45b1e0`,
+  xhigh): the cap counts unfolded `Guard` occurrences (seven leaves suffice: six gates + the
+  RHS), not nodes; dropping the reduction is resource-driven widening that silently changes
+  verdicts (`condition_predicate.rs:~2568` → `control.rs:~1341` → `conditional_overlays.rs:~382`
+  → `final_signals.rs:~200`); smallest fix: keep the exact stamped predicate, simplify joins
+  losslessly through `PredicateMemo`/the in-tree `PredicateBdd` (already lossless on
+  exhaustion), DELETE the counter, the rescue helpers, `truthiness_abstentions` and the sticky
+  budget (~200–300 lines deleted); reverse `over_cap_branch_stamp_removes_the_changed_truthy_
+  reduction` (it asserts the bug); inline seven-gate and v5 templates given; land on top of the
+  stack; typed Unknown propagation to the public result is a separate few-hundred-line change.
+  `design-kube-version-policy-astra.md` (`20260926T002550-c53cf321`): the CLI default is
+  `v1.35.0`, the corpus pins 1.29, `primary_kubernetes_version` (`session.rs:~472`) turns the
+  first provider directory into an exact `.Capabilities.KubeVersion` string, `ChartYaml` does not
+  read `kubeVersion`; principled design = the root constraint's ADMITTED RANGE as the analysis
+  domain, range-aware capability guards (true/false/split/unknown, with `R∩G` / `R\G`
+  propagated), version-scoped provider alternatives (`lookup/chain.rs:~137` returns the first
+  hit), Masterminds v3.5.0-exact semver (wildcards, prerelease-per-AND-group), minimal pinned
+  evidence per target; 1,550–2,650 production LOC in five steps — filed as a later track
+  (`W16 admitted-version domain`); the semver evaluator alone (350–600 LOC) removes the jira
+  fallback and reopens prometheus' `>= 1.27.x` guards. `plan-f13-corrections-sol.md`
+  (`20260926T002610-8806b2df`): executable plan for F13's three corrections (literal-context-only
+  token edges with abstention after any dynamic prefix; comment-aware exclusion language; one
+  claim per occurrence, delete `PlainTokenEdges::meet`; serialized continuation only from the
+  arm's own provenance — `partial_text` ≠ whole node, `StringText` ≠ serialized; the `useYaml`
+  selector witness; rebase notes for F31/MLS/D5) — F13 lands last.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
