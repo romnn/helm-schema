@@ -4408,4 +4408,10 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Consequence: Go cannot run on every battery probe without a ~20× verdict slowdown — next
   session should decide sampling/differential use before landing it. Chain: dump step running.
 
+- 18:13 — **Landing-1 chain: dump, unit, lint, battery and integration green; sweep running.**
+  Restarted chain: dump 0 (17:27–17:37), unit 0, lint 0 (residual parsed through the colour
+  codes), **battery 0 in 959 s** (16 min on the now-quiet machine, load ~20, vs 33–55 min under
+  load and 2 h 53 m serial), integration 0 (17:54–18:08, legacy 14 min), sweep started 18:08
+  (roster frozen by `sweep-plan`, 6 workers). Receipt `round8-d3f23-landing/receipt.json`.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
