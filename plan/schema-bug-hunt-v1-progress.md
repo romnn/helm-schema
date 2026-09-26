@@ -4042,4 +4042,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   State: 8 builders + runner agent; old sweep 1,699 rows still holding the lock (12 h); okteto
   intake mid-battery. Strict closures 3/83.
 
+- 14:35 — **User decision: start the rendered-layout frontend refactor now (option 1).** Track
+  `frontend` opened on the F23 candidate (clone `round8-frontend`, cold target
+  `round8-frontend-target`): phase 1 (equality-preserving) retires the 22 text-reparsing sites,
+  the textual control-keyword reclassifiers (`holes.rs:202`, `resource_identity.rs:499`) and the
+  `starts_with("{{-")` trim check in favour of the CST's delimiter kinds and typed expressions
+  stored once per span; the two Helm-proven behaviour corrections (`{{-3}}` is a negative
+  literal, compact `{{if(...)}}` control tokens) are the last two commits, semantic, with
+  full-schema tests. Phases 2–4 (render skeleton with YAML parse and provenance, trim/indent/
+  helper composition before parent assignment, deletion of the line/adoption/repair model) wait
+  for the commit-by-commit brief requested from astra
+  (`brief-frontend-rendered-layout-astra.md`). D5 is SUPERSEDED by this track; kube-starrocks and
+  openldap stay quarantined until the track's dump adopts their fixtures.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
