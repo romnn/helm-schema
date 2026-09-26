@@ -4149,4 +4149,43 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   W4 (F75), F1 policy, B6 stack gates, govalidate, frontend phase 1, runner fixes; old sweep
   1,758 rows, lock still held. Load 52–59. Strict closures 3/83.
 
+- 15:45 — **Pool hand-back (battery 2 h 53 m → 55 min), B6 stack hand-back (not landable),
+  okteto slice PASSED.** Pool (`round8-pool-evidence`, HEAD df9c5c3a on BASE a8668313 = main +
+  F23 candidate, `final.patch` sha 73cda700…): bounded Helm pool (`min(6, cores−2)` workers,
+  strict `(chart, probe)` start order, 1.3× peak-RSS reservation) + exact-invocation cache
+  (versioned SHA-256 key over platform/binary/env/cwd/args/chart+values content; atomic never-
+  overwriting store; damaged entry = miss; abnormal exit never stored) + deterministic chart
+  preparation + process-wide compiled K8s validators. **Full battery 10,389 s → 3,298 s (3.15×)
+  under load 40–130, every one of the 7,952 HELM_FLIP lines, 62 assertion items and
+  coverage.json identical to battery-final-7.log.** Misses the <40 min target because 82/164
+  charts are classified nondeterministic (`lookup` 57, `genCA`/`randAlphaNum`/`now`/… the rest;
+  `cacheability-census.txt`) and their renders are never cached — coalescence replayed
+  2,646/7,961 calls, decoding 1,252/7,798. Kube-version v2+v3 and the gate patch did not apply
+  on this base (rebase when they land). Codex pre-landing review launched (sol,
+  20260926T134419-fb568176) with the policy question: client-only `helm template` evaluates
+  `lookup` to an empty map deterministically, and for `randAlphaNum`/`genCA`/`now` the exit
+  code and manifest STRUCTURE are deterministic while scalar content varies — asked for the
+  precise safe-to-cache condition (key binding on `KUBECONFIG`/`--dry-run`), whether replaying
+  one observed render is sound evidence for an exit+validity verdict, and a middle ground
+  (cache the verdict, mark `nondeterministic_content`, never reuse manifest bytes). Decision
+  deferred to that review. B6 stack (`round8-stack-evidence`, clone `round8-stack`; L2+n4 on
+  F23+F4/MLS r5+B6/L1): gates green (fmt, unit 1618/1618, lint, lint:fc; integration/dump/
+  battery not run), all L2 and n4 cells fixed, one stack regression fixed (`predicate_guards_self`
+  in ir `contract_rows.rs`: a row's self guard recognised through And/Or arms; red 3 → green),
+  n4's long tests moved to fixtures; but **7 cells worse than base** (dd agent caps
+  `""`/`"x"`/`false`/`[]`, w2ag4 linux `sys=false` caps ×3): base rejected them only through an
+  unguarded `default dict` hint that n4 correctly removes; the real rejection needs the agent's
+  linux row typed, which the `MAX_STAMPED_GUARDS=6` bound drops (`symbolic_local_state/
+  mod.rs:309-374`) → the agent-container defect gets its own item (witnesses `w/w2ag4`,
+  `min/e/v5`); par/hp dormant cells wrong on base and stack (helper's `or .securityContext
+  .sysAdmin` reads an unpassed key; F9 territory). Stack stays queued behind F9/agent-container.
+  Target-dir hazard recorded: a worktree built in a shared target dir served stale crates once
+  (touch sources after switching trees). Okteto intake: the okteto battery slice with the new
+  roster rows PASSED (exit 0, 9,120 s serial; `battery-okteto.log`); graylog slice running.
+  Runner-fix agent: final full suite in progress. Old sweep 1,769 rows, lock still held.
+  New builder: k8s provider D1–D3 cache-dependence fixes launched (`round8-k8s`, target
+  `round7-f4`, spec `spec-k8s-provider-red-tests-astra.md`: abstain on undecided capability
+  with `UnresolvedCapability`, carry `Uncertain` as `SchemaUnavailable` and stop substitution,
+  never memoize `Unavailable`/incomplete inference). Strict closures 3/83.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
