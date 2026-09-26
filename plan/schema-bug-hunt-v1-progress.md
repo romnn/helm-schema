@@ -4454,4 +4454,21 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   hand-back) and shrink F74-size schemas; (2) row-level sweep workers; (3) changed-chart
   selection. Decision left running: the chain finalizes on its own when the sweep passes.
 
+- 21:30 — **User decision: option 2 (row-level sweep workers) now, and speed up the whole sweep
+  gate the way the battery was.** Measured at 21:25: openebs 6/129 rows at ~20 min per row
+  (~40 h), kube-prometheus-stack 25/84 at ~7 min, milvus 37/103 at ~5 min, gitea 94/171 at ~2
+  min; the other 132 charts done; 6 helm processes busy. Runner agent resumed for runner v4 on
+  `runner-v3-fail-closed`: (1) row-level work units with once-per-chart preparation and
+  heaviest-first ordering, (2) identical-schema rows (`cand_schema_sha256 == base_schema_sha256`,
+  95/156 charts) classified `identical-schema` without Helm, (3) a fail-closed verdict cache
+  (versioned key over helm sha/version, kube version, transport, prepared chart digest, schema
+  sha, override sha, argv; entry manifest; hit only on full verification) under
+  `/Volumes/T7/dev/round8/sweep-cache/`; red-then-green tests in the runner suites; no landing
+  step run by the agent. Codex design started (sol, 20260926T193020-455285cd →
+  `design-fast-sweep-gate-sol.md`): sweep verdicts through compiled-once Helm validation
+  (govalidate + coalescer port, pooled/cached control renders) with a CLI differential sample as
+  the fail-closed safety net, the exact lint/template equivalence argument, `definitions` vs
+  `$defs` compile cost, roster redundancy, LOC and landing order. The current sweep keeps
+  running until runner v4 is ready (its rows are discarded at the restart from dump).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
