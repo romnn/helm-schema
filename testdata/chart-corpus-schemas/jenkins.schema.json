@@ -8339,32 +8339,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/4O"
-          },
-          {
-            "$ref": "#/$defs/3R"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "controller": {
-            "additionalProperties": {},
-            "properties": {
-              "podSecurityContextOverride": {
-                "description": "Completely overwrites the contents of the pod security context, ignoring the values provided for `runAsUser`, `fsGroup`, and `securityContextCapabilities`",
-                "type": "object"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/$defs/3k"
           },
           {
@@ -14207,6 +14181,57 @@
                       "string"
                     ]
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/4O"
+          },
+          {
+            "$ref": "#/$defs/3R"
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "controller": {
+              "properties": {
+                "podSecurityContextOverride": {
+                  "not": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "podSecurityContextOverride"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "controller"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "additionalProperties": {},
+          "properties": {
+            "controller": {
+              "additionalProperties": {},
+              "properties": {
+                "podSecurityContextOverride": {
+                  "description": "Completely overwrites the contents of the pod security context, ignoring the values provided for `runAsUser`, `fsGroup`, and `securityContextCapabilities`",
+                  "type": "object"
                 }
               }
             }
@@ -20358,75 +20383,6 @@
         {
           "additionalProperties": {},
           "properties": {
-            "backendconfig": {
-              "allOf": [
-                {
-                  "if": {
-                    "$ref": "#/$defs/b"
-                  },
-                  "then": {
-                    "allOf": [
-                      {
-                        "additionalProperties": {},
-                        "properties": {
-                          "labels": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/2"
-                              },
-                              {
-                                "$ref": "#/$defs/n"
-                              }
-                            ],
-                            "description": "backendconfig labels"
-                          }
-                        }
-                      },
-                      {
-                        "additionalProperties": {},
-                        "properties": {
-                          "apiVersion": {
-                            "description": "backendconfig API version",
-                            "type": "string"
-                          }
-                        }
-                      },
-                      {
-                        "additionalProperties": {},
-                        "properties": {
-                          "name": {
-                            "description": "backendconfig name",
-                            "type": "string"
-                          }
-                        }
-                      },
-                      {
-                        "additionalProperties": {},
-                        "properties": {
-                          "annotations": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/2"
-                              },
-                              {
-                                "$ref": "#/$defs/n"
-                              }
-                            ],
-                            "description": "backendconfig annotations"
-                          }
-                        }
-                      }
-                    ]
-                  }
-                }
-              ],
-              "description": "If you're running on GKE and need to configure a backendconfig\nto finish ingress setup, use the following values.\nDocs: https://cloud.google.com/kubernetes-engine/docs/concepts/backendconfig"
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
             "googlePodMonitor": {
               "allOf": [
                 {
@@ -20527,6 +20483,92 @@
                   "description": "If enabled: true, Jenkins Configuration as Code will be reloaded on-the-fly without a reboot.\nIf false or not-specified, JCasC changes will cause a reboot and will only be applied at the subsequent start-up.\nAuto-reload uses the http://<jenkins_url>/reload-configuration-as-code endpoint to reapply config when changes to\nthe configScripts are detected."
                 }
               }
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "backendconfig": {
+              "allOf": [
+                {
+                  "if": {
+                    "$ref": "#/$defs/b"
+                  },
+                  "then": {
+                    "allOf": [
+                      {
+                        "additionalProperties": {},
+                        "properties": {
+                          "labels": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/2"
+                              },
+                              {
+                                "$ref": "#/$defs/n"
+                              }
+                            ],
+                            "description": "backendconfig labels"
+                          }
+                        }
+                      },
+                      {
+                        "additionalProperties": {},
+                        "properties": {
+                          "apiVersion": {
+                            "description": "backendconfig API version",
+                            "type": "string"
+                          }
+                        }
+                      },
+                      {
+                        "if": {
+                          "properties": {
+                            "name": {
+                              "not": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ],
+                          "type": "object"
+                        },
+                        "then": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "name": {
+                              "description": "backendconfig name",
+                              "type": "string"
+                            }
+                          }
+                        }
+                      },
+                      {
+                        "additionalProperties": {},
+                        "properties": {
+                          "annotations": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/2"
+                              },
+                              {
+                                "$ref": "#/$defs/n"
+                              }
+                            ],
+                            "description": "backendconfig annotations"
+                          }
+                        }
+                      }
+                    ]
+                  }
+                }
+              ],
+              "description": "If you're running on GKE and need to configure a backendconfig\nto finish ingress setup, use the following values.\nDocs: https://cloud.google.com/kubernetes-engine/docs/concepts/backendconfig"
             }
           }
         },

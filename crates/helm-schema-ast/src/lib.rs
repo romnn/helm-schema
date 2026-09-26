@@ -127,10 +127,30 @@ fn normalized_control_condition(raw: &str) -> Option<&str> {
         .or_else(|| text.strip_prefix("with "))
 }
 
+/// What an indexed chart file source is to Helm.
+///
+/// Helm keeps two disjoint namespaces: templates, which it registers under
+/// an execution name and can execute, and chart files, which only
+/// `.Files.Get` can read. The role records which one a source belongs to
+/// so consumers never have to recover it from the path text.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DefineSourceRole {
+    /// A template registered under its Helm execution name.
+    Template,
+    /// A static chart file reachable only through `.Files.Get`.
+    FilesGet,
+}
+
 /// Index of helper/template file sources.
 #[derive(Default, Debug, Clone)]
 pub struct DefineIndex {
-    files: HashMap<String, String>,
+    files: HashMap<String, IndexedSource>,
+}
+
+#[derive(Debug, Clone)]
+struct IndexedSource {
+    role: DefineSourceRole,
+    src: String,
 }
 
 impl DefineIndex {
@@ -140,27 +160,41 @@ impl DefineIndex {
         Self::default()
     }
 
-    /// Adds or replaces one logical chart file source.
+    /// Adds or replaces one template source, keyed by its execution name.
     pub fn add_file_source(&mut self, path: &str, src: &str) {
-        self.files.retain(|existing_path, existing_src| {
-            !is_inline_source(existing_path, existing_src, src)
-        });
-        self.files.insert(path.to_string(), src.to_string());
+        self.insert(path, src, DefineSourceRole::Template);
+    }
+
+    /// Adds or replaces one `.Files.Get` payload, keyed by its chart-relative path.
+    pub fn add_files_get_source(&mut self, path: &str, src: &str) {
+        self.insert(path, src, DefineSourceRole::FilesGet);
+    }
+
+    fn insert(&mut self, path: &str, src: &str, role: DefineSourceRole) {
+        self.files
+            .retain(|existing_path, existing| !is_inline_source(existing_path, &existing.src, src));
+        self.files.insert(
+            path.to_string(),
+            IndexedSource {
+                role,
+                src: src.to_string(),
+            },
+        );
     }
 
     /// Returns the source registered at a logical chart path.
     #[must_use]
     pub fn get_file(&self, path: &str) -> Option<&str> {
-        self.files.get(path).map(std::string::String::as_str)
+        self.files.get(path).map(|entry| entry.src.as_str())
     }
 
-    /// Iterates logical chart paths and sources in stable path order.
-    pub fn file_sources(&self) -> impl Iterator<Item = (&str, &str)> {
+    /// Iterates logical chart paths, roles and sources in stable path order.
+    pub fn file_sources(&self) -> impl Iterator<Item = (&str, DefineSourceRole, &str)> {
         let mut entries: Vec<_> = self.files.iter().collect();
         entries.sort_by_key(|(path, _)| *path);
         entries
             .into_iter()
-            .map(|(path, src)| (path.as_str(), src.as_str()))
+            .map(|(path, entry)| (path.as_str(), entry.role, entry.src.as_str()))
     }
 }
 

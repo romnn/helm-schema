@@ -24,6 +24,7 @@ use crate::schema_tree::{
     CanonicalConstraintApplication, CanonicalConstraintOutcome, SchemaDocument,
     draft07_root_document,
 };
+use crate::uncoalesced_root::UncoalescedRootGate;
 
 pub(crate) struct LoweredEmissionPlan {
     predicate_memo: helm_schema_core::PredicateMemo,
@@ -40,8 +41,16 @@ pub(crate) struct LoweredEmissionPlan {
 #[derive(Clone)]
 pub(crate) struct RootValuesDocuments {
     composed: YamlValue,
+    /// The composed defaults with every subchart enabled, before
+    /// render-time default merges, as JSON with null-valued keys deleted
+    /// the way Helm's coalescing leaves them. Not Helm's defaults-only
+    /// coalesce: a subchart a condition disables still contributes, which
+    /// is the document the lint gate needs, since an override can enable it.
+    coalesced_defaults: Value,
+    /// The root `values.yaml` as written, when the caller supplied it.
+    uncoalesced_root: Option<Value>,
     input_defaults: YamlValue,
-    subchart_defaults: YamlValue,
+    runtime_defaults: YamlValue,
     dependency_refill: YamlValue,
     guarded: Vec<GuardedRootValuesDocuments>,
 }
@@ -50,7 +59,7 @@ pub(crate) struct RootValuesDocuments {
 struct GuardedRootValuesDocuments {
     guards: Vec<helm_schema_core::ConditionalGuard>,
     composed: YamlValue,
-    subchart_defaults: YamlValue,
+    runtime_defaults: YamlValue,
     dependency_refill: YamlValue,
 }
 
@@ -88,18 +97,18 @@ impl RootValuesDocuments {
                 )
             })
             .max_by_key(|(_, documents)| documents.guards.len());
-        let (values_document, composed, subchart_defaults, dependency_refill) = guarded.map_or(
+        let (values_document, composed, runtime_defaults, dependency_refill) = guarded.map_or(
             (
                 None,
                 &self.composed,
-                &self.subchart_defaults,
+                &self.runtime_defaults,
                 &self.dependency_refill,
             ),
             |(index, documents)| {
                 (
                     Some(index),
                     &documents.composed,
-                    &documents.subchart_defaults,
+                    &documents.runtime_defaults,
                     &documents.dependency_refill,
                 )
             },
@@ -108,7 +117,7 @@ impl RootValuesDocuments {
             values_document,
             composed,
             crate::condition_encoding::AbsenceDefaults {
-                deeper_stage: subchart_defaults,
+                runtime_defaults,
                 dependency_refill,
                 dependency_roots,
             },
@@ -119,7 +128,7 @@ impl RootValuesDocuments {
 fn prepare_guarded_values_documents(
     signals: &ContractSchemaSignals,
     composed: &YamlValue,
-    subchart_defaults: &YamlValue,
+    runtime_defaults: &YamlValue,
     dependency_refill: &YamlValue,
     predicate_memo: &helm_schema_core::PredicateMemo,
 ) -> Vec<GuardedRootValuesDocuments> {
@@ -157,9 +166,9 @@ fn prepare_guarded_values_documents(
                 .collect::<BTreeSet<_>>();
             let mut branch_composed = composed.clone();
             crate::values_yaml::apply_values_default_sources(&mut branch_composed, &sources);
-            let mut branch_subchart_defaults = subchart_defaults.clone();
+            let mut branch_runtime_defaults = runtime_defaults.clone();
             crate::values_yaml::copy_values_default_sources(
-                &mut branch_subchart_defaults,
+                &mut branch_runtime_defaults,
                 &branch_composed,
                 &sources,
             );
@@ -172,7 +181,7 @@ fn prepare_guarded_values_documents(
             GuardedRootValuesDocuments {
                 guards: branch_guards.clone(),
                 composed: branch_composed,
-                subchart_defaults: branch_subchart_defaults,
+                runtime_defaults: branch_runtime_defaults,
                 dependency_refill: branch_dependency_refill,
             }
         })
@@ -216,6 +225,10 @@ impl LoweredEmissionPlan {
         let mut composed = input
             .values_documents
             .map_or(YamlValue::Null, |documents| documents.composed.clone());
+        // Taken before render-time default merges: Helm validates, and
+        // `helm lint` compares against, the coalesced values alone.
+        let mut coalesced_defaults = serde_json::to_value(&composed).unwrap_or(Value::Null);
+        drop_null_members(&mut coalesced_defaults);
         crate::values_yaml::apply_values_default_sources(
             &mut composed,
             contract_schema_signals.values_default_sources(),
@@ -225,15 +238,20 @@ impl LoweredEmissionPlan {
             &mut input_defaults,
             input.shadowed_input_paths.unwrap_or(&BTreeSet::new()),
         );
-        let mut subchart_defaults = input
-            .values_documents
-            .map_or(YamlValue::Null, |documents| documents.dependency.clone());
-        // Chart-internal root merges (`set $ "Values" (mustMergeOverwrite
-        // defaults .Values)`) fill their defaults at render time, after any
-        // null-deletion, so absence at such paths reads as the merged default
-        // exactly like a dependency-owned key reads as its subchart default.
+        // A schema validates the COALESCED document, in which every chart's
+        // and every subchart's declared defaults have already been applied.
+        // A key missing from it was therefore null-deleted, and helm's
+        // coalescing carries that deletion through the subchart stage too
+        // (verified against helm v4.2.3: `--set kid.grp=null` renders
+        // `kid: {flag: true, global: {}}` and aborts on `.Values.grp.enabled`
+        // whether the parent, the subchart, or both declared `grp`). Nothing
+        // a chart DECLARES can refill such a key; only a render-time merge
+        // inside the templates (`set $ "Values" (mustMergeOverwrite defaults
+        // .Values)`) can, and those are exactly the `ValuesDefaultSource`
+        // facts. So this document starts empty and holds only them.
+        let mut runtime_defaults = YamlValue::Null;
         crate::values_yaml::copy_values_default_sources(
-            &mut subchart_defaults,
+            &mut runtime_defaults,
             &composed,
             contract_schema_signals.values_default_sources(),
         );
@@ -248,14 +266,20 @@ impl LoweredEmissionPlan {
         let guarded = prepare_guarded_values_documents(
             &contract_schema_signals,
             &composed,
-            &subchart_defaults,
+            &runtime_defaults,
             &dependency_refill,
             &predicate_memo,
         );
+        let uncoalesced_root = input
+            .values_documents
+            .and_then(|documents| documents.uncoalesced_root.as_ref())
+            .and_then(|document| serde_json::to_value(document).ok());
         let documents = RootValuesDocuments {
             composed,
+            coalesced_defaults,
+            uncoalesced_root,
             input_defaults,
-            subchart_defaults,
+            runtime_defaults,
             dependency_refill,
             guarded,
         };
@@ -266,7 +290,7 @@ impl LoweredEmissionPlan {
         let resolved_paths = PathSchemaResolver::new(
             &contract_schema_signals,
             &documents.input_defaults,
-            &documents.subchart_defaults,
+            &documents.runtime_defaults,
             &provider_resolutions,
         )
         .resolve_all();
@@ -274,7 +298,7 @@ impl LoweredEmissionPlan {
             &resolved_paths,
             &contract_schema_signals,
             &documents.composed,
-            &documents.subchart_defaults,
+            &documents.runtime_defaults,
             &provider_resolutions,
         );
         let terminal_schemas = contract_schema_signals
@@ -351,6 +375,11 @@ impl LoweredEmissionPlan {
             selected_conditionals,
             &mut emission_report,
         );
+        let mut uncoalesced_root_gate = UncoalescedRootGate::new(
+            self.documents.uncoalesced_root.as_ref(),
+            &self.documents.coalesced_defaults,
+            &provider_definitions,
+        );
         append_selected_constraints(
             &mut document,
             fallback_conditionals,
@@ -358,6 +387,7 @@ impl LoweredEmissionPlan {
             &self.support.dependency_roots,
             &mut emission_report,
             &self.predicate_memo,
+            &mut uncoalesced_root_gate,
         );
         if !selected_terminals.is_empty() {
             let terminal_clauses = selected_terminals
@@ -368,14 +398,14 @@ impl LoweredEmissionPlan {
             append_terminal_clauses(
                 &mut document,
                 &terminal_clauses,
-                self.contract_schema_signals.values_default_sources(),
-                self.contract_schema_signals
-                    .guarded_values_default_sources(),
+                &self.contract_schema_signals,
                 &self.documents,
                 &self.support.dependency_roots,
                 &self.predicate_memo,
+                &mut uncoalesced_root_gate,
             );
         }
+        emission_report.lint_withdrawals = uncoalesced_root_gate.into_relaxed();
         prune_unreachable_provider_definitions(&document, &mut provider_definitions);
 
         ProjectedTree {
@@ -802,4 +832,15 @@ fn count_emitted_carriers(
     };
     visit(schema, 0, &mut counts);
     counts
+}
+
+/// Deletes null-valued object members along object chains; lists are
+/// replaced wholesale by Helm's coalescing and keep their members.
+fn drop_null_members(value: &mut Value) {
+    if let Value::Object(members) = value {
+        members.retain(|_, member| !member.is_null());
+        for member in members.values_mut() {
+            drop_null_members(member);
+        }
+    }
 }

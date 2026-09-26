@@ -1409,3 +1409,90 @@ fn complementary_guarded_ranges_keep_the_iterable_requirement() {
         );
     }
 }
+
+/// `if len X` guarding `range X`: `len` aborts on everything but strings,
+/// lists and maps, and a non-empty string then reaches the range, which
+/// aborts on it too — so under the toggle exactly lists, maps and the empty
+/// string render (promtail's `networkPolicy.k8sApi.cidrs`). Helm matrix:
+/// `round8-witness-evidence/w2.matrix.txt`.
+///
+/// RED on 0cf0e8d8: the bare `len X` condition lowered as an approximate
+/// truthy stand-in, so the range-input capture beneath it abstained and a
+/// non-empty string was accepted.
+#[test]
+fn len_guarded_range_rejects_non_iterable_strings() {
+    let values_yaml = indoc! {"
+        enabled: false
+        cidrs: []
+    "};
+    let src = indoc! {r"
+        {{- if .Values.enabled }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: probe
+        data:
+          {{- if len .Values.cidrs }}
+          {{- range $cidr := .Values.cidrs }}
+          cidr: {{ $cidr | quote }}
+          {{- end }}
+          {{- end }}
+        {{- end }}
+    "};
+    let schema = schema_for_values_yaml(parse_ir(src), Some(values_yaml));
+    let cells = [
+        ("default list", serde_json::json!({ "enabled": true }), true),
+        (
+            "list",
+            serde_json::json!({ "enabled": true, "cidrs": ["10.0.0.0/8"] }),
+            true,
+        ),
+        (
+            "map",
+            serde_json::json!({ "enabled": true, "cidrs": { "a": "10.0.0.0/8" } }),
+            true,
+        ),
+        (
+            "empty string",
+            serde_json::json!({ "enabled": true, "cidrs": "" }),
+            true,
+        ),
+        (
+            "string",
+            serde_json::json!({ "enabled": true, "cidrs": "xyz" }),
+            false,
+        ),
+        (
+            "integer",
+            serde_json::json!({ "enabled": true, "cidrs": 3 }),
+            false,
+        ),
+        (
+            "boolean",
+            serde_json::json!({ "enabled": true, "cidrs": true }),
+            false,
+        ),
+        (
+            "null-deleted",
+            serde_json::json!({ "enabled": true, "cidrs": null }),
+            false,
+        ),
+        (
+            "string, toggle off",
+            serde_json::json!({ "cidrs": "xyz" }),
+            true,
+        ),
+    ];
+    let have: Vec<(&str, bool)> = cells
+        .iter()
+        .map(|(label, overrides, _)| {
+            let instance = composed_instance(values_yaml, overrides.clone());
+            (*label, schema_accepts_instance(&schema, &instance))
+        })
+        .collect();
+    let want: Vec<(&str, bool)> = cells
+        .iter()
+        .map(|(label, _, accepted)| (*label, *accepted))
+        .collect();
+    sim_assert_eq!(have: have, want: want);
+}

@@ -69,6 +69,23 @@ jobs:
       - name: Integration tests
         run: task test:integration
 
+  helmsweep:
+    name: helmsweep
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: jdx/mise-action@v4
+        with:
+          install: false
+          cache: true
+          env: false
+      - run: mise install task go@1.26.5
+      - name: Build
+        run: task build:helmsweep
+      - name: Vet, race tests and gofmt
+        run: task test:helmsweep
+
   network:
     name: network (${{ matrix.os }})
     runs-on: ${{ matrix.os }}

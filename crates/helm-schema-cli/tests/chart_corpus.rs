@@ -31,12 +31,12 @@
 //! those doc comments before treating a diff against one as a regression.
 
 use test_util::prelude::sim_assert_eq;
+#[path = "common/chart_instances.rs"]
+mod chart_instances;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
 #[path = "common/values_validation.rs"]
 mod values_validation;
-#[path = "common/values_yaml.rs"]
-mod values_yaml;
 
 use color_eyre::eyre::{self, WrapErr as _};
 use serde_json::Value;
@@ -81,10 +81,8 @@ const KNOWN_VALUES_REJECTIONS: &[&str] = &[
 /// its new fixture.
 const QUARANTINED_FALSE_REJECTIONS: &[&str] = &[
     "aws-ebs-csi-driver",
-    "dify",
     "eck-stack",
     "gitea",
-    "graylog",
     "headscale",
     "imgproxy",
     "kube-starrocks",
@@ -92,15 +90,10 @@ const QUARANTINED_FALSE_REJECTIONS: &[&str] = &[
     "nacos",
     "netbox",
     "nginx-ingress",
-    "okteto",
-    "oncall",
     "openebs",
     "openldap-stack-ha",
-    "redmine",
-    "spinnaker",
     "stacks-blockchain-api",
     "synapse",
-    "weblate",
     "yourls",
 ];
 

@@ -114,13 +114,23 @@ fn fail_validator_from_disabled_dependency_does_not_reject_defaults() -> eyre::R
             .join("; "),
     );
 
-    // Enabling the dependency activates the validator: the subchart's
-    // defaults satisfy the failing test, so rendering aborts and the
-    // document must be rejected.
+    // Enabling the dependency activates the validator: Helm's coalesced
+    // document carries the subchart's defaults, which satisfy the failing
+    // test, so rendering aborts and the document must be rejected.
+    let enabled = serde_json::json!({
+        "redis": { "enabled": true, "auth": { "enabled": true, "usePassword": true } },
+    });
     assert!(
-        !validator.is_valid(&serde_json::json!({ "redis": { "enabled": true } })),
+        !validator.is_valid(&enabled),
         "with the dependency enabled, the subchart's defaults satisfy the \
          failing test and the document must be rejected",
+    );
+    // `helm lint -f` with `redis.enabled: true` validates the root values
+    // and the override without the subchart's defaults, and passes (Helm
+    // v4.2.3), so that document stays accepted.
+    assert!(
+        validator.is_valid(&serde_json::json!({ "redis": { "enabled": true } })),
+        "the lint document of the enabling override must be accepted",
     );
 
     Ok(())

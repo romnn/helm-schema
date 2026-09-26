@@ -6,6 +6,8 @@ use std::sync::OnceLock;
 use color_eyre::eyre::{self, WrapErr, eyre};
 use vfs::VfsPath;
 
+/// Helm values coalescing over chart directories.
+pub mod helm_values;
 /// S-expression fixtures and parsing utilities.
 pub mod sexpr;
 

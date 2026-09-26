@@ -365,6 +365,17 @@ impl ValuePathContext<'_> {
             "gt" | "lt" | "ge" | "le" => {
                 exact_candidate(self.positive_len_predicate(function, args))
             }
+            // `len` aborts on everything but strings, lists and maps (its
+            // operand capture rejects the rest), and on those a non-zero
+            // length is exactly Helm truthiness — the bare `if len X` form
+            // of `gt (len X) 0` (promtail's `networkPolicy.k8sApi.cidrs`).
+            "len" => match args {
+                [subject] => self.decoded_condition_predicate(subject),
+                _ => Decoded::Approximate {
+                    value: self.truthy_predicate(expr),
+                    usable_for_control: false,
+                },
+            },
             "typeIs" | "kindIs" => exact_candidate(self.type_is_predicate(function, args)),
             "hasKey" => exact_candidate(self.has_key_predicate(args)),
             "hasPrefix" => exact_candidate(

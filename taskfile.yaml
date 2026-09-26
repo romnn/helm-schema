@@ -3,6 +3,8 @@ version: "3"
 vars:
   ZIGBUILD_IMAGE: ghcr.io/rust-cross/cargo-zigbuild:latest
   GORELEASER_VERSION: "2.17.0"
+  # The Go toolchain the pinned Helm v4.2.3 release binary was built with.
+  HELMSWEEP_GO: "1.26.5"
 
 tasks:
   default:
@@ -178,6 +180,44 @@ tasks:
     desc: "test cargo workspace for all combinations of features"
     cmds:
       - cargo fc nextest run -P default --all-targets --no-tests warn {{.CLI_ARGS}}
+
+  build:helmsweep:
+    desc: "build the in-process Helm v4.2.3 lint/template driver of the landing sweep"
+    dir: "{{.ROOT_DIR}}/tools/helmsweep"
+    env:
+      GOTOOLCHAIN: local
+    cmds:
+      # A missing or different toolchain fails here; nothing falls back.
+      - >-
+        test "$(mise exec go@{{.HELMSWEEP_GO}} -- go env GOVERSION)" = "go{{.HELMSWEEP_GO}}"
+        || { echo "helmsweep needs go{{.HELMSWEEP_GO}}" >&2; exit 1; }
+      # Tagged Helm module, digest-checked and patched, in a build-local copy
+      # (stage.sh); the source tree holds only the patch.
+      - mise exec go@{{.HELMSWEEP_GO}} -- ./stage.sh "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build"
+      # No VCS stamp: the binary's sha256 (the verdict cache's build id)
+      # changes only when its sources or toolchain do.
+      - >-
+        cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build" && mise exec go@{{.HELMSWEEP_GO}} -- go build -trimpath -buildvcs=false
+        -o "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep{{exeExt}}" .
+      # The binary must report the pinned toolchain, modules and patch.
+      - |
+        version="$("${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep{{exeExt}}" version)"
+        patch="$(shasum -a 256 helm-memo.patch | cut -d' ' -f1)"
+        for line in "go go{{.HELMSWEEP_GO}}" "helm.sh/helm/v4 v4.2.3 => ./third_party/helm-v4.2.3" \
+          "github.com/santhosh-tekuri/jsonschema/v6 v6.0.2" "patch $patch"; do
+          printf '%s\n' "$version" | grep -qxF "$line" || { echo "helmsweep version lacks: $line" >&2; exit 1; }
+        done
+
+  test:helmsweep:
+    desc: "vet, race-test and format-check the helmsweep driver against the patched Helm"
+    dir: "{{.ROOT_DIR}}/tools/helmsweep"
+    env:
+      GOTOOLCHAIN: local
+    cmds:
+      - test -z "$(mise exec go@{{.HELMSWEEP_GO}} -- gofmt -l .)" || { echo "gofmt -l is not empty" >&2; exit 1; }
+      - mise exec go@{{.HELMSWEEP_GO}} -- ./stage.sh "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build"
+      - cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build" && mise exec go@{{.HELMSWEEP_GO}} -- go vet ./...
+      - cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build" && mise exec go@{{.HELMSWEEP_GO}} -- go test -race -count=1 ./...
 
   test:integration:
     desc: "run integration tests in cargo workspace"

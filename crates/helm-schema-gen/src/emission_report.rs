@@ -1,6 +1,50 @@
 use std::collections::BTreeMap;
 
+use helm_schema_core::ValuesPath;
+
 use crate::emission_policy::{EmissionClass, EmissionClassKind};
+
+/// The `helm lint` document a withdrawn constraint fails.
+///
+/// `helm lint` validates the root `values.yaml` coalesced with the user's
+/// override files, never with dependency defaults (Helm v4.2.3
+/// `pkg/chart/v2/lint/rules/values.go:62-68`).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LintDocument {
+    /// The root `values.yaml` as written, linted without overrides; the
+    /// whole constraint failed it.
+    Root,
+    /// The coalesced defaults restricted to the members the root declares,
+    /// with the root's nulls kept; the constraint failed it once every
+    /// guard an override can switch on was taken as switched on.
+    Floor,
+}
+
+/// How a constraint a `helm lint` document fails was relaxed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LintOutcome {
+    /// It applies only where every deciding path holds a non-null value;
+    /// a pure presence requirement on those paths is lost.
+    Conditioned,
+    /// It was dropped: no deciding path could be encoded as a presence test.
+    Withdrawn,
+}
+
+/// A conditional constraint relaxed because a `helm lint` document fails it
+/// while the coalesced defaults satisfy it.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct LintWithdrawal {
+    /// Values path the constraint is anchored at.
+    pub anchor: ValuesPath,
+    /// First lint document that fails the constraint.
+    pub document: LintDocument,
+    /// Guard paths and constrained members of the constraint whose presence
+    /// differs between a failing lint document and the coalesced defaults:
+    /// only a dependency supplies them, or the root declares them null.
+    pub deciding_paths: Vec<ValuesPath>,
+    /// How the constraint was relaxed.
+    pub outcome: LintOutcome,
+}
 
 /// Fact totals at one emission-selection boundary.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
@@ -85,6 +129,10 @@ pub struct EmissionReport {
     pub canonicalization: CanonicalizationCounts,
     /// Ambiguous-union insertions that deliberately retained their original schema.
     pub insertion_abstentions: InsertionAbstentionCounts,
+    /// Conditional constraints relaxed because a document `helm lint`
+    /// validates fails them while the coalesced defaults satisfy them, in
+    /// relaxation order.
+    pub lint_withdrawals: Vec<LintWithdrawal>,
 }
 
 #[derive(Clone, Copy)]

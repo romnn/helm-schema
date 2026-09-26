@@ -2,7 +2,7 @@ use std::cell::{OnceCell, RefCell};
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 use std::rc::Rc;
 
-use helm_schema_ast::{DefineIndex, TemplateExpr};
+use helm_schema_ast::{DefineIndex, DefineSourceRole, TemplateExpr};
 use helm_schema_core::ValuesPath;
 
 use crate::abstract_value::AbstractValue;
@@ -39,7 +39,6 @@ struct ParsedDefinesInner {
     define_bodies: HashMap<String, CachedDefineBody>,
     define_names: BTreeSet<String>,
     define_source_paths: BTreeMap<String, BTreeSet<String>>,
-    implicit_template_names: BTreeMap<String, String>,
     file_sources: HashMap<String, String>,
 }
 
@@ -50,14 +49,14 @@ impl ParsedDefines {
         let mut define_bodies = HashMap::new();
         let mut define_names = BTreeSet::new();
         let mut define_source_paths: BTreeMap<String, BTreeSet<String>> = BTreeMap::new();
-        let mut implicit_template_names = BTreeMap::new();
         let mut file_sources = HashMap::new();
-        for (path, src) in defines.file_sources() {
+        for (path, role, src) in defines.file_sources() {
             file_sources.insert(path.to_string(), src.to_string());
-            if let Some(template_relative_path) = template_relative_path(path) {
-                let name = format!("@file:{path}");
-                implicit_template_names.insert(template_relative_path, name.clone());
-                define_bodies.insert(name, CachedDefineBody::new(src, path, 0));
+            // A template is callable under the exact name Helm registers it
+            // by, which is the index key. `.Files.Get` payloads share the
+            // map but are never executable templates.
+            if role == DefineSourceRole::Template {
+                define_bodies.insert(path.to_string(), CachedDefineBody::new(src, path, 0));
             }
             for block in extract_define_blocks(src) {
                 define_names.insert(block.name.clone());
@@ -76,7 +75,6 @@ impl ParsedDefines {
                 define_bodies,
                 define_names,
                 define_source_paths,
-                implicit_template_names,
                 file_sources,
             }),
         }
@@ -279,19 +277,6 @@ impl IrAnalysisDb {
 
     pub(crate) fn has_helper(&self, name: &str) -> bool {
         self.parsed_defines.inner.define_bodies.contains_key(name)
-    }
-
-    pub(crate) fn implicit_template_name(&self, suffix: &str) -> Option<&str> {
-        let suffix = suffix.trim_start_matches('/');
-        let mut matches = self
-            .parsed_defines
-            .inner
-            .implicit_template_names
-            .iter()
-            .filter(|(path, _)| path.as_str() == suffix)
-            .map(|(_, name)| name.as_str());
-        let first = matches.next()?;
-        matches.next().is_none().then_some(first)
     }
 
     pub(crate) fn file_source(&self, path: &str) -> Option<&str> {
@@ -1120,12 +1105,6 @@ impl IrAnalysisDb {
             .borrow_mut()
             .insert(name.to_string(), footprint);
     }
-}
-
-fn template_relative_path(path: &str) -> Option<String> {
-    let marker = "templates/";
-    let index = path.rfind(marker)?;
-    Some(path[(index + marker.len())..].to_string())
 }
 
 /// One dot (`.`) binding as the two evaluation flavors see it: value

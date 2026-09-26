@@ -16,7 +16,7 @@ fn condition_cache_separates_selected_values_documents() -> eyre::Result<()> {
     let absent = serde_yaml::Value::Null;
     let dependency_roots = BTreeSet::new();
     let absence = AbsenceDefaults {
-        deeper_stage: &absent,
+        runtime_defaults: &absent,
         dependency_refill: &absent,
         dependency_roots: &dependency_roots,
     };

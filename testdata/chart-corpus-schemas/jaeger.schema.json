@@ -6231,6 +6231,100 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/a"
+              },
+              {
+                "$ref": "#/$defs/c"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/a"
+              },
+              {
+                "$ref": "#/$defs/o"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/a"
+              },
+              {
+                "$ref": "#/$defs/p"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/a"
+              },
+              {
+                "$ref": "#/$defs/b"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/a"
+              },
+              {
+                "$ref": "#/$defs/n"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "global": {
+              "properties": {
+                "imageRegistry": {
+                  "not": {
+                    "enum": [
+                      null
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "imageRegistry"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "additionalProperties": {},
+          "properties": {
+            "global": {
+              "additionalProperties": {},
+              "properties": {
+                "imageRegistry": {
+                  "$ref": "#/$defs/N"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "not": {
@@ -8296,75 +8390,6 @@
             "properties": {
               "serviceAccount": {
                 "$ref": "#/$defs/y"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/a"
-              },
-              {
-                "$ref": "#/$defs/c"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/a"
-              },
-              {
-                "$ref": "#/$defs/o"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/a"
-              },
-              {
-                "$ref": "#/$defs/p"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/a"
-              },
-              {
-                "$ref": "#/$defs/b"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/a"
-              },
-              {
-                "$ref": "#/$defs/n"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "additionalProperties": {},
-            "properties": {
-              "imageRegistry": {
-                "$ref": "#/$defs/N"
               }
             }
           }

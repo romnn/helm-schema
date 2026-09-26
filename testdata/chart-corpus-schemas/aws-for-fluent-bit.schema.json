@@ -1521,6 +1521,37 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/H"
+      },
+      "then": {
+        "if": {
+          "properties": {
+            "global": {
+              "not": {
+                "enum": [
+                  null
+                ]
+              }
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
+        },
+        "then": {
+          "additionalProperties": {},
+          "properties": {
+            "global": {
+              "description": "Override the deployment namespace\nnamespaceOverride:",
+              "type": "object"
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "properties": {
           "serviceMonitor": {
             "properties": {
@@ -1921,20 +1952,6 @@
                 ]
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/H"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "global": {
-            "description": "Override the deployment namespace\nnamespaceOverride:",
-            "type": "object"
           }
         }
       }

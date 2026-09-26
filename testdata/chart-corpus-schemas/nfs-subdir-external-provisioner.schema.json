@@ -34,7 +34,7 @@
             "type": "integer"
           },
           {
-            "$ref": "#/$defs/E"
+            "$ref": "#/$defs/F"
           },
           {
             "type": "number"
@@ -52,7 +52,7 @@
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/E"
+        "$ref": "#/$defs/F"
       },
       "type": "object"
     },
@@ -84,6 +84,31 @@
       }
     },
     "A": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/2"
+        },
+        {
+          "$ref": "#/$defs/5"
+        },
+        {
+          "$ref": "#/$defs/3"
+        },
+        {
+          "$ref": "#/$defs/6"
+        },
+        {
+          "$ref": "#/$defs/4"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/q"
+        }
+      ]
+    },
+    "B": {
       "additionalProperties": false,
       "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
       "properties": {
@@ -121,7 +146,7 @@
         "null"
       ]
     },
-    "B": {
+    "C": {
       "allOf": [
         {
           "not": {
@@ -143,11 +168,11 @@
         }
       ]
     },
-    "C": {
+    "D": {
       "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
-    "D": {
+    "E": {
       "properties": {
         "rbac": {
           "$ref": "#/$defs/i"
@@ -158,7 +183,7 @@
       ],
       "type": "object"
     },
-    "E": {
+    "F": {
       "allOf": [
         {
           "$ref": "#/$defs/9"
@@ -172,7 +197,7 @@
       ],
       "type": "string"
     },
-    "F": {
+    "G": {
       "allOf": [
         {
           "$ref": "#/$defs/e"
@@ -208,20 +233,10 @@
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
-    "G": {
+    "H": {
       "description": "A list of node selector requirements by node's fields.",
       "items": {
-        "$ref": "#/$defs/J"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "H": {
-      "description": "A list of node selector requirements by node's labels.",
-      "items": {
-        "$ref": "#/$defs/J"
+        "$ref": "#/$defs/K"
       },
       "type": [
         "array",
@@ -229,6 +244,16 @@
       ]
     },
     "I": {
+      "description": "A list of node selector requirements by node's labels.",
+      "items": {
+        "$ref": "#/$defs/K"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "J": {
       "additionalProperties": false,
       "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
       "properties": {
@@ -260,7 +285,7 @@
         }
       ]
     },
-    "J": {
+    "K": {
       "additionalProperties": false,
       "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
       "properties": {
@@ -292,7 +317,7 @@
         "null"
       ]
     },
-    "K": {
+    "L": {
       "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
         "$ref": "#/$defs/a"
@@ -303,7 +328,7 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "L": {
+    "M": {
       "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
         "$ref": "#/$defs/a"
@@ -314,7 +339,7 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "M": {
+    "N": {
       "additionalProperties": false,
       "description": "SELinuxOptions are the labels to be applied to the container",
       "properties": {
@@ -352,7 +377,7 @@
         "null"
       ]
     },
-    "N": {
+    "O": {
       "allOf": [
         {
           "additionalProperties": {
@@ -369,15 +394,15 @@
         }
       ]
     },
-    "O": {
+    "P": {
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "null"
     },
-    "P": {
+    "Q": {
       "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
       "type": "string"
     },
-    "Q": {
+    "R": {
       "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
       "items": {
         "$ref": "#/$defs/a"
@@ -579,7 +604,7 @@
       "type": "object"
     },
     "providerSchema1": {
-      "$ref": "#/$defs/x"
+      "$ref": "#/$defs/y"
     },
     "providerSchema2": {
       "anyOf": [
@@ -628,7 +653,7 @@
       ]
     },
     "providerSchema3": {
-      "$ref": "#/$defs/z"
+      "$ref": "#/$defs/A"
     },
     "q": {
       "allOf": [
@@ -694,19 +719,19 @@
               "$ref": "#/$defs/n"
             },
             "matchLabelKeys": {
-              "$ref": "#/$defs/L"
+              "$ref": "#/$defs/M"
             },
             "mismatchLabelKeys": {
-              "$ref": "#/$defs/K"
+              "$ref": "#/$defs/L"
             },
             "namespaceSelector": {
               "$ref": "#/$defs/n"
             },
             "namespaces": {
-              "$ref": "#/$defs/Q"
+              "$ref": "#/$defs/R"
             },
             "topologyKey": {
-              "$ref": "#/$defs/P"
+              "$ref": "#/$defs/Q"
             }
           },
           "required": [
@@ -766,6 +791,21 @@
       "type": "object"
     },
     "v": {
+      "properties": {
+        "server": {
+          "not": {
+            "enum": [
+              null
+            ]
+          }
+        }
+      },
+      "required": [
+        "server"
+      ],
+      "type": "object"
+    },
+    "w": {
       "additionalProperties": {},
       "properties": {
         "path": {
@@ -773,7 +813,7 @@
         }
       }
     },
-    "w": {
+    "x": {
       "additionalProperties": false,
       "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
       "properties": {
@@ -781,19 +821,19 @@
           "$ref": "#/$defs/n"
         },
         "matchLabelKeys": {
-          "$ref": "#/$defs/L"
+          "$ref": "#/$defs/M"
         },
         "mismatchLabelKeys": {
-          "$ref": "#/$defs/K"
+          "$ref": "#/$defs/L"
         },
         "namespaceSelector": {
           "$ref": "#/$defs/n"
         },
         "namespaces": {
-          "$ref": "#/$defs/Q"
+          "$ref": "#/$defs/R"
         },
         "topologyKey": {
-          "$ref": "#/$defs/P"
+          "$ref": "#/$defs/Q"
         }
       },
       "required": [
@@ -804,7 +844,7 @@
         "null"
       ]
     },
-    "x": {
+    "y": {
       "anyOf": [
         {
           "$ref": "#/$defs/2"
@@ -863,38 +903,13 @@
         }
       ]
     },
-    "y": {
+    "z": {
       "anyOf": [
         {
           "$ref": "#/$defs/2"
         },
         {
           "$ref": "#/$defs/1"
-        },
-        {
-          "$ref": "#/$defs/5"
-        },
-        {
-          "$ref": "#/$defs/3"
-        },
-        {
-          "$ref": "#/$defs/6"
-        },
-        {
-          "$ref": "#/$defs/4"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/q"
-        }
-      ]
-    },
-    "z": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/2"
         },
         {
           "$ref": "#/$defs/5"
@@ -1052,6 +1067,109 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/l"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nfs": {
+                "additionalProperties": {},
+                "properties": {
+                  "mountOptions": {
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "storageClass": {
+                "additionalProperties": {},
+                "description": "For creating the StorageClass automatically:",
+                "properties": {
+                  "accessModes": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/2"
+                      },
+                      {
+                        "$ref": "#/$defs/5"
+                      },
+                      {
+                        "$ref": "#/$defs/3"
+                      },
+                      {
+                        "$ref": "#/$defs/6"
+                      },
+                      {
+                        "$ref": "#/$defs/4"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/$defs/q"
+                      }
+                    ],
+                    "description": "Set access mode - ReadWriteOnce, ReadOnlyMany or ReadWriteMany"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "nfs": {
+                "required": [
+                  "server"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "nfs": {
+                  "$ref": "#/$defs/v"
+                }
+              },
+              "required": [
+                "nfs"
+              ],
+              "type": "object"
+            },
+            "then": {
+              "additionalProperties": {},
+              "properties": {
+                "nfs": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "server": {
+                      "not": {
+                        "type": "null"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "properties": {
@@ -1186,102 +1304,12 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/l"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nfs": {
-                "additionalProperties": {},
-                "properties": {
-                  "server": {
-                    "not": {
-                      "type": "null"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nfs": {
-                "additionalProperties": {},
-                "properties": {
-                  "mountOptions": {
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "storageClass": {
-                "additionalProperties": {},
-                "description": "For creating the StorageClass automatically:",
-                "properties": {
-                  "accessModes": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/2"
-                      },
-                      {
-                        "$ref": "#/$defs/5"
-                      },
-                      {
-                        "$ref": "#/$defs/3"
-                      },
-                      {
-                        "$ref": "#/$defs/6"
-                      },
-                      {
-                        "$ref": "#/$defs/4"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "$ref": "#/$defs/q"
-                      }
-                    ],
-                    "description": "Set access mode - ReadWriteOnce, ReadOnlyMany or ReadWriteMany"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "nfs": {
-                "required": [
-                  "server"
-                ],
-                "type": "object"
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "$ref": "#/$defs/l"
           },
           {
-            "$ref": "#/$defs/B"
+            "$ref": "#/$defs/C"
           }
         ]
       },
@@ -1538,7 +1566,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/D"
+            "$ref": "#/$defs/E"
           },
           {
             "properties": {
@@ -1567,7 +1595,7 @@
                     "$ref": "#/$defs/1"
                   },
                   {
-                    "$ref": "#/$defs/N"
+                    "$ref": "#/$defs/O"
                   }
                 ],
                 "description": "Additional labels for any resource created"
@@ -1578,7 +1606,7 @@
             "additionalProperties": {},
             "properties": {
               "nameOverride": {
-                "$ref": "#/$defs/y"
+                "$ref": "#/$defs/z"
               }
             }
           }
@@ -1664,7 +1692,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/B"
+        "$ref": "#/$defs/C"
       },
       "then": {
         "allOf": [
@@ -1675,7 +1703,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "server": {
-                    "$ref": "#/$defs/x"
+                    "$ref": "#/$defs/y"
                   }
                 }
               }
@@ -1685,7 +1713,7 @@
             "additionalProperties": {},
             "properties": {
               "nfs": {
-                "$ref": "#/$defs/v"
+                "$ref": "#/$defs/w"
               }
             }
           }
@@ -1735,7 +1763,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/D"
+        "$ref": "#/$defs/E"
       },
       "then": {
         "additionalProperties": {},
@@ -1824,10 +1852,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/H"
+                            "$ref": "#/$defs/I"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/G"
+                            "$ref": "#/$defs/H"
                           }
                         },
                         "type": "object",
@@ -1864,10 +1892,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/H"
+                            "$ref": "#/$defs/I"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/G"
+                            "$ref": "#/$defs/H"
                           }
                         },
                         "type": [
@@ -1911,7 +1939,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/w"
+                    "$ref": "#/$defs/x"
                   },
                   "type": [
                     "array",
@@ -1941,7 +1969,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/w"
+                    "$ref": "#/$defs/x"
                   },
                   "type": [
                     "array",
@@ -2074,7 +2102,7 @@
           "$ref": "#/$defs/1"
         },
         {
-          "$ref": "#/$defs/N"
+          "$ref": "#/$defs/O"
         },
         {
           "$ref": "#/$defs/j"
@@ -2105,7 +2133,7 @@
       "type": "object"
     },
     "nameOverride": {
-      "$ref": "#/$defs/y"
+      "$ref": "#/$defs/z"
     },
     "nfs": {
       "additionalProperties": {},
@@ -2117,53 +2145,58 @@
           "then": {
             "allOf": [
               {
-                "additionalProperties": {},
-                "properties": {
-                  "server": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/2"
-                      },
-                      {
-                        "$ref": "#/$defs/3"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/e"
-                          },
-                          {
-                            "$ref": "#/$defs/g"
-                          },
-                          {
-                            "$ref": "#/$defs/d"
-                          },
-                          {
-                            "$ref": "#/$defs/9"
-                          },
-                          {
-                            "$ref": "#/$defs/b"
-                          },
-                          {
-                            "$ref": "#/$defs/h"
-                          },
-                          {
-                            "$ref": "#/$defs/c"
-                          },
-                          {
-                            "$ref": "#/$defs/7"
-                          },
-                          {
-                            "$ref": "#/$defs/8"
-                          },
-                          {
-                            "$ref": "#/$defs/f"
-                          }
-                        ],
-                        "description": "server is the hostname or IP address of the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs",
-                        "type": "string"
-                      }
-                    ]
+                "if": {
+                  "$ref": "#/$defs/v"
+                },
+                "then": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "server": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/2"
+                        },
+                        {
+                          "$ref": "#/$defs/3"
+                        },
+                        {
+                          "allOf": [
+                            {
+                              "$ref": "#/$defs/e"
+                            },
+                            {
+                              "$ref": "#/$defs/g"
+                            },
+                            {
+                              "$ref": "#/$defs/d"
+                            },
+                            {
+                              "$ref": "#/$defs/9"
+                            },
+                            {
+                              "$ref": "#/$defs/b"
+                            },
+                            {
+                              "$ref": "#/$defs/h"
+                            },
+                            {
+                              "$ref": "#/$defs/c"
+                            },
+                            {
+                              "$ref": "#/$defs/7"
+                            },
+                            {
+                              "$ref": "#/$defs/8"
+                            },
+                            {
+                              "$ref": "#/$defs/f"
+                            }
+                          ],
+                          "description": "server is the hostname or IP address of the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs",
+                          "type": "string"
+                        }
+                      ]
+                    }
                   }
                 }
               },
@@ -2233,7 +2266,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/v"
+                "$ref": "#/$defs/w"
               }
             ]
           }
@@ -2386,7 +2419,7 @@
                   {
                     "oneOf": [
                       {
-                        "$ref": "#/$defs/z"
+                        "$ref": "#/$defs/A"
                       },
                       {
                         "anyOf": [
@@ -2400,7 +2433,7 @@
                             "$ref": "#/$defs/6"
                           },
                           {
-                            "$ref": "#/$defs/C"
+                            "$ref": "#/$defs/D"
                           },
                           {
                             "$ref": "#/$defs/4"
@@ -2470,10 +2503,10 @@
           ]
         },
         "seLinuxOptions": {
-          "$ref": "#/$defs/M"
+          "$ref": "#/$defs/N"
         },
         "seccompProfile": {
-          "$ref": "#/$defs/I"
+          "$ref": "#/$defs/J"
         },
         "supplementalGroups": {
           "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
@@ -2519,7 +2552,7 @@
           ]
         },
         "windowsOptions": {
-          "$ref": "#/$defs/A"
+          "$ref": "#/$defs/B"
         }
       },
       "type": [
@@ -2565,7 +2598,7 @@
           "$ref": "#/$defs/6"
         },
         {
-          "$ref": "#/$defs/C"
+          "$ref": "#/$defs/D"
         },
         {
           "$ref": "#/$defs/4"
@@ -2747,13 +2780,13 @@
           ]
         },
         "seLinuxOptions": {
-          "$ref": "#/$defs/M"
+          "$ref": "#/$defs/N"
         },
         "seccompProfile": {
-          "$ref": "#/$defs/I"
+          "$ref": "#/$defs/J"
         },
         "windowsOptions": {
-          "$ref": "#/$defs/A"
+          "$ref": "#/$defs/B"
         }
       },
       "type": [
@@ -2776,7 +2809,7 @@
                   "name": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/F"
+                        "$ref": "#/$defs/G"
                       },
                       {
                         "$ref": "#/$defs/2"
@@ -2794,7 +2827,7 @@
                         "$ref": "#/$defs/6"
                       },
                       {
-                        "$ref": "#/$defs/O"
+                        "$ref": "#/$defs/P"
                       },
                       {
                         "$ref": "#/$defs/4"
@@ -2936,7 +2969,7 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/F"
+                            "$ref": "#/$defs/G"
                           },
                           {
                             "$ref": "#/$defs/2"
@@ -2951,7 +2984,7 @@
                             "$ref": "#/$defs/6"
                           },
                           {
-                            "$ref": "#/$defs/O"
+                            "$ref": "#/$defs/P"
                           },
                           {
                             "$ref": "#/$defs/4"

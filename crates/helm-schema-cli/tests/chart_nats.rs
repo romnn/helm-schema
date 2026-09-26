@@ -11,8 +11,6 @@ mod chart_instances;
 mod helm_samples;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
-#[path = "common/values_yaml.rs"]
-mod values_yaml;
 
 #[test]
 fn nats_json_decoded_extra_resources_exclude_integer_iteration() -> eyre::Result<()> {

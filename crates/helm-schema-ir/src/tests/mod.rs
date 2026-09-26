@@ -269,14 +269,16 @@ fn ranged_tpl_executes_a_selected_nested_default_program() {
     );
 }
 
+/// Helm registers a template file under its exact execution name, so an
+/// include of that name executes the file's body.
 #[test]
-fn base_path_include_executes_implicit_template_source() {
+fn exact_template_name_include_executes_the_registered_file() {
     let src = indoc! {r#"
         apiVersion: v1
         kind: ConfigMap
         data:
           initialize: |-
-            {{ include (print $.Template.BasePath "/_create.txt") . | nindent 4 }}
+            {{ include "demo/templates/_create.txt" . | nindent 4 }}
     "#};
     let partial = indoc! {r"
         {{- range $bucket := .Values.buckets }}
@@ -284,7 +286,7 @@ fn base_path_include_executes_implicit_template_source() {
         {{- end }}
     "};
     let mut index = DefineIndex::new();
-    index.add_file_source("templates/_create.txt", partial);
+    index.add_file_source("demo/templates/_create.txt", partial);
     let ir = SymbolicIrContext::new(&index)
         .generate_contract_ir(src)
         .finalize();
@@ -293,7 +295,145 @@ fn base_path_include_executes_implicit_template_source() {
         ir.uses()
             .iter()
             .any(|use_| use_.source_expr == conditional_path("buckets.*.name")),
-        "the implicit template body should contribute its member access: {ir:#?}"
+        "the named template body should contribute its member access: {ir:#?}"
+    );
+}
+
+/// Two charts may ship the same template basename. Helm keeps them apart by
+/// execution name, so an include of one name must never execute the other
+/// chart's body — the shared basename establishes no identity.
+#[test]
+fn a_shared_template_basename_does_not_establish_identity() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          own: |-
+            {{ include "demo/charts/kid/templates/frag.yaml" . | nindent 4 }}
+    "#};
+    let mut index = DefineIndex::new();
+    index.add_file_source(
+        "demo/templates/frag.yaml",
+        "parent: {{ .Values.parentToken }}\n",
+    );
+    index.add_file_source(
+        "demo/charts/kid/templates/frag.yaml",
+        "child: {{ .Values.childToken }}\n",
+    );
+    let ir = SymbolicIrContext::new(&index)
+        .generate_contract_ir(src)
+        .finalize();
+
+    let sources: Vec<String> = ir
+        .uses()
+        .iter()
+        .map(|use_| use_.source_expr.encode())
+        .collect();
+    assert!(
+        sources.contains(&"childToken".to_string()),
+        "the named subchart body must execute: {ir:#?}"
+    );
+    assert!(
+        !sources.contains(&"parentToken".to_string()),
+        "the sibling body sharing the basename must not execute: {ir:#?}"
+    );
+}
+
+/// `.Template.BasePath` is the executing chart's own `templates` directory,
+/// so `include (print $.Template.BasePath "/frag.yaml")` folds to that
+/// chart's template — the parent's same-named file stays untouched.
+#[test]
+fn base_path_include_resolves_the_executing_charts_own_template() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          own: |-
+            {{ include (print $.Template.BasePath "/frag.yaml") . | nindent 4 }}
+    "#};
+    let mut index = DefineIndex::new();
+    index.add_file_source(
+        "demo/templates/frag.yaml",
+        "parent: {{ .Values.parentToken }}\n",
+    );
+    index.add_file_source(
+        "demo/charts/kid/templates/frag.yaml",
+        "child: {{ .Values.childToken }}\n",
+    );
+
+    for (base_path, executed, skipped) in [
+        ("demo/templates", "parentToken", "childToken"),
+        ("demo/charts/kid/templates", "childToken", "parentToken"),
+    ] {
+        let context = SymbolicIrContext::with_policy(
+            &index,
+            crate::SymbolicPolicy {
+                static_root_strings: std::collections::BTreeMap::from([(
+                    vec!["Template".to_string(), "BasePath".to_string()],
+                    base_path.to_string(),
+                )]),
+                ..crate::SymbolicPolicy::default()
+            },
+        );
+        let ir = context.generate_contract_ir(src).finalize();
+        let sources: Vec<String> = ir
+            .uses()
+            .iter()
+            .map(|use_| use_.source_expr.encode())
+            .collect();
+        assert!(
+            sources.contains(&executed.to_string()),
+            "{base_path} must execute its own template: {ir:#?}"
+        );
+        assert!(
+            !sources.contains(&skipped.to_string()),
+            "{base_path} must not execute the other chart's template: {ir:#?}"
+        );
+    }
+}
+
+/// A template in a subdirectory still reports the chart's own `templates`
+/// directory, so its self-include reaches a sibling at the top of
+/// `templates/`, not a file beside it.
+#[test]
+fn base_path_is_chart_scoped_not_subdirectory_scoped() {
+    let src = indoc! {r#"
+        apiVersion: v1
+        kind: ConfigMap
+        data:
+          own: |-
+            {{ include (print $.Template.BasePath "/frag.yaml") . | nindent 4 }}
+    "#};
+    let mut index = DefineIndex::new();
+    index.add_file_source("demo/templates/frag.yaml", "top: {{ .Values.topToken }}\n");
+    index.add_file_source(
+        "demo/templates/sub/frag.yaml",
+        "beside: {{ .Values.besideToken }}\n",
+    );
+    let context = SymbolicIrContext::with_policy(
+        &index,
+        crate::SymbolicPolicy {
+            static_root_strings: std::collections::BTreeMap::from([(
+                vec!["Template".to_string(), "BasePath".to_string()],
+                "demo/templates".to_string(),
+            )]),
+            ..crate::SymbolicPolicy::default()
+        },
+    );
+    let ir = context.generate_contract_ir(src).finalize();
+
+    let sources: Vec<String> = ir
+        .uses()
+        .iter()
+        .map(|use_| use_.source_expr.encode())
+        .collect();
+    assert!(
+        sources.contains(&"topToken".to_string()),
+        "the chart-level sibling must execute: {ir:#?}"
+    );
+    assert!(
+        !sources.contains(&"besideToken".to_string()),
+        "the subdirectory file must not be reached: {ir:#?}"
     );
 }
 
@@ -825,7 +965,7 @@ fn nonempty_choice_list_range_preserves_computed_mutation() {
 fn checksum_include_rows_stay_serialized_at_the_annotation_slot() {
     let mut idx = DefineIndex::new();
     idx.add_file_source(
-        "templates/configmaps/config.yaml",
+        "repro/templates/configmaps/config.yaml",
         indoc! {r#"
             kind: ConfigMap
             apiVersion: v1
@@ -852,7 +992,7 @@ fn checksum_include_rows_stay_serialized_at_the_annotation_slot() {
           template:
             metadata:
               annotations:
-                checksum/config: {{ include (print $.Template.BasePath "/configmaps/config.yaml") . | sha256sum }}
+                checksum/config: {{ include "repro/templates/configmaps/config.yaml" . | sha256sum }}
     "#};
     let ir = SymbolicIrContext::new(&idx)
         .generate_contract_ir(src)

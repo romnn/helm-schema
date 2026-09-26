@@ -6,6 +6,7 @@ use super::{
 };
 use helm_schema_core::ValuesPath;
 
+use crate::uncoalesced_root::{GuardEncoding, UncoalescedRootGate};
 use crate::values_yaml::yaml_value_at_values_path;
 
 pub(super) fn resolve_overlay_target_schema(
@@ -222,42 +223,38 @@ fn guards_supported_with_self_path(
 pub(crate) fn append_terminal_clauses(
     root_schema: &mut SchemaDocument,
     clauses: &[Vec<ConditionalGuard>],
-    values_default_sources: &BTreeSet<helm_schema_core::ValuesDefaultSource>,
-    guarded_values_default_sources: &BTreeSet<helm_schema_core::GuardedValuesDefaultSource>,
+    signals: &helm_schema_core::ContractSchemaSignals,
     documents: &crate::emission_plan::RootValuesDocuments,
     dependency_roots: &BTreeSet<Vec<String>>,
     predicate_memo: &helm_schema_core::PredicateMemo,
+    gate: &mut UncoalescedRootGate<'_>,
 ) {
     append_values_default_source_absence_clauses(
         root_schema,
         clauses,
-        values_default_sources,
-        guarded_values_default_sources,
+        signals,
         documents,
         dependency_roots,
         predicate_memo,
+        gate,
     );
-    // A deleted dependency values root is not the document minus a key:
-    // helm recreates the table from the SUBCHART's own values, so a clause
-    // whose guards all hold against that refill terminates every document
-    // missing the root — the half a clause anchored inside the root cannot
-    // reach. One clause per root states it.
-    let mut deleted_roots = BTreeSet::new();
-    for guards in clauses {
-        let (_, _, absence) = documents.condition_context(guards, dependency_roots, predicate_memo);
-        if let Some(root) =
-            crate::condition_encoding::deleted_dependency_root_terminates(guards, absence)
-        {
-            deleted_roots.insert(root);
-        }
-    }
-    for root in deleted_roots {
-        let Some(condition) = crate::condition_encoding::dependency_root_gone_condition(root)
-        else {
-            continue;
-        };
-        root_schema.append_conditional(&[], condition, SchemaNode::foreign(Value::Bool(false)));
-    }
+    append_guarded_values_default_source_clauses(
+        root_schema,
+        clauses,
+        signals,
+        documents,
+        dependency_roots,
+        predicate_memo,
+        gate,
+    );
+    append_deleted_dependency_root_clauses(
+        root_schema,
+        clauses,
+        documents,
+        dependency_roots,
+        predicate_memo,
+        gate,
+    );
     for guards in clauses {
         let (_, values_yaml_doc, absence) =
             documents.condition_context(guards, dependency_roots, predicate_memo);
@@ -283,23 +280,19 @@ pub(crate) fn append_terminal_clauses(
         {
             continue;
         }
-        let condition = SchemaNode::all_of(build_condition_clauses(
+        append_terminal_clause(
+            root_schema,
+            gate,
             guards,
             &ancestor_segments,
             values_yaml_doc,
             absence,
-            crate::condition_encoding::ConditionPolarity::Narrow,
-        ));
-        root_schema.append_conditional(
-            &ancestor_segments,
-            condition,
-            SchemaNode::foreign(Value::Bool(false)),
         );
-        // `deeper_stage` is the effective subtree when the document supplies
+        // `runtime_defaults` is the effective subtree when the document supplies
         // no ancestor. A definitively false original formula makes the
         // missing-ancestor companion unreachable; uncertainty stays open.
         if split_vacuous_ancestor
-            && evaluate_guard_set_on_values(guards, absence.deeper_stage) != Some(false)
+            && evaluate_guard_set_on_values(guards, absence.runtime_defaults) != Some(false)
         {
             let path = ValuesPath::from_segments(
                 ancestor_segments
@@ -314,37 +307,84 @@ pub(crate) fn append_terminal_clauses(
                 .iter()
                 .all(|guard| guard_encodes_fully(guard, &root, values_yaml_doc, absence))
             {
-                let condition = SchemaNode::all_of(build_condition_clauses(
+                append_terminal_clause(
+                    root_schema,
+                    gate,
                     &missing_ancestor_guards,
                     &root,
                     values_yaml_doc,
                     absence,
-                    crate::condition_encoding::ConditionPolarity::Narrow,
-                ));
-                root_schema.append_conditional(
-                    &root,
-                    condition,
-                    SchemaNode::foreign(Value::Bool(false)),
                 );
             }
         }
     }
 }
 
-fn append_values_default_source_absence_clauses(
+/// A deleted dependency values root is not the document minus a key: helm
+/// recreates the table from the SUBCHART's own values, so a clause whose
+/// guards all hold against that refill terminates every document missing the
+/// root — the half a clause anchored inside the root cannot reach. One clause
+/// per root states it.
+fn append_deleted_dependency_root_clauses(
     root_schema: &mut SchemaDocument,
     clauses: &[Vec<ConditionalGuard>],
-    values_default_sources: &BTreeSet<helm_schema_core::ValuesDefaultSource>,
-    guarded_values_default_sources: &BTreeSet<helm_schema_core::GuardedValuesDefaultSource>,
     documents: &crate::emission_plan::RootValuesDocuments,
     dependency_roots: &BTreeSet<Vec<String>>,
     predicate_memo: &helm_schema_core::PredicateMemo,
+    gate: &mut UncoalescedRootGate<'_>,
+) {
+    let mut deleted_roots = BTreeSet::new();
+    for guards in clauses {
+        let (_, _, absence) = documents.condition_context(guards, dependency_roots, predicate_memo);
+        if let Some(root) =
+            crate::condition_encoding::deleted_dependency_root_terminates(guards, absence)
+        {
+            deleted_roots.insert(root);
+        }
+    }
+    for root in deleted_roots {
+        let Some(condition) = crate::condition_encoding::dependency_root_gone_condition(root)
+        else {
+            continue;
+        };
+        let guards = [ConditionalGuard::Absent {
+            path: ValuesPath::from_segments(
+                root.iter()
+                    .map(|segment| helm_schema_core::Segment::from_encoded_component(segment)),
+            ),
+        }];
+        let (_, values_yaml_doc, absence) =
+            documents.condition_context(&guards, dependency_roots, predicate_memo);
+        append_unless_withdrawn(
+            root_schema,
+            gate,
+            &[],
+            &guards,
+            condition,
+            GuardEncoding {
+                values_yaml_doc,
+                absence,
+                polarity: crate::condition_encoding::ConditionPolarity::Narrow,
+            },
+        );
+    }
+}
+
+fn append_values_default_source_absence_clauses(
+    root_schema: &mut SchemaDocument,
+    clauses: &[Vec<ConditionalGuard>],
+    signals: &helm_schema_core::ContractSchemaSignals,
+    documents: &crate::emission_plan::RootValuesDocuments,
+    dependency_roots: &BTreeSet<Vec<String>>,
+    predicate_memo: &helm_schema_core::PredicateMemo,
+    gate: &mut UncoalescedRootGate<'_>,
 ) {
     for guards in clauses {
         let [ConditionalGuard::Absent { path }] = guards.as_slice() else {
             continue;
         };
-        let Some(source_path) = unique_values_default_source_path(path, values_default_sources)
+        let Some(source_path) =
+            unique_values_default_source_path(path, signals.values_default_sources())
         else {
             continue;
         };
@@ -357,17 +397,40 @@ fn append_values_default_source_absence_clauses(
         else {
             continue;
         };
-        root_schema.append_conditional(
+        let (_, values_yaml_doc, absence) =
+            documents.condition_context(guards, dependency_roots, predicate_memo);
+        append_unless_withdrawn(
+            root_schema,
+            gate,
             &[],
+            &[
+                ConditionalGuard::Absent { path: path.clone() },
+                ConditionalGuard::Absent { path: source_path },
+            ],
             SchemaNode::all_of(vec![target_absent, source_absent]),
-            SchemaNode::foreign(Value::Bool(false)),
+            GuardEncoding {
+                values_yaml_doc,
+                absence,
+                polarity: crate::condition_encoding::ConditionPolarity::Narrow,
+            },
         );
     }
+}
+
+fn append_guarded_values_default_source_clauses(
+    root_schema: &mut SchemaDocument,
+    clauses: &[Vec<ConditionalGuard>],
+    signals: &helm_schema_core::ContractSchemaSignals,
+    documents: &crate::emission_plan::RootValuesDocuments,
+    dependency_roots: &BTreeSet<Vec<String>>,
+    predicate_memo: &helm_schema_core::PredicateMemo,
+    gate: &mut UncoalescedRootGate<'_>,
+) {
     for guards in clauses {
         let guard_predicate = helm_schema_core::Predicate::all(
             guards.iter().map(ConditionalGuard::predicate).collect(),
         );
-        for fact in guarded_values_default_sources {
+        for fact in signals.guarded_values_default_sources() {
             let activation = helm_schema_core::Predicate::all(
                 fact.outer_guards
                     .iter()
@@ -410,10 +473,20 @@ fn append_values_default_source_absence_clauses(
             );
             conditions.push(target_absent);
             conditions.push(source_absent);
-            root_schema.append_conditional(
+            let mut judged_guards = remaining_guards;
+            judged_guards.push(ConditionalGuard::Absent { path: path.clone() });
+            judged_guards.push(ConditionalGuard::Absent { path: source_path });
+            append_unless_withdrawn(
+                root_schema,
+                gate,
                 &[],
+                &judged_guards,
                 SchemaNode::all_of(conditions),
-                SchemaNode::foreign(Value::Bool(false)),
+                GuardEncoding {
+                    values_yaml_doc,
+                    absence,
+                    polarity: crate::condition_encoding::ConditionPolarity::Narrow,
+                },
             );
         }
     }
@@ -559,6 +632,7 @@ pub(crate) fn append_selected_constraints(
     dependency_roots: &BTreeSet<Vec<String>>,
     report: &mut EmissionReport,
     predicate_memo: &helm_schema_core::PredicateMemo,
+    gate: &mut UncoalescedRootGate<'_>,
 ) {
     let mut condition_cache = crate::condition_encoding::ConditionFragmentCache::new();
     // Conditionals sharing one guard set and scope conjoin into one if/then:
@@ -598,6 +672,9 @@ pub(crate) fn append_selected_constraints(
             documents.condition_context(&guards, dependency_roots, predicate_memo);
         let mut merged: Option<(Value, usize, usize)> = None;
         let mut separate = Vec::new();
+        // Each conditional is judged against the lint documents before
+        // grouping, so one withdrawn fact never takes its siblings along.
+        let mut guard_condition = None;
         for conditional in group {
             let mandatory = usize::from(matches!(conditional.class, EmissionClass::Mandatory));
             let Some(fragment) = build_scoped_target_fragment(
@@ -610,6 +687,31 @@ pub(crate) fn append_selected_constraints(
                 report.mandatory_outcomes.fallback += mandatory;
                 continue;
             };
+            let condition = guard_condition.get_or_insert_with(|| {
+                SchemaNode::all_of(crate::condition_encoding::build_condition_clauses_cached(
+                    &guards,
+                    &ancestor_segments,
+                    values_document,
+                    values_yaml_doc,
+                    absence,
+                    &mut condition_cache,
+                ))
+            });
+            let encoding = GuardEncoding {
+                values_yaml_doc,
+                absence,
+                polarity: crate::condition_encoding::ConditionPolarity::Widen,
+            };
+            let Some(fragment) = gate.lint_safe_then(
+                &ancestor_segments,
+                &guards,
+                condition,
+                &SchemaNode::foreign(fragment),
+                encoding,
+            ) else {
+                continue;
+            };
+            let fragment = fragment.into_value();
             match &mut merged {
                 None => merged = Some((fragment, 1, mandatory)),
                 Some((target, facts, mandatory_facts)) => {
@@ -856,4 +958,58 @@ fn build_target_fragment(path_segments: &[String], leaf_schema: SchemaNode) -> S
     // member exists on an object, the leaf requirement applies"; asserting
     // `type: object` on the carrier would reject the skipped falsy states.
     SchemaNode::untyped_member_host().property(head, child)
+}
+
+/// Appends `if <guards> then false` at `ancestor_segments` unless the gate
+/// withdraws it.
+fn append_terminal_clause(
+    root_schema: &mut SchemaDocument,
+    gate: &mut UncoalescedRootGate<'_>,
+    guards: &[ConditionalGuard],
+    ancestor_segments: &[String],
+    values_yaml_doc: &YamlValue,
+    absence: crate::condition_encoding::AbsenceDefaults<'_>,
+) {
+    let encoding = GuardEncoding {
+        values_yaml_doc,
+        absence,
+        polarity: crate::condition_encoding::ConditionPolarity::Narrow,
+    };
+    let condition = SchemaNode::all_of(build_condition_clauses(
+        guards,
+        ancestor_segments,
+        values_yaml_doc,
+        absence,
+        encoding.polarity,
+    ));
+    append_unless_withdrawn(
+        root_schema,
+        gate,
+        ancestor_segments,
+        guards,
+        condition,
+        encoding,
+    );
+}
+
+/// Appends `if condition then false` at `ancestor_segments` as the lint gate
+/// keeps it; `condition` encodes `guards` with `encoding`.
+fn append_unless_withdrawn(
+    root_schema: &mut SchemaDocument,
+    gate: &mut UncoalescedRootGate<'_>,
+    ancestor_segments: &[String],
+    guards: &[ConditionalGuard],
+    condition: SchemaNode,
+    encoding: GuardEncoding<'_>,
+) {
+    let then_schema = SchemaNode::foreign(Value::Bool(false));
+    if let Some(then_schema) = gate.lint_safe_then(
+        ancestor_segments,
+        guards,
+        &condition,
+        &then_schema,
+        encoding,
+    ) {
+        root_schema.append_conditional(ancestor_segments, condition, then_schema);
+    }
 }

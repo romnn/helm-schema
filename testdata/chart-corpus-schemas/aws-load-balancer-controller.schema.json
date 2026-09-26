@@ -8,18 +8,6 @@
     "10": {
       "anyOf": [
         {
-          "type": "null"
-        },
-        {
-          "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
-          "format": "int32",
-          "type": "integer"
-        }
-      ]
-    },
-    "11": {
-      "anyOf": [
-        {
           "not": {
             "properties": {
               "metricsBindAddr": {}
@@ -45,10 +33,10 @@
         }
       ]
     },
-    "12": {
+    "11": {
       "properties": {
         "ingressValidationNamespaceSelector": {
-          "$ref": "#/$defs/P"
+          "$ref": "#/$defs/O"
         }
       },
       "required": [
@@ -56,10 +44,10 @@
       ],
       "type": "object"
     },
-    "13": {
+    "12": {
       "properties": {
         "ingressValidationObjectSelector": {
-          "$ref": "#/$defs/P"
+          "$ref": "#/$defs/O"
         }
       },
       "required": [
@@ -67,10 +55,10 @@
       ],
       "type": "object"
     },
-    "14": {
+    "13": {
       "properties": {
         "serviceAccount": {
-          "$ref": "#/$defs/z"
+          "$ref": "#/$defs/y"
         }
       },
       "required": [
@@ -78,7 +66,7 @@
       ],
       "type": "object"
     },
-    "15": {
+    "14": {
       "properties": {
         "replicaCount": {
           "anyOf": [
@@ -98,7 +86,7 @@
       ],
       "type": "object"
     },
-    "16": {
+    "15": {
       "additionalProperties": false,
       "description": "Attributes defines custom attributes on resources.",
       "properties": {
@@ -117,9 +105,9 @@
       ],
       "type": "object"
     },
-    "17": {
+    "16": {
       "additionalProperties": {
-        "$ref": "#/$defs/C"
+        "$ref": "#/$defs/B"
       },
       "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
       "type": [
@@ -127,7 +115,7 @@
         "null"
       ]
     },
-    "18": {
+    "17": {
       "anyOf": [
         {
           "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
@@ -139,7 +127,7 @@
         }
       ]
     },
-    "19": {
+    "18": {
       "anyOf": [
         {
           "type": "null"
@@ -151,20 +139,14 @@
         }
       ]
     },
-    "1A": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/1"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/F"
-        }
+    "19": {
+      "description": "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required.",
+      "type": [
+        "string",
+        "null"
       ]
     },
-    "1B": {
+    "1A": {
       "additionalProperties": {
         "$ref": "#/$defs/2"
       },
@@ -174,7 +156,7 @@
         "null"
       ]
     },
-    "1C": {
+    "1B": {
       "additionalProperties": false,
       "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
       "properties": {
@@ -212,7 +194,7 @@
         "null"
       ]
     },
-    "1D": {
+    "1C": {
       "anyOf": [
         {
           "additionalProperties": false,
@@ -268,7 +250,7 @@
             "port": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/r"
+                  "$ref": "#/$defs/q"
                 },
                 {
                   "type": "integer"
@@ -297,7 +279,7 @@
         }
       ]
     },
-    "1E": {
+    "1D": {
       "allOf": [
         {
           "$ref": "#/$defs/c"
@@ -318,7 +300,7 @@
           "$ref": "#/$defs/f"
         },
         {
-          "$ref": "#/$defs/i"
+          "$ref": "#/$defs/h"
         },
         {
           "$ref": "#/$defs/8"
@@ -333,10 +315,20 @@
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
-    "1F": {
+    "1E": {
       "description": "A list of node selector requirements by node's fields.",
       "items": {
-        "$ref": "#/$defs/1I"
+        "$ref": "#/$defs/1H"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "1F": {
+      "description": "A list of node selector requirements by node's labels.",
+      "items": {
+        "$ref": "#/$defs/1H"
       },
       "type": [
         "array",
@@ -344,16 +336,6 @@
       ]
     },
     "1G": {
-      "description": "A list of node selector requirements by node's labels.",
-      "items": {
-        "$ref": "#/$defs/1I"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "1H": {
       "additionalProperties": false,
       "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
       "properties": {
@@ -385,7 +367,7 @@
         }
       ]
     },
-    "1I": {
+    "1H": {
       "additionalProperties": false,
       "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
       "properties": {
@@ -417,7 +399,7 @@
         "null"
       ]
     },
-    "1J": {
+    "1I": {
       "allOf": [
         {
           "$ref": "#/$defs/c"
@@ -438,7 +420,7 @@
           "$ref": "#/$defs/f"
         },
         {
-          "$ref": "#/$defs/i"
+          "$ref": "#/$defs/h"
         },
         {
           "$ref": "#/$defs/8"
@@ -453,17 +435,17 @@
       "description": "name is the name of resource being referenced.",
       "type": "string"
     },
-    "1K": {
+    "1J": {
       "allOf": [
         {
           "not": {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/H"
           }
         },
         {
           "anyOf": [
             {
-              "$ref": "#/$defs/I"
+              "$ref": "#/$defs/H"
             },
             {
               "allOf": [
@@ -487,46 +469,46 @@
                   "type": "object"
                 },
                 {
-                  "$ref": "#/$defs/x"
+                  "$ref": "#/$defs/w"
                 }
               ]
             }
           ]
         },
         {
-          "$ref": "#/$defs/j"
+          "$ref": "#/$defs/i"
         }
       ]
     },
-    "1L": {
+    "1K": {
       "anyOf": [
         {
-          "$ref": "#/$defs/k"
+          "$ref": "#/$defs/j"
         },
         {
           "allOf": [
             {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/k"
+                  "$ref": "#/$defs/j"
                 },
                 {
                   "not": {
-                    "$ref": "#/$defs/1d"
+                    "$ref": "#/$defs/1c"
                   }
                 }
               ]
             },
             {
               "not": {
-                "$ref": "#/$defs/Q"
+                "$ref": "#/$defs/P"
               }
             }
           ]
         }
       ]
     },
-    "1M": {
+    "1L": {
       "description": "Optional duration in seconds the pod needs to terminate gracefully upon probe failure. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. If this value is nil, the pod's terminationGracePeriodSeconds will be used. Otherwise, this value overrides the value provided by the pod spec. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). This is a beta field and requires enabling ProbeTerminationGracePeriod feature gate. Minimum value is 1. spec.terminationGracePeriodSeconds is used if unset.",
       "format": "int64",
       "type": [
@@ -534,12 +516,12 @@
         "null"
       ]
     },
-    "1N": {
+    "1M": {
       "additionalProperties": false,
       "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
       "properties": {
         "key": {
-          "$ref": "#/$defs/1g"
+          "$ref": "#/$defs/1f"
         },
         "operator": {
           "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
@@ -565,7 +547,7 @@
         "null"
       ]
     },
-    "1O": {
+    "1N": {
       "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
         "$ref": "#/$defs/2"
@@ -576,7 +558,7 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "1P": {
+    "1O": {
       "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
         "$ref": "#/$defs/2"
@@ -587,7 +569,7 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "1Q": {
+    "1P": {
       "additionalProperties": false,
       "description": "ExecAction describes a \"run in container\" action.",
       "properties": {
@@ -608,33 +590,26 @@
       ]
     },
     "1a": {
-      "description": "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required.",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "1b": {
       "additionalProperties": false,
       "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
       "properties": {
         "labelSelector": {
-          "$ref": "#/$defs/o"
+          "$ref": "#/$defs/n"
         },
         "matchLabelKeys": {
-          "$ref": "#/$defs/1P"
-        },
-        "mismatchLabelKeys": {
           "$ref": "#/$defs/1O"
         },
+        "mismatchLabelKeys": {
+          "$ref": "#/$defs/1N"
+        },
         "namespaceSelector": {
-          "$ref": "#/$defs/o"
+          "$ref": "#/$defs/n"
         },
         "namespaces": {
-          "$ref": "#/$defs/W"
+          "$ref": "#/$defs/V"
         },
         "topologyKey": {
-          "$ref": "#/$defs/V"
+          "$ref": "#/$defs/U"
         }
       },
       "required": [
@@ -645,7 +620,7 @@
         "null"
       ]
     },
-    "1c": {
+    "1b": {
       "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
       "format": "int32",
       "type": [
@@ -653,7 +628,7 @@
         "null"
       ]
     },
-    "1d": {
+    "1c": {
       "properties": {
         "keepTLSSecret": {
           "$ref": "#/$defs/t"
@@ -664,7 +639,7 @@
       ],
       "type": "object"
     },
-    "1e": {
+    "1d": {
       "properties": {
         "objectSelector": {
           "enum": [
@@ -677,7 +652,7 @@
       ],
       "type": "object"
     },
-    "1f": {
+    "1e": {
       "properties": {
         "featureGates": {
           "enum": [
@@ -690,11 +665,11 @@
       ],
       "type": "object"
     },
-    "1g": {
+    "1f": {
       "description": "key is the label key that the selector applies to.",
       "type": "string"
     },
-    "1h": {
+    "1g": {
       "properties": {
         "objectSelector": {}
       },
@@ -703,14 +678,14 @@
       ],
       "type": "object"
     },
-    "1i": {
+    "1h": {
       "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "1j": {
+    "1i": {
       "allOf": [
         {
           "$ref": "#/$defs/a"
@@ -724,22 +699,22 @@
       ],
       "type": "string"
     },
-    "1k": {
+    "1j": {
       "description": "optional specify whether the ConfigMap or its keys must be defined",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "1l": {
+    "1k": {
       "description": "Kind is the type of resource being referenced",
       "type": "string"
     },
-    "1m": {
+    "1l": {
       "description": "Name is the name of resource being referenced",
       "type": "string"
     },
-    "1n": {
+    "1m": {
       "properties": {
         "env": {
           "$ref": "#/$defs/t"
@@ -750,7 +725,7 @@
       ],
       "type": "object"
     },
-    "1o": {
+    "1n": {
       "properties": {
         "featureGates": {}
       },
@@ -759,7 +734,7 @@
       ],
       "type": "object"
     },
-    "1p": {
+    "1o": {
       "additionalProperties": false,
       "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
       "properties": {
@@ -824,7 +799,7 @@
       },
       "type": "object"
     },
-    "1q": {
+    "1p": {
       "additionalProperties": false,
       "description": "HPAScalingRules configures the scaling behavior for one direction. These Rules are applied after calculating DesiredReplicas from metrics for the HPA. They can limit the scaling velocity by specifying scaling policies. They can prevent flapping by specifying the stabilization window, so that the number of replicas is not set instantly, instead, the safest value from the stabilization window is chosen.",
       "properties": {
@@ -886,7 +861,7 @@
         "null"
       ]
     },
-    "1r": {
+    "1q": {
       "additionalProperties": false,
       "description": "DownwardAPIVolumeFile represents information to create the file containing the pod field",
       "properties": {
@@ -939,7 +914,7 @@
               ]
             },
             "divisor": {
-              "$ref": "#/$defs/C"
+              "$ref": "#/$defs/B"
             },
             "resource": {
               "description": "Required: resource to select",
@@ -964,7 +939,7 @@
         "null"
       ]
     },
-    "1s": {
+    "1r": {
       "anyOf": [
         {
           "$ref": "#/$defs/3"
@@ -988,21 +963,21 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/v"
+          "$ref": "#/$defs/u"
         }
       ]
     },
-    "1t": {
+    "1s": {
       "description": "items if unspecified, each key-value pair in the Data field of the referenced ConfigMap will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the ConfigMap, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
       "items": {
-        "$ref": "#/$defs/T"
+        "$ref": "#/$defs/S"
       },
       "type": [
         "array",
         "null"
       ]
     },
-    "1u": {
+    "1t": {
       "additionalProperties": false,
       "description": "SELinuxOptions are the labels to be applied to the container",
       "properties": {
@@ -1040,7 +1015,7 @@
         "null"
       ]
     },
-    "1v": {
+    "1u": {
       "additionalProperties": false,
       "properties": {
         "port": {
@@ -1064,24 +1039,24 @@
         "null"
       ]
     },
-    "1w": {
+    "1v": {
       "allOf": [
         {
           "not": {
-            "$ref": "#/$defs/I"
+            "$ref": "#/$defs/H"
           }
         },
         {
-          "$ref": "#/$defs/x"
+          "$ref": "#/$defs/w"
         },
         {
-          "$ref": "#/$defs/j"
+          "$ref": "#/$defs/i"
         }
       ]
     },
-    "1x": {
+    "1w": {
       "additionalProperties": {
-        "$ref": "#/$defs/C"
+        "$ref": "#/$defs/B"
       },
       "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
       "type": [
@@ -1089,7 +1064,7 @@
         "null"
       ]
     },
-    "1y": {
+    "1x": {
       "allOf": [
         {
           "properties": {
@@ -1103,13 +1078,26 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/15"
+          "$ref": "#/$defs/14"
         }
       ]
     },
-    "1z": {
+    "1y": {
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "null"
+    },
+    "1z": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/1"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/E"
+        }
+      ]
     },
     "2": {
       "type": [
@@ -1146,7 +1134,7 @@
             "type": "integer"
           },
           {
-            "$ref": "#/$defs/1j"
+            "$ref": "#/$defs/1i"
           },
           {
             "type": "number"
@@ -1164,7 +1152,7 @@
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/1j"
+        "$ref": "#/$defs/1i"
       },
       "type": "object"
     },
@@ -1192,17 +1180,6 @@
     },
     "A": {
       "properties": {
-        "rbac": {
-          "$ref": "#/$defs/z"
-        }
-      },
-      "required": [
-        "rbac"
-      ],
-      "type": "object"
-    },
-    "B": {
-      "properties": {
         "disableIngressValidation": {
           "$ref": "#/$defs/t"
         }
@@ -1212,7 +1189,7 @@
       ],
       "type": "object"
     },
-    "C": {
+    "B": {
       "oneOf": [
         {
           "$ref": "#/$defs/2"
@@ -1225,17 +1202,17 @@
         }
       ]
     },
-    "D": {
+    "C": {
       "allOf": [
         {
-          "$ref": "#/$defs/1B"
+          "$ref": "#/$defs/1A"
         },
         {
-          "$ref": "#/$defs/n"
+          "$ref": "#/$defs/m"
         }
       ]
     },
-    "E": {
+    "D": {
       "anyOf": [
         {
           "$ref": "#/$defs/1"
@@ -1244,22 +1221,22 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/S"
+          "$ref": "#/$defs/R"
         }
       ]
     },
-    "F": {
+    "E": {
       "additionalProperties": {
         "$ref": "#/$defs/2"
       },
       "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
       "type": "object"
     },
-    "G": {
+    "F": {
       "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
       "type": "null"
     },
-    "H": {
+    "G": {
       "not": {
         "properties": {
           "certManager": {
@@ -1280,7 +1257,7 @@
         "type": "object"
       }
     },
-    "I": {
+    "H": {
       "properties": {
         "ingressClassParams": {
           "properties": {
@@ -1299,10 +1276,10 @@
       ],
       "type": "object"
     },
-    "J": {
+    "I": {
       "properties": {
         "serviceMonitor": {
-          "$ref": "#/$defs/u"
+          "$ref": "#/$defs/s"
         }
       },
       "required": [
@@ -1310,7 +1287,7 @@
       ],
       "type": "object"
     },
-    "K": {
+    "J": {
       "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
       "format": "date-time",
       "type": [
@@ -1318,21 +1295,21 @@
         "null"
       ]
     },
-    "L": {
+    "K": {
       "description": "fsType is the filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified.",
       "type": [
         "string",
         "null"
       ]
     },
-    "M": {
+    "L": {
       "description": "readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
       "type": [
         "boolean",
         "null"
       ]
     },
-    "N": {
+    "M": {
       "properties": {
         "enableServiceMutatorWebhook": {
           "$ref": "#/$defs/t"
@@ -1343,7 +1320,7 @@
       ],
       "type": "object"
     },
-    "O": {
+    "N": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -1355,7 +1332,7 @@
         ]
       }
     },
-    "P": {
+    "O": {
       "anyOf": [
         {
           "$ref": "#/$defs/t"
@@ -1365,7 +1342,7 @@
         }
       ]
     },
-    "Q": {
+    "P": {
       "allOf": [
         {
           "properties": {
@@ -1426,7 +1403,7 @@
         }
       ]
     },
-    "R": {
+    "Q": {
       "allOf": [
         {
           "$ref": "#/$defs/c"
@@ -1447,7 +1424,7 @@
           "$ref": "#/$defs/f"
         },
         {
-          "$ref": "#/$defs/i"
+          "$ref": "#/$defs/h"
         },
         {
           "$ref": "#/$defs/8"
@@ -1462,14 +1439,14 @@
       "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
       "type": "string"
     },
-    "S": {
+    "R": {
       "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
       "items": {
-        "$ref": "#/$defs/1N"
+        "$ref": "#/$defs/1M"
       },
       "type": "array"
     },
-    "T": {
+    "S": {
       "additionalProperties": false,
       "description": "Maps a string key to a path within a volume.",
       "properties": {
@@ -1499,7 +1476,7 @@
         "null"
       ]
     },
-    "U": {
+    "T": {
       "additionalProperties": false,
       "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
       "properties": {
@@ -1508,22 +1485,22 @@
           "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
           "properties": {
             "labelSelector": {
-              "$ref": "#/$defs/o"
+              "$ref": "#/$defs/n"
             },
             "matchLabelKeys": {
-              "$ref": "#/$defs/1P"
-            },
-            "mismatchLabelKeys": {
               "$ref": "#/$defs/1O"
             },
+            "mismatchLabelKeys": {
+              "$ref": "#/$defs/1N"
+            },
             "namespaceSelector": {
-              "$ref": "#/$defs/o"
+              "$ref": "#/$defs/n"
             },
             "namespaces": {
-              "$ref": "#/$defs/W"
+              "$ref": "#/$defs/V"
             },
             "topologyKey": {
-              "$ref": "#/$defs/V"
+              "$ref": "#/$defs/U"
             }
           },
           "required": [
@@ -1546,11 +1523,11 @@
         "null"
       ]
     },
-    "V": {
+    "U": {
       "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
       "type": "string"
     },
-    "W": {
+    "V": {
       "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
       "items": {
         "$ref": "#/$defs/2"
@@ -1560,7 +1537,7 @@
         "null"
       ]
     },
-    "X": {
+    "W": {
       "additionalProperties": false,
       "description": "TCPSocketAction describes an action based on opening a socket",
       "properties": {
@@ -1572,7 +1549,7 @@
           ]
         },
         "port": {
-          "$ref": "#/$defs/r"
+          "$ref": "#/$defs/q"
         }
       },
       "required": [
@@ -1583,7 +1560,7 @@
         "null"
       ]
     },
-    "Y": {
+    "X": {
       "anyOf": [
         {
           "not": {
@@ -1611,11 +1588,11 @@
         }
       ]
     },
-    "Z": {
+    "Y": {
       "not": {
         "properties": {
           "webhookConfig": {
-            "$ref": "#/$defs/B"
+            "$ref": "#/$defs/A"
           }
         },
         "required": [
@@ -1623,6 +1600,18 @@
         ],
         "type": "object"
       }
+    },
+    "Z": {
+      "anyOf": [
+        {
+          "type": "null"
+        },
+        {
+          "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
+          "format": "int32",
+          "type": "integer"
+        }
+      ]
     },
     "a": {
       "not": {
@@ -1660,11 +1649,8 @@
       }
     },
     "h": {
-      "if": {
-        "type": "boolean"
-      },
-      "then": {
-        "type": "boolean"
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
       }
     },
     "helm-double-quoted-safe": {
@@ -1683,7 +1669,7 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/s"
+            "$ref": "#/$defs/r"
           },
           "propertyNames": {
             "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
@@ -1692,18 +1678,13 @@
         },
         {
           "items": {
-            "$ref": "#/$defs/s"
+            "$ref": "#/$defs/r"
           },
           "type": "array"
         }
       ]
     },
     "i": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "j": {
       "properties": {
         "createIngressClassResource": {
           "$ref": "#/$defs/t"
@@ -1714,7 +1695,7 @@
       ],
       "type": "object"
     },
-    "k": {
+    "j": {
       "properties": {
         "enableCertManager": {
           "$ref": "#/$defs/t"
@@ -1725,12 +1706,12 @@
       ],
       "type": "object"
     },
-    "l": {
+    "k": {
       "additionalProperties": false,
       "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
       "properties": {
         "name": {
-          "$ref": "#/$defs/q"
+          "$ref": "#/$defs/p"
         }
       },
       "type": [
@@ -1739,26 +1720,26 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "m": {
+    "l": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "n": {
+    "m": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "o": {
+    "n": {
       "additionalProperties": false,
       "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
       "properties": {
         "matchExpressions": {
           "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
           "items": {
-            "$ref": "#/$defs/1N"
+            "$ref": "#/$defs/1M"
           },
           "type": [
             "array",
@@ -1782,18 +1763,18 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "p": {
+    "o": {
       "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
-    "q": {
+    "p": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
         "string",
         "null"
       ]
     },
-    "r": {
+    "q": {
       "oneOf": [
         {
           "$ref": "#/$defs/2"
@@ -1806,8 +1787,19 @@
         }
       ]
     },
-    "s": {
+    "r": {
       "$ref": "#/$defs/helm-double-quoted-safe"
+    },
+    "s": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
     },
     "t": {
       "anyOf": [
@@ -1835,17 +1827,6 @@
       ]
     },
     "u": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "v": {
       "allOf": [
         {
           "$ref": "#/$defs/c"
@@ -1866,7 +1847,7 @@
           "$ref": "#/$defs/f"
         },
         {
-          "$ref": "#/$defs/i"
+          "$ref": "#/$defs/h"
         },
         {
           "$ref": "#/$defs/8"
@@ -1880,7 +1861,7 @@
       ],
       "type": "string"
     },
-    "w": {
+    "v": {
       "additionalProperties": {
         "$ref": "#/$defs/2"
       },
@@ -1890,10 +1871,10 @@
         "null"
       ]
     },
-    "x": {
+    "w": {
       "properties": {
         "ingressClassParams": {
-          "$ref": "#/$defs/z"
+          "$ref": "#/$defs/y"
         }
       },
       "required": [
@@ -1901,10 +1882,10 @@
       ],
       "type": "object"
     },
-    "y": {
+    "x": {
       "properties": {
         "autoscaling": {
-          "$ref": "#/$defs/u"
+          "$ref": "#/$defs/s"
         }
       },
       "required": [
@@ -1912,7 +1893,7 @@
       ],
       "type": "object"
     },
-    "z": {
+    "y": {
       "properties": {
         "create": {
           "$ref": "#/$defs/t"
@@ -1920,6 +1901,17 @@
       },
       "required": [
         "create"
+      ],
+      "type": "object"
+    },
+    "z": {
+      "properties": {
+        "rbac": {
+          "$ref": "#/$defs/y"
+        }
+      },
+      "required": [
+        "rbac"
       ],
       "type": "object"
     }
@@ -1960,7 +1952,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/N"
+        "$ref": "#/$defs/M"
       },
       "then": {
         "allOf": [
@@ -1983,7 +1975,7 @@
                   "failurePolicy": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/G"
+                        "$ref": "#/$defs/F"
                       },
                       {
                         "$ref": "#/$defs/3"
@@ -1995,7 +1987,7 @@
                         "$ref": "#/$defs/4"
                       },
                       {
-                        "$ref": "#/$defs/R"
+                        "$ref": "#/$defs/Q"
                       },
                       {
                         "$ref": "#/$defs/7"
@@ -2041,7 +2033,7 @@
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/S"
+                        "$ref": "#/$defs/R"
                       }
                     ],
                     "description": "key: value\narray of namespace selectors for the service mutator webhook"
@@ -2070,7 +2062,7 @@
                             "type": "null"
                           },
                           {
-                            "$ref": "#/$defs/F"
+                            "$ref": "#/$defs/E"
                           }
                         ],
                         "description": "- key: <key>\noperator: <operator>\nvalues:\n- <value>"
@@ -2115,7 +2107,7 @@
                     "description": "limit webhook to only mutate services matching the objectSelector",
                     "properties": {
                       "matchExpressions": {
-                        "$ref": "#/$defs/E"
+                        "$ref": "#/$defs/D"
                       }
                     }
                   }
@@ -2203,7 +2195,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/k"
+        "$ref": "#/$defs/j"
       },
       "then": {
         "additionalProperties": {},
@@ -2221,25 +2213,25 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/x"
+                "$ref": "#/$defs/w"
               },
               {
-                "$ref": "#/$defs/j"
+                "$ref": "#/$defs/i"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/k"
+                "$ref": "#/$defs/j"
               },
               {
-                "$ref": "#/$defs/H"
+                "$ref": "#/$defs/G"
               }
             ]
           },
           {
-            "$ref": "#/$defs/J"
+            "$ref": "#/$defs/I"
           }
         ]
       },
@@ -2254,7 +2246,7 @@
                     "$ref": "#/$defs/1"
                   },
                   {
-                    "$ref": "#/$defs/n"
+                    "$ref": "#/$defs/m"
                   }
                 ],
                 "description": "additionalLabels -- Labels to add to each object of the chart."
@@ -2276,7 +2268,7 @@
                     "$ref": "#/$defs/4"
                   },
                   {
-                    "$ref": "#/$defs/v"
+                    "$ref": "#/$defs/u"
                   }
                 ]
               }
@@ -2287,7 +2279,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/y"
+        "$ref": "#/$defs/x"
       },
       "then": {
         "allOf": [
@@ -2323,7 +2315,7 @@
             "additionalProperties": {},
             "properties": {
               "annotations": {
-                "$ref": "#/$defs/D"
+                "$ref": "#/$defs/C"
               }
             }
           }
@@ -2365,10 +2357,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/j"
           },
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/G"
           }
         ]
       },
@@ -2390,7 +2382,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/15"
+        "$ref": "#/$defs/14"
       },
       "then": {
         "additionalProperties": {},
@@ -2408,13 +2400,13 @@
                 "description": "PodDisruptionBudgetSpec is a description of a PodDisruptionBudget.",
                 "properties": {
                   "maxUnavailable": {
-                    "$ref": "#/$defs/r"
+                    "$ref": "#/$defs/q"
                   },
                   "minAvailable": {
-                    "$ref": "#/$defs/r"
+                    "$ref": "#/$defs/q"
                   },
                   "selector": {
-                    "$ref": "#/$defs/o"
+                    "$ref": "#/$defs/n"
                   },
                   "unhealthyPodEvictionPolicy": {
                     "description": "UnhealthyPodEvictionPolicy defines the criteria for when unhealthy pods should be considered for eviction. Current implementation considers healthy pods, as pods that have status.conditions item with type=\"Ready\",status=\"True\".\n\nValid policies are IfHealthyBudget and AlwaysAllow. If no policy is specified, the default behavior will be used, which corresponds to the IfHealthyBudget policy.\n\nIfHealthyBudget policy means that running pods (status.phase=\"Running\"), but not yet healthy can be evicted only if the guarded application is not disrupted (status.currentHealthy is at least equal to status.desiredHealthy). Healthy pods will be subject to the PDB for eviction.\n\nAlwaysAllow policy means that all running pods (status.phase=\"Running\"), but not yet healthy are considered disrupted and can be evicted regardless of whether the criteria in a PDB is met. This means perspective running pods of a disrupted application might not get a chance to become healthy. Healthy pods will be subject to the PDB for eviction.\n\nAdditional policies may be added in the future. Clients making eviction decisions should disallow eviction of unhealthy pods if they encounter an unrecognized policy in this field.\n\nThis field is beta-level. The eviction API uses this field when the feature gate PDBUnhealthyPodEvictionPolicy is enabled (enabled by default).",
@@ -2463,7 +2455,7 @@
           {
             "properties": {
               "certManager": {
-                "$ref": "#/$defs/P"
+                "$ref": "#/$defs/O"
               }
             },
             "required": [
@@ -2472,7 +2464,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/j"
           }
         ]
       },
@@ -2531,7 +2523,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/j"
+            "$ref": "#/$defs/i"
           }
         ]
       },
@@ -2572,7 +2564,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/1L"
+            "$ref": "#/$defs/1K"
           },
           {
             "anyOf": [
@@ -2612,7 +2604,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/1n"
+                "$ref": "#/$defs/1m"
               },
               {
                 "properties": {
@@ -2628,7 +2620,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/1n"
+            "$ref": "#/$defs/1m"
           }
         ]
       },
@@ -2679,13 +2671,13 @@
                 "anyOf": [
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/s"
+                      "$ref": "#/$defs/r"
                     },
                     "type": "object"
                   },
                   {
                     "items": {
-                      "$ref": "#/$defs/s"
+                      "$ref": "#/$defs/r"
                     },
                     "type": "array"
                   },
@@ -2706,7 +2698,7 @@
           {
             "properties": {
               "webhookConfig": {
-                "$ref": "#/$defs/13"
+                "$ref": "#/$defs/12"
               }
             },
             "required": [
@@ -2715,7 +2707,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/Z"
+            "$ref": "#/$defs/Y"
           }
         ]
       },
@@ -2767,7 +2759,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1K"
+        "$ref": "#/$defs/1J"
       },
       "then": {
         "additionalProperties": {},
@@ -2781,7 +2773,7 @@
                 "$ref": "#/$defs/4"
               },
               {
-                "$ref": "#/$defs/1J"
+                "$ref": "#/$defs/1I"
               }
             ],
             "description": "The ingress class this controller will satisfy. If not specified, controller will match all\ningresses without ingress class annotation and ingresses of type alb"
@@ -2791,7 +2783,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1L"
+        "$ref": "#/$defs/1K"
       },
       "then": {
         "additionalProperties": {},
@@ -2810,7 +2802,7 @@
           "additionalProperties": {},
           "properties": {
             "repository": {
-              "$ref": "#/$defs/s"
+              "$ref": "#/$defs/r"
             }
           }
         }
@@ -2833,11 +2825,11 @@
         "anyOf": [
           {
             "not": {
-              "$ref": "#/$defs/1h"
+              "$ref": "#/$defs/1g"
             }
           },
           {
-            "$ref": "#/$defs/1e"
+            "$ref": "#/$defs/1d"
           }
         ]
       },
@@ -2845,7 +2837,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/A"
+        "$ref": "#/$defs/z"
       },
       "then": {
         "allOf": [
@@ -2881,7 +2873,7 @@
                             "$ref": "#/$defs/f"
                           },
                           {
-                            "$ref": "#/$defs/i"
+                            "$ref": "#/$defs/h"
                           },
                           {
                             "$ref": "#/$defs/8"
@@ -2923,7 +2915,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/j"
+        "$ref": "#/$defs/i"
       },
       "then": {
         "allOf": [
@@ -2955,7 +2947,7 @@
                         "$ref": "#/$defs/4"
                       },
                       {
-                        "$ref": "#/$defs/1J"
+                        "$ref": "#/$defs/1I"
                       }
                     ],
                     "description": "The name of ingressClassParams resource will be referred in ingressClass"
@@ -2972,7 +2964,7 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/1E"
+                        "$ref": "#/$defs/1D"
                       },
                       {
                         "$ref": "#/$defs/3"
@@ -2987,7 +2979,7 @@
                         "$ref": "#/$defs/7"
                       },
                       {
-                        "$ref": "#/$defs/1z"
+                        "$ref": "#/$defs/1y"
                       },
                       {
                         "$ref": "#/$defs/5"
@@ -3073,7 +3065,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/A"
+            "$ref": "#/$defs/z"
           },
           {
             "anyOf": [
@@ -3109,7 +3101,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/Q"
+        "$ref": "#/$defs/P"
       },
       "then": {
         "allOf": [
@@ -3191,10 +3183,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/1K"
+            "$ref": "#/$defs/1J"
           },
           {
-            "$ref": "#/$defs/1w"
+            "$ref": "#/$defs/1v"
           }
         ]
       },
@@ -3224,7 +3216,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/j"
           },
           {
             "anyOf": [
@@ -3314,11 +3306,11 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/J"
+              "$ref": "#/$defs/I"
             }
           },
           {
-            "$ref": "#/$defs/11"
+            "$ref": "#/$defs/10"
           }
         ]
       },
@@ -3333,7 +3325,7 @@
                 "not": {
                   "properties": {
                     "serviceMutatorWebhookConfig": {
-                      "$ref": "#/$defs/1h"
+                      "$ref": "#/$defs/1g"
                     }
                   },
                   "required": [
@@ -3345,7 +3337,7 @@
               {
                 "properties": {
                   "serviceMutatorWebhookConfig": {
-                    "$ref": "#/$defs/1e"
+                    "$ref": "#/$defs/1d"
                   }
                 },
                 "required": [
@@ -3356,7 +3348,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/N"
+            "$ref": "#/$defs/M"
           }
         ]
       },
@@ -3369,7 +3361,7 @@
           "additionalProperties": {},
           "properties": {
             "tag": {
-              "$ref": "#/$defs/s"
+              "$ref": "#/$defs/r"
             }
           }
         }
@@ -3440,7 +3432,7 @@
     {
       "if": {
         "not": {
-          "$ref": "#/$defs/J"
+          "$ref": "#/$defs/I"
         }
       },
       "then": {
@@ -3460,12 +3452,12 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/Z"
+            "$ref": "#/$defs/Y"
           },
           {
             "properties": {
               "webhookConfig": {
-                "$ref": "#/$defs/12"
+                "$ref": "#/$defs/11"
               }
             },
             "required": [
@@ -3494,19 +3486,19 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/1y"
+            "$ref": "#/$defs/1x"
           },
           {
-            "$ref": "#/$defs/14"
+            "$ref": "#/$defs/13"
           },
           {
-            "$ref": "#/$defs/A"
+            "$ref": "#/$defs/z"
           },
           {
-            "$ref": "#/$defs/y"
+            "$ref": "#/$defs/x"
           },
           {
-            "$ref": "#/$defs/j"
+            "$ref": "#/$defs/i"
           }
         ]
       },
@@ -3521,10 +3513,10 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/w"
+                    "$ref": "#/$defs/v"
                   },
                   {
-                    "$ref": "#/$defs/n"
+                    "$ref": "#/$defs/m"
                   }
                 ]
               }
@@ -3536,7 +3528,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/11"
+        "$ref": "#/$defs/10"
       },
       "then": false
     },
@@ -3572,7 +3564,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/j"
+            "$ref": "#/$defs/i"
           }
         ]
       },
@@ -3582,7 +3574,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/N"
+            "$ref": "#/$defs/M"
           },
           {
             "anyOf": [
@@ -3651,10 +3643,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/x"
+            "$ref": "#/$defs/w"
           },
           {
-            "$ref": "#/$defs/j"
+            "$ref": "#/$defs/i"
           }
         ]
       },
@@ -3679,7 +3671,7 @@
                         "$ref": "#/$defs/4"
                       },
                       {
-                        "$ref": "#/$defs/v"
+                        "$ref": "#/$defs/u"
                       }
                     ],
                     "description": "The name of ingressClassParams resource will be referred in ingressClass"
@@ -3764,7 +3756,7 @@
                                 "listenerAttributes": {
                                   "description": "The attributes of the listener",
                                   "items": {
-                                    "$ref": "#/$defs/16"
+                                    "$ref": "#/$defs/15"
                                   },
                                   "type": "array"
                                 },
@@ -3785,7 +3777,7 @@
                           "loadBalancerAttributes": {
                             "description": "LoadBalancerAttributes define the custom attributes to LoadBalancers for all Ingress that that belong to IngressClass with this IngressClassParams.",
                             "items": {
-                              "$ref": "#/$defs/16"
+                              "$ref": "#/$defs/15"
                             },
                             "type": "array"
                           },
@@ -3819,7 +3811,7 @@
                                   "description": "A label selector requirement is a selector that contains values, a key, and an operator that\nrelates the key and values.",
                                   "properties": {
                                     "key": {
-                                      "$ref": "#/$defs/1g"
+                                      "$ref": "#/$defs/1f"
                                     },
                                     "operator": {
                                       "description": "operator represents a key's relationship to a set of values.\nValid operators are In, NotIn, Exists and DoesNotExist.",
@@ -3967,7 +3959,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1w"
+        "$ref": "#/$defs/1v"
       },
       "then": {
         "additionalProperties": {},
@@ -3981,7 +3973,7 @@
                 "$ref": "#/$defs/4"
               },
               {
-                "$ref": "#/$defs/v"
+                "$ref": "#/$defs/u"
               }
             ],
             "description": "The ingress class this controller will satisfy. If not specified, controller will match all\ningresses without ingress class annotation and ingresses of type alb"
@@ -3994,7 +3986,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/Q"
+              "$ref": "#/$defs/P"
             }
           },
           {
@@ -4002,11 +3994,11 @@
               "allOf": [
                 {
                   "not": {
-                    "$ref": "#/$defs/k"
+                    "$ref": "#/$defs/j"
                   }
                 },
                 {
-                  "$ref": "#/$defs/1d"
+                  "$ref": "#/$defs/1c"
                 }
               ]
             }
@@ -4149,7 +4141,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/Y"
+        "$ref": "#/$defs/X"
       },
       "then": false
     },
@@ -4157,7 +4149,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/j"
           },
           {
             "anyOf": [
@@ -4204,7 +4196,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/G"
           }
         ]
       },
@@ -4244,7 +4236,7 @@
     {
       "if": {
         "not": {
-          "$ref": "#/$defs/y"
+          "$ref": "#/$defs/x"
         }
       },
       "then": {
@@ -4269,7 +4261,7 @@
                 "$ref": "#/$defs/7"
               },
               {
-                "$ref": "#/$defs/p"
+                "$ref": "#/$defs/o"
               },
               {
                 "$ref": "#/$defs/5"
@@ -4283,10 +4275,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/1y"
+            "$ref": "#/$defs/1x"
           },
           {
-            "$ref": "#/$defs/14"
+            "$ref": "#/$defs/13"
           },
           {
             "allOf": [
@@ -4317,13 +4309,13 @@
             ]
           },
           {
-            "$ref": "#/$defs/A"
+            "$ref": "#/$defs/z"
           },
           {
-            "$ref": "#/$defs/y"
+            "$ref": "#/$defs/x"
           },
           {
-            "$ref": "#/$defs/j"
+            "$ref": "#/$defs/i"
           }
         ]
       },
@@ -4331,7 +4323,7 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/1s"
+            "$ref": "#/$defs/1r"
           }
         }
       }
@@ -4364,7 +4356,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/Y"
+            "$ref": "#/$defs/X"
           },
           {
             "anyOf": [
@@ -4372,7 +4364,7 @@
                 "not": {
                   "properties": {
                     "controllerConfig": {
-                      "$ref": "#/$defs/1o"
+                      "$ref": "#/$defs/1n"
                     }
                   },
                   "required": [
@@ -4384,7 +4376,7 @@
               {
                 "properties": {
                   "controllerConfig": {
-                    "$ref": "#/$defs/1f"
+                    "$ref": "#/$defs/1e"
                   }
                 },
                 "required": [
@@ -4420,20 +4412,20 @@
                   "type": "object"
                 },
                 {
-                  "$ref": "#/$defs/n"
+                  "$ref": "#/$defs/m"
                 }
               ]
             },
             {
-              "$ref": "#/$defs/w"
+              "$ref": "#/$defs/v"
             },
             {
-              "$ref": "#/$defs/n"
+              "$ref": "#/$defs/m"
             }
           ]
         },
         {
-          "$ref": "#/$defs/m"
+          "$ref": "#/$defs/l"
         }
       ],
       "description": "additionalLabels -- Labels to add to each object of the chart."
@@ -4462,10 +4454,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/1G"
+                            "$ref": "#/$defs/1F"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/1F"
+                            "$ref": "#/$defs/1E"
                           }
                         },
                         "type": "object",
@@ -4502,10 +4494,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/1G"
+                            "$ref": "#/$defs/1F"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/1F"
+                            "$ref": "#/$defs/1E"
                           }
                         },
                         "type": [
@@ -4539,7 +4531,7 @@
                 "preferredDuringSchedulingIgnoredDuringExecution": {
                   "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
                   "items": {
-                    "$ref": "#/$defs/U"
+                    "$ref": "#/$defs/T"
                   },
                   "type": [
                     "array",
@@ -4549,7 +4541,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/1b"
+                    "$ref": "#/$defs/1a"
                   },
                   "type": [
                     "array",
@@ -4569,7 +4561,7 @@
                 "preferredDuringSchedulingIgnoredDuringExecution": {
                   "description": "The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
                   "items": {
-                    "$ref": "#/$defs/U"
+                    "$ref": "#/$defs/T"
                   },
                   "type": [
                     "array",
@@ -4579,7 +4571,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/1b"
+                    "$ref": "#/$defs/1a"
                   },
                   "type": [
                     "array",
@@ -4596,7 +4588,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/m"
+          "$ref": "#/$defs/l"
         },
         {
           "type": "null"
@@ -4615,7 +4607,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/u"
+                "$ref": "#/$defs/s"
               },
               {
                 "anyOf": [
@@ -4664,7 +4656,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/u"
+            "$ref": "#/$defs/s"
           },
           "then": {
             "allOf": [
@@ -4693,7 +4685,7 @@
                         "$ref": "#/$defs/7"
                       },
                       {
-                        "$ref": "#/$defs/p"
+                        "$ref": "#/$defs/o"
                       },
                       {
                         "$ref": "#/$defs/5"
@@ -4724,7 +4716,7 @@
                         "$ref": "#/$defs/7"
                       },
                       {
-                        "$ref": "#/$defs/p"
+                        "$ref": "#/$defs/o"
                       },
                       {
                         "$ref": "#/$defs/5"
@@ -4746,10 +4738,10 @@
                         "description": "HorizontalPodAutoscalerBehavior configures the scaling behavior of the target in both Up and Down directions (scaleUp and scaleDown fields respectively).",
                         "properties": {
                           "scaleDown": {
-                            "$ref": "#/$defs/1q"
+                            "$ref": "#/$defs/1p"
                           },
                           "scaleUp": {
-                            "$ref": "#/$defs/1q"
+                            "$ref": "#/$defs/1p"
                           }
                         },
                         "type": "object"
@@ -4772,7 +4764,7 @@
                         "type": "integer"
                       },
                       {
-                        "$ref": "#/$defs/p"
+                        "$ref": "#/$defs/o"
                       }
                     ]
                   }
@@ -4878,7 +4870,7 @@
             "featureGates": {
               "allOf": [
                 {
-                  "$ref": "#/$defs/O"
+                  "$ref": "#/$defs/N"
                 }
               ],
               "description": "featureGates set of key: value pairs that describe AWS load balance controller features\nListenerRulesTagging: true\nWeightedTargetGroups: true\nServiceTypeLoadBalancerOnly: false\nEndpointsFailOpen: true\nEnableServiceController: true\nEnableIPTargetType: true\nEnableTCPUDPListener: false\nEnableRGTAPI: false\nSubnetsClusterTagCheck: true\nNLBHealthCheckAdvancedConfig: true\nNLBSecurityGroup: true\nALBSingleSubnet: false\nLBCapacityReservation: true\nSubnetDiscoveryByReachability: true\nNLBGatewayAPI: true\nALBGatewayAPI: true\nGatewayListenerSet: true\nGlobalAcceleratorController: false\nIngressPlanAnnotation: false\nEnhancedDefaultBehavior: false\nEnableDefaultTagsLowPriority: false\nALBTargetControlAgent: false\nEnableCertificateManagement: false"
@@ -4889,11 +4881,11 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/1f"
+                "$ref": "#/$defs/1e"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/1o"
+                  "$ref": "#/$defs/1n"
                 }
               }
             ]
@@ -4933,7 +4925,7 @@
     "defaultTags": {
       "allOf": [
         {
-          "$ref": "#/$defs/O"
+          "$ref": "#/$defs/N"
         }
       ],
       "description": "defaultTags are the tags to apply to all AWS resources managed by this controller\ndefault_tag1: value1\ndefault_tag2: value2"
@@ -4947,36 +4939,21 @@
           "$ref": "#/$defs/1"
         },
         {
-          "$ref": "#/$defs/m"
+          "$ref": "#/$defs/l"
         },
         {
-          "$ref": "#/$defs/D"
+          "$ref": "#/$defs/C"
         }
       ],
       "description": "deploymentAnnotations contains annotations for the controller deployment"
     },
     "disableIngressClassAnnotation": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h"
-        }
-      ],
       "description": "disableIngressClassAnnotation disables the usage of kubernetes.io/ingress.class annotation, false by default"
     },
     "disableIngressGroupNameAnnotation": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h"
-        }
-      ],
       "description": "disableIngressGroupNameAnnotation disables the usage of alb.ingress.kubernetes.io/group.name annotation, false by default"
     },
     "disableRestrictedSecurityGroupRules": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h"
-        }
-      ],
       "description": "disableRestrictedSecurityGroupRules specifies whether to disable creating port-range restricted security group rules for traffic"
     },
     "dnsPolicy": {
@@ -5011,7 +4988,7 @@
               "$ref": "#/$defs/f"
             },
             {
-              "$ref": "#/$defs/i"
+              "$ref": "#/$defs/h"
             },
             {
               "$ref": "#/$defs/8"
@@ -5046,65 +5023,30 @@
       "description": "Specifies the dnsPolicy that should be used for pods in the deployment\nThis may need to be used to be changed given certain conditions. For instance, if one uses the cilium CNI\nwith certain settings, one may need to set `hostNetwork: true` and webhooks won't work unless `dnsPolicy`\nis set to `ClusterFirstWithHostNet`. See https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy"
     },
     "enableBackendSecurityGroup": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h"
-        }
-      ],
       "description": "enableBackendSecurityGroup enables shared security group for backend traffic (default true)"
     },
     "enableCertManager": {
       "description": "Enable cert-manager"
     },
     "enableEndpointSlices": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h"
-        }
-      ],
       "description": "enableEndpointSlices enables k8s EndpointSlices for IP targets instead of Endpoints (default true)"
     },
     "enableManageBackendSecurityGroupRules": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h"
-        }
-      ],
       "description": "enableManageBackendSecurityGroupRules enables controller manages security group rules (default false)"
     },
     "enablePodReadinessGateInject": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h"
-        }
-      ],
       "description": "If enabled, targetHealth readiness gate will get injected to the pod spec for the matching endpoint pods (default true)"
     },
     "enableServiceMutatorWebhook": {
       "description": "enableServiceMutatorWebhook allows you enable the webhook which makes this controller the default for all new services of type LoadBalancer"
     },
     "enableShield": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h"
-        }
-      ],
       "description": "Enable Shield addon for ALB (default true)"
     },
     "enableWaf": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h"
-        }
-      ],
       "description": "Enable WAF addon for ALB (default true)"
     },
     "enableWafv2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h"
-        }
-      ],
       "description": "Enable WAF V2 addon for ALB (default true)"
     },
     "env": {
@@ -5123,7 +5065,7 @@
                 "description": "ConfigMapEnvSource selects a ConfigMap to populate the environment variables with.\n\nThe contents of the target ConfigMap's Data field will represent the key-value pairs as environment variables.",
                 "properties": {
                   "name": {
-                    "$ref": "#/$defs/q"
+                    "$ref": "#/$defs/p"
                   },
                   "optional": {
                     "description": "Specify whether the ConfigMap must be defined",
@@ -5150,7 +5092,7 @@
                 "description": "SecretEnvSource selects a Secret to populate the environment variables with.\n\nThe contents of the target Secret's Data field will represent the key-value pairs as environment variables.",
                 "properties": {
                   "name": {
-                    "$ref": "#/$defs/q"
+                    "$ref": "#/$defs/p"
                   },
                   "optional": {
                     "description": "Specify whether the Secret must be defined",
@@ -5220,7 +5162,7 @@
               "$ref": "#/$defs/f"
             },
             {
-              "$ref": "#/$defs/i"
+              "$ref": "#/$defs/h"
             },
             {
               "$ref": "#/$defs/8"
@@ -5394,7 +5336,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/1i"
+                    "$ref": "#/$defs/1h"
                   }
                 },
                 "required": [
@@ -5411,7 +5353,7 @@
                 "description": "AzureFile represents an Azure File Service mount on the host and bind mount to the pod.",
                 "properties": {
                   "readOnly": {
-                    "$ref": "#/$defs/M"
+                    "$ref": "#/$defs/L"
                   },
                   "secretName": {
                     "description": "secretName is the  name of secret that contains Azure Storage Account Name and Key",
@@ -5464,7 +5406,7 @@
                     ]
                   },
                   "secretRef": {
-                    "$ref": "#/$defs/l"
+                    "$ref": "#/$defs/k"
                   },
                   "user": {
                     "description": "user is optional: User is the rados user name, default is admin More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it",
@@ -5501,7 +5443,7 @@
                     ]
                   },
                   "secretRef": {
-                    "$ref": "#/$defs/l"
+                    "$ref": "#/$defs/k"
                   },
                   "volumeID": {
                     "description": "volumeID used to identify the volume in cinder. More info: https://examples.k8s.io/mysql-cinder-pd/README.md",
@@ -5529,13 +5471,13 @@
                     ]
                   },
                   "items": {
-                    "$ref": "#/$defs/1t"
+                    "$ref": "#/$defs/1s"
                   },
                   "name": {
-                    "$ref": "#/$defs/q"
+                    "$ref": "#/$defs/p"
                   },
                   "optional": {
-                    "$ref": "#/$defs/1k"
+                    "$ref": "#/$defs/1j"
                   }
                 },
                 "type": [
@@ -5559,7 +5501,7 @@
                     ]
                   },
                   "nodePublishSecretRef": {
-                    "$ref": "#/$defs/l"
+                    "$ref": "#/$defs/k"
                   },
                   "readOnly": {
                     "description": "readOnly specifies a read-only configuration for the volume. Defaults to false (read/write).",
@@ -5602,7 +5544,7 @@
                   "items": {
                     "description": "Items is a list of downward API volume file",
                     "items": {
-                      "$ref": "#/$defs/1r"
+                      "$ref": "#/$defs/1q"
                     },
                     "type": [
                       "array",
@@ -5627,7 +5569,7 @@
                     ]
                   },
                   "sizeLimit": {
-                    "$ref": "#/$defs/C"
+                    "$ref": "#/$defs/B"
                   }
                 },
                 "type": [
@@ -5648,10 +5590,10 @@
                         "description": "ObjectMeta is metadata that all persisted resources must have, which includes all objects users must create.",
                         "properties": {
                           "annotations": {
-                            "$ref": "#/$defs/1B"
+                            "$ref": "#/$defs/1A"
                           },
                           "creationTimestamp": {
-                            "$ref": "#/$defs/K"
+                            "$ref": "#/$defs/J"
                           },
                           "deletionGracePeriodSeconds": {
                             "description": "Number of seconds allowed for this object to gracefully terminate before it will be removed from the system. Only set when deletionTimestamp is also set. May only be shortened. Read-only.",
@@ -5662,7 +5604,7 @@
                             ]
                           },
                           "deletionTimestamp": {
-                            "$ref": "#/$defs/K"
+                            "$ref": "#/$defs/J"
                           },
                           "finalizers": {
                             "description": "Must be empty before the object is deleted from the registry. Each entry is an identifier for the responsible component that will remove the entry from the list. If the deletionTimestamp of the object is non-nil, entries in this list can only be removed. Finalizers may be processed and removed in any order.  Order is NOT enforced because it introduces significant risk of stuck finalizers. finalizers is a shared field, any actor with permission can reorder it. If the finalizer list is processed in order, then this can lead to a situation in which the component responsible for the first finalizer in the list is waiting for a signal (field value, external system, or other) produced by a component responsible for a finalizer later in the list, resulting in a deadlock. Without enforced ordering finalizers are free to order amongst themselves and are not vulnerable to ordering changes in the list.",
@@ -5691,7 +5633,7 @@
                             ]
                           },
                           "labels": {
-                            "$ref": "#/$defs/w"
+                            "$ref": "#/$defs/v"
                           },
                           "managedFields": {
                             "description": "ManagedFields maps workflow-id and version to the set of fields that are managed by that workflow. This is mostly for internal housekeeping, and users typically shouldn't need to set or understand this field. A workflow can be the user's name, a controller's name, or the name of a specific apply path like \"ci-cd\". The set of fields is always in the version that the workflow used when modifying the object.",
@@ -5742,7 +5684,7 @@
                                   ]
                                 },
                                 "time": {
-                                  "$ref": "#/$defs/K"
+                                  "$ref": "#/$defs/J"
                                 }
                               },
                               "type": [
@@ -5871,13 +5813,13 @@
                             "description": "TypedLocalObjectReference contains enough information to let you locate the typed referenced object inside the same namespace.",
                             "properties": {
                               "apiGroup": {
-                                "$ref": "#/$defs/1a"
+                                "$ref": "#/$defs/19"
                               },
                               "kind": {
-                                "$ref": "#/$defs/1l"
+                                "$ref": "#/$defs/1k"
                               },
                               "name": {
-                                "$ref": "#/$defs/1m"
+                                "$ref": "#/$defs/1l"
                               }
                             },
                             "required": [
@@ -5894,13 +5836,13 @@
                             "additionalProperties": false,
                             "properties": {
                               "apiGroup": {
-                                "$ref": "#/$defs/1a"
+                                "$ref": "#/$defs/19"
                               },
                               "kind": {
-                                "$ref": "#/$defs/1l"
+                                "$ref": "#/$defs/1k"
                               },
                               "name": {
-                                "$ref": "#/$defs/1m"
+                                "$ref": "#/$defs/1l"
                               },
                               "namespace": {
                                 "description": "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled.",
@@ -5924,10 +5866,10 @@
                             "description": "VolumeResourceRequirements describes the storage resource requirements for a volume.",
                             "properties": {
                               "limits": {
-                                "$ref": "#/$defs/17"
+                                "$ref": "#/$defs/16"
                               },
                               "requests": {
-                                "$ref": "#/$defs/1x"
+                                "$ref": "#/$defs/1w"
                               }
                             },
                             "type": [
@@ -5936,7 +5878,7 @@
                             ]
                           },
                           "selector": {
-                            "$ref": "#/$defs/o"
+                            "$ref": "#/$defs/n"
                           },
                           "storageClassName": {
                             "description": "storageClassName is the name of the StorageClass required by the claim. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#class-1",
@@ -5989,7 +5931,7 @@
                 "description": "Represents a Fibre Channel volume. Fibre Channel volumes can only be mounted as read/write once. Fibre Channel volumes support ownership management and SELinux relabeling.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/L"
+                    "$ref": "#/$defs/K"
                   },
                   "lun": {
                     "description": "lun is Optional: FC target lun number",
@@ -6065,7 +6007,7 @@
                     ]
                   },
                   "secretRef": {
-                    "$ref": "#/$defs/l"
+                    "$ref": "#/$defs/k"
                   }
                 },
                 "required": [
@@ -6289,7 +6231,7 @@
                     ]
                   },
                   "secretRef": {
-                    "$ref": "#/$defs/l"
+                    "$ref": "#/$defs/k"
                   },
                   "targetPortal": {
                     "description": "targetPortal is iSCSI Target Portal. The Portal is either an IP or ip_addr:port if the port is other than default (typically TCP ports 860 and 3260).",
@@ -6368,7 +6310,7 @@
                 "description": "Represents a Photon Controller persistent disk resource.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/L"
+                    "$ref": "#/$defs/K"
                   },
                   "pdID": {
                     "description": "pdID is the ID that identifies Photon Controller persistent disk",
@@ -6395,7 +6337,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/M"
+                    "$ref": "#/$defs/L"
                   },
                   "volumeID": {
                     "description": "volumeID uniquely identifies a Portworx volume",
@@ -6433,7 +6375,7 @@
                           "description": "ClusterTrustBundleProjection describes how to select a set of ClusterTrustBundle objects and project their contents into the pod filesystem.",
                           "properties": {
                             "labelSelector": {
-                              "$ref": "#/$defs/o"
+                              "$ref": "#/$defs/n"
                             },
                             "name": {
                               "description": "Select a single ClusterTrustBundle by object name.  Mutually-exclusive with signerName and labelSelector.",
@@ -6474,13 +6416,13 @@
                           "description": "Adapts a ConfigMap into a projected volume.\n\nThe contents of the target ConfigMap's Data field will be presented in a projected volume as files using the keys in the Data field as the file names, unless the items element is populated with specific mappings of keys to paths. Note that this is identical to a configmap volume source without the default mode.",
                           "properties": {
                             "items": {
-                              "$ref": "#/$defs/1t"
+                              "$ref": "#/$defs/1s"
                             },
                             "name": {
-                              "$ref": "#/$defs/q"
+                              "$ref": "#/$defs/p"
                             },
                             "optional": {
-                              "$ref": "#/$defs/1k"
+                              "$ref": "#/$defs/1j"
                             }
                           },
                           "type": [
@@ -6495,7 +6437,7 @@
                             "items": {
                               "description": "Items is a list of DownwardAPIVolume file",
                               "items": {
-                                "$ref": "#/$defs/1r"
+                                "$ref": "#/$defs/1q"
                               },
                               "type": [
                                 "array",
@@ -6515,7 +6457,7 @@
                             "items": {
                               "description": "items if unspecified, each key-value pair in the Data field of the referenced Secret will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the Secret, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
                               "items": {
-                                "$ref": "#/$defs/T"
+                                "$ref": "#/$defs/S"
                               },
                               "type": [
                                 "array",
@@ -6523,7 +6465,7 @@
                               ]
                             },
                             "name": {
-                              "$ref": "#/$defs/q"
+                              "$ref": "#/$defs/p"
                             },
                             "optional": {
                               "description": "optional field specify whether the Secret or its key must be defined",
@@ -6681,7 +6623,7 @@
                     ]
                   },
                   "secretRef": {
-                    "$ref": "#/$defs/l"
+                    "$ref": "#/$defs/k"
                   },
                   "user": {
                     "description": "user is the rados user name. Default is admin. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it",
@@ -6723,14 +6665,14 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/1i"
+                    "$ref": "#/$defs/1h"
                   },
                   "secretRef": {
                     "additionalProperties": false,
                     "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
                     "properties": {
                       "name": {
-                        "$ref": "#/$defs/q"
+                        "$ref": "#/$defs/p"
                       }
                     },
                     "type": "object",
@@ -6794,7 +6736,7 @@
                   "items": {
                     "description": "items If unspecified, each key-value pair in the Data field of the referenced Secret will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the Secret, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
                     "items": {
-                      "$ref": "#/$defs/T"
+                      "$ref": "#/$defs/S"
                     },
                     "type": [
                       "array",
@@ -6826,13 +6768,13 @@
                 "description": "Represents a StorageOS persistent volume resource.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/L"
+                    "$ref": "#/$defs/K"
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/M"
+                    "$ref": "#/$defs/L"
                   },
                   "secretRef": {
-                    "$ref": "#/$defs/l"
+                    "$ref": "#/$defs/k"
                   },
                   "volumeName": {
                     "description": "volumeName is the human-readable name of the StorageOS volume.  Volume names are only unique within a namespace.",
@@ -6969,7 +6911,7 @@
                   "$ref": "#/$defs/f"
                 },
                 {
-                  "$ref": "#/$defs/i"
+                  "$ref": "#/$defs/h"
                 },
                 {
                   "$ref": "#/$defs/8"
@@ -7002,7 +6944,7 @@
         {
           "description": "ImagePullSecrets is an optional list of references to secrets in the same namespace to use for pulling any of the images used by this PodSpec. If specified, these secrets will be passed to individual puller implementations for them to use. More info: https://kubernetes.io/docs/concepts/containers/images#specifying-imagepullsecrets-on-a-pod",
           "items": {
-            "$ref": "#/$defs/l"
+            "$ref": "#/$defs/k"
           },
           "type": "array",
           "x-kubernetes-patch-merge-key": "name",
@@ -7052,22 +6994,22 @@
           "description": "Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
           "properties": {
             "exec": {
-              "$ref": "#/$defs/1Q"
+              "$ref": "#/$defs/1P"
             },
             "failureThreshold": {
-              "$ref": "#/$defs/10"
+              "$ref": "#/$defs/Z"
             },
             "grpc": {
-              "$ref": "#/$defs/1v"
+              "$ref": "#/$defs/1u"
             },
             "httpGet": {
-              "$ref": "#/$defs/1D"
+              "$ref": "#/$defs/1C"
             },
             "initialDelaySeconds": {
-              "$ref": "#/$defs/19"
+              "$ref": "#/$defs/18"
             },
             "periodSeconds": {
-              "$ref": "#/$defs/1c"
+              "$ref": "#/$defs/1b"
             },
             "successThreshold": {
               "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
@@ -7078,13 +7020,13 @@
               ]
             },
             "tcpSocket": {
-              "$ref": "#/$defs/X"
+              "$ref": "#/$defs/W"
             },
             "terminationGracePeriodSeconds": {
-              "$ref": "#/$defs/1M"
+              "$ref": "#/$defs/1L"
             },
             "timeoutSeconds": {
-              "$ref": "#/$defs/18"
+              "$ref": "#/$defs/17"
             }
           },
           "type": "object"
@@ -7109,7 +7051,7 @@
       "type": "string"
     },
     "nameOverride": {
-      "$ref": "#/$defs/1s"
+      "$ref": "#/$defs/1r"
     },
     "nlbGatewayMaxConcurrentReconciles": {
       "description": "Maximum number of concurrently running reconcile loops for NLB gateways (default 3)"
@@ -7128,7 +7070,7 @@
           "x-kubernetes-map-type": "atomic"
         },
         {
-          "$ref": "#/$defs/m"
+          "$ref": "#/$defs/l"
         },
         {
           "type": "null"
@@ -7140,7 +7082,7 @@
       "description": "objectSelector for webhook",
       "properties": {
         "matchExpressions": {
-          "$ref": "#/$defs/E"
+          "$ref": "#/$defs/D"
         },
         "matchLabels": {
           "anyOf": [
@@ -7151,7 +7093,7 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/F"
+              "$ref": "#/$defs/E"
             }
           ],
           "description": "- key: <key>\noperator: <operator>\nvalues:\n- <value>\nkey: value"
@@ -7165,10 +7107,10 @@
           "$ref": "#/$defs/1"
         },
         {
-          "$ref": "#/$defs/m"
+          "$ref": "#/$defs/l"
         },
         {
-          "$ref": "#/$defs/D"
+          "$ref": "#/$defs/C"
         }
       ]
     },
@@ -7183,15 +7125,15 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/w"
+              "$ref": "#/$defs/v"
             },
             {
-              "$ref": "#/$defs/n"
+              "$ref": "#/$defs/m"
             }
           ]
         },
         {
-          "$ref": "#/$defs/m"
+          "$ref": "#/$defs/l"
         }
       ]
     },
@@ -7202,7 +7144,7 @@
         "failurePolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/G"
+              "$ref": "#/$defs/F"
             },
             {
               "$ref": "#/$defs/3"
@@ -7214,7 +7156,7 @@
               "$ref": "#/$defs/4"
             },
             {
-              "$ref": "#/$defs/R"
+              "$ref": "#/$defs/Q"
             },
             {
               "$ref": "#/$defs/7"
@@ -7277,10 +7219,10 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/1u"
+              "$ref": "#/$defs/1t"
             },
             "seccompProfile": {
-              "$ref": "#/$defs/1H"
+              "$ref": "#/$defs/1G"
             },
             "supplementalGroups": {
               "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
@@ -7326,7 +7268,7 @@
               ]
             },
             "windowsOptions": {
-              "$ref": "#/$defs/1C"
+              "$ref": "#/$defs/1B"
             }
           },
           "type": "object"
@@ -7355,22 +7297,22 @@
           "description": "Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
           "properties": {
             "exec": {
-              "$ref": "#/$defs/1Q"
+              "$ref": "#/$defs/1P"
             },
             "failureThreshold": {
-              "$ref": "#/$defs/10"
+              "$ref": "#/$defs/Z"
             },
             "grpc": {
-              "$ref": "#/$defs/1v"
+              "$ref": "#/$defs/1u"
             },
             "httpGet": {
-              "$ref": "#/$defs/1D"
+              "$ref": "#/$defs/1C"
             },
             "initialDelaySeconds": {
-              "$ref": "#/$defs/19"
+              "$ref": "#/$defs/18"
             },
             "periodSeconds": {
-              "$ref": "#/$defs/1c"
+              "$ref": "#/$defs/1b"
             },
             "successThreshold": {
               "anyOf": [
@@ -7385,13 +7327,13 @@
               ]
             },
             "tcpSocket": {
-              "$ref": "#/$defs/X"
+              "$ref": "#/$defs/W"
             },
             "terminationGracePeriodSeconds": {
-              "$ref": "#/$defs/1M"
+              "$ref": "#/$defs/1L"
             },
             "timeoutSeconds": {
-              "$ref": "#/$defs/18"
+              "$ref": "#/$defs/17"
             }
           },
           "type": "object"
@@ -7442,10 +7384,10 @@
           "x-kubernetes-list-type": "map"
         },
         "limits": {
-          "$ref": "#/$defs/17"
+          "$ref": "#/$defs/16"
         },
         "requests": {
-          "$ref": "#/$defs/1x"
+          "$ref": "#/$defs/1w"
         }
       },
       "type": [
@@ -7467,7 +7409,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/p"
+          "$ref": "#/$defs/o"
         },
         {
           "$ref": "#/$defs/5"
@@ -7524,7 +7466,7 @@
               "$ref": "#/$defs/f"
             },
             {
-              "$ref": "#/$defs/i"
+              "$ref": "#/$defs/h"
             },
             {
               "$ref": "#/$defs/8"
@@ -7642,13 +7584,13 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/1u"
+              "$ref": "#/$defs/1t"
             },
             "seccompProfile": {
-              "$ref": "#/$defs/1H"
+              "$ref": "#/$defs/1G"
             },
             "windowsOptions": {
-              "$ref": "#/$defs/1C"
+              "$ref": "#/$defs/1B"
             }
           },
           "type": "object"
@@ -7663,7 +7605,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/z"
+            "$ref": "#/$defs/y"
           },
           "then": {
             "allOf": [
@@ -7706,7 +7648,7 @@
                       {
                         "description": "ImagePullSecrets is a list of references to secrets in the same namespace to use for pulling any images in pods that reference this ServiceAccount. ImagePullSecrets are distinct from Secrets because Secrets can be mounted in the pod, but ImagePullSecrets are only accessed by the kubelet. More info: https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod",
                         "items": {
-                          "$ref": "#/$defs/l"
+                          "$ref": "#/$defs/k"
                         },
                         "type": "array"
                       },
@@ -7727,7 +7669,7 @@
                   "name": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/1E"
+                        "$ref": "#/$defs/1D"
                       },
                       {
                         "$ref": "#/$defs/3"
@@ -7745,7 +7687,7 @@
                         "$ref": "#/$defs/7"
                       },
                       {
-                        "$ref": "#/$defs/1z"
+                        "$ref": "#/$defs/1y"
                       },
                       {
                         "$ref": "#/$defs/5"
@@ -7787,7 +7729,7 @@
                             ]
                           },
                           {
-                            "$ref": "#/$defs/n"
+                            "$ref": "#/$defs/m"
                           }
                         ]
                       }
@@ -7864,7 +7806,7 @@
                   "$ref": "#/$defs/f"
                 },
                 {
-                  "$ref": "#/$defs/i"
+                  "$ref": "#/$defs/h"
                 },
                 {
                   "$ref": "#/$defs/8"
@@ -7891,10 +7833,10 @@
           "$ref": "#/$defs/1"
         },
         {
-          "$ref": "#/$defs/m"
+          "$ref": "#/$defs/l"
         },
         {
-          "$ref": "#/$defs/D"
+          "$ref": "#/$defs/C"
         }
       ],
       "description": "serviceAnnotations contains annotations to be added to the provisioned webhook service resource"
@@ -7907,7 +7849,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/u"
+            "$ref": "#/$defs/s"
           },
           "then": {
             "allOf": [
@@ -7920,7 +7862,7 @@
                         "$ref": "#/$defs/1"
                       },
                       {
-                        "$ref": "#/$defs/n"
+                        "$ref": "#/$defs/m"
                       }
                     ],
                     "description": "Labels to add to the service monitor"
@@ -7946,7 +7888,7 @@
                                 "$ref": "#/$defs/4"
                               },
                               {
-                                "$ref": "#/$defs/v"
+                                "$ref": "#/$defs/u"
                               }
                             ]
                           },
@@ -7968,7 +7910,7 @@
                       {
                         "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
                         "items": {
-                          "$ref": "#/$defs/1p"
+                          "$ref": "#/$defs/1o"
                         },
                         "type": "array"
                       },
@@ -8006,7 +7948,7 @@
                             "$ref": "#/$defs/f"
                           },
                           {
-                            "$ref": "#/$defs/i"
+                            "$ref": "#/$defs/h"
                           },
                           {
                             "$ref": "#/$defs/8"
@@ -8041,7 +7983,7 @@
                       {
                         "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
                         "items": {
-                          "$ref": "#/$defs/1p"
+                          "$ref": "#/$defs/1o"
                         },
                         "type": "array"
                       }
@@ -8079,7 +8021,7 @@
                             "$ref": "#/$defs/f"
                           },
                           {
-                            "$ref": "#/$defs/i"
+                            "$ref": "#/$defs/h"
                           },
                           {
                             "$ref": "#/$defs/8"
@@ -8188,7 +8130,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/p"
+          "$ref": "#/$defs/o"
         },
         {
           "$ref": "#/$defs/5"
@@ -8197,19 +8139,9 @@
       "description": "Time period for the controller pod to do a graceful shutdown"
     },
     "tolerateNonExistentBackendAction": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h"
-        }
-      ],
       "description": "tolerateNonExistentBackendAction permits rules which specify backend actions that don't exist, true by default (When enabled, it will return 503 error if backend action not exist)"
     },
     "tolerateNonExistentBackendService": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h"
-        }
-      ],
       "description": "tolerateNonExistentBackendService permits rules which specify backend services that don't exist, true by default (When enabled, it will return 503 error if backend service not exist)"
     },
     "tolerations": {
@@ -8281,7 +8213,7 @@
             "description": "TopologySpreadConstraint specifies how to spread matching pods among the given topology.",
             "properties": {
               "labelSelector": {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/n"
               },
               "matchLabelKeys": {
                 "description": "MatchLabelKeys is a set of pod label keys to select the pods over which spreading will be calculated. The keys are used to lookup values from the incoming pod labels, those key-value labels are ANDed with labelSelector to select the group of existing pods over which spreading will be calculated for the incoming pod. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. MatchLabelKeys cannot be set when LabelSelector isn't set. Keys that don't exist in the incoming pod labels will be ignored. A null or empty list means only match against labelSelector.\n\nThis is a beta field and requires the MatchLabelKeysInPodTopologySpread feature gate to be enabled (enabled by default).",
@@ -8369,10 +8301,10 @@
               "description": "Spec to control the desired behavior of rolling update.",
               "properties": {
                 "maxSurge": {
-                  "$ref": "#/$defs/r"
+                  "$ref": "#/$defs/q"
                 },
                 "maxUnavailable": {
-                  "$ref": "#/$defs/r"
+                  "$ref": "#/$defs/q"
                 }
               },
               "type": [
@@ -8394,7 +8326,7 @@
           "$ref": "#/$defs/1"
         },
         {
-          "$ref": "#/$defs/m"
+          "$ref": "#/$defs/l"
         },
         {
           "type": "null"
@@ -8408,7 +8340,7 @@
     "vpcTags": {
       "allOf": [
         {
-          "$ref": "#/$defs/O"
+          "$ref": "#/$defs/N"
         }
       ],
       "description": "This is alternative to vpcId. Set this when your pods are unable to use the metadata service to determine VPC automatically.\nAll specified tags are used as AND filters for VPC lookup.\nName: tagValue"
@@ -8427,7 +8359,7 @@
           "type": "integer"
         },
         {
-          "$ref": "#/$defs/p"
+          "$ref": "#/$defs/o"
         },
         {
           "type": "null"
@@ -8442,11 +8374,11 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/12"
+                "$ref": "#/$defs/11"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/B"
+                  "$ref": "#/$defs/A"
                 }
               }
             ]
@@ -8461,7 +8393,7 @@
                     "description": "limit ingress validation webhook to only validate ingresses in the namespace matching the object selector.",
                     "properties": {
                       "matchExpressions": {
-                        "$ref": "#/$defs/E"
+                        "$ref": "#/$defs/D"
                       }
                     }
                   }
@@ -8475,7 +8407,7 @@
                     "description": "limit ingress validation webhook to only validate ingresses in the namespace matching the object selector.",
                     "properties": {
                       "matchLabels": {
-                        "$ref": "#/$defs/1A"
+                        "$ref": "#/$defs/1z"
                       }
                     }
                   }
@@ -8488,11 +8420,11 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/13"
+                "$ref": "#/$defs/12"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/B"
+                  "$ref": "#/$defs/A"
                 }
               }
             ]
@@ -8507,7 +8439,7 @@
                     "description": "limit ingress validation webhook to only validate ingresses matching the objectSelector",
                     "properties": {
                       "matchLabels": {
-                        "$ref": "#/$defs/1A"
+                        "$ref": "#/$defs/1z"
                       }
                     }
                   }
@@ -8521,7 +8453,7 @@
                     "description": "limit ingress validation webhook to only validate ingresses matching the objectSelector",
                     "properties": {
                       "matchExpressions": {
-                        "$ref": "#/$defs/E"
+                        "$ref": "#/$defs/D"
                       }
                     }
                   }
@@ -8533,7 +8465,7 @@
         {
           "if": {
             "not": {
-              "$ref": "#/$defs/B"
+              "$ref": "#/$defs/A"
             }
           },
           "then": {
@@ -8542,7 +8474,7 @@
               "ingressValdationFailurePolicy": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/G"
+                    "$ref": "#/$defs/F"
                   },
                   {
                     "$ref": "#/$defs/3"
@@ -8554,7 +8486,7 @@
                     "$ref": "#/$defs/4"
                   },
                   {
-                    "$ref": "#/$defs/R"
+                    "$ref": "#/$defs/Q"
                   },
                   {
                     "$ref": "#/$defs/7"
@@ -8604,7 +8536,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/S"
+          "$ref": "#/$defs/R"
         }
       ],
       "description": "array of namespace selectors for the pod mutator webhook\n- key: elbv2.k8s.aws/pod-readiness-gate-inject\noperator: In\nvalues:\n- enabled"

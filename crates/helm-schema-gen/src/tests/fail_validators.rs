@@ -1,6 +1,6 @@
 use super::*;
 use color_eyre::eyre::{self, OptionExt as _};
-use indoc::indoc;
+use indoc::{formatdoc, indoc};
 use test_util::prelude::sim_assert_eq;
 
 /// A `regexMatch` fail whose subject reached the match through `tpl` (a
@@ -3723,5 +3723,104 @@ fn nested_default_with_an_unknown_tail_does_not_claim_the_empty_string() {
                 "{helper}: Helm renders instance={instance}; schema={schema}"
             );
         }
+    }
+}
+
+/// An `if <map test> X / else if <slice test> X / else fail` chain
+/// partitions `X`: the else-`fail` fires only where EVERY arm test failed,
+/// so validity is the DISJUNCTION of the arms' kinds, never their
+/// conjunction (cilium's `clustermesh-clusters` dict-or-list helper). The
+/// `kindIs`, `typeIs` and `eq (kindOf …)` spellings decode to the same
+/// partition. Helm matrix: `round8-witness-evidence/w1.matrix.txt`.
+///
+/// RED on 0cf0e8d8: the single-path fail lane conjoined the negated arm
+/// tests into `(array|null) ∧ (object|null)`, so under the toggle only null
+/// survived and the chart's own default `[]` was rejected.
+#[test]
+fn kind_dispatch_else_fail_accepts_every_dispatched_kind() {
+    let values_yaml = indoc! {"
+        enabled: false
+        clusters: []
+    "};
+    let spellings = [
+        (
+            r#"kindIs "map" .Values.clusters"#,
+            r#"kindIs "slice" .Values.clusters"#,
+        ),
+        (
+            r#"typeIs "map[string]interface {}" .Values.clusters"#,
+            r#"typeIs "[]interface {}" .Values.clusters"#,
+        ),
+        (
+            r#"eq (kindOf .Values.clusters) "map""#,
+            r#"eq (kindOf .Values.clusters) "slice""#,
+        ),
+        (
+            r#"eq (typeOf .Values.clusters) "map[string]interface {}""#,
+            r#"eq (typeOf .Values.clusters) "[]interface {}""#,
+        ),
+    ];
+    for (map_test, slice_test) in spellings {
+        let src = formatdoc! {r#"
+            {{{{- if .Values.enabled }}}}
+            {{{{- if {map_test} }}}}
+            mode: map
+            {{{{- else if {slice_test} }}}}
+            mode: list
+            {{{{- else }}}}
+            {{{{- fail "unknown type" }}}}
+            {{{{- end }}}}
+            {{{{- end }}}}
+        "#};
+        let schema = schema_for_values_yaml(parse_ir(&src), Some(values_yaml));
+        let cells = [
+            ("default list", serde_json::json!({ "enabled": true }), true),
+            (
+                "list",
+                serde_json::json!({ "enabled": true, "clusters": [{ "name": "c1" }] }),
+                true,
+            ),
+            (
+                "map",
+                serde_json::json!({ "enabled": true, "clusters": { "c1": {} } }),
+                true,
+            ),
+            (
+                "string",
+                serde_json::json!({ "enabled": true, "clusters": "xyz" }),
+                false,
+            ),
+            (
+                "integer",
+                serde_json::json!({ "enabled": true, "clusters": 3 }),
+                false,
+            ),
+            (
+                "boolean",
+                serde_json::json!({ "enabled": true, "clusters": true }),
+                false,
+            ),
+            (
+                "string, toggle off",
+                serde_json::json!({ "clusters": "xyz" }),
+                true,
+            ),
+        ];
+        let have: Vec<(&str, &str, bool)> = cells
+            .iter()
+            .map(|(label, overrides, _)| {
+                let instance = composed_instance(values_yaml, overrides.clone());
+                (
+                    map_test,
+                    *label,
+                    schema_accepts_instance(&schema, &instance),
+                )
+            })
+            .collect();
+        let want: Vec<(&str, &str, bool)> = cells
+            .iter()
+            .map(|(label, _, accepted)| (map_test, *label, *accepted))
+            .collect();
+        sim_assert_eq!(have: have, want: want);
     }
 }

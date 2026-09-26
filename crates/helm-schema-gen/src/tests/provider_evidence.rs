@@ -1710,11 +1710,13 @@ fn live_guarded_unset_provider_source_preserves_chart_default() {
     );
 }
 
-/// A dependency-owned default is restored by Helm's subchart coalescing even
-/// when the parent document omits the leaf. It must therefore not become a
-/// parent-level presence requirement.
+/// A dependency-declared default does NOT suppress the presence
+/// requirement. The schema validates the COALESCED document, in which that
+/// default is already applied, so a leaf missing there was null-deleted and
+/// reaches the provider sink as nil — helm v4.2.3 carries the deletion
+/// through the subchart's own coalesce stage rather than refilling it.
 #[test]
-fn dependency_default_suppresses_parent_provider_source_presence() {
+fn dependency_default_leaves_the_parent_provider_source_presence_requirement() {
     let source = indoc! {r"
         apiVersion: v1
         kind: Service
@@ -1729,21 +1731,21 @@ fn dependency_default_suppresses_parent_provider_source_presence() {
         child:
           port: 80
     "};
-    let schema =
-        schema_for_dependency_values_yaml(parse_ir(source), values_yaml, values_yaml, values_yaml);
+    let schema = schema_for_dependency_values_yaml(parse_ir(source), values_yaml, values_yaml);
     let instance = serde_json::json!({ "child": {} });
 
     assert!(
-        schema_accepts_instance(&schema, &instance),
-        "the dependency refills its provider source before rendering: schema={schema}"
+        !schema_accepts_instance(&schema, &instance),
+        "a deleted provider source stays deleted through the subchart stage: schema={schema}"
     );
 }
 
-/// Layered maps refill leaves only for the dependency's named entries. A
-/// parent may omit `containerPort` from an overridden built-in port, while a
-/// newly added enabled port still renders null without that leaf.
+/// A ranged member's provider leaf binds however it was declared. Deleting
+/// `containerPort` from the chart's own named port leaves the coalesced
+/// document without it exactly as a newly added port lacks it, and both
+/// render the field null.
 #[test]
-fn dependency_defaults_refill_named_ranged_provider_sources() {
+fn ranged_member_provider_sources_bind_however_declared() {
     let source = indoc! {r"
         apiVersion: apps/v1
         kind: Deployment
@@ -1776,26 +1778,16 @@ fn dependency_defaults_refill_named_ranged_provider_sources() {
               enabled: true
               containerPort: 4317
     "};
-    let deeper_stage_values = indoc! {"
-        child:
-          ports:
-            otlp:
-              containerPort: 4317
-    "};
-    let schema = schema_for_dependency_values_yaml(
-        parse_ir(source),
-        composed_values,
-        deeper_stage_values,
-        composed_values,
-    );
+    let schema =
+        schema_for_dependency_values_yaml(parse_ir(source), composed_values, composed_values);
 
     for (instance, want, label) in [
         (
             serde_json::json!({ "child": { "ports": {
                 "otlp": { "enabled": true },
             } } }),
-            true,
-            "the dependency refills its named port",
+            false,
+            "a named port whose leaf was deleted renders null too",
         ),
         (
             serde_json::json!({ "child": { "ports": {

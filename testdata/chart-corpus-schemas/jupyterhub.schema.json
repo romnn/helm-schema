@@ -17823,6 +17823,81 @@
         {
           "additionalProperties": {},
           "properties": {
+            "db": {
+              "allOf": [
+                {
+                  "if": {
+                    "allOf": [
+                      {
+                        "properties": {
+                          "pvc": {
+                            "properties": {
+                              "storageClassName": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "storageClassName"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "pvc"
+                        ],
+                        "type": "object"
+                      },
+                      {
+                        "$ref": "#/$defs/25"
+                      }
+                    ]
+                  },
+                  "then": {
+                    "if": {
+                      "properties": {
+                        "pvc": {
+                          "properties": {
+                            "storageClassName": {
+                              "not": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "storageClassName"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "pvc"
+                      ],
+                      "type": "object"
+                    },
+                    "then": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "pvc": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "storageClassName": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
             "extraFiles": {
               "allOf": [
                 {
@@ -17964,56 +18039,6 @@
         },
         {
           "$ref": "#/$defs/5f"
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "db": {
-              "allOf": [
-                {
-                  "if": {
-                    "allOf": [
-                      {
-                        "properties": {
-                          "pvc": {
-                            "properties": {
-                              "storageClassName": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "storageClassName"
-                            ],
-                            "type": "object"
-                          }
-                        },
-                        "required": [
-                          "pvc"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "$ref": "#/$defs/25"
-                      }
-                    ]
-                  },
-                  "then": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "pvc": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "storageClassName": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              ]
-            }
-          }
         },
         {
           "$ref": "#/$defs/1V"

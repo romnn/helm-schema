@@ -450,7 +450,7 @@
       "not": {
         "properties": {
           "starrocksCnSpec": {
-            "$ref": "#/$defs/2b"
+            "$ref": "#/$defs/2a"
           }
         },
         "required": [
@@ -924,6 +924,17 @@
     },
     "20": {
       "properties": {
+        "service": {
+          "$ref": "#/$defs/4k"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "type": "object"
+    },
+    "21": {
+      "properties": {
         "starrocksCnSpec": {
           "properties": {
             "cnEnvVars": {
@@ -941,18 +952,17 @@
       ],
       "type": "object"
     },
-    "21": {
+    "22": {
+      "additionalProperties": {},
       "properties": {
-        "service": {
-          "$ref": "#/$defs/4k"
-        }
+        "hostPath": {},
+        "mountPath": {},
+        "name": {},
+        "readOnly": {}
       },
-      "required": [
-        "service"
-      ],
       "type": "object"
     },
-    "22": {
+    "23": {
       "properties": {
         "maxUnavailablePods": {
           "$ref": "#/$defs/t"
@@ -963,7 +973,7 @@
       ],
       "type": "object"
     },
-    "23": {
+    "24": {
       "additionalProperties": {},
       "properties": {
         "mountPath": {},
@@ -972,7 +982,7 @@
       },
       "type": "object"
     },
-    "24": {
+    "25": {
       "additionalProperties": false,
       "properties": {
         "configMapName": {
@@ -981,16 +991,6 @@
         "resolveKey": {
           "type": "string"
         }
-      },
-      "type": "object"
-    },
-    "25": {
-      "additionalProperties": {},
-      "properties": {
-        "hostPath": {},
-        "mountPath": {},
-        "name": {},
-        "readOnly": {}
       },
       "type": "object"
     },
@@ -1017,18 +1017,6 @@
       "type": "object"
     },
     "28": {
-      "additionalProperties": {},
-      "properties": {
-        "data": {
-          "type": [
-            "array",
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    "29": {
       "properties": {
         "entrypoint": {
           "$ref": "#/$defs/t"
@@ -1039,11 +1027,20 @@
       ],
       "type": "object"
     },
+    "29": {
+      "additionalProperties": {},
+      "properties": {
+        "csi": {},
+        "mountPath": {},
+        "name": {},
+        "readOnly": {}
+      }
+    },
     "2A": {
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/29"
+            "$ref": "#/$defs/28"
           },
           {
             "anyOf": [
@@ -1127,7 +1124,7 @@
           "$ref": "#/$defs/N"
         },
         {
-          "$ref": "#/$defs/u"
+          "$ref": "#/$defs/v"
         }
       ]
     },
@@ -1506,15 +1503,6 @@
       "type": "object"
     },
     "2a": {
-      "additionalProperties": {},
-      "properties": {
-        "csi": {},
-        "mountPath": {},
-        "name": {},
-        "readOnly": {}
-      }
-    },
-    "2b": {
       "properties": {
         "resources": {
           "$ref": "#/$defs/t"
@@ -1524,6 +1512,18 @@
         "resources"
       ],
       "type": "object"
+    },
+    "2b": {
+      "additionalProperties": {},
+      "properties": {
+        "data": {
+          "type": [
+            "array",
+            "null",
+            "object"
+          ]
+        }
+      }
     },
     "2c": {
       "additionalProperties": {},
@@ -1788,7 +1788,7 @@
           "items": {
             "allOf": [
               {
-                "$ref": "#/$defs/2a"
+                "$ref": "#/$defs/29"
               },
               {
                 "$ref": "#/$defs/I"
@@ -1801,7 +1801,7 @@
           "additionalProperties": {
             "allOf": [
               {
-                "$ref": "#/$defs/2a"
+                "$ref": "#/$defs/29"
               },
               {
                 "$ref": "#/$defs/I"
@@ -1822,7 +1822,7 @@
           "additionalProperties": {
             "allOf": [
               {
-                "$ref": "#/$defs/2a"
+                "$ref": "#/$defs/29"
               },
               {
                 "$ref": "#/$defs/J"
@@ -1835,7 +1835,7 @@
           "items": {
             "allOf": [
               {
-                "$ref": "#/$defs/2a"
+                "$ref": "#/$defs/29"
               },
               {
                 "$ref": "#/$defs/J"
@@ -1865,7 +1865,7 @@
       "anyOf": [
         {
           "items": {
-            "$ref": "#/$defs/23"
+            "$ref": "#/$defs/24"
           },
           "type": "array"
         },
@@ -1877,7 +1877,7 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/23"
+            "$ref": "#/$defs/24"
           },
           "type": "object"
         }
@@ -1892,7 +1892,7 @@
       "anyOf": [
         {
           "items": {
-            "$ref": "#/$defs/23"
+            "$ref": "#/$defs/24"
           },
           "type": "array"
         },
@@ -1904,7 +1904,7 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/23"
+            "$ref": "#/$defs/24"
           },
           "type": "object"
         }
@@ -2001,7 +2001,7 @@
     "36": {
       "properties": {
         "starrocksBeSpec": {
-          "$ref": "#/$defs/4d"
+          "$ref": "#/$defs/4c"
         }
       },
       "required": [
@@ -2012,7 +2012,7 @@
     "37": {
       "properties": {
         "starrocksCnSpec": {
-          "$ref": "#/$defs/4d"
+          "$ref": "#/$defs/4c"
         }
       },
       "required": [
@@ -2023,7 +2023,7 @@
     "38": {
       "properties": {
         "starrocksFESpec": {
-          "$ref": "#/$defs/4d"
+          "$ref": "#/$defs/4c"
         }
       },
       "required": [
@@ -2046,17 +2046,6 @@
     },
     "3A": {
       "properties": {
-        "starrocksFESpec": {
-          "$ref": "#/$defs/29"
-        }
-      },
-      "required": [
-        "starrocksFESpec"
-      ],
-      "type": "object"
-    },
-    "3B": {
-      "properties": {
         "starrocksBeSpec": {
           "$ref": "#/$defs/4o"
         }
@@ -2066,7 +2055,7 @@
       ],
       "type": "object"
     },
-    "3C": {
+    "3B": {
       "properties": {
         "starrocksCnSpec": {
           "$ref": "#/$defs/4o"
@@ -2077,7 +2066,7 @@
       ],
       "type": "object"
     },
-    "3D": {
+    "3C": {
       "properties": {
         "starrocksFESpec": {
           "$ref": "#/$defs/4o"
@@ -2088,7 +2077,7 @@
       ],
       "type": "object"
     },
-    "3E": {
+    "3D": {
       "properties": {
         "starrocksCnSpec": {
           "properties": {
@@ -2104,6 +2093,17 @@
       },
       "required": [
         "starrocksCnSpec"
+      ],
+      "type": "object"
+    },
+    "3E": {
+      "properties": {
+        "starrocksFESpec": {
+          "$ref": "#/$defs/4f"
+        }
+      },
+      "required": [
+        "starrocksFESpec"
       ],
       "type": "object"
     },
@@ -2337,7 +2337,7 @@
     "3W": {
       "properties": {
         "service": {
-          "$ref": "#/$defs/7L"
+          "$ref": "#/$defs/7M"
         }
       },
       "required": [
@@ -2348,7 +2348,7 @@
     "3X": {
       "properties": {
         "starrocksBeSpec": {
-          "$ref": "#/$defs/7y"
+          "$ref": "#/$defs/7x"
         }
       },
       "required": [
@@ -2359,7 +2359,7 @@
     "3Y": {
       "properties": {
         "starrocksCnSpec": {
-          "$ref": "#/$defs/7y"
+          "$ref": "#/$defs/7x"
         }
       },
       "required": [
@@ -2578,7 +2578,7 @@
     "3q": {
       "properties": {
         "starrocksBeSpec": {
-          "$ref": "#/$defs/22"
+          "$ref": "#/$defs/23"
         }
       },
       "required": [
@@ -2633,7 +2633,7 @@
     "3v": {
       "properties": {
         "starrocksBeSpec": {
-          "$ref": "#/$defs/4b"
+          "$ref": "#/$defs/4f"
         }
       },
       "required": [
@@ -2655,7 +2655,7 @@
     "3x": {
       "properties": {
         "starrocksCnSpec": {
-          "$ref": "#/$defs/4b"
+          "$ref": "#/$defs/4f"
         }
       },
       "required": [
@@ -2677,7 +2677,7 @@
     "3z": {
       "properties": {
         "starrocksFESpec": {
-          "$ref": "#/$defs/4b"
+          "$ref": "#/$defs/28"
         }
       },
       "required": [
@@ -3280,17 +3280,6 @@
       "type": "object"
     },
     "4b": {
-      "properties": {
-        "runAsNonRoot": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "runAsNonRoot"
-      ],
-      "type": "object"
-    },
-    "4c": {
       "additionalProperties": {
         "if": {
           "type": "string"
@@ -3308,7 +3297,7 @@
         }
       }
     },
-    "4d": {
+    "4c": {
       "properties": {
         "topologySpreadConstraints": {
           "$ref": "#/$defs/t"
@@ -3319,14 +3308,25 @@
       ],
       "type": "object"
     },
-    "4e": {
+    "4d": {
       "items": {
         "$ref": "#/$defs/7h"
       },
       "type": "array"
     },
-    "4f": {
+    "4e": {
       "description": "the loadBalancerIP for static ip config when the type=LoadBalancer and loadbalancerIp is not empty."
+    },
+    "4f": {
+      "properties": {
+        "runAsNonRoot": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "runAsNonRoot"
+      ],
+      "type": "object"
     },
     "4g": {
       "properties": {
@@ -3534,7 +3534,7 @@
               "not": {
                 "properties": {
                   "starrocks": {
-                    "$ref": "#/$defs/3C"
+                    "$ref": "#/$defs/3B"
                   }
                 },
                 "required": [
@@ -3580,7 +3580,7 @@
               "not": {
                 "properties": {
                   "starrocks": {
-                    "$ref": "#/$defs/3B"
+                    "$ref": "#/$defs/3A"
                   }
                 },
                 "required": [
@@ -3668,7 +3668,7 @@
           "not": {
             "properties": {
               "starrocks": {
-                "$ref": "#/$defs/3D"
+                "$ref": "#/$defs/3C"
               }
             },
             "required": [
@@ -3790,7 +3790,7 @@
           "not": {
             "properties": {
               "starrocks": {
-                "$ref": "#/$defs/3z"
+                "$ref": "#/$defs/3E"
               }
             },
             "required": [
@@ -4163,7 +4163,7 @@
               "starrocks": {
                 "properties": {
                   "starrocksFESpec": {
-                    "$ref": "#/$defs/7t"
+                    "$ref": "#/$defs/7s"
                   }
                 },
                 "required": [
@@ -4366,7 +4366,7 @@
             "datadog": {
               "properties": {
                 "log": {
-                  "$ref": "#/$defs/7u"
+                  "$ref": "#/$defs/7t"
                 }
               },
               "required": [
@@ -4491,7 +4491,7 @@
         "starrocks": {
           "properties": {
             "starrocksBeSpec": {
-              "$ref": "#/$defs/7c"
+              "$ref": "#/$defs/7d"
             }
           },
           "required": [
@@ -4510,7 +4510,7 @@
         "starrocks": {
           "properties": {
             "starrocksCnSpec": {
-              "$ref": "#/$defs/7c"
+              "$ref": "#/$defs/7d"
             }
           },
           "required": [
@@ -4586,7 +4586,7 @@
     "5Y": {
       "properties": {
         "starrocks": {
-          "$ref": "#/$defs/u"
+          "$ref": "#/$defs/v"
         }
       },
       "required": [
@@ -4628,7 +4628,7 @@
           "$ref": "#/$defs/b"
         },
         {
-          "$ref": "#/$defs/4e"
+          "$ref": "#/$defs/4d"
         },
         {
           "type": "null"
@@ -4661,13 +4661,13 @@
         "additionalProperties": false,
         "properties": {
           "configMapRef": {
-            "$ref": "#/$defs/77"
+            "$ref": "#/$defs/78"
           },
           "prefix": {
             "type": "string"
           },
           "secretRef": {
-            "$ref": "#/$defs/77"
+            "$ref": "#/$defs/78"
           }
         },
         "type": "object"
@@ -4738,7 +4738,7 @@
       "anyOf": [
         {
           "items": {
-            "$ref": "#/$defs/25"
+            "$ref": "#/$defs/22"
           },
           "type": "array"
         },
@@ -4747,7 +4747,7 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/25"
+            "$ref": "#/$defs/22"
           },
           "type": "object"
         },
@@ -5137,7 +5137,7 @@
     "65": {
       "properties": {
         "starrocks": {
-          "$ref": "#/$defs/20"
+          "$ref": "#/$defs/21"
         }
       },
       "required": [
@@ -5284,7 +5284,7 @@
       "not": {
         "properties": {
           "starrocksBeSpec": {
-            "$ref": "#/$defs/2b"
+            "$ref": "#/$defs/2a"
           }
         },
         "required": [
@@ -5412,7 +5412,7 @@
     "6M": {
       "properties": {
         "starrocksBeSpec": {
-          "$ref": "#/$defs/29"
+          "$ref": "#/$defs/28"
         }
       },
       "required": [
@@ -5423,7 +5423,7 @@
     "6N": {
       "properties": {
         "starrocksCnSpec": {
-          "$ref": "#/$defs/29"
+          "$ref": "#/$defs/28"
         }
       },
       "required": [
@@ -5608,7 +5608,7 @@
     "6b": {
       "properties": {
         "starrocksBeSpec": {
-          "$ref": "#/$defs/21"
+          "$ref": "#/$defs/20"
         }
       },
       "required": [
@@ -5619,7 +5619,7 @@
     "6c": {
       "properties": {
         "starrocksCnSpec": {
-          "$ref": "#/$defs/21"
+          "$ref": "#/$defs/20"
         }
       },
       "required": [
@@ -5713,7 +5713,7 @@
     "6g": {
       "properties": {
         "starrocks": {
-          "$ref": "#/$defs/3A"
+          "$ref": "#/$defs/3z"
         }
       },
       "required": [
@@ -6087,7 +6087,7 @@
         {
           "anyOf": [
             {
-              "$ref": "#/$defs/7K"
+              "$ref": "#/$defs/7L"
             },
             {
               "not": {
@@ -6306,6 +6306,24 @@
       "description": "- 10.0.0.0/8\nSpecify how nodes distribute service traffic. Possible values: Cluster, Local.\nOnly applies when the type is NodePort or LoadBalancer. Local preserves the client source IP."
     },
     "77": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "log": {}
+            },
+            "required": [
+              "log"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "$ref": "#/$defs/7G"
+        }
+      ]
+    },
+    "78": {
       "additionalProperties": false,
       "properties": {
         "name": {
@@ -6318,11 +6336,8 @@
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "78": {
-      "description": "mount secrets if necessary.\nsee https://kubernetes.io/docs/concepts/storage/volumes/#using-subpath for more details about subPath."
-    },
     "79": {
-      "description": "- ip: \"127.0.0.1\"\nhostnames:\n- \"example.com\"\nschedulerName allows you to specify which scheduler will be used for the pod"
+      "description": "mount secrets if necessary.\nsee https://kubernetes.io/docs/concepts/storage/volumes/#using-subpath for more details about subPath."
     },
     "7A": {
       "properties": {
@@ -6364,10 +6379,12 @@
     },
     "7E": {
       "properties": {
-        "serviceMonitor": {}
+        "fe": {
+          "$ref": "#/$defs/t"
+        }
       },
       "required": [
-        "serviceMonitor"
+        "fe"
       ],
       "type": "object"
     },
@@ -6417,6 +6434,15 @@
     },
     "7K": {
       "properties": {
+        "serviceMonitor": {}
+      },
+      "required": [
+        "serviceMonitor"
+      ],
+      "type": "object"
+    },
+    "7L": {
+      "properties": {
         "metrics": {
           "enum": [
             null
@@ -6428,7 +6454,7 @@
       ],
       "type": "object"
     },
-    "7L": {
+    "7M": {
       "properties": {
         "type": {
           "enum": [
@@ -6441,23 +6467,12 @@
       ],
       "type": "object"
     },
-    "7M": {
+    "7N": {
       "properties": {
         "capabilities": {}
       },
       "required": [
         "capabilities"
-      ],
-      "type": "object"
-    },
-    "7N": {
-      "properties": {
-        "fe": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "fe"
       ],
       "type": "object"
     },
@@ -6656,6 +6671,9 @@
       "description": "- ip: \"127.0.0.1\"\nhostnames:\n- \"example.com\"\nschedulerName allows you to specify which scheduler will be used for the pod"
     },
     "7a": {
+      "description": "- ip: \"127.0.0.1\"\nhostnames:\n- \"example.com\"\nschedulerName allows you to specify which scheduler will be used for the pod"
+    },
+    "7b": {
       "properties": {
         "starrocksBeSpec": {
           "$ref": "#/$defs/4j"
@@ -6666,7 +6684,7 @@
       ],
       "type": "object"
     },
-    "7b": {
+    "7c": {
       "properties": {
         "starrocksCnSpec": {
           "$ref": "#/$defs/4j"
@@ -6677,7 +6695,7 @@
       ],
       "type": "object"
     },
-    "7c": {
+    "7d": {
       "properties": {
         "capabilities": {
           "properties": {
@@ -6695,24 +6713,6 @@
         "capabilities"
       ],
       "type": "object"
-    },
-    "7d": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "log": {}
-            },
-            "required": [
-              "log"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "$ref": "#/$defs/7G"
-        }
-      ]
     },
     "7e": {
       "allOf": [
@@ -6883,9 +6883,6 @@
       "type": "object"
     },
     "7s": {
-      "description": "imagePullSecrets allows you to use secrets for pulling images for your pods."
-    },
-    "7t": {
       "properties": {
         "configyaml": {
           "type": "object"
@@ -6896,7 +6893,7 @@
       ],
       "type": "object"
     },
-    "7u": {
+    "7t": {
       "properties": {
         "logConfig": {
           "type": "object"
@@ -6907,13 +6904,13 @@
       ],
       "type": "object"
     },
-    "7v": {
+    "7u": {
       "description": "hostAliases allows adding entries to /etc/hosts inside the containers"
     },
-    "7w": {
+    "7v": {
       "description": "imagePullSecrets allows you to use secrets to pull images for pods."
     },
-    "7x": {
+    "7w": {
       "properties": {
         "profiling": {
           "enum": [
@@ -6926,7 +6923,7 @@
       ],
       "type": "object"
     },
-    "7y": {
+    "7x": {
       "properties": {
         "config": {
           "$ref": "#/$defs/t"
@@ -6936,6 +6933,9 @@
         "config"
       ],
       "type": "object"
+    },
+    "7y": {
+      "description": "imagePullSecrets allows you to use secrets for pulling images for your pods."
     },
     "7z": {
       "$ref": "#/$defs/helm-double-quoted-safe",
@@ -7736,6 +7736,34 @@
       ]
     },
     "u": {
+      "anyOf": [
+        {
+          "properties": {
+            "starrocks": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "starrocks"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "starrocks": {}
+            },
+            "required": [
+              "starrocks"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "v": {
       "properties": {
         "starrocksCnSpec": {
           "$ref": "#/$defs/R"
@@ -7743,19 +7771,6 @@
       },
       "required": [
         "starrocksCnSpec"
-      ],
-      "type": "object"
-    },
-    "v": {
-      "properties": {
-        "starrocks": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "starrocks"
       ],
       "type": "object"
     },
@@ -7808,19 +7823,6 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "additionalProperties": false,
   "allOf": [
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/v"
-          },
-          {
-            "$ref": "#/$defs/5N"
-          }
-        ]
-      },
-      "then": false
-    },
     {
       "if": {
         "$ref": "#/$defs/7"
@@ -8154,11 +8156,11 @@
           "properties": {
             "configMaps": {
               "additionalProperties": {
-                "$ref": "#/$defs/28"
+                "$ref": "#/$defs/2b"
               },
               "description": "create configmaps if necessary.\ne.g., create my-configmap\n- name: my-configmap\ndata:\nkey: |\nthis is the content of the configmap\nwhen mounted, the key will be the name of the file",
               "items": {
-                "$ref": "#/$defs/28"
+                "$ref": "#/$defs/2b"
               }
             }
           }
@@ -8393,7 +8395,7 @@
           {
             "properties": {
               "starrocks": {
-                "$ref": "#/$defs/7b"
+                "$ref": "#/$defs/7c"
               }
             },
             "required": [
@@ -8738,6 +8740,19 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/$defs/2L"
+          },
+          {
+            "$ref": "#/$defs/u"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "properties": {
               "starrocks": {
                 "properties": {
@@ -8812,7 +8827,7 @@
                             "$ref": "#/$defs/b"
                           },
                           {
-                            "$ref": "#/$defs/4e"
+                            "$ref": "#/$defs/4d"
                           },
                           {
                             "type": "null"
@@ -8946,6 +8961,27 @@
       "if": {
         "allOf": [
           {
+            "properties": {
+              "starrocks": {
+                "$ref": "#/$defs/6f"
+              }
+            },
+            "required": [
+              "starrocks"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/u"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/$defs/1w"
           },
           {
@@ -9040,6 +9076,19 @@
           }
         ]
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/5N"
+          },
+          {
+            "$ref": "#/$defs/u"
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -9410,27 +9459,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/v"
-          },
-          {
-            "properties": {
-              "starrocks": {
-                "$ref": "#/$defs/67"
-              }
-            },
-            "required": [
-              "starrocks"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/$defs/2T"
           },
           {
@@ -9538,48 +9566,6 @@
           }
         ]
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/v"
-          },
-          {
-            "properties": {
-              "starrocks": {
-                "$ref": "#/$defs/61"
-              }
-            },
-            "required": [
-              "starrocks"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/v"
-          },
-          {
-            "properties": {
-              "starrocks": {
-                "$ref": "#/$defs/6f"
-              }
-            },
-            "required": [
-              "starrocks"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -10362,6 +10348,19 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/$defs/U"
+          },
+          {
+            "$ref": "#/$defs/u"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/$defs/2X"
           },
           {
@@ -10519,11 +10518,11 @@
           "properties": {
             "secrets": {
               "additionalProperties": {
-                "$ref": "#/$defs/28"
+                "$ref": "#/$defs/2b"
               },
               "description": "create secrets if necessary.\ne.g., create my-secret\n- name: my-secret\ndata:\nkey: |\nthis is the content of the secret\nwhen mounted, the key will be the name of the file",
               "items": {
-                "$ref": "#/$defs/28"
+                "$ref": "#/$defs/2b"
               }
             }
           }
@@ -10638,7 +10637,7 @@
           {
             "properties": {
               "starrocks": {
-                "$ref": "#/$defs/7a"
+                "$ref": "#/$defs/7b"
               }
             },
             "required": [
@@ -10752,6 +10751,27 @@
       "if": {
         "allOf": [
           {
+            "properties": {
+              "starrocks": {
+                "$ref": "#/$defs/67"
+              }
+            },
+            "required": [
+              "starrocks"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/u"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/$defs/6j"
           },
           {
@@ -10808,37 +10828,6 @@
           }
         ]
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/v"
-          },
-          {
-            "properties": {
-              "starrocks": {
-                "allOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/5s"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "starrocks"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/4x"
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -11000,6 +10989,34 @@
         "allOf": [
           {
             "properties": {
+              "starrocks": {
+                "allOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/3a"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "starrocks"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/u"
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
               "operator": {
                 "$ref": "#/$defs/6l"
               }
@@ -11113,6 +11130,27 @@
           }
         ]
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "starrocks": {
+                "$ref": "#/$defs/6s"
+              }
+            },
+            "required": [
+              "starrocks"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/u"
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -11670,7 +11708,7 @@
                       {
                         "properties": {
                           "datadog": {
-                            "$ref": "#/$defs/7x"
+                            "$ref": "#/$defs/7w"
                           }
                         },
                         "required": [
@@ -12202,34 +12240,6 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "starrocks": {
-                "allOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/3a"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "starrocks"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/v"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/$defs/2W"
           },
           {
@@ -12327,7 +12337,7 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/25"
+                          "$ref": "#/$defs/22"
                         },
                         "type": "array"
                       },
@@ -12336,7 +12346,7 @@
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/25"
+                          "$ref": "#/$defs/22"
                         },
                         "type": "object"
                       },
@@ -12848,7 +12858,7 @@
                         "not": {
                           "properties": {
                             "metrics": {
-                              "$ref": "#/$defs/7E"
+                              "$ref": "#/$defs/7K"
                             }
                           },
                           "required": [
@@ -12878,10 +12888,28 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/v"
+            "properties": {
+              "starrocks": {
+                "allOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/54"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "starrocks"
+            ],
+            "type": "object"
           },
           {
-            "$ref": "#/$defs/U"
+            "$ref": "#/$defs/70"
+          },
+          {
+            "$ref": "#/$defs/u"
           }
         ]
       },
@@ -13008,19 +13036,6 @@
           }
         ]
       }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/v"
-          },
-          {
-            "$ref": "#/$defs/2L"
-          }
-        ]
-      },
-      "then": false
     },
     {
       "if": {
@@ -13180,7 +13195,7 @@
                   "datadog": {
                     "properties": {
                       "profiling": {
-                        "$ref": "#/$defs/7N"
+                        "$ref": "#/$defs/7E"
                       }
                     },
                     "required": [
@@ -13458,62 +13473,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/v"
-          },
-          {
-            "properties": {
-              "starrocks": {
-                "$ref": "#/$defs/6s"
-              }
-            },
-            "required": [
-              "starrocks"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/$defs/U"
           },
           {
             "$ref": "#/$defs/5m"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "properties": {
-              "starrocks": {
-                "allOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "$ref": "#/$defs/54"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "starrocks"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/v"
-          },
-          {
-            "$ref": "#/$defs/70"
           }
         ]
       },
@@ -13552,6 +13515,37 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "starrocks": {
+                "allOf": [
+                  {
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/5s"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "starrocks"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/u"
+          },
+          {
+            "$ref": "#/$defs/4x"
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -13863,6 +13857,27 @@
           }
         }
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "properties": {
+              "starrocks": {
+                "$ref": "#/$defs/61"
+              }
+            },
+            "required": [
+              "starrocks"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/u"
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -14392,7 +14407,7 @@
                         "$ref": "#/$defs/b"
                       },
                       {
-                        "$ref": "#/$defs/4e"
+                        "$ref": "#/$defs/4d"
                       },
                       {
                         "type": "null"
@@ -14919,7 +14934,7 @@
                     "$ref": "#/$defs/d"
                   },
                   {
-                    "$ref": "#/$defs/7d"
+                    "$ref": "#/$defs/77"
                   }
                 ]
               },
@@ -15893,7 +15908,7 @@
                     "not": {
                       "properties": {
                         "starrocksCnSpec": {
-                          "$ref": "#/$defs/7M"
+                          "$ref": "#/$defs/7N"
                         }
                       },
                       "required": [
@@ -16096,7 +16111,7 @@
                     "description": "spec for component be, provide storage and compute function.",
                     "properties": {
                       "beEnvVars": {
-                        "$ref": "#/$defs/4c"
+                        "$ref": "#/$defs/4b"
                       }
                     }
                   }
@@ -16929,7 +16944,7 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/20"
+                  "$ref": "#/$defs/21"
                 }
               },
               {
@@ -17012,7 +17027,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/20"
+                "$ref": "#/$defs/21"
               },
               {
                 "$ref": "#/$defs/2"
@@ -17063,7 +17078,7 @@
                     "not": {
                       "properties": {
                         "starrocksBeSpec": {
-                          "$ref": "#/$defs/7M"
+                          "$ref": "#/$defs/7N"
                         }
                       },
                       "required": [
@@ -17300,7 +17315,7 @@
                   {
                     "properties": {
                       "datadog": {
-                        "$ref": "#/$defs/7K"
+                        "$ref": "#/$defs/7L"
                       }
                     },
                     "required": [
@@ -17321,7 +17336,7 @@
                 "$ref": "#/$defs/N"
               },
               {
-                "$ref": "#/$defs/u"
+                "$ref": "#/$defs/v"
               },
               {
                 "$ref": "#/$defs/2"
@@ -17522,7 +17537,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/7b"
+                "$ref": "#/$defs/7c"
               },
               {
                 "$ref": "#/$defs/2"
@@ -18716,7 +18731,7 @@
                 "allOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/u"
+                      "$ref": "#/$defs/v"
                     }
                   },
                   {
@@ -19053,7 +19068,7 @@
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/3B"
+                      "$ref": "#/$defs/3A"
                     }
                   }
                 ]
@@ -19062,7 +19077,7 @@
                 "allOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/3C"
+                      "$ref": "#/$defs/3B"
                     }
                   },
                   {
@@ -19072,7 +19087,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/3D"
+                  "$ref": "#/$defs/3C"
                 }
               }
             ]
@@ -19472,7 +19487,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/20"
+                "$ref": "#/$defs/21"
               },
               {
                 "$ref": "#/$defs/6T"
@@ -19492,7 +19507,7 @@
                     "description": "spec for compute node, compute node provide compute function.",
                     "properties": {
                       "cnEnvVars": {
-                        "$ref": "#/$defs/4c"
+                        "$ref": "#/$defs/4b"
                       }
                     }
                   }
@@ -19607,7 +19622,7 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/u"
+                  "$ref": "#/$defs/v"
                 }
               },
               {
@@ -19620,7 +19635,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/3E"
+                  "$ref": "#/$defs/3D"
                 }
               },
               {
@@ -19670,7 +19685,7 @@
                             "$ref": "#/$defs/c"
                           },
                           "configMapInfo": {
-                            "$ref": "#/$defs/24"
+                            "$ref": "#/$defs/25"
                           },
                           "configMaps": {
                             "$ref": "#/$defs/Z"
@@ -19805,7 +19820,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/3A"
+                "$ref": "#/$defs/3z"
               }
             ]
           },
@@ -19835,7 +19850,7 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/u"
+                  "$ref": "#/$defs/v"
                 }
               },
               {
@@ -19848,7 +19863,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/3E"
+                  "$ref": "#/$defs/3D"
                 }
               },
               {
@@ -19887,7 +19902,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/3z"
+                  "$ref": "#/$defs/3E"
                 }
               },
               {
@@ -19953,7 +19968,7 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/u"
+                  "$ref": "#/$defs/v"
                 }
               },
               {
@@ -20088,7 +20103,7 @@
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/3z"
+                      "$ref": "#/$defs/3E"
                     }
                   },
                   {
@@ -20134,7 +20149,7 @@
                       },
                       {
                         "not": {
-                          "$ref": "#/$defs/3B"
+                          "$ref": "#/$defs/3A"
                         }
                       }
                     ]
@@ -20167,7 +20182,7 @@
                     "allOf": [
                       {
                         "not": {
-                          "$ref": "#/$defs/3C"
+                          "$ref": "#/$defs/3B"
                         }
                       },
                       {
@@ -20327,7 +20342,7 @@
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/3D"
+                      "$ref": "#/$defs/3C"
                     }
                   },
                   {
@@ -20371,11 +20386,11 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/u"
+                  "$ref": "#/$defs/v"
                 }
               },
               {
-                "$ref": "#/$defs/3E"
+                "$ref": "#/$defs/3D"
               },
               {
                 "$ref": "#/$defs/1W"
@@ -20577,7 +20592,7 @@
                             "$ref": "#/$defs/c"
                           },
                           "configMapInfo": {
-                            "$ref": "#/$defs/24"
+                            "$ref": "#/$defs/25"
                           },
                           "configMaps": {
                             "$ref": "#/$defs/Z"
@@ -20747,7 +20762,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/u"
+                "$ref": "#/$defs/v"
               },
               {
                 "$ref": "#/$defs/2"
@@ -20983,7 +20998,7 @@
                     "$ref": "#/$defs/1f"
                   },
                   {
-                    "$ref": "#/$defs/3A"
+                    "$ref": "#/$defs/3z"
                   }
                 ]
               }
@@ -21718,7 +21733,7 @@
                 "$ref": "#/$defs/3"
               },
               {
-                "$ref": "#/$defs/7a"
+                "$ref": "#/$defs/7b"
               }
             ]
           },
@@ -21779,7 +21794,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/u"
+                "$ref": "#/$defs/v"
               },
               {
                 "$ref": "#/$defs/2D"
@@ -21876,7 +21891,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/7x"
+                    "$ref": "#/$defs/7w"
                   }
                 ]
               },
@@ -21884,7 +21899,7 @@
             },
             {
               "if": {
-                "$ref": "#/$defs/7d"
+                "$ref": "#/$defs/77"
               },
               "then": false
             }
@@ -21901,7 +21916,7 @@
                         "$ref": "#/$defs/d"
                       },
                       {
-                        "$ref": "#/$defs/7u"
+                        "$ref": "#/$defs/7t"
                       }
                     ]
                   },
@@ -21946,7 +21961,7 @@
               "allOf": [
                 {
                   "if": {
-                    "$ref": "#/$defs/7N"
+                    "$ref": "#/$defs/7E"
                   },
                   "then": {
                     "$ref": "#/$defs/7W"
@@ -22046,7 +22061,7 @@
                 "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/7E"
+                      "$ref": "#/$defs/7K"
                     }
                   },
                   {
@@ -22176,7 +22191,7 @@
               }
             },
             "hostAliases": {
-              "$ref": "#/$defs/7v"
+              "$ref": "#/$defs/7u"
             },
             "hostPaths": {
               "description": "e.g., mount an emptyDir volume to /tmp\n- name: tmp-data\nmountPath: /tmp\nmount hostPath volumes if necessary.\nNote: please use storageSpec field for persistent storage data and log."
@@ -22186,7 +22201,7 @@
             },
             "imagePullPolicy": {},
             "imagePullSecrets": {
-              "$ref": "#/$defs/7w"
+              "$ref": "#/$defs/7v"
             },
             "initContainers": {
               "description": "sidecar-container:\nimage: busybox\nIf your starrocksBeSpec.storageSpec.name is 'be' or not set, you can mount the volume of data like this.\ncommand: ['sh', '-c', 'echo \"hello from the sidecar container\" >/opt/starrocks/be/storage/sidecar-data.txt && sleep 3600']\nvolumeMounts:\n- mountPath: /opt/starrocks/be/storage\nname: be-data # append '-data' to the end of the name of the starrocksBeSpec.storageSpec.name\ninitContainers is an optional list of containers that are run in the same pod as the starrocks component.\nYou can use this to launch helper containers that run before the main container starts.\nSee https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#Container for how to configure a container."
@@ -22239,10 +22254,10 @@
               "$ref": "#/$defs/55"
             },
             "schedulerName": {
-              "$ref": "#/$defs/79"
+              "$ref": "#/$defs/7a"
             },
             "secrets": {
-              "$ref": "#/$defs/78"
+              "$ref": "#/$defs/79"
             },
             "service": {
               "additionalProperties": {},
@@ -22261,7 +22276,7 @@
                   "description": "e.g., specify a dedicated node port for BE service by containerPort.\n- nodePort: 30040 # The range of valid ports is 30000-32767\ncontainerPort: 8040 # The port on the container to expose.\nSpecify the source IP ranges for the load balancer when the type=LoadBalancer."
                 },
                 "loadbalancerIP": {
-                  "$ref": "#/$defs/4f"
+                  "$ref": "#/$defs/4e"
                 },
                 "ports": {
                   "description": "Config the service port for BE service.\nTo assign a specific port or nodePort to a service, you should specify them by the corresponding name or\ncontainerPort in the service configuration. If both containerPort and name are specified, containerPort takes precedence.\nFor BE, the port name can be webserver, heartbeat, brpc, be, and their default container port is 8040, 9050, 8060, 9060."
@@ -22397,7 +22412,7 @@
                   }
                 },
                 "imagePullSecrets": {
-                  "$ref": "#/$defs/7w"
+                  "$ref": "#/$defs/7v"
                 },
                 "nodeSelector": {
                   "description": "- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule|ScheduleAnyway\nlabelSelector:\nmatchLabels:\nfoo: bar\nIf specified, the pod's nodeSelector，displayName=\"Map of nodeSelectors to match when scheduling pods on nodes\"\nRef: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector"
@@ -22567,7 +22582,7 @@
               }
             },
             "hostAliases": {
-              "$ref": "#/$defs/7v"
+              "$ref": "#/$defs/7u"
             },
             "hostPaths": {
               "description": "e.g., mount an emptyDir volume to /tmp\n- name: tmp-data\nmountPath: /tmp\nmount hostPath volumes if necessary.\nNote:\n1. Please use the storageSpec field for persistent storage data and log.\n2. Please use podAntiAffinity to avoid the pods are scheduled on the same node.\n3. If you use hostPath to mount the volume of cache data, the cache will be lost when the pod is restarted."
@@ -22584,7 +22599,7 @@
             },
             "imagePullPolicy": {},
             "imagePullSecrets": {
-              "$ref": "#/$defs/7s"
+              "$ref": "#/$defs/7y"
             },
             "initContainers": {
               "description": "sidecar-container:\nimage: busybox\nIf starrocksCnSpec.storageSpec.name is cn, you can mount the volume of cache data like this.\nIf starrocksCnSpec.storageSpec.name is not set, no default volume will be created, so you cannot mount the volume of cache data like this.\ncommand: ['sh', '-c', 'echo \"hello from the sidecar container\" >/opt/starrocks/cn/storage/sidecar-data.txt && sleep 3600']\nvolumeMounts:\n- mountPath: /opt/starrocks/cn/storage\nname: cn-data # append '-data' to the end of the name of the starrocksCnSpec.storageSpec.name\ninitContainers is an optional list of containers that are run in the same pod as the starrocks component.\nYou can use this to launch helper containers that run before the main container starts.\nSee https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#Container for how to configure a container."
@@ -22635,10 +22650,10 @@
               "$ref": "#/$defs/55"
             },
             "schedulerName": {
-              "$ref": "#/$defs/79"
+              "$ref": "#/$defs/7a"
             },
             "secrets": {
-              "$ref": "#/$defs/78"
+              "$ref": "#/$defs/79"
             },
             "service": {
               "additionalProperties": {},
@@ -22813,11 +22828,11 @@
               "if": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/22"
+                    "$ref": "#/$defs/23"
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/2b"
+                      "$ref": "#/$defs/2a"
                     }
                   }
                 ]
@@ -22925,12 +22940,12 @@
                 "allOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/22"
+                      "$ref": "#/$defs/23"
                     }
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/2b"
+                      "$ref": "#/$defs/2a"
                     }
                   }
                 ]
@@ -22965,7 +22980,7 @@
                             "$ref": "#/$defs/c"
                           },
                           "configMapInfo": {
-                            "$ref": "#/$defs/24"
+                            "$ref": "#/$defs/25"
                           },
                           "configMaps": {
                             "$ref": "#/$defs/Z"
@@ -23089,7 +23104,7 @@
                     "not": {
                       "allOf": [
                         {
-                          "$ref": "#/$defs/7t"
+                          "$ref": "#/$defs/7s"
                         },
                         {
                           "$ref": "#/$defs/1m"
@@ -23118,7 +23133,7 @@
                 "allOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/22"
+                      "$ref": "#/$defs/23"
                     }
                   },
                   {
@@ -23348,7 +23363,7 @@
                         "$ref": "#/$defs/2e"
                       },
                       {
-                        "$ref": "#/$defs/4c"
+                        "$ref": "#/$defs/4b"
                       },
                       {
                         "$ref": "#/$defs/3l"
@@ -23667,7 +23682,7 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/7L"
+                            "$ref": "#/$defs/7M"
                           },
                           {
                             "$ref": "#/$defs/4k"
@@ -23766,7 +23781,7 @@
                   "description": "e.g., specify a dedicated node port for FE service by containerPort.\n- nodePort: 30030 # The range of valid ports is 30000-32767\ncontainerPort: 8030 # The port exported on the container\nspecifies the source IP ranges for the load balancer when the type=LoadBalancer."
                 },
                 "loadbalancerIP": {
-                  "$ref": "#/$defs/4f"
+                  "$ref": "#/$defs/4e"
                 },
                 "ports": {
                   "description": "Config the service port for FE service.\nTo assign a specific port or nodePort to a service, you should specify them by the corresponding name or\ncontainerPort in the service configuration. If both containerPort and name are specified, containerPort takes precedence.\nFor fe, port name can be http, query, rpc, edit-log, and their default container port is 8030, 9030, 9020, 9010."
@@ -24045,7 +24060,7 @@
                         "$ref": "#/$defs/3W"
                       },
                       {
-                        "$ref": "#/$defs/21"
+                        "$ref": "#/$defs/20"
                       }
                     ]
                   },
@@ -24299,7 +24314,7 @@
                                 "$ref": "#/$defs/1e"
                               },
                               "configMapInfo": {
-                                "$ref": "#/$defs/24"
+                                "$ref": "#/$defs/25"
                               },
                               "image": {
                                 "type": "string"
@@ -24389,7 +24404,7 @@
                     "$ref": "#/$defs/d"
                   },
                   {
-                    "$ref": "#/$defs/21"
+                    "$ref": "#/$defs/20"
                   }
                 ]
               },
@@ -24507,7 +24522,7 @@
             },
             "imagePullPolicy": {},
             "imagePullSecrets": {
-              "$ref": "#/$defs/7s"
+              "$ref": "#/$defs/7y"
             },
             "livenessProbeFailureSeconds": {
               "$ref": "#/$defs/3F"
@@ -24542,7 +24557,7 @@
                   "description": "e.g., specify a dedicated node port for FE proxy service by containerPort.\n- nodePort: 30080 # The range of valid ports is 30000-32767\ncontainerPort: 8080 # The port on the container to expose.\nSpecify the source IP ranges for the load balancer when the type=LoadBalancer."
                 },
                 "loadbalancerIP": {
-                  "$ref": "#/$defs/4f"
+                  "$ref": "#/$defs/4e"
                 },
                 "ports": {
                   "description": "Config the service port for FE proxy service.\nTo assign a specific port or nodePort to a service, you should specify them by the corresponding name or\ncontainerPort in the service configuration. If both containerPort and name are specified, containerPort takes precedence.\nFor FE proxy, the port name can be http-port, and its default container port is 8080."

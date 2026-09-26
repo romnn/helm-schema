@@ -799,9 +799,9 @@ fn subchart_values_are_scoped_to_the_coalesced_child_view() -> eyre::Result<()> 
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
       // Helm's dependency coalescing type-asserts the alias' values root.
-      // The subchart reads its effective `kid.global`; a deleted child
-      // global reaches the member read as nil, while a scalar ROOT global
-      // merely skips injection.
+      // No `kid.global` absence arm: `helm lint` validates the root
+      // values.yaml without it, and that arm made lint fail
+      // (`at '/kid': 'allOf' failed`, Helm v4.2.3), so it is withdrawn.
       "allOf": [
         {
           "additionalProperties": {},
@@ -818,21 +818,6 @@ fn subchart_values_are_scoped_to_the_coalesced_child_view() -> eyre::Result<()> 
         },
         "kid": {
           "additionalProperties": {},
-          "allOf": [
-            {
-              "if": {
-                "allOf": [
-                  { "type": "object" },
-                  {
-                    "properties": { "global": { "enum": [null] } },
-                    "required": ["global"],
-                    "type": "object"
-                  }
-                ]
-              },
-              "then": false
-            }
-          ],
           "properties": {
             "foo": {},
             "global": child_global_defaults_schema,
@@ -865,6 +850,19 @@ fn subchart_values_are_scoped_to_the_coalesced_child_view() -> eyre::Result<()> 
     assert!(
         !validator.is_valid(&serde_json::json!({ "kid": { "global": "disabled" } })),
         "a scalar child global reaches the child member access and aborts"
+    );
+    assert!(
+        validator.is_valid(&serde_json::json!({ "kid": { "persistence": { "enabled": true } } })),
+        "`helm lint` validates the root values.yaml as written and passes"
+    );
+    // The recorded precision cost: `helm template --set kid.global=null`
+    // aborts at `.Values.global.bar` with this coalesced child scope, which
+    // differs from the lint document only by the child's own `foo` default.
+    assert!(
+        validator.is_valid(
+            &serde_json::json!({ "kid": { "foo": 1, "persistence": { "enabled": true } } })
+        ),
+        "the withdrawn arm no longer rejects a deleted child global"
     );
     Ok(())
 }

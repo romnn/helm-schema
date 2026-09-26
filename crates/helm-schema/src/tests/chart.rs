@@ -222,6 +222,10 @@ fn chart_metadata_becomes_segmented_static_root_strings() -> eyre::Result<()> {
                 vec!["Chart".to_string(), "Version".to_string()],
                 "0.1.0".to_string(),
             ),
+            (
+                vec!["Template".to_string(), "BasePath".to_string()],
+                "root/templates".to_string(),
+            ),
         ])
     );
 
@@ -949,4 +953,142 @@ fn archive_entry_path_verdicts_are_platform_independent() {
             "{rejected} must be rejected"
         );
     }
+}
+
+/// Helm's template namespace, verified row by row against `helm template`
+/// v4.2.3: the root chart's name, one `charts/<dependency key>` segment per
+/// dependency edge, the ALIAS for an aliased dependency, and
+/// `<namespace>/templates` as `.Template.BasePath` regardless of which
+/// subdirectory a template lives in.
+#[test]
+fn template_namespaces_follow_helms_execution_names() -> eyre::Result<()> {
+    let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: d3deep
+            version: 0.1.0
+            dependencies:
+              - name: kid
+                version: 0.1.0
+              - name: kid
+                version: 0.1.0
+                alias: kidalias
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("templates/sub/deep.yaml")?,
+        "kind: ConfigMap\n",
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/kid/Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: kid
+            version: 0.1.0
+            dependencies:
+              - name: gkid
+                version: 0.1.0
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/kid/charts/gkid/Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: gkid
+            version: 0.1.0
+        "},
+    )?;
+
+    let charts = discover_chart_contexts(&chart_dir)?;
+    let namespaces: Vec<(String, String)> = charts
+        .iter()
+        .map(|chart| {
+            (
+                chart.template_namespace.clone(),
+                chart
+                    .static_root_strings
+                    .get(&vec!["Template".to_string(), "BasePath".to_string()])
+                    .cloned()
+                    .unwrap_or_default(),
+            )
+        })
+        .collect();
+
+    sim_assert_eq!(
+        have: namespaces,
+        want: vec![
+            ("d3deep".to_string(), "d3deep/templates".to_string()),
+            (
+                "d3deep/charts/kid".to_string(),
+                "d3deep/charts/kid/templates".to_string(),
+            ),
+            (
+                "d3deep/charts/kid/charts/gkid".to_string(),
+                "d3deep/charts/kid/charts/gkid/templates".to_string(),
+            ),
+            (
+                "d3deep/charts/kidalias".to_string(),
+                "d3deep/charts/kidalias/templates".to_string(),
+            ),
+            (
+                "d3deep/charts/kidalias/charts/gkid".to_string(),
+                "d3deep/charts/kidalias/charts/gkid/templates".to_string(),
+            ),
+        ],
+    );
+    Ok(())
+}
+
+/// A template is indexed under the exact name Helm registers it by, which
+/// is what keeps two charts shipping `templates/frag.yaml` distinct.
+#[test]
+fn templates_are_indexed_under_their_execution_names() -> eyre::Result<()> {
+    let chart_dir = vfs::VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: root
+            version: 0.1.0
+        "},
+    )?;
+    test_util::write(&chart_dir.join("templates/frag.yaml")?, "parent: yes\n")?;
+    test_util::write(
+        &chart_dir.join("templates/sub/deep.yaml")?,
+        "kind: ConfigMap\n",
+    )?;
+    test_util::write(&chart_dir.join("files/payload.yaml")?, "payload: yes\n")?;
+    test_util::write(
+        &chart_dir.join("charts/kid/Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: kid
+            version: 0.1.0
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("charts/kid/templates/frag.yaml")?,
+        "child: yes\n",
+    )?;
+
+    let charts = discover_chart_contexts(&chart_dir)?;
+    let corpus = LoadedChartCorpus::load(&charts, false)?;
+    let defines = build_define_index(&charts, &corpus)?;
+
+    sim_assert_eq!(
+        have: defines.file_sources().map(|(path, ..)| path).collect::<Vec<_>>(),
+        want: vec![
+            "files/payload.yaml",
+            "root/charts/kid/templates/frag.yaml",
+            "root/templates/frag.yaml",
+            "root/templates/sub/deep.yaml",
+        ],
+    );
+    sim_assert_eq!(
+        have: defines.get_file("root/charts/kid/templates/frag.yaml"),
+        want: Some("child: yes\n"),
+    );
+    Ok(())
 }

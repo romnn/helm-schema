@@ -9,8 +9,6 @@ use color_eyre::eyre;
 mod chart_instances;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
-#[path = "common/values_yaml.rs"]
-mod values_yaml;
 
 #[test]
 fn argo_cd_cluster_credentials_require_config_per_entry() -> eyre::Result<()> {

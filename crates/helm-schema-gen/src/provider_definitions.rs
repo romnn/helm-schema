@@ -122,7 +122,34 @@ pub(crate) fn prune_unreachable_provider_definitions(
     document.visit_embedded_values(&mut |value| {
         collect_referenced_definitions(value, definitions_by_name, &mut reachable);
     });
+    close_over_definition_references(&mut reachable, definitions_by_name);
 
+    let before = definitions_by_name.len();
+    definitions_by_name.retain(|name, _| reachable.contains(name));
+    before - definitions_by_name.len()
+}
+
+/// The definitions `schema` reaches through `$ref`, transitively.
+pub(crate) fn definitions_reachable_from(
+    schema: &Value,
+    definitions_by_name: &BTreeMap<String, Value>,
+) -> BTreeMap<String, Value> {
+    let mut reachable = BTreeSet::new();
+    collect_referenced_definitions(schema, definitions_by_name, &mut reachable);
+    close_over_definition_references(&mut reachable, definitions_by_name);
+    let mut definitions = BTreeMap::new();
+    for name in reachable {
+        if let Some(definition) = definitions_by_name.get(&name) {
+            definitions.insert(name, definition.clone());
+        }
+    }
+    definitions
+}
+
+fn close_over_definition_references(
+    reachable: &mut BTreeSet<String>,
+    definitions_by_name: &BTreeMap<String, Value>,
+) {
     let mut pending = reachable.iter().cloned().collect::<Vec<_>>();
     while let Some(name) = pending.pop() {
         let Some(definition) = definitions_by_name.get(&name) else {
@@ -136,10 +163,6 @@ pub(crate) fn prune_unreachable_provider_definitions(
             }
         }
     }
-
-    let before = definitions_by_name.len();
-    definitions_by_name.retain(|name, _| reachable.contains(name));
-    before - definitions_by_name.len()
 }
 
 fn collect_referenced_definitions(

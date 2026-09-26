@@ -10,8 +10,6 @@ use color_eyre::eyre;
 mod chart_instances;
 #[path = "common/schema_roundtrip.rs"]
 mod schema_roundtrip;
-#[path = "common/values_yaml.rs"]
-mod values_yaml;
 
 #[test]
 fn kyverno_image_tag_validator_holds() -> eyre::Result<()> {
