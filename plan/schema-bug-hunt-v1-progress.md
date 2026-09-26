@@ -3884,4 +3884,41 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   selection (astra), CLI DX corrections (sol), corpus hygiene (sol), wave-4 briefs (astra), IR
   refactor step 1 (astra), gen refactor D4 (sol). All registered in `round8/codex-runs.tsv`.
 
+- 13:20 — **Heartbeat: nine batch-twelve reports in; two reworks, two designs dispatched.**
+  W4 pre-landing (sol): REWORK — `control.rs:1435–1451` unions the structural wildcard subset
+  over a definite member that `set` overwrote (counterexample: `$services = set $services
+  "default" (omit …)`, Helm accepts, the candidate would fail it); required: keep the overlay
+  decision, add the counterexample red-first beside the overlay fail test, cover the other
+  Sprig-empty types in the `default` test → sent to the W4 agent (resumed). Gate round 2 (sol):
+  REWORK — the "CLOSED 3/83" is offline-verified only (no live oracle check per landing; F74 has
+  size obligations but zero verdict witnesses; the adjudicated digest omits fixture bytes, Helm
+  version, bundle identity, coalescer version; six enrolled null-override rows depend on the
+  approximate coalescer — `nats-operator-image-tag-null`, `rook-ceph-controller-manager-null`,
+  `promtail-values-cidrs-null`, `cilium-clusters-null`, `influxdb-set-hostname-null`,
+  `nginx-hostname-null-enabled`); queued as gate round 3 after the coalescer lands, inside the
+  combined test-infra landing. Coalescer checkpoint 1 (sol): the five coalescing phases are
+  CORRECT against Helm source; corrections forwarded (fail-closed loader for YAML 1.1 / chart
+  type / lock; a `-f`/`--set*` parser with Helm's group order and strvals coercions; `global`
+  warnings surfaced; matrix cells `string`, `global-null`, `export-override`, `default-nulls`;
+  harness `{}` fallback → failed probe; wire only after forward-composition parity). F2
+  present-null (sol design): `HasKey` is the single owner of membership, `Absent` derived
+  (A = ¬H ∨ N), consumer migration list with file:line, four of W1's six failures are real
+  migration gates → sent to the W1 agent (resumed on top of its W1 tree, separate patch). F6
+  aws-ebs (sol design): the loop-carried join must yield a zero-or-more list value carrying the
+  item provenance (new `AbstractValue` cardinality), owned by the range-exit join in
+  `symbolic_local_state`; land F9 FIRST, then this (200–350 LOC) → queued after F9 re-prep.
+  Briefs received for later launches: `--timing`/counters/Criterion (sol, 700–1,100 LOC),
+  changed-chart selection (astra, `SCHEMA_ACCEPTANCE_SELECTION_MANIFEST`, receipt-bound
+  predecessor, 550–850 LOC — after the pool), CLI DX corrections (sol: `.helmignore` warning
+  first, `kubeVersion` check, Go-regexp check on the FINAL schema with the regexp patch's Rust
+  AST checker moved into production, writer receipt after naming, strict-flag deprecation,
+  docs), corpus hygiene (sol: three `.helmignore` patches need NO dump — the loader ignores
+  `.helmignore` (`file_roles.rs:205`); manifests for 164 charts; `ABORTING_DEFAULTS` roster
+  with `working.yaml` for aws-load-balancer-controller/karpenter/loki (Helm-verified);
+  cert-manager parser-only; `corpus_integrity.rs` red-first; `scripts/vendor-chart.sh`).
+  State: okteto intake mid-run (per-chart battery), pool/producer/perf1/coalesce/stack running,
+  W1/W4 resumed (8 builders, user-waived cap; load 39); old sweep 1,639 rows, still zero new
+  false rejections; heavy lock still held by the old sweep. Strict closures: 3/83 (offline-
+  verified per sol's caveat; the live per-landing oracle check is queued in gate round 3).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
