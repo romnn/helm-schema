@@ -3921,4 +3921,47 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   false rejections; heavy lock still held by the old sweep. Strict closures: 3/83 (offline-
   verified per sol's caveat; the live per-landing oracle check is queued in gate round 3).
 
+- 13:45 — **Heartbeat: batch twelve complete (21/21); every pre-landing review says REWORK.**
+  W1 (astra): four Helm-verified counterexamples — literal-dict membership must require a PROVEN
+  complete key set (computed keys, odd trailing args, `set` mutation → abstain), transformed keys
+  (`printf`, `toString`) must not be equated with raw identity, size-changing transforms
+  (`slice`, `rest`, `initial`) must clear collection truth before piped `len`, and the deleted
+  `len` decoder arm handled `len (merge (dict) .Values.a .Values.b)` exactly → move into the
+  evaluator first → sent to the W1 agent (with the F2 work). Naming turn 2 (astra): flow,
+  determinism, DAG and C1 guard VERIFIED; rework limited to the stability promise (boundary
+  identities, arm order, occupied names, `-2` suffix order), comment hygiene, C5 gates via the
+  runner → sent to the naming agent. Kube-version (sol): no defect; `Some(false)` only after
+  authoritative absence, CRD exception → `None`; the two 1.33 CRD `.not-found` markers are
+  AUTHORITATIVE (orchestrator curl at the pinned revision a6f9a32d and at master: 404, while
+  deployment-apps-v1.json is 200); remaining: final-tree gates (runner) and dropping the
+  unrelated `mongodbcommunity_v1.json` hunk from its patch. Regexp (sol): the `\xHH` source
+  fix is sound; rework = make the real-Go test a mandatory pinned integration gate (Go 1.26.x
+  vs the repo's 1.27.1), replace the two `panic!`s with `eyre` errors, reject Go's nested
+  repetition overflow in `go_regexp.rs` or stop claiming a guarantee; oncall `helm lint` with
+  the fixed schema stayed CPU-busy for minutes — UNVERIFIED, must be timed; the four `\s`
+  exposures (kps, vault ×2, zalando) are a separate follow-up. F4+MLS r5 (astra): three P1s —
+  literal-member sources stay typed after replacement (w10 `baseTier: {}` renders in Helm,
+  r5 rejects), `unclassified` must abstain, nested-merge flattening assumes a false
+  associativity; `merge_all` route not deleted; tests lack full-schema equality; 23 relaxations
+  / 21 tightenings vs F4. D5 (astra): two P1s — byte containment ≠ scalar ownership under
+  right-trim (`{{ if .Values.a -}}` removes the indentation so `key:` becomes a sibling; Helm
+  parses `{"conf":"","key":"hello\ntail"}`), suffix correction depends on source indentation;
+  block-scalar headers still line-detected (`starts_with('|')`), rotation output not pinned,
+  kube-starrocks/openldap de-quarantined without adopted fixtures. Gate round 2 (sol, earlier).
+  Designs/briefs received: F75 typed `tpl` output (astra: D(s) = string ∧ no `{{` ∧ no
+  `<no value>`, existing `ScalarValueDispatch` with incomplete arms, consumer list) → sent to
+  the W4 agent to follow its rework; F1 `global` + `--open-root` + `--declared-types` (astra:
+  register every discovered dependency prefix through `push_pathless_dependency_fragment`,
+  reserve `global` as `{}` at every root after backfill, `DeclaredDefaultShape` channel,
+  `PolicyException { option }` gate state, CLOSED-BY-POLICY tally; 59/156 fixtures lack root
+  `global`) → queued for the next builder slot; wave-4 briefs (astra: W4a helper-text F46 +
+  three F6-deferred mechanisms can start today on F23; W4b ordered `coalesce`/correlated alias
+  members F27/F50 with F14/F52 verification; W4c recursive range targets F48/F58 behind
+  F9/n4/W3); allocation batches 1–2, IR refactor step 1, gen refactor D4 briefs saved for
+  after the campaign. Target-dir note: W1 (resumed) and the perf1 agent both use
+  `round7-f9/target` — cargo serialises them; no correctness impact. State: 8 builders, load
+  53–61, old sweep 1,661 rows (0 new false rejections), lock still held by the sweep; okteto
+  intake mid-battery; Codex batch twelve fully collected (`codex-runs.tsv`, 49 rows).
+  Strict closures 3/83 (offline-verified).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
