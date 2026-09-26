@@ -141,9 +141,10 @@ gates only, drop the stray mongodbcommunity hunk), regexp (`round8-regexp-eviden
   mid-turn — resume them with SendMessage, their context survives.
 
 ## 6. Status at hand-off time (2026-09-26, ~17:10 local)
-- **Landing 1 chain RUNNING** since 16:59 local: `LANDING_ENV=/Volumes/T7/dev/round8/runner/landing-f23.env`,
-  clone `/Volumes/T7/dev/round8-d3f23-f` branch `landing-f23` @ f9a63646 (83247085 candidate-4f →
-  9ef27e08 okteto roster → f9a63646 pool v2; tree byte-identical to `round8-pool/` HEAD 43390951),
+- **Landing 1 chain RUNNING** (restarted 17:27 local after a lint stop, see ledger 17:40/17:30): `LANDING_ENV=/Volumes/T7/dev/round8/runner/landing-f23.env`,
+  clone `/Volumes/T7/dev/round8-d3f23-f` branch `landing-f23` @ 37c58f9d (83247085 candidate-4f →
+  9ef27e08 okteto roster → f9a63646 pool v2 → 37c58f9d lint:fc splits; tree byte-identical to
+  `round8-pool/` HEAD e71d6e61),
   evidence `/Volumes/T7/dev/round8-d3f23-landing/` (`chain.log`, `receipt.json`, per-step logs).
   The nohup loop runs dump → unit → lint → battery → integration → sweep → finalize and stops
   at the first non-zero step. To resume after a failure: fix, then re-run from the earliest

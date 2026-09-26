@@ -4375,4 +4375,11 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `runner-v3-fail-closed`). The runner's own sha is part of the receipt binding, so the chain
   restarts from dump once the split patch is applied.
 
+- 17:30 — **Chain restarted from dump.** Pool agent split the four functions with no behaviour
+  change (`round8-pool-evidence/fc-fix.patch`, sha e613ed3b…, 3 files +154/−134; lint:fc now
+  reports only the accepted residual — which stops cargo-fc before `helm-schema`, so the agent
+  also ran workspace clippy with the limit raised to 101: no `too_many_lines`; integration set
+  51/51; fmt 0). Applied on the landing branch as 37c58f9d (`round8-d3f23-f`, tree == pool clone
+  HEAD e71d6e61). Chain relaunched 17:27 (runner sha changed → new binding), same env and log.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
