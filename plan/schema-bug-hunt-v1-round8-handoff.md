@@ -118,9 +118,12 @@ gates only, drop the stray mongodbcommunity hunk), regexp (`round8-regexp-eviden
   `design-d5-rendered-layout-sol.md`; clone `round8-frontend`, target `round8-frontend-target`,
   evidence `round8-frontend-evidence/` (phase 1 gates `gates-c1.1.txt`; agent still running at
   hand-off, no handoff yet). D5 itself is superseded (`round8-d5-evidence`, `round8-d5-land-evidence`).
-- Go validator helper for the battery: design `design-go-validator-helper-sol.md`, clone
-  `round8-govalidate`, evidence `round8-govalidate-evidence/` (differential runs; agent still
-  running at hand-off, no handoff yet).
+- Go validator helper for the battery: DONE, unreviewed — `round8-govalidate-evidence/final.patch`
+  (sha ca58d80d…, on candidate + coalescer), `handoff.md`; design `design-go-validator-helper-sol.md`.
+  Two open items before it can land: (a) NEW DEFECT — the emitted airflow and oncall schemas do not
+  compile in Helm (`\u` escapes in URL `pattern`; Go regexp rejects them) → emitter fix + test;
+  (b) Helm verdicts are ~20× slower than the Rust screen, so running Go on every probe is not
+  affordable — decide sampling/differential use (ledger 17:45).
 
 ## 4. Queued work with briefs already written (post-landing)
 `brief-corpus-hygiene-sol.md` (after the producer lands), `brief-cli-dx-corrections-sol.md`

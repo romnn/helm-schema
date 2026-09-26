@@ -4382,4 +4382,30 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   51/51; fmt 0). Applied on the landing branch as 37c58f9d (`round8-d3f23-f`, tree == pool clone
   HEAD e71d6e61). Chain relaunched 17:27 (runner sha changed → new binding), same env and log.
 
+- 17:45 — **Govalidate hand-back: Helm's own validator wired into the battery; NEW FINDING — the
+  airflow and oncall schemas do not compile in Helm.** `round8-govalidate-evidence/final.patch`
+  (sha ca58d80d…, 15 files, HEAD 5ae9572f on BASE a104461a = candidate-4f + coalescer final;
+  production LOC 0), `handoff.md`, logs. `tools/govalidate/` (Go 1.26.5 via mise, helm v4.2.3 +
+  jsonschema/v6 6.0.2 pinned, go.sum committed) is a resident JSON-lines process built exactly
+  as `util.ValidateAgainstSingleSchema` (jsonschema.go:131–157 @ v4.2.3): compile/validate/
+  helm_validate/compose; `common/helm_validator.rs` one helper per test process, verdicts by
+  seq/id, protocol errors are harness failures, binary sha + versions in `ProbeCoverageReport`;
+  `ProfileSchemas` sends every probe to Go AND the Rust screen, any disagreement is a hard
+  `DialectDisagreement`, uncompilable schema fails; `build:govalidate` is a prerequisite of
+  `test:integration`/`test:all` (CI installs go@1.26.5). Tests: 9 Go protocol tests,
+  `dialect_differential.rs` (62 audit witnesses, 28 asserted divergences; corpus in 4 shards;
+  values-port parity 21 matrix cases + 10 charts × 2 overrides — the coalescer port matched Helm's
+  `.Values` on every case), 2 battery tests. Gates: fmt 0, go vet/test 0 (9), unit 115/115,
+  integration 42/42 (2,228 s), lint residual only, ast-grep 0. Results: 154/156 corpus schemas
+  compile; **airflow and oncall fail — their URL `pattern` uses `\u` escapes that Go regexp
+  rejects** (registered in `REGISTERED_COMPILE_FAILURES`; a real emitter defect: Helm users of
+  those two schemas would get a compile error — needs an emitter fix + regression test; not in
+  the landing sequence); 0 divergences across 261,788 chart probes (datadog's idn-hostname site
+  never reached); audit predictions mostly confirmed, two differ (Rust misses signed-zero
+  duplicates in `uniqueItems` at 16+ items; `\s` vs U+2028 agrees). Cost: Helm validation
+  4,098 s serial vs Rust 202 s (~20×); compile up to 225 s (milvus), 136 s (gitea); emitting
+  `definitions` instead of `$defs` cut okteto's compile 14.6 → 4.2 s (separate candidate).
+  Consequence: Go cannot run on every battery probe without a ~20× verdict slowdown — next
+  session should decide sampling/differential use before landing it. Chain: dump step running.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
