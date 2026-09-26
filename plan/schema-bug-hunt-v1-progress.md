@@ -4607,4 +4607,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Expected: ~35 min to the sweep, fast pass ~1–2 h cold (≈120 schema compiles for the 61
   changed charts), differential ≈ 1–1.5 h, finalize.
 
+- 00:45 (Sep 27) — **v5 chain: dump 0 (3 min), unit 0, lint 0 (1.5 min), battery 0 (13.5 min),
+  integration 0 (11 min) — sweep failed at `task build:helmsweep`: internal disk full.** The Go
+  linker wrote to `$TMPDIR` on the internal disk (303 MB free, 98%): `ld: write() failed,
+  errno=28`. Cause: the system temp dir held 69 GB of leaked battery harness temp dirs
+  (`helm-schema-helm-root-*` 2.1 GB each, `helm-schema-adjudication-*` 1.5 GB each) left by
+  killed battery runs, plus 4.4 GB of old scratch checkouts of mine. Cleanup: my scratch
+  checkouts removed (→ 4.2 GB free), stale `helm-schema-*` temp dirs older than 30 min being
+  deleted in the background (no harness process running). Re-ran `sweep` + `finalize` at 00:40
+  (dump..integration remain green in the receipt). Follow-ups for the hand-off: (1) the battery
+  harness must create its temp roots under the target dir (or a run-scoped dir) and sweep stale
+  ones at start — a SIGKILLed run leaks gigabytes; (2) the runner should export `GOTMPDIR`/
+  `TMPDIR` under `$TARGET` for the helmsweep build so a full internal disk cannot break the
+  chain; (3) the internal disk needs headroom (Go build cache 2.8 GB, cargo registry 1.6 GB,
+  `/private/tmp` 6.8 GB).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
