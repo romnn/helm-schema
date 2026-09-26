@@ -3697,4 +3697,26 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   carries the empty `mongodbcommunity_v1.json` (from the truncated candidate patch); the patch
   leaves that file out; the candidate has the content.
 
+- 04:20 — **Kube-version v3 done — the CRD "not served" defect fixed structurally, not by
+  deleting data** (`round8-kubever-evidence/final.patch` = `git diff 39f3b7a9`, v1+v2+v3, 33 files):
+  yannh never publishes the CustomResourceDefinition schema in its standalone bundles (curl at
+  revision a6f9a32d: 404 in v1.29.0/v1.35.0 standalone and standalone-strict, 200 in the
+  non-standalone dirs) while every cluster serves the kind; the capability oracle read the 404 as
+  "API absent", so the adjudicator judged every rendered CRD "not served" AND in production
+  `.Capabilities.APIVersions.Has "apiextensions.k8s.io/v1"` (probe kind = CRD) answered false.
+  Owner: `helm-schema-k8s` `capability_probe.rs` gains `UNPUBLISHED_BUILTIN_KINDS` (only the CRD
+  entry, comment citing the upstream evidence) + `absence_is_evidence(probe)`; `provider.rs`
+  `capability_has_query_at_primary_version` returns `Some(false)` only when absence is evidence;
+  the validator's "not served" check goes through the oracle, so a rendered CRD is Uncertain.
+  The two `.not-found` records stay (true facts about the source; deleting them would turn corpus
+  lookups into offline misses and could move fixtures) and are vendored into the 1.33 subset
+  too. Tests red before: `an_unpublished_builtin_kind_is_never_proved_absent` (k8s), `a_crd_at_
+  the_policy_version_is_uncertain_not_unserved`, `an_added_crd_is_not_a_matched_tightening`.
+  Gates: fmt 0, unit 189/189, k8s integration 97/97, adjudicator suites 72/72, lint 0 except the
+  B6 residual. Battery impact: run 2 (`battery-final-6.log`) had NO verdict decided by a CRD
+  violation (921 CRD-bearing Kubernetes-judged flips: 920 matched loosenings with no violations,
+  one oncall uninformative-baseline case decided by a non-CRD violation) → nothing to
+  re-adjudicate; run 3 is unaffected. Production change → its dump rides the next chain (no
+  corpus chart queries `Has "apiextensions…"`, so no fixture drift is expected).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
