@@ -4361,4 +4361,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `f75/capture-new2.log`). Expected fixture moves: gitea, openebs, datadog, redis-ha + the
   cross-check list. Needs: Codex pre-landing review (budget + regression), dump adjudication.
 
+- 17:40 — **Landing-1 chain stopped at lint (two small corrections in flight).** dump exit 0
+  (10 min, legacy lanes), unit exit 0 (33 s on the warm target), lint: `task lint` passed with
+  the accepted residual, `task lint:fc` rc 201 with clippy pedantic `too_many_lines` in four
+  TEST functions of the pool/okteto patches that the pool agent's `-A clippy::too_many_lines`
+  run had hidden (`tests/helm_invocation.rs:190` 102/100, `tests/common/helm_adjudication.rs:863`
+  102/100, `schema_emission_profiles.rs:534` 145/100 (okteto rewrite), `:2052` 114/100 (pool
+  fold)); pool agent resumed to split them (`round8-pool-evidence/fc-fix.patch`, to be applied on
+  the landing branch). Second defect, in the runner: cargo-fc colours its log (351 escapes) and
+  `landing.py lint_residual` parsed `located=[]`, so even the accepted residual would have been
+  refused — fixed by stripping ANSI escapes before parsing, with a coloured-log case in
+  `tests/test_lint.sh` (red on the previous parser: 2 FAIL; green now; runner commit on
+  `runner-v3-fail-closed`). The runner's own sha is part of the receipt binding, so the chain
+  restarts from dump once the split patch is applied.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
