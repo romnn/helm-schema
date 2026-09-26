@@ -4,6 +4,12 @@ use test_util::prelude::sim_assert_eq;
 use super::*;
 
 mod complete_deduplication;
+mod naming;
+
+/// Minimizes a schema that has no private definition handles.
+fn minimize(schema: Value) -> Value {
+    minimize_schema(schema, &BTreeMap::new())
+}
 
 #[test]
 fn generated_reference_inlining_is_one_step_and_preserves_other_scopes() {
@@ -55,43 +61,6 @@ fn generated_definition_names_use_compact_base62() {
 }
 
 #[test]
-fn most_referenced_definitions_receive_the_shortest_names() {
-    let mut schema = json!({
-        "allOf": [
-            { "$ref": "#/$defs/old-a" },
-            { "$ref": "#/$defs/old-b" },
-            { "$ref": "#/$defs/old-b" },
-            { "$ref": "#/$defs/old-b" }
-        ]
-    });
-    let definitions = BTreeMap::from([
-        ("old-a".to_string(), json!({ "type": "string" })),
-        ("old-b".to_string(), json!({ "type": "boolean" })),
-    ]);
-
-    let compacted = compact_definition_names(&mut schema, definitions);
-
-    sim_assert_eq!(
-        have: schema,
-        want: json!({
-            "allOf": [
-                { "$ref": "#/$defs/2" },
-                { "$ref": "#/$defs/1" },
-                { "$ref": "#/$defs/1" },
-                { "$ref": "#/$defs/1" }
-            ]
-        })
-    );
-    sim_assert_eq!(
-        have: Value::Object(compacted.into_iter().collect()),
-        want: json!({
-            "1": { "type": "boolean" },
-            "2": { "type": "string" }
-        })
-    );
-}
-
-#[test]
 fn repeated_property_schemas_move_to_defs() {
     let repeated = json!({
         "type": "object",
@@ -110,13 +79,13 @@ fn repeated_property_schemas_move_to_defs() {
         }
     });
 
-    let result = minimize_schema(schema);
+    let result = minimize(schema);
 
     sim_assert_eq!(
         have: result,
         want: json!({
             "$defs": {
-                "1": {
+                "hf0936da3b7c0": {
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
@@ -128,8 +97,8 @@ fn repeated_property_schemas_move_to_defs() {
             "$schema": "http://json-schema.org/draft-07/schema#",
             "type": "object",
             "properties": {
-                "left": { "$ref": "#/$defs/1" },
-                "right": { "$ref": "#/$defs/1" }
+                "left": { "$ref": "#/$defs/hf0936da3b7c0" },
+                "right": { "$ref": "#/$defs/hf0936da3b7c0" }
             }
         })
     );
@@ -153,20 +122,23 @@ fn non_schema_keyword_payloads_are_not_replaced() {
         }
     });
 
-    let result = minimize_schema(schema);
+    let result = minimize(schema);
     sim_assert_eq!(
-        have: result
-            .pointer("/$defs/1/required")
-            .and_then(Value::as_array)
-            .map(Vec::len),
-        want: Some(2)
-    );
-    sim_assert_eq!(
-        have: result
-            .pointer("/$defs/1/enum")
-            .and_then(Value::as_array)
-            .map(Vec::len),
-        want: Some(2)
+        have: result,
+        want: json!({
+            "$defs": {
+                "h2b9e4402ce33": {
+                    "type": "object",
+                    "required": ["name", "namespace"],
+                    "enum": [{"kind": "A"}, {"kind": "B"}]
+                }
+            },
+            "type": "object",
+            "properties": {
+                "left": { "$ref": "#/$defs/h2b9e4402ce33" },
+                "right": { "$ref": "#/$defs/h2b9e4402ce33" }
+            }
+        })
     );
 }
 
@@ -194,7 +166,7 @@ fn schemas_containing_refs_are_not_extracted() {
         }
     });
 
-    let result = minimize_schema(schema);
+    let result = minimize(schema);
     sim_assert_eq!(
         have: result,
         want: json!({
@@ -260,13 +232,13 @@ fn repeated_schemas_may_reference_unchanged_root_definitions() {
         "type": "object"
     });
 
-    let result = minimize_schema(schema);
+    let result = minimize(schema);
 
     sim_assert_eq!(
         have: result,
         want: json!({
             "$defs": {
-                "1": {
+                "h78679c096c30": {
                     "allOf": [
                         {
                             "properties": {
@@ -286,8 +258,8 @@ fn repeated_schemas_may_reference_unchanged_root_definitions() {
                 }
             },
             "properties": {
-                "left": { "$ref": "#/$defs/1" },
-                "right": { "$ref": "#/$defs/1" }
+                "left": { "$ref": "#/$defs/h78679c096c30" },
+                "right": { "$ref": "#/$defs/h78679c096c30" }
             },
             "type": "object"
         })
@@ -318,7 +290,7 @@ fn nested_references_preserve_existing_definition_addresses() {
         }
     });
 
-    let result = minimize_schema(schema);
+    let result = minimize(schema);
 
     sim_assert_eq!(
         have: result.pointer("/$defs/base/allOf/0/$ref"),
@@ -351,14 +323,14 @@ fn property_names_that_look_like_ref_keywords_do_not_block_extraction() {
         }
     });
 
-    let result = minimize_schema(schema);
+    let result = minimize(schema);
     sim_assert_eq!(
         have: result.pointer("/properties/left/$ref"),
-        want: Some(&Value::String("#/$defs/1".to_string()))
+        want: Some(&Value::String("#/$defs/hc7be211819b2".to_string()))
     );
     sim_assert_eq!(
         have: result.pointer("/properties/right/$ref"),
-        want: Some(&Value::String("#/$defs/1".to_string()))
+        want: Some(&Value::String("#/$defs/hc7be211819b2".to_string()))
     );
 }
 
@@ -372,7 +344,7 @@ fn repeated_tiny_schemas_are_not_replaced_without_size_win() {
         }
     });
 
-    let result = minimize_schema(schema.clone());
+    let result = minimize(schema.clone());
     sim_assert_eq!(have: result, want: schema);
 }
 
@@ -395,12 +367,19 @@ fn existing_defs_names_are_not_reused() {
         }
     });
 
-    let result = minimize_schema(schema);
-    assert!(result.pointer("/$defs/1").is_some());
-    assert!(result.pointer("/$defs/2").is_some());
+    let result = minimize(schema);
     sim_assert_eq!(
-        have: result.pointer("/properties/left/$ref"),
-        want: Some(&Value::String("#/$defs/2".to_string()))
+        have: result,
+        want: json!({
+            "$defs": {
+                "1": { "type": "null" },
+                "h08529119e013": repeated
+            },
+            "properties": {
+                "left": { "$ref": "#/$defs/h08529119e013" },
+                "right": { "$ref": "#/$defs/h08529119e013" }
+            }
+        })
     );
 }
 
@@ -434,8 +413,8 @@ fn equivalent_junctor_grouping_produces_one_stable_definition() {
         "type": "object"
     });
 
-    let minimized = minimize_schema(schema);
-    let regrouped = minimize_schema(json!({
+    let minimized = minimize(schema);
+    let regrouped = minimize(json!({
         "properties": {
             "left": {
                 "allOf": [arm("third"), { "allOf": [arm("first"), arm("second")] }]
@@ -451,14 +430,14 @@ fn equivalent_junctor_grouping_produces_one_stable_definition() {
     sim_assert_eq!(have: regrouped, want: minimized.clone());
     sim_assert_eq!(
         have: minimized.pointer("/properties/left/$ref"),
-        want: Some(&Value::String("#/$defs/2".to_string()))
+        want: Some(&Value::String("#/$defs/h9a84c6f3caf4".to_string()))
     );
     sim_assert_eq!(
         have: minimized.pointer("/properties/right/$ref"),
-        want: Some(&Value::String("#/$defs/2".to_string()))
+        want: Some(&Value::String("#/$defs/h9a84c6f3caf4".to_string()))
     );
     sim_assert_eq!(
-        have: minimized.pointer("/$defs/2/allOf").and_then(Value::as_array).map(Vec::len),
+        have: minimized.pointer("/$defs/h9a84c6f3caf4/allOf").and_then(Value::as_array).map(Vec::len),
         want: Some(3)
     );
 }
@@ -545,9 +524,9 @@ fn digest_collisions_still_require_exact_canonical_identity() {
     )]);
 
     let planned = plan_definitions(BTreeSet::new(), candidates);
-    let first_name = planned.definition_name(fingerprint, &first);
-    let second_name = planned.definition_name(fingerprint, &second);
-    sim_assert_eq!(have: first_name.is_some(), want: true);
-    sim_assert_eq!(have: second_name.is_some(), want: true);
-    sim_assert_eq!(have: first_name == second_name, want: false);
+    let first_id = planned.definition_id(fingerprint, &first);
+    let second_id = planned.definition_id(fingerprint, &second);
+    sim_assert_eq!(have: first_id.is_some(), want: true);
+    sim_assert_eq!(have: second_id.is_some(), want: true);
+    sim_assert_eq!(have: first_id == second_id, want: false);
 }

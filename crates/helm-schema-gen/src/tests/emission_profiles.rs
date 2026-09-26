@@ -111,16 +111,18 @@ fn emission_report_conserves_facts_and_keeps_mandatory_facts() {
           member: value
     "};
     let signals = schema_signals_for(parse_ir(source));
-    let (_, full) = generate_values_schema_with_report(
+    let full = generate_values_schema_with_report(
         ValuesSchemaInput::new(&signals, &NoopProvider)
             .with_values_documents(&prepared_values_documents(Some(values_yaml)))
             .with_profile(SchemaProfile::Full),
-    );
-    let (_, lean) = generate_values_schema_with_report(
+    )
+    .emission_report;
+    let lean = generate_values_schema_with_report(
         ValuesSchemaInput::new(&signals, &NoopProvider)
             .with_values_documents(&prepared_values_documents(Some(values_yaml)))
             .with_profile(SchemaProfile::Lean),
-    );
+    )
+    .emission_report;
 
     for report in [&full, &lean] {
         sim_assert_eq!(
@@ -250,10 +252,11 @@ fn kind_partition_audit_retains_local_anchors() {
             type: RollingUpdate
     "};
     let signals = schema_signals_for(parse_ir(source));
-    let (_, report) = generate_values_schema_with_report(
+    let report = generate_values_schema_with_report(
         ValuesSchemaInput::new(&signals, &provider())
             .with_values_documents(&prepared_values_documents(Some(values_yaml))),
-    );
+    )
+    .emission_report;
     let local_partitions =
         report.counts_for_class(crate::emission_policy::EmissionClassKind::KindPartitionLocal);
 
@@ -378,12 +381,18 @@ fn finish_projected(projected: crate::emission_plan::ProjectedTree) -> serde_jso
     crate::emission_plan::finish_generated(
         projected.document.into_value(),
         projected.emission_report,
+        std::collections::BTreeMap::new(),
     )
     .schema
 }
 
 fn finish_materialized(materialized: crate::emission_plan::MaterializedTree) -> serde_json::Value {
-    crate::emission_plan::finish_generated(materialized.schema, materialized.emission_report).schema
+    crate::emission_plan::finish_generated(
+        materialized.schema,
+        materialized.emission_report,
+        std::collections::BTreeMap::new(),
+    )
+    .schema
 }
 
 #[test]

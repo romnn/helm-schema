@@ -1,3 +1,4 @@
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 use serde_json::Value;
@@ -43,6 +44,9 @@ pub struct ResolvedContract {
     pub schema: Value,
     /// Fact and carrier accounting from schema emission.
     pub emission_report: EmissionReport,
+    /// Final names of the private definition handles in `schema`, applied by
+    /// the output pipeline after minimization.
+    pub definition_names: BTreeMap<String, String>,
 }
 
 /// Final schema after optional generation transforms.
@@ -52,4 +56,7 @@ pub struct GeneratedSchema {
     pub schema: Value,
     /// Fact and carrier accounting from schema emission.
     pub emission_report: EmissionReport,
+    /// Final names of the private definition handles in `schema`, applied by
+    /// the output pipeline after minimization.
+    pub definition_names: BTreeMap<String, String>,
 }

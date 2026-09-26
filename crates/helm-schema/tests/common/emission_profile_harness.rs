@@ -1026,7 +1026,10 @@ fn generate_schema(
     profile_session(chart_relative_path, profile, false)
         .generated_schema()
         .map(|mut generated| {
-            generated.schema = helm_schema_json_schema_minify::minimize_schema(generated.schema);
+            generated.schema = helm_schema_json_schema_minify::minimize_schema(
+                generated.schema,
+                &generated.definition_names,
+            );
             generated
         })
         .map_err(eyre::Report::from)

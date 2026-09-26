@@ -16,16 +16,27 @@ const DEFINITIONS_KEY: &str = "$defs";
 const PROVIDER_DEFINITION_PREFIX: &str = "providerSchema";
 const PROVIDER_SOURCE_DEFINITION_PREFIX: &str = "providerSource";
 const PROVIDER_SHARED_DEFINITION_PREFIX: &str = "providerShared";
+/// Readable-name prefixes the content-named handles above receive once every
+/// extraction decision is final.
+const PROVIDER_DEFINITION_NAME_PREFIX: &str = "providerSchema_";
+const PROVIDER_SHARED_DEFINITION_NAME_PREFIX: &str = "providerShared_";
 const MIN_SHARED_PROVIDER_PAYLOAD_BYTES: usize = 16 * 1024;
 
 /// Extract repeated provider-owned schema leaves into root `$defs`
 /// definitions, rewriting each extracted `resolved_path.schema` to an
-/// internal `$ref`. Returns the definitions keyed by definition name.
+/// internal `$ref`.
+/// Returns the definitions keyed by definition name.
+///
+/// A definition with one provider source is named after that source.
+/// Any other definition gets a private handle, and `names` receives the
+/// content-derived name that replaces the handle after every extraction
+/// decision, so later size measurements never see the readable spelling.
 #[tracing::instrument(skip_all)]
 pub(crate) fn extract_provider_definitions(
     resolved_paths: &mut [ResolvedPathSchema],
     conditional_schemas: &mut [LoweredConjunct],
     values_descriptions: &BTreeMap<String, String>,
+    names: &mut BTreeMap<String, String>,
 ) -> BTreeMap<String, Value> {
     let description_paths = DescriptionPathIndex::new(values_descriptions);
     let entries = ProviderSchemaDefinitionEntries::from_resolved_paths_and_conditionals(
@@ -38,12 +49,28 @@ pub(crate) fn extract_provider_definitions(
     let mut used_definition_names = BTreeSet::new();
     let mut next_id = 1;
 
+    let mut content_digests = BTreeMap::new();
+    let mut source_names = BTreeSet::new();
+
     for (key, entry) in entries.into_repeated_entries() {
         let name = next_definition_name(&entry, &mut used_definition_names, &mut next_id);
+        if entry.preferred_source_definition_name().is_some() {
+            source_names.insert(name.clone());
+        } else {
+            content_digests.insert(
+                name.clone(),
+                helm_schema_json_schema_minify::content_digest(&entry.schema),
+            );
+        }
         ref_names_by_key.insert(key, name.clone());
         let definition_schema = entry.into_definition_schema(&name);
         definitions_by_name.insert(name, definition_schema);
     }
+    names.extend(helm_schema_json_schema_minify::content_names(
+        PROVIDER_DEFINITION_NAME_PREFIX,
+        &content_digests,
+        &source_names,
+    ));
 
     // A `$ref` is only a faithful substitute while the site still carries the
     // candidate payload verbatim. Resolve policy may have processed the site
@@ -201,7 +228,16 @@ struct RepeatedPayload {
     uses: usize,
 }
 
-pub(crate) fn extract_repeated_provider_payloads(schema: &mut Value) -> BTreeMap<String, Value> {
+/// Extract repeated large provider payloads under private handles.
+///
+/// `names` holds the final names of the handles already extracted; it
+/// receives the content-derived name of each new handle.
+/// A payload's name hashes its references by those final names, never by the
+/// handles.
+pub(crate) fn extract_repeated_provider_payloads(
+    schema: &mut Value,
+    names: &mut BTreeMap<String, String>,
+) -> BTreeMap<String, Value> {
     let metadata = SchemaMetadataIndex::new(schema);
     let mut counts = std::collections::HashMap::<(u128, usize), usize>::new();
     visit_repeated_core_hashes(schema, &metadata, &mut |fingerprint| {
@@ -231,10 +267,26 @@ pub(crate) fn extract_repeated_provider_payloads(schema: &mut Value) -> BTreeMap
     let mut used = BTreeSet::new();
     replace_repeated_schema_cores(schema, &metadata, &counts, &selected, &mut used);
 
-    selected
-        .into_values()
-        .filter(|(name, _)| used.contains(name))
-        .collect()
+    let mut definitions = BTreeMap::new();
+    let mut content_digests = BTreeMap::new();
+    for (name, payload) in selected.into_values() {
+        if !used.contains(&name) {
+            continue;
+        }
+        let mut named_payload = payload.clone();
+        helm_schema_json_schema_minify::rename_definitions(&mut named_payload, names);
+        content_digests.insert(
+            name.clone(),
+            helm_schema_json_schema_minify::content_digest(&named_payload),
+        );
+        definitions.insert(name, payload);
+    }
+    names.extend(helm_schema_json_schema_minify::content_names(
+        PROVIDER_SHARED_DEFINITION_NAME_PREFIX,
+        &content_digests,
+        &BTreeSet::new(),
+    ));
+    definitions
 }
 
 fn core_fingerprint(

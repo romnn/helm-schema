@@ -1,9 +1,10 @@
 use std::collections::BTreeSet;
 use std::io::Write;
 
+use helm_schema_json_schema_minify::{rename_definitions, shipping_definition_names};
 use serde_json::Value;
 
-use crate::error::EngineResult;
+use crate::error::{CliError, EngineResult};
 use crate::output_pipeline::JsonOutputFormat;
 
 /// Helm refuses to load any chart file larger than 5 MiB, and a chart's
@@ -27,12 +28,14 @@ pub struct FinalOutputMetrics {
 
 /// Serializes a schema in the requested JSON format and appends a newline.
 ///
-/// Pretty output automatically falls back to compact JSON before crossing
-/// Helm's per-file size limit.
+/// Output that would cross Helm's per-file size limit falls back along a
+/// ladder: pretty, then compact, then compact with short definition names.
+/// Each rung is taken only when the previous one is oversized.
 ///
 /// # Errors
 ///
-/// Returns an error when JSON serialization or writing to `out` fails.
+/// Returns an error when JSON serialization or writing to `out` fails, or
+/// when even the last rung exceeds Helm's limit.
 #[tracing::instrument(skip_all, fields(format = ?format))]
 pub fn write_schema_json(
     out: &mut impl Write,
@@ -45,12 +48,13 @@ pub fn write_schema_json(
 
 /// Serializes a schema without computing [`FinalOutputMetrics`].
 ///
-/// Pretty output automatically falls back to compact JSON before crossing
-/// Helm's per-file size limit.
+/// Oversized output falls back along the same ladder as
+/// [`write_schema_json`].
 ///
 /// # Errors
 ///
-/// Returns an error when JSON serialization or writing to `out` fails.
+/// Returns an error when JSON serialization or writing to `out` fails, or
+/// when even the last rung exceeds Helm's limit.
 pub fn write_schema_json_without_metrics(
     out: &mut impl Write,
     schema: &Value,
@@ -64,24 +68,42 @@ fn write_schema_json_bytes(
     schema: &Value,
     format: JsonOutputFormat,
 ) -> EngineResult<usize> {
-    let mut bytes = match format {
-        JsonOutputFormat::Compact => serde_json::to_vec(schema)?,
-        JsonOutputFormat::Pretty => {
-            // A schema whose pretty serialization crosses Helm's chart-file
-            // limit still fits comfortably in compact form (whitespace is
-            // most of the size at that scale), so pretty degrades to
-            // compact rather than emitting a schema the chart cannot ship.
-            let mut pretty = BoundedPrettyWriter::default();
-            serde_json::to_writer_pretty(&mut pretty, schema)?;
-            match pretty.into_bytes() {
-                Some(bytes) => bytes,
-                None => serde_json::to_vec(schema)?,
-            }
-        }
-    };
-    bytes.push(b'\n');
+    let bytes = serialize_within_helm_limit(schema, format)?;
     out.write_all(&bytes)?;
     Ok(bytes.len())
+}
+
+/// Serializes `schema` on the first ladder rung within Helm's limit.
+///
+/// Whitespace is most of a large pretty document, so compact JSON usually
+/// fits.
+/// Short names are the last resort: they rename every root definition to a
+/// frequency-ranked base-62 key, a bijective rename of the same graph.
+fn serialize_within_helm_limit(schema: &Value, format: JsonOutputFormat) -> EngineResult<Vec<u8>> {
+    if format == JsonOutputFormat::Pretty {
+        let mut pretty = BoundedPrettyWriter::default();
+        serde_json::to_writer_pretty(&mut pretty, schema)?;
+        if let Some(mut bytes) = pretty.into_bytes() {
+            bytes.push(b'\n');
+            return Ok(bytes);
+        }
+    }
+    let mut compact = serde_json::to_vec(schema)?;
+    compact.push(b'\n');
+    if compact.len() <= HELM_MAX_CHART_FILE_BYTES {
+        return Ok(compact);
+    }
+    let mut shipped = schema.clone();
+    rename_definitions(&mut shipped, &shipping_definition_names(schema));
+    let mut short = serde_json::to_vec(&shipped)?;
+    short.push(b'\n');
+    if short.len() <= HELM_MAX_CHART_FILE_BYTES {
+        return Ok(short);
+    }
+    Err(CliError::SchemaExceedsHelmFileLimit {
+        bytes: short.len(),
+        limit: HELM_MAX_CHART_FILE_BYTES,
+    })
 }
 
 #[derive(Default)]
@@ -91,6 +113,7 @@ struct BoundedPrettyWriter {
 }
 
 impl BoundedPrettyWriter {
+    /// The pretty bytes, when they fit Helm's limit with a trailing newline.
     fn into_bytes(self) -> Option<Vec<u8>> {
         (self.written < HELM_MAX_CHART_FILE_BYTES).then_some(self.bytes)
     }

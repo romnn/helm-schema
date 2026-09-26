@@ -1,4 +1,5 @@
 use indoc::indoc;
+use std::collections::BTreeMap;
 use std::fs;
 use std::path::PathBuf;
 use test_util::prelude::sim_assert_eq;
@@ -98,8 +99,14 @@ fn prepared_override_schemas_bundle_refs_before_merge() {
         "type": "object"
     });
 
-    let output = apply_schema_output_pipeline(schema, prepared, &temp_dir, output_policy())
-        .expect("apply output pipeline");
+    let output = apply_schema_output_pipeline(
+        schema,
+        &BTreeMap::new(),
+        prepared,
+        &temp_dir,
+        output_policy(),
+    )
+    .expect("apply output pipeline");
 
     let cloud = output.pointer("/properties/cloud").expect("cloud schema");
     sim_assert_eq!(
@@ -160,7 +167,8 @@ fn bundled_overrides_allocate_names_across_the_base_and_every_override() -> eyre
     )?;
     sim_assert_eq!(have: reversed.identity().digest == ordered_digest, want: false);
 
-    let output = apply_schema_output_pipeline(base, prepared, &temp_dir, output_policy())?;
+    let output =
+        apply_schema_output_pipeline(base, &BTreeMap::new(), prepared, &temp_dir, output_policy())?;
 
     sim_assert_eq!(
         have: output.pointer("/properties/alpha/$ref"),
@@ -229,7 +237,8 @@ fn bundled_overrides_share_one_definition_for_the_same_external_target() -> eyre
     let repeated = prepare_for_schema(&paths, ReferencePolicy::SelfContained, &base)?;
     sim_assert_eq!(have: repeated.identity().digest, want: digest);
 
-    let output = apply_schema_output_pipeline(base, prepared, &temp_dir, output_policy())?;
+    let output =
+        apply_schema_output_pipeline(base, &BTreeMap::new(), prepared, &temp_dir, output_policy())?;
 
     sim_assert_eq!(
         have: output.pointer("/properties/alpha/$ref"),
@@ -292,8 +301,14 @@ fn fully_inlined_export_override_refs_resolve_before_merge() {
         "type": "object"
     });
 
-    let output = apply_schema_output_pipeline(schema, prepared, &temp_dir, output_policy())
-        .expect("apply output pipeline");
+    let output = apply_schema_output_pipeline(
+        schema,
+        &BTreeMap::new(),
+        prepared,
+        &temp_dir,
+        output_policy(),
+    )
+    .expect("apply output pipeline");
 
     let cloud = output.pointer("/properties/cloud").expect("cloud schema");
     sim_assert_eq!(
@@ -336,8 +351,14 @@ fn override_refs_are_preserved_when_reference_mode_preserves_refs() {
         "type": "object"
     });
 
-    let output = apply_schema_output_pipeline(schema, prepared, &temp_dir, output_policy())
-        .expect("apply output pipeline");
+    let output = apply_schema_output_pipeline(
+        schema,
+        &BTreeMap::new(),
+        prepared,
+        &temp_dir,
+        output_policy(),
+    )
+    .expect("apply output pipeline");
 
     sim_assert_eq!(
         have: output
@@ -438,8 +459,13 @@ fn caller_authored_ref_replace_keys_do_not_collide_with_merge_intent() -> eyre::
         ReferencePolicy::PreserveRefs,
     ] {
         let prepared = prepare(std::slice::from_ref(&override_path), reference_mode)?;
-        let output =
-            apply_schema_output_pipeline(base.clone(), prepared, &temp_dir, output_policy())?;
+        let output = apply_schema_output_pipeline(
+            base.clone(),
+            &BTreeMap::new(),
+            prepared,
+            &temp_dir,
+            output_policy(),
+        )?;
         sim_assert_eq!(
             have: output.pointer("/x-caller/$ref-replace"),
             want: Some(&serde_json::json!("caller non-ref value"))
@@ -492,7 +518,13 @@ fn final_override_replacement_prunes_the_orphaned_generator_definition() -> eyre
         "type": "object",
     });
 
-    let output = apply_schema_output_pipeline(schema, prepared, &temp_dir, output_policy())?;
+    let output = apply_schema_output_pipeline(
+        schema,
+        &BTreeMap::new(),
+        prepared,
+        &temp_dir,
+        output_policy(),
+    )?;
 
     sim_assert_eq!(have: output.get("$defs"), want: None);
     sim_assert_eq!(
