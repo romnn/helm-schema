@@ -3658,4 +3658,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   incomplete-analysis result, PROTOCOL v2, corpus hygiene, and the incremental verification
   design (evidence store + changed-chart selection + Rust lint sweep).
 
+- 04:00 — **D5 rework (sol's named changes) done** (`round8-d5-land-evidence/final.patch` =
+  `git diff f0605cc2`, production unchanged +55/−10): the Helm-contradicting rotation IR golden
+  is gone — `block_scalar_after_a_rotated_branch_keeps_its_header_out_of_the_text` asserts only
+  that no `note: |` text reaches the fragment (doc comment states the Helm contract); the CST
+  golden asserts only the header/body invariant (every body/hole start at or after its header
+  end); both red on the pre-review `parse.rs` (`red-narrow.log`), 12/12 `block_*` green.
+  `handoff.md`: branch-layout defect filed as a family candidate with `process_line`/
+  `rotate_branch`/`close_branch`/`entry_line` references; the 13 requiredness rejections marked
+  sink-justified; the openldap subchart `enabled: null` probes recorded as a protocol
+  composition defect; kube-starrocks `log: []` filed under F13 (`charts/operator/templates/
+  deployment.yaml:39`). Gates: fmt 0, unit 1559/1559, lint 0 except the B6 residual. **D5 is
+  land-ready** (own dump/battery, separate from F6).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
