@@ -1,6 +1,6 @@
 //! Checks exact Helm values and offline rendered-resource adjudication.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fs;
 use std::io::Read as _;
 use std::path::Path;
@@ -13,6 +13,7 @@ use flate2::write::GzEncoder;
 use helm_schema_k8s::cache::{CACHE_LAYOUT_VERSION, LAYOUT_MARKER_FILENAME, k8s_cache_path};
 use indoc::{formatdoc, indoc};
 use serde_json::json;
+use test_util::helm_values::AcceptanceDocument;
 use test_util::prelude::sim_assert_eq;
 
 #[path = "common/helm_adjudication.rs"]
@@ -472,6 +473,99 @@ fn coalescence_preserves_null_ownership_before_render_mutation() -> eyre::Result
     sim_assert_eq!(have: rendered, want: json!({"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "example"}, "data": {"mutated": "true", "kubernetes": "v1.29.0"}}));
     sim_assert_eq!(have: serde_json::from_slice::<serde_json::Value>(&fs::read(probe.evidence_dir.join("coalesced.json"))?)?, want: expected);
     sim_assert_eq!(have: serde_json::from_slice::<serde_json::Value>(&fs::read(probe.evidence_dir.join("values.json"))?)?, want: overlay);
+    Ok(())
+}
+
+/// Helm validates three different documents, and the Rust port composes
+/// each: a root schema `{"const": D}` passes exactly the check that
+/// validates `D`. Lint's values rule keeps the values file's nulls, lint's
+/// template rule coalesces twice and refills the deleted defaults, and
+/// `helm template` coalesces once.
+#[test]
+fn helm_validates_the_three_documents_the_port_composes() -> eyre::Result<()> {
+    let source = test_util::workspace_testdata().join("helm-values/nulls");
+    let chart = PinnedHelmChart::prepare(&source)?;
+    let overlay = json!({
+        "owned": null, "absent": null, "defaultNull": null,
+        "nested": {"owned": null, "absent": null, "defaultNull": null},
+    });
+    let mut documents = BTreeMap::new();
+    for (kind, document) in chart.acceptance_documents(&overlay) {
+        documents.insert(kind, document?);
+    }
+    let distinct: BTreeSet<String> = documents.values().map(ToString::to_string).collect();
+    sim_assert_eq!(have: distinct.len(), want: AcceptanceDocument::ALL.len());
+    for (kind, document) in &documents {
+        sim_assert_eq!(
+            have: helm_schema_acceptance(&source, &overlay, &json!({"const": document}))?,
+            want: BTreeSet::from([*kind]),
+            "the {kind:?} document"
+        );
+    }
+    Ok(())
+}
+
+/// The documents whose schema check Helm v4.2.3 passes when `schema` is the
+/// root chart's `values.schema.json`: lint's values and template rules, and
+/// `helm template`.
+fn helm_schema_acceptance(
+    chart: &Path,
+    overlay: &serde_json::Value,
+    schema: &serde_json::Value,
+) -> eyre::Result<BTreeSet<AcceptanceDocument>> {
+    let work = tempfile::tempdir()?;
+    let copy = work.path().join("chart");
+    copy_dir(chart, &copy)?;
+    fs::write(copy.join("values.schema.json"), serde_json::to_vec(schema)?)?;
+    let values = work.path().join("values.json");
+    fs::write(&values, serde_json::to_vec(overlay)?)?;
+    let mut accepted = BTreeSet::from(AcceptanceDocument::ALL);
+
+    let lint = Command::new("helm")
+        .arg("lint")
+        .arg(&copy)
+        .arg("-f")
+        .arg(&values)
+        .output()?;
+    let report = String::from_utf8_lossy(&lint.stdout);
+    for line in report.lines() {
+        if line.starts_with("[ERROR] values.yaml:") {
+            accepted.remove(&AcceptanceDocument::LintRaw);
+        } else if line.starts_with("[ERROR] templates/: values don't meet the specifications") {
+            accepted.remove(&AcceptanceDocument::LintCoalescedTwice);
+        } else if line.starts_with("[ERROR]") {
+            eyre::bail!("helm lint failed for another reason: {report}");
+        }
+    }
+
+    let template = Command::new("helm")
+        .args(["template", "acceptance"])
+        .arg(&copy)
+        .arg("-f")
+        .arg(&values)
+        .output()?;
+    if !template.status.success() {
+        let stderr = String::from_utf8_lossy(&template.stderr);
+        eyre::ensure!(
+            stderr.contains("values don't meet the specifications"),
+            "helm template failed for another reason: {stderr}"
+        );
+        accepted.remove(&AcceptanceDocument::Template);
+    }
+    Ok(accepted)
+}
+
+fn copy_dir(from: &Path, to: &Path) -> eyre::Result<()> {
+    fs::create_dir_all(to)?;
+    for entry in fs::read_dir(from)? {
+        let entry = entry?;
+        let target = to.join(entry.file_name());
+        if entry.file_type()?.is_dir() {
+            copy_dir(&entry.path(), &target)?;
+        } else {
+            fs::copy(entry.path(), target)?;
+        }
+    }
     Ok(())
 }
 

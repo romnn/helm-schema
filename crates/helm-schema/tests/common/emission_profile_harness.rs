@@ -10,6 +10,7 @@ use helm_schema::provider::ProviderOptions;
 use jsonschema::Validator;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
+use test_util::helm_values::ValuesError;
 use vfs::VfsPath;
 
 use crate::helm_adjudication::ViolationKey;
@@ -51,6 +52,11 @@ pub(crate) struct ProbeCoverage {
     pub(crate) composite_pairs_dropped_by_cap: usize,
     pub(crate) total_emitted: usize,
     pub(crate) total_dropped: usize,
+    /// Probes given as a composed document (`ProbeInstance::Coalesced`).
+    pub(crate) composed_probes: usize,
+    /// Composed probes no values file reaches, with the reason; they are
+    /// excluded from screening and adjudication.
+    pub(crate) unreachable_probes: Vec<String>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -80,13 +86,47 @@ pub(crate) enum ProbeInstance {
     Coalesced(Value),
 }
 
+/// Whether a values file makes Helm compose a probe's document.
+#[derive(Clone, Debug, PartialEq)]
+pub(crate) enum ProbeValuesFile {
+    /// This values file does.
+    Reachable(Value),
+    /// None does; the probe is not a document Helm validates.
+    Unreachable(String),
+}
+
 impl ProbeInstance {
-    pub(crate) fn helm_values_file(&self, defaults: &Value) -> Value {
-        match self {
-            Self::Defaults => Value::Object(Map::new()),
-            Self::SparseOverride(value) => value.clone(),
-            Self::Coalesced(value) => sparse_override_for_composed(defaults, value)
-                .unwrap_or_else(|| Value::Object(Map::new())),
+    /// The values file Helm composes into this probe's document.
+    ///
+    /// A composed document is reached through the sparse override that
+    /// separates it from `defaults`, checked by composing that override
+    /// forward over the chart. When Helm composes it into a different
+    /// document, or aborts on it, the probe is unreachable.
+    ///
+    /// # Errors
+    ///
+    /// Fails when the chart cannot be composed at all.
+    pub(crate) fn helm_values_file(
+        &self,
+        chart_dir: &Path,
+        defaults: &Value,
+    ) -> eyre::Result<ProbeValuesFile> {
+        let composed = match self {
+            Self::Defaults => return Ok(ProbeValuesFile::Reachable(Value::Object(Map::new()))),
+            Self::SparseOverride(value) => return Ok(ProbeValuesFile::Reachable(value.clone())),
+            Self::Coalesced(composed) => composed,
+        };
+        let overlay = sparse_override_for_composed(defaults, composed)
+            .unwrap_or_else(|| Value::Object(Map::new()));
+        match test_util::helm_values::coalesce_chart_values(chart_dir, overlay.clone()) {
+            Ok(reached) if reached == *composed => Ok(ProbeValuesFile::Reachable(overlay)),
+            Ok(_) => Ok(ProbeValuesFile::Unreachable(format!(
+                "Helm composes the separating override {overlay} into a different document"
+            ))),
+            Err(ValuesError::NotValidated(reason)) => Ok(ProbeValuesFile::Unreachable(format!(
+                "the separating override {overlay}: {reason}"
+            ))),
+            Err(error) => Err(error.into()),
         }
     }
 }
@@ -140,9 +180,8 @@ impl ProfileSchemas {
     pub(crate) fn compile(
         full_schema: &Value,
         lean_schema: &Value,
-        mut defaults: Value,
+        defaults: Value,
     ) -> eyre::Result<Self> {
-        drop_null_map_entries(&mut defaults);
         let full = jsonschema::validator_for(full_schema)
             .map_err(|error| eyre::eyre!("compile full schema: {error}"))?;
         let lean = jsonschema::validator_for(lean_schema)
@@ -285,10 +324,10 @@ impl ProfileSchemas {
     fn compose(&self, probe: &ProbeInstance) -> Value {
         match probe {
             ProbeInstance::Defaults => self.defaults.clone(),
+            // Helm's `CoalesceTables` over the coalesced defaults: a null
+            // deletes only a value it meets and otherwise stays.
             ProbeInstance::SparseOverride(value) => {
-                let mut composed = self.defaults.clone();
-                merge_override(&mut composed, value.clone());
-                composed
+                test_util::helm_values::coalesce_tables(value, &self.defaults)
             }
             // A literal `{}` is an explicitly empty coalesced document. It
             // must not be confused with the no-override/defaults case.
@@ -326,20 +365,58 @@ pub(crate) fn profile_session(
 /// the user supplies nothing. Schemas validate this document, so probes
 /// compose over it rather than over the root `values.yaml` alone.
 pub(crate) fn read_coalesced_defaults(chart_relative_path: &str) -> eyre::Result<Value> {
-    test_util::helm_values::coalesce_chart_values(
-        &chart_path(chart_relative_path),
+    let chart = HelmChartDir::stage(chart_relative_path)?;
+    Ok(test_util::helm_values::coalesce_chart_values(
+        chart.path(),
         Value::Object(Map::new()),
-    )
+    )?)
 }
 
-pub(crate) fn read_json_fixture(
-    chart_relative_path: &str,
-    relative_path: &str,
-) -> eyre::Result<Value> {
-    let path = chart_path(chart_relative_path).join(relative_path);
-    let source =
-        std::fs::read_to_string(&path).wrap_err_with(|| format!("read {}", path.display()))?;
-    serde_json::from_str(&source).wrap_err_with(|| format!("parse {}", path.display()))
+/// A corpus chart directory as Helm loads it. The corpus ships a chart
+/// whose manifest is only `Chart.template.yaml` (cert-manager); like the
+/// Helm adjudicator's private copy, the staged copy names it `Chart.yaml`.
+/// Every other chart is used in place.
+pub(crate) struct HelmChartDir {
+    path: std::path::PathBuf,
+    _staged: Option<tempfile::TempDir>,
+}
+
+impl HelmChartDir {
+    pub(crate) fn stage(chart_relative_path: &str) -> eyre::Result<Self> {
+        let source = chart_path(chart_relative_path);
+        if source.join("Chart.yaml").is_file() || !source.join("Chart.template.yaml").is_file() {
+            return Ok(Self {
+                path: source,
+                _staged: None,
+            });
+        }
+        let staged = tempfile::tempdir()?;
+        let path = staged.path().join("chart");
+        copy_dir(&source, &path)?;
+        std::fs::copy(path.join("Chart.template.yaml"), path.join("Chart.yaml"))?;
+        Ok(Self {
+            path,
+            _staged: Some(staged),
+        })
+    }
+
+    pub(crate) fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+fn copy_dir(from: &Path, to: &Path) -> eyre::Result<()> {
+    std::fs::create_dir_all(to)?;
+    for entry in std::fs::read_dir(from)? {
+        let entry = entry?;
+        let target = to.join(entry.file_name());
+        if entry.file_type()?.is_dir() {
+            copy_dir(&entry.path(), &target)?;
+        } else {
+            std::fs::copy(entry.path(), target)?;
+        }
+    }
+    Ok(())
 }
 
 pub(crate) fn read_chart_schema_fixture(chart: &str) -> eyre::Result<Value> {
@@ -526,8 +603,6 @@ pub(crate) fn guard_state_probes(
     }
 
     coverage.guards_discovered = guards.len();
-    let mut normalized_defaults = defaults.clone();
-    drop_null_map_entries(&mut normalized_defaults);
     let mut probes = Vec::new();
     for (index, (schema, condition, then_schema)) in guards
         .into_iter()
@@ -540,7 +615,7 @@ pub(crate) fn guard_state_probes(
         coverage.guards_attempted += 1;
         let guard_validator = compile_root_guard(schema, condition)?;
         let (witness_candidates, omitted_candidates) =
-            synthesized_guard_witness_candidates(&normalized_defaults, schema, condition);
+            synthesized_guard_witness_candidates(defaults, schema, condition);
         coverage.guard_witness_candidates += witness_candidates.len() + omitted_candidates;
         coverage.guard_witness_candidates_dropped += omitted_candidates;
         let mut satisfied = None;
@@ -724,9 +799,7 @@ fn compose_assignments(defaults: &Value, assignments: &[(&Vec<String>, &Value)])
     for (path, value) in assignments {
         set_path(&mut patch, path, (*value).clone());
     }
-    let mut composed = defaults.clone();
-    merge_override(&mut composed, patch);
-    composed
+    test_util::helm_values::coalesce_tables(&patch, defaults)
 }
 
 fn root_if_arms(schema: &Value) -> Vec<(&Value, &Value)> {
@@ -1073,42 +1146,6 @@ fn chart_path(chart_relative_path: &str) -> std::path::PathBuf {
     test_util::workspace_testdata()
         .join("charts")
         .join(Path::new(chart_relative_path))
-}
-
-pub(super) fn merge_override(base: &mut Value, override_value: Value) {
-    let overrides = match override_value {
-        Value::Object(overrides) => overrides,
-        mut value => {
-            drop_null_map_entries(&mut value);
-            *base = value;
-            return;
-        }
-    };
-    if !base.is_object() {
-        *base = Value::Object(Map::new());
-    }
-    let Some(base) = base.as_object_mut() else {
-        return;
-    };
-    for (key, mut value) in overrides {
-        if value.is_null() {
-            base.remove(&key);
-        } else if let Some(existing) = base.get_mut(&key) {
-            merge_override(existing, value);
-        } else {
-            drop_null_map_entries(&mut value);
-            base.insert(key, value);
-        }
-    }
-}
-
-fn drop_null_map_entries(value: &mut Value) {
-    if let Value::Object(entries) = value {
-        entries.retain(|_, value| !value.is_null());
-        for value in entries.values_mut() {
-            drop_null_map_entries(value);
-        }
-    }
 }
 
 fn collect_paths(

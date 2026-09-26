@@ -3,6 +3,7 @@
 
 use color_eyre::eyre::{self, WrapErr as _};
 use helm_schema_test_support::{ArtifactId, ChartId};
+use test_util::helm_values::{AcceptanceDocument, ValuesError, acceptance_values};
 use test_util::prelude::sim_assert_eq;
 
 #[path = "common/chart_instances.rs"]
@@ -34,8 +35,7 @@ fn datadog_active_member_hosts_reject_scalars() -> eyre::Result<()> {
     let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Datadog))?;
     let validator = jsonschema::validator_for(&schema)?;
 
-    // Helm reaches each member read under the chart defaults. The operator
-    // case fails earlier while Helm coalesces the aliased dependency.
+    // Helm reaches each member read under the chart defaults.
     let outcomes = [
         (
             "clusterChecksRunner.rbac",
@@ -49,7 +49,6 @@ fn datadog_active_member_hosts_reject_scalars() -> eyre::Result<()> {
             "datadog.serviceMonitoring.tls",
             serde_json::json!({ "datadog": { "serviceMonitoring": { "tls": 7 } } }),
         ),
-        ("operator", serde_json::json!({ "operator": 7 })),
     ]
     .into_iter()
     .map(|(path, override_value)| {
@@ -63,9 +62,25 @@ fn datadog_active_member_hosts_reject_scalars() -> eyre::Result<()> {
             ("clusterChecksRunner.rbac", false),
             ("datadog.discovery.networkStats", false),
             ("datadog.serviceMonitoring.tls", false),
-            ("operator", false),
         ],
-        "every scalar host aborts in Helm"
+        "every scalar host is rejected"
+    );
+
+    // The operator scope is the aliased dependency's: Helm aborts while it
+    // coalesces, so no template document exists. Lint's values rule still
+    // validates the raw document against the root schema, which rejects it.
+    let chart = helm_schema_test_support::generate::chart_dir("datadog");
+    let operator = serde_json::json!({ "operator": 7 });
+    let Err(ValuesError::NotValidated(abort)) =
+        acceptance_values(&chart, operator.clone(), AcceptanceDocument::Template)
+    else {
+        eyre::bail!("Helm aborts on a scalar dependency scope");
+    };
+    sim_assert_eq!(have: abort, want: "Helm aborts: type mismatch on operator");
+    let lint_raw = acceptance_values(&chart, operator, AcceptanceDocument::LintRaw)?.root;
+    assert!(
+        !validator.is_valid(&lint_raw),
+        "the root schema rejects the document lint's values rule checks"
     );
     Ok(())
 }
