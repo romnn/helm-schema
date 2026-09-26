@@ -4196,4 +4196,44 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   govalidate (differential run 2), runner fixes (final suite), k8s D1–D3 (base build). Old
   sweep 1,771 rows, lock still held. Load 34–45. Strict closures 3/83.
 
+- 16:05 — **Quota stop, scope narrowed to landing; okteto and runner v3 handed back.** The Claude
+  work account hit its weekly limit at ~15:55 and killed F1, W1, coalescer, runner-fix and k8s
+  D1–D3 mid-turn; the user reset the quota and narrowed the goal: land the agreed sequence with
+  minimal tokens (only work that is basically ready), no new work, then a final hand-off. F1, W1
+  and k8s were told to checkpoint and hand off (no further implementation); coalescer and
+  runner-fix to finish minimally. **Okteto intake (`round8-okteto-evidence`, `final.patch` sha
+  5ad56cc5…, 2 test files, 0 production lines, BASE 5474952c → HEAD b90a2802):** all 62 run-3
+  cells registered one at a time from the probe evidence (A: 6 `openshift.enabled` cells are
+  UNDECIDED — `route.openshift.io/v1` Route has no datree catalog schema, proof
+  `datree-route-lookup.txt`, so a new `KNOWN_UNDECIDED_ACCEPTANCES` roster carries the exact
+  validator uncertainty strings; B: 8 `*.image ← "3"` → F30; C: 8 `*.image ← null` → F36, 8
+  `← ""` Unfiled (`ne $image ""` at `_image.tpl:13`); D: 32 cells → F9/F13/F4/F5/F75/F31/F30 and
+  11 Unfiled where a helper's `toJson`/`toYaml` output is re-parsed); the count allowance
+  `PREREGISTERED_ACCEPTED_HELM_ABORT_ALLOWANCE` is deleted, rows record how the baseline rejected
+  the cell, the gate fails on unlisted cells and on listed cells that stop failing the same way;
+  okteto slice exit 0 (9,120 s; 2,583 flips: 48 abort tightenings, 2,474 matched loosenings, 6
+  undecided, 55 false acceptances), graylog slice exit 0 (178 s, 524 flips, 9 listed); 14 roster
+  tests 14/14; fmt 0; fixtures unchanged. Open: K8s verdicts use the 1.29.0 bundle while okteto
+  renders under 1.33.0 (kube-version track). **Runner v3 (`/Volumes/T7/dev/round8/runner`, git
+  branch `runner-v3-fail-closed`, HEAD 3564c94, evidence `round8-runner-evidence`):** 13 of 14
+  review findings fixed, finding 13 as the stop-gap (Python mirror writer, exit 6 on the short-name
+  rung); receipt schema v3 with lock-before-write, running attempts, invalidation of successors,
+  binding digests (clone/E/dump/target/lock, baseline commit, tool shas), `verify_frozen` at
+  every boundary, chart prep sanitizer, Helm log classification (`unresolved:*` → exit 5), kube
+  map validation, Helm-faithful `gen_overrides.py` (finding 8, Helm 4.2.3 matrices), frozen
+  `roster.tsv` sweep plan, 128-bit lock tokens, canonical paths; producer dump mode is the default
+  (`DUMP_MODE=legacy` for F23); suite `zsh tests/run-all.sh` green (10/10 zsh suites, 47/47
+  unittests, 519 s; red on v2: 9/10 suites, 41/41). Decision surfaced: `ACCEPTED_SWEEP_UNRESOLVED`
+  (e.g. `cert-manager=unresolved:loader`, no Chart.yaml) — adopted for the F23 landing env.
+  Producer digests are a reimplementation of `manifest.rs@a2cf765a` (unverified against a real
+  dump); harness-v2 manifests refused until extended. **k8s D1–D3:** nothing implemented (setup
+  only); `round8-k8s` on `k8s-cache-correctness`, BASE 22813ad1, `handoff.md` = resume point
+  (next edit: `load_source_schema_doc` three-way outcome at `source_cache.rs:156`). **Landing
+  plan under the narrowed scope:** landing 1 = F23 candidate-4f + okteto roster + pool (test-only
+  accelerator; applies on that exact base with three conflict regions in
+  `schema_emission_profiles.rs`, all around the deleted abort allowance) via runner v3
+  (`DUMP_MODE=legacy`) once the sol pool review and the old sweep (150/156 charts) finish;
+  landing 2 = coalescer + producer + naming + perf1 rebased on the new main; everything else
+  (gate r3, kube-version v2/v3, regexp hardening, semantic candidates) goes to the hand-off.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
