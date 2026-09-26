@@ -4570,4 +4570,25 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `rows.tsv` equal for all 12 charts, cold 23m13s at load 18–20, warm 0.33 s with 639/639 hits
   and 651 byte-identical outputs. Waiting on runner v5 to integrate it.
 
+- 23:50 — **Runner v5 hand-back (helmsweep fast pass + CLI differential); one correction ordered.**
+  `runner-v5` (301e5d1, worktree `round8-runner-v5`, on v4 900bb69; live dir untouched): plan +
+  phase 1 as v4 (`prepared` marker moved to `$S/prepared/<chart>`); `task build:helmsweep` →
+  `$TARGET/helmsweep`, its `version` must name its own sha256, path/sha/version bound in the
+  receipt; fast pass over the roster minus identical-schema rows (`HELMSWEEP_JOBS` default 4,
+  cache `$SWEEP_CACHE/helmsweep`, `--helm-env-clear`); CLI differential per chart = override ids
+  divisible by 100 + the 3 lowest ids whose fast base/cand (rc, class) differ + every unresolved
+  fast row, through v4's row workers and verdict cache into `w/<chart>/cli/`; every CLI cell in
+  both engines now runs under `HOME=<fresh empty>` + `PATH=/usr/bin:/bin`; gate recomputes the
+  selection, requires a CLI verdict for every selected row, writes `parity.tsv`, **exit 7** on any
+  fast/CLI disagreement or gap (precedence 2, 7, 3, 5); `SWEEP_ENGINE=cli` keeps pure v4; binding
+  gains `sweep_engine` + the rule (k=100, cap 3); receipt `/5`. Tests with a fake helmsweep (fast
+  roster + selection, disagreement → 7, missing verdict/wrong selection → 7, cap, unresolved via
+  ACCEPTED_SWEEP_UNRESOLVED, build/fast-pass failures, cleared env); red vs v4: `test_sweep` 19
+  checks + `FastPass`; green: all zsh suites 0, 57/57 unittests (one hard-coded schema string
+  fixed after the first run; only that suite re-run). Correction ordered: the verdict-cache key
+  omitted the environment (kept so the live v4 entries would hit) — per AGENTS.md the key must
+  include it; the agent adds the environment record to the key (v4 entries miss, accepted), a
+  red-then-green test, and one complete green run-all. Then: stop the v4 chain, merge v5, apply
+  helmsweep to `landing-f23`, fresh E, restart from dump.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
