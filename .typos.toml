@@ -5,6 +5,9 @@ extend-exclude = [
   "crates/helm-schema-template-grammar/grammars/**/*",
   "testdata/**/*",
   "plan/**/*",
+  # go.mod and go.sum hold module hashes.
+  "tools/helmsweep/go.mod",
+  "tools/helmsweep/go.sum",
   "**/tests/*.inc",
   # Generated docs assets: the catppuccin chroma stylesheet (its class names like
   # `.nd` trip the spellchecker) and the schema snippets emitted by the tool
@@ -15,6 +18,9 @@ extend-exclude = [
 
 [default]
 extend-ignore-re = [
+  # Regexp Unicode category escapes such as \p{Nd}
+  "\\\\p\\{[A-Za-z]+\\}",
+
   # "spellcheck:ignore-line" ignores the current line
   "(?Rm)^.*(#|//|--|<!--)\\s*spellcheck:ignore-line(\\s*-->)?\\s*$",
 

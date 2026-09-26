@@ -1,0 +1,156 @@
+--- a/pkg/chart/common/util/jsonschema.go
++++ b/pkg/chart/common/util/jsonschema.go
+@@ -18,6 +18,7 @@
+ 
+ import (
+ 	"bytes"
++	"crypto/sha256"
+ 	"crypto/tls"
+ 	"errors"
+ 	"fmt"
+@@ -25,6 +26,7 @@
+ 	"net/http"
+ 	"strings"
+ 	"sync"
++	"sync/atomic"
+ 	"time"
+ 
+ 	"github.com/santhosh-tekuri/jsonschema/v6"
+@@ -136,32 +138,125 @@
+ 	}
+ 	slog.Debug("unmarshalled JSON schema", "schema", schemaJSON)
+ 
++	validator, err := compileMemoized(schemaJSON, schema)
++	if err != nil {
++		return err
++	}
++
++	err = validator.Validate(values.AsMap())
++	if err != nil {
++		return JSONSchemaValidationError{err}
++	}
++
++	return nil
++}
++
++// helmsweep patch (tools/helmsweep/third_party/PATCH.md): the compiled schema
++// is memoized by the SHA-256 of the schema bytes, so a process validating many
++// value sets against one schema compiles it once. Only a successful compile
++// that loaded no external resource is kept; everything else compiles per call
++// exactly as upstream does. A compiled schema is shared read-only: Validate
++// allocates its own validator state per call.
++type compiledSchema struct {
++	done      chan struct{}
++	validator *jsonschema.Schema
++}
++
++var (
++	compiledSchemasMu sync.Mutex
++	compiledSchemas   = map[[sha256.Size]byte]*compiledSchema{}
++	schemaCompiles    atomic.Int64
++	schemaMemoHits    atomic.Int64
++)
++
++// CompiledSchemaMemoStats reports how many compiles ran and how many calls
++// reused a memoized compile.
++func CompiledSchemaMemoStats() (compiles, memoHits int64) {
++	return schemaCompiles.Load(), schemaMemoHits.Load()
++}
++
++// DropCompiledSchema forgets the memoized compile of schemaJSON, if any.
++func DropCompiledSchema(schemaJSON []byte) {
++	compiledSchemasMu.Lock()
++	delete(compiledSchemas, sha256.Sum256(schemaJSON))
++	compiledSchemasMu.Unlock()
++}
++
++// compileMemoized returns the memoized compile of schemaJSON, compiling it
++// once when concurrent callers ask for the same bytes.
++func compileMemoized(schemaJSON []byte, schema any) (*jsonschema.Schema, error) {
++	sum := sha256.Sum256(schemaJSON)
++	compiledSchemasMu.Lock()
++	entry, found := compiledSchemas[sum]
++	if !found {
++		entry = &compiledSchema{done: make(chan struct{})}
++		compiledSchemas[sum] = entry
++	}
++	compiledSchemasMu.Unlock()
++
++	if found {
++		<-entry.done
++		if entry.validator != nil {
++			schemaMemoHits.Add(1)
++			return entry.validator, nil
++		}
++		validator, _, err := compileSchema(schema)
++		return validator, err
++	}
++
++	defer func() {
++		if entry.validator == nil {
++			compiledSchemasMu.Lock()
++			if compiledSchemas[sum] == entry {
++				delete(compiledSchemas, sum)
++			}
++			compiledSchemasMu.Unlock()
++		}
++		close(entry.done)
++	}()
++	validator, loadedExternal, err := compileSchema(schema)
++	if err != nil {
++		return nil, err
++	}
++	if !loadedExternal {
++		entry.validator = validator
++	}
++	return validator, nil
++}
++
++// compileSchema is upstream's compile sequence; it also reports whether the
++// compile loaded any resource through the loaders.
++func compileSchema(schema any) (*jsonschema.Schema, bool, error) {
++	schemaCompiles.Add(1)
++
+ 	// Configure compiler with loaders for different URL schemes
+-	loader := jsonschema.SchemeURLLoader{
++	loader := &recordingLoader{loader: jsonschema.SchemeURLLoader{
+ 		"file":  jsonschema.FileLoader{},
+ 		"http":  newHTTPURLLoader(),
+ 		"https": newHTTPURLLoader(),
+ 		"urn":   urnLoader{},
+-	}
++	}}
+ 
+ 	compiler := jsonschema.NewCompiler()
+ 	compiler.UseLoader(loader)
+-	err = compiler.AddResource("file:///values.schema.json", schema)
++	err := compiler.AddResource("file:///values.schema.json", schema)
+ 	if err != nil {
+-		return err
++		return nil, loader.loaded, err
+ 	}
+ 
+ 	validator, err := compiler.Compile("file:///values.schema.json")
+-	if err != nil {
+-		return err
+-	}
++	return validator, loader.loaded, err
++}
+ 
+-	err = validator.Validate(values.AsMap())
+-	if err != nil {
+-		return JSONSchemaValidationError{err}
+-	}
++// recordingLoader delegates to upstream's loaders and records that one ran.
++type recordingLoader struct {
++	loader jsonschema.URLLoader
++	loaded bool
++}
+ 
+-	return nil
++func (l *recordingLoader) Load(url string) (any, error) {
++	l.loaded = true
++	return l.loader.Load(url)
+ }
+ 
+ // URNResolverFunc allows SDK to plug a URN resolver. It must return a
