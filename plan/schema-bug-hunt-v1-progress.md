@@ -4471,4 +4471,30 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `$defs` compile cost, roster redundancy, LOC and landing order. The current sweep keeps
   running until runner v4 is ready (its rows are discarded at the restart from dump).
 
+- 21:55 — **User direction: a Go sweep driver on Helm's own pinned modules (no port); design in,
+  builder launched.** sol (`design-helm-go-sweep-driver-sol.md`, supersedes
+  `design-fast-sweep-gate-sol.md`): one Go executable with `lint`/`template` (later `documents`)
+  calling Helm v4.2.3's real paths — `pkg/chart/v2/loader` (keeps `.helmignore` and the
+  5,242,880 limit), `pkg/action/lint.go` + `pkg/chart/v2/lint` `RunAll` with the values AND
+  template rules exactly as `pkg/cmd/lint.go`, `pkg/action/install.go` client-only dry run as
+  `pkg/cmd/template.go`/`runInstall` (`SkipSchemaValidation`, kube version, release `t`); the
+  ONLY Helm change is a memo in `pkg/chart/common/util/jsonschema.go: ValidateAgainstSingleSchema`
+  (sha256-of-bytes key, single-flight, compiled `*jsonschema.Schema` shared read-only — argued
+  from jsonschema v6.0.2's validator allocating per call; `-race` parity required before multiple
+  workers) via `replace helm.sh/helm/v4 => ./third_party/helm-v4.2.3`; fresh settings/values/
+  load/config per cell, env cleared once, no network; on-disk verdict cache keyed by build id +
+  versions + mode + kube version + chart-copy digest + schema/override sha, manifest-verified,
+  `unresolved:*` never stored; the Python gate stays the refusal authority; CLI differential
+  (k=100 per chart + differing rows + unresolved rows; sol estimates ~500–560 unique CLI rows
+  for this roster — the differential may dominate, so a per-chart cap on differing rows is the
+  policy to decide); later a `documents` op lets the battery take Helm's three documents from
+  Helm's code and delete the Rust coalescer port. Budget 650–900 Go LOC + 60–100 patch + 100–180
+  runner + 250–400 tests; fast pass 0.5–2 h, cold with differential 3–12 h. Opus builder
+  launched (`round8-helmsweep`, branch `helmsweep` off landing-f23 37c58f9d, evidence
+  `round8-helmsweep-evidence`): module `tools/helmsweep/`, subcommands `lint`/`template`/`sweep
+  --roster --work --jobs --cache`, same per-row files as the gate reads, Go tests incl. `-race`,
+  CLI parity on 8 medium charts × all overrides + 4 rows each of the four heavy charts (reusing
+  the live sweep's CLI logs read-only), `task build:helmsweep`; the runner integration follows
+  runner v4 (same runner agent). Sweep 138/156 charts started; runner v4 still building.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
