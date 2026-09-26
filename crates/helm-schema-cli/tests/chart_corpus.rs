@@ -12,11 +12,15 @@
 //! and only the latter protect fixture regeneration from pinning a
 //! regression.
 //!
-//! To regenerate fixtures after an intentional generator change, run
-//! `SCHEMA_DUMP=1 cargo nextest run -p helm-schema-cli --no-fail-fast -E
-//! 'binary(chart_corpus)'`, review the dumps written to the system temp
-//! directory (`helm-schema.cli.chart-corpus.<chart>.schema.json`), and copy
-//! the adjudicated ones into `testdata/chart-corpus-schemas/`.
+//! The chart list and each chart's generation recipe live in the
+//! `helm-schema-test-support` registry. Each test consumes its chart's
+//! artifact: from the producer run named by `HELM_SCHEMA_CORPUS_ARTIFACTS`
+//! after verifying the manifest against the checkout, or, without one, by
+//! generating that chart locally. To regenerate fixtures after an intentional
+//! generator change, run `cargo run -p helm-schema-test-support --bin
+//! corpus_generation -- --out <dir>`, review the chart artifacts
+//! (`helm-schema.cli.chart-corpus.<chart>.schema.json`), and copy the
+//! adjudicated ones into `testdata/chart-corpus-schemas/`.
 //!
 //! Charts whose own `values.yaml` is currently rejected by the generated
 //! schema are listed in `KNOWN_VALUES_REJECTIONS`; each entry is a known
@@ -33,12 +37,11 @@
 use test_util::prelude::sim_assert_eq;
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
-#[path = "common/schema_roundtrip.rs"]
-mod schema_roundtrip;
 #[path = "common/values_validation.rs"]
 mod values_validation;
 
 use color_eyre::eyre::{self, WrapErr as _};
+use helm_schema_test_support::registry::{ArtifactId, ArtifactTarget, ChartId};
 use serde_json::Value;
 
 /// Charts whose shipped `values.yaml` fails validation against the schema
@@ -214,18 +217,13 @@ const UNADJUDICATED_INTAKE: &[&str] = &[
     "zookeeper",
 ];
 
-fn assert_chart_schema_fixture(chart: &str) -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path(chart)?;
-    let dump = std::env::var("SCHEMA_DUMP").is_ok();
-
-    if dump {
-        let path =
-            std::env::temp_dir().join(format!("helm-schema.cli.chart-corpus.{chart}.schema.json"));
-        let mut bytes =
-            serde_json::to_vec_pretty(&schema).wrap_err("serialize chart corpus schema dump")?;
-        bytes.push(b'\n');
-        std::fs::write(&path, bytes).wrap_err("write chart corpus schema dump")?;
-    }
+fn assert_chart_schema_fixture(chart_id: ChartId) -> eyre::Result<()> {
+    let chart = chart_id.relative_path();
+    let spec = ArtifactId::Chart(chart_id).spec();
+    let ArtifactTarget::Fixture(fixture) = &spec.target else {
+        eyre::bail!("{chart}: registered without a chart-corpus fixture");
+    };
+    let schema = helm_schema_test_support::consume(spec.id)?;
 
     let values_json = values_validation::values_yaml_as_json_for_path(chart)?;
     if KNOWN_VALUES_REJECTIONS.contains(&chart) {
@@ -244,13 +242,8 @@ fn assert_chart_schema_fixture(chart: &str) -> eyre::Result<()> {
     } else {
         values_validation::assert_values_json_validates(&values_json, &schema);
     }
-    if dump {
-        return Ok(());
-    }
 
-    let fixture_path = test_util::workspace_testdata()
-        .join("chart-corpus-schemas")
-        .join(format!("{chart}.schema.json"));
+    let fixture_path = test_util::workspace_root().join(fixture);
     let expected: Value = serde_json::from_str(
         &std::fs::read_to_string(&fixture_path)
             .wrap_err_with(|| format!("read fixture {}", fixture_path.display()))?,
@@ -261,178 +254,17 @@ fn assert_chart_schema_fixture(chart: &str) -> eyre::Result<()> {
 }
 
 macro_rules! chart_schema_case {
-    ($name:ident, $chart:literal) => {
-        #[test]
-        fn $name() -> eyre::Result<()> {
-            assert_chart_schema_fixture($chart)
-        }
+    ($(($name:ident, $variant:ident, $chart:literal)),* $(,)?) => {
+        $(
+            #[test]
+            fn $name() -> eyre::Result<()> {
+                assert_chart_schema_fixture(ChartId::$variant)
+            }
+        )*
     };
 }
 
-chart_schema_case!(airflow, "airflow");
-chart_schema_case!(argo_cd, "argo-cd");
-chart_schema_case!(aws_load_balancer_controller, "aws-load-balancer-controller");
-chart_schema_case!(bitnami_postgresql, "bitnami-postgresql");
-chart_schema_case!(bitnami_redis, "bitnami-redis");
-chart_schema_case!(cert_manager, "cert-manager");
-chart_schema_case!(cilium, "cilium");
-chart_schema_case!(cloudnative_pg, "cloudnative-pg");
-chart_schema_case!(cluster_autoscaler, "cluster-autoscaler");
-chart_schema_case!(common, "common");
-chart_schema_case!(coredns, "coredns");
-chart_schema_case!(crossplane, "crossplane");
-chart_schema_case!(datadog, "datadog");
-chart_schema_case!(dict_config, "dict-config");
-chart_schema_case!(external_dns, "external-dns");
-chart_schema_case!(external_secrets, "external-secrets");
-chart_schema_case!(falco, "falco");
-chart_schema_case!(fluent_bit, "fluent-bit");
-chart_schema_case!(flux2, "flux2");
-chart_schema_case!(grafana, "grafana");
-chart_schema_case!(harbor, "harbor");
-chart_schema_case!(ingress_nginx, "ingress-nginx");
-chart_schema_case!(istiod, "istiod");
-chart_schema_case!(jaeger, "jaeger");
-chart_schema_case!(jenkins, "jenkins");
-chart_schema_case!(karpenter, "karpenter");
-chart_schema_case!(keda, "keda");
-chart_schema_case!(kube_prometheus_stack, "kube-prometheus-stack");
-chart_schema_case!(kube_state_metrics, "kube-state-metrics");
-chart_schema_case!(kyverno, "kyverno");
-chart_schema_case!(loki, "loki");
-chart_schema_case!(longhorn, "longhorn");
-chart_schema_case!(metallb, "metallb");
-chart_schema_case!(metrics_server, "metrics-server");
-chart_schema_case!(minio, "minio");
-chart_schema_case!(nack, "nack");
-chart_schema_case!(nats, "nats");
-chart_schema_case!(nats_account_server, "nats-account-server");
-chart_schema_case!(nats_kafka, "nats-kafka");
-chart_schema_case!(nats_operator, "nats-operator");
-chart_schema_case!(
-    nfs_subdir_external_provisioner,
-    "nfs-subdir-external-provisioner"
-);
-chart_schema_case!(oauth2_proxy, "oauth2-proxy");
-chart_schema_case!(prometheus, "prometheus");
-chart_schema_case!(promtail, "promtail");
-chart_schema_case!(reloader, "reloader");
-chart_schema_case!(
-    schema_emission_unconditional_fail,
-    "schema-emission-unconditional-fail"
-);
-chart_schema_case!(sealed_secrets, "sealed-secrets");
-chart_schema_case!(signoz_signoz, "signoz-signoz");
-chart_schema_case!(surveyor, "surveyor");
-chart_schema_case!(tempo, "tempo");
-chart_schema_case!(traefik, "traefik");
-chart_schema_case!(trivy_operator, "trivy-operator");
-chart_schema_case!(vault, "vault");
-chart_schema_case!(velero, "velero");
-chart_schema_case!(zalando_postgres_operator, "zalando-postgres-operator");
-chart_schema_case!(zalando_postgres_operator_ui, "zalando-postgres-operator-ui");
-
-// Corpus-expansion-v1 intake, unadjudicated
-chart_schema_case!(aws_ebs_csi_driver, "aws-ebs-csi-driver");
-chart_schema_case!(dify, "dify");
-chart_schema_case!(eck_stack, "eck-stack");
-chart_schema_case!(gitea, "gitea");
-chart_schema_case!(graylog, "graylog");
-chart_schema_case!(headscale, "headscale");
-chart_schema_case!(imgproxy, "imgproxy");
-chart_schema_case!(kube_starrocks, "kube-starrocks");
-chart_schema_case!(kubeshark, "kubeshark");
-chart_schema_case!(milvus, "milvus");
-chart_schema_case!(nacos, "nacos");
-chart_schema_case!(netbox, "netbox");
-chart_schema_case!(nginx_ingress, "nginx-ingress");
-chart_schema_case!(okteto, "okteto");
-chart_schema_case!(oncall, "oncall");
-chart_schema_case!(openebs, "openebs");
-chart_schema_case!(openldap_stack_ha, "openldap-stack-ha");
-chart_schema_case!(redmine, "redmine");
-chart_schema_case!(schema_registry, "schema-registry");
-chart_schema_case!(spinnaker, "spinnaker");
-chart_schema_case!(stacks_blockchain_api, "stacks-blockchain-api");
-chart_schema_case!(synapse, "synapse");
-chart_schema_case!(weblate, "weblate");
-chart_schema_case!(yourls, "yourls");
-chart_schema_case!(actions_runner_controller, "actions-runner-controller");
-chart_schema_case!(alertmanager, "alertmanager");
-chart_schema_case!(alloy, "alloy");
-chart_schema_case!(apisix, "apisix");
-chart_schema_case!(argo_events, "argo-events");
-chart_schema_case!(argo_rollouts, "argo-rollouts");
-chart_schema_case!(argo_workflows, "argo-workflows");
-chart_schema_case!(argocd_apps, "argocd-apps");
-chart_schema_case!(argocd_image_updater, "argocd-image-updater");
-chart_schema_case!(aws_for_fluent_bit, "aws-for-fluent-bit");
-chart_schema_case!(aws_node_termination_handler, "aws-node-termination-handler");
-chart_schema_case!(base, "base");
-chart_schema_case!(chartmuseum, "chartmuseum");
-chart_schema_case!(clickhouse, "clickhouse");
-chart_schema_case!(consul, "consul");
-chart_schema_case!(descheduler, "descheduler");
-chart_schema_case!(dex, "dex");
-chart_schema_case!(eck_operator, "eck-operator");
-chart_schema_case!(elasticsearch, "elasticsearch");
-chart_schema_case!(etcd, "etcd");
-chart_schema_case!(filebeat, "filebeat");
-chart_schema_case!(fluentd, "fluentd");
-chart_schema_case!(gateway, "gateway");
-chart_schema_case!(gitlab_runner, "gitlab-runner");
-chart_schema_case!(goldilocks, "goldilocks");
-chart_schema_case!(headlamp, "headlamp");
-chart_schema_case!(home_assistant, "home-assistant");
-chart_schema_case!(influxdb, "influxdb");
-chart_schema_case!(jira, "jira");
-chart_schema_case!(jupyterhub, "jupyterhub");
-chart_schema_case!(kafka_ui, "kafka-ui");
-chart_schema_case!(keycloakx, "keycloakx");
-chart_schema_case!(kibana, "kibana");
-chart_schema_case!(kubernetes_event_exporter, "kubernetes-event-exporter");
-chart_schema_case!(kubeview, "kubeview");
-chart_schema_case!(kured, "kured");
-chart_schema_case!(logstash, "logstash");
-chart_schema_case!(mailhog, "mailhog");
-chart_schema_case!(mariadb, "mariadb");
-chart_schema_case!(mariadb_galera, "mariadb-galera");
-chart_schema_case!(metabase, "metabase");
-chart_schema_case!(minecraft, "minecraft");
-chart_schema_case!(nfs_server_provisioner, "nfs-server-provisioner");
-chart_schema_case!(nginx, "nginx");
-chart_schema_case!(nginx_ingress_controller, "nginx-ingress-controller");
-chart_schema_case!(ollama, "ollama");
-chart_schema_case!(open_webui, "open-webui");
-chart_schema_case!(opensearch, "opensearch");
-chart_schema_case!(opentelemetry_operator, "opentelemetry-operator");
-chart_schema_case!(pgadmin4, "pgadmin4");
-chart_schema_case!(phpmyadmin, "phpmyadmin");
-chart_schema_case!(pihole, "pihole");
-chart_schema_case!(postgresql_ha, "postgresql-ha");
-chart_schema_case!(prometheus_adapter, "prometheus-adapter");
-chart_schema_case!(prometheus_blackbox_exporter, "prometheus-blackbox-exporter");
-chart_schema_case!(prometheus_node_exporter, "prometheus-node-exporter");
-chart_schema_case!(prometheus_operator_crds, "prometheus-operator-crds");
-chart_schema_case!(prometheus_pushgateway, "prometheus-pushgateway");
-chart_schema_case!(prometheus_redis_exporter, "prometheus-redis-exporter");
-chart_schema_case!(qdrant, "qdrant");
-chart_schema_case!(rabbitmq, "rabbitmq");
-chart_schema_case!(rabbitmq_cluster_operator, "rabbitmq-cluster-operator");
-chart_schema_case!(rancher, "rancher");
-chart_schema_case!(redis_cluster, "redis-cluster");
-chart_schema_case!(redis_ha, "redis-ha");
-chart_schema_case!(rook_ceph, "rook-ceph");
-chart_schema_case!(spark, "spark");
-chart_schema_case!(terraform, "terraform");
-chart_schema_case!(tigera_operator, "tigera-operator");
-chart_schema_case!(trino, "trino");
-chart_schema_case!(uptime_kuma, "uptime-kuma");
-chart_schema_case!(vector, "vector");
-chart_schema_case!(vpa, "vpa");
-chart_schema_case!(x509_certificate_exporter, "x509-certificate-exporter");
-chart_schema_case!(zabbix, "zabbix");
-chart_schema_case!(zookeeper, "zookeeper");
+helm_schema_test_support::corpus_charts!(chart_schema_case);
 
 /// Guards the two quarantine rosters against drifting apart as charts are
 /// promoted out of them.

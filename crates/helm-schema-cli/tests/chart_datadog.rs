@@ -2,16 +2,15 @@
 //! full-schema pin live in `chart_corpus.rs`.
 
 use color_eyre::eyre::{self, WrapErr as _};
+use helm_schema_test_support::{ArtifactId, ChartId};
 use test_util::prelude::sim_assert_eq;
 
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
-#[path = "common/schema_roundtrip.rs"]
-mod schema_roundtrip;
 
 #[test]
 fn datadog_image_tag_accepts_non_strings() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("datadog")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Datadog))?;
     let validator = jsonschema::validator_for(&schema)?;
 
     // Cases compose over the chart defaults: helm validates the coalesced
@@ -32,7 +31,7 @@ fn datadog_image_tag_accepts_non_strings() -> eyre::Result<()> {
 
 #[test]
 fn datadog_active_member_hosts_reject_scalars() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("datadog")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Datadog))?;
     let validator = jsonschema::validator_for(&schema)?;
 
     // Helm reaches each member read under the chart defaults. The operator
@@ -73,7 +72,7 @@ fn datadog_active_member_hosts_reject_scalars() -> eyre::Result<()> {
 
 #[test]
 fn datadog_fips_root_is_required_by_the_live_helper_chain() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("datadog")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Datadog))?;
     let validator = jsonschema::validator_for(&schema)?;
     let instance = chart_instances::with_override("datadog", serde_json::json!({ "fips": null }))?;
 
@@ -86,9 +85,9 @@ fn datadog_fips_root_is_required_by_the_live_helper_chain() -> eyre::Result<()> 
 
 #[test]
 fn datadog_renderable_ci_values_remain_accepted() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("datadog")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Datadog))?;
     let validator = jsonschema::validator_for(&schema)?;
-    let chart_dir = schema_roundtrip::physical_chart_dir("datadog");
+    let chart_dir = helm_schema_test_support::generate::chart_dir("datadog");
 
     let outcomes = ["autoscaling-values.yaml", "gke-gdc-values.yaml"]
         .into_iter()

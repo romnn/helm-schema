@@ -63,7 +63,7 @@ pub mod prelude {
 }
 
 /// Identifies helper and template fixtures used to construct a define index.
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct DefineSourceSpec<'a> {
     /// Paths of helper templates relative to the workspace test-data directory.
     pub helper_templates: &'a [&'a str],

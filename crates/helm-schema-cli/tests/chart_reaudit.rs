@@ -12,13 +12,12 @@ use indoc::indoc;
 use std::collections::BTreeSet;
 
 use color_eyre::eyre::{self, OptionExt as _};
+use helm_schema_test_support::{ArtifactId, ChartId};
 use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
 
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
-#[path = "common/schema_roundtrip.rs"]
-mod schema_roundtrip;
 
 struct SemanticCase {
     label: &'static str,
@@ -75,7 +74,9 @@ struct ValidationFailure {
 }
 
 fn assert_chart_cases(chart: &str, cases: Vec<SemanticCase>) -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path(chart)?;
+    let chart_id = ChartId::from_relative_path(chart)
+        .ok_or_eyre(format!("{chart} is not a registered corpus chart"))?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(chart_id))?;
     let validator = jsonschema::validator_for(&schema)
         .map_err(|error| eyre::eyre!("compile {chart} schema: {error}"))?;
     let validation_errors = |instance: &Value| {

@@ -7,16 +7,15 @@
 //! Values validation and the full-schema pin live in `chart_corpus.rs`.
 
 use color_eyre::eyre;
+use helm_schema_test_support::{ArtifactId, ChartId};
 use serde_json::Value;
 
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
-#[path = "common/schema_roundtrip.rs"]
-mod schema_roundtrip;
 
 #[test]
 fn falco_rolearn_contract_is_branch_scoped() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("falco")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Falco))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
     // Cases compose over the chart defaults: helm validates the coalesced
@@ -80,7 +79,7 @@ fn coalesce_tables(overrides: Value, values: Value) -> Value {
 /// `helm template` renders the same override (Helm v4.2.3).
 #[test]
 fn falco_lint_document_with_a_dependency_only_toggle_is_accepted() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("falco")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Falco))?;
     let validator = jsonschema::validator_for(&schema)?;
     let values: Value = serde_yaml::from_str(&std::fs::read_to_string(
         test_util::workspace_testdata().join("charts/falco/values.yaml"),

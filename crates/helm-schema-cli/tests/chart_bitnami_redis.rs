@@ -3,20 +3,19 @@
 //! live in `chart_corpus.rs`.
 
 use color_eyre::eyre;
+use helm_schema_test_support::{ArtifactId, ChartId};
 
 use test_util::prelude::sim_assert_eq;
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
 #[path = "common/descriptions.rs"]
 mod descriptions;
-#[path = "common/schema_roundtrip.rs"]
-mod schema_roundtrip;
 #[path = "common/values_yaml.rs"]
 mod values_yaml;
 
 #[test]
 fn bitnami_redis_master_persistence_rejects_a_scalar_host() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("bitnami-redis")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::BitnamiRedis))?;
     let validator = jsonschema::validator_for(&schema)?;
     let instance = chart_instances::with_override(
         "bitnami-redis",
@@ -32,7 +31,7 @@ fn bitnami_redis_master_persistence_rejects_a_scalar_host() -> eyre::Result<()> 
 
 #[test]
 fn bitnami_redis_values_descriptions_apply() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("bitnami-redis")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::BitnamiRedis))?;
     assert_schema_description(
         &schema,
         "/properties/auth/properties/enabled/description",

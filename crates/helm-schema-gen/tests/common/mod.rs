@@ -1,53 +1,16 @@
 pub mod cases;
 
 use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
-use helm_schema_ast::DefineIndex;
-use helm_schema_core::{ResourceSchemaOracle, YamlPath};
-use helm_schema_gen::{PreparedValuesDocuments, ValuesSchemaInput, generate_values_schema};
-use helm_schema_ir::{ContractIr, ResourceRef};
-use helm_schema_k8s::{
-    Chain, CrdsCatalogSchemaProvider, K8sSchemaProvider, KubernetesJsonSchemaProvider,
-};
+use helm_schema_core::YamlPath;
+use helm_schema_ir::ResourceRef;
+use helm_schema_k8s::K8sSchemaProvider;
+use helm_schema_test_support::generate::{self, bundled_crd_provider, bundled_k8s_provider};
+use helm_schema_test_support::registry::{ArtifactId, ArtifactTarget, TemplateId};
 use serde::Deserialize;
 use serde_json::Value;
 use std::path::Path;
 use std::process::Command;
 use test_util::prelude::sim_assert_eq;
-
-pub fn build_define_index(
-    spec: test_util::DefineSourceSpec<'_>,
-    _helper_parse_mode: HelperParseMode,
-) -> eyre::Result<DefineIndex> {
-    let mut idx = DefineIndex::new();
-    for source in spec.load()? {
-        idx.add_file_source(&source.path, &source.source);
-    }
-    Ok(idx)
-}
-
-#[derive(Clone, Copy)]
-pub enum ProviderKind<'a> {
-    K8s(&'a str),
-    CrdK8s(&'a str),
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum HelperParseMode {
-    Lenient,
-    Strict,
-}
-
-#[derive(Clone, Copy)]
-pub struct SchemaCorpusCase<'a> {
-    pub template_path: &'a str,
-    pub values_path: &'a str,
-    pub fixture_values_yaml: Option<&'a str>,
-    pub expected_fixture: &'a str,
-    pub define_sources: test_util::DefineSourceSpec<'a>,
-    pub provider: ProviderKind<'a>,
-    pub helper_parse_mode: HelperParseMode,
-    pub dump_stem: &'a str,
-}
 
 #[derive(Clone, Copy)]
 pub struct HelmRenderCase<'a> {
@@ -78,52 +41,8 @@ pub struct SchemaExpectation<'a> {
 
 #[derive(Clone, Copy)]
 pub struct SchemaBehaviorCase<'a> {
-    pub schema_case: SchemaCorpusCase<'a>,
+    pub schema_case: TemplateId,
     pub expectations: &'a [SchemaExpectation<'a>],
-}
-
-/// K8s provider reading only the vendored bundle.
-///
-/// Provider availability is a deterministic test INPUT: the bundle pins which
-/// upstream schemas a test can see. Reaching the ambient user cache with
-/// downloads enabled made results depend on cache warmth and on
-/// `raw.githubusercontent.com` being reachable — the exact failure mode the
-/// bundle exists to remove. Every provider a test builds must come from here.
-pub fn bundled_k8s_provider(version: &str) -> KubernetesJsonSchemaProvider {
-    KubernetesJsonSchemaProvider::new(version.to_string())
-        .with_cache_dir(
-            test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
-        )
-        .with_allow_download(false)
-}
-
-/// CRD catalog provider reading only the vendored bundle. See
-/// [`bundled_k8s_provider`] for why downloads stay off.
-pub fn bundled_crd_provider() -> CrdsCatalogSchemaProvider {
-    CrdsCatalogSchemaProvider::new()
-        .with_cache_dir(test_util::workspace_testdata().join("provider-bundle/crds-catalog-cache"))
-        .with_allow_download(false)
-}
-
-/// Production-like K8s provider path for chart-level generator tests.
-///
-/// These tests are meant to approximate what end users run through the CLI,
-/// so they use the chain layer plus apiVersion inference instead of the older
-/// single-provider shortcut.
-pub fn production_k8s_chain(version: &str) -> Chain {
-    let k8s_provider = bundled_k8s_provider(version).with_api_version_guess(true);
-    Chain::new(vec![Box::new(k8s_provider)]).with_inference_enabled(true)
-}
-
-/// Production-like CRD + K8s provider path for chart-level generator tests.
-///
-/// This keeps real-world CRD-consuming chart tests on the same resolution path
-/// as the CLI while leaving lower-layer provider-specific tests free to pin a
-/// single provider when that is the actual subject under test.
-pub fn production_crd_k8s_chain(version: &str) -> Chain {
-    let crds = bundled_crd_provider();
-    let k8s_provider = bundled_k8s_provider(version).with_api_version_guess(true);
-    Chain::new(vec![Box::new(crds), Box::new(k8s_provider)]).with_inference_enabled(true)
 }
 
 /// Recursively remove `"additionalProperties": false` from a JSON schema.
@@ -157,72 +76,40 @@ pub fn values_yaml_to_json(values_yaml: &str) -> eyre::Result<Value> {
     serde_yaml::from_str(values_yaml).wrap_err("parse values.yaml as JSON")
 }
 
-pub fn generate_schema_with_values_yaml(
-    contract: ContractIr,
-    provider: &dyn ResourceSchemaOracle,
-    values_yaml: Option<&str>,
-) -> Value {
-    let schema_signals = contract.finalize().into_schema_signals();
-    let composed = values_yaml
-        .and_then(|source| serde_yaml::from_str(source).ok())
-        .unwrap_or(serde_yaml::Value::Null);
-    let documents = PreparedValuesDocuments::new(composed, serde_yaml::Value::Null);
-    generate_values_schema(
-        ValuesSchemaInput::new(&schema_signals, provider).with_values_documents(&documents),
-    )
-}
-
-pub fn render_schema_case(case: &SchemaCorpusCase<'_>) -> eyre::Result<Value> {
-    if let Some(values_yaml) = case.fixture_values_yaml {
-        render_schema_case_with_values(case, values_yaml)
-    } else {
-        let values_yaml = test_util::read_testdata(case.values_path)?;
-        render_schema_case_with_values(case, &values_yaml)
+/// The chart values a template case's schema is generated over.
+fn registered_values_yaml(id: TemplateId) -> eyre::Result<String> {
+    let recipe = id.case().recipe;
+    match recipe.inline_values {
+        Some(values_yaml) => Ok(values_yaml.to_string()),
+        None => test_util::read_testdata(recipe.values_path),
     }
 }
 
-pub fn render_schema_case_with_values(
-    case: &SchemaCorpusCase<'_>,
-    values_yaml: &str,
-) -> eyre::Result<Value> {
-    let src = test_util::read_testdata(case.template_path)?;
-    let idx = build_define_index(case.define_sources, case.helper_parse_mode)?;
-    let ir = helm_schema_ir::SymbolicIrContext::new(&idx).generate_contract_ir(&src);
-    let provider = match case.provider {
-        ProviderKind::K8s(version) => production_k8s_chain(version),
-        ProviderKind::CrdK8s(version) => production_crd_k8s_chain(version),
+pub fn assert_schema_fixture(id: TemplateId) -> eyre::Result<()> {
+    let actual = generate::template_schema(&id.case().recipe)?;
+    let spec = ArtifactId::Template(id).spec();
+    let ArtifactTarget::Fixture(fixture) = &spec.target else {
+        eyre::bail!("{id:?} is registered without a fixture");
     };
-    let schema = generate_schema_with_values_yaml(ir, &provider, Some(values_yaml));
-
-    if std::env::var("SCHEMA_DUMP").is_ok() {
-        eprintln!("{}", serde_json::to_string_pretty(&schema)?);
-        let path = std::env::temp_dir().join(format!("helm-schema.{}.schema.json", case.dump_stem));
-        std::fs::write(&path, serde_json::to_vec_pretty(&schema)?)
-            .wrap_err_with(|| format!("write schema dump to {}", path.display()))?;
-    }
-
-    Ok(schema)
-}
-
-pub fn assert_schema_fixture(case: &SchemaCorpusCase<'_>) -> eyre::Result<()> {
-    let actual = render_schema_case(case)?;
-    if std::env::var("SCHEMA_DUMP").is_ok() {
-        return Ok(());
-    }
-    let expected: Value = serde_json::from_str(case.expected_fixture)
-        .wrap_err_with(|| format!("parse expected schema fixture for {}", case.dump_stem))?;
+    let fixture_path = test_util::workspace_root().join(fixture);
+    let expected: Value = serde_json::from_str(
+        &std::fs::read_to_string(&fixture_path)
+            .wrap_err_with(|| format!("read {}", fixture_path.display()))?,
+    )
+    .wrap_err_with(|| format!("parse expected schema fixture {}", fixture_path.display()))?;
     sim_assert_eq!(
         have: actual,
         want: expected,
         "schema fixture mismatch for {}",
-        case.dump_stem,
+        spec.dump_name,
     );
     Ok(())
 }
 
-pub fn assert_values_yaml_validates(case: &SchemaCorpusCase<'_>) -> eyre::Result<()> {
-    let values_yaml = test_util::read_testdata(case.values_path)?;
-    let schema = render_schema_case_with_values(case, &values_yaml)?;
+pub fn assert_values_yaml_validates(id: TemplateId) -> eyre::Result<()> {
+    let recipe = id.case().recipe;
+    let values_yaml = test_util::read_testdata(recipe.values_path)?;
+    let schema = generate::template_schema_with_values(&recipe, &values_yaml)?;
     let errors = validate_values_yaml(&values_yaml, &schema)?;
     color_eyre::eyre::ensure!(
         errors.is_empty(),
@@ -331,15 +218,12 @@ pub fn assert_helm_render_case(case: &HelmRenderCase<'_>) -> eyre::Result<()> {
 }
 
 pub fn assert_schema_behavior_case(case: &SchemaBehaviorCase<'_>) -> eyre::Result<()> {
-    let schema = render_schema_case(&case.schema_case)?;
+    let schema = generate::template_schema(&case.schema_case.case().recipe)?;
     // Expectations are sparse OVERRIDES over the chart's declared defaults:
     // helm validates the coalesced document, so a template that navigates
     // `.Values.x.y` aborts on a document missing `x` — the state a user's
     // `null` deletion produces, which is pinned separately.
-    let defaults = match case.schema_case.fixture_values_yaml {
-        Some(values_yaml) => values_yaml.to_string(),
-        None => test_util::read_testdata(case.schema_case.values_path)?,
-    };
+    let defaults = registered_values_yaml(case.schema_case)?;
     let defaults: Value = serde_yaml::from_str::<serde_yaml::Value>(&defaults)
         .ok()
         .and_then(|doc| serde_json::to_value(doc).ok())
@@ -354,7 +238,7 @@ pub fn assert_schema_behavior_case(case: &SchemaBehaviorCase<'_>) -> eyre::Resul
             have: accepted,
             want: expectation.accepted,
             "{}: {}. schema={schema}",
-            case.schema_case.dump_stem, expectation.message
+            case.schema_case.case().dump_stem, expectation.message
         );
     }
     Ok(())

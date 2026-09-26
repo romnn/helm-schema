@@ -5,7 +5,7 @@ use serde_json::Value;
 /// coalesces them, and return the document a schema validates.
 pub fn with_override(chart_relative_path: &str, override_value: Value) -> eyre::Result<Value> {
     test_util::helm_values::coalesce_chart_values(
-        &crate::schema_roundtrip::physical_chart_dir(chart_relative_path),
+        &helm_schema_test_support::generate::chart_dir(chart_relative_path),
         override_value,
     )
 }

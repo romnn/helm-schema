@@ -12,8 +12,10 @@
 # with downloads disabled, which is what lets `retries = 0` mean something
 # there: a failure is a real defect, and retrying would only hide it.
 #
-# The `ci` profile runs ALL classes — `task test:all` means all — with the
-# network settings applied per-binary through an override.
+# The `ci` profile runs ALL classes in one invocation (`cargo tci`), with the
+# network settings applied per-binary through an override. `task test:all`
+# instead runs the default, integration and network profiles once each, so
+# the integration run can consume the corpus producer's artifacts.
 #
 # `period` is when a test is REPORTED slow; `period * terminate-after` is
 # when it is KILLED. Keep those far apart. Whole-chart analysis takes tens of

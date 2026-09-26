@@ -3,18 +3,17 @@
 //! default-values validation live in `chart_corpus.rs`.
 
 use color_eyre::eyre;
+use helm_schema_test_support::{ArtifactId, ChartId};
 use indoc::indoc;
 
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
 #[path = "common/helm_samples.rs"]
 mod helm_samples;
-#[path = "common/schema_roundtrip.rs"]
-mod schema_roundtrip;
 
 #[test]
 fn nats_json_decoded_extra_resources_exclude_integer_iteration() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("nats")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Nats))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
     let resource = serde_json::json!({
@@ -44,7 +43,7 @@ fn nats_json_decoded_extra_resources_exclude_integer_iteration() -> eyre::Result
 
 #[test]
 fn nats_tpl_yaml_sentinels_stay_nested_and_do_not_seed_root_properties() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("nats")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Nats))?;
 
     assert!(
         schema.pointer("/properties/$tplYaml").is_none()
@@ -81,7 +80,7 @@ fn nats_tpl_yaml_sentinels_stay_nested_and_do_not_seed_root_properties() -> eyre
 /// under `helm template` on the vendored chart.
 #[test]
 fn nats_wrapper_results_must_be_compatible_with_their_sinks() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("nats")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Nats))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
     for (overrides, want) in [
         // Replace programs at the item node: Helm decodes each rendered
@@ -177,7 +176,7 @@ fn nats_wrapper_results_must_be_compatible_with_their_sinks() -> eyre::Result<()
 /// node's ordinary domain.
 #[test]
 fn nats_program_wrappers_inhabit_typed_leaves() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("nats")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Nats))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
     for (overrides, want) in [
         (
@@ -222,7 +221,7 @@ fn nats_program_wrappers_inhabit_typed_leaves() -> eyre::Result<()> {
 /// under `helm template` on the vendored chart.
 #[test]
 fn nats_jsonpatch_ops_bind_through_the_helper_range() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("nats")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Nats))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
     for (overrides, want) in [
         (
@@ -266,7 +265,7 @@ fn nats_jsonpatch_ops_bind_through_the_helper_range() -> eyre::Result<()> {
 /// all polarities verified under `helm template` on the vendored chart.
 #[test]
 fn nats_jsonpatch_per_op_requirements_bind_through_the_helper_range() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("nats")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Nats))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
     for (patch, want) in [
         (
@@ -322,7 +321,7 @@ fn nats_jsonpatch_per_op_requirements_bind_through_the_helper_range() -> eyre::R
 /// polarity verified under `helm template` on the vendored chart.
 #[test]
 fn nats_pre_rewrite_strict_consumers_reject_wrapper_programs() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("nats")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Nats))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
     for (overrides, want) in [
         (

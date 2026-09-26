@@ -1,5 +1,6 @@
 [package]
-name = "helm-schema-gen"
+name = "helm-schema-test-support"
+publish = false
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -12,28 +13,25 @@ categories.workspace = true
 [lints]
 workspace = true
 
-[features]
-bench-support = []
-
 [dependencies]
+color-eyre.workspace = true
 thiserror.workspace = true
+indoc.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 serde_yaml.workspace = true
-regex.workspace = true
 sha2.workspace = true
-tracing.workspace = true
-jsonschema.workspace = true
-helm-schema-json-schema-walk.workspace = true
+tempfile.workspace = true
+vfs.workspace = true
 
-helm-schema-core.workspace = true
-
-[dev-dependencies]
-color-eyre.workspace = true
-indoc.workspace = true
-test-util.workspace = true
-helm-schema-test-support.workspace = true
-similar-asserts = "2"
+helm-schema.workspace = true
 helm-schema-ast.workspace = true
+helm-schema-core.workspace = true
+helm-schema-gen.workspace = true
 helm-schema-ir.workspace = true
+helm-schema-json-schema-minify.workspace = true
 helm-schema-k8s.workspace = true
+test-util.workspace = true
+
+[build-dependencies]
+sha2.workspace = true

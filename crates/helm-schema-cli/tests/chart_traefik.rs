@@ -5,15 +5,14 @@
 //! full-schema pin live in `chart_corpus.rs`.
 
 use color_eyre::eyre;
+use helm_schema_test_support::{ArtifactId, ChartId};
 
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
-#[path = "common/schema_roundtrip.rs"]
-mod schema_roundtrip;
 
 #[test]
 fn traefik_log_root_is_required_by_the_otlp_guard_chain() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("traefik")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Traefik))?;
     let validator = jsonschema::validator_for(&schema)?;
     let instance = chart_instances::with_override("traefik", serde_json::json!({ "log": null }))?;
 
@@ -26,7 +25,7 @@ fn traefik_log_root_is_required_by_the_otlp_guard_chain() -> eyre::Result<()> {
 
 #[test]
 fn traefik_plugin_validator_holds() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("traefik")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Traefik))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
     // Compose over the chart defaults: helm validates the coalesced
@@ -77,7 +76,7 @@ fn traefik_plugin_validator_holds() -> eyre::Result<()> {
 /// dormant.
 #[test]
 fn traefik_http3_terminal_binds_through_the_services_overlay() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("traefik")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Traefik))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
     let bad_port = serde_json::json!({
@@ -126,7 +125,7 @@ fn traefik_http3_terminal_binds_through_the_services_overlay() -> eyre::Result<(
 /// object member with an exposed port renders.
 #[test]
 fn traefik_additional_service_members_must_be_mappings() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("traefik")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Traefik))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
     for (override_, want, label) in [
@@ -182,7 +181,7 @@ fn traefik_additional_service_members_must_be_mappings() -> eyre::Result<()> {
 /// provider bundle is the rejecting stage.
 #[test]
 fn traefik_local_plugin_mount_paths_bind_provider_presence() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("traefik")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Traefik))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
     let plugins = |value: serde_json::Value| {
@@ -251,7 +250,7 @@ fn traefik_local_plugin_mount_paths_bind_provider_presence() -> eyre::Result<()>
 /// `propertyNames`, scoped to the gateway-live branch.
 #[test]
 fn traefik_listener_keys_carry_the_provider_section_name_domain() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("traefik")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Traefik))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
     // Cases compose over the chart defaults: helm validates the coalesced

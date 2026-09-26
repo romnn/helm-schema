@@ -5,15 +5,14 @@
 //! Values validation and the full-schema pin live in `chart_corpus.rs`.
 
 use color_eyre::eyre;
+use helm_schema_test_support::{ArtifactId, ChartId};
 
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
-#[path = "common/schema_roundtrip.rs"]
-mod schema_roundtrip;
 
 #[test]
 fn sealed_secrets_ranged_namespaces_domain_holds() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("sealed-secrets")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::SealedSecrets))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
     // Cases compose over the chart defaults: helm validates the coalesced

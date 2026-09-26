@@ -7,19 +7,21 @@ mod common;
 use color_eyre::eyre::{self, OptionExt as _};
 use common::cases;
 use helm_schema_k8s::{Chain, Diagnostic, DiagnosticSink};
+use helm_schema_test_support::TemplateId;
+use helm_schema_test_support::generate;
 
 #[test]
 fn schema_fixtures_match() -> eyre::Result<()> {
-    for case in cases::STANDARD_SCHEMA_CASES {
-        common::assert_schema_fixture(case)?;
+    for id in TemplateId::ALL {
+        common::assert_schema_fixture(*id)?;
     }
     Ok(())
 }
 
 #[test]
 fn values_yaml_validates_against_generated_schemas() -> eyre::Result<()> {
-    for case in cases::VALUES_VALIDATION_CASES {
-        common::assert_values_yaml_validates(case)?;
+    for id in TemplateId::ALL {
+        common::assert_values_yaml_validates(*id)?;
     }
     Ok(())
 }
@@ -119,10 +121,10 @@ rendered_manifest_validation_test!(
 
 #[test]
 fn warns_when_hpa_v2beta1_schema_missing_in_newer_k8s_bundle() -> eyre::Result<()> {
-    let case = cases::SURVEYOR_HPA;
-    let src = test_util::read_testdata(case.template_path)?;
-    let values_yaml = test_util::read_testdata(case.values_path)?;
-    let idx = common::build_define_index(case.define_sources, case.helper_parse_mode)?;
+    let recipe = TemplateId::SurveyorHpa.case().recipe;
+    let src = test_util::read_testdata(recipe.template_path)?;
+    let values_yaml = test_util::read_testdata(recipe.values_path)?;
+    let idx = generate::define_index(recipe.define_sources)?;
     let ir = helm_schema_ir::SymbolicIrContext::new(&idx).generate_contract_ir(&src);
 
     let diagnostics = DiagnosticSink::new();
@@ -130,10 +132,10 @@ fn warns_when_hpa_v2beta1_schema_missing_in_newer_k8s_bundle() -> eyre::Result<(
     // so the "missing schema" warning is reproduced from disk rather than by
     // asking upstream on every run.
     let k8s_provider =
-        common::bundled_k8s_provider("v1.35.0").with_diagnostic_sink(diagnostics.clone());
+        generate::bundled_k8s_provider("v1.35.0").with_diagnostic_sink(diagnostics.clone());
     let chain = Chain::new(vec![Box::new(k8s_provider)]).with_diagnostic_sink(diagnostics.clone());
 
-    let _schema = common::generate_schema_with_values_yaml(ir, &chain, Some(&values_yaml));
+    let _schema = generate::values_schema(ir, &chain, Some(&values_yaml));
 
     let actual = diagnostics.snapshot();
     let hint = actual

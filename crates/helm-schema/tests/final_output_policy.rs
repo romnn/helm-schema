@@ -3,34 +3,33 @@
 use std::path::Path;
 
 use color_eyre::eyre::{self, WrapErr as _};
-use helm_schema::generation::{GenerateOptions, SchemaProfile};
 use helm_schema::output::{
     EmitRequest, FetchPolicy, LoadBudget, OutputPipelineOptions, PolicyInputOptions,
     ReferencePolicy,
 };
-use helm_schema::provider::ProviderOptions;
+use helm_schema_test_support::generate;
+use helm_schema_test_support::registry::{ArtifactId, ArtifactTarget, PolicyId};
 use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
-use vfs::VfsPath;
-
-const CHART: &str = "schema-emission-controls";
 
 #[test]
 fn final_outputs_match_policy_annotation_fixtures() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
-    let full_session = profile_session(SchemaProfile::Full, false);
-    let lean_session = profile_session(SchemaProfile::Lean, false);
-    let full = full_session.emit(emit_request(ReferencePolicy::SelfContained))?;
-    let lean = lean_session.emit(emit_request(ReferencePolicy::SelfContained))?;
+    let full_recipe = PolicyId::Full.recipe();
+    let lean_recipe = PolicyId::Lean.recipe();
+    let full_session = generate::policy_session(&full_recipe);
+    let lean_session = generate::policy_session(&lean_recipe);
+    let full = generate::emit_policy(&full_session, &full_recipe)?;
+    let lean = generate::emit_policy(&lean_session, &lean_recipe)?;
 
-    assert_fixture("full", &full)?;
-    assert_fixture("lean", &lean)?;
+    assert_fixture(PolicyId::Full, &full)?;
+    assert_fixture(PolicyId::Lean, &lean)?;
     sim_assert_eq!(
         have: full_session.generated_schema()?.schema.get("x-helm-schema-policy"),
         want: None
     );
 
-    let repeated = lean_session.emit(emit_request(ReferencePolicy::SelfContained))?;
+    let repeated = generate::emit_policy(&lean_session, &lean_recipe)?;
     sim_assert_eq!(have: repeated, want: lean);
     Ok(())
 }
@@ -38,30 +37,22 @@ fn final_outputs_match_policy_annotation_fixtures() -> eyre::Result<()> {
 #[test]
 fn overrides_cannot_forge_policy_annotations_or_boolean_root_identity() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
-    let session = profile_session(SchemaProfile::Full, false);
-    let tempdir = tempfile::tempdir().wrap_err("create final-output fixture directory")?;
+    let caller_recipe = PolicyId::CallerOverwrite.recipe();
+    let boolean_recipe = PolicyId::BooleanFalse.recipe();
+    // One session serves both overrides: override loading is an output-stage
+    // concern and must not depend on a fresh analysis.
+    sim_assert_eq!(have: boolean_recipe.chart, want: caller_recipe.chart);
+    let session = generate::policy_session(&caller_recipe);
 
-    let caller_path = tempdir.path().join("caller.json");
-    std::fs::write(
-        &caller_path,
-        serde_json::to_vec(&json!({
-            "x-helm-schema-generated": false,
-            "x-helm-schema-policy": { "forged": true },
-            "description": "caller override"
-        }))?,
-    )
-    .wrap_err("write caller override")?;
-    let caller = emit_with_override(&session, &caller_path, ReferencePolicy::PreserveRefs)?;
-    assert_fixture("caller-overwrite", &caller)?;
+    let caller = generate::emit_policy(&session, &caller_recipe)?;
+    assert_fixture(PolicyId::CallerOverwrite, &caller)?;
     sim_assert_eq!(
         have: caller["x-helm-schema-policy"]["requested-profile"].clone(),
         want: json!("full")
     );
 
-    let boolean_path = tempdir.path().join("boolean.json");
-    std::fs::write(&boolean_path, b"false\n").wrap_err("write Boolean override")?;
-    let boolean = emit_with_override(&session, &boolean_path, ReferencePolicy::SelfContained)?;
-    assert_fixture("boolean-false", &boolean)?;
+    let boolean = generate::emit_policy(&session, &boolean_recipe)?;
+    assert_fixture(PolicyId::BooleanFalse, &boolean)?;
     let validator = jsonschema::validator_for(&boolean)?;
     sim_assert_eq!(have: validator.is_valid(&json!({})), want: false);
     Ok(())
@@ -70,12 +61,23 @@ fn overrides_cannot_forge_policy_annotations_or_boolean_root_identity() -> eyre:
 #[test]
 fn narrowing_and_reference_modifiers_change_the_policy_fingerprint() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
-    let ordinary = profile_session(SchemaProfile::Full, false)
-        .emit(emit_request(ReferencePolicy::SelfContained))?;
-    let narrowed = profile_session(SchemaProfile::Full, true)
-        .emit(emit_request(ReferencePolicy::SelfContained))?;
-    let preserved = profile_session(SchemaProfile::Full, false)
-        .emit(emit_request(ReferencePolicy::PreserveRefs))?;
+    let ordinary_recipe = PolicyId::Full.recipe();
+    let mut narrowed_recipe = ordinary_recipe;
+    narrowed_recipe.chart.infer_required = true;
+    let mut preserved_recipe = ordinary_recipe;
+    preserved_recipe.reference_policy = ReferencePolicy::PreserveRefs;
+    let ordinary = generate::emit_policy(
+        &generate::policy_session(&ordinary_recipe),
+        &ordinary_recipe,
+    )?;
+    let narrowed = generate::emit_policy(
+        &generate::policy_session(&narrowed_recipe),
+        &narrowed_recipe,
+    )?;
+    let preserved = generate::emit_policy(
+        &generate::policy_session(&preserved_recipe),
+        &preserved_recipe,
+    )?;
 
     sim_assert_eq!(
         have: narrowed["x-helm-schema-policy"]["narrowing"].clone(),
@@ -94,7 +96,10 @@ fn override_loading_and_root_validation_precede_chart_generation() -> eyre::Resu
     let override_path = tempdir.path().join("invalid-override.json");
     std::fs::write(&override_path, b"null\n").wrap_err("write invalid override")?;
     let missing_chart = tempdir.path().join("missing-chart");
-    let session = profile_session_at(&missing_chart, SchemaProfile::Full, false);
+    let session = helm_schema::AnalysisSession::new(generate::generate_options_at(
+        &missing_chart,
+        &PolicyId::Full.recipe().chart,
+    ));
 
     let error = emit_with_override(&session, &override_path, ReferencePolicy::PreserveRefs)
         .expect_err("invalid override root should fail before chart generation");
@@ -148,62 +153,23 @@ fn emit_request(reference_policy: ReferencePolicy) -> EmitRequest {
     }
 }
 
-fn profile_session(profile: SchemaProfile, infer_required: bool) -> helm_schema::AnalysisSession {
-    let chart_dir = test_util::workspace_testdata().join("charts").join(CHART);
-    profile_session_at(&chart_dir, profile, infer_required)
-}
-
-fn profile_session_at(
-    chart_dir: &Path,
-    profile: SchemaProfile,
-    infer_required: bool,
-) -> helm_schema::AnalysisSession {
-    let chart_dir = chart_dir.to_string_lossy().to_string();
-    helm_schema::AnalysisSession::new(GenerateOptions {
-        chart_dir: VfsPath::new(vfs::PhysicalFS::new(&chart_dir)),
-        include_tests: false,
-        include_subchart_values: true,
-        values_files: Vec::new(),
-        infer_required,
-        emission: profile.into(),
-        provider: ProviderOptions {
-            k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],
-            k8s_schema_cache_dir: Some(
-                test_util::workspace_testdata()
-                    .join("provider-bundle/kubernetes-json-schema-cache"),
-            ),
-            allow_net: false,
-            crd_catalog_cache_dir: Some(
-                test_util::workspace_testdata().join("provider-bundle/crds-catalog-cache"),
-            ),
-            disable_k8s_schemas: false,
-            crd_override_dir: Some(
-                test_util::workspace_testdata().join("provider-bundle/crds-catalog-cache"),
-            ),
-            ..Default::default()
-        },
-    })
-}
-
-fn assert_fixture(name: &str, actual: &Value) -> eyre::Result<()> {
-    let fixture_path = test_util::workspace_testdata()
-        .join("final-output-schemas")
-        .join(format!("{name}.schema.json"));
-    if std::env::var("SCHEMA_DUMP").is_ok() {
-        let dump_path =
-            std::env::temp_dir().join(format!("helm-schema.final-output.{name}.schema.json"));
-        let mut bytes = serde_json::to_vec_pretty(actual).wrap_err("serialize final output")?;
-        bytes.push(b'\n');
-        std::fs::write(&dump_path, bytes)
-            .wrap_err_with(|| format!("write {}", dump_path.display()))?;
-        return Ok(());
-    }
+fn assert_fixture(id: PolicyId, actual: &Value) -> eyre::Result<()> {
+    let spec = ArtifactId::FinalPolicy(id).spec();
+    let ArtifactTarget::Fixture(fixture) = &spec.target else {
+        eyre::bail!("{id:?} is registered without a fixture");
+    };
+    let fixture_path = test_util::workspace_root().join(fixture);
     let expected: Value = serde_json::from_str(
         &std::fs::read_to_string(&fixture_path)
             .wrap_err_with(|| format!("read {}", fixture_path.display()))?,
     )
     .wrap_err_with(|| format!("parse {}", fixture_path.display()))?;
-    sim_assert_eq!(have: actual, want: &expected, "{name}: final output fixture mismatch");
+    sim_assert_eq!(
+        have: actual,
+        want: &expected,
+        "{}: final output fixture mismatch",
+        id.name()
+    );
     Ok(())
 }
 

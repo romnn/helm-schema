@@ -5,6 +5,7 @@
 //! so a fixture regeneration cannot silently pin a regression.
 
 use color_eyre::eyre;
+use helm_schema_test_support::{ArtifactId, ChartId};
 
 use std::collections::BTreeSet;
 
@@ -14,8 +15,6 @@ mod chart_instances;
 mod descriptions;
 #[path = "common/helm_samples.rs"]
 mod helm_samples;
-#[path = "common/schema_roundtrip.rs"]
-mod schema_roundtrip;
 #[path = "common/values_yaml.rs"]
 mod values_yaml;
 
@@ -28,7 +27,7 @@ use serde_json::{Map, Value};
     reason = "the chart-wide semantic assertions are clearest in one generated-schema regression"
 )]
 fn signoz_signoz_schema_semantics_hold() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("signoz-signoz")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::SignozSignoz))?;
     assert_schema_description(
         &schema,
         "/properties/alertmanager/properties/ingress/properties/enabled/description",
