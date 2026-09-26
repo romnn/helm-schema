@@ -4635,4 +4635,24 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   previous CLI sweep design would have needed 13–40 h for the same roster. Strict closures
   3/83 (unchanged: F23's closures were counted in round 7; the roster changes are test-only).
 
+- 01:40 (Sep 27) — **User directions after landing 1: land every queued near-ready landing on the
+  fast chain; do not skip any row in the sweep; land the follow-up perf work too.** Launched:
+  (1) landing-2 assembler (Opus, `round8-landing2` off c02c01f8, target `round7-integrate`):
+  producer → perf1 → naming (code only; fixture lanes adopt at dump) → coalescer, `--3way`, one
+  commit per patch, `conflicts.md`, gates fmt/unit/lint/lint:fc/targeted integration; no
+  landing step. (2) Runner v5.1 (runner agent, worktree): the identical-schema skip is DELETED
+  — every roster row runs through helmsweep (the 96 identical rows are the cheap charts; the
+  user's point: a skipped chart can silently never run; the skip's soundness argument — equal
+  schema bytes ⇒ equal verdict — is retired in favour of running everything) plus
+  `GOTMPDIR`/`TMPDIR` under `$TARGET`, bound in the receipt; red-then-green; full run-all.
+  (3) helmsweep `documents`/render server mode + battery in-process renders (helmsweep agent,
+  `round8-battery-go` off c02c01f8, target `round7-f4`): replaces ~8,000 CLI spawns per battery
+  with requests to a resident helmsweep (memoized compiles, same cleared env, same abnormal
+  rules); cache key binds the helmsweep identity; CLI mode kept behind an env switch for
+  parity; proof = `coverage.json` + 62 assertion items identical to landing 1's battery and
+  HELM_FLIP lines identical between modes; Go `-race` + Rust client tests; timings. Cost model
+  for "run everything": fast pass on all 2,036 rows ≈ 15–17 min (identical rows are cheap
+  charts); running every row through the real CLI would be the old 13–40 h, so the CLI
+  differential stays a sample (k=100 per chart + ≤3 differing + all unresolved).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
