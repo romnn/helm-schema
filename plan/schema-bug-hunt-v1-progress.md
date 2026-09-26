@@ -4118,4 +4118,25 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   candidates land on the fast battery; F23 follows immediately. No new builders launched
   (load 56–62; the pool's battery and the okteto intake are the critical path).
 
+- 15:10 — **Heartbeat: coalescer and producer reviews both REWORK; agents resumed.** Coalescer
+  (sol): mechanism, Helm findings, YAML 1.1 refusals, `Rc<RefCell>` aliasing and typed errors
+  CONFIRMED; three corrections — (1) order-sensitive dependency results (two undeclared children
+  writing the same shared `global` table path; Helm iterates a Go map, the port sorts by name)
+  must return `ValuesError::Unmodelled`; (2) unreachable probes need a typed
+  `Reachable`/`Unreachable(reason)` outcome recorded separately with a reachable-coverage floor,
+  not a battery failure; (3) chart_reaudit.rs:95's general `NotValidated` → lint-raw fallback
+  hides aborts — assert the expected aborts for the two scalar-root cases; gate integration
+  points listed. Producer (astra): structure right; three P1s — a stale producer executable can
+  certify current source (embed build provenance at compile time and verify it in `consume`),
+  the local-generation branch skips full fixture equality (add `sim_assert_eq!` against the
+  committed fixture), no complete-manifest validator (exact registry membership, duplicates,
+  files, provenance before consumption and adoption); P2 input digests captured before dispatch
+  and rechecked before publication; digest coverage tightened (`.cargo/config.toml`, whole
+  non-test source dirs, drop over-inclusions, bind the local-override root identity); no global
+  lock explains the slow producer (870 s wall vs 711 s CPU under load 63–76) — `--only <id>` and
+  a job budget for a controlled comparison. Both agents resumed with the exact lists. State: pool
+  battery (6 Helm workers) and okteto intake still running; W4 on F75; W1 on F2; F1; B6 stack;
+  govalidate; frontend phase 1; runner fixes; old sweep 1,730 rows, lock still held. Strict
+  closures 3/83.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
