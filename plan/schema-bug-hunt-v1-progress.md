@@ -4139,4 +4139,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   govalidate; frontend phase 1; runner fixes; old sweep 1,730 rows, lock still held. Strict
   closures 3/83.
 
+- 15:30 — **Heartbeat (quiet).** Perf1 rework accepted: documents with any non-local `$ref`/
+  `$dynamicRef`/`$recursiveRef` or a `$schema` key bypass the memo and compile fresh (red test
+  with a rewritten `file://` target fails on the old memo, exit 100; passes now), the entry-reuse
+  test renamed honestly, `accepts` merged into one path, chart_corpus 157/157 byte-identical,
+  +7 core LOC (`round8-perf1-evidence`, 42df7e85 → 52695528) — ready for the combined
+  test-infra landing. Running: pool full battery (5–6 Helm workers, `round8-pool-evidence/
+  full-battery`), okteto intake battery, coalescer rework, producer rework, W1 (F2 + rework),
+  W4 (F75), F1 policy, B6 stack gates, govalidate, frontend phase 1, runner fixes; old sweep
+  1,758 rows, lock still held. Load 52–59. Strict closures 3/83.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
