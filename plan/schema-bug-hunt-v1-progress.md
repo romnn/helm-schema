@@ -3988,4 +3988,58 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   OpenShift CRD evidence). Claude work account at 87% weekly (subagents run on it; Fable at
   68%) — flagged to the user. Strict closures 3/83.
 
+- 14:30 — **Heartbeat: batch thirteen complete (10/10); corrections forwarded; two structural
+  findings for the user.** Cross-checks forwarded to their implementers: F2 (astra → W1 agent:
+  `guard_implies_present_at` at requirements.rs:2419 equates membership with non-null and
+  suppresses the nil-abort clause — fix first; Helm `required` accepts false/0/{}/[]; `dig`
+  null intermediate aborts; kyverno/velero reject EVERY present legacy key → `not:{required}`;
+  declared-null defaults can survive nested coalescing; extra implications; `Absent` evaluator
+  at condition_encoding.rs:1017 ignores null); F1 (sol → F1 agent: admit BOTH root `global.x`
+  and `<alias>.global.x`; `has_referenced_descendants` is a hint not a proof; under `annotate`
+  keep declared shape as resolver CONTEXT (resolve_policy.rs:685 chooses input typing over
+  provider output) and drop only declaration-only emitted assertions; expect fixture diffs
+  beyond the 59 root additions); F75 (sol → W4 agent: lower BOTH `lower_scalar_dispatch` and
+  `lower_scalar_dispatch_arms` with an opaque arm; make the templated regex route abstain for
+  `tpl` output; `length_exceeds_subset` returns a `Predicate`; consumer audit); perf1 (sol:
+  REWORK — `resolve-file` is enabled so `Value`-equal documents with an external `$ref` can
+  compile differently; bypass the memo unless the document is self-contained; rename the
+  "compiles once" test to "entry reuse") → perf1 agent resumed. F6 cross-check (astra): the
+  evaluator executes unknown-length ranges ONCE (no fixpoint), so `[] ⊔ [X]` proves
+  empty-or-singleton, not repetition — a structural proof of self-preserving append is needed;
+  prefer `RepeatedList(Box<AbstractValue>)` beside exact `List`; 60 production consumer lines
+  classified (abstain / use item shape / unaffected); `append`/`prepend`/`concat` synthesize
+  representative elements so "List means exact" is not an enforced invariant today. Determinism
+  audit (sol): no process-to-process byte nondeterminism found in production; `serde_json`
+  `preserve_order` is NOT enabled (maps are key-sorted); four guards to add (version-rank ties
+  in `filename.rs:79`, diagnostic sink first-payload-wins, sorted `read_dir` in the cache scan)
+  and one cheap regression test (run the CLI twice in fresh processes for three charts, compare
+  bytes). MLS round-6 brief (sol): keep `LiteralKey` effects extended with path provenance and
+  survival conditions, keep `MergedLayers` as the grouped tree with per-call mode, DELETE the
+  `merge_all` route (collections.rs:1294/1355), `unclassified` = uncertainty (open the member),
+  mergo `isEmptyValue` semantics spelled out, ten red-first tiny charts with full schemas and
+  Helm/K8s verdicts. **Two structural findings:** (a) D5 rework design (sol) and the
+  line-heuristics audit (astra) agree: YAML ownership in the syntax/IR frontend is decided from
+  SOURCE-LINE shape (15 violations of the "parsers over string heuristics" rule: indentation
+  ⇒ parentage, block headers via `starts_with('|')`, block extent/adoption repairs, mapping
+  scope from raw text, quote-state scanner, `---` boundaries ignoring scalar context, helper
+  output trims, resource identity from raw spellings, physical-line truncation, the colon
+  scanner, `starts_with("{{-")` mis-trimming `{{-3}}`, textual control-keyword reparsing, a
+  `.yaml` filename enabling embedded-YAML contracts; 22 reparsing sites) — the fix is ONE
+  guarded rendered-layout skeleton per control arm (exact literals + typed holes + CST trim
+  effects + a YAML parse with provenance; `Uncertain` where a placeholder could change the
+  parse; `tree-sitter-yaml` justified only if it REPLACES the line parser), estimated
+  +900–1,500 / −1,300–2,100 LOC (net −1,200…+200) — a multi-day frontend refactor that is the
+  root cause of the D5 class; small D5 patches would add more line heuristics → USER DECISION:
+  start it now as a dedicated track or after the campaign; (b) runner v2 is NOT fail-closed
+  (astra: 14 findings incl. finalization racing a rerun, manifest identity never enforced,
+  render control not schema-free (no `--skip-schema-validation`, schema symlinks, nested
+  archives), exit-1 conflation, lexical path containment for `rm -rf`, substring lock-token
+  match) → **runner-fix agent launched** (round8 repo branch, red-first shell/unittest tests;
+  ship() stays the fail-safe Python mirror and the sweep refuses when a third rung would be
+  needed). W4 rework accepted (overlay guard pinned; the reviewer's cell was not red because
+  fail lowering already drops wildcard arms; `eq $.Values.count 1` float64-vs-int abort recorded
+  as an F5-class transport residual); W4 agent resumed on F75. Perf1 review otherwise green.
+  State: 8 builders + runner agent; old sweep 1,699 rows still holding the lock (12 h); okteto
+  intake mid-battery. Strict closures 3/83.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
