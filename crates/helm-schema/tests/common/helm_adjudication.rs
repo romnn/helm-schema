@@ -860,6 +860,35 @@ impl OfflineKubernetesValidator {
         Ok(evaluated)
     }
 
+    /// The shared compiled schema of `apiVersion`/`kind`, compiled once.
+    fn compiled_validator(
+        &self,
+        api_version: &str,
+        kind: &str,
+    ) -> Result<Arc<jsonschema::Validator>, String> {
+        let key = (api_version.to_string(), kind.to_string());
+        let group = api_version.split_once('/').map_or("", |(group, _)| group);
+        // Hold the map only to find the cell; compile outside it.
+        let cell = self
+            .schemas
+            .0
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .entry(key)
+            .or_default()
+            .clone();
+        cell.get_or_init(|| {
+            match &self.crds {
+                Some(crds) if !is_k8s_builtin_group(group) => {
+                    compile_crd_validator(crds, api_version, kind)
+                }
+                _ => compile_resource_validator(&self.provider, api_version, kind),
+            }
+            .map(Arc::new)
+        })
+        .clone()
+    }
+
     fn validate_document(&self, document: &Value, location: &str, evidence: &mut ResourceEvidence) {
         if let Some(error) = document.get("Error") {
             evidence.uncertain.push(format!(
@@ -892,26 +921,7 @@ impl OfflineKubernetesValidator {
                 self.validate_document(item, &format!("{location}/items/{index}"), evidence);
             }
         }
-        let key = (api_version.to_string(), kind.to_string());
-        let group = api_version.split_once('/').map_or("", |(group, _)| group);
-        // Hold the map only to find the cell; compile outside it.
-        let cell = self
-            .schemas
-            .0
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner)
-            .entry(key)
-            .or_default()
-            .clone();
-        let validator = cell.get_or_init(|| {
-            match &self.crds {
-                Some(crds) if !is_k8s_builtin_group(group) => {
-                    compile_crd_validator(crds, api_version, kind)
-                }
-                _ => compile_resource_validator(&self.provider, api_version, kind),
-            }
-            .map(Arc::new)
-        });
+        let validator = self.compiled_validator(api_version, kind);
         let name = document
             .pointer("/metadata/name")
             .and_then(Value::as_str)
@@ -920,7 +930,7 @@ impl OfflineKubernetesValidator {
             .pointer("/metadata/namespace")
             .and_then(Value::as_str)
             .map(str::to_string);
-        match validator {
+        match &validator {
             Ok(validator) => {
                 for error in validator.iter_errors(document) {
                     evidence.invalid.push(KubernetesViolation {

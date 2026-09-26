@@ -246,7 +246,17 @@ fn identical_invocations_replay_and_changed_inputs_execute() -> eyre::Result<()>
         "the Kubernetes version reaches the render"
     );
 
-    // An ordinary Helm failure is a completed execution and replays as one.
+    Ok(())
+}
+
+/// An ordinary Helm failure is a completed execution and replays as one; a
+/// bypassed chart always executes; a runner without replay never replays.
+#[test]
+fn failures_replay_and_bypassed_or_private_invocations_execute() -> eyre::Result<()> {
+    let root = tempfile::tempdir()?;
+    let runner = HelmRunner::new(root.path(), true)?;
+    let chart = publish_chart(&runner, "value: default\n")?;
+    let cacheable = Cacheability::Cacheable;
     let failed = render(
         &runner,
         &chart,
@@ -271,7 +281,6 @@ fn identical_invocations_replay_and_changed_inputs_execute() -> eyre::Result<()>
     );
     sim_assert_eq!(have: failed_again.outcome, want: Outcome::Replayed);
 
-    // A bypassed chart always executes; a runner without replay never replays.
     let bypass = Cacheability::Bypass("calls now".to_string());
     for _ in 0..2 {
         let bypassed = render(

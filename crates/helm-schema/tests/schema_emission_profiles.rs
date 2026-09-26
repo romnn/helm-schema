@@ -527,60 +527,75 @@ fn helm_adjudication_records_each_outcome_once() {
     }));
 }
 
-/// The roster matches each false acceptance by chart, probe, rejection and
-/// how the baseline rejected it, and a probe of an adjudicated chart that no
-/// longer fails alike must be removed.
-#[test]
-fn known_false_acceptances_are_matched_by_the_roster() -> eyre::Result<()> {
-    const LISTED: &[Probe] = &[
-        Probe {
-            path: "a.b",
-            value: "non-coercible string",
-        },
-        Probe {
-            path: "c",
-            value: "non-coercible string",
-        },
-    ];
-    const WITH_FIXED: &[Probe] = &[
-        Probe {
-            path: "a.b",
-            value: "non-coercible string",
-        },
-        Probe {
-            path: "c",
-            value: "non-coercible string",
-        },
-        Probe {
-            path: "fixed",
-            value: "non-coercible string",
-        },
-    ];
-    const INFORMED: &[Probe] = &[Probe {
-        path: "d",
-        value: "null deletion",
-    }];
-    let group = |chart, rejection, baseline, probes| KnownFalseAcceptances {
+const ROSTER_LISTED: &[Probe] = &[
+    Probe {
+        path: "a.b",
+        value: "non-coercible string",
+    },
+    Probe {
+        path: "c",
+        value: "non-coercible string",
+    },
+];
+const ROSTER_WITH_FIXED: &[Probe] = &[
+    Probe {
+        path: "a.b",
+        value: "non-coercible string",
+    },
+    Probe {
+        path: "c",
+        value: "non-coercible string",
+    },
+    Probe {
+        path: "fixed",
+        value: "non-coercible string",
+    },
+];
+const ROSTER_INFORMED: &[Probe] = &[Probe {
+    path: "d",
+    value: "null deletion",
+}];
+
+fn roster_group(
+    chart: &'static str,
+    rejection: Rejection,
+    baseline: Baseline,
+    probes: &'static [Probe],
+) -> KnownFalseAcceptances {
+    KnownFalseAcceptances {
         chart,
         rejection,
         baseline,
         family: Family::Unfiled,
         probes,
-    };
-    let uninformed = |probes| {
-        group(
-            "chart",
-            Rejection::HelmAborts,
-            Baseline::RejectsItsDefaults,
-            probes,
-        )
-    };
-    let informed = group(
+    }
+}
+
+/// Helm aborts behind a baseline rejecting `chart`'s own defaults alike.
+fn uninformed_group(probes: &'static [Probe]) -> KnownFalseAcceptances {
+    roster_group(
+        "chart",
+        Rejection::HelmAborts,
+        Baseline::RejectsItsDefaults,
+        probes,
+    )
+}
+
+/// Helm aborts behind a baseline rejecting unlike its defaults.
+fn informed_group(probes: &'static [Probe]) -> KnownFalseAcceptances {
+    roster_group(
         "chart",
         Rejection::HelmAborts,
         Baseline::RejectsUnlikeItsDefaults,
-        INFORMED,
-    );
+        probes,
+    )
+}
+
+/// The roster matches each false acceptance by chart, probe, rejection and
+/// how the baseline rejected it, and a probe of an adjudicated chart that no
+/// longer fails alike must be removed.
+#[test]
+fn known_false_acceptances_are_matched_by_the_roster() -> eyre::Result<()> {
     let mut coverage = HelmAdjudicationCoverage::default();
     coverage.charts_adjudicated.insert("chart".to_string());
     for case in [
@@ -596,85 +611,57 @@ fn known_false_acceptances_are_matched_by_the_roster() -> eyre::Result<()> {
         HelmFlipVerdict::CandidateAcceptsHelmAborts,
         "chart: d <- null deletion".to_string(),
     );
-    validate_helm_adjudication_coverage(&coverage, &[uninformed(LISTED), informed], &[])?;
+    validate_helm_adjudication_coverage(
+        &coverage,
+        &[
+            uninformed_group(ROSTER_LISTED),
+            informed_group(ROSTER_INFORMED),
+        ],
+        &[],
+    )?;
     // A chart this run did not adjudicate keeps its entries.
     validate_helm_adjudication_coverage(
         &coverage,
         &[
-            uninformed(LISTED),
-            group(
-                "chart",
-                Rejection::HelmAborts,
-                Baseline::RejectsUnlikeItsDefaults,
-                INFORMED,
-            ),
-            group(
+            uninformed_group(ROSTER_LISTED),
+            informed_group(ROSTER_INFORMED),
+            roster_group(
                 "other",
                 Rejection::HelmAborts,
                 Baseline::RejectsItsDefaults,
-                WITH_FIXED,
+                ROSTER_WITH_FIXED,
             ),
         ],
         &[],
     )?;
     for roster in [
-        vec![uninformed(LISTED)],
+        vec![uninformed_group(ROSTER_LISTED)],
         vec![
-            uninformed(&LISTED[..1]),
-            group(
-                "chart",
-                Rejection::HelmAborts,
-                Baseline::RejectsUnlikeItsDefaults,
-                INFORMED,
-            ),
+            uninformed_group(&ROSTER_LISTED[..1]),
+            informed_group(ROSTER_INFORMED),
         ],
         vec![
-            group(
+            roster_group(
                 "chart",
                 Rejection::KubernetesRejects,
                 Baseline::RejectsItsDefaults,
-                LISTED,
+                ROSTER_LISTED,
             ),
-            group(
-                "chart",
-                Rejection::HelmAborts,
-                Baseline::RejectsUnlikeItsDefaults,
-                INFORMED,
-            ),
+            informed_group(ROSTER_INFORMED),
         ],
         // A cell behind a baseline with its own violations is not the
         // uninformed baseline's, and the reverse.
         vec![
-            uninformed(LISTED),
-            group(
-                "chart",
-                Rejection::HelmAborts,
-                Baseline::RejectsItsDefaults,
-                INFORMED,
-            ),
+            uninformed_group(ROSTER_LISTED),
+            uninformed_group(ROSTER_INFORMED),
         ],
         vec![
-            group(
-                "chart",
-                Rejection::HelmAborts,
-                Baseline::RejectsUnlikeItsDefaults,
-                LISTED,
-            ),
-            group(
-                "chart",
-                Rejection::HelmAborts,
-                Baseline::RejectsUnlikeItsDefaults,
-                INFORMED,
-            ),
+            informed_group(ROSTER_LISTED),
+            informed_group(ROSTER_INFORMED),
         ],
         vec![
-            uninformed(WITH_FIXED),
-            group(
-                "chart",
-                Rejection::HelmAborts,
-                Baseline::RejectsUnlikeItsDefaults,
-                INFORMED,
-            ),
+            uninformed_group(ROSTER_WITH_FIXED),
+            informed_group(ROSTER_INFORMED),
         ],
     ] {
         assert!(validate_helm_adjudication_coverage(&coverage, &roster, &[]).is_err());
@@ -2100,10 +2087,28 @@ fn compare_charts(charts: Vec<ComparedChart>) -> eyre::Result<AcceptanceComparis
             }
         },
     );
+    let mut comparison = fold_results(results, adjudicate_live)?;
+    if let Some(kubernetes) = &kubernetes {
+        kubernetes.verify_bundles_unchanged()?;
+    }
+    comparison.pool = Some(PoolReport {
+        workers: limits.workers,
+        memory_bytes: limits.memory_bytes,
+        peaks,
+        wall_ms: elapsed_ms(started),
+    });
+    Ok(comparison)
+}
+
+/// Folds chart and probe results, already in ordinal order, into one comparison.
+fn fold_results(
+    results: Vec<(helm_pool::Ordinal, AcceptanceResult)>,
+    adjudicate_live: bool,
+) -> eyre::Result<AcceptanceComparison> {
     let mut comparison = AcceptanceComparison::default();
     comparison.helm_adjudication.enabled = adjudicate_live;
     let mut helm_charts = Vec::new();
-    for ((chart, _), result) in results {
+    for (_, result) in results {
         match result {
             AcceptanceResult::Chart(screened) => {
                 let screened = screened?;
@@ -2118,7 +2123,7 @@ fn compare_charts(charts: Vec<ComparedChart>) -> eyre::Result<AcceptanceComparis
                 comparison.helm_adjudication.screened_flips += screened.screened_flips;
                 comparison.coverage.push(screened.coverage);
                 comparison.costs.push(screened.cost);
-                helm_charts.push((chart, screened.helm));
+                helm_charts.push(screened.helm);
             }
             AcceptanceResult::Probe(probe) => {
                 if let Some(cost) = comparison.costs.last_mut() {
@@ -2142,7 +2147,13 @@ fn compare_charts(charts: Vec<ComparedChart>) -> eyre::Result<AcceptanceComparis
             }
         }
     }
-    for ((_, helm), cost) in helm_charts.iter().zip(&mut comparison.costs) {
+    record_helm_costs(&helm_charts, &mut comparison.costs);
+    Ok(comparison)
+}
+
+/// Records each chart's prepared copies and Helm costs in its cost entry.
+fn record_helm_costs(helm_charts: &[Option<std::sync::Arc<ChartHelm>>], costs: &mut [ChartCost]) {
+    for (helm, cost) in helm_charts.iter().zip(costs) {
         let Some(helm) = helm else { continue };
         cost.preparation_ms = helm
             .preparation_ms
@@ -2155,16 +2166,6 @@ fn compare_charts(charts: Vec<ComparedChart>) -> eyre::Result<AcceptanceComparis
             ));
         }
     }
-    if let Some(kubernetes) = &kubernetes {
-        kubernetes.verify_bundles_unchanged()?;
-    }
-    comparison.pool = Some(PoolReport {
-        workers: limits.workers,
-        memory_bytes: limits.memory_bytes,
-        peaks,
-        wall_ms: elapsed_ms(started),
-    });
-    Ok(comparison)
 }
 
 /// The pool a comparison ran on and the most it ran at once.
