@@ -4273,4 +4273,25 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   env `landing-f23.env`: `SWEEP_JOBS=6`, `ACCEPTED_SWEEP_UNRESOLVED='cert-manager=unresolved:
   loader'`. Old sweep 150/156 charts.
 
+- 16:30 — **Coalescer and producer reworks DONE (landing 2 ready); hand-off drafted.** Coalescer
+  (`round8-coalesce-evidence/final.patch` sha 5051d717…, 78 files, HEAD 3923ca9f): (1) order-
+  sensitive results refused — two or more undeclared siblings writing the parent's shared `global`
+  → `ValuesError::Unmodelled` (Helm: 30 runs gave `from-a` 29×, `from-b` 1×; declared deps agree
+  30/30); (2) `Reachable`/`Unreachable(reason)` probe outcome, unreachable probes recorded under
+  `unreachable_probes` and excluded from verdicts, floor = half of a chart's composed probes;
+  (3) `chart_reaudit.rs` general lint-raw fallback removed, datadog and prometheus assert their
+  aborts + a lint-raw rejection; fmt 0, unit 115/115, targeted integration 104/104; `task lint`
+  not re-run. Producer (`round8-producer-evidence/final.patch` sha 77bded4e…, HEAD 6d2e9768):
+  build-provenance hash embedded at compile time (stale producer refuses to run, consumers refuse
+  a foreign build), local-generation branch asserts `sim_assert_eq!` against the committed
+  fixture, one manifest validator (`corpus_generation --verify`), inputs hashed before dispatch
+  and rechecked before publication, output dir locked, digest coverage tightened, typed
+  `ProvenanceError`; 21 red-then-green tests; fmt 0, lint/lint:fc residual only, clippy 0, unit
+  1540/1540, producer 1023 s @3 jobs, 202/202 byte-identical, integration 738 passed in 246 s;
+  no case for process-per-chart (77 s vs 76 s). Runner needs `--verify` hooks + the new manifest
+  format before producer mode can be used (legacy mode meanwhile). Pool v2: fixes done (unit,
+  clippy, red mutations logged), parity battery running under load 110–160 (govalidate
+  differential, W4 F75 matrix, frontend gates, old sweep 152/156). Hand-off document drafted at
+  `plan/schema-bug-hunt-v1-round8-handoff.md` (copy `/Volumes/T7/dev/round8/HANDOFF.md`).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
