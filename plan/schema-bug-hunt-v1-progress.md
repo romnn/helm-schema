@@ -3719,4 +3719,43 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   re-adjudicate; run 3 is unaffected. Production change → its dump rides the next chain (no
   corpus chart queries `Has "apiextensions…"`, so no fixture drift is expected).
 
+- 04:50 — **Codex batches nine and ten collected** (21 reports, `round8/*.md`; the agentmux
+  transcript file is lazy — `collect-codex.py` now reads each run's `turns/0000/last-message.md`).
+  Read so far: `design-gate-time-budget-{astra,sol}.md` and `audit-helm-validation-paths-sol.md`.
+  Gate time (both agree, measured from the logs): integration is dominated by `chart_reaudit`
+  (133 tests, 2,143 test-s) and `chart_corpus` (1,072 test-s) — 323 integration tests generate
+  whole-chart schemas through `schema_roundtrip` (344 generation calls per landing: traefik 17×,
+  airflow 16×, cilium 15×, nats 11×…); the dump's 202 artifacts are NOT 4× the corpus (156 + 20
+  template + 4 lean + 4 policy + 18 IR); the battery does not regenerate; validator compile-once
+  already exists in the battery; `[profile.dev.package."*"] opt-level = 2` is already set;
+  effective concurrency in every gate tonight was THREE (my `NEXTEST_TEST_THREADS=3`; the profile
+  allows 8); run 2 issued 21,221 `helm template` processes (2 per case + 5,301 decoder calls),
+  Helm ≈65–85% of battery time, 7,895 unique chart/overlay pairs (cross-phase dedup buys little);
+  tonight's sweep rows were 92% changed charts. The 20-minute plan: (1) phase timers + a
+  reserved machine, (2) ONE `corpus_generation` producer with a manifest consumed by every lane
+  incl. `chart_reaudit` and chart-specific tests (L, 3–5 days), (3) changed-chart selection by
+  exact bytes for battery/sweep (M), (4) one bounded Helm pool N=9 with prepared immutable charts
+  (M/L; battery 6–10 min), (5) batched assertions/compile-once outside the battery (M), (6)
+  stable names; targets: build+lint 5, generation+fixtures 3, unit+integration 3, changed-chart
+  battery 4, sweep+witnesses 3, allowance 2 = 20 min for WARM, bounded landings — a broad landing
+  cannot inherit it (selection + 3→9 workers on tonight's sweep ≈ 46 min). Helm validation paths
+  (sol, Helm source cited): Helm validates THREE documents — lint's values rule (raw root +
+  parsed overrides, root schema only), lint's template rule (`ProcessDependencies` +
+  `CoalesceValues`, then `ToRenderValuesWithSchemaValidation` coalesces AGAIN; root schema on the
+  whole map and each enabled dependency's schema on its subtree with inherited `global`), and
+  template/install (once-coalesced); `--with-subcharts` lints dependencies standalone; in lint
+  mode `fail`/`required` are suppressed (INFO `funcMap fail`, exit 0 — explains the sweep rows);
+  null handling is key/phase-dependent (a null with no matching default REMAINS; `sub.enabled:
+  null` survives with a parent-only default) so the harness's `drop_nulls` is wrong and the
+  protocol's "bare `{}` = every key null-deleted" needs Helm-exact semantics; the Rust coalescer
+  also continues on a non-map dependency scope (Helm errors), omits `.tgz` dependencies,
+  `import-values`, aliases, multi-document values, `.helmignore`; the root schema must admit
+  enabled dependency names; `UncoalescedRootGate` must satisfy four Helm-derived invariants
+  (raw + every `CoalesceTables(overrides, root)` document incl. retained nulls and CLI-coerced
+  values; the twice-coalesced and once-coalesced documents; withdraw/condition only when both
+  hold; validate only schemas Helm loads). → **Coalescer-fidelity agent launched** (fresh Opus,
+  `round8-coalesce`): Helm-derived expectations per case, delete `drop_nulls`, error on
+  unmodelled features rather than compose a wrong document, add `AcceptanceDocument::
+  {LintRaw, LintCoalescedTwice, Template}` for the gate and battery, fix the `{}` fallback.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
