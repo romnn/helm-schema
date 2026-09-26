@@ -3631,4 +3631,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   content for both identities (`landing.py identity`), aborts on any zero-byte artifact/file, never
   runs `git checkout`/`restore`/`reset` on the clone (8 test files green).
 
+- 03:40 — **Frozen-witness gate, round 2 (astra §1 applied)** (`round8-gate-evidence/final.patch` =
+  `git diff --cached kubever-base`, 114 files, gate work only on top of the kube-version owner):
+  an unusable fixture (over the shipped limit or failing to compile) yields NO verdict — every
+  row on that chart is `RowState::FixtureUnusable`, never a recorded state, so the family cannot
+  close (red-first `red-unusable.log`); F79 kept as a regression row but marked `unfrozen` (its
+  adjudicator-classification obligation is D4 work); `SchemaExpectation::PolicyUnresolved
+  { current, question }` pins the current verdict both ways, counts as known-open and blocks
+  closure without prescribing a loosening (F1 ×10, F73 ×2, F80 ×2, questions spelled out;
+  excluded from transport-conflict detection); `KUBERNETES_VERSIONS` deleted in favour of
+  `kubernetes_version::chart_kubernetes_version`; tuple destructured. Gates: fmt 0, unit
+  1565/1565 (gate 14/14), lint 0 except the B6 residual. **Scorecard: CLOSED 3/83 (F17, F74, F77)**;
+  F79 open/unfrozen; F1/F73/F80 policy-unresolved; F5 four transport conflicts; 62 families
+  without a frozen row. Process note (surfaced to the user): with `git stash`/`git reset` denied
+  in its clone, the agent created the kubever base commit through a temporary git index instead
+  — inside its own clone only, main untouched, but it is a workaround of a denied command.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
