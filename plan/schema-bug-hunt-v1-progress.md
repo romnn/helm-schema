@@ -3719,7 +3719,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   re-adjudicate; run 3 is unaffected. Production change → its dump rides the next chain (no
   corpus chart queries `Has "apiextensions…"`, so no fixture drift is expected).
 
-- 04:50 — **Codex batches nine and ten collected** (21 reports, `round8/*.md`; the agentmux
+- 04:44 — **Codex batches nine and ten collected** (21 reports, `round8/*.md`; the agentmux
   transcript file is lazy — `collect-codex.py` now reads each run's `turns/0000/last-message.md`).
   Read so far: `design-gate-time-budget-{astra,sol}.md` and `audit-helm-validation-paths-sol.md`.
   Gate time (both agree, measured from the logs): integration is dominated by `chart_reaudit`
@@ -3758,7 +3758,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   unmodelled features rather than compose a wrong document, add `AcceptanceDocument::
   {LintRaw, LintCoalescedTwice, Template}` for the gate and battery, fix the `{}` fallback.
 
-- 05:20 — **Battery run 3 (F23 candidate f1c12aca, dump-final-9) FAILED after 2h53m** — not on F23:
+- 12:35 — **Battery run 3 (F23 candidate f1c12aca, dump-final-9) FAILED after 2h53m** — not on F23:
   removing okteto's quarantine plus the kube-version owner (1.33 for okteto) made okteto
   adjudicable for the first time, and the gate correctly surfaced its pre-existing debt: 6 accepted
   cells whose changed resources Kubernetes could not decide (`openshift.enabled <- true/…` renders
@@ -3777,7 +3777,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   0 new false rejections (base lint 0 → cand lint 1 with a rendering control); 209 improvements;
   4 defaults improvements (dify, graylog, okteto, redmine); 8 kyverno `reportsServer.enabled+…`
   rows are cand tightenings on overrides Helm itself aborts (template=1 on both copies) — matched.
-- 05:20 — **Wave-3 and naming hand-backs.** W1 (`round8-w1-evidence`, +39 LOC, BASE 721e87b0):
+- 12:35 — **Wave-3 and naming hand-backs.** W1 (`round8-w1-evidence`, +39 LOC, BASE 721e87b0):
   F66 CLOSED (gitea `clientSettingsPolicies.body: {}`), F45 CLOSED (verification + the piped
   `not (X | len)` spelling), F2 PARTIAL — literal-dict half closed via `has_key_predicate` lowering
   `hasKey` on a `dict` literal to an OR of `Guard::Eq` (schema-registry/bitnami-postgresql/openebs
@@ -3804,7 +3804,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `controller.tsc` range accumulation loses the member path at range exit
   (`widen_changed_fragment_bindings` → `local_binding_result` drops unresolved candidates), a
   fix overlaps F9's accumulator work; F6 stays queued behind F9.
-- 05:20 — **Codex batches nine and ten digested** (18 further reports read; all in `round8/`).
+- 12:35 — **Codex batches nine and ten digested** (18 further reports read; all in `round8/`).
   Actionable now: (a) performance — debug builds RECOMPILE a validator on every acceptance-cache
   hit (`declared_default.rs:16–21`, astra #1, ~30–120 LOC, byte-identical), stop the pretty probe
   at overflow, `--timing` + phase counters before any other optimisation; both allocation audits
