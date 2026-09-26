@@ -4556,4 +4556,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   gate refuses on disagreement) briefed to the runner agent in a worktree off runner-v4. The v4
   CLI sweep keeps running meanwhile (milvus 32/103) and fills the verdict cache v5 reuses.
 
+- 23:35 — **helmsweep now patches Helm at build time (no vendored sources, no submodule).** HEAD
+  175eaecc on `helmsweep`, `round8-helmsweep-evidence/final.patch` sha 7c7669b6… (137 KB, no Helm
+  sources), `handoff.md`. `tools/helmsweep/` holds `go.mod`/`go.sum` (helm v4.2.3 by hash, no
+  replace), `helm-memo.patch`, `PATCH.md`, `stage.sh`: `go mod download` (`GOFLAGS=-mod=mod`),
+  writable copy of the module into `$CARGO_TARGET_DIR/helmsweep-build/third_party/helm-v4.2.3`,
+  refuse unless the copy's digest is the pinned ad77014f…, `git apply --check` + `git apply` (any
+  mismatch exits 1; `stage-negative.log`), the replace appended only to the build copy's go.mod,
+  build and tests run in that copy (so `go version -m` matches the old binary). Gates: vet 0,
+  `go test -race` 18/18, `task build:helmsweep` (+ version check) 0, `task test:helmsweep` 0,
+  gofmt clean, typos 0, fmt 0. Binary not byte-identical (16a7dc3d… vs a328b514…: the embed path
+  and a doc comment moved) → parity re-run on the new binary: 639 cells, 0 disagreements,
+  `rows.tsv` equal for all 12 charts, cold 23m13s at load 18–20, warm 0.33 s with 639/639 hits
+  and 651 byte-identical outputs. Waiting on runner v5 to integrate it.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
