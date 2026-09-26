@@ -144,25 +144,25 @@ gates only, drop the stray mongodbcommunity hunk), regexp (`round8-regexp-eviden
   from different binaries; the Claude work account weekly limit (reset Oct 2, 01:00) kills agents
   mid-turn — resume them with SendMessage, their context survives.
 
-## 6. Status at hand-off time (2026-09-26, ~17:10 local)
-- **Landing 1 chain RUNNING** (restarted 17:27 local after a lint stop, see ledger 17:40/17:30): `LANDING_ENV=/Volumes/T7/dev/round8/runner/landing-f23.env`,
-  clone `/Volumes/T7/dev/round8-d3f23-f` branch `landing-f23` @ 37c58f9d (83247085 candidate-4f →
-  9ef27e08 okteto roster → f9a63646 pool v2 → 37c58f9d lint:fc splits; tree byte-identical to
-  `round8-pool/` HEAD e71d6e61),
-  evidence `/Volumes/T7/dev/round8-d3f23-landing/` (`chain.log`, `receipt.json`, per-step logs).
-  Dump, unit, lint, battery (959 s) and integration are GREEN; the sweep started 18:08 and is
-  Helm-compile bound on openebs/kube-prometheus-stack/milvus/gitea (≈16 h, ledger 19:50).
-  The nohup loop runs dump → unit → lint → battery → integration → sweep → finalize and stops
-  at the first non-zero step. To resume after a failure: fix, then re-run from the earliest
-  stale/failed step (`./run-landing.sh <step>`; the receipt refuses out-of-order runs). On
-  "chain green": adopt `$E/adopted.tsv` fixtures into the landing branch (commit "fixtures:
-  landing 1"), fast-forward `main` in `/Volumes/T7/dev/helm-schema` to that branch (never push),
-  record it in the ledger, then start landing 2.
-- The old legacy lint sweep was stopped at 17:00 (1,877 rows preserved, see ledger 17:10).
-- The old clone `/Volumes/T7/dev/round8-d3f23-e` is unused (13 staged leftovers; a hard reset was declined).
-- Agents still running at hand-off (their hand-backs land in their evidence dirs): frontend phase 1 (`round8-frontend-evidence/`),
-  govalidate (`round8-govalidate-evidence/`). Every other agent has handed off or checkpointed.
-- Codex runs all collected (`round8/codex-runs.tsv`); none pending.
-- Pool v2 render cache replays 0 renders on the corpus (every flip-carrying chart calls a
-  nondeterministic function or `tpl`); the 3× win comes from the pool. Next lever, if wanted:
-  the changed-chart selection design (`design-changed-chart-selection-astra.md`).
+## 6. Status at hand-off time (2026-09-27, ~01:30 local)
+- **Landing 1 is ON MAIN** (merge c02c01f8): F23 candidate-4f + okteto/graylog roster + Helm pool v2 +
+  helmsweep (`tools/helmsweep`, Helm v4.2.3 patched at build time). Receipt
+  `/Volumes/T7/dev/round8-d3f23-landing3/receipt.json` (sha b1cdbb74…). Ledger 01:25 has the
+  step timings. The landing clone `/Volumes/T7/dev/round8-d3f23-f` (branch `landing-f23`) and
+  the env `runner/landing-f23.env` are the template for the next landing.
+- **Runner is v5** (`/Volumes/T7/dev/round8/runner`, branch `runner-v3-fail-closed` merged with
+  `runner-v5`; `SWEEP_ENGINE=helmsweep` default, CLI differential k=100 / cap 3 / all unresolved,
+  exit 7 on parity disagreement; verdict cache keyed incl. the cleared environment; receipt /5).
+  Evidence `round8-runner-evidence/` (handoff.md, v4-green/red, v5-green/red).
+- **Next landing (landing 2)**: coalescer + producer + naming + perf1 rebased on the new main in a
+  fresh clone, `DUMP_MODE=legacy` until the runner learns the producer's new manifest; expect
+  the whole chain in ~1.5 h now. Then the semantic candidates (§3), each on the fast chain.
+- **Hygiene follow-ups found during the landing** (ledger 00:45): the battery harness leaks
+  multi-GB temp dirs under the system temp folder when killed (69 GB found) — create them under
+  the target dir and sweep stale ones at start; the runner should export `GOTMPDIR`/`TMPDIR`
+  under `$TARGET`; the emitted airflow/oncall schemas do not compile in Helm (`\u` in patterns,
+  ledger 17:45 of Sep 26) — emitter fix + test; helmsweep's `documents` op can later serve the
+  battery's ~8,000 renders in-process and let the Rust coalescer port be deleted.
+- Old evidence dirs `round8-d3f23-landing` (v3 run, sweep broken by an in-place runner edit) and
+  `round8-d3f23-landing2` (v4 run, stopped) are history only; `round8-d3f23-e` is unused.
+- Codex runs all collected (`round8/codex-runs.tsv`); no agent running at hand-off.

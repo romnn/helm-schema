@@ -4622,4 +4622,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   chain; (3) the internal disk needs headroom (Go build cache 2.8 GB, cargo registry 1.6 GB,
   `/private/tmp` 6.8 GB).
 
+- 01:25 (Sep 27) — **LANDING 1 ON MAIN (c02c01f8): F23 + okteto/graylog roster + Helm pool v2 +
+  helmsweep.** Chain on runner v5 (E `round8-d3f23-landing3`, receipt sha b1cdbb74…, finalized
+  01:14): dump 3 min, unit 21 s, lint 1.5 min, battery 13.5 min (pooled), integration 11 min,
+  sweep 33.5 min total = helmsweep build + **fast pass 14m44s** (61 changed charts, 1,103 schema
+  compiles, 6,878 memo hits, 0 failures; 96 identical-schema rows skipped) + CLI differential
+  (86 rows / 258 cells through the real Helm binary, cache misses 5,820 as expected after the
+  environment-keyed cache reset) + gate: **parity 258/258 agree, 0 disagreements, 0 new lint
+  failures, 0 unresolved rows** (cert-manager accepted class unused), finalize 0. adopted.tsv
+  empty (the candidate's fixtures already matched its dump). Merged `landing-f23` (193560a1)
+  into main with a no-ff merge; main differs from the landing tree only under `plan/`. The
+  previous CLI sweep design would have needed 13–40 h for the same roster. Strict closures
+  3/83 (unchanged: F23's closures were counted in round 7; the roster changes are test-only).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
