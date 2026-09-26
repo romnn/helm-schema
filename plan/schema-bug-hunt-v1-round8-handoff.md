@@ -150,6 +150,8 @@ gates only, drop the stray mongodbcommunity hunk), regexp (`round8-regexp-eviden
   9ef27e08 okteto roster → f9a63646 pool v2 → 37c58f9d lint:fc splits; tree byte-identical to
   `round8-pool/` HEAD e71d6e61),
   evidence `/Volumes/T7/dev/round8-d3f23-landing/` (`chain.log`, `receipt.json`, per-step logs).
+  Dump, unit, lint, battery (959 s) and integration are GREEN; the sweep started 18:08 and is
+  Helm-compile bound on openebs/kube-prometheus-stack/milvus/gitea (≈16 h, ledger 19:50).
   The nohup loop runs dump → unit → lint → battery → integration → sweep → finalize and stops
   at the first non-zero step. To resume after a failure: fix, then re-run from the earliest
   stale/failed step (`./run-landing.sh <step>`; the receipt refuses out-of-order runs). On

@@ -4438,4 +4438,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   while Helm renders x only when `flag` is truthy (`scratch/probe3-1.4.log`, a13-inline).
   Next: Codex review, then the runner chain on 83927a5b (after landing 2).
 
+- 19:50 — **Sweep is Helm-compile bound; ~16 h to finish; left running.** After 100 min the
+  sweep has 105/156 charts started; the heavy charts are serial per worker (one chart per
+  worker, rows in sequence): openebs ~7.5 min per row (129 rows), kube-prometheus-stack ~7.4
+  min (84), milvus ~4.8 min (103), gitea ~2.2 min (171). The cost is Helm's JSON-schema compile
+  per `helm lint` (shipped compact schemas: openebs base 4.6 MB / cand 4.0 MB, kps 4.0/3.9,
+  gitea 4.7/4.5, milvus base 2.4 MB → cand 5.0 MB — an F74-size growth just under Helm's
+  5,242,880 limit); a control render of openebs takes 2.5 s. Estimated completion ≈ 16 h
+  (openebs bound); row-level worker parallelism would give ~8 h including a chain restart, so
+  not worth the tokens now. Historical F23 sweeps never completed openebs either
+  (`lint-final6/results-final10.txt`: 0 openebs rows). 95 of 156 charts have byte-identical
+  candidate and baseline schemas (changed-chart selection would skip them, but they are the
+  cheap ones). Structural levers for the next session, in order of payoff: (1) cut Helm's
+  compile cost — emit `definitions` instead of `$defs` (3.5× on okteto per the govalidate
+  hand-back) and shrink F74-size schemas; (2) row-level sweep workers; (3) changed-chart
+  selection. Decision left running: the chain finalizes on its own when the sweep passes.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
