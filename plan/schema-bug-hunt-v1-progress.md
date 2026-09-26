@@ -3964,4 +3964,28 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   intake mid-battery; Codex batch twelve fully collected (`codex-runs.tsv`, 49 rows).
   Strict closures 3/83 (offline-verified).
 
+- 14:00 — **Heartbeat.** Perf1 hand-back: the acceptance memo in `declared_default.rs` is now
+  keyed by the complete document with one `jsonschema::Validator` per document (compile once,
+  validate per instance; compile failure → `None` → `false`; the per-(document, instance)
+  result map and the debug-build re-verification on every hit DELETED), byte-identical output
+  (chart_corpus 157/157, no fixture touched), −4 core LOC, three memo tests
+  (`crates/helm-schema-gen/src/tests/resolve_policy.rs`); timing inconclusive at load 19–64
+  (`round8-perf1-evidence/`, BASE 42df7e85 → fc2c2f75) — needs an idle-machine rerun; joins
+  the combined landing after F23 (attribution: byte-identical dump). Naming turn 3: docs and
+  hygiene rework committed (`6e2e85f4`, +50/−27), stability exceptions documented,
+  `final-code-only.patch` refreshed; ready for the combined landing (re-dump on the landed
+  tree). Launched the **F1 `global` reservation + `--open-root` + `--declared-types`**
+  implementer (`round8-f1`, astra brief, on the F23 candidate + gate patch, target
+  `round7-f31`). Codex weekly quota RESET (2% used) → **batch thirteen launched (10 runs)**:
+  perf1 pre-landing review (sol), MLS r5 rework brief (sol), D5 rework design — rendered-layout
+  ownership, retiring the line-based block-scalar model (sol), cross-checks of the F2 `HasKey`
+  design (astra), the F1 brief (sol), the F75 `tpl` design (sol) and the F6 zero-or-more list
+  design (astra) while their implementers work, a line-heuristics audit of the syntax/IR
+  layers (astra), a workspace determinism audit (sol), and a fail-closed review of runner v2
+  (astra). State: 8 builders (stack, pool, producer, coalesce, okteto, W1, W4, F1), load
+  38–48; old sweep at 1,681 rows after 11.5 h, still holding the heavy lock; okteto intake
+  mid-battery (`battery-okteto.log`, `datree-route-lookup.txt` — the agent is fetching
+  OpenShift CRD evidence). Claude work account at 87% weekly (subagents run on it; Fable at
+  68%) — flagged to the user. Strict closures 3/83.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
