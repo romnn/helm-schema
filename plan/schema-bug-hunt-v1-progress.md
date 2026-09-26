@@ -4236,4 +4236,41 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   landing 2 = coalescer + producer + naming + perf1 rebased on the new main; everything else
   (gate r3, kube-version v2/v3, regexp hardening, semantic candidates) goes to the hand-off.
 
+- 16:10 — **Pool review REWORK (4 items, policy fixed); F1, W1, k8s checkpointed; agent-container
+  brief received.** Pool (sol, `review-pool-prelanding-sol.md`): (1) render cacheability under-
+  proved — `tpl` can assemble an action from fragments the scanner never sees (fix adopted: any
+  `tpl` call bypasses the render cache); (2) a worker panic in `helm_pool.rs:111` can deadlock the
+  pool (drop-guard release + propagate + test); (3) `result.json` has no integrity check — a valid-
+  JSON corruption could flip exit 0→1 and replay (checksum the full result metadata in a final
+  entry manifest); (4) the executable hash is taken once (bind per-invocation identity). Policy,
+  final: `lookup` leaves the bypass list ONLY under client-only `helm template` (no
+  `--dry-run=server`/`--validate`, `KUBECONFIG` cleared) — Helm 4.2.3 evaluates local `lookup`
+  to empty; random/clock/cert functions stay excluded from verdict replay (a random value can
+  change a K8s constraint, branch, exit or the defaults comparison). Parity independently
+  confirmed (7,952 verdict labels, assertion text, coverage JSON). Pool agent resumed with the four
+  fixes, the policy encoding and a rebase onto candidate-4f + okteto roster (new BASE2) → will
+  deliver `final-v2.patch` + one parity battery. **F1 checkpoint** (`round8-f1-evidence`,
+  `checkpoint.patch` sha efb980ee…, clone `round8-f1` branch `f1-global-policy`, BASE 1c449bd9 →
+  HEAD d5b9bf4c): F1 done (every dependency instance registered, `global` reserved at every chart
+  root, `top_level_mapping_paths` deleted), `AuthoringPolicy` on `GenerateOptions` with
+  `--open-root`/`--declared-types=annotate` (vocabulary 2), gate rows F73/F80 CLOSED-BY-POLICY;
+  unit 1586/1587 (`fixture_verdicts` red: 5 rows "unexpected fix" — 3 cilium F69, okteto-defaults
+  and promtail F54 — cause unknown); in progress: "template reads members of `global`" must count
+  only actual uses (cross-check point 2); lint/lint:fc/corpus not run; `handoff.md` next steps 1–6.
+  **W1** (`round8-w1-evidence`): rework DONE and green (`final.patch` 721e87b0..79e74676, sha
+  a4910cbe…: literal-key dict completeness, raw membership key, `slice`/`rest`/`initial`/`compact`
+  abstain, evaluator merge emptiness; unit 1563/1563) — ready for a Codex re-review + corpus witness
+  matrix; F2 present-null checkpointed RED (`checkpoint-f2.patch` 79e74676..85725416: `hasKey` →
+  `HasKey`, `Guard::member_path()`, partial requirements migration; 9 focused tests failing; known
+  causes: root-level `not hasKey` fail arm lost, velero `$breaking` accumulator dropped by the
+  guard budget at `symbolic_local_state/mod.rs:~375`). **k8s D1–D3**: not started (setup only).
+  **Agent-container brief** (astra, `brief-agent-container-defect-astra.md`): the bound at
+  `conjoin_changed_truthy_reductions` (`symbolic_local_state/mod.rs:303`) drops the whole local
+  reduction on overflow; fix = make `joined_truthy_reduction_arms` (`branch_join.rs:210`) the
+  sole truthiness owner for complete `if` chains, generalise its falsy-write special case to every
+  changed local, abstain explicitly; keep the stack blocked until that lands; tests listed
+  (IR `src/tests/symbolic_local_state.rs` w2ag4 merge/join + expanded datadog condition). Runner
+  env `landing-f23.env`: `SWEEP_JOBS=6`, `ACCEPTED_SWEEP_UNRESOLVED='cert-manager=unresolved:
+  loader'`. Old sweep 150/156 charts.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
