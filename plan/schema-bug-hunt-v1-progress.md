@@ -4055,4 +4055,36 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (`brief-frontend-rendered-layout-astra.md`). D5 is SUPERSEDED by this track; kube-starrocks and
   openldap stay quarantined until the track's dump adopts their fixtures.
 
+- 14:45 — **Coalescer track hand-back (`round8-coalesce-evidence`, 64 files, BASE 61f6db73).**
+  A line-by-line Helm 4.2.3 port in `crates/test-util/src/helm_values/` (9 modules, Go
+  shared-map behaviour kept): `AcceptanceDocument::{LintRaw, LintCoalescedTwice, Template}`,
+  `acceptance_values(dir, overrides, kind)` → root + per-dependency subtrees with inherited
+  `global` + typed warnings, `ValuesOptions::merge_values()` (`-f`, `--set-json`, `--set`,
+  `--set-string` in Helm's order), `ValuesError` (thiserror). DELETED: `drop_nulls`, the silent
+  non-map-scope continue, the harness's `merge_override`/`drop_null_map_entries`, the temporal
+  `coalesced-defaults.json` special cases, the loader's `Chart.template.yaml` substitution.
+  Harness: a composed probe whose overlay differs from the forward Helm document FAILS (no `{}`
+  fallback); screening uses the port's `CoalesceTables`; the battery records per-document
+  verdicts as evidence only. All 26 astra matrix rows match Helm; the raw lint rule verified
+  exactly via a `{"const": DOC}` root schema. NEW Helm findings (confirmed): lint's values rule
+  MUTATES the overrides' nested tables in place before the template rule reads them; the raw
+  lint rule reads only the FIRST values.yaml document; a child's nested `global` leaks into the
+  parent's `global` (shallow copy); a dependency failing its version constraint stays loaded
+  under its own name but its condition still removes it; YAML 1.1 forms (`y`, `yes`, `012`,
+  `1_000`, integer keys, `<<`, ints > 2^53) read differently. Corpus: 165 charts × 3 documents
+  compose with zero refusals; vs BASE the template document changed for openebs, signoz (BASE
+  dropped nulls Helm keeps), temporal-wrapper (`.tgz`) and cert-manager — all four byte-match
+  real `helm template` (`helm-corpus/`), as does open-webui (import-values). Tests: 33 in
+  test-util (7/10 template cells red on BASE), 3 in helm-schema (one runs live Helm); two CLI
+  tests moved to lint's raw document (datadog `operator: 7`, prometheus scalar root — Helm
+  aborts with type mismatch). No fixture bytes changed. Open: the "all declared keys deleted"
+  probe can be unreachable with a parent `global` default (now fails loudly); `--set-file`/
+  `--set-literal` not ported; gate integration at `family_witnesses.rs:229`. → cross-vendor
+  pre-landing review requested (sol, `review-coalesce-final-sol.md`); joins the combined
+  test-infra landing. **Go validator helper launched** (`round8-govalidate`, on the coalescer
+  tree, target `round7-integrate`): `tools/govalidate/` resident binary with Helm's exact
+  compiler configuration, `compose` op returning Helm's own composed map as the reference for
+  the Rust port, `HelmValidator` in the harness, Rust verdict kept as a prefilter with
+  disagreement = hard failure, `dialect_differential.rs`.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
