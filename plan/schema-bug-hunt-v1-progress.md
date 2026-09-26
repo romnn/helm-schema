@@ -4497,4 +4497,33 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   the live sweep's CLI logs read-only), `task build:helmsweep`; the runner integration follows
   runner v4 (same runner agent). Sweep 138/156 charts started; runner v4 still building.
 
+- 22:15 — **Incident: the live sweep was broken by an in-place runner edit; runner v4 merged;
+  chain restarted from dump on v4.** The runner agent edited `/Volumes/T7/dev/round8/runner/`
+  in place early in the v4 work while the live `run-landing.sh sweep` was executing from that
+  directory: 18 charts (tempo … zookeeper) were started by the half-written worker, exited 2
+  (usage) and produced no rows (18 `usage:` lines in `round8-d3f23-landing/sweep/workers.log`);
+  v3 was restored within minutes and the rest of v4 was built in a worktree, but the sweep could
+  no longer pass (xargs 123, missing rows). I stopped the chain (loop, `run-landing.sh sweep`
+  via TERM — lock released cleanly — xargs, workers, helm; `FAIL[sweep]: terminated` recorded).
+  Lesson for the protocol: never edit a runner directory that a live chain executes from; build
+  in a worktree and merge between chains. **Runner v4** (`runner-v4` → merged ff into
+  `/Volumes/T7/dev/round8/runner`, HEAD 900bb69 + env commits; evidence `round8-runner-
+  evidence/{handoff.md,v4-green,v4-red}`): row-level work units (plan writes one unit per
+  roster row, heaviest charts first by shipped schema size then rows; phase 1 prepares each
+  chart's three copies once with a `prepared` marker, phase 2 spreads rows over `SWEEP_JOBS`
+  workers; gate files unchanged), identical-schema skip (`identical-schema` class, gate refuses
+  a skip whose shas differ and a non-skip whose shas match; 96 rows / 95 charts on this roster —
+  none of the four slow charts), verdict cache (`SWEEP_CACHE` default
+  `/Volumes/T7/dev/round8/sweep-cache`, bound in the receipt; versioned key over helm sha/
+  version, kube version, transport, kind, copy role, prepared-copy digest, schema sha or none,
+  override sha, argv; hit only when it re-keys, its manifest verifies and its log re-classifies
+  the same; pass/reject only; deterministic archive sanitizing (gzip mtime 0) was needed for
+  any hit); receipt schema `/4`. Suite green (10/10 zsh, 54/54 unittests, 448 s); red vs v3:
+  `test_sweep` 20 checks + `VerdictCache` 6/6. Dry `sweep_plan` on the live receipt: 62 s,
+  2,036 rows with identical keys. Restart: fresh E `/Volumes/T7/dev/round8-d3f23-landing2`
+  (v4 refuses v3 receipts; the old E keeps the green dump/unit/lint/battery/integration logs),
+  same R (37c58f9d), SWEEP_JOBS=6 (11 cores, 18 GB), chain relaunched from dump via the nohup
+  loop, log `round8-d3f23-landing2/chain.log`. Expected: ~1.3 h to the sweep, then ≈ Σ row
+  costs / 6 ≈ 13 h (openebs 129 × ~20 min dominates) unless the Go driver lands first.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
