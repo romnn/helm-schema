@@ -4087,4 +4087,35 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   the Rust port, `HelmValidator` in the harness, Rust verdict kept as a prefilter with
   disagreement = hard failure, `dialect_differential.rs`.
 
+- 14:55 — **Producer hand-back (`round8-producer-evidence`, BASE 286c08a2 → a2cf765a, 0 production
+  LOC, test-side +2,913/−1,332).** New unpublished `crates/helm-schema-test-support`: closed
+  `ArtifactId` registry (156/20/4/4/18 + internal nested signoz-postgresql), typed
+  `GenerationRecipe`, `corpus_generation --out <dir> [--jobs n]` writing the 202 dump names +
+  `manifest.json` (harness version, producer sha, non-test source digest, provider-bundle
+  digest, per-artifact recipe/input hash/size/sha; written last via rename), `consume(id)`
+  (env `HELM_SCHEMA_CORPUS_ARTIFACTS` unset → local generation; set → every hash verified,
+  stale fails closed); chart_corpus, all 133 chart_reaudit tests and 15 chart binaries rewired;
+  DELETED `schema_roundtrip.rs`, gen `schema_generation.rs`, IR `common/{mod,cases}.rs`, and the
+  `SCHEMA_DUMP` branches (lean lane left for step 4); `test:integration` runs the producer
+  first, `test:all` runs each suite once. Results: 202/202 artifacts byte-identical to main,
+  two runs → identical manifests; **integration 1,496 s → 378 s wall (4,436 → 1,044 test-s;
+  chart_reaudit 2,143 → 48.5 s, chart_corpus 1,072 → 41.5 s)**; remaining cost is
+  `schema_emission_profiles` 697 s (step 4, emission-harness owner). Weak spot: the producer
+  took 886 s wall at 3 jobs with ~590 s CPU under load 63–76 (old dump 278 s) — contention or
+  serialization to be diagnosed on an idle machine; process-per-chart is the fallback. Runner
+  patch delivered separately (`runner/`: regex parsers and dump classification deleted; dump =
+  one producer run + manifest re-hash) → handed to the runner-fix agent to integrate after its
+  fail-closed work (`DUMP_MODE=legacy` until the producer lands). Pre-landing review requested
+  (astra). Frontend brief received (`brief-frontend-rendered-layout-astra.md`: syntax owns
+  rendered pieces/skeleton/ownership with `tree-sitter-yaml`, AST lowers each action once by
+  `ActionId`, IR evaluates; commits 1.1–1.5 (phase 1, 22-site inventory), 2.1–2.3 (skeleton +
+  YAML-node facts), 3.1–3.4 (guarded output before ownership, identity from complete scalars,
+  exact helper dispatch, opaque block text), 4.1–4.3 (delete `Frame`/adoption/deferred
+  placement; extension-independent manifest discovery after a Helm witness); A1–A15 witness
+  ledger; LOC budgets per phase) → forwarded to the frontend agent. **Landing order revised:**
+  the combined TEST-INFRA landing (pool, producer, coalescer, gate r3, kube-version v2/v3,
+  regexp, naming, perf1, runner fixes) goes FIRST on main so that F23 and the twelve semantic
+  candidates land on the fast battery; F23 follows immediately. No new builders launched
+  (load 56–62; the pool's battery and the okteto intake are the critical path).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
