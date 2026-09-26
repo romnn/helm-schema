@@ -4337,4 +4337,28 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   battery → integration → sweep → finalize run by a nohup loop; log `round8-d3f23-landing/
   chain.log`, receipt `receipt.json` there. Expected wall-clock 4–5 h (sweep dominates).
 
+- 17:25 — **W4 F75 (tpl typed output) hand-back: datadog closed, candidate not yet adjudicated by
+  dump.** `round8-w4-evidence/final-f75.patch` (`git diff 99c6824c -- crates`, 8 files,
+  uncommitted in `round8-w4`; `handoff.md` incl. why the pinned overlay test cannot be red and
+  the transport-dependent number-comparison residual `eq $.Values.count 1`, F5 class). Helm
+  4.2.3 matrices (`f75/matrix-*.txt`): 81/90-char names now rejected, 80 accepted, `"a"×71 +
+  {{ .Release.Name }}` accepted (abstains), `<no value>` cells accepted, 81 `é` rejected, 45 `é`
+  (90 bytes) accepted (character count only claimed); datadog d2/d3 accept→reject, d10 base false
+  rejection fixed; redis-ha `"mymaster<no value>"` base false rejection fixed; tpl-regex-else
+  absent name base false acceptance fixed; gitea/trino/openebs/alertmanager cells unchanged.
+  Mechanism (IR only): `tpl` output = incomplete `ScalarValueDispatch` whose identity arm holds
+  under `NotMatchesPattern{\{\{|<no value>}`; `length_exceeds_subset` ORs each arm's condition
+  with its proven overflow, subsets carried as a `Predicate`; opaque taint arm for incomplete
+  dispatches (cross-check blocker 1); `regex_match_predicate` abstains on derived text and
+  incomplete dispatches in both polarities (blocker 2); three redis-ha fixes (`later_arm_
+  condition` proven falsy subset, bound regex results keep both polarities, Rust regex compiled
+  only for literal arms). 5 red-then-green tests in `comparison_operands.rs` + extended
+  `post_tpl_regex_admits_template_programs`. fmt 0, unit 1567/1567, lint residual only (now
+  `control.rs:608`), clippy 0. **Over budget: +331/−91 (net +240 vs +100–180).** Residuals:
+  multibyte over the byte bound at ≤80 chars, redis-ha empty-fallback arm with a Go-only
+  pattern, and a REGRESSION vs the rework HEAD — helper-rendered `tpl` output in a plain YAML
+  slot lost its D-arm lexical constraints (`"a: b"` accepted; `guarded-helper-hole` in
+  `f75/capture-new2.log`). Expected fixture moves: gitea, openebs, datadog, redis-ha + the
+  cross-check list. Needs: Codex pre-landing review (budget + regression), dump adjudication.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.

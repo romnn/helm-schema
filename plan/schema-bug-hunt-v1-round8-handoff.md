@@ -94,7 +94,8 @@ gates only, drop the stray mongodbcommunity hunk), regexp (`round8-regexp-eviden
   (F2 present-null, RED, 9 tests); designs `design-f2-present-null-haskey-sol.md`,
   `crosscheck-f2-haskey-astra.md`.
 - W4 comparison operands (F34/F65/F75): `round8-w4-evidence` (BASE 822bbb35 → 99c6824c; overlay
-  guard rework done); F75 pending as `final-f75.patch` (agent was still running at hand-off);
+  guard rework done); F75 DONE but unreviewed: `final-f75.patch` (8 files, +240 net LOC, over
+  budget; one regression vs the rework HEAD on helper-rendered `tpl` in plain slots; see ledger 17:25);
   `review-w4-prelanding-sol.md`, `design-f75-tpl-typed-output-astra.md`, `crosscheck-f75-tpl-sol.md`,
   `briefs-w4-astra.md` (W4a/W4b).
 - B6 stack (F4 + MLS r5 + B6/L1 + L2 + n4): `round8-stack-evidence/final-stack.patch` (31 files
@@ -152,8 +153,7 @@ gates only, drop the stray mongodbcommunity hunk), regexp (`round8-regexp-eviden
   record it in the ledger, then start landing 2.
 - The old legacy lint sweep was stopped at 17:00 (1,877 rows preserved, see ledger 17:10).
 - The old clone `/Volumes/T7/dev/round8-d3f23-e` is unused (13 staged leftovers; a hard reset was declined).
-- Agents still running at hand-off (their hand-backs land in their evidence dirs): W4 F75
-  (`round8-w4-evidence/final-f75.patch`), frontend phase 1 (`round8-frontend-evidence/`),
+- Agents still running at hand-off (their hand-backs land in their evidence dirs): frontend phase 1 (`round8-frontend-evidence/`),
   govalidate (`round8-govalidate-evidence/`). Every other agent has handed off or checkpointed.
 - Codex runs all collected (`round8/codex-runs.tsv`); none pending.
 - Pool v2 render cache replays 0 renders on the corpus (every flip-carrying chart calls a
