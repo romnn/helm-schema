@@ -4591,4 +4591,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   red-then-green test, and one complete green run-all. Then: stop the v4 chain, merge v5, apply
   helmsweep to `landing-f23`, fresh E, restart from dump.
 
+- 23:46 — **Runner v5 final; v4 chain stopped; landing-1 chain restarted on v5 with helmsweep.**
+  Runner v5 8104032: the verdict-cache key now includes the exact cleared CLI environment (key
+  v2), red-then-green `VerdictCache.test_entry_written_under_another_environment_is_a_miss` (red
+  on 301e5d1), one complete `run-all` on the final tree exit 0 in 573 s (every zsh suite 0,
+  58/58 unittests; `v5-green/run-all.txt`). Stopped the v4 chain (loop, `run-landing.sh sweep`
+  via TERM, xargs, the four python row workers that had been re-parented to launchd, their
+  helm children; `FAIL[sweep]: terminated`; lock released); its ~70 milvus rows are discarded
+  (uncleared-environment cache entries no longer hit — accepted). Merged `runner-v5` into
+  `/Volumes/T7/dev/round8/runner` (b1cfeb4); applied `round8-helmsweep-evidence/final.patch`
+  (7c7669b6…) on `landing-f23` in `round8-d3f23-f` → HEAD 193560a1 (`tools/helmsweep`,
+  Taskfile `build:helmsweep`/`test:helmsweep`, typos config; no vendored Helm, no zero-byte
+  files); fresh E `/Volumes/T7/dev/round8-d3f23-landing3`; chain relaunched from dump at 23:45
+  (`SWEEP_ENGINE=helmsweep`, HELMSWEEP_JOBS 4, CLI differential k=100/cap 3 with 6 CLI workers).
+  Expected: ~35 min to the sweep, fast pass ~1–2 h cold (≈120 schema compiles for the 61
+  changed charts), differential ≈ 1–1.5 h, finalize.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
