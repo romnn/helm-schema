@@ -3621,4 +3621,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   arm's own provenance — `partial_text` ≠ whole node, `StringText` ≠ serialized; the `useYaml`
   selector witness; rebase notes for F31/MLS/D5) — F13 lands last.
 
+- 03:30 — **sccache trial: negative** (`round8-sccache-evidence/report.md`): 0/209 cross-clone Rust
+  hits — the key hashes every `CARGO_*` env (the repo sets `CARGO_WORKSPACE_DIR` to the absolute
+  clone path) and the cwd/`CARGO_MANIFEST_DIR` (`basedirs` is C/C++-only), and `env!("OUT_DIR")`
+  users embed the target path; same-path rebuilds hit 99%; 141/391 units are never cacheable;
+  `CARGO_INCREMENTAL=0` makes the edit loop 3.7× slower. Self-audit item 7 is therefore WRONG as a
+  fix: the lever is reused clone slots with warm target dirs (already §7), not a compile cache.
+  **Runner v2 round 3**: refuses `dump` while any intent-to-add path exists, hashes worktree
+  content for both identities (`landing.py identity`), aborts on any zero-byte artifact/file, never
+  runs `git checkout`/`restore`/`reset` on the clone (8 test files green).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
