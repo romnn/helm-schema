@@ -19,7 +19,8 @@ mod known_false_acceptances;
 
 use helm_adjudication::{KubernetesVerdict, OfflineKubernetesValidator, PinnedHelmChart};
 use known_false_acceptances::{
-    Family, KNOWN_FALSE_ACCEPTANCES, KnownFalseAcceptances, Probe, Rejection,
+    Baseline, Family, KNOWN_FALSE_ACCEPTANCES, KNOWN_UNDECIDED_ACCEPTANCES, KnownFalseAcceptances,
+    KnownUndecidedAcceptances, Probe, Rejection,
 };
 
 use harness::{
@@ -38,7 +39,6 @@ struct ProbeCoverageReport {
 }
 
 // A non-zero allowance must land before the live run whose widening relies on it.
-const PREREGISTERED_ACCEPTED_HELM_ABORT_ALLOWANCE: usize = 0;
 const PREREGISTERED_ACCEPTANCE_FLIP_ALLOWANCE: usize = 0;
 
 #[derive(Debug, Default, Serialize)]
@@ -53,16 +53,13 @@ struct HelmAdjudicationCoverage {
     tightenings_matched_kubernetes_rejection: usize,
     loosenings_matched_kubernetes_validation: usize,
     loosenings_matched_defaults_violations: usize,
-    loosenings_with_uncertain_kubernetes_cases: Vec<String>,
-    candidate_accepts_helm_aborts: usize,
-    candidate_accepts_helm_abort_allowance: usize,
-    candidate_accepts_helm_abort_cases: Vec<String>,
-    candidate_accepts_kubernetes_rejection_cases: Vec<String>,
+    /// Accepted cells Helm renders whose changed resources Kubernetes cannot
+    /// decide.
+    loosenings_with_uncertain_kubernetes: Vec<ObservedUndecidedAcceptance>,
     /// Labels of the charts whose flips were adjudicated live.
     charts_adjudicated: std::collections::BTreeSet<String>,
-    /// Accepted cells Helm or Kubernetes reject, where the baseline rejected
-    /// the cell exactly as it rejects the chart's own defaults.
-    uninformative_baseline_false_acceptances: Vec<ObservedFalseAcceptance>,
+    /// Accepted cells Helm or Kubernetes reject.
+    false_acceptances: Vec<ObservedFalseAcceptance>,
 }
 
 /// A false acceptance the battery observed, to be matched by the roster.
@@ -70,6 +67,14 @@ struct HelmAdjudicationCoverage {
 struct ObservedFalseAcceptance {
     case: String,
     rejection: Rejection,
+    baseline: Baseline,
+}
+
+/// An accepted cell Kubernetes cannot decide, to be matched by the roster.
+#[derive(Debug, Serialize)]
+struct ObservedUndecidedAcceptance {
+    case: String,
+    uncertain: Vec<String>,
 }
 
 impl HelmAdjudicationCoverage {
@@ -95,22 +100,33 @@ impl HelmAdjudicationCoverage {
                 self.loosenings_matched_defaults_violations += 1;
                 true
             }
-            HelmFlipVerdict::LooseningWithUncertainKubernetes => {
-                self.loosenings_with_uncertain_kubernetes_cases.push(case);
+            HelmFlipVerdict::LooseningWithUncertainKubernetes(uncertain) => {
+                self.loosenings_with_uncertain_kubernetes
+                    .push(ObservedUndecidedAcceptance { case, uncertain });
                 true
             }
             HelmFlipVerdict::CandidateAcceptsHelmAborts => {
-                self.candidate_accepts_helm_aborts += 1;
-                self.candidate_accepts_helm_abort_cases.push(case);
+                self.false_acceptances.push(ObservedFalseAcceptance {
+                    case,
+                    rejection: Rejection::HelmAborts,
+                    baseline: Baseline::RejectsUnlikeItsDefaults,
+                });
                 true
             }
             HelmFlipVerdict::CandidateAcceptsKubernetesRejects => {
-                self.candidate_accepts_kubernetes_rejection_cases.push(case);
+                self.false_acceptances.push(ObservedFalseAcceptance {
+                    case,
+                    rejection: Rejection::KubernetesRejects,
+                    baseline: Baseline::RejectsUnlikeItsDefaults,
+                });
                 true
             }
             HelmFlipVerdict::UninformativeBaselineFalseAcceptance(rejection) => {
-                self.uninformative_baseline_false_acceptances
-                    .push(ObservedFalseAcceptance { case, rejection });
+                self.false_acceptances.push(ObservedFalseAcceptance {
+                    case,
+                    rejection,
+                    baseline: Baseline::RejectsItsDefaults,
+                });
                 true
             }
         };
@@ -119,14 +135,14 @@ impl HelmAdjudicationCoverage {
     }
 }
 
-/// Every problem with the adjudicated outcomes: unaccounted flips, accepted
-/// cells Kubernetes cannot decide or rejects, accepted Helm aborts beyond
-/// the allowance, and false acceptances behind an uninformative baseline
-/// that `roster` does not list, or that it lists but that no longer fail on
-/// a chart this run adjudicated.
+/// Every problem with the adjudicated outcomes: unaccounted flips, and
+/// accepted cells Kubernetes cannot decide or Helm or Kubernetes reject that
+/// the rosters do not list, or that they list but that no longer fail alike
+/// on a chart this run adjudicated.
 fn validate_helm_adjudication_coverage(
     coverage: &HelmAdjudicationCoverage,
     roster: &[KnownFalseAcceptances],
+    undecided_roster: &[KnownUndecidedAcceptances],
 ) -> eyre::Result<()> {
     let mut problems = Vec::new();
     if coverage.flips_adjudicated
@@ -134,57 +150,43 @@ fn validate_helm_adjudication_coverage(
             + coverage.tightenings_matched_kubernetes_rejection
             + coverage.loosenings_matched_kubernetes_validation
             + coverage.loosenings_matched_defaults_violations
-            + coverage.loosenings_with_uncertain_kubernetes_cases.len()
-            + coverage.candidate_accepts_helm_abort_cases.len()
-            + coverage.candidate_accepts_kubernetes_rejection_cases.len()
-            + coverage.uninformative_baseline_false_acceptances.len()
+            + coverage.loosenings_with_uncertain_kubernetes.len()
+            + coverage.false_acceptances.len()
     {
         problems.push(format!(
             "adjudicated flip outcome accounting mismatch: {coverage:?}"
         ));
     }
-    if !coverage
-        .loosenings_with_uncertain_kubernetes_cases
-        .is_empty()
-    {
-        problems.push(format!(
-            "accepted cells whose changed resources Kubernetes could not decide: {:?}",
-            coverage.loosenings_with_uncertain_kubernetes_cases
-        ));
+    let mut unlisted_undecided = Vec::new();
+    for observed in &coverage.loosenings_with_uncertain_kubernetes {
+        let listed = undecided_roster
+            .iter()
+            .any(|group| group.lists(&observed.case, &observed.uncertain));
+        if !listed {
+            unlisted_undecided.push(format!("{} ({:?})", observed.case, observed.uncertain));
+        }
     }
-    if !coverage
-        .candidate_accepts_kubernetes_rejection_cases
-        .is_empty()
-    {
+    if !unlisted_undecided.is_empty() {
         problems.push(format!(
-            "accepted-but-Kubernetes-rejected cells: {:?}",
-            coverage.candidate_accepts_kubernetes_rejection_cases
-        ));
-    }
-    if coverage.candidate_accepts_helm_aborts != coverage.candidate_accepts_helm_abort_cases.len() {
-        problems.push(format!(
-            "accepted-but-Helm-aborting accounting mismatch: {coverage:?}"
-        ));
-    }
-    if coverage.candidate_accepts_helm_aborts > coverage.candidate_accepts_helm_abort_allowance {
-        problems.push(format!(
-            "accepted-but-Helm-aborting cells exceed the pre-registered allowance: {:?}",
-            coverage.candidate_accepts_helm_abort_cases
+            "accepted cells whose changed resources Kubernetes could not decide, missing \
+             from KNOWN_UNDECIDED_ACCEPTANCES: {unlisted_undecided:?}"
         ));
     }
     let mut unlisted = Vec::new();
-    for observed in &coverage.uninformative_baseline_false_acceptances {
+    for observed in &coverage.false_acceptances {
         let listed = roster
             .iter()
-            .any(|group| group.lists(&observed.case, observed.rejection));
+            .any(|group| group.lists(&observed.case, observed.rejection, observed.baseline));
         if !listed {
-            unlisted.push(format!("{} ({:?})", observed.case, observed.rejection));
+            unlisted.push(format!(
+                "{} ({:?}, {:?})",
+                observed.case, observed.rejection, observed.baseline
+            ));
         }
     }
     if !unlisted.is_empty() {
         problems.push(format!(
-            "false acceptances behind an uninformative baseline missing from \
-             KNOWN_FALSE_ACCEPTANCES: {unlisted:?}"
+            "false acceptances missing from KNOWN_FALSE_ACCEPTANCES: {unlisted:?}"
         ));
     }
     let mut fixed = Vec::new();
@@ -193,23 +195,47 @@ fn validate_helm_adjudication_coverage(
             continue;
         }
         for probe in group.probes {
+            let observed = coverage.false_acceptances.iter().any(|observed| {
+                observed.rejection == group.rejection
+                    && observed.baseline == group.baseline
+                    && known_false_acceptances::names(group.chart, probe, &observed.case)
+            });
+            if !observed {
+                fixed.push(format!(
+                    "{}: {} <- {} ({:?}, {:?}, {:?})",
+                    group.chart,
+                    probe.path,
+                    probe.value,
+                    group.rejection,
+                    group.baseline,
+                    group.family
+                ));
+            }
+        }
+    }
+    for group in undecided_roster {
+        if !coverage.charts_adjudicated.contains(group.chart) {
+            continue;
+        }
+        for probe in group.probes {
             let observed = coverage
-                .uninformative_baseline_false_acceptances
+                .loosenings_with_uncertain_kubernetes
                 .iter()
                 .any(|observed| {
-                    observed.rejection == group.rejection && group.names(probe, &observed.case)
+                    group.uncertain == observed.uncertain.as_slice()
+                        && known_false_acceptances::names(group.chart, probe, &observed.case)
                 });
             if !observed {
                 fixed.push(format!(
-                    "{}: {} <- {} ({:?}, {:?})",
-                    group.chart, probe.path, probe.value, group.rejection, group.family
+                    "{}: {} <- {} (undecided: {:?})",
+                    group.chart, probe.path, probe.value, group.uncertain
                 ));
             }
         }
     }
     if !fixed.is_empty() {
         problems.push(format!(
-            "KNOWN_FALSE_ACCEPTANCES entries that no longer fail; remove them: {fixed:?}"
+            "roster entries that no longer fail alike; remove or re-adjudicate them: {fixed:?}"
         ));
     }
     eyre::ensure!(problems.is_empty(), "{}", problems.join("\n"));
@@ -226,7 +252,7 @@ fn matched_flip_validation_accepts_confirmed_outcomes() -> eyre::Result<()> {
         HelmFlipVerdict::LooseningMatchedDefaultsViolations,
     ] {
         coverage.record_verdict(verdict, "confirmed".to_string());
-        validate_helm_adjudication_coverage(&coverage, &[])?;
+        validate_helm_adjudication_coverage(&coverage, &[], &[])?;
     }
     Ok(())
 }
@@ -237,10 +263,80 @@ fn matched_flip_validation_accepts_confirmed_outcomes() -> eyre::Result<()> {
 fn uncertain_loosening_is_not_matched_by_the_render() {
     let mut coverage = HelmAdjudicationCoverage::default();
     coverage.record_verdict(
-        HelmFlipVerdict::LooseningWithUncertainKubernetes,
+        HelmFlipVerdict::LooseningWithUncertainKubernetes(vec!["reason".to_string()]),
         "uncertain".to_string(),
     );
-    assert!(validate_helm_adjudication_coverage(&coverage, &[]).is_err());
+    assert!(validate_helm_adjudication_coverage(&coverage, &[], &[]).is_err());
+}
+
+/// The undecided roster lists an accepted cell only with the exact
+/// uncertainty the adjudicator reported for it, and a listed cell of an
+/// adjudicated chart that is no longer undecided alike must be removed.
+#[test]
+fn known_undecided_acceptances_are_matched_exactly() -> eyre::Result<()> {
+    const PROBES: &[Probe] = &[Probe {
+        path: "a",
+        value: "true",
+    }];
+    const WITH_FIXED: &[Probe] = &[
+        Probe {
+            path: "a",
+            value: "true",
+        },
+        Probe {
+            path: "fixed",
+            value: "true",
+        },
+    ];
+    let group = |chart, uncertain, probes| KnownUndecidedAcceptances {
+        chart,
+        uncertain,
+        probes,
+    };
+    let mut coverage = HelmAdjudicationCoverage::default();
+    coverage.charts_adjudicated.insert("chart".to_string());
+    coverage.record_verdict(
+        HelmFlipVerdict::LooseningWithUncertainKubernetes(vec![
+            "document 1: example.test/v1/Kind name: pinned CRD schema not found".to_string(),
+        ]),
+        "chart: a <- true".to_string(),
+    );
+    let reported: &[&str] = &["document 1: example.test/v1/Kind name: pinned CRD schema not found"];
+    validate_helm_adjudication_coverage(&coverage, &[], &[group("chart", reported, PROBES)])?;
+    // A chart this run did not adjudicate keeps its entries.
+    validate_helm_adjudication_coverage(
+        &coverage,
+        &[],
+        &[
+            group("chart", reported, PROBES),
+            group("other", reported, WITH_FIXED),
+        ],
+    )?;
+    let other_reason: &[&str] =
+        &["document 1: example.test/v1/Other name: pinned CRD schema not found"];
+    let with_more: &[&str] = &[
+        "document 1: example.test/v1/Kind name: pinned CRD schema not found",
+        "document 2: example.test/v1/Other name: pinned CRD schema not found",
+    ];
+    for roster in [
+        vec![group("chart", other_reason, PROBES)],
+        vec![group("chart", with_more, PROBES)],
+        vec![group("other", reported, PROBES)],
+        vec![group("chart", reported, WITH_FIXED)],
+    ] {
+        assert!(validate_helm_adjudication_coverage(&coverage, &[], &roster).is_err());
+    }
+    // An undecided acceptance is no false acceptance: the false-acceptance
+    // roster does not list it.
+    let false_acceptances = [KnownFalseAcceptances {
+        chart: "chart",
+        rejection: Rejection::KubernetesRejects,
+        baseline: Baseline::RejectsItsDefaults,
+        family: Family::Unfiled,
+        probes: PROBES,
+    }];
+    assert!(validate_helm_adjudication_coverage(&coverage, &false_acceptances, &[]).is_err());
+    Ok(())
 }
 
 fn validate_probe_coverage(chart: &ProbeCoverage) -> eyre::Result<()> {
@@ -356,16 +452,13 @@ fn capped_base_probes_visit_every_bucket_before_repeating() {
 
 #[test]
 fn helm_adjudication_validation_rejects_unregistered_accepted_abort() {
-    let coverage = HelmAdjudicationCoverage {
-        enabled: true,
-        flips_adjudicated: 1,
-        candidate_accepts_helm_aborts: 1,
-        candidate_accepts_helm_abort_allowance: 0,
-        candidate_accepts_helm_abort_cases: vec!["chart: probe".to_string()],
-        ..HelmAdjudicationCoverage::default()
-    };
+    let mut coverage = HelmAdjudicationCoverage::default();
+    coverage.record_verdict(
+        HelmFlipVerdict::CandidateAcceptsHelmAborts,
+        "chart: probe".to_string(),
+    );
 
-    assert!(validate_helm_adjudication_coverage(&coverage, &[]).is_err());
+    assert!(validate_helm_adjudication_coverage(&coverage, &[], &[]).is_err());
 }
 
 #[test]
@@ -387,7 +480,7 @@ fn helm_adjudication_records_each_outcome_once() {
             Some(true),
         ),
         (
-            HelmFlipVerdict::LooseningWithUncertainKubernetes,
+            HelmFlipVerdict::LooseningWithUncertainKubernetes(vec!["reason".to_string()]),
             Some(true),
         ),
         (HelmFlipVerdict::CandidateAcceptsHelmAborts, Some(true)),
@@ -408,20 +501,25 @@ fn helm_adjudication_records_each_outcome_once() {
         "tightenings_matched_helm_abort": 1, "tightenings_matched_kubernetes_rejection": 1,
         "loosenings_matched_kubernetes_validation": 1,
         "loosenings_matched_defaults_violations": 1,
-        "loosenings_with_uncertain_kubernetes_cases": ["case"],
-        "candidate_accepts_helm_aborts": 1, "candidate_accepts_helm_abort_allowance": 0,
-        "candidate_accepts_helm_abort_cases": ["case"],
-        "candidate_accepts_kubernetes_rejection_cases": ["case"],
+        "loosenings_with_uncertain_kubernetes": [{ "case": "case", "uncertain": ["reason"] }],
         "charts_adjudicated": [],
-        "uninformative_baseline_false_acceptances": [
-            { "case": "case", "rejection": "HelmAborts" },
+        "false_acceptances": [
+            {
+                "case": "case", "rejection": "HelmAborts",
+                "baseline": "RejectsUnlikeItsDefaults",
+            },
+            {
+                "case": "case", "rejection": "KubernetesRejects",
+                "baseline": "RejectsUnlikeItsDefaults",
+            },
+            { "case": "case", "rejection": "HelmAborts", "baseline": "RejectsItsDefaults" },
         ]
     }));
 }
 
-/// The roster matches each false acceptance behind an uninformative
-/// baseline by chart, probe and rejection, and a probe of an adjudicated
-/// chart that no longer fails must be removed.
+/// The roster matches each false acceptance by chart, probe, rejection and
+/// how the baseline rejected it, and a probe of an adjudicated chart that no
+/// longer fails alike must be removed.
 #[test]
 fn known_false_acceptances_are_matched_by_the_roster() -> eyre::Result<()> {
     const LISTED: &[Probe] = &[
@@ -448,12 +546,31 @@ fn known_false_acceptances_are_matched_by_the_roster() -> eyre::Result<()> {
             value: "non-coercible string",
         },
     ];
-    let group = |chart, rejection, probes| KnownFalseAcceptances {
+    const INFORMED: &[Probe] = &[Probe {
+        path: "d",
+        value: "null deletion",
+    }];
+    let group = |chart, rejection, baseline, probes| KnownFalseAcceptances {
         chart,
         rejection,
+        baseline,
         family: Family::Unfiled,
         probes,
     };
+    let uninformed = |probes| {
+        group(
+            "chart",
+            Rejection::HelmAborts,
+            Baseline::RejectsItsDefaults,
+            probes,
+        )
+    };
+    let informed = group(
+        "chart",
+        Rejection::HelmAborts,
+        Baseline::RejectsUnlikeItsDefaults,
+        INFORMED,
+    );
     let mut coverage = HelmAdjudicationCoverage::default();
     coverage.charts_adjudicated.insert("chart".to_string());
     for case in [
@@ -465,24 +582,92 @@ fn known_false_acceptances_are_matched_by_the_roster() -> eyre::Result<()> {
             case.to_string(),
         );
     }
-    validate_helm_adjudication_coverage(
-        &coverage,
-        &[group("chart", Rejection::HelmAborts, LISTED)],
-    )?;
+    coverage.record_verdict(
+        HelmFlipVerdict::CandidateAcceptsHelmAborts,
+        "chart: d <- null deletion".to_string(),
+    );
+    validate_helm_adjudication_coverage(&coverage, &[uninformed(LISTED), informed], &[])?;
     // A chart this run did not adjudicate keeps its entries.
     validate_helm_adjudication_coverage(
         &coverage,
         &[
-            group("chart", Rejection::HelmAborts, LISTED),
-            group("other", Rejection::HelmAborts, WITH_FIXED),
+            uninformed(LISTED),
+            group(
+                "chart",
+                Rejection::HelmAborts,
+                Baseline::RejectsUnlikeItsDefaults,
+                INFORMED,
+            ),
+            group(
+                "other",
+                Rejection::HelmAborts,
+                Baseline::RejectsItsDefaults,
+                WITH_FIXED,
+            ),
         ],
+        &[],
     )?;
     for roster in [
-        vec![group("chart", Rejection::HelmAborts, &LISTED[..1])],
-        vec![group("chart", Rejection::KubernetesRejects, LISTED)],
-        vec![group("chart", Rejection::HelmAborts, WITH_FIXED)],
+        vec![uninformed(LISTED)],
+        vec![
+            uninformed(&LISTED[..1]),
+            group(
+                "chart",
+                Rejection::HelmAborts,
+                Baseline::RejectsUnlikeItsDefaults,
+                INFORMED,
+            ),
+        ],
+        vec![
+            group(
+                "chart",
+                Rejection::KubernetesRejects,
+                Baseline::RejectsItsDefaults,
+                LISTED,
+            ),
+            group(
+                "chart",
+                Rejection::HelmAborts,
+                Baseline::RejectsUnlikeItsDefaults,
+                INFORMED,
+            ),
+        ],
+        // A cell behind a baseline with its own violations is not the
+        // uninformed baseline's, and the reverse.
+        vec![
+            uninformed(LISTED),
+            group(
+                "chart",
+                Rejection::HelmAborts,
+                Baseline::RejectsItsDefaults,
+                INFORMED,
+            ),
+        ],
+        vec![
+            group(
+                "chart",
+                Rejection::HelmAborts,
+                Baseline::RejectsUnlikeItsDefaults,
+                LISTED,
+            ),
+            group(
+                "chart",
+                Rejection::HelmAborts,
+                Baseline::RejectsUnlikeItsDefaults,
+                INFORMED,
+            ),
+        ],
+        vec![
+            uninformed(WITH_FIXED),
+            group(
+                "chart",
+                Rejection::HelmAborts,
+                Baseline::RejectsUnlikeItsDefaults,
+                INFORMED,
+            ),
+        ],
     ] {
-        assert!(validate_helm_adjudication_coverage(&coverage, &roster).is_err());
+        assert!(validate_helm_adjudication_coverage(&coverage, &roster, &[]).is_err());
     }
     Ok(())
 }
@@ -1428,7 +1613,11 @@ fn round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed() -> eyre:
         "Round 73 Helm adjudication failures:\n{}",
         helm_adjudication_failures.join("\n")
     );
-    validate_helm_adjudication_coverage(&report.helm_adjudication, KNOWN_FALSE_ACCEPTANCES)?;
+    validate_helm_adjudication_coverage(
+        &report.helm_adjudication,
+        KNOWN_FALSE_ACCEPTANCES,
+        KNOWN_UNDECIDED_ACCEPTANCES,
+    )?;
     eyre::ensure!(
         flips.is_empty(),
         "round 73 changed fixture acceptance:\n{}",
@@ -1492,7 +1681,11 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
         "fixture flips were not all live-adjudicated: {report:?}"
     );
     // Correctness campaigns permit oracle-matched changes; preservation runs keep their count gate.
-    validate_helm_adjudication_coverage(&report.helm_adjudication, KNOWN_FALSE_ACCEPTANCES)?;
+    validate_helm_adjudication_coverage(
+        &report.helm_adjudication,
+        KNOWN_FALSE_ACCEPTANCES,
+        KNOWN_UNDECIDED_ACCEPTANCES,
+    )?;
     if std::env::var_os("SCHEMA_ACCEPTANCE_ALLOW_MATCHED_FLIPS").is_none() {
         eyre::ensure!(
             flips.len() == PREREGISTERED_ACCEPTANCE_FLIP_ALLOWANCE,
@@ -1501,8 +1694,14 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
         );
     }
     eprintln!(
-        "charts_checked={charts_checked} probes_checked={probes_checked} flips={}",
-        flips.len()
+        "charts_checked={charts_checked} probes_checked={probes_checked} flips={} \
+         listed_false_acceptances={} listed_undecided_acceptances={}",
+        flips.len(),
+        report.helm_adjudication.false_acceptances.len(),
+        report
+            .helm_adjudication
+            .loosenings_with_uncertain_kubernetes
+            .len()
     );
     Ok(())
 }
@@ -1560,7 +1759,11 @@ fn external_schema_pair_flips_are_helm_adjudicated() -> eyre::Result<()> {
         "external Helm adjudication failures:\n{}",
         comparison.helm_adjudication_failures.join("\n")
     );
-    validate_helm_adjudication_coverage(&comparison.helm_adjudication, KNOWN_FALSE_ACCEPTANCES)?;
+    validate_helm_adjudication_coverage(
+        &comparison.helm_adjudication,
+        KNOWN_FALSE_ACCEPTANCES,
+        KNOWN_UNDECIDED_ACCEPTANCES,
+    )?;
     eprintln!(
         "probes_checked={} flips={}",
         comparison.probes_checked,
@@ -1696,9 +1899,6 @@ fn collect_acceptance_flips(
 ) -> eyre::Result<()> {
     let adjudicate_live = std::env::var("ADJUDICATE_WITH_HELM").is_ok();
     comparison.helm_adjudication.enabled |= adjudicate_live;
-    comparison
-        .helm_adjudication
-        .candidate_accepts_helm_abort_allowance = PREREGISTERED_ACCEPTED_HELM_ABORT_ALLOWANCE;
     if adjudicate_live {
         comparison
             .helm_adjudication
@@ -1776,7 +1976,7 @@ fn collect_acceptance_flips(
     Ok(())
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 enum HelmFlipVerdict {
     Collapsed,
     TighteningMatchedHelmAbort,
@@ -1784,8 +1984,9 @@ enum HelmFlipVerdict {
     LooseningMatchedKubernetesValidation,
     /// Helm renders, and every Kubernetes violation is one the defaults render already carries.
     LooseningMatchedDefaultsViolations,
-    /// Helm renders, but a new or changed resource has no decidable schema.
-    LooseningWithUncertainKubernetes,
+    /// Helm renders, but a new or changed resource has no decidable schema,
+    /// for the reasons listed.
+    LooseningWithUncertainKubernetes(Vec<String>),
     CandidateAcceptsHelmAborts,
     CandidateAcceptsKubernetesRejects,
     /// The candidate accepts a cell Helm or Kubernetes rejects, and the
@@ -1876,7 +2077,9 @@ fn adjudicate_round74_flip(
             }
         } else if !comparison.uncertain.is_empty() {
             if after {
-                Ok(HelmFlipVerdict::LooseningWithUncertainKubernetes)
+                Ok(HelmFlipVerdict::LooseningWithUncertainKubernetes(
+                    comparison.uncertain.clone(),
+                ))
             } else {
                 Err(
                     "tightening rejects a document Helm renders without a proved Kubernetes violation",
@@ -1972,7 +2175,7 @@ fn loosenings_need_complete_evidence_beyond_the_defaults_render() -> eyre::Resul
         adjudicate_round74_flip(&chart, &json!({"tag": "b"}), &accept_all, &mut kubernetes)?;
     sim_assert_eq!(have: inherited, want: HelmFlipVerdict::LooseningMatchedDefaultsViolations);
     coverage.record_verdict(inherited, "inherited".to_string());
-    validate_helm_adjudication_coverage(&coverage, &[])?;
+    validate_helm_adjudication_coverage(&coverage, &[], &[])?;
 
     // An added resource without a schema leaves the acceptance unproved, even
     // though the render's proven violations are all the defaults' own.
@@ -1987,10 +2190,16 @@ fn loosenings_need_complete_evidence_beyond_the_defaults_render() -> eyre::Resul
         &accept_all,
         &mut kubernetes,
     )?;
-    sim_assert_eq!(have: added, want: HelmFlipVerdict::LooseningWithUncertainKubernetes);
+    sim_assert_eq!(
+        have: added,
+        want: HelmFlipVerdict::LooseningWithUncertainKubernetes(vec![
+            "document 2: example.test/v1/Unknown added: pinned resource schema not found"
+                .to_string(),
+        ]),
+    );
     let mut added_coverage = HelmAdjudicationCoverage::default();
     added_coverage.record_verdict(added, "added".to_string());
-    assert!(validate_helm_adjudication_coverage(&added_coverage, &[]).is_err());
+    assert!(validate_helm_adjudication_coverage(&added_coverage, &[], &[]).is_err());
 
     // Two changed copies of one identity inherit the defaults' single violation once.
     sim_assert_eq!(
@@ -2077,7 +2286,9 @@ fn exact_flip_adjudication_uses_coalesced_values_and_kubernetes_evidence() -> ey
     );
     sim_assert_eq!(
         have: adjudicate_round74_flip(&chart, &json!({"name": "changed"}), &accept_all, &mut missing)?,
-        want: HelmFlipVerdict::LooseningWithUncertainKubernetes,
+        want: HelmFlipVerdict::LooseningWithUncertainKubernetes(vec![
+            "document 0: v1/ConfigMap changed: pinned resource schema not found".to_string(),
+        ]),
     );
 
     // The actual probe aborts even though this chart's unmodified defaults render.
