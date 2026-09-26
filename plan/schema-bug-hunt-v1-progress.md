@@ -3758,4 +3758,84 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   unmodelled features rather than compose a wrong document, add `AcceptanceDocument::
   {LintRaw, LintCoalescedTwice, Template}` for the gate and battery, fix the `{}` fallback.
 
+- 05:20 — **Battery run 3 (F23 candidate f1c12aca, dump-final-9) FAILED after 2h53m** — not on F23:
+  removing okteto's quarantine plus the kube-version owner (1.33 for okteto) made okteto
+  adjudicable for the first time, and the gate correctly surfaced its pre-existing debt: 6 accepted
+  cells whose changed resources Kubernetes could not decide (`openshift.enabled <- true/…` renders
+  OpenShift kinds absent from the pinned 1.33 evidence), `*.image <- coercible string` accepted but
+  Kubernetes-rejected, `*.image <- null deletion / empty string` accepted but Helm-aborting beyond
+  the allowance, and 31 okteto + 1 graylog (`mongodb.community.version <- null deletion [depth 3]`,
+  the probe I over-pruned in run 1) false acceptances behind an uninformative baseline missing
+  from `KNOWN_FALSE_ACCEPTANCES` (`battery-final-7.log:15872`). Everything else matched (33
+  loosening flips matched by Kubernetes validation, 6 tightenings matched by Helm aborts).
+  Decision: register okteto's debt EXACTLY (per-cell roster rows with family + evidence) and add
+  the OpenShift CRD evidence for the undecidable cells rather than re-quarantine — an Opus agent
+  is being launched for that; the chain then re-runs through runner v2 (dump first: dump-final-9
+  predates the kubever production edits in `capability_probe.rs`/`provider.rs`, so the candidate's
+  fixtures may be stale for capability-guarded charts — a freshness probe on six charts is running,
+  `fixture-freshness-final11.log`). Sweep (old `one.sh`, 1,482 rows at 05:20, still running):
+  0 new false rejections (base lint 0 → cand lint 1 with a rendering control); 209 improvements;
+  4 defaults improvements (dify, graylog, okteto, redmine); 8 kyverno `reportsServer.enabled+…`
+  rows are cand tightenings on overrides Helm itself aborts (template=1 on both copies) — matched.
+- 05:20 — **Wave-3 and naming hand-backs.** W1 (`round8-w1-evidence`, +39 LOC, BASE 721e87b0):
+  F66 CLOSED (gitea `clientSettingsPolicies.body: {}`), F45 CLOSED (verification + the piped
+  `not (X | len)` spelling), F2 PARTIAL — literal-dict half closed via `has_key_predicate` lowering
+  `hasKey` on a `dict` literal to an OR of `Guard::Eq` (schema-registry/bitnami-postgresql/openebs
+  `resourcesPreset: huge`), one truth fact for `len`/`keys` (witness-track decoder arm DELETED);
+  present-null half OPEN (kyverno `mode: null`, velero `resticTimeout: null` abort in Helm but
+  are accepted because `Absent` treats explicit null as absent — needs every consumer moved to
+  `HasKey`/`NotHasKey`, 6 tests broke on the attempt, reverted). 3 red→green tests in
+  `fail_validators.rs`. W4 (`round8-w4-evidence`, +45 LOC): F34 CLOSED (trino keda/worker
+  cells, alertmanager rc2+clusterPort null), F65 CLOSED for the mechanism (gitea RWX+indexers;
+  residual `eq (first .Values.persistence.accessModes) "ReadWriteOnce"` is list-member
+  equality, a different mechanism), F75 PARTIAL (openebs cpuCount closed; datadog clusterName
+  81/90 chars open — `tpl` results carry no typed scalar). Mechanisms: `call_with_final_operand`
+  (pipe spelling = call spelling), a `default` fallback bug fixed (literal default replaces EVERY
+  empty input, so `NotEq 0` became `Truthy`; BASE falsely rejected `count: null`),
+  `approximate_arm_predicate` unions structural and evaluator subsets, `inline_regions.rs`
+  duplicate of the if-activation logic DELETED, `ScalarValue::Length` (character-count subset,
+  never exact). 5 red→green tests in `comparison_operands.rs`. Naming turn 2
+  (`round8-naming-evidence`): C1–C4 applied, dump-2 adopted (160 pure renames of BASE-code
+  output; the naming clone's BASE had two stale fixtures — openebs, signoz-signoz — from an
+  earlier candidate patch, equal modulo rename), readability replay −30.5% changed lines,
+  A/B `helm lint` identical modulo names, all four large charts stay on the compact+readable
+  rung (openebs 4,895,963 B), +416 LOC, open: `landing.py ship()` lacks the third rung. F6 round
+  2 (`round8-f6-land-evidence`): 3/5 review changes done; (1)/(2) blocked — the aws-ebs
+  `controller.tsc` range accumulation loses the member path at range exit
+  (`widen_changed_fragment_bindings` → `local_binding_result` drops unresolved candidates), a
+  fix overlaps F9's accumulator work; F6 stays queued behind F9.
+- 05:20 — **Codex batches nine and ten digested** (18 further reports read; all in `round8/`).
+  Actionable now: (a) performance — debug builds RECOMPILE a validator on every acceptance-cache
+  hit (`declared_default.rs:16–21`, astra #1, ~30–120 LOC, byte-identical), stop the pretty probe
+  at overflow, `--timing` + phase counters before any other optimisation; both allocation audits
+  agree on the top sites (guard-set document triples in `emission_plan.rs:158`, provider root
+  clones in `resolve_ctx.rs:331`, conditional payload clones, metrics canonicalisation) with an
+  F+B (fixture + byte identity) proof per batch; (b) test time — one producer per chart for
+  `chart_reaudit`/`chart_corpus`/profiles (3–8 min), `debug=1` A/B, `test:all` runs integration
+  twice; (c) Helm invocation — bounded pool + exact-invocation cache (battery 45–70 min → 10–15),
+  decoder batching only with parity, sweep must stay schema-free; (d) dialect — Rust `jsonschema`
+  and Helm's Go validator DISAGREE on `idn-hostname` (datadog), `\s` (kps, vault, zalando),
+  format parsers, `$ref`-sibling `const`; the battery's schema verdicts are therefore not Helm's
+  → Go validator helper design requested; (e) corpus hygiene — nginx/mariadb/bitnami-postgresql
+  `.helmignore` IGNORES `values.schema.json`, so every lint verdict on them is vacuous; cert-manager
+  snapshot is not loadable; add a chart manifest; (f) k8s provider — "unknown capability → first
+  available alternative" (`chain.rs:137`) lets cache contents decide chart semantics (AGENTS.md
+  antipattern), uncertainty erased in `load_source_schema_doc`, sticky `NotOwned` memo; (g) IR/gen
+  architecture — both "local maximum": local-state record consolidation (−500), typed execution
+  obligations (−350), sink-use facts (−550), guard payload ownership (−250), single helper
+  execution (−650), placement lowering (−900) ≈ −3,200 LOC; gen: immutable body handles for
+  conditional arms, provider body identity, resolver `Value→SchemaNode→Value` adapter removal;
+  (h) incomplete-analysis result — typed `AnalysisOutcome` with `UnresolvedObligation`s, exit 3
+  by default, `--allow-incomplete` + `x-helm-schema-incomplete` (2,000–3,500 LOC, user decision);
+  (i) policy families — F5 transport union, F1/F73 open root (SUPERSEDES the strict-mode default
+  in this register — USER DECISION), F80 annotation-only unread values; (j) CLI DX — warn when
+  `.helmignore` hides the schema, `--k8s-version` default `v1.35.0` vs chart `kubeVersion`, Go-regexp
+  check, rung/bytes report, `--check`, `explain`; three redundant `--strict-*` flags; (k) fidelity
+  levels — separate widening pass, NOT `lean`; (l) PROTOCOL v2 adopted (`round8/PROTOCOL.md`;
+  v1 kept). **Codex batch eleven launched (7 runs, xhigh)**: adversarial fidelity review (astra),
+  independent verification of the Helm validation-path audit against v4.2.3 source (astra),
+  single corpus-generation producer design (sol), bounded Helm pool + invocation cache for the
+  current battery (astra), policy-decision challenge F5/F1/F73/F80 (sol), Go validator helper
+  design (sol), k8s provider red-test specs (astra). Codex quota 70% → ~85% weekly.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
