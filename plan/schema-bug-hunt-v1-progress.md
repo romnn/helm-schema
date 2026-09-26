@@ -3838,4 +3838,50 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   current battery (astra), policy-decision challenge F5/F1/F73/F80 (sol), Go validator helper
   design (sol), k8s provider red-test specs (astra). Codex quota 70% → ~85% weekly.
 
+- 13:00 — **User back; decisions adopted; performance implementers launched.** Decisions (user
+  agreed with the orchestrator's reading of sol's `decision-policy-challenge-sol.md` over astra's
+  `decision-policy-families-astra.md`): KEEP the strict authoring default in this register; FIX
+  Helm-injected `global` as a correctness bug at every chart and dependency-instance root (F1:
+  all ten `*-global-image-registry` rows → `Fixed(Accepts)`, ~20–60 LOC); ADD explicit caller
+  policy options `--open-root` and `--declared-types=assert|annotate` (default `assert`); F73 and
+  F80 rows become explicit POLICY-EXCEPTION rows in the frozen gate (strict verdict by default,
+  `Accepts` under the option; a family closed only by such rows is reported as CLOSED-BY-POLICY,
+  separately from CLOSED); F5 keeps the transport union with the four `-f` false acceptances
+  documented as a transport limitation; the incomplete-analysis result (exit 3 default) is
+  DEFERRED past the campaign. Machine budget: the four-builder cap is waived by the user for the
+  performance work; one combined test-infrastructure landing (gate, kube-version v2/v3, regexp,
+  coalescer, pool, naming) after F23 is approved, then semantic candidates one at a time on the
+  fast battery. Launched (Opus): **Helm pool + exact-invocation cache** for the battery
+  (`round8-pool`, astra design §1–§8, instrument first, deterministic preparation, keyed store
+  under `round8/helm-invocations/v1/`, nondeterministic charts never cached for render/lint,
+  pool with RSS admission, one full battery run must reproduce `battery-final-7.log`'s verdicts
+  line-for-line) and **single corpus-generation producer** (`round8-producer`, sol design steps
+  1–3 and 5: `helm-schema-test-support` crate, typed `ArtifactId` registry, `corpus_generation`
+  binary writing the 202 artifacts + manifest, `consume(id)` fail-closed on stale manifests,
+  `chart_reaudit`/chart-specific binaries reading the artifact, `test:all` running each suite
+  once; step 4 (shared Full/Lean analysis) deferred to the emission-harness owner). Also running:
+  okteto intake (roster + OpenShift CRD evidence), validator-recompilation perf fix, coalescer
+  (now with astra's source verification forwarded: no final `drop_nulls`, chart-default cleanup
+  is real, fixed `--set*` group order, 17-case matrix to pin to OBSERVED Helm output), B6 stack.
+  Batch-11 results digested: fidelity-levels design REJECTED as written by astra (polarity under
+  `not`/`if`, shared `$defs` widening, `additionalProperties` domain, tuple `items`; a syntactic
+  polarity-aware widening-witness checker is the proof obligation; provenance for `outline` is
+  absent today); Go validator helper: `util.ValidateAgainstSingleSchema` at
+  `pkg/chart/common/util/jsonschema.go:116–154` recompiles per call, so cache `*jsonschema.Schema`
+  by id, feed Helm-composed values (chart + `-f`), `tools/govalidate/` with pinned go.mod
+  (helm v4.2.3, jsonschema v6.0.2, go 1.26.x — the repo's mise pins Go 1.27.0), Rust verdict kept
+  as a prefilter with disagreement = hard failure; full cross-product is 7.3M validations per
+  profile → chart-own probes as the gate; k8s provider D1/D2/D3 CONFIRMED with exact red-test
+  specs (`provider_cache_correctness.rs`: HPA v1/v2 partial-cache abstention with a proposed
+  `UnresolvedCapability` diagnostic; Pod release/mirror substitution with `SchemaUnavailable`;
+  sticky memo of `Unavailable`/incomplete inference) — queued as the next semantic candidate
+  after a builder frees. **Codex batch twelve launched (21 runs, xhigh, before the weekly
+  reset)**: pre-landing reviews of W1 (astra), W4 (sol), naming turn 2 (astra), coalescer
+  checkpoint 1 (sol), kube-version v1–v3 (sol), gate round 2 (sol), F4+MLS r5 (astra), regexp
+  (sol), D5 (astra); implementation briefs for F1 `global` + policy options (astra), F2
+  present-null `HasKey` migration (sol), F75 typed `tpl` output (astra), F6 aws-ebs range
+  accumulation (sol), allocation batches 1–2 (astra), `--timing` + Criterion (sol), changed-chart
+  selection (astra), CLI DX corrections (sol), corpus hygiene (sol), wave-4 briefs (astra), IR
+  refactor step 1 (astra), gen refactor D4 (sol). All registered in `round8/codex-runs.tsv`.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
