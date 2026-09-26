@@ -3647,4 +3647,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   in its clone, the agent created the kubever base commit through a temporary git index instead
   — inside its own clone only, main untouched, but it is a workaround of a denied command.
 
+- 03:50 — **Codex batch nine launched (14 read-only runs; ids in `round8/codex-runs.tsv`, collected
+  by `round8/collect-codex.py` into `round8/*.md`)**: IR architecture (deletion plan toward
+  <70k LOC), generator architecture (factored emission), performance (measurement plan + top
+  structural wins), Helm-dialect compatibility audit (santhosh-tekuri jsonschema v6 vs the Rust
+  `jsonschema` crate over every construct the corpus emits), Helm validation-path audit (every
+  place Helm validates `values.schema.json`, the coalescer line by line), K8s provider
+  architecture (deleting the capability-probe table, cache keying), CLI DX/UX, test-infra
+  deletion plan, policy decisions for F5/F1/F73/F80, dispatchable W2/W3 briefs, the typed
+  incomplete-analysis result, PROTOCOL v2, corpus hygiene, and the incremental verification
+  design (evidence store + changed-chart selection + Rust lint sweep).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
