@@ -4665,4 +4665,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   per sweep. README's stale "key omits the environment" line corrected. Landing 2 will start
   from dump on this runner.
 
+- 01:50 (Sep 27) — **Landing 2 assembled and its chain launched.** `round8-landing2` branch
+  `landing-2` (c02c01f8 → 72ce31a2 producer [squash of `corpus-producer` 6d2e9768, byte-equal to
+  the patch; main's dropped `mod values_yaml` and the producer's dropped `mod schema_roundtrip`
+  both gone; `helm_schema_test_support::{consume, generate::chart_dir}`; `PreparedValuesDocuments
+  ::new` two-arg form] → e2b9e1d1 perf1 → e7cebf6f naming code-only [the `definition_names` hunk
+  carried into `helm-schema-test-support/src/generate.rs:88-96` since `schema_roundtrip.rs` is
+  gone] → d734629c coalescer [Reachable/Unreachable checked in `screen_chart`
+  (`schema_emission_profiles.rs:2273`), unreachable probes to `coverage.unreachable_probes`,
+  composition errors via `ScreenedChart.failures` into `helm_adjudication_failures`; the three-
+  document record beside the pool's `exit_code`; `ChartInputs::Fixture.defaults_fixture` and
+  `read_json_fixture` deleted; the gate-clone call sites do not exist on main]). Gates: fmt 0,
+  unit 1578/1578, test-util integration 34/34, focused integration 54/54, lint and lint:fc
+  residual only. Expected fixture moves (naming): 154 chart-corpus + 3 lean + 3 final-output
+  files (gen/IR lanes unchanged); the coalescer's Helm-exact defaults may change probe
+  composition for openebs, signoz-signoz, the temporal wrapper and cert-manager (battery will
+  show). Evidence `round8-landing2-evidence/` (`final.patch` sha a02d2a47…, 150 files,
+  `conflicts.md`, `handoff.md`). Chain launched 01:48 on runner v5.1 with `landing-2.env`
+  (BASELINE c02c01f8, E `round8-landing2-run`, target `round7-integrate`).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
