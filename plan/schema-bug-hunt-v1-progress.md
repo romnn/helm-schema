@@ -4294,4 +4294,32 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   differential, W4 F75 matrix, frontend gates, old sweep 152/156). Hand-off document drafted at
   `plan/schema-bug-hunt-v1-round8-handoff.md` (copy `/Volumes/T7/dev/round8/HANDOFF.md`).
 
+- 17:05 — **Pool v2 hand-back: full battery PASSES in 33 min on candidate + okteto + pool;
+  landing 1 assembled.** Pool v2 (`round8-pool-evidence/final-v2.patch` sha ef60fdce…,
+  `handoff-v2.md`, BASE2 bb623e4f = a8668313 + okteto patch, HEAD 43390951): (1) any `tpl`,
+  `keys` or `values` call disables render caching, literal/values scanning and the depth limit
+  deleted (`helm_cache_policy.rs:59-62`); (2) drop guard releases the worker slot and reservation
+  and wakes the others so a panic propagates (`helm_pool.rs:144-157`); (3) an entry manifest
+  hashing all four stored files is written last, missing/mismatching = miss, damaged entries moved
+  aside (`helm_invocation.rs:173,:541,:568`); (4) Helm size/mtime/inode recorded at hash time
+  and checked before every invocation, Helm home content in the key (`:182,:352,:486`);
+  `lookup`-only charts get `Cacheability::ClientOnly` bound in the key as `client_only`
+  (template, no `--dry-run=server`/`--validate`, no `KUBECONFIG`). Four red mutations logged.
+  fmt 0, unit 115/115, integration (pool + okteto roster + flip tests) 55/55, clippy 0; `task
+  lint` not re-run (last: residual only). **Full battery exit 0 in 1,976 s** (`full-battery-v2/`)
+  with `SCHEMA_ACCEPTANCE_ALLOW_MATCHED_FLIPS=1` (as run 3 and the okteto/graylog slices);
+  parity vs battery-final-7 on `coverage.json`: screened 7,952, collapsed 5, adjudicated 7,947,
+  abort tightenings 73, valid loosenings 7,612, defaults loosenings 25, the 6 undecided and 231
+  false-acceptance cases with rejection and baseline, and the adjudicated chart set — all equal
+  (nextest hides passing output, so no HELM_FLIP line diff; rerun with `--no-capture` for one).
+  Render cache replayed 0/7,952 even with the `lookup` exception (every flip-carrying chart also
+  calls `tpl`/`genCA`/`now`/`randAlphaNum`/`keys`); coalesce 66/7,961, decode 1,258/7,798
+  replayed cold. **Landing 1 assembled** in a fresh clone `/Volumes/T7/dev/round8-d3f23-f`
+  (the old `round8-d3f23-e` kept 13 staged leftovers and a hard reset was declined): branch
+  `landing-f23` = f7be7ba5 → 83247085 candidate-4f (sha f1c12aca) → 9ef27e08 okteto roster
+  (5ad56cc5) → f9a63646 pool v2 (ef60fdce); `crates/`, `Cargo.lock` and `testdata/` are byte-
+  identical to the pool clone's HEAD 43390951. `landing-f23.env`: R → the fresh clone,
+  `ALLOW_MATCHED_FLIPS=1` (every F23 battery run needed it: 7,947 matched flips). Waiting only on
+  the old sweep's openebs/weblate workers to release the legacy lock.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
