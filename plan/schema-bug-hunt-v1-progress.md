@@ -4655,4 +4655,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   charts); running every row through the real CLI would be the old 13–40 h, so the CLI
   differential stays a sample (k=100 per chart + ≤3 differing + all unresolved).
 
+- 01:55 (Sep 27) — **Runner v5.1 merged (072a0ce): no row is skipped; temp dirs under the
+  target.** The identical-schema skip, its class, gate rule, receipt counter and tests are deleted;
+  a skipped row is refused as malformed; every roster row runs through helmsweep. `GOTMPDIR=
+  $TARGET/gotmp` and `TMPDIR=$TARGET/tmp` for the helmsweep build, the sweep step and the CLI
+  cells' temporary homes, bound in the receipt as `sweep_tmp`. Red vs 73b5088: 20 checks;
+  green: one complete run-all exit 0 in 405 s (58/58). Cost: the 96 former skips are one-row
+  charts (~0.2 s each fast, ~0.6 s median CLI for their row-0 differential) → under 2 minutes
+  per sweep. README's stale "key omits the environment" line corrected. Landing 2 will start
+  from dump on this runner.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
