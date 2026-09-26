@@ -4322,4 +4322,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `ALLOW_MATCHED_FLIPS=1` (every F23 battery run needed it: 7,947 matched flips). Waiting only on
   the old sweep's openebs/weblate workers to release the legacy lock.
 
+- 17:10 — **Old sweep stopped, legacy lock freed, landing-1 chain launched.** The final11 lint
+  sweep (started 02:35, `run-final11-f.sh` under a retry loop) had all 156 charts started but
+  openebs at 16/129 overrides (~5 min per lint under load 140) and weblate at 61/97 — ~9 more
+  hours for rows the runner v3 sweep reproduces under its receipt anyway. Killed the loop, the
+  script, xargs, both workers and their helm children; removed `/Volumes/T7/dev/round8/heavy.lock`
+  (legacy owner). Partial results preserved and sorted: `round8-d3f23-evidence/lint-final7/
+  results-final11.txt` (1,877 rows), `new-lint-failures-partial.txt` (8 rows, all kyverno
+  `reportsServer.enabled+…` where `helm template` fails for base AND candidate — the v3 gate's
+  control render fails there, so they are not new lint failures), `STOPPED-1700.txt`. Chain:
+  `LANDING_ENV=/Volumes/T7/dev/round8/runner/landing-f23.env` (R `round8-d3f23-f` @ f9a63646,
+  E `/Volumes/T7/dev/round8-d3f23-landing` fresh v3 evidence dir, DUMP_MODE=legacy, ALLOW_MATCHED_
+  FLIPS=1, SWEEP_JOBS=6, cert-manager loader failure accepted), steps dump → unit → lint →
+  battery → integration → sweep → finalize run by a nohup loop; log `round8-d3f23-landing/
+  chain.log`, receipt `receipt.json` there. Expected wall-clock 4–5 h (sweep dominates).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
