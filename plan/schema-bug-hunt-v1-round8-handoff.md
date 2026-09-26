@@ -139,5 +139,23 @@ gates only, drop the stray mongodbcommunity hunk), regexp (`round8-regexp-eviden
   from different binaries; the Claude work account weekly limit (reset Oct 2, 01:00) kills agents
   mid-turn — resume them with SendMessage, their context survives.
 
-## 6. Status at hand-off time
-(updated at the end of the session — see the ledger's last entries)
+## 6. Status at hand-off time (2026-09-26, ~17:10 local)
+- **Landing 1 chain RUNNING** since 16:59 local: `LANDING_ENV=/Volumes/T7/dev/round8/runner/landing-f23.env`,
+  clone `/Volumes/T7/dev/round8-d3f23-f` branch `landing-f23` @ f9a63646 (83247085 candidate-4f →
+  9ef27e08 okteto roster → f9a63646 pool v2; tree byte-identical to `round8-pool/` HEAD 43390951),
+  evidence `/Volumes/T7/dev/round8-d3f23-landing/` (`chain.log`, `receipt.json`, per-step logs).
+  The nohup loop runs dump → unit → lint → battery → integration → sweep → finalize and stops
+  at the first non-zero step. To resume after a failure: fix, then re-run from the earliest
+  stale/failed step (`./run-landing.sh <step>`; the receipt refuses out-of-order runs). On
+  "chain green": adopt `$E/adopted.tsv` fixtures into the landing branch (commit "fixtures:
+  landing 1"), fast-forward `main` in `/Volumes/T7/dev/helm-schema` to that branch (never push),
+  record it in the ledger, then start landing 2.
+- The old legacy lint sweep was stopped at 17:00 (1,877 rows preserved, see ledger 17:10).
+- The old clone `/Volumes/T7/dev/round8-d3f23-e` is unused (13 staged leftovers; a hard reset was declined).
+- Agents still running at hand-off (their hand-backs land in their evidence dirs): W4 F75
+  (`round8-w4-evidence/final-f75.patch`), frontend phase 1 (`round8-frontend-evidence/`),
+  govalidate (`round8-govalidate-evidence/`). Every other agent has handed off or checkpointed.
+- Codex runs all collected (`round8/codex-runs.tsv`); none pending.
+- Pool v2 render cache replays 0 renders on the corpus (every flip-carrying chart calls a
+  nondeterministic function or `tpl`); the 3× win comes from the pool. Next lever, if wanted:
+  the changed-chart selection design (`design-changed-chart-selection-astra.md`).
