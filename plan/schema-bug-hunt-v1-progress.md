@@ -4526,4 +4526,34 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   loop, log `round8-d3f23-landing2/chain.log`. Expected: ~1.3 h to the sweep, then ≈ Σ row
   costs / 6 ≈ 13 h (openebs 129 × ~20 min dominates) unless the Go driver lands first.
 
+- 23:05 — **helmsweep hand-back: Helm-in-process sweep driver, 0 parity disagreements on 639 CLI
+  cells.** `round8-helmsweep-evidence/final.patch` (sha 5e300b4a…, HEAD 19ab9e0c on 37c58f9d),
+  `handoff.md`, `parity.tsv`, `parity-timings.tsv`, `bin/helmsweep` (sha a328b514…).
+  `tools/helmsweep`: Helm v4.2.3's own code paths (`helm.go` reproduces the lint command and
+  the template/`runInstall` sequence on Helm's actions), the ONLY Helm change `helm-memo.patch`
+  in `ValidateAgainstSingleSchema` (compiled schemas memoized by sha256 of bytes, single compile
+  under concurrency, only successful compiles without external resources kept; Helm's own tests
+  for the patched packages pass under `-race`); ambiguous process-wide Helm log lines → the
+  affected cell re-runs alone so its log matches the CLI; `sweep` verifies roster hash, plan
+  files and a digest of every prepared copy, refuses non-local `$ref`s, clears env once
+  (`HOME=<empty>`, `PATH=/usr/bin:/bin`), 4 workers with one compile at a time, writes the per-
+  row logs, `rows.tsv` (byte-equal to the live ones) and `cells.tsv` with cache hit/miss;
+  `cache.go` fail-closed verdict cache (pass/reject only); `-buildvcs=false -trimpath` keeps the
+  binary hash stable. Parity: 213 rows / 639 cells — all rows of kyverno (incl. the
+  `reportsServer.enabled+…` aborts), goldilocks, loki, oauth2-proxy, open-webui, spinnaker,
+  datadog, phpmyadmin + rows 0–3 of openebs/kps/milvus/gitea — 0 disagreements vs the live CLI
+  logs; the Go port of `classify_helm` agrees with Python on all 4,755 live cells; kyverno's 45
+  cells re-run through the real CLI under the cleared env are byte-equal. 18 Go tests (memo,
+  vendored-tree pin, 12 cache damage kinds, 29 classifier fixtures + 12 infra cells through real
+  Helm, gate files + cached rerun, 15 refusals); go vet 0, `go test -race` 18/18, gofmt clean,
+  `task build:helmsweep`/`test:helmsweep` 0, typos 0, fmt 0. Timings: cold 8m35s–20m35s for the
+  parity set (24 compiles, peak 0.94 GB), warm 0.29 s with 651 files byte-identical; kyverno
+  9–19 s vs 489 s CLI; openebs rows 0–3 4.7–11 min vs 81 min. Over budget: ~1,046 Go LOC (650–
+  900), tests ~633, patch ~100. Blocker resolved by decision: no vendored Helm tree in the repo
+  (68 zero-byte upstream testdata files hit the runner's zero-byte rule) → patch-at-build from
+  the go module cache with a pinned digest (agent resumed). Runner v5 (integration: fast pass +
+  CLI differential k=100 per chart + ≤3 differing rows + every unresolved row, parity receipt,
+  gate refuses on disagreement) briefed to the runner agent in a worktree off runner-v4. The v4
+  CLI sweep keeps running meanwhile (milvus 32/103) and fills the verdict cache v5 reuses.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
