@@ -101,6 +101,13 @@ hand-off, then the ledger's last entries.
 - Every fix lands with a red-then-green test; fixture drift is not a test.
 - Report closures strictly (verified closures only; policy closures separately).
 
+- Every pre-landing review, design and diagnosis goes to BOTH Codex reviewers
+  (`gpt-6-sol` and `gpt-6-astra`, xhigh, read-only) in parallel; Codex quota is plentiful and
+  the two catch different defects. Merge their findings before resuming the builder.
+- Test harnesses and tools never write bulk scratch to the system temp folder on the small
+  internal disk: temp roots live under the target volume (`$TARGET/tmp`, `GOTMPDIR`) and stale
+  ones are swept at start. Killed battery runs once left 70 GB in `/var/folders/.../T`.
+
 ## Mistakes worth not repeating
 
 - **Editing a runner directory a live chain executes from** broke an 18-chart
