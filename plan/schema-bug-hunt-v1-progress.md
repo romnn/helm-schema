@@ -4971,4 +4971,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   regenerated with a naming-only proof via the bijection; sample keys in the handoff for human
   review. Lands on the fast chain after review.
 
+- 10:25 (Sep 27) — **Naming scheme corrected by the user: SOURCE paths.** The churn argument only
+  applies to destination (first-use) paths. Deduplicated content has a stable origin: provider
+  document + JSON pointer for Kubernetes/CRD schemas, `values/<path>` for values-derived content,
+  helper name for helper-derived content; the smallest source path wins when dedup merges several.
+  Builder re-briefed: `--defs-names=source|destination|short` (library option too), default
+  `source` for fixtures and for the shipped file when it fits, automatic `short` past Helm's limit;
+  provenance threaded through extraction (never inferred from content); a stability test that an
+  earlier use of a provider type does not rename it; any class without provenance reported and
+  named by destination path, never by hash.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
