@@ -5,15 +5,18 @@ pub mod cli;
 mod config;
 mod diag_emit;
 
+use std::collections::BTreeMap;
 use std::io::{BufWriter, Write};
 use std::path::Path;
 
 use helm_schema::chart_source::RootChartSource;
 use helm_schema::diagnostics::DiagnosticSink;
 use helm_schema::output::{
-    FetchPolicy, LoadBudget, PolicyInputOptions, write_schema_json_without_metrics,
+    FetchPolicy, HELM_MAX_CHART_FILE_BYTES, JsonOutputFormat, LoadBudget, PolicyInputOptions,
+    shorten_definition_names, write_schema_json_without_metrics,
 };
 use helm_schema::{AnalysisSession, EngineResult};
+use serde_json::Value;
 use tracing_subscriber::Layer as _;
 use tracing_subscriber::layer::SubscriberExt as _;
 
@@ -29,6 +32,9 @@ pub use helm_schema::{CliError, flatten, schema_override};
 /// Returns an error if chart discovery fails, a template/values file cannot be
 /// read/parsed, the schema cannot be generated, or output cannot be written.
 pub fn run(cli: Cli) -> EngineResult<()> {
+    if let Some(cli::Command::Shorten(args)) = &cli.command {
+        return shorten(args, cli.diag.diag_format);
+    }
     let trace_output = cli.perf.trace_output.clone();
     if let Some(trace_output) = trace_output {
         let trace_file = create_output_file(&trace_output)?;
@@ -50,16 +56,21 @@ pub fn run(cli: Cli) -> EngineResult<()> {
 }
 
 fn run_inner(cli: Cli) -> EngineResult<()> {
+    let Some(chart_dir_arg) = cli.chart_dir.clone() else {
+        return Err(CliError::CliValidation(
+            "a CHART_DIR to analyze is required".to_string(),
+        ));
+    };
     let run_span = tracing::info_span!(
         "helm_schema_run",
-        chart_dir = %cli.chart_dir.display()
+        chart_dir = %chart_dir_arg.display()
     );
     let _entered = run_span.enter();
 
-    let root_source = RootChartSource::open(&cli.chart_dir, LoadBudget::default())?;
+    let root_source = RootChartSource::open(&chart_dir_arg, LoadBudget::default())?;
     let effective_config = config::resolve(
         &root_source,
-        &cli.chart_dir,
+        &chart_dir_arg,
         cli.config.as_deref(),
         cli.no_config,
         cli.profile,
@@ -135,23 +146,92 @@ fn run_inner(cli: Cli) -> EngineResult<()> {
     let schema = generated?;
 
     let json_format = cli.output.json_format();
+    if !cli.output.shorten_defs {
+        let bytes = write_schema(cli.output.output.as_deref(), &schema, json_format)?;
+        warn_over_helm_limit(bytes, false, cli.diag.diag_format);
+        return Ok(());
+    }
+    let shortened = shorten_definition_names(&schema);
+    let bytes = write_schema(cli.output.output.as_deref(), &shortened.schema, json_format)?;
+    if let Some(path) = &cli.output.defs_map {
+        write_definition_map(path, &shortened.readable_names)?;
+    }
+    warn_over_helm_limit(bytes, true, cli.diag.diag_format);
+    Ok(())
+}
 
-    if let Some(path) = cli.output.output {
-        let mut out = BufWriter::new(create_output_file(&path)?);
-        write_schema_json_without_metrics(&mut out, &schema, json_format)
-            .map_err(|err| write_output_error_with_path(err, &path))?;
-        out.flush().map_err(|err| CliError::WriteOutput {
-            path: path.clone(),
-            source: err,
-        })?;
-    } else {
+/// `helm-schema shorten`: the explicit rename of a readable schema's `$defs`
+/// to short keys, and the map back.
+fn shorten(args: &cli::ShortenArgs, diag_format: cli::DiagFormat) -> EngineResult<()> {
+    let bytes = std::fs::read(&args.input).map_err(|source| CliError::ReadSchema {
+        path: args.input.clone(),
+        source,
+    })?;
+    let schema: Value = serde_json::from_slice(&bytes).map_err(|source| CliError::ParseSchema {
+        path: args.input.clone(),
+        source,
+    })?;
+    let shortened = shorten_definition_names(&schema);
+    let written = write_schema(Some(&args.output), &shortened.schema, args.json_format())?;
+    if let Some(path) = &args.map {
+        write_definition_map(path, &shortened.readable_names)?;
+    }
+    warn_over_helm_limit(written, true, diag_format);
+    Ok(())
+}
+
+/// Writes `schema` to `path`, or to standard output; returns the bytes written.
+fn write_schema(
+    path: Option<&Path>,
+    schema: &Value,
+    format: JsonOutputFormat,
+) -> EngineResult<usize> {
+    let Some(path) = path else {
         let stdout = std::io::stdout();
         let mut out = BufWriter::new(stdout.lock());
-        write_schema_json_without_metrics(&mut out, &schema, json_format)?;
+        let written = write_schema_json_without_metrics(&mut out, schema, format)?;
         out.flush()?;
-    }
+        return Ok(written);
+    };
+    let mut out = BufWriter::new(create_output_file(path)?);
+    let written = write_schema_json_without_metrics(&mut out, schema, format)
+        .map_err(|err| write_output_error_with_path(err, path))?;
+    out.flush().map_err(|err| CliError::WriteOutput {
+        path: path.to_path_buf(),
+        source: err,
+    })?;
+    Ok(written)
+}
 
-    Ok(())
+/// Writes the map from each short `$defs` key to its readable name.
+fn write_definition_map(
+    path: &Path,
+    readable_names: &BTreeMap<String, String>,
+) -> EngineResult<()> {
+    let mut bytes = serde_json::to_vec_pretty(readable_names)?;
+    bytes.push(b'\n');
+    let mut out = create_output_file(path)?;
+    out.write_all(&bytes)
+        .map_err(|source| CliError::WriteOutput {
+            path: path.to_path_buf(),
+            source,
+        })
+}
+
+/// Warns when Helm would refuse a schema of `bytes` bytes.
+fn warn_over_helm_limit(bytes: usize, shortened: bool, format: cli::DiagFormat) {
+    if bytes <= HELM_MAX_CHART_FILE_BYTES {
+        return;
+    }
+    let diagnostics = DiagnosticSink::new();
+    diagnostics.push(
+        helm_schema::diagnostics::Diagnostic::SchemaExceedsHelmFileLimit {
+            bytes,
+            limit: HELM_MAX_CHART_FILE_BYTES,
+            shortened,
+        },
+    );
+    diag_emit::emit_to_stderr(&diagnostics, format);
 }
 
 fn create_output_file(path: &Path) -> EngineResult<std::fs::File> {

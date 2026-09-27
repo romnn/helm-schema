@@ -89,18 +89,6 @@ pub enum CliError {
         kind: &'static str,
     },
 
-    /// The final schema exceeds Helm's chart-file size limit even as compact
-    /// JSON with short definition names.
-    #[error(
-        "values.schema.json would be {bytes} bytes even as compact JSON with short definition names; Helm refuses chart files over {limit} bytes"
-    )]
-    SchemaExceedsHelmFileLimit {
-        /// Bytes of the smallest serialization, including the trailing newline.
-        bytes: usize,
-        /// Helm's per-file limit.
-        limit: usize,
-    },
-
     /// Helm template source could not be parsed.
     #[error("template parse error: {0}")]
     TemplateParse(#[from] helm_schema_ast::ParseError),
@@ -141,6 +129,26 @@ pub enum CliError {
         /// Underlying filesystem failure.
         #[source]
         source: std::io::Error,
+    },
+
+    /// A schema to shorten could not be read.
+    #[error("failed to read schema {path}")]
+    ReadSchema {
+        /// Schema file that could not be read.
+        path: PathBuf,
+        /// Underlying filesystem failure.
+        #[source]
+        source: std::io::Error,
+    },
+
+    /// A schema to shorten is not JSON.
+    #[error("failed to parse schema {path}")]
+    ParseSchema {
+        /// Schema file that could not be parsed.
+        path: PathBuf,
+        /// Underlying parse failure.
+        #[source]
+        source: serde_json::Error,
     },
 
     /// Wraps any failure surfaced by the `jsonschema` / `referencing`

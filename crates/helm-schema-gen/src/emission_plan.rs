@@ -1,6 +1,7 @@
 use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_core::ContractSchemaSignals;
+use helm_schema_json_schema_minify::DefinitionOrigin;
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
@@ -203,8 +204,8 @@ pub(crate) struct ProjectedTree {
     pub(crate) document: SchemaDocument,
     pub(crate) emission_report: EmissionReport,
     provider_definitions: BTreeMap<String, Value>,
-    /// Final names of the private provider-definition handles.
-    definition_names: BTreeMap<String, String>,
+    /// Content origins of the private provider-definition handles.
+    definition_origins: BTreeMap<String, Vec<DefinitionOrigin>>,
 }
 
 #[derive(Clone)]
@@ -212,13 +213,13 @@ pub(crate) struct MaterializedTree {
     pub(crate) schema: Value,
     pub(crate) emission_report: EmissionReport,
     provider_definitions: BTreeMap<String, Value>,
-    definition_names: BTreeMap<String, String>,
+    definition_origins: BTreeMap<String, Vec<DefinitionOrigin>>,
 }
 
 pub(crate) struct CompletedGeneratedSchema {
     pub(crate) schema: Value,
     pub(crate) emission_report: EmissionReport,
-    pub(crate) definition_names: BTreeMap<String, String>,
+    pub(crate) definition_origins: BTreeMap<String, Vec<DefinitionOrigin>>,
 }
 
 impl LoweredEmissionPlan {
@@ -361,12 +362,12 @@ impl LoweredEmissionPlan {
         // Candidate metadata is consumed only after selection. The shared
         // plan stays immutable, and each projection receives fresh payloads.
         let mut resolved_paths = self.resolved_paths.clone();
-        let mut definition_names = BTreeMap::new();
+        let mut definition_origins = BTreeMap::new();
         let mut provider_definitions = extract_provider_definitions(
             &mut resolved_paths,
             &mut selected_conditionals,
             &self.values_descriptions,
-            &mut definition_names,
+            &mut definition_origins,
         );
         let (mut document, base_document_abstentions) = materialize_base_document(
             &self.contract_schema_signals,
@@ -418,7 +419,7 @@ impl LoweredEmissionPlan {
             document,
             emission_report,
             provider_definitions,
-            definition_names,
+            definition_origins,
         }
     }
 
@@ -433,7 +434,7 @@ impl LoweredEmissionPlan {
         finish_generated(
             materialized.schema,
             materialized.emission_report,
-            materialized.definition_names,
+            materialized.definition_origins,
         )
     }
 
@@ -462,7 +463,7 @@ impl LoweredEmissionPlan {
             document,
             emission_report,
             provider_definitions,
-            definition_names,
+            definition_origins,
         } = projected;
         let mut schema = document.into_value();
         if let Ok(declared_defaults) = serde_json::to_value(&self.documents.input_defaults)
@@ -478,7 +479,7 @@ impl LoweredEmissionPlan {
             schema,
             emission_report,
             provider_definitions,
-            definition_names,
+            definition_origins,
         }
     }
 
@@ -491,7 +492,7 @@ impl LoweredEmissionPlan {
                 .provider_definitions
                 .extend(extract_repeated_provider_payloads(
                     &mut materialized.schema,
-                    &mut materialized.definition_names,
+                    &mut materialized.definition_origins,
                 ));
         }
         materialized
@@ -795,14 +796,14 @@ fn tree_segment_spelling(segment: &helm_schema_core::Segment) -> String {
 pub(crate) fn finish_generated(
     schema: Value,
     mut emission_report: EmissionReport,
-    definition_names: BTreeMap<String, String>,
+    definition_origins: BTreeMap<String, Vec<DefinitionOrigin>>,
 ) -> CompletedGeneratedSchema {
     emission_report.carriers =
         count_emitted_carriers(&schema, emission_report.carriers.grouping_fan_in);
     CompletedGeneratedSchema {
         schema: draft07_root_document(schema),
         emission_report,
-        definition_names,
+        definition_origins,
     }
 }
 

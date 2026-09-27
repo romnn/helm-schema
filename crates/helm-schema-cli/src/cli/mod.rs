@@ -7,10 +7,11 @@ mod k8s_args;
 mod output_args;
 mod perf_args;
 mod profile_args;
+mod shorten_args;
 
 use std::path::PathBuf;
 
-use clap::Parser;
+use clap::{Parser, Subcommand};
 
 pub use chart_args::ChartArgs;
 pub use crd_args::{CrdArgs, CrdVersionLookup};
@@ -18,21 +19,28 @@ pub use diag_args::{DiagArgs, DiagFormat};
 pub use emission_args::{EmissionArgs, PolicyToggle};
 pub use inference_args::InferenceArgs;
 pub use k8s_args::{DEFAULT_AUTO_WINDOW, K8sArgs, K8sVersionFallback};
-pub use output_args::OutputArgs;
+pub use output_args::{DefsNames, OutputArgs};
 pub use perf_args::PerfArgs;
 pub use profile_args::SchemaProfile;
+pub use shorten_args::ShortenArgs;
 
 /// Complete command-line interface for one schema-generation invocation.
 #[derive(Parser, Debug, Clone)]
 #[command(
     name = "helm-schema",
     about = "Generate JSON schema for Helm values.yaml",
+    args_conflicts_with_subcommands = true,
+    subcommand_negates_reqs = true,
     after_long_help = "EMISSION RETENTION:\n  full  keeps mandatory facts, root/local ordinary conditionals, terminal clauses,\n        and kind partitions.\n  lean  keeps every mandatory fact and every locally anchored ordinary conditional;\n        it drops root-anchored ordinary conditionals, terminal clauses, and kind\n        partitions.\n\nMandatory facts cannot be disabled. The four emission override flags only change\nW-class refinements and therefore only widen acceptance when switched off."
 )]
 pub struct Cli {
+    /// A command other than schema generation.
+    #[command(subcommand)]
+    pub command: Option<Command>,
+
     /// Chart directory or packaged chart archive to analyze.
-    #[arg(value_name = "CHART_DIR")]
-    pub chart_dir: PathBuf,
+    #[arg(value_name = "CHART_DIR", required = true)]
+    pub chart_dir: Option<PathBuf>,
 
     /// Final output and reference-processing options.
     #[command(flatten)]
@@ -94,4 +102,16 @@ pub struct Cli {
     /// rather than reference helm-schema's private `$defs` names.
     #[arg(long)]
     pub override_schema: Vec<PathBuf>,
+}
+
+/// Commands other than schema generation.
+#[derive(Subcommand, Debug, Clone)]
+pub enum Command {
+    /// Rename the `$defs` entries of a generated schema to short keys, for a
+    /// copy handed to Helm.
+    ///
+    /// Helm refuses chart files over 5 MiB. The readable schema stays the
+    /// reviewed artifact; the map translates error messages that mention a
+    /// short key back to readable names.
+    Shorten(ShortenArgs),
 }

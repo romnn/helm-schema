@@ -5,7 +5,10 @@ use serde_json::{Map, Value, json};
 use test_util::prelude::sim_assert_eq;
 
 use super::minimize;
-use crate::{content_digest, content_names, rename_definitions, shipping_definition_names};
+use crate::{
+    DefinitionNames, DefinitionOrigin, expand_short_definition_names, minimize_schema,
+    name_definitions, rename_definitions, shorten_definition_names,
+};
 
 /// An object schema large enough that two uses are worth extracting.
 fn record(label: &str, fields: &[&str]) -> Value {
@@ -41,102 +44,276 @@ fn reference_at<'a>(schema: &'a Value, pointer: &str) -> Option<&'a str> {
     schema.pointer(pointer)?.get("$ref")?.as_str()
 }
 
+fn origin(provider: &str, document: &str, pointer: &str) -> DefinitionOrigin {
+    DefinitionOrigin {
+        provider: provider.to_string(),
+        document: document.to_string(),
+        pointer: pointer.to_string(),
+    }
+}
+
+/// Private handles as a generator hands them over: two provider definitions
+/// with recorded origins, one shared payload without one.
+fn handles() -> BTreeMap<String, Vec<DefinitionOrigin>> {
+    BTreeMap::from([
+        (
+            "providerSource_k8s_0123456789ab".to_string(),
+            vec![origin(
+                "k8s",
+                "_definitions.json",
+                "/definitions/io.k8s.api.core.v1.SecurityContext",
+            )],
+        ),
+        (
+            "providerSchema1".to_string(),
+            vec![
+                origin(
+                    "crd",
+                    "monitoring.coreos.com/prometheus_v1.json",
+                    "/properties/spec/properties/containers/items",
+                ),
+                origin(
+                    "crd",
+                    "monitoring.coreos.com/alertmanager_v1.json",
+                    "/properties/spec/properties/containers/items",
+                ),
+            ],
+        ),
+        ("providerShared1".to_string(), Vec::new()),
+        ("7".to_string(), Vec::new()),
+        ("8".to_string(), Vec::new()),
+        ("9".to_string(), Vec::new()),
+    ])
+}
+
+/// A document over those handles: a named helper, a quoted property name,
+/// and references below `items`, `anyOf`, `additionalProperties` and
+/// `patternProperties`.
+fn handle_document() -> Value {
+    json!({
+        "$defs": {
+            "helm-double-quoted-safe": {
+                "anyOf": [{ "type": "string" }, { "items": { "$ref": "#/$defs/9" } }]
+            },
+            "providerSource_k8s_0123456789ab": {
+                "properties": { "capabilities": { "$ref": "#/$defs/7" } }
+            },
+            "providerSchema1": {
+                "properties": { "securityContext": { "$ref": "#/$defs/providerSource_k8s_0123456789ab" } }
+            },
+            "providerShared1": { "properties": { "drop": { "$ref": "#/$defs/8" } } },
+            "7": { "properties": { "add": { "$ref": "#/$defs/8" } } },
+            "8": { "items": { "type": "string" }, "type": "array" },
+            "9": { "type": "integer" }
+        },
+        "properties": {
+            "web": {
+                "properties": {
+                    "sidecars": { "items": { "$ref": "#/$defs/providerSchema1" } },
+                    "app.kubernetes.io/name": { "$ref": "#/$defs/providerShared1" }
+                }
+            },
+            "api": {
+                "anyOf": [
+                    { "type": "null" },
+                    { "additionalProperties": { "$ref": "#/$defs/7" } }
+                ],
+                "patternProperties": { "^x-": { "$ref": "#/$defs/helm-double-quoted-safe" } }
+            }
+        },
+        "type": "object"
+    })
+}
+
+/// `handle_document` with every definition key and reference renamed.
+fn renamed_document(names: &[(&str, &str)]) -> Value {
+    let mut document = handle_document();
+    let renames = names
+        .iter()
+        .map(|(handle, name)| ((*handle).to_string(), (*name).to_string()))
+        .collect();
+    rename_definitions(&mut document, &renames);
+    document
+}
+
 #[test]
-fn unrelated_insertion_keeps_existing_definition_names() {
+fn source_names_are_recorded_origins_or_the_smallest_referencing_path() {
+    let mut schema = handle_document();
+
+    name_definitions(&mut schema, &handles(), DefinitionNames::Source);
+
+    // The k8s pointer names an OpenAPI type; the CRD definition takes the
+    // smaller of its two origins; `7` is referenced from `values/api…` and
+    // from inside the k8s type, which sorts first; `8` is reached only
+    // through anonymous definitions and takes the smaller of their paths;
+    // `9` sits below the named helper.
+    sim_assert_eq!(
+        have: schema,
+        want: renamed_document(&[
+            ("providerSource_k8s_0123456789ab", "k8s/io.k8s.api.core.v1.SecurityContext"),
+            (
+                "providerSchema1",
+                "crd/monitoring.coreos.com/alertmanager_v1/spec.containers@items"
+            ),
+            ("providerShared1", "values/web.'app.kubernetes.io/name'"),
+            ("7", "k8s/io.k8s.api.core.v1.SecurityContext.capabilities"),
+            ("8", "k8s/io.k8s.api.core.v1.SecurityContext.capabilities.add"),
+            ("9", "helm-double-quoted-safe@anyOf(1)@items"),
+        ])
+    );
+}
+
+#[test]
+fn destination_names_are_the_first_reference_in_canonical_order() {
+    let mut schema = handle_document();
+
+    name_definitions(&mut schema, &handles(), DefinitionNames::Destination);
+
+    // Keys are visited in sorted order, so `api` comes before `web`, and a
+    // definition's references are visited only after the whole document.
+    sim_assert_eq!(
+        have: schema,
+        want: renamed_document(&[
+            ("7", "api@anyOf(1)@additionalProperties"),
+            ("providerShared1", "web.'app.kubernetes.io/name'"),
+            ("providerSchema1", "web.sidecars@items"),
+            ("8", "api@anyOf(1)@additionalProperties.add"),
+            ("9", "helm-double-quoted-safe@anyOf(1)@items"),
+            ("providerSource_k8s_0123456789ab", "web.sidecars@items.securityContext"),
+        ])
+    );
+}
+
+#[test]
+fn readable_names_resolve_as_references() -> eyre::Result<()> {
+    let mut schema = handle_document();
+    name_definitions(&mut schema, &handles(), DefinitionNames::Source);
+    let validator = jsonschema::validator_for(&schema)?;
+
+    assert!(validator.is_valid(&json!({ "web": { "app.kubernetes.io/name": { "drop": ["a"] } } })));
+    assert!(!validator.is_valid(&json!({ "web": { "app.kubernetes.io/name": { "drop": [1] } } })));
+    assert!(!validator.is_valid(&json!({ "api": { "x-a": [true] } })));
+    Ok(())
+}
+
+#[test]
+fn naming_is_deterministic_and_independent_of_key_order() -> eyre::Result<()> {
+    let forward: Value = serde_json::from_str(indoc::indoc! {r##"
+        {"properties": {"a": {"properties": {"x": {"$ref": "#/$defs/1"}}}, "b": {"$ref": "#/$defs/1"}},
+         "$defs": {"1": {"type": "string"}}}
+    "##})?;
+    let backward: Value = serde_json::from_str(indoc::indoc! {r##"
+        {"$defs": {"1": {"type": "string"}},
+         "properties": {"b": {"$ref": "#/$defs/1"}, "a": {"properties": {"x": {"$ref": "#/$defs/1"}}}}}
+    "##})?;
+    let anonymous = BTreeMap::from([("1".to_string(), Vec::new())]);
+    for policy in [DefinitionNames::Source, DefinitionNames::Destination] {
+        let mut runs = Vec::new();
+        for document in [&forward, &forward, &backward] {
+            let mut schema = document.clone();
+            name_definitions(&mut schema, &anonymous, policy);
+            runs.push(schema);
+        }
+        sim_assert_eq!(have: &runs[1], want: &runs[0]);
+        sim_assert_eq!(have: &runs[2], want: &runs[0]);
+        sim_assert_eq!(have: definitions(&runs[0]).into_keys().collect::<Vec<_>>(), want: vec![match policy {
+            DefinitionNames::Source => "values/a.x".to_string(),
+            DefinitionNames::Destination => "a.x".to_string(),
+        }]);
+    }
+    Ok(())
+}
+
+#[test]
+fn an_unrelated_values_edit_keeps_existing_names() {
     let alpha = record("alpha", &["one", "two", "three"]);
     let beta = record("beta", &["one", "two", "three", "four", "five"]);
     let before = minimize(json!({
-        "properties": { "left": alpha, "right": alpha },
+        "properties": { "left": alpha, "right": alpha, "x": beta, "y": beta },
         "type": "object"
     }));
-    // The inserted record is larger and more referenced, so an ordinal scheme
-    // hands it the name the alpha record held before.
+    // A new repeated record and a new plain property, elsewhere in values.
+    let gamma = record("gamma", &["one", "two", "three", "four"]);
     let after = minimize(json!({
         "properties": {
-            "left": alpha,
-            "right": alpha,
-            "x": beta,
-            "y": beta,
-            "z": beta
+            "left": alpha, "right": alpha, "x": beta, "y": beta,
+            "zeta": { "properties": { "g1": gamma, "g2": gamma, "count": { "type": "integer" } } }
         },
         "type": "object"
     }));
 
-    let before_definitions = definitions(&before);
     let after_definitions = definitions(&after);
-    sim_assert_eq!(have: before_definitions.len(), want: 1);
-    sim_assert_eq!(have: after_definitions.len(), want: 2);
-    for (name, body) in &before_definitions {
-        sim_assert_eq!(have: after_definitions.get(name), want: Some(body));
-    }
     sim_assert_eq!(
-        have: reference_at(&after, "/properties/left"),
-        want: reference_at(&before, "/properties/left")
+        have: after_definitions.keys().cloned().collect::<Vec<_>>(),
+        want: vec!["values/left", "values/x", "values/zeta.g1"]
+    );
+    for (name, body) in definitions(&before) {
+        sim_assert_eq!(have: after_definitions.get(&name), want: Some(&body));
+    }
+}
+
+#[test]
+fn an_earlier_use_of_a_provider_type_keeps_its_source_name() {
+    let document = |uses: &[&str]| {
+        let mut properties = Map::new();
+        for name in uses {
+            properties.insert(
+                (*name).to_string(),
+                json!({ "$ref": "#/$defs/providerSource_k8s_0123456789ab" }),
+            );
+        }
+        json!({
+            "$defs": { "providerSource_k8s_0123456789ab": { "type": "object" } },
+            "properties": properties
+        })
+    };
+    let anonymous = BTreeMap::from([(
+        "providerSource_k8s_0123456789ab".to_string(),
+        vec![origin(
+            "k8s",
+            "_definitions.json",
+            "/definitions/io.k8s.api.core.v1.Container",
+        )],
+    )]);
+    let name = |uses: &[&str], policy| {
+        let mut schema = document(uses);
+        name_definitions(&mut schema, &anonymous, policy);
+        definitions(&schema).into_keys().collect::<Vec<_>>()
+    };
+
+    let source = vec!["k8s/io.k8s.api.core.v1.Container".to_string()];
+    sim_assert_eq!(have: name(&["web"], DefinitionNames::Source), want: source.clone());
+    sim_assert_eq!(have: name(&["api", "web"], DefinitionNames::Source), want: source);
+    // A destination name follows the first use instead.
+    sim_assert_eq!(have: name(&["web"], DefinitionNames::Destination), want: vec!["web".to_string()]);
+    sim_assert_eq!(
+        have: name(&["api", "web"], DefinitionNames::Destination),
+        want: vec!["api".to_string()]
     );
 }
 
 #[test]
-fn body_edit_renames_the_definition_and_its_dependants_only() {
-    let child = record("child", &["one", "two", "three"]);
-    let mut edited_child = child.clone();
-    edited_child["properties"]["one"] = json!({ "const": "child-edited" });
-    let parent = |child: &Value| {
-        json!({
-            "properties": { "inner": child, "label": { "const": "parent label text" } },
-            "type": "object"
-        })
-    };
-    let unrelated = record("unrelated", &["one", "two", "three"]);
-    let document = |child: &Value| {
-        json!({
+fn minimized_output_is_pinned() {
+    let alpha = record("alpha", &["one", "two", "three"]);
+    let beta = record("beta", &["one", "two", "three", "four", "five"]);
+    let after = minimize(json!({
+        "properties": { "left": alpha, "right": alpha, "x": beta, "y": beta, "z": beta },
+        "type": "object"
+    }));
+
+    sim_assert_eq!(
+        have: after,
+        want: json!({
+            "$defs": { "values/left": alpha, "values/x": beta },
             "properties": {
-                "a": parent(child),
-                "b": parent(child),
-                "c": child,
-                "u": unrelated,
-                "v": unrelated
+                "left": { "$ref": "#/$defs/values~1left" },
+                "right": { "$ref": "#/$defs/values~1left" },
+                "x": { "$ref": "#/$defs/values~1x" },
+                "y": { "$ref": "#/$defs/values~1x" },
+                "z": { "$ref": "#/$defs/values~1x" }
             },
             "type": "object"
         })
-    };
-
-    let before = minimize(document(&child));
-    let after = minimize(document(&edited_child));
-
-    // The edited child and the parent that contains it are renamed; the
-    // unrelated definition keeps its name and body.
-    for pointer in ["/properties/a", "/properties/c"] {
-        assert!(
-            reference_at(&before, pointer).is_some(),
-            "{pointer} should be extracted"
-        );
-        assert_ne!(
-            reference_at(&after, pointer),
-            reference_at(&before, pointer),
-            "{pointer} must be renamed"
-        );
-    }
-    sim_assert_eq!(
-        have: reference_at(&after, "/properties/u"),
-        want: reference_at(&before, "/properties/u")
-    );
-    sim_assert_eq!(have: definitions(&after).len(), want: definitions(&before).len());
-}
-
-#[test]
-fn description_edit_renames_the_definition() {
-    let original = record("alpha", &["one", "two", "three"]);
-    let mut redescribed = original.clone();
-    redescribed["description"] = json!("A different description.");
-    let document = |record: &Value| json!({ "properties": { "left": record, "right": record }, "type": "object" });
-
-    let before = minimize(document(&original));
-    let after = minimize(document(&redescribed));
-
-    assert!(reference_at(&before, "/properties/left").is_some());
-    assert_ne!(
-        reference_at(&after, "/properties/left"),
-        reference_at(&before, "/properties/left")
     );
 }
 
@@ -158,7 +335,6 @@ fn cycle_through_a_named_helper_keeps_its_names() {
         for name in ["a", "b", "c", "d"] {
             properties.insert(name.to_string(), helper_reference.clone());
         }
-        // More uses than the helper reference, so an ordinal scheme reorders.
         if let Some(extra) = extra {
             for name in ["s", "t", "u", "v", "w", "x", "y", "z"] {
                 properties.insert(name.to_string(), extra.clone());
@@ -176,253 +352,15 @@ fn cycle_through_a_named_helper_keeps_its_names() {
         helper("^[a-z]*$"),
         Some(record("beta", &["one", "two", "three", "four", "five"])),
     ));
-    // The helper is an identity boundary: its callers name it, not its body.
     let helper_edited = minimize(document(helper("^[A-Z]*$"), None));
 
-    let generated = reference_at(&before, "/properties/a");
-    assert!(
-        generated.is_some_and(|reference| reference != "#/$defs/helm-double-quoted-safe"),
-        "the helper reference itself should be extracted: {before}"
-    );
-    sim_assert_eq!(have: reference_at(&inserted, "/properties/a"), want: generated);
-    sim_assert_eq!(have: reference_at(&helper_edited, "/properties/a"), want: generated);
-}
-
-#[test]
-fn unrelated_insertion_output_is_pinned() {
-    let alpha = record("alpha", &["one", "two", "three"]);
-    let beta = record("beta", &["one", "two", "three", "four", "five"]);
-    let after = minimize(json!({
-        "properties": { "left": alpha, "right": alpha, "x": beta, "y": beta, "z": beta },
-        "type": "object"
-    }));
-
-    sim_assert_eq!(
-        have: after,
-        want: json!({
-            "$defs": { "h9081c41d3351": alpha, "h9ac9edc9ffde": beta },
-            "properties": {
-                "left": { "$ref": "#/$defs/h9081c41d3351" },
-                "right": { "$ref": "#/$defs/h9081c41d3351" },
-                "x": { "$ref": "#/$defs/h9ac9edc9ffde" },
-                "y": { "$ref": "#/$defs/h9ac9edc9ffde" },
-                "z": { "$ref": "#/$defs/h9ac9edc9ffde" }
-            },
-            "type": "object"
-        })
-    );
-}
-
-fn string_map(entries: &[(&str, &str)]) -> BTreeMap<String, String> {
-    entries
-        .iter()
-        .map(|(id, digest)| ((*id).to_string(), (*digest).to_string()))
-        .collect()
-}
-
-#[test]
-fn prefix_collision_extends_only_the_colliding_group() {
-    let digests = string_map(&[
-        ("a", "0123456789abcd00ffff"),
-        ("b", "0123456789abce00ffff"),
-        ("c", "0123456789abcf00ffff"),
-        ("d", "fedcba9876543210ffff"),
-    ]);
-
-    let assigned = content_names("p-", &digests, &BTreeSet::new());
-
-    // `a`, `b` and `c` share twelve digits and extend to thirteen; `d` keeps
-    // the fixed twelve-digit name.
-    sim_assert_eq!(
-        have: assigned,
-        want: string_map(&[
-            ("a", "p-0123456789abcd"),
-            ("b", "p-0123456789abce"),
-            ("c", "p-0123456789abcf"),
-            ("d", "p-fedcba987654"),
-        ])
-    );
-}
-
-#[test]
-fn content_names_avoid_taken_names_and_keep_equal_digests_distinct() {
-    let digests = string_map(&[
-        ("a", "0123456789abcdef"),
-        ("b", "0123456789abcdef"),
-        ("c", "fedcba9876543210"),
-    ]);
-    let taken = BTreeSet::from(["p-fedcba987654".to_string()]);
-
-    let assigned = content_names("p-", &digests, &taken);
-
-    sim_assert_eq!(
-        have: assigned,
-        want: string_map(&[
-            ("a", "p-0123456789abcdef"),
-            ("b", "p-0123456789abcdef-2"),
-            ("c", "p-fedcba9876543"),
-        ])
-    );
-}
-
-#[test]
-fn content_digest_includes_descriptions_and_ignores_key_order() -> eyre::Result<()> {
-    let described = json!({ "description": "one", "type": "string" });
-    let reordered: Value = serde_json::from_str(r#"{"type":"string","description":"one"}"#)?;
-    let redescribed = json!({ "description": "two", "type": "string" });
-
-    sim_assert_eq!(have: content_digest(&reordered), want: content_digest(&described));
-    assert_ne!(content_digest(&redescribed), content_digest(&described));
-    Ok(())
-}
-
-/// A readable document with self and mutual cycles, escaped names, a pointer
-/// suffix, a `$ref` sibling, and `$ref`-looking data.
-fn readable_document() -> Value {
-    json!({
-        "$defs": {
-            "a/b": { "items": { "$ref": "#/$defs/a~1b" }, "type": "array" },
-            "c~d": { "properties": { "next": { "$ref": "#/$defs/hmutual" } } },
-            "hmutual": {
-                "properties": { "back": { "$ref": "#/$defs/c~0d" } },
-                "default": { "$ref": "#/$defs/hmutual" }
-            },
-            "hleaf": { "properties": { "name": { "type": "string" } } }
-        },
-        "properties": {
-            "cycle": { "$ref": "#/$defs/a~1b" },
-            "mutual": { "$ref": "#/$defs/c~0d" },
-            "leaf": { "$ref": "#/$defs/hleaf/properties/name" },
-            "leaf2": { "$ref": "#/$defs/hleaf" },
-            "leaf3": { "$ref": "#/$defs/hleaf", "description": "A sibling annotation." },
-            "data": { "examples": [{ "$ref": "#/$defs/hleaf" }], "const": "#/$defs/hleaf" }
-        }
-    })
-}
-
-#[test]
-fn shipping_rename_is_a_bijection_that_inverts_to_the_readable_document() -> eyre::Result<()> {
-    let readable = readable_document();
-    let renames = shipping_definition_names(&readable);
-    let mut shipped = readable.clone();
-    rename_definitions(&mut shipped, &renames);
-
-    // Total coverage, unique destinations, equal definition counts.
-    sim_assert_eq!(
-        have: renames.keys().cloned().collect::<BTreeSet<_>>(),
-        want: definitions(&readable).into_keys().collect::<BTreeSet<_>>()
-    );
-    sim_assert_eq!(
-        have: renames.values().collect::<BTreeSet<_>>().len(),
-        want: renames.len()
-    );
-    sim_assert_eq!(have: definitions(&shipped).len(), want: definitions(&readable).len());
-
-    // The most referenced definition gets the shortest name.
-    sim_assert_eq!(
-        have: shipped,
-        want: json!({
-            "$defs": {
-                "1": { "properties": { "name": { "type": "string" } } },
-                "2": { "items": { "$ref": "#/$defs/2" }, "type": "array" },
-                "3": { "properties": { "next": { "$ref": "#/$defs/4" } } },
-                "4": {
-                    "properties": { "back": { "$ref": "#/$defs/3" } },
-                    "default": { "$ref": "#/$defs/hmutual" }
-                }
-            },
-            "properties": {
-                "cycle": { "$ref": "#/$defs/2" },
-                "mutual": { "$ref": "#/$defs/3" },
-                "leaf": { "$ref": "#/$defs/1/properties/name" },
-                "leaf2": { "$ref": "#/$defs/1" },
-                "leaf3": { "$ref": "#/$defs/1", "description": "A sibling annotation." },
-                "data": { "examples": [{ "$ref": "#/$defs/hleaf" }], "const": "#/$defs/hleaf" }
-            }
-        })
-    );
-
-    // Every rewritten reference resolves in the shipped document.
-    for pointer in [
-        "/properties/cycle",
-        "/properties/mutual",
-        "/properties/leaf",
-        "/properties/leaf3",
-        "/$defs/2/items",
-        "/$defs/3/properties/next",
-        "/$defs/4/properties/back",
-    ] {
-        let reference = reference_at(&shipped, pointer).ok_or_eyre("reference expected")?;
-        let target = reference
-            .strip_prefix('#')
-            .ok_or_eyre("local reference expected")?;
-        assert!(shipped.pointer(target).is_some(), "{reference} dangles");
-    }
-
-    let inverse = renames
-        .iter()
-        .map(|(readable, shipped)| (shipped.clone(), readable.clone()))
-        .collect::<BTreeMap<_, _>>();
-    let mut restored = shipped;
-    rename_definitions(&mut restored, &inverse);
-    sim_assert_eq!(have: restored, want: readable);
-    Ok(())
-}
-
-#[test]
-fn shipping_rename_abstains_on_references_it_cannot_rewrite() {
-    let external = json!({
-        "$defs": { "hleaf": { "type": "string" } },
-        "properties": { "a": { "$ref": "other.json#/$defs/hleaf" } }
-    });
-    let encoded = json!({
-        "$defs": { "hleaf": { "type": "string" } },
-        "properties": { "a": { "$ref": "#/%24defs/hleaf" } }
-    });
-    let dangling = json!({
-        "$defs": { "hleaf": { "type": "string" } },
-        "properties": { "a": { "$ref": "#/$defs/1" } }
-    });
-
-    // `$dynamicRef` to a JSON Pointer behaves like `$ref`, which the rename
-    // would leave dangling.
-    let dynamic = json!({
-        "$defs": { "hlong-name": { "type": "string" } },
-        "properties": { "a": { "$dynamicRef": "#/$defs/hlong-name" } }
-    });
-    // A fragment-only `$id` names a location, not a new resource, so the
-    // reference below it still resolves against the root.
-    let fragment_identifier = json!({
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "definitions": {},
-        "$defs": { "hlong-name": { "type": "string" } },
-        "properties": {
-            "a": { "$id": "#entry", "properties": { "b": { "$ref": "#/$defs/hlong-name" } } }
-        }
-    });
-    let nested_resource = json!({
-        "$defs": { "hleaf": { "type": "string" } },
-        "properties": {
-            "a": { "$ref": "#/$defs/hleaf" },
-            "b": { "$id": "nested.json", "$defs": { "hleaf": {} }, "$ref": "#/$defs/hleaf" }
-        }
-    });
-    let anchor = json!({
-        "$defs": { "hlong-name": { "$anchor": "leaf", "type": "string" } },
-        "properties": { "a": { "$ref": "#leaf" } }
-    });
-
-    for schema in [
-        external,
-        encoded,
-        dangling,
-        dynamic,
-        fragment_identifier,
-        nested_resource,
-        anchor,
-    ] {
-        sim_assert_eq!(have: shipping_definition_names(&schema), want: BTreeMap::new());
-    }
+    // The helper reference also occurs inside the helper, whose path sorts
+    // before `values/a`.
+    let name = Some("#/$defs/helm-double-quoted-safe@anyOf(1)@additionalProperties");
+    sim_assert_eq!(have: reference_at(&before, "/properties/a"), want: name);
+    sim_assert_eq!(have: reference_at(&inserted, "/properties/a"), want: name);
+    sim_assert_eq!(have: reference_at(&helper_edited, "/properties/a"), want: name);
+    assert!(definitions(&before).contains_key("helm-double-quoted-safe"));
 }
 
 #[test]
@@ -443,42 +381,21 @@ fn extracting_an_inline_child_keeps_the_parent_name() {
         "type": "object"
     }));
 
-    sim_assert_eq!(have: definitions(&inline).len(), want: 1);
-    sim_assert_eq!(have: definitions(&extracted).len(), want: 2);
     sim_assert_eq!(
-        have: reference_at(&extracted, "/properties/a"),
-        want: reference_at(&inline, "/properties/a")
+        have: definitions(&inline).into_keys().collect::<Vec<_>>(),
+        want: vec!["values/a"]
     );
-}
-
-#[test]
-fn unrelated_conditional_arm_insertion_keeps_existing_definition_names() {
-    let alpha = record("alpha", &["one", "two", "three"]);
-    let beta = record("beta", &["one", "two", "three", "four", "five"]);
-    let arm = |flag: &str, record: &Value| {
-        json!({
-            "if": { "properties": { flag: { "const": true } }, "required": [flag] },
-            "then": { "properties": { "left": record, "right": record, "extra": record } }
-        })
-    };
-    let before = minimize(json!({ "allOf": [arm("alpha", &alpha)], "type": "object" }));
-    let after = minimize(json!({
-        "allOf": [arm("beta", &beta), arm("alpha", &alpha)],
-        "type": "object"
-    }));
-
-    let after_definitions = definitions(&after);
-    sim_assert_eq!(have: after_definitions.len(), want: 2);
-    for (name, body) in definitions(&before) {
-        sim_assert_eq!(have: after_definitions.get(&name), want: Some(&body));
-    }
+    sim_assert_eq!(
+        have: definitions(&extracted).into_keys().collect::<Vec<_>>(),
+        want: vec!["values/a", "values/a.inner"]
+    );
 }
 
 #[test]
 fn private_handles_decide_extraction_before_their_final_names_apply() {
     let document = |name: &str| {
         let property = json!({
-            "allOf": [{ "$ref": format!("#/$defs/{name}") }],
+            "allOf": [{ "$ref": format!("#/$defs/{}", name.replace('/', "~1")) }],
             "description": "short"
         });
         json!({
@@ -486,13 +403,20 @@ fn private_handles_decide_extraction_before_their_final_names_apply() {
             "properties": { "a": property, "b": property }
         })
     };
-    let readable = "providerSchema_0123456789ab";
-    let names = BTreeMap::from([("p1".to_string(), readable.to_string())]);
+    let readable = "k8s/io.k8s.apimachinery.pkg.util.intstr.IntOrString";
+    let anonymous = BTreeMap::from([(
+        "p1".to_string(),
+        vec![origin(
+            "k8s",
+            "_definitions.json",
+            "/definitions/io.k8s.apimachinery.pkg.util.intstr.IntOrString",
+        )],
+    )]);
 
     // Measured with the private handle, sharing the two uses does not pay,
     // so the final name only replaces the handle.
     sim_assert_eq!(
-        have: crate::minimize_schema(document("p1"), &names),
+        have: minimize_schema(document("p1"), &anonymous, DefinitionNames::Source),
         want: document(readable)
     );
     // Measured with the readable spelling, the same subtree would move.
@@ -500,24 +424,222 @@ fn private_handles_decide_extraction_before_their_final_names_apply() {
 }
 
 #[test]
-fn private_names_skip_absent_handles_and_taken_names() {
+fn naming_skips_absent_handles_and_suffixes_taken_names() {
     let mut schema = json!({
-        "$defs": { "p1": { "type": "string" }, "p2": { "type": "null" }, "taken": {} },
-        "properties": { "a": { "$ref": "#/$defs/p1" }, "b": { "$ref": "#/$defs/p2" } }
+        "$defs": {
+            "p1": { "type": "string" },
+            "p2": { "type": "null" },
+            "values/b": { "type": "boolean" }
+        },
+        "properties": {
+            "a": { "$ref": "#/$defs/p1" },
+            "b": { "$ref": "#/$defs/p2" },
+            "c": { "$ref": "#/$defs/values~1b" }
+        }
     });
-    let names = BTreeMap::from([
-        ("p1".to_string(), "final-one".to_string()),
-        ("p2".to_string(), "taken".to_string()),
-        ("p3".to_string(), "final-three".to_string()),
+    let anonymous = BTreeMap::from([
+        ("p1".to_string(), Vec::new()),
+        ("p2".to_string(), Vec::new()),
+        ("p3".to_string(), Vec::new()),
     ]);
 
-    crate::name_private_definitions(&mut schema, &names);
+    name_definitions(&mut schema, &anonymous, DefinitionNames::Source);
 
     sim_assert_eq!(
         have: schema,
         want: json!({
-            "$defs": { "final-one": { "type": "string" }, "p2": { "type": "null" }, "taken": {} },
-            "properties": { "a": { "$ref": "#/$defs/final-one" }, "b": { "$ref": "#/$defs/p2" } }
+            "$defs": {
+                "values/a": { "type": "string" },
+                "values/b@2": { "type": "null" },
+                "values/b": { "type": "boolean" }
+            },
+            "properties": {
+                "a": { "$ref": "#/$defs/values~1a" },
+                "b": { "$ref": "#/$defs/values~1b@2" },
+                "c": { "$ref": "#/$defs/values~1b" }
+            }
         })
+    );
+}
+
+/// A readable document with self and mutual cycles, escaped names, a pointer
+/// suffix, a `$ref` sibling, and `$ref`-looking data.
+fn readable_document() -> Value {
+    json!({
+        "$defs": {
+            "values/cycle": { "items": { "$ref": "#/$defs/values~1cycle" }, "type": "array" },
+            "c~d": { "properties": { "next": { "$ref": "#/$defs/values~1mutual" } } },
+            "values/mutual": {
+                "properties": { "back": { "$ref": "#/$defs/c~0d" } },
+                "default": { "$ref": "#/$defs/values~1mutual" }
+            },
+            "values/leaf": { "properties": { "name": { "type": "string" } } }
+        },
+        "properties": {
+            "cycle": { "$ref": "#/$defs/values~1cycle" },
+            "mutual": { "$ref": "#/$defs/c~0d" },
+            "leaf": { "$ref": "#/$defs/values~1leaf/properties/name" },
+            "leaf2": { "$ref": "#/$defs/values~1leaf" },
+            "leaf3": { "$ref": "#/$defs/values~1leaf", "description": "A sibling annotation." },
+            "data": { "examples": [{ "$ref": "#/$defs/values~1leaf" }], "const": "#/$defs/values~1leaf" }
+        }
+    })
+}
+
+#[test]
+fn shortening_is_a_bijection_that_inverts_to_the_readable_document() -> eyre::Result<()> {
+    let readable = readable_document();
+    let shortened = shorten_definition_names(&readable);
+
+    // Total coverage, unique destinations, equal definition counts.
+    sim_assert_eq!(
+        have: shortened.readable_names.values().cloned().collect::<BTreeSet<_>>(),
+        want: definitions(&readable).into_keys().collect::<BTreeSet<_>>()
+    );
+    sim_assert_eq!(
+        have: shortened.readable_names.len(),
+        want: definitions(&readable).len()
+    );
+    sim_assert_eq!(
+        have: definitions(&shortened.schema).len(),
+        want: definitions(&readable).len()
+    );
+
+    // The most referenced definition gets the shortest name.
+    sim_assert_eq!(
+        have: &shortened.schema,
+        want: &json!({
+            "$defs": {
+                "1": { "properties": { "name": { "type": "string" } } },
+                "2": { "properties": { "next": { "$ref": "#/$defs/4" } } },
+                "3": { "items": { "$ref": "#/$defs/3" }, "type": "array" },
+                "4": {
+                    "properties": { "back": { "$ref": "#/$defs/2" } },
+                    "default": { "$ref": "#/$defs/values~1mutual" }
+                }
+            },
+            "properties": {
+                "cycle": { "$ref": "#/$defs/3" },
+                "mutual": { "$ref": "#/$defs/2" },
+                "leaf": { "$ref": "#/$defs/1/properties/name" },
+                "leaf2": { "$ref": "#/$defs/1" },
+                "leaf3": { "$ref": "#/$defs/1", "description": "A sibling annotation." },
+                "data": { "examples": [{ "$ref": "#/$defs/values~1leaf" }], "const": "#/$defs/values~1leaf" }
+            }
+        })
+    );
+
+    // Every rewritten reference resolves in the shortened document.
+    for pointer in [
+        "/properties/cycle",
+        "/properties/mutual",
+        "/properties/leaf",
+        "/properties/leaf3",
+        "/$defs/3/items",
+        "/$defs/2/properties/next",
+        "/$defs/4/properties/back",
+    ] {
+        let reference =
+            reference_at(&shortened.schema, pointer).ok_or_eyre("reference expected")?;
+        let target = reference
+            .strip_prefix('#')
+            .ok_or_eyre("local reference expected")?;
+        assert!(
+            shortened.schema.pointer(target).is_some(),
+            "{reference} dangles"
+        );
+    }
+
+    let mut restored = shortened.schema;
+    rename_definitions(&mut restored, &shortened.readable_names);
+    sim_assert_eq!(have: restored, want: readable);
+    Ok(())
+}
+
+#[test]
+fn shortening_abstains_on_references_it_cannot_rewrite() {
+    let external = json!({
+        "$defs": { "values/leaf": { "type": "string" } },
+        "properties": { "a": { "$ref": "other.json#/$defs/values~1leaf" } }
+    });
+    let encoded = json!({
+        "$defs": { "values/leaf": { "type": "string" } },
+        "properties": { "a": { "$ref": "#/%24defs/values~1leaf" } }
+    });
+    let dangling = json!({
+        "$defs": { "values/leaf": { "type": "string" } },
+        "properties": { "a": { "$ref": "#/$defs/1" } }
+    });
+    // `$dynamicRef` to a JSON Pointer behaves like `$ref`, which the rename
+    // would leave dangling.
+    let dynamic = json!({
+        "$defs": { "values/long-name": { "type": "string" } },
+        "properties": { "a": { "$dynamicRef": "#/$defs/values~1long-name" } }
+    });
+    // A fragment-only `$id` names a location, not a new resource, so the
+    // reference below it still resolves against the root.
+    let fragment_identifier = json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "definitions": {},
+        "$defs": { "values/long-name": { "type": "string" } },
+        "properties": {
+            "a": { "$id": "#entry", "properties": { "b": { "$ref": "#/$defs/values~1long-name" } } }
+        }
+    });
+    let nested_resource = json!({
+        "$defs": { "values/leaf": { "type": "string" } },
+        "properties": {
+            "a": { "$ref": "#/$defs/values~1leaf" },
+            "b": { "$id": "nested.json", "$defs": { "values/leaf": {} }, "$ref": "#/$defs/values~1leaf" }
+        }
+    });
+    let anchor = json!({
+        "$defs": { "values/long-name": { "$anchor": "leaf", "type": "string" } },
+        "properties": { "a": { "$ref": "#leaf" } }
+    });
+
+    for schema in [
+        external,
+        encoded,
+        dangling,
+        dynamic,
+        fragment_identifier,
+        nested_resource,
+        anchor,
+    ] {
+        let shortened = shorten_definition_names(&schema);
+        sim_assert_eq!(have: shortened.readable_names, want: BTreeMap::new());
+        sim_assert_eq!(have: shortened.schema, want: schema);
+    }
+}
+
+#[test]
+fn helm_errors_translate_back_to_readable_names() {
+    let readable_names = BTreeMap::from([
+        (
+            "2b".to_string(),
+            "k8s/io.k8s.api.core.v1.Probe.exec".to_string(),
+        ),
+        ("1".to_string(), "values/web".to_string()),
+    ]);
+    // Recorded from `helm lint` (Helm v4.3.0) on a shortened schema.
+    let helm_error = indoc::indoc! {r##"
+        [ERROR] templates/: values don't meet the specifications of the schema(s) in the following chart(s):
+        refchk:
+        "file:///values.schema.json#/$defs/2b" is not valid against metaschema: jsonschema validation failed with 'http://json-schema.org/draft-07/schema#'
+        - at '/pattern': '^(?=x)' is not valid regex: error parsing regexp: invalid or unsupported Perl syntax: `(?=`
+        json-pointer in "file:///values.schema.json#/$defs/1/properties/a" not found; $defs/21 and $defs/1b stay
+    "##};
+
+    sim_assert_eq!(
+        have: expand_short_definition_names(helm_error, &readable_names),
+        want: indoc::indoc! {r##"
+            [ERROR] templates/: values don't meet the specifications of the schema(s) in the following chart(s):
+            refchk:
+            "file:///values.schema.json#/$defs/k8s~1io.k8s.api.core.v1.Probe.exec" is not valid against metaschema: jsonschema validation failed with 'http://json-schema.org/draft-07/schema#'
+            - at '/pattern': '^(?=x)' is not valid regex: error parsing regexp: invalid or unsupported Perl syntax: `(?=`
+            json-pointer in "file:///values.schema.json#/$defs/values~1web/properties/a" not found; $defs/21 and $defs/1b stay
+        "##}
+        .to_string()
     );
 }

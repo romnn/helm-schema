@@ -149,6 +149,7 @@ fn emit_request(reference_policy: ReferencePolicy) -> EmitRequest {
         output: OutputPipelineOptions {
             strip_descriptions: false,
             minimize: true,
+            definition_names: helm_schema::output::DefinitionNames::Source,
         },
     }
 }

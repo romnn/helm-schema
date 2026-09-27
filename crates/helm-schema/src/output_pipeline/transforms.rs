@@ -1,7 +1,7 @@
 use std::collections::BTreeMap;
 use std::path::Path;
 
-use helm_schema_json_schema_minify::{minimize_schema, name_private_definitions};
+use helm_schema_json_schema_minify::{DefinitionOrigin, minimize_schema, name_definitions};
 use serde_json::Value;
 
 use crate::error::EngineResult;
@@ -12,8 +12,8 @@ use crate::output_pipeline::reachability::{OwnedDefinitions, prune_unreachable_o
 use crate::output_pipeline::{OutputPipelineOptions, PreparedEmitRequest, ReferencePolicy};
 use crate::schema_override;
 
-/// Applies overrides, reference policy, final minimization, and the final
-/// names of the generator's private definition handles.
+/// Applies overrides, reference policy, final minimization, and the readable
+/// names of anonymous definitions, the generator's private handles among them.
 ///
 /// # Errors
 ///
@@ -30,7 +30,7 @@ use crate::schema_override;
 )]
 pub(crate) fn apply_schema_output_pipeline(
     mut schema: Value,
-    definition_names: &BTreeMap<String, String>,
+    definition_origins: &BTreeMap<String, Vec<DefinitionOrigin>>,
     prepared: PreparedEmitRequest,
     base_dir: &Path,
     policy: FinalOutputPolicy,
@@ -44,10 +44,10 @@ pub(crate) fn apply_schema_output_pipeline(
     }
     let generated_definitions = generated_definitions.retain_unchanged(&schema);
     // An override that replaced a handle's body owns that definition now.
-    let mut owned_names = BTreeMap::new();
-    for (handle, name) in definition_names {
+    let mut anonymous = BTreeMap::new();
+    for (handle, origins) in definition_origins {
         if generated_definitions.owns_root_definition(handle) {
-            owned_names.insert(handle.clone(), name.clone());
+            anonymous.insert(handle.clone(), origins.clone());
         }
     }
 
@@ -57,7 +57,7 @@ pub(crate) fn apply_schema_output_pipeline(
         reference_policy,
         options,
         &generated_definitions,
-        &owned_names,
+        &anonymous,
     )?;
     annotate_final_schema(schema, policy, &override_identity, reference_policy)
 }
@@ -76,7 +76,7 @@ fn apply_output_transforms(
     reference_policy: ReferencePolicy,
     options: OutputPipelineOptions,
     generated_definitions: &OwnedDefinitions,
-    definition_names: &BTreeMap<String, String>,
+    anonymous: &BTreeMap<String, Vec<DefinitionOrigin>>,
 ) -> EngineResult<Value> {
     match reference_policy {
         ReferencePolicy::SelfContained => schema = flatten::bundle_prepared_refs(schema, base_dir)?,
@@ -94,9 +94,9 @@ fn apply_output_transforms(
     // from them and lose their original ownership.
     prune_unreachable_owned_definitions(&mut schema, generated_definitions);
     if options.minimize {
-        schema = minimize_schema(schema, definition_names);
+        schema = minimize_schema(schema, anonymous, options.definition_names);
     } else {
-        name_private_definitions(&mut schema, definition_names);
+        name_definitions(&mut schema, anonymous, options.definition_names);
     }
 
     Ok(schema)

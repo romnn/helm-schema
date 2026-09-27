@@ -253,7 +253,7 @@ impl AnalysisSession {
             Ok(GeneratedSchema {
                 schema,
                 emission_report: resolved.emission_report.clone(),
-                definition_names: resolved.definition_names.clone(),
+                definition_origins: resolved.definition_origins.clone(),
             })
         })?)
         .clone())
@@ -274,7 +274,7 @@ impl AnalysisSession {
         let generated = self.generated_schema()?;
         apply_schema_output_pipeline(
             generated.schema,
-            &generated.definition_names,
+            &generated.definition_origins,
             PreparedEmitRequest::empty(request),
             self.chart_base_dir(),
             FinalOutputPolicy::new(self.resolved_emission_policy()?, self.opts.infer_required),
@@ -298,7 +298,7 @@ impl AnalysisSession {
         let prepared = prepare_emit_request(loaded, &policy_input_options, &generated.schema)?;
         apply_schema_output_pipeline(
             generated.schema,
-            &generated.definition_names,
+            &generated.definition_origins,
             prepared,
             self.chart_base_dir(),
             FinalOutputPolicy::new(self.resolved_emission_policy()?, self.opts.infer_required),
@@ -397,7 +397,7 @@ impl AnalysisSession {
             Ok(ResolvedContract {
                 schema: generated.schema,
                 emission_report: generated.emission_report,
-                definition_names: generated.definition_names,
+                definition_origins: generated.definition_origins,
             })
         })
     }

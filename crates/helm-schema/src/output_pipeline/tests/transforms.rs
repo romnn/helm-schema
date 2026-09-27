@@ -27,6 +27,7 @@ fn minimization_does_not_preserve_children_of_dead_owned_definitions() -> eyre::
         OutputPipelineOptions {
             strip_descriptions: false,
             minimize: true,
+            definition_names: helm_schema_json_schema_minify::DefinitionNames::Source,
         },
         &owned,
         &std::collections::BTreeMap::new(),
@@ -41,6 +42,7 @@ fn request(reference_policy: ReferencePolicy) -> PreparedEmitRequest {
         output: OutputPipelineOptions {
             strip_descriptions: false,
             minimize: false,
+            definition_names: helm_schema_json_schema_minify::DefinitionNames::Source,
         },
     })
 }

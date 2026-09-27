@@ -15,8 +15,8 @@ use helm_schema_json_schema_walk::{
 use serde_json::{Map, Value};
 
 pub use naming::{
-    content_digest, content_names, name_private_definitions, rename_definitions,
-    shipping_definition_names,
+    DefinitionNames, DefinitionOrigin, ShortenedSchema, expand_short_definition_names,
+    name_definitions, rename_definitions, shorten_definition_names,
 };
 
 const DEFINITIONS_KEY: &str = "$defs";
@@ -30,17 +30,22 @@ const DEFINITION_REF_PREFIX: &str = "#/$defs/";
 ///
 /// Every extraction decision is made on the document as given, including
 /// the caller's private definition handles, and on private planning ids.
-/// Only then are the handles renamed to their final `private_names` (see
-/// [`name_private_definitions`]) and each extracted definition named after
-/// its content (see [`content_names`]), so no final name influences which
+/// Only then are those handles and the extracted definitions named by
+/// `names` (see [`name_definitions`]), so no final name influences which
 /// subtrees are extracted.
 #[must_use]
 #[tracing::instrument(skip_all)]
-pub fn minimize_schema(schema: Value, private_names: &BTreeMap<String, String>) -> Value {
+pub fn minimize_schema(
+    schema: Value,
+    anonymous: &BTreeMap<String, Vec<DefinitionOrigin>>,
+    names: DefinitionNames,
+) -> Value {
     let (mut minimized, generated) = extract_repeated_subschemas(schema);
-    name_private_definitions(&mut minimized, private_names);
-    let names = naming::readable_definition_names(&minimized, &generated);
-    rename_definitions(&mut minimized, &names);
+    let mut anonymous = anonymous.clone();
+    for id in generated {
+        anonymous.entry(id).or_default();
+    }
+    name_definitions(&mut minimized, &anonymous, names);
     minimized
 }
 
@@ -110,7 +115,7 @@ struct ExactCandidate {
 }
 
 /// An extraction decision, keyed by a private planning id that is replaced by
-/// the definition's content name once extraction is final.
+/// the definition's readable name once extraction is final.
 #[derive(Debug)]
 struct PlannedDefinition {
     schema: Value,

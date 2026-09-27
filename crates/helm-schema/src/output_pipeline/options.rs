@@ -1,3 +1,5 @@
+use helm_schema_json_schema_minify::DefinitionNames;
+
 use crate::fetch_policy::FetchPolicy;
 use crate::load_budget::LoadBudget;
 
@@ -11,6 +13,8 @@ pub struct OutputPipelineOptions {
     pub strip_descriptions: bool,
     /// Whether redundant schema structure is minimized.
     pub minimize: bool,
+    /// How anonymous `$defs` entries are named.
+    pub definition_names: DefinitionNames,
 }
 
 /// Input-loading policy for schema documents that must be prepared before

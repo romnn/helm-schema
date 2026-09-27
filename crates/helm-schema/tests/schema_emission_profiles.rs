@@ -1492,6 +1492,7 @@ fn temporal_middle_policy_measurements() -> eyre::Result<()> {
         output: helm_schema::output::OutputPipelineOptions {
             strip_descriptions: false,
             minimize: true,
+            definition_names: helm_schema::output::DefinitionNames::Source,
         },
     };
     let full_schema = full_session.emit(emit_request)?;

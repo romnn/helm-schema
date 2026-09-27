@@ -87,12 +87,13 @@ pub fn chart_schema(recipe: &ChartRecipe) -> eyre::Result<Value> {
         .wrap_err_with(|| format!("generate {:?} schema for {}", recipe.profile, recipe.chart))?;
     if recipe.minimize {
         // Mirror the CLI's default output policy: repeated schema subtrees
-        // are interned into root-level `$defs` under readable content names.
-        // Fixtures keep those names; only the shipping writer may shorten
-        // them, and only past Helm's size limit.
+        // are interned into root-level `$defs` under readable source paths.
+        // Fixtures always keep those names; shortening is a separate
+        // transform applied only to what is handed to Helm.
         Ok(helm_schema_json_schema_minify::minimize_schema(
             generated.schema,
-            &generated.definition_names,
+            &generated.definition_origins,
+            helm_schema_json_schema_minify::DefinitionNames::Source,
         ))
     } else {
         Ok(generated.schema)
@@ -118,6 +119,7 @@ pub fn emit_policy(session: &AnalysisSession, recipe: &PolicyRecipe) -> eyre::Re
         output: OutputPipelineOptions {
             strip_descriptions: false,
             minimize: recipe.chart.minimize,
+            definition_names: helm_schema::output::DefinitionNames::Source,
         },
     };
     let Some(file) = recipe.override_file else {

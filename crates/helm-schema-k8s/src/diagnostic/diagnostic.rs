@@ -88,6 +88,8 @@ pub enum DiagnosticKey {
     },
     /// Discovered chart config weakens emission relative to this invocation without it.
     DiscoveredConfigWeakensEmission,
+    /// The written schema is larger than Helm accepts for one chart file.
+    SchemaExceedsHelmFileLimit,
 }
 
 /// User-facing diagnostic. Every event helm-schema emits at runtime is
@@ -207,6 +209,16 @@ pub enum Diagnostic {
         /// Whether the config path came from an explicit `--config` argument.
         explicit: bool,
     },
+    /// The written schema is larger than Helm accepts for one chart file,
+    /// so Helm refuses the chart until the schema is shortened.
+    SchemaExceedsHelmFileLimit {
+        /// Bytes written, including the trailing newline.
+        bytes: usize,
+        /// Helm's per-file limit.
+        limit: usize,
+        /// Whether definition names were already shortened.
+        shortened: bool,
+    },
 }
 
 impl Diagnostic {
@@ -297,6 +309,9 @@ impl Diagnostic {
             Diagnostic::DiscoveredConfigWeakensEmission { .. } => {
                 DiagnosticKey::DiscoveredConfigWeakensEmission
             }
+            Diagnostic::SchemaExceedsHelmFileLimit { .. } => {
+                DiagnosticKey::SchemaExceedsHelmFileLimit
+            }
         }
     }
 
@@ -332,7 +347,8 @@ impl Diagnostic {
             | Diagnostic::LocalOverrideUnreadable { .. }
             | Diagnostic::CacheLayoutInvalidated { .. }
             | Diagnostic::CacheLayoutForwardIncompatible { .. }
-            | Diagnostic::InputChannelNumericRangeAmbiguity { .. } => {}
+            | Diagnostic::InputChannelNumericRangeAmbiguity { .. }
+            | Diagnostic::SchemaExceedsHelmFileLimit { .. } => {}
         }
     }
 }

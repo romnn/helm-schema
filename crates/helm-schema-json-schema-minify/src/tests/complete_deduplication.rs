@@ -66,7 +66,7 @@ fn reference_siblings_remain_visible_to_definition_sharing() -> eyre::Result<()>
     });
     let minimized = minimize(schema.clone());
     let expected = json!({
-        "$defs": {"h7c3ce567bde7": repeated, "left": {"$ref": "#/$defs/h7c3ce567bde7"}, "right": {"$ref": "#/$defs/h7c3ce567bde7"}},
+        "$defs": {"left@2": repeated, "left": {"$ref": "#/$defs/left@2"}, "right": {"$ref": "#/$defs/left@2"}},
         "$ref": "#/$defs/left"
     });
     sim_assert_eq!(have: &minimized, want: &expected);
@@ -86,9 +86,9 @@ fn existing_definition_children_are_shared() -> eyre::Result<()> {
     let minimized = minimize(schema.clone());
     let expected = json!({
         "$defs": {
-            "h7c3ce567bde7": repeated,
-            "left": {"title": "Left", "properties": {"item": {"$ref": "#/$defs/h7c3ce567bde7"}}},
-            "right": {"title": "Right", "properties": {"item": {"$ref": "#/$defs/h7c3ce567bde7"}}}
+            "left.item": repeated,
+            "left": {"title": "Left", "properties": {"item": {"$ref": "#/$defs/left.item"}}},
+            "right": {"title": "Right", "properties": {"item": {"$ref": "#/$defs/left.item"}}}
         },
         "allOf": [{"$ref": "#/$defs/left"}, {"$ref": "#/$defs/right"}]
     });
@@ -112,10 +112,10 @@ fn extracted_parent_bodies_share_their_children() -> eyre::Result<()> {
     let minimized = minimize(schema.clone());
     let expected = json!({
         "$defs": {
-            "hd69d08ae940d": {"properties": {"left": {"$ref": "#/$defs/h7c3ce567bde7"}, "right": {"$ref": "#/$defs/h7c3ce567bde7"}}},
-            "h7c3ce567bde7": child
+            "values/first": {"properties": {"left": {"$ref": "#/$defs/values~1first.left"}, "right": {"$ref": "#/$defs/values~1first.left"}}},
+            "values/first.left": child
         },
-        "properties": {"first": {"$ref": "#/$defs/hd69d08ae940d"}, "second": {"$ref": "#/$defs/hd69d08ae940d"}}
+        "properties": {"first": {"$ref": "#/$defs/values~1first"}, "second": {"$ref": "#/$defs/values~1first"}}
     });
     sim_assert_eq!(have: &minimized, want: &expected);
     equivalent_validation(
@@ -155,9 +155,9 @@ fn percent_encoded_pointer_preserves_repeated_ancestors() -> eyre::Result<()> {
     let minimized = minimize(schema.clone());
     let expected = json!({
         "$defs": {
-            "h7c3ce567bde7": payload(),
-            "A": {"properties": {"value": {"$ref": "#/$defs/h7c3ce567bde7"}}},
-            "B": {"properties": {"value": {"$ref": "#/$defs/h7c3ce567bde7"}}}
+            "A.value": payload(),
+            "A": {"properties": {"value": {"$ref": "#/$defs/A.value"}}},
+            "B": {"properties": {"value": {"$ref": "#/$defs/A.value"}}}
         },
         "allOf": [{"$ref": reference}]
     });
@@ -211,16 +211,16 @@ fn nested_resource_numeric_references_do_not_name_generated_definitions() -> eyr
     let expected = json!({
         "$id": "https://example.test/root.json",
         "$defs": {
-            "h3f48cf8b61bf": {"properties": {
-                "a": {"$ref": "#/$defs/h7c3ce567bde7"},
-                "b": {"$ref": "#/$defs/h7c3ce567bde7"},
-                "c": {"$ref": "#/$defs/h7c3ce567bde7"}
+            "values/first": {"properties": {
+                "a": {"$ref": "#/$defs/values~1first.a"},
+                "b": {"$ref": "#/$defs/values~1first.a"},
+                "c": {"$ref": "#/$defs/values~1first.a"}
             }},
-            "h7c3ce567bde7": child
+            "values/first.a": child
         },
         "properties": {
-            "first": {"$ref": "#/$defs/h3f48cf8b61bf"},
-            "second": {"$ref": "#/$defs/h3f48cf8b61bf"},
+            "first": {"$ref": "#/$defs/values~1first"},
+            "second": {"$ref": "#/$defs/values~1first"},
             "scoped": scoped
         }
     });
@@ -263,7 +263,7 @@ fn complete_definition_bodies_share_while_original_names_remain() -> eyre::Resul
     });
     let minimized = minimize(schema.clone());
     let expected = json!({
-        "$defs": {"h7c3ce567bde7": repeated, "left": {"$ref": "#/$defs/h7c3ce567bde7"}, "right": {"$ref": "#/$defs/h7c3ce567bde7"}},
+        "$defs": {"left@2": repeated, "left": {"$ref": "#/$defs/left@2"}, "right": {"$ref": "#/$defs/left@2"}},
         "properties": {"left": {"$ref": "#/$defs/left"}, "right": {"$ref": "#/$defs/right"}}
     });
     sim_assert_eq!(have: &minimized, want: &expected);
@@ -285,8 +285,8 @@ fn recursive_definition_edges_preserve_finite_tree_validation() -> eyre::Result<
         "first": {"$ref": "#/$defs/tree"}, "second": tree
     }});
     let minimized = minimize(schema.clone());
-    let expected = json!({"$defs": {"ha3a187c35175": tree, "tree": {"$ref": "#/$defs/ha3a187c35175"}}, "properties": {
-        "first": {"$ref": "#/$defs/tree"}, "second": {"$ref": "#/$defs/ha3a187c35175"}
+    let expected = json!({"$defs": {"tree@2": tree, "tree": {"$ref": "#/$defs/tree@2"}}, "properties": {
+        "first": {"$ref": "#/$defs/tree"}, "second": {"$ref": "#/$defs/tree@2"}
     }});
     sim_assert_eq!(have: &minimized, want: &expected);
     equivalent_validation(
@@ -308,8 +308,8 @@ fn incoming_pointer_keeps_logical_array_positions() -> eyre::Result<()> {
     });
     let minimized = minimize(schema.clone());
     let expected = json!({
-        "$defs": {"h7c3ce567bde7": payload(), "usesIndex": {"$ref": "#/allOf/1"}},
-        "allOf": [{"$ref": "#/$defs/h7c3ce567bde7"}, {"$ref": "#/$defs/h7c3ce567bde7"}]
+        "$defs": {"values/@allOf(0)": payload(), "usesIndex": {"$ref": "#/allOf/1"}},
+        "allOf": [{"$ref": "#/$defs/values~1@allOf(0)"}, {"$ref": "#/$defs/values~1@allOf(0)"}]
     });
     sim_assert_eq!(have: &minimized, want: &expected);
     equivalent_validation(&schema, &minimized, &[json!("abc"), json!("a")])

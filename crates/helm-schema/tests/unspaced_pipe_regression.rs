@@ -95,6 +95,7 @@ fn emit_schema(chart_dir: &Path) -> eyre::Result<Value> {
         output: OutputPipelineOptions {
             strip_descriptions: false,
             minimize: true,
+            definition_names: helm_schema::output::DefinitionNames::Source,
         },
     })?)
 }

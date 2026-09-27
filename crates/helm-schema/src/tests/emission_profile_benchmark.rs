@@ -45,6 +45,7 @@ fn emission_profile_release_benchmark() -> eyre::Result<()> {
         output: OutputPipelineOptions {
             strip_descriptions: true,
             minimize: true,
+            definition_names: helm_schema_json_schema_minify::DefinitionNames::Source,
         },
     };
     let chart_dir = temporal_chart_path();

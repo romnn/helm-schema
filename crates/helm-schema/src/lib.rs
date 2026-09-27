@@ -41,8 +41,12 @@ pub mod output {
     pub use crate::fetch_policy::FetchPolicy;
     pub use crate::load_budget::LoadBudget;
     pub use crate::output_pipeline::{
-        EmitRequest, FinalOutputMetrics, JsonOutputFormat, OutputPipelineOptions,
-        PolicyInputOptions, ReferencePolicy, write_schema_json, write_schema_json_without_metrics,
+        EmitRequest, FinalOutputMetrics, HELM_MAX_CHART_FILE_BYTES, JsonOutputFormat,
+        OutputPipelineOptions, PolicyInputOptions, ReferencePolicy, write_schema_json,
+        write_schema_json_without_metrics,
+    };
+    pub use helm_schema_json_schema_minify::{
+        DefinitionNames, ShortenedSchema, expand_short_definition_names, shorten_definition_names,
     };
 }
 
