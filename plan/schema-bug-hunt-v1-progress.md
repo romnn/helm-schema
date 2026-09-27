@@ -5234,6 +5234,37 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   user works on the same account and will say when to speed up or slow down. Plan: two builders now (W1
   rework 2, frontend rework), the wrappers builder when one of them hands back.
 
+- 00:05 (Sep 28) — **Scratch and runner v6.6 both REWORK from both reviewers; builders resumed with merged
+  briefs.** Scratch (`review-scratch-prelanding-{sol,astra}.md`): P1 the owner-lock protocol races pid reuse
+  (a locked stale file is dropped before unlink) and a concurrent sweeper can lock+unlink a lock file
+  between a claimer's open and lock (live process on an unlinked inode → its scratch swept); P1 the
+  deletion predicate authorizes deleting any `<label>-<pid>-<n>` dir under any first-level entry of
+  `<target>/tmp` (dirs the helper never created) and follows first-level symlinks; P2 Windows Go children
+  ignore `TMPDIR` (need `TMP`/`TEMP`); P2 the killed-child test races other nextest processes; P2/P3
+  failure evidence is swept by the next process; P2 `tools/helmsweep/env.go:~70` drops `TMPDIR` on the
+  `--helm-env-clear` re-exec and `task test:helmsweep` uses the system temp; P3 ast-grep misses import
+  forms, `lib.rs:162` swallows a claim failure. Both confirm cross-run replay hits still work (stable cache
+  root; existing entries miss once) and that no production or fixture bytes changed. Rework brief
+  `brief-scratch-rework.md` (S1 pid+nonce owner ids, hold the stale lock through removal, one root-level
+  lock serializing claim and sweep; S2 private root `<target>/scratch` with a marker file, never follow
+  symlinks; S3 `TMP`/`TEMP`; S4 isolated root for the test; S5 failure evidence moved to
+  `<target>/evidence` with a 7-day prune; S6 helmsweep re-exec keeps the four temp vars, task and direct
+  Helm spawns get a scratch TMPDIR; S7 import forms + narrowed claim). Runner v6.6
+  (`review-runner-v66-{sol,astra}.md`): P1 lane check counts tests (156 of 157 in `chart_corpus`
+  incl. `quarantine_rosters_are_consistent`; one fixture test can be skipped) and accepts a singleton name
+  in any binary; P1 the sweep seal omits raw fast/CLI logs and per-row records, finalize requires only a
+  nonempty seal; P1/P2 `accepted_unresolved` admits operational classes (`no-log`, `exit-*`) and CLI mode
+  has no missing-log check; P2 battery validation ignores per-chart coverage and `charts_adjudicated`; P2
+  `CARGO_BUILD_RUSTC*`, `CARGO_BUILD_TARGET`, `RUSTDOCFLAGS` uncleared and the user cargo config
+  (`target-cpu=native`) unbound; P2 classes match substrings anywhere (a template error containing the
+  phrase would be excused); STATUS-regex change also affects legacy dump classification (acceptable);
+  R1/R3/R6/R7/R9 confirmed closed. Rework brief `brief-runner-v66-rework.md` (V1 exact `(binary, test)`
+  set from `cargo nextest list` on the frozen tree + roster cross-check; V2 complete roster-derived seal
+  inventory, finalize refuses omissions; V3 allowlist of adjudicated diagnostic classes, missing log fatal
+  in both engines; V4 per-chart coverage and adjudicated set; V5 the extra vars + user cargo config sha
+  bound; V6 top-level diagnostic forms with negative and Windows cases in the shared table; V7 README).
+  Four builders now (W1 rework 2, frontend rework, scratch rework, runner rework); personal quota 82 %.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
