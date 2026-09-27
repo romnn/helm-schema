@@ -1,42 +1,234 @@
 {
   "$defs": {
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
+    "constrains/configMap": {
+      "additionalProperties": {},
+      "properties": {
+        "configMap": {
           "type": "object"
+        }
+      }
+    },
+    "constrains/configMap.name": {
+      "additionalProperties": {},
+      "properties": {
+        "configMap": {
+          "additionalProperties": {},
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment@4"
+            }
+          }
+        }
+      }
+    },
+    "constrains/configMap.name/fragment": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/$defs/constrains~1configMap.name~1fragment@2"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/constrains~1configMap.name~1fragment@2"
+      },
+      "type": "object"
+    },
+    "constrains/configMap.name/fragment@10": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "constrains/configMap.name/fragment@11": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "constrains/configMap.name/fragment@12": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "constrains/configMap.name/fragment@13": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "constrains/configMap.name/fragment@14": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "constrains/configMap.name/fragment@15": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "constrains/configMap.name/fragment@16": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "constrains/configMap.name/fragment@2": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "$ref": "#/$defs/constrains~1configMap.name~1fragment@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configMap.name~1fragment@6"
+        }
+      ],
+      "type": "string"
+    },
+    "constrains/configMap.name/fragment@3": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
         },
         {
           "not": {
-            "const": 0
-          },
-          "type": "number"
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "constrains/configMap.name/fragment@4": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1configMap.name~1fragment@3"
         },
         {
-          "minLength": 1,
+          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configMap.name~1fragment@14"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configMap.name~1fragment"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment@13"
+            },
+            {
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment@7"
+            },
+            {
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment@12"
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment@8"
+            },
+            {
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment@10"
+            },
+            {
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment@11"
+            },
+            {
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment@5"
+            },
+            {
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment@6"
+            },
+            {
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment@9"
+            }
+          ],
+          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
           "type": "string"
         },
         {
-          "minItems": 1,
-          "type": "array"
+          "$ref": "#/$defs/constrains~1configMap.name~1fragment@16"
         },
         {
-          "const": true
+          "$ref": "#/$defs/constrains~1configMap.name~1fragment@15"
         }
       ]
     },
-    "values/@allOf(0)@if@allOf(1)": {
+    "constrains/configMap.name/fragment@5": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
+    },
+    "constrains/configMap.name/fragment@6": {
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "constrains/configMap.name/fragment@7": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "constrains/configMap.name/fragment@8": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "constrains/configMap.name/fragment@9": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "constrains/configMap=null": {
       "properties": {
-        "nats": {
-          "$ref": "#/$defs/t"
+        "configMap": {
+          "enum": [
+            null
+          ]
         }
       },
       "required": [
-        "nats"
+        "configMap"
       ],
       "type": "object"
     },
-    "values/@allOf(0)@if@allOf(2)": {
+    "constrains/configMap@2": {
+      "properties": {
+        "configMap": {}
+      },
+      "required": [
+        "configMap"
+      ],
+      "type": "object"
+    },
+    "constrains/nats+nats=null": {
       "not": {
         "anyOf": [
           {
@@ -66,18 +258,92 @@
         ]
       }
     },
-    "values/@allOf(1)@if": {
+    "constrains/nats:t": {
       "properties": {
-        "operator": {
+        "nats": {
           "$ref": "#/$defs/t"
         }
       },
       "required": [
-        "operator"
+        "nats"
       ],
       "type": "object"
     },
-    "values/@allOf(10)@if@allOf(0)": {
+    "constrains/operator+operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+2more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1operator+operator=null"
+            },
+            {
+              "$ref": "#/$defs/constrains~1operator:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "properties": {
+                "operator": {
+                  "$ref": "#/$defs/constrains~1operatorjwt:t"
+                }
+              },
+              "required": [
+                "operator"
+              ],
+              "type": "object"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null"
+              }
+            },
+            {
+              "$ref": "#/$defs/constrains~1operator:t"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/operator+operator.systemaccountjwt+operator.systemaccountjwt:t+3more": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1operator+operator=null"
+            },
+            {
+              "$ref": "#/$defs/constrains~1operator:t"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null"
+              }
+            },
+            {
+              "properties": {
+                "operator": {
+                  "$ref": "#/$defs/constrains~1systemaccountjwt:t"
+                }
+              },
+              "required": [
+                "operator"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/$defs/constrains~1operator:t"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/operator+operator=null": {
       "not": {
         "anyOf": [
           {
@@ -107,7 +373,7 @@
         ]
       }
     },
-    "values/@allOf(10)@if@allOf(1)": {
+    "constrains/operator.operatorjwt+operator.operatorjwt=null": {
       "anyOf": [
         {
           "not": {
@@ -151,135 +417,7 @@
         }
       ]
     },
-    "values/@allOf(11)@if@allOf(0)": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/values~1@allOf(10)@if@allOf(0)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@if"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "properties": {
-                "operator": {
-                  "$ref": "#/$defs/values~1@allOf(11)@if@allOf(0)@anyOf(1)@allOf(0).operator"
-                }
-              },
-              "required": [
-                "operator"
-              ],
-              "type": "object"
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/values~1@allOf(10)@if@allOf(1)"
-              }
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@if"
-            }
-          ]
-        }
-      ]
-    },
-    "values/@allOf(11)@if@allOf(0)@anyOf(1)@allOf(0).operator": {
-      "properties": {
-        "operatorjwt": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "operatorjwt"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(11)@if@allOf(1)@anyOf(0).operator.operatorjwt": {
-      "properties": {
-        "configMap": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "configMap"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(11)@if@allOf(1)@anyOf(1)@not.operator.operatorjwt": {
-      "properties": {
-        "configMap": {}
-      },
-      "required": [
-        "configMap"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(13)@if.store": {
-      "properties": {
-        "type": {
-          "enum": [
-            "file"
-          ]
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(2)@then@allOf(0).operator.operatorjwt": {
-      "additionalProperties": {},
-      "properties": {
-        "configMap": {
-          "type": "object"
-        }
-      }
-    },
-    "values/@allOf(3)@if@allOf(1)": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/values~1@allOf(10)@if@allOf(0)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@if"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/values~1@allOf(3)@if@allOf(1)@anyOf(1)@allOf(0)@not"
-              }
-            },
-            {
-              "properties": {
-                "operator": {
-                  "$ref": "#/$defs/values~1@allOf(3)@if@allOf(1)@anyOf(1)@allOf(1).operator"
-                }
-              },
-              "required": [
-                "operator"
-              ],
-              "type": "object"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@if"
-            }
-          ]
-        }
-      ]
-    },
-    "values/@allOf(3)@if@allOf(1)@anyOf(1)@allOf(0)@not": {
+    "constrains/operator.systemaccountjwt+operator.systemaccountjwt=null": {
       "anyOf": [
         {
           "not": {
@@ -323,7 +461,29 @@
         }
       ]
     },
-    "values/@allOf(3)@if@allOf(1)@anyOf(1)@allOf(1).operator": {
+    "constrains/operator:t": {
+      "properties": {
+        "operator": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "constrains/operatorjwt:t": {
+      "properties": {
+        "operatorjwt": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "operatorjwt"
+      ],
+      "type": "object"
+    },
+    "constrains/systemaccountjwt:t": {
       "properties": {
         "systemaccountjwt": {
           "$ref": "#/$defs/t"
@@ -334,129 +494,43 @@
       ],
       "type": "object"
     },
-    "values/accountserver.image@anyOf(0)": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
+    "constrains/type=file": {
+      "properties": {
+        "type": {
+          "enum": [
+            "file"
+          ]
         }
+      },
+      "required": [
+        "type"
       ],
-      "type": "string"
-    },
-    "values/accountserver.image@anyOf(2)": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/accountserver.image@anyOf(3)": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "maxItems": 0,
-            "type": "array"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "null"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "maxProperties": 0,
-            "type": "object"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)"
-      },
       "type": "object"
     },
-    "values/accountserver.image@anyOf(3)@additionalProperties@anyOf(2)": {
-      "allOf": [
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
         {
           "not": {
-            "pattern": "[ \\t]#"
-          }
+            "const": 0
+          },
+          "type": "number"
         },
         {
-          "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
+          "minLength": 1,
+          "type": "string"
         },
         {
-          "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
         }
-      ],
-      "type": "string"
-    },
-    "values/accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
-      }
-    },
-    "values/accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)": {
-      "not": {
-        "pattern": "[\\r\\n]"
-      }
-    },
-    "values/accountserver.image@anyOf(4)@allOf(0)": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "values/accountserver.image@anyOf(4)@allOf(1)": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "values/accountserver.image@anyOf(4)@allOf(2)": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "values/accountserver.image@anyOf(4)@allOf(4)": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "values/accountserver.image@anyOf(4)@allOf(5)": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "values/accountserver.image@anyOf(4)@allOf(6)": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "values/accountserver.image@anyOf(4)@allOf(9)": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "values/accountserver.image@anyOf(5)": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/accountserver.image@anyOf(6)": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
+      ]
     },
     "values/accountserver.resources.limits@additionalProperties": {
       "oneOf": [
@@ -485,80 +559,6 @@
           }
         }
       }
-    },
-    "values/operator@allOf(0)@then.systemaccountjwt": {
-      "additionalProperties": {},
-      "properties": {
-        "configMap": {
-          "additionalProperties": {},
-          "properties": {
-            "name": {
-              "$ref": "#/$defs/values~1operator@allOf(0)@then.systemaccountjwt.configMap.name"
-            }
-          }
-        }
-      }
-    },
-    "values/operator@allOf(0)@then.systemaccountjwt.configMap.name": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1accountserver.image@anyOf(0)"
-        },
-        {
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/values~1accountserver.image@anyOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1accountserver.image@anyOf(3)"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(0)"
-            },
-            {
-              "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(1)"
-            },
-            {
-              "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(2)"
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(4)"
-            },
-            {
-              "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(5)"
-            },
-            {
-              "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(6)"
-            },
-            {
-              "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
-            },
-            {
-              "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
-            },
-            {
-              "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(9)"
-            }
-          ],
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "string"
-        },
-        {
-          "$ref": "#/$defs/values~1accountserver.image@anyOf(5)"
-        },
-        {
-          "$ref": "#/$defs/values~1accountserver.image@anyOf(6)"
-        }
-      ]
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -628,10 +628,10 @@
             ]
           },
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1nats:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2)"
+            "$ref": "#/$defs/constrains~1nats+nats=null"
           }
         ]
       },
@@ -639,7 +639,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(1)@if"
+        "$ref": "#/$defs/constrains~1operator:t"
       },
       "then": {
         "additionalProperties": {},
@@ -652,7 +652,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(11)@if@allOf(0)"
+        "$ref": "#/$defs/constrains~1operator+operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+2more"
       },
       "then": {
         "allOf": [
@@ -663,7 +663,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "operatorjwt": {
-                    "$ref": "#/$defs/values~1@allOf(2)@then@allOf(0).operator.operatorjwt"
+                    "$ref": "#/$defs/constrains~1configMap"
                   }
                 }
               }
@@ -696,7 +696,7 @@
                     "operator": {
                       "properties": {
                         "systemaccountjwt": {
-                          "$ref": "#/$defs/values~1@allOf(11)@if@allOf(1)@anyOf(1)@not.operator.operatorjwt"
+                          "$ref": "#/$defs/constrains~1configMap@2"
                         }
                       },
                       "required": [
@@ -716,7 +716,7 @@
                   "operator": {
                     "properties": {
                       "systemaccountjwt": {
-                        "$ref": "#/$defs/values~1@allOf(11)@if@allOf(1)@anyOf(0).operator.operatorjwt"
+                        "$ref": "#/$defs/constrains~1configMap=null"
                       }
                     },
                     "required": [
@@ -733,7 +733,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/values~1@allOf(3)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1operator+operator.systemaccountjwt+operator.systemaccountjwt:t+3more"
           }
         ]
       },
@@ -741,7 +741,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(3)@if@allOf(1)"
+        "$ref": "#/$defs/constrains~1operator+operator.systemaccountjwt+operator.systemaccountjwt:t+3more"
       },
       "then": {
         "allOf": [
@@ -752,7 +752,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "systemaccountjwt": {
-                    "$ref": "#/$defs/values~1@allOf(2)@then@allOf(0).operator.operatorjwt"
+                    "$ref": "#/$defs/constrains~1configMap"
                   }
                 }
               }
@@ -778,10 +778,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1nats:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2)"
+            "$ref": "#/$defs/constrains~1nats+nats=null"
           }
         ]
       },
@@ -833,13 +833,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(10)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1operator+operator=null"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if"
+            "$ref": "#/$defs/constrains~1operator:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(3)@if@allOf(1)@anyOf(1)@allOf(0)@not"
+            "$ref": "#/$defs/constrains~1operator.systemaccountjwt+operator.systemaccountjwt=null"
           }
         ]
       },
@@ -880,7 +880,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1nats:t"
           },
           {
             "anyOf": [
@@ -927,7 +927,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2)"
+            "$ref": "#/$defs/constrains~1nats+nats=null"
           }
         ]
       },
@@ -953,13 +953,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(10)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1operator+operator=null"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(10)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1operator.operatorjwt+operator.operatorjwt=null"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if"
+            "$ref": "#/$defs/constrains~1operator:t"
           }
         ]
       },
@@ -969,7 +969,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(11)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1operator+operator.operatorjwt+operator.operatorjwt:t+operator.operatorjwt=null+2more"
           },
           {
             "anyOf": [
@@ -978,7 +978,7 @@
                   "operator": {
                     "properties": {
                       "operatorjwt": {
-                        "$ref": "#/$defs/values~1@allOf(11)@if@allOf(1)@anyOf(0).operator.operatorjwt"
+                        "$ref": "#/$defs/constrains~1configMap=null"
                       }
                     },
                     "required": [
@@ -998,7 +998,7 @@
                     "operator": {
                       "properties": {
                         "operatorjwt": {
-                          "$ref": "#/$defs/values~1@allOf(11)@if@allOf(1)@anyOf(1)@not.operator.operatorjwt"
+                          "$ref": "#/$defs/constrains~1configMap@2"
                         }
                       },
                       "required": [
@@ -1054,7 +1054,7 @@
       "if": {
         "properties": {
           "store": {
-            "$ref": "#/$defs/values~1@allOf(13)@if.store"
+            "$ref": "#/$defs/constrains~1type=file"
           }
         },
         "required": [
@@ -1125,28 +1125,28 @@
         "image": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1accountserver.image@anyOf(0)"
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment@3"
             },
             {
               "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/values~1accountserver.image@anyOf(2)"
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment@14"
             },
             {
-              "$ref": "#/$defs/values~1accountserver.image@anyOf(3)"
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@13"
                 },
                 {
-                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@12"
                 },
                 {
                   "not": {
@@ -1154,66 +1154,66 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(4)"
+                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(5)"
+                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@10"
                 },
                 {
-                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(6)"
+                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@11"
                 },
                 {
-                  "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@5"
                 },
                 {
-                  "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@6"
                 },
                 {
-                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(9)"
+                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@9"
                 }
               ],
               "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/values~1accountserver.image@anyOf(5)"
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment@16"
             },
             {
-              "$ref": "#/$defs/values~1accountserver.image@anyOf(6)"
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment@15"
             }
           ]
         },
         "pullPolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1accountserver.image@anyOf(0)"
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment@3"
             },
             {
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/values~1accountserver.image@anyOf(2)"
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment@14"
             },
             {
-              "$ref": "#/$defs/values~1accountserver.image@anyOf(3)"
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1accountserver.image@anyOf(5)"
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment@16"
             },
             {
-              "$ref": "#/$defs/values~1accountserver.image@anyOf(6)"
+              "$ref": "#/$defs/constrains~1configMap.name~1fragment@15"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@13"
                 },
                 {
-                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@12"
                 },
                 {
                   "not": {
@@ -1221,22 +1221,22 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(4)"
+                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(5)"
+                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@10"
                 },
                 {
-                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(6)"
+                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@11"
                 },
                 {
-                  "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@5"
                 },
                 {
-                  "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@6"
                 },
                 {
-                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(9)"
+                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@9"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -1324,7 +1324,7 @@
                       "name": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1accountserver.image@anyOf(0)"
+                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@3"
                           },
                           {
                             "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
@@ -1333,13 +1333,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(0)"
+                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@13"
                               },
                               {
-                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(1)"
+                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@7"
                               },
                               {
-                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(2)"
+                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@12"
                               },
                               {
                                 "not": {
@@ -1347,38 +1347,38 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(4)"
+                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@8"
                               },
                               {
-                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(5)"
+                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@10"
                               },
                               {
-                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(6)"
+                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@11"
                               },
                               {
-                                "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
+                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@5"
                               },
                               {
-                                "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
+                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@6"
                               },
                               {
-                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(9)"
+                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@9"
                               }
                             ],
                             "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/values~1accountserver.image@anyOf(2)"
+                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@14"
                           },
                           {
-                            "$ref": "#/$defs/values~1accountserver.image@anyOf(3)"
+                            "$ref": "#/$defs/constrains~1configMap.name~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/values~1accountserver.image@anyOf(5)"
+                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@16"
                           },
                           {
-                            "$ref": "#/$defs/values~1accountserver.image@anyOf(6)"
+                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@15"
                           }
                         ]
                       }
@@ -1416,7 +1416,7 @@
                 "$ref": "#/$defs/t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(3)@if@allOf(1)@anyOf(1)@allOf(1).operator"
+                "$ref": "#/$defs/constrains~1systemaccountjwt:t"
               }
             ]
           },
@@ -1424,7 +1424,7 @@
             "additionalProperties": {},
             "properties": {
               "systemaccountjwt": {
-                "$ref": "#/$defs/values~1operator@allOf(0)@then.systemaccountjwt"
+                "$ref": "#/$defs/constrains~1configMap.name"
               }
             }
           }
@@ -1436,7 +1436,7 @@
                 "$ref": "#/$defs/t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(11)@if@allOf(0)@anyOf(1)@allOf(0).operator"
+                "$ref": "#/$defs/constrains~1operatorjwt:t"
               }
             ]
           },
@@ -1444,7 +1444,7 @@
             "additionalProperties": {},
             "properties": {
               "operatorjwt": {
-                "$ref": "#/$defs/values~1operator@allOf(0)@then.systemaccountjwt"
+                "$ref": "#/$defs/constrains~1configMap.name"
               }
             }
           }
@@ -1494,7 +1494,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/values~1@allOf(13)@if.store"
+                "$ref": "#/$defs/constrains~1type=file"
               }
             ]
           },
@@ -1502,7 +1502,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/values~1@allOf(13)@if.store"
+            "$ref": "#/$defs/constrains~1type=file"
           },
           "then": {
             "additionalProperties": {},
@@ -1515,19 +1515,19 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1accountserver.image@anyOf(0)"
+                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@3"
                           },
                           {
-                            "$ref": "#/$defs/values~1accountserver.image@anyOf(2)"
+                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@14"
                           },
                           {
-                            "$ref": "#/$defs/values~1accountserver.image@anyOf(3)"
+                            "$ref": "#/$defs/constrains~1configMap.name~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/values~1accountserver.image@anyOf(5)"
+                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@16"
                           },
                           {
-                            "$ref": "#/$defs/values~1accountserver.image@anyOf(6)"
+                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@15"
                           },
                           {
                             "type": "null"
@@ -1535,13 +1535,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(0)"
+                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@13"
                               },
                               {
-                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(1)"
+                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@7"
                               },
                               {
-                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(2)"
+                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@12"
                               },
                               {
                                 "not": {
@@ -1549,22 +1549,22 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(4)"
+                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@8"
                               },
                               {
-                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(5)"
+                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@10"
                               },
                               {
-                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(6)"
+                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@11"
                               },
                               {
-                                "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
+                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@5"
                               },
                               {
-                                "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
+                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@6"
                               },
                               {
-                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(9)"
+                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@9"
                               }
                             ],
                             "type": "string"
@@ -1574,17 +1574,17 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1accountserver.image@anyOf(2)"
+                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@14"
                           },
                           {
                             "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$",
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/values~1accountserver.image@anyOf(5)"
+                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@16"
                           },
                           {
-                            "$ref": "#/$defs/values~1accountserver.image@anyOf(6)"
+                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@15"
                           },
                           {
                             "type": "number"

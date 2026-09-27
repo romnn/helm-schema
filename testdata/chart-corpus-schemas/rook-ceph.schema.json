@@ -1,5 +1,555 @@
 {
   "$defs": {
+    "constrains/:t": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/t"
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/:t@2": {
+      "not": {
+        "$ref": "#/$defs/t"
+      }
+    },
+    "constrains/@items.name": {
+      "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
+      "items": {
+        "additionalProperties": false,
+        "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+        "properties": {
+          "name": {
+            "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "type": [
+        "array",
+        "null"
+      ],
+      "x-kubernetes-list-map-keys": [
+        "name"
+      ],
+      "x-kubernetes-list-type": "map"
+    },
+    "constrains/ceph-csi-operator.fullnameOverride:t": {
+      "properties": {
+        "ceph-csi-operator": {
+          "properties": {
+            "fullnameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "fullnameOverride"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "ceph-csi-operator"
+      ],
+      "type": "object"
+    },
+    "constrains/ceph-csi-operator.nameOverride:t": {
+      "properties": {
+        "ceph-csi-operator": {
+          "properties": {
+            "nameOverride": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "nameOverride"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "ceph-csi-operator"
+      ],
+      "type": "object"
+    },
+    "constrains/ceph-csi-operator.serviceAccount.create:t": {
+      "properties": {
+        "ceph-csi-operator": {
+          "properties": {
+            "serviceAccount": {
+              "properties": {
+                "create": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "create"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "serviceAccount"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "ceph-csi-operator"
+      ],
+      "type": "object"
+    },
+    "constrains/csi.attacher:t": {
+      "properties": {
+        "csi": {
+          "properties": {
+            "attacher": {
+              "$ref": "#/$defs/constrains~1:t"
+            }
+          },
+          "required": [
+            "attacher"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "constrains/csi.cephcsi:t": {
+      "properties": {
+        "csi": {
+          "properties": {
+            "cephcsi": {
+              "$ref": "#/$defs/constrains~1:t"
+            }
+          },
+          "required": [
+            "cephcsi"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "constrains/csi.csiAddons:t": {
+      "properties": {
+        "csi": {
+          "properties": {
+            "csiAddons": {
+              "$ref": "#/$defs/constrains~1:t"
+            }
+          },
+          "required": [
+            "csiAddons"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "constrains/csi.installCsiOperator": {
+      "not": {
+        "properties": {
+          "csi": {
+            "properties": {
+              "installCsiOperator": {}
+            },
+            "required": [
+              "installCsiOperator"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "csi"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1csi.installCsiOperator"
+        },
+        {
+          "$ref": "#/$defs/constrains~1csi.installCsiOperator:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1csi.installCsiOperator=null"
+        }
+      ]
+    },
+    "constrains/csi.installCsiOperator+csi.installCsiOperator=null": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1csi.installCsiOperator"
+        },
+        {
+          "$ref": "#/$defs/constrains~1csi.installCsiOperator=null"
+        }
+      ]
+    },
+    "constrains/csi.installCsiOperator:t": {
+      "properties": {
+        "csi": {
+          "properties": {
+            "installCsiOperator": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "installCsiOperator"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "constrains/csi.installCsiOperator=null": {
+      "properties": {
+        "csi": {
+          "properties": {
+            "installCsiOperator": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "installCsiOperator"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "constrains/csi.provisioner:t": {
+      "properties": {
+        "csi": {
+          "properties": {
+            "provisioner": {
+              "$ref": "#/$defs/constrains~1:t"
+            }
+          },
+          "required": [
+            "provisioner"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "constrains/csi.registrar:t": {
+      "properties": {
+        "csi": {
+          "properties": {
+            "registrar": {
+              "$ref": "#/$defs/constrains~1:t"
+            }
+          },
+          "required": [
+            "registrar"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "constrains/csi.resizer:t": {
+      "properties": {
+        "csi": {
+          "properties": {
+            "resizer": {
+              "$ref": "#/$defs/constrains~1:t"
+            }
+          },
+          "required": [
+            "resizer"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "constrains/csi.snapshotter:t": {
+      "properties": {
+        "csi": {
+          "properties": {
+            "snapshotter": {
+              "$ref": "#/$defs/constrains~1:t"
+            }
+          },
+          "required": [
+            "snapshotter"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "constrains/csi:t": {
+      "properties": {
+        "csi": {
+          "$ref": "#/$defs/constrains~1:t"
+        }
+      },
+      "required": [
+        "csi"
+      ],
+      "type": "object"
+    },
+    "constrains/effect+key+operator+tolerationSeconds+value": {
+      "additionalProperties": false,
+      "description": "The pod this Toleration is attached to tolerates any taint that matches the triple <key,value,effect> using the matching operator <operator>.",
+      "properties": {
+        "effect": {
+          "description": "Effect indicates the taint effect to match. Empty means match all taint effects. When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "key": {
+          "description": "Key is the taint key that the toleration applies to. Empty means match all taint keys. If the key is empty, operator must be Exists; this combination means to match all values and all keys.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "operator": {
+          "description": "Operator represents a key's relationship to the value. Valid operators are Exists and Equal. Defaults to Equal. Exists is equivalent to wildcard for value, so that a pod can tolerate all taints of a particular category.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tolerationSeconds": {
+          "description": "TolerationSeconds represents the period of time the toleration (which must be of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default, it is not set, which means tolerate the taint forever (do not evict). Zero and negative values will be treated as 0 (evict immediately) by the system.",
+          "format": "int64",
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "value": {
+          "description": "Value is the taint value the toleration matches to. If the operator is Exists, the value should be empty, otherwise just a regular string.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/gmsaCredentialSpec+gmsaCredentialSpecName+hostProcess+runAsUserName": {
+      "additionalProperties": false,
+      "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
+      "properties": {
+        "gmsaCredentialSpec": {
+          "description": "GMSACredentialSpec is where the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa) inlines the contents of the GMSA credential spec named by the GMSACredentialSpecName field.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "gmsaCredentialSpecName": {
+          "description": "GMSACredentialSpecName is the name of the GMSA credential spec to use.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "hostProcess": {
+          "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "runAsUserName": {
+          "description": "The UserName in Windows to run the entrypoint of the container process. Defaults to the user specified in image metadata if unspecified. May also be set in PodSecurityContext. If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "constrains/level+role+type+user": {
+      "additionalProperties": false,
+      "description": "SELinuxOptions are the labels to be applied to the container",
+      "properties": {
+        "level": {
+          "description": "Level is SELinux level label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "role": {
+          "description": "Role is a SELinux role label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "description": "Type is a SELinux type label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "user": {
+          "description": "User is a SELinux user label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "constrains/localhostProfile+type": {
+      "additionalProperties": false,
+      "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
+      "properties": {
+        "localhostProfile": {
+          "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-unions": [
+        {
+          "discriminator": "type",
+          "fields-to-discriminateBy": {
+            "localhostProfile": "LocalhostProfile"
+          }
+        }
+      ]
+    },
+    "constrains/monitoring.enabled:t": {
+      "properties": {
+        "monitoring": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "monitoring"
+      ],
+      "type": "object"
+    },
+    "constrains/name": {
+      "additionalProperties": false,
+      "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
+      "properties": {
+        "name": {
+          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-map-type": "atomic"
+    },
+    "constrains/repository:t": {
+      "properties": {
+        "repository": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "repository"
+      ],
+      "type": "object"
+    },
+    "constrains/tag:t": {
+      "properties": {
+        "tag": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "tag"
+      ],
+      "type": "object"
+    },
     "helm-double-quoted-safe": {
       "anyOf": [
         {
@@ -56,253 +606,13 @@
         }
       ]
     },
-    "values/@allOf(0)@if@allOf(0)": {
-      "properties": {
-        "monitoring": {
-          "$ref": "#/$defs/values~1@allOf(0)@if@allOf(0).monitoring"
-        }
-      },
-      "required": [
-        "monitoring"
-      ],
+    "values/annotations/fragment": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
       "type": "object"
     },
-    "values/@allOf(0)@if@allOf(0).monitoring": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(1)@if@allOf(0)": {
-      "properties": {
-        "csi": {
-          "properties": {
-            "cephcsi": {
-              "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).csi.cephcsi"
-            }
-          },
-          "required": [
-            "cephcsi"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "csi"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(1)@if@allOf(0).csi.cephcsi": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/t"
-        },
-        {
-          "type": "object"
-        }
-      ]
-    },
-    "values/@allOf(1)@if@allOf(1)": {
-      "properties": {
-        "csi": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).csi.cephcsi"
-        }
-      },
-      "required": [
-        "csi"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(11)@if@allOf(0)": {
-      "properties": {
-        "csi": {
-          "properties": {
-            "attacher": {
-              "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).csi.cephcsi"
-            }
-          },
-          "required": [
-            "attacher"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "csi"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(15)@if@allOf(1)": {
-      "properties": {
-        "csi": {
-          "properties": {
-            "provisioner": {
-              "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).csi.cephcsi"
-            }
-          },
-          "required": [
-            "provisioner"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "csi"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(16)@if@allOf(0).csi.snapshotter": {
-      "properties": {
-        "tag": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "tag"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(16)@if@allOf(1).csi.snapshotter": {
-      "properties": {
-        "repository": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "repository"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(16)@if@allOf(2)": {
-      "properties": {
-        "csi": {
-          "properties": {
-            "snapshotter": {
-              "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).csi.cephcsi"
-            }
-          },
-          "required": [
-            "snapshotter"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "csi"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(18)@if": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(2)"
-        }
-      ]
-    },
-    "values/@allOf(18)@if@anyOf(0)": {
-      "not": {
-        "properties": {
-          "csi": {
-            "properties": {
-              "installCsiOperator": {}
-            },
-            "required": [
-              "installCsiOperator"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "csi"
-        ],
-        "type": "object"
-      }
-    },
-    "values/@allOf(18)@if@anyOf(1)": {
-      "properties": {
-        "csi": {
-          "properties": {
-            "installCsiOperator": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "installCsiOperator"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "csi"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(18)@if@anyOf(2)": {
-      "properties": {
-        "csi": {
-          "properties": {
-            "installCsiOperator": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "installCsiOperator"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "csi"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(18)@then@allOf(0).ceph-csi-operator.controllerManager.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "values/@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(0)": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "values/@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(1)": {
-      "not": {
-        "$ref": "#/$defs/t"
-      }
-    },
-    "values/@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(2)": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)": {
+    "values/fragment": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -313,7 +623,7 @@
             "type": "integer"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)"
+            "$ref": "#/$defs/values~1fragment@4"
           },
           {
             "type": "number"
@@ -331,303 +641,70 @@
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)"
+        "$ref": "#/$defs/values~1fragment@4"
       },
       "type": "object"
     },
-    "values/@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
-        }
-      ],
-      "type": "string"
-    },
-    "values/@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)": {
-      "not": {
-        "pattern": "[ \\t]#"
-      }
-    },
-    "values/@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)": {
+    "values/fragment@10": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "values/@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)": {
+    "values/fragment@11": {
+      "not": {
+        "pattern": "[ \\t]#"
+      }
+    },
+    "values/fragment@12": {
       "not": {
         "pattern": "[\\r\\n]"
       }
     },
-    "values/@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(4)": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(5)": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "values/@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(4)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(5)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(6)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(9)"
-        }
-      ],
-      "type": "string"
-    },
-    "values/@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(0)": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "values/@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(1)": {
+    "values/fragment@13": {
       "not": {
         "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
-    "values/@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(2)": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "values/@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(4)": {
+    "values/fragment@14": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "values/@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(5)": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "values/@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(6)": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "values/@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(9)": {
+    "values/fragment@15": {
       "not": {
         "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
       }
     },
-    "values/@allOf(18)@then@allOf(11).ceph-csi-operator.controllerManager.podSecurityContext.seLinuxOptions": {
-      "additionalProperties": false,
-      "description": "SELinuxOptions are the labels to be applied to the container",
-      "properties": {
-        "level": {
-          "description": "Level is SELinux level label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "role": {
-          "description": "Role is a SELinux role label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "type": {
-          "description": "Type is a SELinux type label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "user": {
-          "description": "User is a SELinux user label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
+    "values/fragment@16": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "values/fragment@17": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "values/fragment@18": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "values/fragment@19": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "values/fragment@2": {
+      "additionalProperties": {
+        "type": "string"
       },
-      "type": [
-        "object",
-        "null"
-      ]
+      "type": "object"
     },
-    "values/@allOf(18)@then@allOf(11).ceph-csi-operator.controllerManager.podSecurityContext.seccompProfile": {
-      "additionalProperties": false,
-      "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
-      "properties": {
-        "localhostProfile": {
-          "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "type": {
-          "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
-          "type": "string"
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": [
-        "object",
-        "null"
-      ],
-      "x-kubernetes-unions": [
-        {
-          "discriminator": "type",
-          "fields-to-discriminateBy": {
-            "localhostProfile": "LocalhostProfile"
-          }
-        }
-      ]
-    },
-    "values/@allOf(18)@then@allOf(11).ceph-csi-operator.controllerManager.podSecurityContext.windowsOptions": {
-      "additionalProperties": false,
-      "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
-      "properties": {
-        "gmsaCredentialSpec": {
-          "description": "GMSACredentialSpec is where the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa) inlines the contents of the GMSA credential spec named by the GMSACredentialSpecName field.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "gmsaCredentialSpecName": {
-          "description": "GMSACredentialSpecName is the name of the GMSA credential spec to use.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "hostProcess": {
-          "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "runAsUserName": {
-          "description": "The UserName in Windows to run the entrypoint of the container process. Defaults to the user specified in image metadata if unspecified. May also be set in PodSecurityContext. If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "values/@allOf(18)@then@allOf(13).ceph-csi-operator.controllerManager.manager.containerSecurityContext.capabilities.add": {
-      "description": "Added capabilities",
-      "items": {
-        "$ref": "#/$defs/values~1@allOf(18)@then@allOf(0).ceph-csi-operator.controllerManager.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "values/@allOf(18)@then@allOf(13).ceph-csi-operator.controllerManager.manager.containerSecurityContext.privileged": {
-      "description": "Run container in privileged mode. Processes in privileged containers are essentially equivalent to root on the host. Defaults to false. Note that this field cannot be set when spec.os.name is windows.",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "values/@allOf(18)@then@allOf(13).ceph-csi-operator.controllerManager.manager.containerSecurityContext.procMount": {
-      "description": "procMount denotes the type of proc mount to use for the containers. The default is DefaultProcMount which uses the container runtime defaults for readonly paths and masked paths. This requires the ProcMountType feature flag to be enabled. Note that this field cannot be set when spec.os.name is windows.",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "values/@allOf(18)@then@allOf(15).ceph-csi-operator.controllerManager.replicas@anyOf(4)": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
-    },
-    "values/@allOf(18)@then@allOf(6).ceph-csi-operator.imagePullSecrets@anyOf(1)@allOf(1)@items": {
-      "additionalProperties": false,
-      "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
-      "properties": {
-        "name": {
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ],
-      "x-kubernetes-map-type": "atomic"
-    },
-    "values/@allOf(18)@then@allOf(8).ceph-csi-operator.controllerManager.manager.resources.claims": {
-      "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
-      "items": {
-        "additionalProperties": false,
-        "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-        "properties": {
-          "name": {
-            "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
-            "type": "string"
-          }
-        },
-        "required": [
-          "name"
-        ],
-        "type": [
-          "object",
-          "null"
-        ]
-      },
-      "type": [
-        "array",
-        "null"
-      ],
-      "x-kubernetes-list-map-keys": [
-        "name"
-      ],
-      "x-kubernetes-list-type": "map"
-    },
-    "values/@allOf(18)@then@allOf(8).ceph-csi-operator.controllerManager.manager.resources.limits@additionalProperties": {
+    "values/fragment@20": {
       "oneOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(0).ceph-csi-operator.controllerManager.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
+          "$ref": "#/$defs/values~1fragment@25"
         },
         {
           "type": [
@@ -637,151 +714,82 @@
         }
       ]
     },
-    "values/@allOf(18)@then@allOf(9).ceph-csi-operator.controllerManager.tolerations@items": {
-      "additionalProperties": false,
-      "description": "The pod this Toleration is attached to tolerates any taint that matches the triple <key,value,effect> using the matching operator <operator>.",
-      "properties": {
-        "effect": {
-          "description": "Effect indicates the taint effect to match. Empty means match all taint effects. When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "key": {
-          "description": "Key is the taint key that the toleration applies to. Empty means match all taint keys. If the key is empty, operator must be Exists; this combination means to match all values and all keys.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "operator": {
-          "description": "Operator represents a key's relationship to the value. Valid operators are Exists and Equal. Defaults to Equal. Exists is equivalent to wildcard for value, so that a pod can tolerate all taints of a particular category.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "tolerationSeconds": {
-          "description": "TolerationSeconds represents the period of time the toleration (which must be of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default, it is not set, which means tolerate the taint forever (do not evict). Zero and negative values will be treated as 0 (evict immediately) by the system.",
-          "format": "int64",
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "value": {
-          "description": "Value is the taint value the toleration matches to. If the operator is Exists, the value should be empty, otherwise just a regular string.",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
+    "values/fragment@21": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/fragment@22": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
+    },
+    "values/fragment@23": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "values/fragment@24": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/fragment@25": {
       "type": [
-        "object",
+        "string",
         "null"
       ]
     },
-    "values/@allOf(2)@if@allOf(1)": {
-      "properties": {
-        "csi": {
-          "properties": {
-            "registrar": {
-              "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).csi.cephcsi"
-            }
-          },
-          "required": [
-            "registrar"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "csi"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(23)@if@allOf(0)": {
-      "properties": {
-        "csi": {
-          "properties": {
-            "csiAddons": {
-              "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).csi.cephcsi"
-            }
-          },
-          "required": [
-            "csiAddons"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "csi"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(26)@if@allOf(0)": {
-      "properties": {
-        "csi": {
-          "properties": {
-            "resizer": {
-              "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).csi.cephcsi"
-            }
-          },
-          "required": [
-            "resizer"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "csi"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(29)@if@anyOf(0)@allOf(0)": {
-      "properties": {
-        "ceph-csi-operator": {
-          "properties": {
-            "serviceAccount": {
-              "properties": {
-                "create": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "create"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "serviceAccount"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "ceph-csi-operator"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(29)@if@anyOf(0)@allOf(1)": {
-      "anyOf": [
+    "values/fragment@3": {
+      "allOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(0)"
+          "$ref": "#/$defs/values~1fragment@19"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(2)"
+          "$ref": "#/$defs/values~1fragment@13"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@18"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@11"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@14"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@16"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@17"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@10"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@12"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@15"
         }
-      ]
+      ],
+      "type": "string"
     },
-    "values/@allOf(29)@then@allOf(1).ceph-csi-operator.serviceAccount.annotations@anyOf(1)": {
+    "values/fragment@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/values~1fragment@11"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@10"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@12"
+        }
+      ],
+      "type": "string"
+    },
+    "values/fragment@5": {
       "allOf": [
         {
           "additionalProperties": {
-            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(0).ceph-csi-operator.controllerManager.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
+            "$ref": "#/$defs/values~1fragment@25"
           },
           "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
           "type": [
@@ -790,59 +798,51 @@
           ]
         },
         {
-          "$ref": "#/$defs/values~1@allOf(29)@then@allOf(1).ceph-csi-operator.serviceAccount.annotations@anyOf(1)@allOf(1)"
+          "$ref": "#/$defs/values~1fragment@2"
         }
       ]
     },
-    "values/@allOf(29)@then@allOf(1).ceph-csi-operator.serviceAccount.annotations@anyOf(1)@allOf(1)": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "values/@allOf(33)@if@anyOf(0)@allOf(1)": {
-      "properties": {
-        "ceph-csi-operator": {
-          "properties": {
-            "fullnameOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "fullnameOverride"
-          ],
-          "type": "object"
+    "values/fragment@6": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
         }
-      },
-      "required": [
-        "ceph-csi-operator"
       ],
-      "type": "object"
+      "type": "string"
     },
-    "values/@allOf(5)@if@anyOf(0)@allOf(0)": {
-      "properties": {
-        "ceph-csi-operator": {
-          "properties": {
-            "nameOverride": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "nameOverride"
-          ],
-          "type": "object"
-        }
+    "values/fragment@7": {
+      "description": "Added capabilities",
+      "items": {
+        "$ref": "#/$defs/values~1fragment@25"
       },
-      "required": [
-        "ceph-csi-operator"
-      ],
-      "type": "object"
+      "type": [
+        "array",
+        "null"
+      ]
     },
-    "values/annotations@anyOf(1)": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
+    "values/fragment@8": {
+      "description": "Run container in privileged mode. Processes in privileged containers are essentially equivalent to root on the host. Defaults to false. Note that this field cannot be set when spec.os.name is windows.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "values/fragment@9": {
+      "description": "procMount denotes the type of proc mount to use for the containers. The default is DefaultProcMount which uses the container runtime defaults for readonly paths and masked paths. This requires the ProcMountType feature flag to be enabled. Note that this field cannot be set when spec.os.name is windows.",
+      "type": [
+        "string",
+        "null"
+      ]
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -852,7 +852,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1monitoring.enabled:t"
           },
           {
             "anyOf": [
@@ -906,10 +906,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1csi.cephcsi:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1csi:t"
           },
           {
             "not": {
@@ -1023,10 +1023,10 @@
             }
           },
           {
-            "$ref": "#/$defs/values~1@allOf(2)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1csi.registrar:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1csi:t"
           }
         ]
       },
@@ -1048,14 +1048,14 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1csi.cephcsi:t"
           },
           {
             "properties": {
               "csi": {
                 "properties": {
                   "cephcsi": {
-                    "$ref": "#/$defs/values~1@allOf(16)@if@allOf(1).csi.snapshotter"
+                    "$ref": "#/$defs/constrains~1repository:t"
                   }
                 },
                 "required": [
@@ -1074,7 +1074,7 @@
               "csi": {
                 "properties": {
                   "cephcsi": {
-                    "$ref": "#/$defs/values~1@allOf(16)@if@allOf(0).csi.snapshotter"
+                    "$ref": "#/$defs/constrains~1tag:t"
                   }
                 },
                 "required": [
@@ -1089,7 +1089,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1csi:t"
           }
         ]
       },
@@ -1151,20 +1151,20 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(5)@if@anyOf(0)@allOf(0)"
+                "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(1)"
+                "$ref": "#/$defs/constrains~1csi.installCsiOperator:t"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(5)@if@anyOf(0)@allOf(0)"
+                "$ref": "#/$defs/constrains~1ceph-csi-operator.nameOverride:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(29)@if@anyOf(0)@allOf(1)"
+                "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
               }
             ]
           }
@@ -1206,7 +1206,7 @@
               "csi": {
                 "properties": {
                   "registrar": {
-                    "$ref": "#/$defs/values~1@allOf(16)@if@allOf(0).csi.snapshotter"
+                    "$ref": "#/$defs/constrains~1tag:t"
                   }
                 },
                 "required": [
@@ -1225,7 +1225,7 @@
               "csi": {
                 "properties": {
                   "registrar": {
-                    "$ref": "#/$defs/values~1@allOf(16)@if@allOf(1).csi.snapshotter"
+                    "$ref": "#/$defs/constrains~1repository:t"
                   }
                 },
                 "required": [
@@ -1240,10 +1240,10 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(2)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1csi.registrar:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1csi:t"
           }
         ]
       },
@@ -1294,7 +1294,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(18)@if"
+            "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null"
           },
           {
             "properties": {
@@ -1441,7 +1441,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(11)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1csi.attacher:t"
           },
           {
             "not": {
@@ -1490,7 +1490,7 @@
             }
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1csi:t"
           }
         ]
       },
@@ -1631,10 +1631,10 @@
             }
           },
           {
-            "$ref": "#/$defs/values~1@allOf(15)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1csi.provisioner:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1csi:t"
           }
         ]
       },
@@ -1660,7 +1660,7 @@
               "csi": {
                 "properties": {
                   "snapshotter": {
-                    "$ref": "#/$defs/values~1@allOf(16)@if@allOf(0).csi.snapshotter"
+                    "$ref": "#/$defs/constrains~1tag:t"
                   }
                 },
                 "required": [
@@ -1679,7 +1679,7 @@
               "csi": {
                 "properties": {
                   "snapshotter": {
-                    "$ref": "#/$defs/values~1@allOf(16)@if@allOf(1).csi.snapshotter"
+                    "$ref": "#/$defs/constrains~1repository:t"
                   }
                 },
                 "required": [
@@ -1694,10 +1694,10 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(16)@if@allOf(2)"
+            "$ref": "#/$defs/constrains~1csi.snapshotter:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1csi:t"
           }
         ]
       },
@@ -1746,7 +1746,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(0)@if@allOf(0)"
+        "$ref": "#/$defs/constrains~1monitoring.enabled:t"
       },
       "then": {
         "additionalProperties": {},
@@ -1764,7 +1764,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(18)@if"
+        "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null"
       },
       "then": {
         "allOf": [
@@ -1805,7 +1805,7 @@
                                       "values": {
                                         "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
                                         "items": {
-                                          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(0).ceph-csi-operator.controllerManager.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
+                                          "$ref": "#/$defs/values~1fragment@25"
                                         },
                                         "type": [
                                           "array",
@@ -1829,7 +1829,7 @@
                                 },
                                 "matchLabels": {
                                   "additionalProperties": {
-                                    "$ref": "#/$defs/values~1@allOf(18)@then@allOf(0).ceph-csi-operator.controllerManager.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
+                                    "$ref": "#/$defs/values~1fragment@25"
                                   },
                                   "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
                                   "type": [
@@ -1847,7 +1847,7 @@
                             "matchLabelKeys": {
                               "description": "MatchLabelKeys is a set of pod label keys to select the pods over which spreading will be calculated. The keys are used to lookup values from the incoming pod labels, those key-value labels are ANDed with labelSelector to select the group of existing pods over which spreading will be calculated for the incoming pod. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. MatchLabelKeys cannot be set when LabelSelector isn't set. Keys that don't exist in the incoming pod labels will be ignored. A null or empty list means only match against labelSelector.\n\nThis is a beta field and requires the MatchLabelKeysInPodTopologySpread feature gate to be enabled (enabled by default).",
                               "items": {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(0).ceph-csi-operator.controllerManager.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
+                                "$ref": "#/$defs/values~1fragment@25"
                               },
                               "type": [
                                 "array",
@@ -1992,55 +1992,55 @@
                       "priorityClassName": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(0)"
+                            "$ref": "#/$defs/values~1fragment@6"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(2)"
+                            "$ref": "#/$defs/values~1fragment@21"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)"
+                            "$ref": "#/$defs/values~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(4)"
+                            "$ref": "#/$defs/values~1fragment@24"
                           },
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(0)"
+                                "$ref": "#/$defs/values~1fragment@19"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(1)"
+                                "$ref": "#/$defs/values~1fragment@13"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(2)"
+                                "$ref": "#/$defs/values~1fragment@18"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)"
+                                "$ref": "#/$defs/values~1fragment@11"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(4)"
+                                "$ref": "#/$defs/values~1fragment@14"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(5)"
+                                "$ref": "#/$defs/values~1fragment@16"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(6)"
+                                "$ref": "#/$defs/values~1fragment@17"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
+                                "$ref": "#/$defs/values~1fragment@10"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
+                                "$ref": "#/$defs/values~1fragment@12"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(9)"
+                                "$ref": "#/$defs/values~1fragment@15"
                               }
                             ],
                             "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(5)"
+                            "$ref": "#/$defs/values~1fragment@23"
                           },
                           {
                             "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -2098,7 +2098,7 @@
                   "imagePullSecrets": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(1)"
+                        "$ref": "#/$defs/constrains~1:t@2"
                       },
                       {
                         "allOf": [
@@ -2118,7 +2118,7 @@
                           {
                             "description": "ImagePullSecrets is a list of references to secrets in the same namespace to use for pulling any images in pods that reference this ServiceAccount. ImagePullSecrets are distinct from Secrets because Secrets can be mounted in the pod, but ImagePullSecrets are only accessed by the kubelet. More info: https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod",
                             "items": {
-                              "$ref": "#/$defs/values~1@allOf(18)@then@allOf(6).ceph-csi-operator.imagePullSecrets@anyOf(1)@allOf(1)@items"
+                              "$ref": "#/$defs/constrains~1name"
                             },
                             "type": [
                               "array",
@@ -2146,7 +2146,7 @@
                     "properties": {
                       "nodeSelector": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(0).ceph-csi-operator.controllerManager.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
+                          "$ref": "#/$defs/values~1fragment@25"
                         },
                         "description": "Node selector for the controller manager pod (default: {})",
                         "type": [
@@ -2180,11 +2180,11 @@
                             "description": "Resource limits and requests for the manager container",
                             "properties": {
                               "claims": {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(8).ceph-csi-operator.controllerManager.manager.resources.claims"
+                                "$ref": "#/$defs/constrains~1@items.name"
                               },
                               "limits": {
                                 "additionalProperties": {
-                                  "$ref": "#/$defs/values~1@allOf(18)@then@allOf(8).ceph-csi-operator.controllerManager.manager.resources.limits@additionalProperties"
+                                  "$ref": "#/$defs/values~1fragment@20"
                                 },
                                 "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                                 "type": [
@@ -2194,7 +2194,7 @@
                               },
                               "requests": {
                                 "additionalProperties": {
-                                  "$ref": "#/$defs/values~1@allOf(18)@then@allOf(8).ceph-csi-operator.controllerManager.manager.resources.limits@additionalProperties"
+                                  "$ref": "#/$defs/values~1fragment@20"
                                 },
                                 "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                                 "type": [
@@ -2229,7 +2229,7 @@
                       "tolerations": {
                         "description": "Tolerations for the controller manager pod (default: [])",
                         "items": {
-                          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(9).ceph-csi-operator.controllerManager.tolerations@items"
+                          "$ref": "#/$defs/constrains~1effect+key+operator+tolerationSeconds+value"
                         },
                         "type": [
                           "array",
@@ -2251,28 +2251,28 @@
                   "nameOverride": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(0)"
+                        "$ref": "#/$defs/values~1fragment@6"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(1)"
+                        "$ref": "#/$defs/constrains~1:t@2"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(2)"
+                        "$ref": "#/$defs/values~1fragment@21"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)"
+                        "$ref": "#/$defs/values~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(4)"
+                        "$ref": "#/$defs/values~1fragment@24"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(5)"
+                        "$ref": "#/$defs/values~1fragment@23"
                       },
                       {
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)"
+                        "$ref": "#/$defs/values~1fragment@3"
                       }
                     ]
                   }
@@ -2333,10 +2333,10 @@
                             ]
                           },
                           "seLinuxOptions": {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(11).ceph-csi-operator.controllerManager.podSecurityContext.seLinuxOptions"
+                            "$ref": "#/$defs/constrains~1level+role+type+user"
                           },
                           "seccompProfile": {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(11).ceph-csi-operator.controllerManager.podSecurityContext.seccompProfile"
+                            "$ref": "#/$defs/constrains~1localhostProfile+type"
                           },
                           "supplementalGroups": {
                             "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
@@ -2382,7 +2382,7 @@
                             ]
                           },
                           "windowsOptions": {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(11).ceph-csi-operator.controllerManager.podSecurityContext.windowsOptions"
+                            "$ref": "#/$defs/constrains~1gmsaCredentialSpec+gmsaCredentialSpecName+hostProcess+runAsUserName"
                           }
                         },
                         "type": [
@@ -2452,12 +2452,12 @@
                                 "description": "Adds and removes POSIX capabilities from running containers.",
                                 "properties": {
                                   "add": {
-                                    "$ref": "#/$defs/values~1@allOf(18)@then@allOf(13).ceph-csi-operator.controllerManager.manager.containerSecurityContext.capabilities.add"
+                                    "$ref": "#/$defs/values~1fragment@7"
                                   },
                                   "drop": {
                                     "description": "List of capabilities to drop from the manager container (default: [\"ALL\"])",
                                     "items": {
-                                      "$ref": "#/$defs/values~1@allOf(18)@then@allOf(0).ceph-csi-operator.controllerManager.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
+                                      "$ref": "#/$defs/values~1fragment@25"
                                     },
                                     "type": [
                                       "array",
@@ -2471,10 +2471,10 @@
                                 ]
                               },
                               "privileged": {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(13).ceph-csi-operator.controllerManager.manager.containerSecurityContext.privileged"
+                                "$ref": "#/$defs/values~1fragment@8"
                               },
                               "procMount": {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(13).ceph-csi-operator.controllerManager.manager.containerSecurityContext.procMount"
+                                "$ref": "#/$defs/values~1fragment@9"
                               },
                               "readOnlyRootFilesystem": {
                                 "description": "Mount root filesystem as read-only (default: true)",
@@ -2507,13 +2507,13 @@
                                 ]
                               },
                               "seLinuxOptions": {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(11).ceph-csi-operator.controllerManager.podSecurityContext.seLinuxOptions"
+                                "$ref": "#/$defs/constrains~1level+role+type+user"
                               },
                               "seccompProfile": {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(11).ceph-csi-operator.controllerManager.podSecurityContext.seccompProfile"
+                                "$ref": "#/$defs/constrains~1localhostProfile+type"
                               },
                               "windowsOptions": {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(11).ceph-csi-operator.controllerManager.podSecurityContext.windowsOptions"
+                                "$ref": "#/$defs/constrains~1gmsaCredentialSpec+gmsaCredentialSpecName+hostProcess+runAsUserName"
                               }
                             },
                             "type": [
@@ -2546,7 +2546,7 @@
                           "args": {
                             "description": "Arguments to pass to the manager container (default: [\"--leader-elect\"])",
                             "items": {
-                              "$ref": "#/$defs/values~1@allOf(18)@then@allOf(0).ceph-csi-operator.controllerManager.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
+                              "$ref": "#/$defs/values~1fragment@25"
                             },
                             "type": [
                               "array",
@@ -2584,16 +2584,16 @@
                             "type": "null"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(2)"
+                            "$ref": "#/$defs/values~1fragment@21"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(4)"
+                            "$ref": "#/$defs/values~1fragment@24"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(15).ceph-csi-operator.controllerManager.replicas@anyOf(4)"
+                            "$ref": "#/$defs/values~1fragment@22"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(5)"
+                            "$ref": "#/$defs/values~1fragment@23"
                           }
                         ],
                         "description": "Number of controller manager replicas (default: 1)"
@@ -2645,58 +2645,58 @@
                       "name": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(0)"
+                            "$ref": "#/$defs/values~1fragment@6"
                           },
                           {
                             "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
                             "type": "null"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(1)"
+                            "$ref": "#/$defs/constrains~1:t@2"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(2)"
+                            "$ref": "#/$defs/values~1fragment@21"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)"
+                            "$ref": "#/$defs/values~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(4)"
+                            "$ref": "#/$defs/values~1fragment@24"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(5)"
+                            "$ref": "#/$defs/values~1fragment@23"
                           },
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(0)"
+                                "$ref": "#/$defs/values~1fragment@19"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(1)"
+                                "$ref": "#/$defs/values~1fragment@13"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(2)"
+                                "$ref": "#/$defs/values~1fragment@18"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)"
+                                "$ref": "#/$defs/values~1fragment@11"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(4)"
+                                "$ref": "#/$defs/values~1fragment@14"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(5)"
+                                "$ref": "#/$defs/values~1fragment@16"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(6)"
+                                "$ref": "#/$defs/values~1fragment@17"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
+                                "$ref": "#/$defs/values~1fragment@10"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
+                                "$ref": "#/$defs/values~1fragment@12"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(9)"
+                                "$ref": "#/$defs/values~1fragment@15"
                               }
                             ],
                             "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -2720,7 +2720,7 @@
           {
             "properties": {
               "discover": {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).csi.cephcsi"
+                "$ref": "#/$defs/constrains~1:t"
               }
             },
             "required": [
@@ -2773,7 +2773,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(18)@if"
+            "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null"
           },
           {
             "properties": {
@@ -2826,7 +2826,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(16)@if@allOf(2)"
+            "$ref": "#/$defs/constrains~1csi.snapshotter:t"
           },
           {
             "not": {
@@ -2875,7 +2875,7 @@
             }
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1csi:t"
           }
         ]
       },
@@ -2897,7 +2897,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(18)@if"
+            "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator:t+csi.installCsiOperator=null"
           },
           {
             "properties": {
@@ -2966,14 +2966,14 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(23)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1csi.csiAddons:t"
           },
           {
             "properties": {
               "csi": {
                 "properties": {
                   "csiAddons": {
-                    "$ref": "#/$defs/values~1@allOf(16)@if@allOf(0).csi.snapshotter"
+                    "$ref": "#/$defs/constrains~1tag:t"
                   }
                 },
                 "required": [
@@ -2992,7 +2992,7 @@
               "csi": {
                 "properties": {
                   "csiAddons": {
-                    "$ref": "#/$defs/values~1@allOf(16)@if@allOf(1).csi.snapshotter"
+                    "$ref": "#/$defs/constrains~1repository:t"
                   }
                 },
                 "required": [
@@ -3007,7 +3007,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1csi:t"
           }
         ]
       },
@@ -3062,7 +3062,7 @@
               "csi": {
                 "properties": {
                   "attacher": {
-                    "$ref": "#/$defs/values~1@allOf(16)@if@allOf(0).csi.snapshotter"
+                    "$ref": "#/$defs/constrains~1tag:t"
                   }
                 },
                 "required": [
@@ -3081,7 +3081,7 @@
               "csi": {
                 "properties": {
                   "attacher": {
-                    "$ref": "#/$defs/values~1@allOf(16)@if@allOf(1).csi.snapshotter"
+                    "$ref": "#/$defs/constrains~1repository:t"
                   }
                 },
                 "required": [
@@ -3096,10 +3096,10 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(11)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1csi.attacher:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1csi:t"
           }
         ]
       },
@@ -3154,7 +3154,7 @@
               "csi": {
                 "properties": {
                   "provisioner": {
-                    "$ref": "#/$defs/values~1@allOf(16)@if@allOf(1).csi.snapshotter"
+                    "$ref": "#/$defs/constrains~1repository:t"
                   }
                 },
                 "required": [
@@ -3169,17 +3169,17 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(15)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1csi.provisioner:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1csi:t"
           },
           {
             "properties": {
               "csi": {
                 "properties": {
                   "provisioner": {
-                    "$ref": "#/$defs/values~1@allOf(16)@if@allOf(0).csi.snapshotter"
+                    "$ref": "#/$defs/constrains~1tag:t"
                   }
                 },
                 "required": [
@@ -3242,14 +3242,14 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(26)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1csi.resizer:t"
           },
           {
             "properties": {
               "csi": {
                 "properties": {
                   "resizer": {
-                    "$ref": "#/$defs/values~1@allOf(16)@if@allOf(1).csi.snapshotter"
+                    "$ref": "#/$defs/constrains~1repository:t"
                   }
                 },
                 "required": [
@@ -3268,7 +3268,7 @@
               "csi": {
                 "properties": {
                   "resizer": {
-                    "$ref": "#/$defs/values~1@allOf(16)@if@allOf(0).csi.snapshotter"
+                    "$ref": "#/$defs/constrains~1tag:t"
                   }
                 },
                 "required": [
@@ -3283,7 +3283,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1csi:t"
           }
         ]
       },
@@ -3398,20 +3398,20 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(29)@if@anyOf(0)@allOf(0)"
+                "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(29)@if@anyOf(0)@allOf(1)"
+                "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(29)@if@anyOf(0)@allOf(0)"
+                "$ref": "#/$defs/constrains~1ceph-csi-operator.serviceAccount.create:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(1)"
+                "$ref": "#/$defs/constrains~1csi.installCsiOperator:t"
               }
             ]
           }
@@ -3440,17 +3440,17 @@
                             "type": "null"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(2)"
+                            "$ref": "#/$defs/values~1fragment@21"
                           },
                           {
                             "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
                             "type": "boolean"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(4)"
+                            "$ref": "#/$defs/values~1fragment@24"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(5)"
+                            "$ref": "#/$defs/values~1fragment@23"
                           }
                         ],
                         "description": "Automatically mount a ServiceAccount's API credentials (default: true)"
@@ -3474,10 +3474,10 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(1)"
+                            "$ref": "#/$defs/constrains~1:t@2"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(29)@then@allOf(1).ceph-csi-operator.serviceAccount.annotations@anyOf(1)"
+                            "$ref": "#/$defs/values~1fragment@5"
                           }
                         ],
                         "description": "Annotations to add to the service account (default: {})"
@@ -3503,60 +3503,60 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(0)"
+                                "$ref": "#/$defs/values~1fragment@19"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(1)"
+                                "$ref": "#/$defs/values~1fragment@13"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(2)"
+                                "$ref": "#/$defs/values~1fragment@18"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)"
+                                "$ref": "#/$defs/values~1fragment@11"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(4)"
+                                "$ref": "#/$defs/values~1fragment@14"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(5)"
+                                "$ref": "#/$defs/values~1fragment@16"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(6)"
+                                "$ref": "#/$defs/values~1fragment@17"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
+                                "$ref": "#/$defs/values~1fragment@10"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
+                                "$ref": "#/$defs/values~1fragment@12"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(9)"
+                                "$ref": "#/$defs/values~1fragment@15"
                               }
                             ],
                             "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(0)"
+                            "$ref": "#/$defs/values~1fragment@6"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(1)"
+                            "$ref": "#/$defs/constrains~1:t@2"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(2)"
+                            "$ref": "#/$defs/values~1fragment@21"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)"
+                            "$ref": "#/$defs/values~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(4)"
+                            "$ref": "#/$defs/values~1fragment@24"
                           },
                           {
                             "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
                             "type": "null"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(5)"
+                            "$ref": "#/$defs/values~1fragment@23"
                           }
                         ],
                         "description": "The name of the service account to use. If not set and create is true, a name is generated using the fullname template (default: \"\")"
@@ -3602,7 +3602,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(23)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1csi.csiAddons:t"
           },
           {
             "not": {
@@ -3651,7 +3651,7 @@
             }
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1csi:t"
           }
         ]
       },
@@ -3675,20 +3675,20 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(29)@if@anyOf(0)@allOf(1)"
+                "$ref": "#/$defs/constrains~1csi.installCsiOperator+csi.installCsiOperator=null"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(33)@if@anyOf(0)@allOf(1)"
+                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t"
               }
             ]
           },
           {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(1)"
+                "$ref": "#/$defs/constrains~1csi.installCsiOperator:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(33)@if@anyOf(0)@allOf(1)"
+                "$ref": "#/$defs/constrains~1ceph-csi-operator.fullnameOverride:t"
               }
             ]
           }
@@ -3715,7 +3715,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(26)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1csi.resizer:t"
           },
           {
             "not": {
@@ -3764,7 +3764,7 @@
             }
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1csi:t"
           }
         ]
       },
@@ -3790,7 +3790,7 @@
               "csi": {
                 "properties": {
                   "serviceMonitor": {
-                    "$ref": "#/$defs/values~1@allOf(0)@if@allOf(0).monitoring"
+                    "$ref": "#/$defs/constrains~1enabled:t"
                   }
                 },
                 "required": [
@@ -3805,7 +3805,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1monitoring.enabled:t"
           }
         ]
       },
@@ -3823,20 +3823,20 @@
                       "namespace": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(1)"
+                            "$ref": "#/$defs/constrains~1:t@2"
                           },
                           {
                             "allOf": [
                               {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(0)"
+                                    "$ref": "#/$defs/values~1fragment@6"
                                   },
                                   {
-                                    "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)"
+                                    "$ref": "#/$defs/values~1fragment"
                                   },
                                   {
-                                    "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)"
+                                    "$ref": "#/$defs/values~1fragment@3"
                                   }
                                 ]
                               },
@@ -3887,10 +3887,10 @@
                       "labels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(1)"
+                            "$ref": "#/$defs/constrains~1:t@2"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(29)@then@allOf(1).ceph-csi-operator.serviceAccount.annotations@anyOf(1)@allOf(1)"
+                            "$ref": "#/$defs/values~1fragment@2"
                           }
                         ],
                         "description": "Additional labels for the ServiceMonitor"
@@ -3913,34 +3913,34 @@
                       "interval": {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(0)"
+                            "$ref": "#/$defs/values~1fragment@19"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(1)"
+                            "$ref": "#/$defs/values~1fragment@13"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(2)"
+                            "$ref": "#/$defs/values~1fragment@18"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)"
+                            "$ref": "#/$defs/values~1fragment@11"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(4)"
+                            "$ref": "#/$defs/values~1fragment@14"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(5)"
+                            "$ref": "#/$defs/values~1fragment@16"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(6)"
+                            "$ref": "#/$defs/values~1fragment@17"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
+                            "$ref": "#/$defs/values~1fragment@10"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
+                            "$ref": "#/$defs/values~1fragment@12"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(9)"
+                            "$ref": "#/$defs/values~1fragment@15"
                           }
                         ],
                         "description": "Interval at which metrics should be scraped",
@@ -3980,13 +3980,13 @@
     "annotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(1)"
+          "$ref": "#/$defs/constrains~1:t@2"
         },
         {
-          "$ref": "#/$defs/values~1annotations@anyOf(1)"
+          "$ref": "#/$defs/values~1annotations~1fragment"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(29)@then@allOf(1).ceph-csi-operator.serviceAccount.annotations@anyOf(1)"
+          "$ref": "#/$defs/values~1fragment@5"
         }
       ],
       "description": "Pod annotations"
@@ -4105,7 +4105,7 @@
     "containerSecurityContext": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(1)"
+          "$ref": "#/$defs/constrains~1:t@2"
         },
         {
           "additionalProperties": false,
@@ -4125,7 +4125,7 @@
                   "description": "Adds and removes POSIX capabilities from running containers.",
                   "properties": {
                     "add": {
-                      "$ref": "#/$defs/values~1@allOf(18)@then@allOf(13).ceph-csi-operator.controllerManager.manager.containerSecurityContext.capabilities.add"
+                      "$ref": "#/$defs/values~1fragment@7"
                     },
                     "drop": {
                       "anyOf": [
@@ -4157,10 +4157,10 @@
               ]
             },
             "privileged": {
-              "$ref": "#/$defs/values~1@allOf(18)@then@allOf(13).ceph-csi-operator.controllerManager.manager.containerSecurityContext.privileged"
+              "$ref": "#/$defs/values~1fragment@8"
             },
             "procMount": {
-              "$ref": "#/$defs/values~1@allOf(18)@then@allOf(13).ceph-csi-operator.controllerManager.manager.containerSecurityContext.procMount"
+              "$ref": "#/$defs/values~1fragment@9"
             },
             "readOnlyRootFilesystem": {
               "description": "Whether this container has a read-only root filesystem. Default is false. Note that this field cannot be set when spec.os.name is windows.",
@@ -4205,13 +4205,13 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/values~1@allOf(18)@then@allOf(11).ceph-csi-operator.controllerManager.podSecurityContext.seLinuxOptions"
+              "$ref": "#/$defs/constrains~1level+role+type+user"
             },
             "seccompProfile": {
-              "$ref": "#/$defs/values~1@allOf(18)@then@allOf(11).ceph-csi-operator.controllerManager.podSecurityContext.seccompProfile"
+              "$ref": "#/$defs/constrains~1localhostProfile+type"
             },
             "windowsOptions": {
-              "$ref": "#/$defs/values~1@allOf(18)@then@allOf(11).ceph-csi-operator.controllerManager.podSecurityContext.windowsOptions"
+              "$ref": "#/$defs/constrains~1gmsaCredentialSpec+gmsaCredentialSpecName+hostProcess+runAsUserName"
             }
           },
           "type": "object"
@@ -4396,55 +4396,55 @@
         "pullPolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(0)"
+              "$ref": "#/$defs/values~1fragment@6"
             },
             {
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(2)"
+              "$ref": "#/$defs/values~1fragment@21"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)"
+              "$ref": "#/$defs/values~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(4)"
+              "$ref": "#/$defs/values~1fragment@24"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(5)"
+              "$ref": "#/$defs/values~1fragment@23"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(0)"
+                  "$ref": "#/$defs/values~1fragment@19"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(1)"
+                  "$ref": "#/$defs/values~1fragment@13"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(2)"
+                  "$ref": "#/$defs/values~1fragment@18"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)"
+                  "$ref": "#/$defs/values~1fragment@11"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(4)"
+                  "$ref": "#/$defs/values~1fragment@14"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(5)"
+                  "$ref": "#/$defs/values~1fragment@16"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(6)"
+                  "$ref": "#/$defs/values~1fragment@17"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
+                  "$ref": "#/$defs/values~1fragment@10"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
+                  "$ref": "#/$defs/values~1fragment@12"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(7)@allOf(9)"
+                  "$ref": "#/$defs/values~1fragment@15"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -4467,12 +4467,12 @@
         {
           "description": "ImagePullSecrets is a list of references to secrets in the same namespace to use for pulling any images in pods that reference this ServiceAccount. ImagePullSecrets are distinct from Secrets because Secrets can be mounted in the pod, but ImagePullSecrets are only accessed by the kubelet. More info: https://kubernetes.io/docs/concepts/containers/images/#specifying-imagepullsecrets-on-a-pod",
           "items": {
-            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(6).ceph-csi-operator.imagePullSecrets@anyOf(1)@allOf(1)@items"
+            "$ref": "#/$defs/constrains~1name"
           },
           "type": "array"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(1)"
+          "$ref": "#/$defs/constrains~1:t@2"
         },
         {
           "type": "null"
@@ -4508,18 +4508,18 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(1)"
+          "$ref": "#/$defs/constrains~1:t@2"
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(0).ceph-csi-operator.controllerManager.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
+            "$ref": "#/$defs/values~1fragment@25"
           },
           "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
           "type": "object",
           "x-kubernetes-map-type": "atomic"
         },
         {
-          "$ref": "#/$defs/values~1annotations@anyOf(1)"
+          "$ref": "#/$defs/values~1annotations~1fragment"
         },
         {
           "type": "null"
@@ -4538,13 +4538,13 @@
     "operatorPodLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(1)"
+          "$ref": "#/$defs/constrains~1:t@2"
         },
         {
           "allOf": [
             {
               "additionalProperties": {
-                "$ref": "#/$defs/values~1@allOf(18)@then@allOf(0).ceph-csi-operator.controllerManager.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
+                "$ref": "#/$defs/values~1fragment@25"
               },
               "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
               "type": [
@@ -4553,12 +4553,12 @@
               ]
             },
             {
-              "$ref": "#/$defs/values~1@allOf(29)@then@allOf(1).ceph-csi-operator.serviceAccount.annotations@anyOf(1)@allOf(1)"
+              "$ref": "#/$defs/values~1fragment@2"
             }
           ]
         },
         {
-          "$ref": "#/$defs/values~1annotations@anyOf(1)"
+          "$ref": "#/$defs/values~1annotations~1fragment"
         }
       ],
       "description": "Custom pod labels for the operator"
@@ -4584,20 +4584,20 @@
     "resources": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(1)"
+          "$ref": "#/$defs/constrains~1:t@2"
         },
         {
           "additionalProperties": false,
           "description": "ResourceRequirements describes the compute resource requirements.",
           "properties": {
             "claims": {
-              "$ref": "#/$defs/values~1@allOf(18)@then@allOf(8).ceph-csi-operator.controllerManager.manager.resources.claims"
+              "$ref": "#/$defs/constrains~1@items.name"
             },
             "limits": {
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/values~1@allOf(18)@then@allOf(8).ceph-csi-operator.controllerManager.manager.resources.limits@additionalProperties"
+                    "$ref": "#/$defs/values~1fragment@20"
                   },
                   "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -4616,7 +4616,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/values~1@allOf(18)@then@allOf(8).ceph-csi-operator.controllerManager.manager.resources.limits@additionalProperties"
+                    "$ref": "#/$defs/values~1fragment@20"
                   },
                   "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -4654,12 +4654,12 @@
         {
           "description": "If specified, the pod's tolerations.",
           "items": {
-            "$ref": "#/$defs/values~1@allOf(18)@then@allOf(9).ceph-csi-operator.controllerManager.tolerations@items"
+            "$ref": "#/$defs/constrains~1effect+key+operator+tolerationSeconds+value"
           },
           "type": "array"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(1)"
+          "$ref": "#/$defs/constrains~1:t@2"
         },
         {
           "type": "null"
@@ -4675,16 +4675,16 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(2)"
+          "$ref": "#/$defs/values~1fragment@21"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(4)"
+          "$ref": "#/$defs/values~1fragment@24"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(15).ceph-csi-operator.controllerManager.replicas@anyOf(4)"
+          "$ref": "#/$defs/values~1fragment@22"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then@allOf(10).ceph-csi-operator.nameOverride@anyOf(5)"
+          "$ref": "#/$defs/values~1fragment@23"
         },
         {
           "description": "TolerationSeconds represents the period of time the toleration (which must be of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default, it is not set, which means tolerate the taint forever (do not evict). Zero and negative values will be treated as 0 (evict immediately) by the system.",

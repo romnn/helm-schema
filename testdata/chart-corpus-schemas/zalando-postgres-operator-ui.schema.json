@@ -1,87 +1,31 @@
 {
   "$defs": {
-    "helm-double-quoted-safe": {
-      "anyOf": [
-        {
-          "type": [
-            "boolean",
-            "integer",
-            "null",
-            "number"
-          ]
-        },
-        {
-          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
-          "type": "string"
-        },
-        {
-          "additionalProperties": {
-            "$ref": "#/$defs/helm-double-quoted-safe@anyOf(2)@additionalProperties"
-          },
-          "propertyNames": {
-            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
-          },
-          "type": "object"
-        },
-        {
-          "items": {
-            "$ref": "#/$defs/helm-double-quoted-safe@anyOf(2)@additionalProperties"
-          },
-          "type": "array"
-        }
-      ]
-    },
-    "helm-double-quoted-safe@anyOf(2)@additionalProperties": {
+    "constrains/:helm-double-quoted-safe": {
       "$ref": "#/$defs/helm-double-quoted-safe"
     },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
+    "constrains/:t": {
+      "not": {
+        "$ref": "#/$defs/t"
+      }
     },
-    "values/@allOf(1)@if@anyOf(0)": {
-      "properties": {
-        "ingress": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@anyOf(0).ingress"
-        }
+    "constrains/@items.hosts": {
+      "additionalProperties": {
+        "$ref": "#/$defs/constrains~1hosts"
       },
-      "required": [
-        "ingress"
-      ],
-      "type": "object"
+      "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
+      "items": {
+        "$ref": "#/$defs/constrains~1hosts"
+      }
     },
-    "values/@allOf(1)@if@anyOf(0).ingress": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
+    "constrains/@items.paths": {
+      "additionalProperties": {
+        "$ref": "#/$defs/constrains~1paths"
       },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
+      "items": {
+        "$ref": "#/$defs/constrains~1paths"
+      }
     },
-    "values/@allOf(1)@if@anyOf(1).serviceAccount": {
+    "constrains/create:t": {
       "properties": {
         "create": {
           "$ref": "#/$defs/t"
@@ -92,258 +36,18 @@
       ],
       "type": "object"
     },
-    "values/@allOf(1)@if@anyOf(2)": {
+    "constrains/enabled:t": {
       "properties": {
-        "rbac": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@anyOf(1).serviceAccount"
+        "enabled": {
+          "$ref": "#/$defs/t"
         }
       },
       "required": [
-        "rbac"
+        "enabled"
       ],
       "type": "object"
     },
-    "values/@allOf(1)@then.nameOverride": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(4)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(5)"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(0)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(1)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(2)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(4)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(5)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(6)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(9)"
-            }
-          ],
-          "type": "string"
-        }
-      ]
-    },
-    "values/@allOf(1)@then.nameOverride@anyOf(0)": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "values/@allOf(1)@then.nameOverride@anyOf(1)": {
-      "not": {
-        "$ref": "#/$defs/t"
-      }
-    },
-    "values/@allOf(1)@then.nameOverride@anyOf(2)": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/@allOf(1)@then.nameOverride@anyOf(3)": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "maxItems": 0,
-            "type": "array"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "null"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "maxProperties": 0,
-            "type": "object"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)"
-      },
-      "type": "object"
-    },
-    "values/@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
-        }
-      ],
-      "type": "string"
-    },
-    "values/@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)": {
-      "not": {
-        "pattern": "[ \\t]#"
-      }
-    },
-    "values/@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
-      }
-    },
-    "values/@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)": {
-      "not": {
-        "pattern": "[\\r\\n]"
-      }
-    },
-    "values/@allOf(1)@then.nameOverride@anyOf(4)": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/@allOf(1)@then.nameOverride@anyOf(5)": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "values/@allOf(1)@then.nameOverride@anyOf(7)@allOf(0)": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "values/@allOf(1)@then.nameOverride@anyOf(7)@allOf(1)": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "values/@allOf(1)@then.nameOverride@anyOf(7)@allOf(2)": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "values/@allOf(1)@then.nameOverride@anyOf(7)@allOf(4)": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "values/@allOf(1)@then.nameOverride@anyOf(7)@allOf(5)": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "values/@allOf(1)@then.nameOverride@anyOf(7)@allOf(6)": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "values/@allOf(1)@then.nameOverride@anyOf(7)@allOf(9)": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "values/@allOf(16).envs.teams": {
-      "type": [
-        "array",
-        "integer",
-        "null",
-        "object"
-      ]
-    },
-    "values/@allOf(18)@then.serviceAccount.name@anyOf(1)@allOf(0)@anyOf(0)": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(4)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(5)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(6)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(9)"
-        }
-      ],
-      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-      "type": "string"
-    },
-    "values/@allOf(18)@then.serviceAccount.name@anyOf(1)@allOf(0)@anyOf(5)": {
-      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-      "type": "null"
-    },
-    "values/@allOf(2)@if@allOf(0)": {
+    "constrains/envs+envs=null": {
       "anyOf": [
         {
           "properties": {
@@ -371,7 +75,380 @@
         }
       ]
     },
-    "values/@allOf(2)@if@allOf(1)@anyOf(0).envs": {
+    "constrains/host+paths": {
+      "additionalProperties": {},
+      "properties": {
+        "host": {},
+        "paths": {
+          "$ref": "#/$defs/constrains~1host+paths~1fragment"
+        }
+      },
+      "type": "object"
+    },
+    "constrains/host+paths/fragment": {
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
+          "type": "array"
+        }
+      ]
+    },
+    "constrains/hosts": {
+      "additionalProperties": {},
+      "properties": {
+        "hosts": {
+          "$ref": "#/$defs/constrains~1hosts~1fragment"
+        }
+      }
+    },
+    "constrains/hosts+secretName": {
+      "additionalProperties": {},
+      "properties": {
+        "hosts": {
+          "$ref": "#/$defs/constrains~1host+paths~1fragment"
+        },
+        "secretName": {}
+      },
+      "type": "object"
+    },
+    "constrains/hosts/fragment": {
+      "type": [
+        "array",
+        "integer",
+        "null",
+        "object"
+      ]
+    },
+    "constrains/hosts:t": {
+      "additionalProperties": {},
+      "properties": {
+        "hosts": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1:t"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "description": "hosts is a list of hosts included in the TLS certificate. The values in this list must match the name/s used in the tlsSecret. Defaults to the wildcard host setting for the loadbalancer controller fulfilling this Ingress, if left unspecified.",
+              "items": {
+                "$ref": "#/$defs/values~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.values@items"
+              },
+              "type": "array",
+              "x-kubernetes-list-type": "atomic"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "array"
+            }
+          ]
+        }
+      }
+    },
+    "constrains/ingress.enabled:t": {
+      "properties": {
+        "ingress": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
+    },
+    "constrains/paths": {
+      "additionalProperties": {},
+      "properties": {
+        "paths": {
+          "$ref": "#/$defs/constrains~1hosts~1fragment"
+        }
+      }
+    },
+    "constrains/paths/fragment": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/$defs/constrains~1paths~1fragment@2"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/constrains~1paths~1fragment@2"
+      },
+      "type": "object"
+    },
+    "constrains/paths/fragment@10": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "constrains/paths/fragment@11": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "constrains/paths/fragment@12": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "constrains/paths/fragment@13": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "constrains/paths/fragment@14": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "constrains/paths/fragment@15": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "constrains/paths/fragment@16": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "constrains/paths/fragment@17": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "constrains/paths/fragment@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@7"
+        }
+      ],
+      "type": "string"
+    },
+    "constrains/paths/fragment@3": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "constrains/paths/fragment@4": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@15"
+        },
+        {
+          "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1paths~1fragment@14"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1fragment@8"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1fragment@13"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1fragment@6"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1fragment@9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1fragment@11"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1fragment@12"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1fragment@5"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1fragment@7"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1fragment@10"
+            }
+          ],
+          "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@17"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@16"
+        }
+      ]
+    },
+    "constrains/paths/fragment@5": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
+    },
+    "constrains/paths/fragment@6": {
+      "not": {
+        "pattern": "[ \\t]#"
+      }
+    },
+    "constrains/paths/fragment@7": {
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "constrains/paths/fragment@8": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "constrains/paths/fragment@9": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "constrains/paths@2": {
+      "additionalProperties": {},
+      "properties": {
+        "paths": {
+          "additionalProperties": {
+            "$ref": "#/$defs/constrains~1paths~1fragment@4"
+          },
+          "items": {
+            "$ref": "#/$defs/constrains~1paths~1fragment@4"
+          }
+        }
+      }
+    },
+    "constrains/rbac.create:t": {
+      "properties": {
+        "rbac": {
+          "$ref": "#/$defs/constrains~1create:t"
+        }
+      },
+      "required": [
+        "rbac"
+      ],
+      "type": "object"
+    },
+    "constrains/secretName": {
+      "additionalProperties": {},
+      "properties": {
+        "secretName": {
+          "anyOf": [
+            {
+              "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1fragment@3"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1fragment@15"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1fragment"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1fragment@17"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/constrains~1paths~1fragment@14"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1paths~1fragment@8"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1paths~1fragment@13"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1paths~1fragment@6"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1paths~1fragment@9"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1paths~1fragment@11"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1paths~1fragment@12"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1paths~1fragment@5"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1paths~1fragment@7"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1paths~1fragment@10"
+                }
+              ],
+              "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1fragment@16"
+            }
+          ]
+        }
+      }
+    },
+    "constrains/teams=null": {
       "properties": {
         "teams": {
           "enum": [
@@ -384,7 +461,7 @@
       ],
       "type": "object"
     },
-    "values/@allOf(7)@if@allOf(1).ingress": {
+    "constrains/tls:t": {
       "properties": {
         "tls": {
           "$ref": "#/$defs/t"
@@ -395,70 +472,61 @@
       ],
       "type": "object"
     },
-    "values/@allOf(7)@then.ingress.tls@anyOf(0)@items": {
-      "additionalProperties": {},
-      "properties": {
-        "hosts": {
-          "$ref": "#/$defs/values~1@allOf(7)@then.ingress.tls@anyOf(0)@items.hosts"
-        },
-        "secretName": {}
-      },
-      "type": "object"
-    },
-    "values/@allOf(7)@then.ingress.tls@anyOf(0)@items.hosts": {
+    "helm-double-quoted-safe": {
       "anyOf": [
         {
-          "additionalProperties": {},
+          "type": [
+            "boolean",
+            "integer",
+            "null",
+            "number"
+          ]
+        },
+        {
+          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
+          "type": "string"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
+          },
+          "propertyNames": {
+            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
+          },
           "type": "object"
         },
         {
-          "items": {},
+          "items": {
+            "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
+          },
           "type": "array"
         }
       ]
     },
-    "values/@allOf(8)@then@allOf(0).ingress.hosts": {
-      "additionalProperties": {
-        "$ref": "#/$defs/values~1@allOf(8)@then@allOf(0).ingress.hosts@additionalProperties"
-      },
-      "items": {
-        "$ref": "#/$defs/values~1@allOf(8)@then@allOf(0).ingress.hosts@additionalProperties"
-      }
-    },
-    "values/@allOf(8)@then@allOf(0).ingress.hosts@additionalProperties": {
-      "additionalProperties": {},
-      "properties": {
-        "paths": {
-          "$ref": "#/$defs/values~1@allOf(16).envs.teams"
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
         }
-      }
-    },
-    "values/@allOf(8)@then@allOf(1).ingress.hosts@anyOf(0)@items": {
-      "additionalProperties": {},
-      "properties": {
-        "host": {},
-        "paths": {
-          "$ref": "#/$defs/values~1@allOf(7)@then.ingress.tls@anyOf(0)@items.hosts"
-        }
-      },
-      "type": "object"
-    },
-    "values/@allOf(8)@then@allOf(2).ingress.tls": {
-      "additionalProperties": {
-        "$ref": "#/$defs/values~1@allOf(8)@then@allOf(2).ingress.tls@additionalProperties"
-      },
-      "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
-      "items": {
-        "$ref": "#/$defs/values~1@allOf(8)@then@allOf(2).ingress.tls@additionalProperties"
-      }
-    },
-    "values/@allOf(8)@then@allOf(2).ingress.tls@additionalProperties": {
-      "additionalProperties": {},
-      "properties": {
-        "hosts": {
-          "$ref": "#/$defs/values~1@allOf(16).envs.teams"
-        }
-      }
+      ]
     },
     "values/affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions": {
       "description": "A list of node selector requirements by node's labels.",
@@ -692,14 +760,14 @@
         "null"
       ]
     },
-    "values/extraEnvs@anyOf(0)@items.valueFrom.configMapKeyRef.name": {
+    "values/extraEnvs/fragment": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
         "string",
         "null"
       ]
     },
-    "values/extraEnvs@anyOf(0)@items.valueFrom.resourceFieldRef.divisor": {
+    "values/extraEnvs/fragment@2": {
       "oneOf": [
         {
           "$ref": "#/$defs/values~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.values@items"
@@ -712,79 +780,47 @@
         }
       ]
     },
-    "values/ingress@allOf(0)@then@allOf(0).hosts@additionalProperties": {
-      "additionalProperties": {},
-      "properties": {
-        "paths": {
-          "additionalProperties": {
-            "$ref": "#/$defs/values~1ingress@allOf(0)@then@allOf(0).hosts@additionalProperties.paths@additionalProperties"
-          },
-          "items": {
-            "$ref": "#/$defs/values~1ingress@allOf(0)@then@allOf(0).hosts@additionalProperties.paths@additionalProperties"
-          }
+    "values/fragment": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@14"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@13"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@12"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@10"
         }
-      }
+      ],
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": "string"
     },
-    "values/ingress@allOf(0)@then@allOf(0).hosts@additionalProperties.paths@additionalProperties": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(2)"
-        },
-        {
-          "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(0)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(1)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(2)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(4)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(5)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(6)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(9)"
-            }
-          ],
-          "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-          "type": "string"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(4)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(5)"
-        }
-      ]
+    "values/fragment@2": {
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": "null"
     },
-    "values/ingress@allOf(0)@then@allOf(2).annotations@anyOf(1)": {
+    "values/ingress/fragment": {
       "allOf": [
         {
           "additionalProperties": {
@@ -804,109 +840,73 @@
         }
       ]
     },
-    "values/ingress@allOf(1)@then@allOf(0).tls@additionalProperties": {
-      "additionalProperties": {},
-      "properties": {
-        "secretName": {
-          "anyOf": [
+    "values/nameOverride": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@15"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@17"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1fragment@16"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "allOf": [
             {
-              "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
-              "type": "null"
+              "$ref": "#/$defs/constrains~1paths~1fragment@14"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(0)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@8"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(2)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@13"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@6"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(4)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@9"
             },
             {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(0)"
-                },
-                {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(1)"
-                },
-                {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(2)"
-                },
-                {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)"
-                },
-                {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(4)"
-                },
-                {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(5)"
-                },
-                {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(6)"
-                },
-                {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
-                },
-                {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
-                },
-                {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(9)"
-                }
-              ],
-              "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
-              "type": "string"
+              "$ref": "#/$defs/constrains~1paths~1fragment@11"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(5)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@12"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1fragment@5"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1fragment@7"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1fragment@10"
             }
-          ]
+          ],
+          "type": "string"
         }
-      }
+      ]
     },
-    "values/ingress@allOf(1)@then@allOf(1).tls@additionalProperties": {
-      "additionalProperties": {},
-      "properties": {
-        "hosts": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(1)"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "description": "hosts is a list of hosts included in the TLS certificate. The values in this list must match the name/s used in the tlsSecret. Defaults to the wildcard host setting for the loadbalancer controller fulfilling this Ingress, if left unspecified.",
-              "items": {
-                "$ref": "#/$defs/values~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.values@items"
-              },
-              "type": "array",
-              "x-kubernetes-list-type": "atomic"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "array"
-            }
-          ]
-        }
-      }
-    },
-    "values/podAnnotations@anyOf(1)": {
+    "values/podAnnotations/fragment": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "values/replicaCount@anyOf(4)": {
+    "values/replicaCount/fragment": {
       "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     }
@@ -949,12 +949,12 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@anyOf(0)"
+            "$ref": "#/$defs/constrains~1ingress.enabled:t"
           },
           {
             "properties": {
               "serviceAccount": {
-                "$ref": "#/$defs/values~1@allOf(1)@if@anyOf(1).serviceAccount"
+                "$ref": "#/$defs/constrains~1create:t"
               }
             },
             "required": [
@@ -963,7 +963,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@anyOf(2)"
+            "$ref": "#/$defs/constrains~1rbac.create:t"
           }
         ]
       },
@@ -971,7 +971,7 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride"
+            "$ref": "#/$defs/values~1nameOverride"
           }
         }
       }
@@ -980,14 +980,14 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(2)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1envs+envs=null"
           },
           {
             "anyOf": [
               {
                 "properties": {
                   "envs": {
-                    "$ref": "#/$defs/values~1@allOf(2)@if@allOf(1)@anyOf(0).envs"
+                    "$ref": "#/$defs/constrains~1teams=null"
                   }
                 },
                 "required": [
@@ -1053,7 +1053,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(2)@if@allOf(0)"
+        "$ref": "#/$defs/constrains~1envs+envs=null"
       },
       "then": false
     },
@@ -1123,12 +1123,12 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@anyOf(0)"
+            "$ref": "#/$defs/constrains~1ingress.enabled:t"
           },
           {
             "properties": {
               "ingress": {
-                "$ref": "#/$defs/values~1@allOf(7)@if@allOf(1).ingress"
+                "$ref": "#/$defs/constrains~1tls:t"
               }
             },
             "required": [
@@ -1149,7 +1149,7 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/values~1@allOf(7)@then.ingress.tls@anyOf(0)@items"
+                      "$ref": "#/$defs/constrains~1hosts+secretName"
                     },
                     "type": "array"
                   },
@@ -1159,7 +1159,7 @@
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/values~1@allOf(7)@then.ingress.tls@anyOf(0)@items"
+                      "$ref": "#/$defs/constrains~1hosts+secretName"
                     },
                     "type": "object"
                   },
@@ -1176,7 +1176,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(1)@if@anyOf(0)"
+        "$ref": "#/$defs/constrains~1ingress.enabled:t"
       },
       "then": {
         "allOf": [
@@ -1188,7 +1188,7 @@
                 "description": "configure UI ingress. If needed: \"enabled: true\"",
                 "properties": {
                   "hosts": {
-                    "$ref": "#/$defs/values~1@allOf(8)@then@allOf(0).ingress.hosts"
+                    "$ref": "#/$defs/constrains~1@items.paths"
                   }
                 }
               }
@@ -1205,13 +1205,13 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/values~1@allOf(8)@then@allOf(1).ingress.hosts@anyOf(0)@items"
+                          "$ref": "#/$defs/constrains~1host+paths"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/values~1@allOf(8)@then@allOf(1).ingress.hosts@anyOf(0)@items"
+                          "$ref": "#/$defs/constrains~1host+paths"
                         },
                         "type": "object"
                       },
@@ -1236,7 +1236,7 @@
                 "description": "configure UI ingress. If needed: \"enabled: true\"",
                 "properties": {
                   "tls": {
-                    "$ref": "#/$defs/values~1@allOf(8)@then@allOf(2).ingress.tls"
+                    "$ref": "#/$defs/constrains~1@items.hosts"
                   }
                 }
               }
@@ -1322,7 +1322,7 @@
           "description": "configure ui image",
           "properties": {
             "repository": {
-              "$ref": "#/$defs/helm-double-quoted-safe@anyOf(2)@additionalProperties"
+              "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
             }
           }
         }
@@ -1336,7 +1336,7 @@
           "description": "configure ui image",
           "properties": {
             "registry": {
-              "$ref": "#/$defs/helm-double-quoted-safe@anyOf(2)@additionalProperties"
+              "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
             }
           }
         }
@@ -1367,7 +1367,7 @@
           "description": "configure ui image",
           "properties": {
             "tag": {
-              "$ref": "#/$defs/helm-double-quoted-safe@anyOf(2)@additionalProperties"
+              "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
             }
           }
         }
@@ -1381,7 +1381,7 @@
           "description": "configure UI ENVs",
           "properties": {
             "teams": {
-              "$ref": "#/$defs/values~1@allOf(16).envs.teams"
+              "$ref": "#/$defs/constrains~1hosts~1fragment"
             }
           }
         }
@@ -1413,7 +1413,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(1)@if@anyOf(2)"
+        "$ref": "#/$defs/constrains~1rbac.create:t"
       },
       "then": {
         "additionalProperties": {},
@@ -1424,74 +1424,74 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(1)"
+                    "$ref": "#/$defs/constrains~1:t"
                   },
                   {
                     "allOf": [
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then.serviceAccount.name@anyOf(1)@allOf(0)@anyOf(0)"
+                            "$ref": "#/$defs/values~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(0)"
+                            "$ref": "#/$defs/constrains~1paths~1fragment@3"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(2)"
+                            "$ref": "#/$defs/constrains~1paths~1fragment@15"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)"
+                            "$ref": "#/$defs/constrains~1paths~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(4)"
+                            "$ref": "#/$defs/constrains~1paths~1fragment@17"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then.serviceAccount.name@anyOf(1)@allOf(0)@anyOf(5)"
+                            "$ref": "#/$defs/values~1fragment@2"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(5)"
+                            "$ref": "#/$defs/constrains~1paths~1fragment@16"
                           }
                         ]
                       },
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(0)"
+                            "$ref": "#/$defs/constrains~1paths~1fragment@3"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)"
+                            "$ref": "#/$defs/constrains~1paths~1fragment"
                           },
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(0)"
+                                "$ref": "#/$defs/constrains~1paths~1fragment@14"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(1)"
+                                "$ref": "#/$defs/constrains~1paths~1fragment@8"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(2)"
+                                "$ref": "#/$defs/constrains~1paths~1fragment@13"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)"
+                                "$ref": "#/$defs/constrains~1paths~1fragment@6"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(4)"
+                                "$ref": "#/$defs/constrains~1paths~1fragment@9"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(5)"
+                                "$ref": "#/$defs/constrains~1paths~1fragment@11"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(6)"
+                                "$ref": "#/$defs/constrains~1paths~1fragment@12"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
+                                "$ref": "#/$defs/constrains~1paths~1fragment@5"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
+                                "$ref": "#/$defs/constrains~1paths~1fragment@7"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(9)"
+                                "$ref": "#/$defs/constrains~1paths~1fragment@10"
                               }
                             ],
                             "description": "Name is the name of resource being referenced",
@@ -1673,7 +1673,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(2)@if@allOf(1)@anyOf(0).envs"
+                "$ref": "#/$defs/constrains~1teams=null"
               },
               {
                 "not": {
@@ -1696,55 +1696,55 @@
         "appUrl": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(0)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@3"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@14"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@13"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@6"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(4)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@9"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(5)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@11"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(6)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@12"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@5"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(9)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@10"
                 }
               ],
               "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(2)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@15"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)"
+              "$ref": "#/$defs/constrains~1paths~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(4)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@17"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(5)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@16"
             },
             {
               "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
@@ -1814,7 +1814,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/values~1extraEnvs@anyOf(0)@items.valueFrom.configMapKeyRef.name"
+                        "$ref": "#/$defs/values~1extraEnvs~1fragment"
                       },
                       "optional": {
                         "description": "Specify whether the ConfigMap or its key must be defined",
@@ -1870,7 +1870,7 @@
                         ]
                       },
                       "divisor": {
-                        "$ref": "#/$defs/values~1extraEnvs@anyOf(0)@items.valueFrom.resourceFieldRef.divisor"
+                        "$ref": "#/$defs/values~1extraEnvs~1fragment@2"
                       },
                       "resource": {
                         "description": "Required: resource to select",
@@ -1895,7 +1895,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/values~1extraEnvs@anyOf(0)@items.valueFrom.configMapKeyRef.name"
+                        "$ref": "#/$defs/values~1extraEnvs~1fragment"
                       },
                       "optional": {
                         "description": "Specify whether the Secret or its key must be defined",
@@ -1934,7 +1934,7 @@
           "x-kubernetes-patch-strategy": "merge"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(1)"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "type": "null"
@@ -1950,55 +1950,55 @@
         "pullPolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(0)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@3"
             },
             {
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(2)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@15"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)"
+              "$ref": "#/$defs/constrains~1paths~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(4)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@17"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(5)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@16"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@14"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@13"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@6"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(4)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@9"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(5)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@11"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(6)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@12"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@5"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(9)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@10"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -2015,7 +2015,7 @@
     "imagePullSecrets": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(1)"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "type": "null"
@@ -2027,7 +2027,7 @@
             "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
             "properties": {
               "name": {
-                "$ref": "#/$defs/values~1extraEnvs@anyOf(0)@items.valueFrom.configMapKeyRef.name"
+                "$ref": "#/$defs/values~1extraEnvs~1fragment"
               }
             },
             "type": [
@@ -2047,7 +2047,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/values~1@allOf(1)@if@anyOf(0).ingress"
+            "$ref": "#/$defs/constrains~1enabled:t"
           },
           "then": {
             "allOf": [
@@ -2056,10 +2056,10 @@
                 "properties": {
                   "hosts": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/values~1ingress@allOf(0)@then@allOf(0).hosts@additionalProperties"
+                      "$ref": "#/$defs/constrains~1paths@2"
                     },
                     "items": {
-                      "$ref": "#/$defs/values~1ingress@allOf(0)@then@allOf(0).hosts@additionalProperties"
+                      "$ref": "#/$defs/constrains~1paths@2"
                     }
                   }
                 }
@@ -2070,58 +2070,58 @@
                   "ingressClassName": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1paths~1fragment@3"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(1)"
+                        "$ref": "#/$defs/constrains~1:t"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(2)"
+                        "$ref": "#/$defs/constrains~1paths~1fragment@15"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)"
+                        "$ref": "#/$defs/constrains~1paths~1fragment"
                       },
                       {
                         "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(4)"
+                        "$ref": "#/$defs/constrains~1paths~1fragment@17"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(5)"
+                        "$ref": "#/$defs/constrains~1paths~1fragment@16"
                       },
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(0)"
+                            "$ref": "#/$defs/constrains~1paths~1fragment@14"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(1)"
+                            "$ref": "#/$defs/constrains~1paths~1fragment@8"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(2)"
+                            "$ref": "#/$defs/constrains~1paths~1fragment@13"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)"
+                            "$ref": "#/$defs/constrains~1paths~1fragment@6"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(4)"
+                            "$ref": "#/$defs/constrains~1paths~1fragment@9"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(5)"
+                            "$ref": "#/$defs/constrains~1paths~1fragment@11"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(6)"
+                            "$ref": "#/$defs/constrains~1paths~1fragment@12"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
+                            "$ref": "#/$defs/constrains~1paths~1fragment@5"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
+                            "$ref": "#/$defs/constrains~1paths~1fragment@7"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(9)"
+                            "$ref": "#/$defs/constrains~1paths~1fragment@10"
                           }
                         ],
                         "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
@@ -2138,10 +2138,10 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(1)"
+                        "$ref": "#/$defs/constrains~1:t"
                       },
                       {
-                        "$ref": "#/$defs/values~1ingress@allOf(0)@then@allOf(2).annotations@anyOf(1)"
+                        "$ref": "#/$defs/values~1ingress~1fragment"
                       }
                     ]
                   }
@@ -2151,7 +2151,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "hosts": {
-                    "$ref": "#/$defs/values~1@allOf(8)@then@allOf(0).ingress.hosts"
+                    "$ref": "#/$defs/constrains~1@items.paths"
                   }
                 }
               },
@@ -2159,7 +2159,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "tls": {
-                    "$ref": "#/$defs/values~1@allOf(8)@then@allOf(2).ingress.tls"
+                    "$ref": "#/$defs/constrains~1@items.hosts"
                   }
                 }
               }
@@ -2170,10 +2170,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(7)@if@allOf(1).ingress"
+                "$ref": "#/$defs/constrains~1tls:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@anyOf(0).ingress"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -2184,11 +2184,11 @@
                 "properties": {
                   "tls": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/values~1ingress@allOf(1)@then@allOf(0).tls@additionalProperties"
+                      "$ref": "#/$defs/constrains~1secretName"
                     },
                     "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
                     "items": {
-                      "$ref": "#/$defs/values~1ingress@allOf(1)@then@allOf(0).tls@additionalProperties"
+                      "$ref": "#/$defs/constrains~1secretName"
                     }
                   }
                 }
@@ -2198,11 +2198,11 @@
                 "properties": {
                   "tls": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/values~1ingress@allOf(1)@then@allOf(1).tls@additionalProperties"
+                      "$ref": "#/$defs/constrains~1hosts:t"
                     },
                     "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
                     "items": {
-                      "$ref": "#/$defs/values~1ingress@allOf(1)@then@allOf(1).tls@additionalProperties"
+                      "$ref": "#/$defs/constrains~1hosts:t"
                     }
                   }
                 }
@@ -2226,7 +2226,7 @@
       "type": "object"
     },
     "nameOverride": {
-      "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride"
+      "$ref": "#/$defs/values~1nameOverride"
     },
     "nodeSelector": {
       "additionalProperties": {
@@ -2242,13 +2242,13 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(1)"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1podAnnotations@anyOf(1)"
+          "$ref": "#/$defs/values~1podAnnotations~1fragment"
         },
         {
-          "$ref": "#/$defs/values~1ingress@allOf(0)@then@allOf(2).annotations@anyOf(1)"
+          "$ref": "#/$defs/values~1ingress~1fragment"
         }
       ],
       "description": "Extra pod annotations"
@@ -2256,58 +2256,58 @@
     "priorityClassName": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(0)"
+          "$ref": "#/$defs/constrains~1paths~1fragment@3"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(1)"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(2)"
+          "$ref": "#/$defs/constrains~1paths~1fragment@15"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)"
+          "$ref": "#/$defs/constrains~1paths~1fragment"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(4)"
+          "$ref": "#/$defs/constrains~1paths~1fragment@17"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(0)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@14"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(1)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@8"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(2)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@13"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@6"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(4)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@9"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(5)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@11"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(6)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@12"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@5"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@7"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(9)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@10"
             }
           ],
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(5)"
+          "$ref": "#/$defs/constrains~1paths~1fragment@16"
         },
         {
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -2338,16 +2338,16 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(2)"
+          "$ref": "#/$defs/constrains~1paths~1fragment@15"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(4)"
+          "$ref": "#/$defs/constrains~1paths~1fragment@17"
         },
         {
-          "$ref": "#/$defs/values~1replicaCount@anyOf(4)"
+          "$ref": "#/$defs/values~1replicaCount~1fragment"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(5)"
+          "$ref": "#/$defs/constrains~1paths~1fragment@16"
         }
       ]
     },
@@ -2389,7 +2389,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/values~1extraEnvs@anyOf(0)@items.valueFrom.resourceFieldRef.divisor"
+                    "$ref": "#/$defs/values~1extraEnvs~1fragment@2"
                   },
                   "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -2411,7 +2411,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/values~1extraEnvs@anyOf(0)@items.valueFrom.resourceFieldRef.divisor"
+                    "$ref": "#/$defs/values~1extraEnvs~1fragment@2"
                   },
                   "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -2471,19 +2471,19 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(1)"
+                    "$ref": "#/$defs/constrains~1:t"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(2)"
+                    "$ref": "#/$defs/constrains~1paths~1fragment@15"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(4)"
+                    "$ref": "#/$defs/constrains~1paths~1fragment@17"
                   },
                   {
-                    "$ref": "#/$defs/values~1replicaCount@anyOf(4)"
+                    "$ref": "#/$defs/values~1replicaCount~1fragment"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(5)"
+                    "$ref": "#/$defs/constrains~1paths~1fragment@16"
                   }
                 ]
               }
@@ -2496,13 +2496,13 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(1)"
+              "$ref": "#/$defs/constrains~1:t"
             },
             {
-              "$ref": "#/$defs/values~1podAnnotations@anyOf(1)"
+              "$ref": "#/$defs/values~1podAnnotations~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1ingress@allOf(0)@then@allOf(2).annotations@anyOf(1)"
+              "$ref": "#/$defs/values~1ingress~1fragment"
             }
           ],
           "description": "If the type of the service is NodePort a port can be specified using the nodePort field\nIf the nodePort field is not specified, or if it has no value, then a random port is used\nnodePort: 32521"
@@ -2516,7 +2516,7 @@
               "type": "integer"
             },
             {
-              "$ref": "#/$defs/values~1replicaCount@anyOf(4)"
+              "$ref": "#/$defs/values~1replicaCount~1fragment"
             }
           ]
         },
@@ -2529,53 +2529,53 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@14"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@13"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@6"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(4)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@9"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(5)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@11"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(6)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@12"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@5"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(9)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@10"
                 }
               ],
               "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(0)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@3"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(2)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@15"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)"
+              "$ref": "#/$defs/constrains~1paths~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(4)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@17"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(5)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@16"
             }
           ]
         }
@@ -2590,7 +2590,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/values~1@allOf(1)@if@anyOf(1).serviceAccount"
+            "$ref": "#/$defs/constrains~1create:t"
           },
           "then": {
             "additionalProperties": {},
@@ -2598,28 +2598,28 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(18)@then.serviceAccount.name@anyOf(1)@allOf(0)@anyOf(0)"
+                    "$ref": "#/$defs/values~1fragment"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(0)"
+                    "$ref": "#/$defs/constrains~1paths~1fragment@3"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(1)"
+                    "$ref": "#/$defs/constrains~1:t"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(2)"
+                    "$ref": "#/$defs/constrains~1paths~1fragment@15"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)"
+                    "$ref": "#/$defs/constrains~1paths~1fragment"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(4)"
+                    "$ref": "#/$defs/constrains~1paths~1fragment@17"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(18)@then.serviceAccount.name@anyOf(1)@allOf(0)@anyOf(5)"
+                    "$ref": "#/$defs/values~1fragment@2"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(5)"
+                    "$ref": "#/$defs/constrains~1paths~1fragment@16"
                   }
                 ],
                 "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
@@ -2635,26 +2635,26 @@
         "name": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(0)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@3"
             },
             {
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(1)"
+              "$ref": "#/$defs/constrains~1:t"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(2)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@15"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)"
+              "$ref": "#/$defs/constrains~1paths~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(4)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@17"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(5)"
+              "$ref": "#/$defs/constrains~1paths~1fragment@16"
             },
             {
               "type": "null"
@@ -2662,34 +2662,34 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@14"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@13"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@6"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(4)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@9"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(5)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@11"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(6)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@12"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@5"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nameOverride@anyOf(7)@allOf(9)"
+                  "$ref": "#/$defs/constrains~1paths~1fragment@10"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",

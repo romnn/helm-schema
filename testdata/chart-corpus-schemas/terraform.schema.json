@@ -1,5 +1,143 @@
 {
   "$defs": {
+    "constrains/CACerts:t": {
+      "properties": {
+        "CACerts": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "CACerts"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/global+syncWorkspace.enabled+syncWorkspace.enabled:t": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1syncWorkspace.enabled+syncWorkspace.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1syncWorkspace.enabled"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.enabled:t+syncWorkspace.enabled"
+        }
+      ]
+    },
+    "constrains/global+syncWorkspace.enabled+syncWorkspace.enabled:t@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1syncWorkspace.enabled+syncWorkspace.enabled:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1global.enabled:t+syncWorkspace.enabled"
+        }
+      ]
+    },
+    "constrains/global.enabled:t+syncWorkspace.enabled": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1syncWorkspace.enabled"
+        },
+        {
+          "properties": {
+            "global": {
+              "$ref": "#/$defs/constrains~1enabled:t"
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/secretName": {
+      "properties": {
+        "secretName": {}
+      },
+      "required": [
+        "secretName"
+      ],
+      "type": "object"
+    },
+    "constrains/secretName=''": {
+      "properties": {
+        "secretName": {
+          "enum": [
+            ""
+          ]
+        }
+      },
+      "required": [
+        "secretName"
+      ],
+      "type": "object"
+    },
+    "constrains/secretName=null": {
+      "properties": {
+        "secretName": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "secretName"
+      ],
+      "type": "object"
+    },
+    "constrains/syncWorkspace.enabled": {
+      "properties": {
+        "syncWorkspace": {
+          "properties": {
+            "enabled": {
+              "pattern": "^-$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "syncWorkspace"
+      ],
+      "type": "object"
+    },
+    "constrains/syncWorkspace.enabled+syncWorkspace.enabled:t": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/constrains~1syncWorkspace.enabled"
+          }
+        },
+        {
+          "properties": {
+            "syncWorkspace": {
+              "$ref": "#/$defs/constrains~1enabled:t"
+            }
+          },
+          "required": [
+            "syncWorkspace"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "helm-double-quoted-safe": {
       "anyOf": [
         {
@@ -56,203 +194,7 @@
         }
       ]
     },
-    "values/@allOf(0)@if": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(0)@if@anyOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(0)@if@anyOf(1)"
-        }
-      ]
-    },
-    "values/@allOf(0)@if@anyOf(0)": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/values~1@allOf(0)@if@anyOf(0)@allOf(0)@not"
-          }
-        },
-        {
-          "properties": {
-            "syncWorkspace": {
-              "$ref": "#/$defs/values~1@allOf(0)@if@anyOf(0)@allOf(1).syncWorkspace"
-            }
-          },
-          "required": [
-            "syncWorkspace"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "values/@allOf(0)@if@anyOf(0)@allOf(0)@not": {
-      "properties": {
-        "syncWorkspace": {
-          "properties": {
-            "enabled": {
-              "pattern": "^-$",
-              "type": "string"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "syncWorkspace"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(0)@if@anyOf(0)@allOf(1).syncWorkspace": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(0)@if@anyOf(1)": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(0)@if@anyOf(0)@allOf(0)@not"
-        },
-        {
-          "properties": {
-            "global": {
-              "$ref": "#/$defs/values~1@allOf(0)@if@anyOf(0)@allOf(1).syncWorkspace"
-            }
-          },
-          "required": [
-            "global"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "values/@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(0)"
-        },
-        {
-          "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
-          "type": "null"
-        },
-        {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^[-?:]([ \\t]|$)"
-              }
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(1)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(2)"
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(4)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(5)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(6)"
-            },
-            {
-              "not": {
-                "pattern": ":[ \\t]|:$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(9)"
-            }
-          ],
-          "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
-          "type": "string"
-        },
-        {
-          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(4)"
-        },
-        {
-          "pattern": "^[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(6)"
-        }
-      ]
-    },
-    "values/@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(0)": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "values/@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(1)": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "values/@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(2)": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "values/@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(4)": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "values/@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(5)": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "values/@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(6)": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "values/@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(9)": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "values/@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(4)": {
+    "values/fragment": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -263,7 +205,7 @@
             "type": "integer"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(4)@additionalProperties@anyOf(2)"
+            "$ref": "#/$defs/values~1fragment@2"
           },
           {
             "type": "number"
@@ -281,11 +223,20 @@
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(4)@additionalProperties@anyOf(2)"
+        "$ref": "#/$defs/values~1fragment@2"
       },
       "type": "object"
     },
-    "values/@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(4)@additionalProperties@anyOf(2)": {
+    "values/fragment@10": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "values/fragment@11": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "values/fragment@2": {
       "allOf": [
         {
           "not": {
@@ -305,68 +256,117 @@
       ],
       "type": "string"
     },
-    "values/@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(6)": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+    "values/fragment@3": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
       "type": "string"
     },
-    "values/@allOf(1)@if@allOf(0)@anyOf(0).syncWorkspace.sensitiveVariables": {
-      "properties": {
-        "secretName": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "secretName"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(1)@if@allOf(0)@anyOf(1).syncWorkspace.sensitiveVariables": {
-      "properties": {
-        "secretName": {
-          "enum": [
-            ""
-          ]
-        }
-      },
-      "required": [
-        "secretName"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(1)@if@allOf(0)@anyOf(2)@not.syncWorkspace.sensitiveVariables": {
-      "properties": {
-        "secretName": {}
-      },
-      "required": [
-        "secretName"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(13)@if@allOf(0)": {
-      "properties": {
-        "CACerts": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "CACerts"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(14)@if@allOf(1)": {
+    "values/fragment@4": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(0)@if@anyOf(0)"
+          "$ref": "#/$defs/values~1fragment@3"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(0)@if@anyOf(0)@allOf(0)@not"
+          "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+          "type": "null"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(0)@if@anyOf(1)"
+          "allOf": [
+            {
+              "not": {
+                "pattern": "^[-?:]([ \\t]|$)"
+              }
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@5"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@10"
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@6"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@8"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@9"
+            },
+            {
+              "not": {
+                "pattern": ":[ \\t]|:$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@7"
+            }
+          ],
+          "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+          "type": "string"
+        },
+        {
+          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment"
+        },
+        {
+          "pattern": "^[ \\t]*(#.*)?$",
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@11"
         }
       ]
+    },
+    "values/fragment@5": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "values/fragment@6": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "values/fragment@7": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "values/fragment@8": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "values/fragment@9": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -374,7 +374,7 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(0)@if"
+        "$ref": "#/$defs/constrains~1global+syncWorkspace.enabled+syncWorkspace.enabled:t@2"
       },
       "then": {
         "allOf": [
@@ -390,7 +390,7 @@
                     "description": "Name and key of Kubernetes secret containing the Terraform CLI Configuration\nMust have Terraform Cloud Team API Token",
                     "properties": {
                       "secretName": {
-                        "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName"
+                        "$ref": "#/$defs/values~1fragment@4"
                       }
                     }
                   }
@@ -432,7 +432,7 @@
                     "description": "Name of Kubernetes secret containing keys and values of sensitive variables",
                     "properties": {
                       "secretName": {
-                        "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName"
+                        "$ref": "#/$defs/values~1fragment@4"
                       }
                     }
                   }
@@ -446,7 +446,7 @@
               "nameOverride": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(0)"
+                    "$ref": "#/$defs/values~1fragment@3"
                   },
                   {
                     "not": {
@@ -458,14 +458,14 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(4)"
+                    "$ref": "#/$defs/values~1fragment"
                   },
                   {
                     "pattern": "^[ \\t]*(#.*)?$",
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(6)"
+                    "$ref": "#/$defs/values~1fragment@11"
                   },
                   {
                     "type": "null"
@@ -478,10 +478,10 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(1)"
+                        "$ref": "#/$defs/values~1fragment@5"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(2)"
+                        "$ref": "#/$defs/values~1fragment@10"
                       },
                       {
                         "not": {
@@ -489,13 +489,13 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(4)"
+                        "$ref": "#/$defs/values~1fragment@6"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(5)"
+                        "$ref": "#/$defs/values~1fragment@8"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(6)"
+                        "$ref": "#/$defs/values~1fragment@9"
                       },
                       {
                         "not": {
@@ -508,7 +508,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(9)"
+                        "$ref": "#/$defs/values~1fragment@7"
                       }
                     ],
                     "type": "string"
@@ -546,7 +546,7 @@
                       "secretKey": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(0)"
+                            "$ref": "#/$defs/values~1fragment@3"
                           },
                           {
                             "allOf": [
@@ -556,10 +556,10 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(1)"
+                                "$ref": "#/$defs/values~1fragment@5"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(2)"
+                                "$ref": "#/$defs/values~1fragment@10"
                               },
                               {
                                 "not": {
@@ -567,13 +567,13 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(4)"
+                                "$ref": "#/$defs/values~1fragment@6"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(5)"
+                                "$ref": "#/$defs/values~1fragment@8"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(6)"
+                                "$ref": "#/$defs/values~1fragment@9"
                               },
                               {
                                 "not": {
@@ -586,14 +586,14 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(2)@allOf(9)"
+                                "$ref": "#/$defs/values~1fragment@7"
                               }
                             ],
                             "description": "key is the key to project.",
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(0)@then@allOf(0).syncWorkspace.terraformRC.secretName@anyOf(4)"
+                            "$ref": "#/$defs/values~1fragment"
                           }
                         ]
                       }
@@ -649,7 +649,7 @@
                   "syncWorkspace": {
                     "properties": {
                       "sensitiveVariables": {
-                        "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0)@anyOf(0).syncWorkspace.sensitiveVariables"
+                        "$ref": "#/$defs/constrains~1secretName=null"
                       }
                     },
                     "required": [
@@ -668,7 +668,7 @@
                   "syncWorkspace": {
                     "properties": {
                       "sensitiveVariables": {
-                        "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0)@anyOf(1).syncWorkspace.sensitiveVariables"
+                        "$ref": "#/$defs/constrains~1secretName=''"
                       }
                     },
                     "required": [
@@ -688,7 +688,7 @@
                     "syncWorkspace": {
                       "properties": {
                         "sensitiveVariables": {
-                          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0)@anyOf(2)@not.syncWorkspace.sensitiveVariables"
+                          "$ref": "#/$defs/constrains~1secretName"
                         }
                       },
                       "required": [
@@ -706,7 +706,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if"
+            "$ref": "#/$defs/constrains~1global+syncWorkspace.enabled+syncWorkspace.enabled:t@2"
           }
         ]
       },
@@ -735,7 +735,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if"
+            "$ref": "#/$defs/constrains~1global+syncWorkspace.enabled+syncWorkspace.enabled:t@2"
           }
         ]
       },
@@ -848,7 +848,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if"
+            "$ref": "#/$defs/constrains~1global+syncWorkspace.enabled+syncWorkspace.enabled:t@2"
           }
         ]
       },
@@ -902,7 +902,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if"
+            "$ref": "#/$defs/constrains~1global+syncWorkspace.enabled+syncWorkspace.enabled:t@2"
           }
         ]
       },
@@ -910,7 +910,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(14)@if@allOf(1)"
+        "$ref": "#/$defs/constrains~1global+syncWorkspace.enabled+syncWorkspace.enabled:t"
       },
       "then": {
         "additionalProperties": {},
@@ -932,7 +932,7 @@
                   "syncWorkspace": {
                     "properties": {
                       "terraformRC": {
-                        "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0)@anyOf(1).syncWorkspace.sensitiveVariables"
+                        "$ref": "#/$defs/constrains~1secretName=''"
                       }
                     },
                     "required": [
@@ -951,7 +951,7 @@
                   "syncWorkspace": {
                     "properties": {
                       "terraformRC": {
-                        "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0)@anyOf(0).syncWorkspace.sensitiveVariables"
+                        "$ref": "#/$defs/constrains~1secretName=null"
                       }
                     },
                     "required": [
@@ -971,7 +971,7 @@
                     "syncWorkspace": {
                       "properties": {
                         "terraformRC": {
-                          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0)@anyOf(2)@not.syncWorkspace.sensitiveVariables"
+                          "$ref": "#/$defs/constrains~1secretName"
                         }
                       },
                       "required": [
@@ -989,7 +989,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if"
+            "$ref": "#/$defs/constrains~1global+syncWorkspace.enabled+syncWorkspace.enabled:t@2"
           }
         ]
       },
@@ -1010,7 +1010,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if"
+            "$ref": "#/$defs/constrains~1global+syncWorkspace.enabled+syncWorkspace.enabled:t@2"
           }
         ]
       },
@@ -1041,7 +1041,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if"
+            "$ref": "#/$defs/constrains~1global+syncWorkspace.enabled+syncWorkspace.enabled:t@2"
           }
         ]
       },
@@ -1059,7 +1059,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(13)@if@allOf(0)"
+        "$ref": "#/$defs/constrains~1CACerts:t"
       },
       "then": {
         "additionalProperties": {},
@@ -1128,7 +1128,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if"
+            "$ref": "#/$defs/constrains~1global+syncWorkspace.enabled+syncWorkspace.enabled:t@2"
           }
         ]
       },
@@ -1196,7 +1196,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if"
+            "$ref": "#/$defs/constrains~1global+syncWorkspace.enabled+syncWorkspace.enabled:t@2"
           }
         ]
       },
@@ -1206,7 +1206,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(13)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1CACerts:t"
           },
           {
             "anyOf": [
@@ -1285,7 +1285,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/values~1@allOf(14)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1global+syncWorkspace.enabled+syncWorkspace.enabled:t"
           }
         ]
       },

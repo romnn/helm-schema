@@ -1,5 +1,511 @@
 {
   "$defs": {
+    "constrains/:helm-double-quoted-safe": {
+      "$ref": "#/$defs/helm-double-quoted-safe"
+    },
+    "constrains/:t": {
+      "not": {
+        "$ref": "#/$defs/t"
+      }
+    },
+    "constrains/@items.key+@items.operator+@items.values": {
+      "description": "A list of node selector requirements by node's fields.",
+      "items": {
+        "$ref": "#/$defs/constrains~1key+operator+values"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "constrains/@items.key+@items.operator+@items.values@2": {
+      "description": "A list of node selector requirements by node's labels.",
+      "items": {
+        "$ref": "#/$defs/constrains~1key+operator+values"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "constrains/buildMode:t+nfs.mountOptions:t": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/constrains~1nfs.mountOptions:t"
+          }
+        },
+        {
+          "not": {
+            "properties": {
+              "buildMode": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "buildMode"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/create:t": {
+      "properties": {
+        "create": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/key+operator+values": {
+      "additionalProperties": false,
+      "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+      "properties": {
+        "key": {
+          "description": "The label key that the selector applies to.",
+          "type": "string"
+        },
+        "operator": {
+          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
+          "type": "string"
+        },
+        "values": {
+          "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
+          "items": {
+            "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "key",
+        "operator"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "constrains/labelSelector.matchExpressions@items.key+8more": {
+      "additionalProperties": false,
+      "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+      "properties": {
+        "labelSelector": {
+          "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
+        },
+        "matchLabelKeys": {
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment"
+        },
+        "mismatchLabelKeys": {
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@2"
+        },
+        "namespaceSelector": {
+          "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
+        },
+        "namespaces": {
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@4"
+        },
+        "topologyKey": {
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@3"
+        }
+      },
+      "required": [
+        "topologyKey"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "constrains/labelSelector.matchExpressions@items.key+8more/fragment": {
+      "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+      "items": {
+        "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
+      },
+      "type": [
+        "array",
+        "null"
+      ],
+      "x-kubernetes-list-type": "atomic"
+    },
+    "constrains/labelSelector.matchExpressions@items.key+8more/fragment@2": {
+      "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+      "items": {
+        "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
+      },
+      "type": [
+        "array",
+        "null"
+      ],
+      "x-kubernetes-list-type": "atomic"
+    },
+    "constrains/labelSelector.matchExpressions@items.key+8more/fragment@3": {
+      "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
+      "type": "string"
+    },
+    "constrains/labelSelector.matchExpressions@items.key+8more/fragment@4": {
+      "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
+      "items": {
+        "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "constrains/matchExpressions@items.key+matchExpressions@items.operator+2more": {
+      "additionalProperties": false,
+      "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+      "properties": {
+        "matchExpressions": {
+          "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+          "items": {
+            "additionalProperties": false,
+            "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+            "properties": {
+              "key": {
+                "description": "key is the label key that the selector applies to.",
+                "type": "string"
+              },
+              "operator": {
+                "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                "type": "string"
+              },
+              "values": {
+                "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                "items": {
+                  "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
+                },
+                "type": [
+                  "array",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "key",
+              "operator"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "matchLabels": {
+          "additionalProperties": {
+            "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
+          },
+          "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-map-type": "atomic"
+    },
+    "constrains/mountOptions:t": {
+      "properties": {
+        "mountOptions": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "mountOptions"
+      ],
+      "type": "object"
+    },
+    "constrains/nfs.mountOptions:t": {
+      "properties": {
+        "nfs": {
+          "$ref": "#/$defs/constrains~1mountOptions:t"
+        }
+      },
+      "required": [
+        "nfs"
+      ],
+      "type": "object"
+    },
+    "constrains/path": {
+      "additionalProperties": {},
+      "properties": {
+        "path": {
+          "$ref": "#/$defs/constrains~1path~1fragment@4"
+        }
+      }
+    },
+    "constrains/path/fragment": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/$defs/constrains~1path~1fragment@2"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/constrains~1path~1fragment@2"
+      },
+      "type": "object"
+    },
+    "constrains/path/fragment@10": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "constrains/path/fragment@11": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "constrains/path/fragment@12": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "constrains/path/fragment@13": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "constrains/path/fragment@14": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "constrains/path/fragment@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1path~1fragment@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1path~1fragment@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1path~1fragment@7"
+        }
+      ],
+      "type": "string"
+    },
+    "constrains/path/fragment@3": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "constrains/path/fragment@4": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1path~1fragment@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1path~1fragment"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1path~1fragment@14"
+            },
+            {
+              "$ref": "#/$defs/constrains~1path~1fragment@8"
+            },
+            {
+              "$ref": "#/$defs/constrains~1path~1fragment@13"
+            },
+            {
+              "$ref": "#/$defs/constrains~1path~1fragment@6"
+            },
+            {
+              "$ref": "#/$defs/constrains~1path~1fragment@9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1path~1fragment@11"
+            },
+            {
+              "$ref": "#/$defs/constrains~1path~1fragment@12"
+            },
+            {
+              "$ref": "#/$defs/constrains~1path~1fragment@5"
+            },
+            {
+              "$ref": "#/$defs/constrains~1path~1fragment@7"
+            },
+            {
+              "$ref": "#/$defs/constrains~1path~1fragment@10"
+            }
+          ],
+          "description": "path that is exported by the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs",
+          "type": "string"
+        }
+      ]
+    },
+    "constrains/path/fragment@5": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
+    },
+    "constrains/path/fragment@6": {
+      "not": {
+        "pattern": "[ \\t]#"
+      }
+    },
+    "constrains/path/fragment@7": {
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "constrains/path/fragment@8": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "constrains/path/fragment@9": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "constrains/podAffinityTerm.labelSelector.matchExpressions@items.key+9more": {
+      "additionalProperties": false,
+      "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
+      "properties": {
+        "podAffinityTerm": {
+          "additionalProperties": false,
+          "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+          "properties": {
+            "labelSelector": {
+              "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
+            },
+            "matchLabelKeys": {
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment"
+            },
+            "mismatchLabelKeys": {
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@2"
+            },
+            "namespaceSelector": {
+              "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
+            },
+            "namespaces": {
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@4"
+            },
+            "topologyKey": {
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@3"
+            }
+          },
+          "required": [
+            "topologyKey"
+          ],
+          "type": "object"
+        },
+        "weight": {
+          "description": "weight associated with matching the corresponding podAffinityTerm, in the range 1-100.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "weight",
+        "podAffinityTerm"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "constrains/rbac.create:t": {
+      "properties": {
+        "rbac": {
+          "$ref": "#/$defs/constrains~1create:t"
+        }
+      },
+      "required": [
+        "rbac"
+      ],
+      "type": "object"
+    },
+    "constrains/server!=null": {
+      "properties": {
+        "server": {
+          "not": {
+            "enum": [
+              null
+            ]
+          }
+        }
+      },
+      "required": [
+        "server"
+      ],
+      "type": "object"
+    },
+    "constrains/storageClass.create:t": {
+      "properties": {
+        "storageClass": {
+          "$ref": "#/$defs/constrains~1create:t"
+        }
+      },
+      "required": [
+        "storageClass"
+      ],
+      "type": "object"
+    },
     "helm-double-quoted-safe": {
       "anyOf": [
         {
@@ -16,7 +522,7 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/helm-double-quoted-safe@anyOf(2)@additionalProperties"
+            "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
           },
           "propertyNames": {
             "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
@@ -25,14 +531,11 @@
         },
         {
           "items": {
-            "$ref": "#/$defs/helm-double-quoted-safe@anyOf(2)@additionalProperties"
+            "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
           },
           "type": "array"
         }
       ]
-    },
-    "helm-double-quoted-safe@anyOf(2)@additionalProperties": {
-      "$ref": "#/$defs/helm-double-quoted-safe"
     },
     "t": {
       "anyOf": [
@@ -59,272 +562,61 @@
         }
       ]
     },
-    "values/@allOf(1)@if@allOf(0)": {
-      "properties": {
-        "nfs": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).nfs"
-        }
-      },
-      "required": [
-        "nfs"
-      ],
+    "values/affinity/fragment": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
       "type": "object"
     },
-    "values/@allOf(1)@if@allOf(0).nfs": {
-      "properties": {
-        "mountOptions": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "mountOptions"
-      ],
-      "type": "object"
+    "values/fragment": {
+      "$ref": "#/$defs/values~1fragment@5"
     },
-    "values/@allOf(1)@if@allOf(1)": {
-      "properties": {
-        "storageClass": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1).storageClass"
-        }
-      },
-      "required": [
-        "storageClass"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(1)@if@allOf(1).storageClass": {
-      "properties": {
-        "create": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(1)@then.nfs.mountOptions@additionalProperties": {
-      "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref"
-    },
-    "values/@allOf(1)@then.nfs.mountOptions@additionalProperties@ref": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(3)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(4)"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)"
-        }
-      ]
-    },
-    "values/@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(0)": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "values/@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(1)": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)": {
+    "values/fragment@2": {
       "additionalProperties": {
-        "anyOf": [
-          {
-            "maxItems": 0,
-            "type": "array"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "null"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "maxProperties": 0,
-            "type": "object"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)"
+        "type": "string"
       },
       "type": "object"
     },
-    "values/@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)": {
+    "values/fragment@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+          "$ref": "#/$defs/constrains~1path~1fragment@14"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+          "$ref": "#/$defs/constrains~1path~1fragment@8"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+          "$ref": "#/$defs/constrains~1path~1fragment@13"
+        },
+        {
+          "$ref": "#/$defs/constrains~1path~1fragment@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1path~1fragment@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1path~1fragment@11"
+        },
+        {
+          "$ref": "#/$defs/constrains~1path~1fragment@12"
+        },
+        {
+          "$ref": "#/$defs/constrains~1path~1fragment@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1path~1fragment@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1path~1fragment@10"
         }
       ],
       "type": "string"
     },
-    "values/@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)": {
-      "not": {
-        "pattern": "[ \\t]#"
-      }
-    },
-    "values/@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
-      }
-    },
-    "values/@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)": {
-      "not": {
-        "pattern": "[\\r\\n]"
-      }
-    },
-    "values/@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(3)": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(4)": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "values/@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(4)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(5)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(6)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(9)"
-        }
-      ],
-      "type": "string"
-    },
-    "values/@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(0)": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "values/@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(1)": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "values/@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(2)": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "values/@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(4)": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "values/@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(5)": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "values/@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(6)": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "values/@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(9)": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "values/@allOf(17)@if@anyOf(2)": {
-      "properties": {
-        "rbac": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1).storageClass"
-        }
-      },
-      "required": [
-        "rbac"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(17)@if@anyOf(3).podDisruptionBudget": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(17)@then@allOf(0).labels@anyOf(0)": {
-      "not": {
-        "$ref": "#/$defs/t"
-      }
-    },
-    "values/@allOf(17)@then@allOf(0).labels@anyOf(1)": {
+    "values/fragment@4": {
       "allOf": [
         {
           "additionalProperties": {
-            "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(1)@allOf(0)@additionalProperties"
+            "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
           },
           "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
           "type": [
@@ -333,124 +625,87 @@
           ]
         },
         {
-          "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(1)@allOf(1)"
+          "$ref": "#/$defs/values~1fragment@2"
         }
       ]
     },
-    "values/@allOf(17)@then@allOf(0).labels@anyOf(1)@allOf(0)@additionalProperties": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "values/@allOf(17)@then@allOf(0).labels@anyOf(1)@allOf(1)": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "values/@allOf(17)@then@allOf(1).nameOverride": {
+    "values/fragment@5": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(0)"
+          "$ref": "#/$defs/constrains~1path~1fragment@3"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(0)"
+          "$ref": "#/$defs/values~1fragment@7"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(1)"
+          "$ref": "#/$defs/constrains~1path~1fragment"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)"
+          "$ref": "#/$defs/values~1fragment@9"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(3)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(4)"
+          "$ref": "#/$defs/values~1fragment@8"
         },
         {
           "type": "null"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)"
+          "$ref": "#/$defs/values~1fragment@3"
         }
       ]
     },
-    "values/@allOf(20)@if": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0)"
-          }
-        },
-        {
-          "not": {
-            "properties": {
-              "buildMode": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "buildMode"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
-    "values/@allOf(20)@then@allOf(0).nfs.server": {
+    "values/fragment@6": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(0)"
+          "$ref": "#/$defs/constrains~1path~1fragment@3"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(0)"
+              "$ref": "#/$defs/constrains~1path~1fragment@14"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(1)"
+              "$ref": "#/$defs/constrains~1path~1fragment@8"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(2)"
+              "$ref": "#/$defs/constrains~1path~1fragment@13"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+              "$ref": "#/$defs/constrains~1path~1fragment@6"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(4)"
+              "$ref": "#/$defs/constrains~1path~1fragment@9"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(5)"
+              "$ref": "#/$defs/constrains~1path~1fragment@11"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(6)"
+              "$ref": "#/$defs/constrains~1path~1fragment@12"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+              "$ref": "#/$defs/constrains~1path~1fragment@5"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+              "$ref": "#/$defs/constrains~1path~1fragment@7"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(9)"
+              "$ref": "#/$defs/constrains~1path~1fragment@10"
             }
           ],
           "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(1)"
+          "$ref": "#/$defs/values~1fragment@7"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)"
+          "$ref": "#/$defs/constrains~1path~1fragment"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(3)"
+          "$ref": "#/$defs/values~1fragment@9"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(4)"
+          "$ref": "#/$defs/values~1fragment@8"
         },
         {
           "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
@@ -458,315 +713,54 @@
         }
       ]
     },
-    "values/@allOf(20)@then@allOf(1).nfs": {
-      "additionalProperties": {},
-      "properties": {
-        "path": {
-          "$ref": "#/$defs/values~1@allOf(20)@then@allOf(1).nfs.path"
-        }
-      }
-    },
-    "values/@allOf(20)@then@allOf(1).nfs.path": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(0)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(1)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(2)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(4)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(5)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(6)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(9)"
-            }
-          ],
-          "description": "path that is exported by the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs",
-          "type": "string"
-        }
-      ]
-    },
-    "values/@allOf(4)@then@allOf(3)@if.nfs": {
-      "properties": {
-        "server": {
-          "not": {
-            "enum": [
-              null
-            ]
-          }
-        }
-      },
-      "required": [
-        "server"
-      ],
-      "type": "object"
-    },
-    "values/affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions": {
-      "description": "A list of node selector requirements by node's labels.",
-      "items": {
-        "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "values/affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items": {
-      "additionalProperties": false,
-      "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-      "properties": {
-        "key": {
-          "description": "The label key that the selector applies to.",
-          "type": "string"
-        },
-        "operator": {
-          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-          "type": "string"
-        },
-        "values": {
-          "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-          "items": {
-            "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(1)@allOf(0)@additionalProperties"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        }
-      },
-      "required": [
-        "key",
-        "operator"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "values/affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchFields": {
-      "description": "A list of node selector requirements by node's fields.",
-      "items": {
-        "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items": {
-      "additionalProperties": false,
-      "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
-      "properties": {
-        "podAffinityTerm": {
-          "additionalProperties": false,
-          "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
-          "properties": {
-            "labelSelector": {
-              "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
-            },
-            "matchLabelKeys": {
-              "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.matchLabelKeys"
-            },
-            "mismatchLabelKeys": {
-              "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.mismatchLabelKeys"
-            },
-            "namespaceSelector": {
-              "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
-            },
-            "namespaces": {
-              "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.namespaces"
-            },
-            "topologyKey": {
-              "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.topologyKey"
-            }
-          },
-          "required": [
-            "topologyKey"
-          ],
-          "type": "object"
-        },
-        "weight": {
-          "description": "weight associated with matching the corresponding podAffinityTerm, in the range 1-100.",
-          "format": "int32",
-          "type": "integer"
-        }
-      },
-      "required": [
-        "weight",
-        "podAffinityTerm"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector": {
-      "additionalProperties": false,
-      "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-      "properties": {
-        "matchExpressions": {
-          "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-          "items": {
-            "additionalProperties": false,
-            "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-            "properties": {
-              "key": {
-                "description": "key is the label key that the selector applies to.",
-                "type": "string"
-              },
-              "operator": {
-                "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                "type": "string"
-              },
-              "values": {
-                "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                "items": {
-                  "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(1)@allOf(0)@additionalProperties"
-                },
-                "type": [
-                  "array",
-                  "null"
-                ]
-              }
-            },
-            "required": [
-              "key",
-              "operator"
-            ],
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
-        "matchLabels": {
-          "additionalProperties": {
-            "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(1)@allOf(0)@additionalProperties"
-          },
-          "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-          "type": [
-            "object",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ],
-      "x-kubernetes-map-type": "atomic"
-    },
-    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.matchLabelKeys": {
-      "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-      "items": {
-        "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(1)@allOf(0)@additionalProperties"
-      },
-      "type": [
-        "array",
-        "null"
-      ],
-      "x-kubernetes-list-type": "atomic"
-    },
-    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.mismatchLabelKeys": {
-      "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-      "items": {
-        "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(1)@allOf(0)@additionalProperties"
-      },
-      "type": [
-        "array",
-        "null"
-      ],
-      "x-kubernetes-list-type": "atomic"
-    },
-    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.namespaces": {
-      "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
-      "items": {
-        "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(1)@allOf(0)@additionalProperties"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.topologyKey": {
-      "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
+    "values/fragment@7": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
       "type": "string"
     },
-    "values/affinity@anyOf(1).podAffinity.requiredDuringSchedulingIgnoredDuringExecution@items": {
-      "additionalProperties": false,
-      "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
-      "properties": {
-        "labelSelector": {
-          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
+    "values/fragment@8": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "values/fragment@9": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/nameOverride": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1path~1fragment@3"
         },
-        "matchLabelKeys": {
-          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.matchLabelKeys"
+        {
+          "$ref": "#/$defs/constrains~1:t"
         },
-        "mismatchLabelKeys": {
-          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.mismatchLabelKeys"
+        {
+          "$ref": "#/$defs/values~1fragment@7"
         },
-        "namespaceSelector": {
-          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
+        {
+          "$ref": "#/$defs/constrains~1path~1fragment"
         },
-        "namespaces": {
-          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.namespaces"
+        {
+          "$ref": "#/$defs/values~1fragment@9"
         },
-        "topologyKey": {
-          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.topologyKey"
+        {
+          "$ref": "#/$defs/values~1fragment@8"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@3"
         }
-      },
-      "required": [
-        "topologyKey"
-      ],
-      "type": [
-        "object",
-        "null"
       ]
     },
-    "values/affinity@anyOf(2)": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
+    "values/nfs.path/fragment": {
+      "$ref": "#/$defs/values~1fragment@6"
     },
-    "values/nfs.path@anyOf(0)": {
-      "$ref": "#/$defs/values~1@allOf(20)@then@allOf(0).nfs.server"
-    },
-    "values/podAnnotations@anyOf(2)": {
+    "values/podAnnotations/fragment": {
       "allOf": [
         {
           "additionalProperties": {
-            "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(1)@allOf(0)@additionalProperties"
+            "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
           },
           "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
           "type": [
@@ -775,11 +769,11 @@
           ]
         },
         {
-          "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(1)@allOf(1)"
+          "$ref": "#/$defs/values~1fragment@2"
         }
       ]
     },
-    "values/podDisruptionBudget@allOf(0)@then.maxUnavailable@anyOf(0)@oneOf(1)@anyOf(3)": {
+    "values/podDisruptionBudget/fragment": {
       "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
@@ -891,43 +885,49 @@
         "null"
       ]
     },
-    "values/serviceAccount@allOf(0)@then@allOf(0).name@anyOf(0)": {
+    "values/securityContext.capabilities.add@items": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "values/serviceAccount/fragment": {
       "allOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(0)"
+          "$ref": "#/$defs/constrains~1path~1fragment@14"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(1)"
+          "$ref": "#/$defs/constrains~1path~1fragment@8"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(2)"
+          "$ref": "#/$defs/constrains~1path~1fragment@13"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+          "$ref": "#/$defs/constrains~1path~1fragment@6"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(4)"
+          "$ref": "#/$defs/constrains~1path~1fragment@9"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(5)"
+          "$ref": "#/$defs/constrains~1path~1fragment@11"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(6)"
+          "$ref": "#/$defs/constrains~1path~1fragment@12"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+          "$ref": "#/$defs/constrains~1path~1fragment@5"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+          "$ref": "#/$defs/constrains~1path~1fragment@7"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(9)"
+          "$ref": "#/$defs/constrains~1path~1fragment@10"
         }
       ],
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
-    "values/serviceAccount@allOf(0)@then@allOf(0).name@anyOf(6)": {
+    "values/serviceAccount/fragment@2": {
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "null"
     }
@@ -970,10 +970,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1nfs.mountOptions:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1storageClass.create:t"
           }
         ]
       },
@@ -985,10 +985,10 @@
             "properties": {
               "mountOptions": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties"
+                  "$ref": "#/$defs/values~1fragment"
                 },
                 "items": {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties"
+                  "$ref": "#/$defs/values~1fragment"
                 }
               }
             }
@@ -1067,7 +1067,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0)"
+        "$ref": "#/$defs/constrains~1nfs.mountOptions:t"
       },
       "then": {
         "allOf": [
@@ -1099,25 +1099,25 @@
                   "accessModes": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1path~1fragment@3"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(1)"
+                        "$ref": "#/$defs/values~1fragment@7"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)"
+                        "$ref": "#/$defs/constrains~1path~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(3)"
+                        "$ref": "#/$defs/values~1fragment@9"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(4)"
+                        "$ref": "#/$defs/values~1fragment@8"
                       },
                       {
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)"
+                        "$ref": "#/$defs/values~1fragment@3"
                       }
                     ],
                     "description": "Set access mode - ReadWriteOnce, ReadOnlyMany or ReadWriteMany"
@@ -1141,7 +1141,7 @@
             "if": {
               "properties": {
                 "nfs": {
-                  "$ref": "#/$defs/values~1@allOf(4)@then@allOf(3)@if.nfs"
+                  "$ref": "#/$defs/constrains~1server!=null"
                 }
               },
               "required": [
@@ -1222,7 +1222,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1storageClass.create:t"
           }
         ]
       },
@@ -1277,7 +1277,7 @@
       "if": {
         "properties": {
           "podSecurityPolicy": {
-            "$ref": "#/$defs/values~1@allOf(17)@if@anyOf(3).podDisruptionBudget"
+            "$ref": "#/$defs/constrains~1enabled:t"
           }
         },
         "required": [
@@ -1291,10 +1291,10 @@
           "labels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(0)"
+                "$ref": "#/$defs/constrains~1:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(1)@allOf(1)"
+                "$ref": "#/$defs/values~1fragment@2"
               }
             ],
             "description": "Additional labels for any resource created"
@@ -1306,10 +1306,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1nfs.mountOptions:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(20)@if"
+            "$ref": "#/$defs/constrains~1buildMode:t+nfs.mountOptions:t"
           }
         ]
       },
@@ -1351,7 +1351,7 @@
           "additionalProperties": {},
           "properties": {
             "repository": {
-              "$ref": "#/$defs/helm-double-quoted-safe@anyOf(2)@additionalProperties"
+              "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
             }
           }
         }
@@ -1497,7 +1497,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1storageClass.create:t"
           }
         ]
       },
@@ -1552,12 +1552,12 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1nfs.mountOptions:t"
           },
           {
             "properties": {
               "serviceAccount": {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1).storageClass"
+                "$ref": "#/$defs/constrains~1create:t"
               }
             },
             "required": [
@@ -1566,12 +1566,12 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(17)@if@anyOf(2)"
+            "$ref": "#/$defs/constrains~1rbac.create:t"
           },
           {
             "properties": {
               "podDisruptionBudget": {
-                "$ref": "#/$defs/values~1@allOf(17)@if@anyOf(3).podDisruptionBudget"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             },
             "required": [
@@ -1580,7 +1580,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1storageClass.create:t"
           }
         ]
       },
@@ -1592,10 +1592,10 @@
               "labels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(0)"
+                    "$ref": "#/$defs/constrains~1:t"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(1)"
+                    "$ref": "#/$defs/values~1fragment@4"
                   }
                 ],
                 "description": "Additional labels for any resource created"
@@ -1606,7 +1606,7 @@
             "additionalProperties": {},
             "properties": {
               "nameOverride": {
-                "$ref": "#/$defs/values~1@allOf(17)@then@allOf(1).nameOverride"
+                "$ref": "#/$defs/values~1nameOverride"
               }
             }
           }
@@ -1620,7 +1620,7 @@
           "additionalProperties": {},
           "properties": {
             "tag": {
-              "$ref": "#/$defs/helm-double-quoted-safe@anyOf(2)@additionalProperties"
+              "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
             }
           }
         }
@@ -1628,7 +1628,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+        "$ref": "#/$defs/constrains~1storageClass.create:t"
       },
       "then": {
         "allOf": [
@@ -1646,7 +1646,7 @@
                         "type": "object"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1:t"
                       },
                       {
                         "type": "object"
@@ -1654,7 +1654,7 @@
                       {
                         "description": "mountOptions controls the mountOptions for dynamically provisioned PersistentVolumes of this storage class. e.g. [\"ro\", \"soft\"]. Not validated - mount of the PVs will simply fail if one is invalid.",
                         "items": {
-                          "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(1)@allOf(0)@additionalProperties"
+                          "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
                         },
                         "type": "array"
                       },
@@ -1692,7 +1692,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(20)@if"
+        "$ref": "#/$defs/constrains~1buildMode:t+nfs.mountOptions:t"
       },
       "then": {
         "allOf": [
@@ -1703,7 +1703,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "server": {
-                    "$ref": "#/$defs/values~1@allOf(20)@then@allOf(0).nfs.server"
+                    "$ref": "#/$defs/values~1fragment@6"
                   }
                 }
               }
@@ -1713,7 +1713,7 @@
             "additionalProperties": {},
             "properties": {
               "nfs": {
-                "$ref": "#/$defs/values~1@allOf(20)@then@allOf(1).nfs"
+                "$ref": "#/$defs/constrains~1path"
               }
             }
           }
@@ -1763,7 +1763,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(17)@if@anyOf(2)"
+        "$ref": "#/$defs/constrains~1rbac.create:t"
       },
       "then": {
         "additionalProperties": {},
@@ -1774,49 +1774,49 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(0)"
+                    "$ref": "#/$defs/constrains~1path~1fragment@3"
                   },
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(0)"
+                        "$ref": "#/$defs/constrains~1path~1fragment@14"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(1)"
+                        "$ref": "#/$defs/constrains~1path~1fragment@8"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(2)"
+                        "$ref": "#/$defs/constrains~1path~1fragment@13"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+                        "$ref": "#/$defs/constrains~1path~1fragment@6"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(4)"
+                        "$ref": "#/$defs/constrains~1path~1fragment@9"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(5)"
+                        "$ref": "#/$defs/constrains~1path~1fragment@11"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(6)"
+                        "$ref": "#/$defs/constrains~1path~1fragment@12"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+                        "$ref": "#/$defs/constrains~1path~1fragment@5"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+                        "$ref": "#/$defs/constrains~1path~1fragment@7"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(9)"
+                        "$ref": "#/$defs/constrains~1path~1fragment@10"
                       }
                     ],
                     "description": "Name of the object being referenced.",
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(0)"
+                    "$ref": "#/$defs/constrains~1:t"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)"
+                    "$ref": "#/$defs/constrains~1path~1fragment"
                   }
                 ],
                 "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
@@ -1831,7 +1831,7 @@
     "affinity": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "additionalProperties": false,
@@ -1852,10 +1852,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions"
+                            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values@2"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchFields"
+                            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values"
                           }
                         },
                         "type": "object",
@@ -1892,10 +1892,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions"
+                            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values@2"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchFields"
+                            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values"
                           }
                         },
                         "type": [
@@ -1929,7 +1929,7 @@
                 "preferredDuringSchedulingIgnoredDuringExecution": {
                   "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
                   "items": {
-                    "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items"
+                    "$ref": "#/$defs/constrains~1podAffinityTerm.labelSelector.matchExpressions@items.key+9more"
                   },
                   "type": [
                     "array",
@@ -1939,7 +1939,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.requiredDuringSchedulingIgnoredDuringExecution@items"
+                    "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more"
                   },
                   "type": [
                     "array",
@@ -1959,7 +1959,7 @@
                 "preferredDuringSchedulingIgnoredDuringExecution": {
                   "description": "The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
                   "items": {
-                    "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items"
+                    "$ref": "#/$defs/constrains~1podAffinityTerm.labelSelector.matchExpressions@items.key+9more"
                   },
                   "type": [
                     "array",
@@ -1969,7 +1969,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.requiredDuringSchedulingIgnoredDuringExecution@items"
+                    "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more"
                   },
                   "type": [
                     "array",
@@ -1986,7 +1986,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/values~1affinity@anyOf(2)"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         },
         {
           "type": "null"
@@ -2001,55 +2001,55 @@
         "pullPolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(0)"
+              "$ref": "#/$defs/constrains~1path~1fragment@3"
             },
             {
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(1)"
+              "$ref": "#/$defs/values~1fragment@7"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)"
+              "$ref": "#/$defs/constrains~1path~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(3)"
+              "$ref": "#/$defs/values~1fragment@9"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(4)"
+              "$ref": "#/$defs/values~1fragment@8"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@14"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@13"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@6"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(4)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@9"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(5)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@11"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(6)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@12"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@5"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(9)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@10"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -2065,7 +2065,7 @@
     "imagePullSecrets": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "type": "null"
@@ -2099,13 +2099,13 @@
     "labels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(1)"
+          "$ref": "#/$defs/values~1fragment@4"
         },
         {
-          "$ref": "#/$defs/values~1affinity@anyOf(2)"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         }
       ],
       "description": "Additional labels for any resource created"
@@ -2133,20 +2133,20 @@
       "type": "object"
     },
     "nameOverride": {
-      "$ref": "#/$defs/values~1@allOf(17)@then@allOf(1).nameOverride"
+      "$ref": "#/$defs/values~1nameOverride"
     },
     "nfs": {
       "additionalProperties": {},
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).nfs"
+            "$ref": "#/$defs/constrains~1mountOptions:t"
           },
           "then": {
             "allOf": [
               {
                 "if": {
-                  "$ref": "#/$defs/values~1@allOf(4)@then@allOf(3)@if.nfs"
+                  "$ref": "#/$defs/constrains~1server!=null"
                 },
                 "then": {
                   "additionalProperties": {},
@@ -2154,42 +2154,42 @@
                     "server": {
                       "anyOf": [
                         {
-                          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(0)"
+                          "$ref": "#/$defs/constrains~1path~1fragment@3"
                         },
                         {
-                          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)"
+                          "$ref": "#/$defs/constrains~1path~1fragment"
                         },
                         {
                           "allOf": [
                             {
-                              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(0)"
+                              "$ref": "#/$defs/constrains~1path~1fragment@14"
                             },
                             {
-                              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(1)"
+                              "$ref": "#/$defs/constrains~1path~1fragment@8"
                             },
                             {
-                              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(2)"
+                              "$ref": "#/$defs/constrains~1path~1fragment@13"
                             },
                             {
-                              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+                              "$ref": "#/$defs/constrains~1path~1fragment@6"
                             },
                             {
-                              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(4)"
+                              "$ref": "#/$defs/constrains~1path~1fragment@9"
                             },
                             {
-                              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(5)"
+                              "$ref": "#/$defs/constrains~1path~1fragment@11"
                             },
                             {
-                              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(6)"
+                              "$ref": "#/$defs/constrains~1path~1fragment@12"
                             },
                             {
-                              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+                              "$ref": "#/$defs/constrains~1path~1fragment@5"
                             },
                             {
-                              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+                              "$ref": "#/$defs/constrains~1path~1fragment@7"
                             },
                             {
-                              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(9)"
+                              "$ref": "#/$defs/constrains~1path~1fragment@10"
                             }
                           ],
                           "description": "server is the hostname or IP address of the NFS server. More info: https://kubernetes.io/docs/concepts/storage/volumes#nfs",
@@ -2206,51 +2206,51 @@
                   "reclaimPolicy": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1path~1fragment@3"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(1)"
+                        "$ref": "#/$defs/values~1fragment@7"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)"
+                        "$ref": "#/$defs/constrains~1path~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(3)"
+                        "$ref": "#/$defs/values~1fragment@9"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(4)"
+                        "$ref": "#/$defs/values~1fragment@8"
                       },
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(0)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@14"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(1)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@8"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(2)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@13"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@6"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(4)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@9"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(5)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@11"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(6)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@12"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@5"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@7"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(9)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@10"
                           }
                         ],
                         "description": "persistentVolumeReclaimPolicy defines what happens to a persistent volume when released from its claim. Valid options are Retain (default for manually created PersistentVolumes), Delete (default for dynamically provisioned PersistentVolumes), and Recycle (deprecated). Recycle must be supported by the volume plugin underlying this PersistentVolume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#reclaiming",
@@ -2266,7 +2266,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/values~1@allOf(20)@then@allOf(1).nfs"
+                "$ref": "#/$defs/constrains~1path"
               }
             ]
           }
@@ -2279,7 +2279,7 @@
               "const": null
             },
             {
-              "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(0)"
+              "$ref": "#/$defs/constrains~1:t"
             },
             {
               "type": "object"
@@ -2297,7 +2297,7 @@
         "path": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1nfs.path@anyOf(0)"
+              "$ref": "#/$defs/values~1nfs.path~1fragment"
             },
             {
               "const": "/nfs-storage"
@@ -2313,53 +2313,53 @@
               "const": null
             },
             {
-              "$ref": "#/$defs/values~1nfs.path@anyOf(0)"
+              "$ref": "#/$defs/values~1nfs.path~1fragment"
             }
           ]
         },
         "volumeName": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(0)"
+              "$ref": "#/$defs/constrains~1path~1fragment@3"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@14"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@13"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@6"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(4)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@9"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(5)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@11"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(6)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@12"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@5"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(9)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@10"
                 }
               ],
               "description": "This must match the Name of a Volume.",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)"
+              "$ref": "#/$defs/constrains~1path~1fragment"
             }
           ]
         }
@@ -2372,18 +2372,18 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(1)@allOf(0)@additionalProperties"
+            "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
           },
           "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
           "type": "object",
           "x-kubernetes-map-type": "atomic"
         },
         {
-          "$ref": "#/$defs/values~1affinity@anyOf(2)"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         },
         {
           "type": "null"
@@ -2393,13 +2393,13 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1affinity@anyOf(2)"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         },
         {
-          "$ref": "#/$defs/values~1podAnnotations@anyOf(2)"
+          "$ref": "#/$defs/values~1podAnnotations~1fragment"
         }
       ],
       "description": "Deployment pod annotations"
@@ -2409,7 +2409,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/values~1@allOf(17)@if@anyOf(3).podDisruptionBudget"
+            "$ref": "#/$defs/constrains~1enabled:t"
           },
           "then": {
             "additionalProperties": {},
@@ -2419,24 +2419,24 @@
                   {
                     "oneOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref"
+                        "$ref": "#/$defs/values~1fragment@5"
                       },
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(1)"
+                            "$ref": "#/$defs/values~1fragment@7"
                           },
                           {
                             "type": "integer"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(3)"
+                            "$ref": "#/$defs/values~1fragment@9"
                           },
                           {
-                            "$ref": "#/$defs/values~1podDisruptionBudget@allOf(0)@then.maxUnavailable@anyOf(0)@oneOf(1)@anyOf(3)"
+                            "$ref": "#/$defs/values~1podDisruptionBudget~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(4)"
+                            "$ref": "#/$defs/values~1fragment@8"
                           },
                           {
                             "type": "null"
@@ -2446,7 +2446,7 @@
                     ]
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(0)"
+                    "$ref": "#/$defs/constrains~1:t"
                   }
                 ]
               }
@@ -2592,26 +2592,26 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(1)"
+          "$ref": "#/$defs/values~1fragment@7"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(3)"
+          "$ref": "#/$defs/values~1fragment@9"
         },
         {
-          "$ref": "#/$defs/values~1podDisruptionBudget@allOf(0)@then.maxUnavailable@anyOf(0)@oneOf(1)@anyOf(3)"
+          "$ref": "#/$defs/values~1podDisruptionBudget~1fragment"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(4)"
+          "$ref": "#/$defs/values~1fragment@8"
         }
       ]
     },
     "resources": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1affinity@anyOf(2)"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         },
         {
           "additionalProperties": false,
@@ -2649,7 +2649,7 @@
               "additionalProperties": {
                 "oneOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(1)@allOf(0)@additionalProperties"
+                    "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
                   },
                   {
                     "type": [
@@ -2669,7 +2669,7 @@
               "additionalProperties": {
                 "oneOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(1)@allOf(0)@additionalProperties"
+                    "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
                   },
                   {
                     "type": [
@@ -2712,7 +2712,7 @@
             "add": {
               "description": "Added capabilities",
               "items": {
-                "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(1)@allOf(0)@additionalProperties"
+                "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
               },
               "type": [
                 "array",
@@ -2722,7 +2722,7 @@
             "drop": {
               "description": "Removed capabilities",
               "items": {
-                "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(1)@allOf(0)@additionalProperties"
+                "$ref": "#/$defs/values~1securityContext.capabilities.add@items"
               },
               "type": [
                 "array",
@@ -2799,7 +2799,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1).storageClass"
+            "$ref": "#/$defs/constrains~1create:t"
           },
           "then": {
             "allOf": [
@@ -2809,28 +2809,28 @@
                   "name": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1serviceAccount@allOf(0)@then@allOf(0).name@anyOf(0)"
+                        "$ref": "#/$defs/values~1serviceAccount~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1path~1fragment@3"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1:t"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(1)"
+                        "$ref": "#/$defs/values~1fragment@7"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)"
+                        "$ref": "#/$defs/constrains~1path~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(3)"
+                        "$ref": "#/$defs/values~1fragment@9"
                       },
                       {
-                        "$ref": "#/$defs/values~1serviceAccount@allOf(0)@then@allOf(0).name@anyOf(6)"
+                        "$ref": "#/$defs/values~1serviceAccount~1fragment@2"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(4)"
+                        "$ref": "#/$defs/values~1fragment@8"
                       }
                     ],
                     "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
@@ -2843,10 +2843,10 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1:t"
                       },
                       {
-                        "$ref": "#/$defs/values~1podAnnotations@anyOf(2)"
+                        "$ref": "#/$defs/values~1podAnnotations~1fragment"
                       }
                     ],
                     "description": "Annotations to add to the service account"
@@ -2867,26 +2867,26 @@
         "name": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(0)"
+              "$ref": "#/$defs/constrains~1path~1fragment@3"
             },
             {
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(0)"
+              "$ref": "#/$defs/constrains~1:t"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(1)"
+              "$ref": "#/$defs/values~1fragment@7"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)"
+              "$ref": "#/$defs/constrains~1path~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(3)"
+              "$ref": "#/$defs/values~1fragment@9"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(4)"
+              "$ref": "#/$defs/values~1fragment@8"
             },
             {
               "type": "null"
@@ -2897,34 +2897,34 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@14"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@13"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@6"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(4)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@9"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(5)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@11"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(6)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@12"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@5"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(9)"
+                  "$ref": "#/$defs/constrains~1path~1fragment@10"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -2941,7 +2941,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1).storageClass"
+            "$ref": "#/$defs/constrains~1create:t"
           },
           "then": {
             "allOf": [
@@ -2951,10 +2951,10 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1:t"
                       },
                       {
-                        "$ref": "#/$defs/values~1podAnnotations@anyOf(2)"
+                        "$ref": "#/$defs/values~1podAnnotations~1fragment"
                       }
                     ],
                     "description": "Storage class annotations"
@@ -2969,25 +2969,25 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1serviceAccount@allOf(0)@then@allOf(0).name@anyOf(0)"
+                            "$ref": "#/$defs/values~1serviceAccount~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(0)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@3"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(1)"
+                            "$ref": "#/$defs/values~1fragment@7"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)"
+                            "$ref": "#/$defs/constrains~1path~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(3)"
+                            "$ref": "#/$defs/values~1fragment@9"
                           },
                           {
-                            "$ref": "#/$defs/values~1serviceAccount@allOf(0)@then@allOf(0).name@anyOf(6)"
+                            "$ref": "#/$defs/values~1serviceAccount~1fragment@2"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(4)"
+                            "$ref": "#/$defs/values~1fragment@8"
                           }
                         ]
                       },
@@ -3005,55 +3005,55 @@
                   "reclaimPolicy": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1path~1fragment@3"
                       },
                       {
                         "description": "reclaimPolicy controls the reclaimPolicy for dynamically provisioned PersistentVolumes of this storage class. Defaults to Delete.",
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(1)"
+                        "$ref": "#/$defs/values~1fragment@7"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)"
+                        "$ref": "#/$defs/constrains~1path~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(3)"
+                        "$ref": "#/$defs/values~1fragment@9"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(4)"
+                        "$ref": "#/$defs/values~1fragment@8"
                       },
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(0)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@14"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(1)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@8"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(2)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@13"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@6"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(4)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@9"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(5)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@11"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(6)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@12"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@5"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@7"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(9)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@10"
                           }
                         ],
                         "description": "reclaimPolicy controls the reclaimPolicy for dynamically provisioned PersistentVolumes of this storage class. Defaults to Delete.",
@@ -3082,13 +3082,13 @@
                         "type": "string"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(1)"
+                        "$ref": "#/$defs/values~1fragment@7"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(3)"
+                        "$ref": "#/$defs/values~1fragment@9"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(4)"
+                        "$ref": "#/$defs/values~1fragment@8"
                       }
                     ],
                     "description": "Allow volume to be expanded dynamically"
@@ -3101,59 +3101,59 @@
                   "volumeBindingMode": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1path~1fragment@3"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(1)"
+                        "$ref": "#/$defs/values~1fragment@7"
                       },
                       {
                         "description": "volumeBindingMode indicates how PersistentVolumeClaims should be provisioned and bound.  When unset, VolumeBindingImmediate is used. This field is only honored by servers that enable the VolumeScheduling feature.",
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)"
+                        "$ref": "#/$defs/constrains~1path~1fragment"
                       },
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(0)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@14"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(1)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@8"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(2)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@13"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@6"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(4)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@9"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(5)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@11"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(6)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@12"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@5"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@7"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(9)"
+                            "$ref": "#/$defs/constrains~1path~1fragment@10"
                           }
                         ],
                         "description": "volumeBindingMode indicates how PersistentVolumeClaims should be provisioned and bound.  When unset, VolumeBindingImmediate is used. This field is only honored by servers that enable the VolumeScheduling feature.",
                         "type": "string"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(3)"
+                        "$ref": "#/$defs/values~1fragment@9"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(4)"
+                        "$ref": "#/$defs/values~1fragment@8"
                       }
                     ],
                     "description": "Set volume bindinng mode - Immediate or WaitForFirstConsumer"
@@ -3204,59 +3204,59 @@
     "strategyType": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(0)"
+          "$ref": "#/$defs/constrains~1path~1fragment@3"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(1)"
+          "$ref": "#/$defs/values~1fragment@7"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(0)"
+              "$ref": "#/$defs/constrains~1path~1fragment@14"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(1)"
+              "$ref": "#/$defs/constrains~1path~1fragment@8"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(2)"
+              "$ref": "#/$defs/constrains~1path~1fragment@13"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+              "$ref": "#/$defs/constrains~1path~1fragment@6"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(4)"
+              "$ref": "#/$defs/constrains~1path~1fragment@9"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(5)"
+              "$ref": "#/$defs/constrains~1path~1fragment@11"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(6)"
+              "$ref": "#/$defs/constrains~1path~1fragment@12"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+              "$ref": "#/$defs/constrains~1path~1fragment@5"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+              "$ref": "#/$defs/constrains~1path~1fragment@7"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(6)@allOf(9)"
+              "$ref": "#/$defs/constrains~1path~1fragment@10"
             }
           ],
           "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(2)"
+          "$ref": "#/$defs/constrains~1path~1fragment"
         },
         {
           "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",
           "type": "null"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(3)"
+          "$ref": "#/$defs/values~1fragment@9"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(1)@then.nfs.mountOptions@additionalProperties@ref@anyOf(4)"
+          "$ref": "#/$defs/values~1fragment@8"
         }
       ]
     },
@@ -3313,7 +3313,7 @@
           "type": "array"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(17)@then@allOf(0).labels@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "type": "null"

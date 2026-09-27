@@ -1,5 +1,989 @@
 {
   "$defs": {
+    "constrains/:t": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@16"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@18"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@17"
+        }
+      ]
+    },
+    "constrains/:t/fragment": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/$defs/constrains~1:t~1fragment@3"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/constrains~1:t~1fragment@3"
+      },
+      "type": "object"
+    },
+    "constrains/:t/fragment@10": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "constrains/:t/fragment@11": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "constrains/:t/fragment@12": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "constrains/:t/fragment@13": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "constrains/:t/fragment@14": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "constrains/:t/fragment@15": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "constrains/:t/fragment@16": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "constrains/:t/fragment@17": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "constrains/:t/fragment@18": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "constrains/:t/fragment@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@15"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@14"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@12"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@13"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@11"
+        }
+      ],
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": "string"
+    },
+    "constrains/:t/fragment@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@8"
+        }
+      ],
+      "type": "string"
+    },
+    "constrains/:t/fragment@4": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "constrains/:t/fragment@5": {
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": "null"
+    },
+    "constrains/:t/fragment@6": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
+    },
+    "constrains/:t/fragment@7": {
+      "not": {
+        "pattern": "[ \\t]#"
+      }
+    },
+    "constrains/:t/fragment@8": {
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "constrains/:t/fragment@9": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "constrains/:t@2": {
+      "not": {
+        "$ref": "#/$defs/t"
+      }
+    },
+    "constrains/@items.key+@items.operator+@items.values": {
+      "description": "A list of node selector requirements by node's fields.",
+      "items": {
+        "$ref": "#/$defs/constrains~1key+operator+values"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "constrains/@items.key+@items.operator+@items.values@2": {
+      "description": "A list of node selector requirements by node's labels.",
+      "items": {
+        "$ref": "#/$defs/constrains~1key+operator+values"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "constrains/additionalMetricsRelabels+additionalRelabeling+interval+scrapeTimeout": {
+      "additionalProperties": {},
+      "properties": {
+        "additionalMetricsRelabels": {
+          "$ref": "#/$defs/values~1serviceMonitor.additionalRelabeling"
+        },
+        "additionalRelabeling": {
+          "$ref": "#/$defs/values~1serviceMonitor.additionalRelabeling"
+        },
+        "interval": {},
+        "scrapeTimeout": {}
+      }
+    },
+    "constrains/auth.enabled:t": {
+      "properties": {
+        "auth": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "auth"
+      ],
+      "type": "object"
+    },
+    "constrains/auth.redisPasswordFile.secret.key:t": {
+      "properties": {
+        "auth": {
+          "$ref": "#/$defs/constrains~1redisPasswordFile.secret.key:t"
+        }
+      },
+      "required": [
+        "auth"
+      ],
+      "type": "object"
+    },
+    "constrains/auth.redisPasswordFile.secret.name:t": {
+      "properties": {
+        "auth": {
+          "$ref": "#/$defs/constrains~1redisPasswordFile.secret.name:t"
+        }
+      },
+      "required": [
+        "auth"
+      ],
+      "type": "object"
+    },
+    "constrains/caCertFile.secret.key:t": {
+      "properties": {
+        "caCertFile": {
+          "$ref": "#/$defs/constrains~1secret.key:t"
+        }
+      },
+      "required": [
+        "caCertFile"
+      ],
+      "type": "object"
+    },
+    "constrains/caCertFile.secret.name:t": {
+      "properties": {
+        "caCertFile": {
+          "$ref": "#/$defs/constrains~1secret.name:t"
+        }
+      },
+      "required": [
+        "caCertFile"
+      ],
+      "type": "object"
+    },
+    "constrains/clientCertFile.secret.key:t": {
+      "properties": {
+        "clientCertFile": {
+          "$ref": "#/$defs/constrains~1secret.key:t"
+        }
+      },
+      "required": [
+        "clientCertFile"
+      ],
+      "type": "object"
+    },
+    "constrains/clientCertFile.secret.name:t": {
+      "properties": {
+        "clientCertFile": {
+          "$ref": "#/$defs/constrains~1secret.name:t"
+        }
+      },
+      "required": [
+        "clientCertFile"
+      ],
+      "type": "object"
+    },
+    "constrains/clientKeyFile.secret.key:t": {
+      "properties": {
+        "clientKeyFile": {
+          "$ref": "#/$defs/constrains~1secret.key:t"
+        }
+      },
+      "required": [
+        "clientKeyFile"
+      ],
+      "type": "object"
+    },
+    "constrains/clientKeyFile.secret.name:t": {
+      "properties": {
+        "clientKeyFile": {
+          "$ref": "#/$defs/constrains~1secret.name:t"
+        }
+      },
+      "required": [
+        "clientKeyFile"
+      ],
+      "type": "object"
+    },
+    "constrains/create:t": {
+      "properties": {
+        "create": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/gmsaCredentialSpec+gmsaCredentialSpecName+hostProcess+runAsUserName": {
+      "additionalProperties": false,
+      "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
+      "properties": {
+        "gmsaCredentialSpec": {
+          "description": "GMSACredentialSpec is where the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa) inlines the contents of the GMSA credential spec named by the GMSACredentialSpecName field.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "gmsaCredentialSpecName": {
+          "description": "GMSACredentialSpecName is the name of the GMSA credential spec to use.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "hostProcess": {
+          "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "runAsUserName": {
+          "description": "The UserName in Windows to run the entrypoint of the container process. Defaults to the user specified in image metadata if unspecified. May also be set in PodSecurityContext. If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "constrains/isSecret:t": {
+      "properties": {
+        "isSecret": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "isSecret"
+      ],
+      "type": "object"
+    },
+    "constrains/key+operator+values": {
+      "additionalProperties": false,
+      "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+      "properties": {
+        "key": {
+          "description": "The label key that the selector applies to.",
+          "type": "string"
+        },
+        "operator": {
+          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
+          "type": "string"
+        },
+        "values": {
+          "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
+          "items": {
+            "$ref": "#/$defs/constrains~1key+operator+values~1fragment"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "key",
+        "operator"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "constrains/key+operator+values/fragment": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "constrains/key:t": {
+      "additionalProperties": {},
+      "properties": {
+        "key": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@4"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1key:t~1fragment"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment"
+            }
+          ]
+        }
+      }
+    },
+    "constrains/key:t/fragment": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@15"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@14"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@12"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@13"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@11"
+        }
+      ],
+      "description": "key is the key to project.",
+      "type": "string"
+    },
+    "constrains/labelSelector.matchExpressions@items.key+8more": {
+      "additionalProperties": false,
+      "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+      "properties": {
+        "labelSelector": {
+          "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
+        },
+        "matchLabelKeys": {
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment"
+        },
+        "mismatchLabelKeys": {
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@2"
+        },
+        "namespaceSelector": {
+          "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
+        },
+        "namespaces": {
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@4"
+        },
+        "topologyKey": {
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@3"
+        }
+      },
+      "required": [
+        "topologyKey"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "constrains/labelSelector.matchExpressions@items.key+8more/fragment": {
+      "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+      "items": {
+        "$ref": "#/$defs/constrains~1key+operator+values~1fragment"
+      },
+      "type": [
+        "array",
+        "null"
+      ],
+      "x-kubernetes-list-type": "atomic"
+    },
+    "constrains/labelSelector.matchExpressions@items.key+8more/fragment@2": {
+      "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+      "items": {
+        "$ref": "#/$defs/constrains~1key+operator+values~1fragment"
+      },
+      "type": [
+        "array",
+        "null"
+      ],
+      "x-kubernetes-list-type": "atomic"
+    },
+    "constrains/labelSelector.matchExpressions@items.key+8more/fragment@3": {
+      "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
+      "type": "string"
+    },
+    "constrains/labelSelector.matchExpressions@items.key+8more/fragment@4": {
+      "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
+      "items": {
+        "$ref": "#/$defs/constrains~1key+operator+values~1fragment"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "constrains/level+role+type+user": {
+      "additionalProperties": false,
+      "description": "SELinuxOptions are the labels to be applied to the container",
+      "properties": {
+        "level": {
+          "description": "Level is SELinux level label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "role": {
+          "description": "Role is a SELinux role label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "description": "Type is a SELinux type label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "user": {
+          "description": "User is a SELinux user label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "constrains/localhostProfile+type": {
+      "additionalProperties": false,
+      "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
+      "properties": {
+        "localhostProfile": {
+          "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-unions": [
+        {
+          "discriminator": "type",
+          "fields-to-discriminateBy": {
+            "localhostProfile": "LocalhostProfile"
+          }
+        }
+      ]
+    },
+    "constrains/matchExpressions@items.key+matchExpressions@items.operator+2more": {
+      "additionalProperties": false,
+      "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+      "properties": {
+        "matchExpressions": {
+          "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+          "items": {
+            "additionalProperties": false,
+            "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+            "properties": {
+              "key": {
+                "description": "key is the label key that the selector applies to.",
+                "type": "string"
+              },
+              "operator": {
+                "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                "type": "string"
+              },
+              "values": {
+                "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                "items": {
+                  "$ref": "#/$defs/constrains~1key+operator+values~1fragment"
+                },
+                "type": [
+                  "array",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "key",
+              "operator"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "matchLabels": {
+          "additionalProperties": {
+            "$ref": "#/$defs/constrains~1key+operator+values~1fragment"
+          },
+          "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-map-type": "atomic"
+    },
+    "constrains/name:t": {
+      "additionalProperties": {},
+      "properties": {
+        "name": {
+          "$ref": "#/$defs/constrains~1:t"
+        }
+      }
+    },
+    "constrains/networkPolicy.enabled:t": {
+      "properties": {
+        "networkPolicy": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "networkPolicy"
+      ],
+      "type": "object"
+    },
+    "constrains/podAffinityTerm.labelSelector.matchExpressions@items.key+9more": {
+      "additionalProperties": false,
+      "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
+      "properties": {
+        "podAffinityTerm": {
+          "additionalProperties": false,
+          "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+          "properties": {
+            "labelSelector": {
+              "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
+            },
+            "matchLabelKeys": {
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment"
+            },
+            "mismatchLabelKeys": {
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@2"
+            },
+            "namespaceSelector": {
+              "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
+            },
+            "namespaces": {
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@4"
+            },
+            "topologyKey": {
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@3"
+            }
+          },
+          "required": [
+            "topologyKey"
+          ],
+          "type": "object"
+        },
+        "weight": {
+          "description": "weight associated with matching the corresponding podAffinityTerm, in the range 1-100.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "weight",
+        "podAffinityTerm"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "constrains/prometheusRule.enabled:t": {
+      "properties": {
+        "prometheusRule": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "prometheusRule"
+      ],
+      "type": "object"
+    },
+    "constrains/rbac.create:t": {
+      "properties": {
+        "rbac": {
+          "$ref": "#/$defs/constrains~1create:t"
+        }
+      },
+      "required": [
+        "rbac"
+      ],
+      "type": "object"
+    },
+    "constrains/redisAddressConfig.enabled:t": {
+      "properties": {
+        "redisAddressConfig": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "redisAddressConfig"
+      ],
+      "type": "object"
+    },
+    "constrains/redisPasswordFile.secret.key:t": {
+      "properties": {
+        "redisPasswordFile": {
+          "$ref": "#/$defs/constrains~1secret.key:t"
+        }
+      },
+      "required": [
+        "redisPasswordFile"
+      ],
+      "type": "object"
+    },
+    "constrains/redisPasswordFile.secret.key:t+redisPasswordFile.secret.name:t": {
+      "not": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1redisPasswordFile.secret.name:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1redisPasswordFile.secret.key:t"
+          }
+        ]
+      }
+    },
+    "constrains/redisPasswordFile.secret.name:t": {
+      "properties": {
+        "redisPasswordFile": {
+          "$ref": "#/$defs/constrains~1secret.name:t"
+        }
+      },
+      "required": [
+        "redisPasswordFile"
+      ],
+      "type": "object"
+    },
+    "constrains/redisTlsConfig.enabled:t": {
+      "properties": {
+        "redisTlsConfig": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "redisTlsConfig"
+      ],
+      "type": "object"
+    },
+    "constrains/secret": {
+      "properties": {
+        "secret": {}
+      },
+      "required": [
+        "secret"
+      ],
+      "type": "object"
+    },
+    "constrains/secret.key:t": {
+      "properties": {
+        "secret": {
+          "properties": {
+            "key": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "key"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "secret"
+      ],
+      "type": "object"
+    },
+    "constrains/secret.name:t": {
+      "properties": {
+        "secret": {
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "secret"
+      ],
+      "type": "object"
+    },
+    "constrains/secret=null": {
+      "properties": {
+        "secret": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "secret"
+      ],
+      "type": "object"
+    },
+    "constrains/serverCertFile.secret.key:t": {
+      "properties": {
+        "serverCertFile": {
+          "$ref": "#/$defs/constrains~1secret.key:t"
+        }
+      },
+      "required": [
+        "serverCertFile"
+      ],
+      "type": "object"
+    },
+    "constrains/serverCertFile.secret.name:t": {
+      "properties": {
+        "serverCertFile": {
+          "$ref": "#/$defs/constrains~1secret.name:t"
+        }
+      },
+      "required": [
+        "serverCertFile"
+      ],
+      "type": "object"
+    },
+    "constrains/serverKeyFile.secret.key:t": {
+      "properties": {
+        "serverKeyFile": {
+          "$ref": "#/$defs/constrains~1secret.key:t"
+        }
+      },
+      "required": [
+        "serverKeyFile"
+      ],
+      "type": "object"
+    },
+    "constrains/serverKeyFile.secret.name:t": {
+      "properties": {
+        "serverKeyFile": {
+          "$ref": "#/$defs/constrains~1secret.name:t"
+        }
+      },
+      "required": [
+        "serverKeyFile"
+      ],
+      "type": "object"
+    },
+    "constrains/service+service=null": {
+      "anyOf": [
+        {
+          "properties": {
+            "service": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "service": {}
+            },
+            "required": [
+              "service"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/type=null": {
+      "properties": {
+        "type": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
     "helm-double-quoted-safe": {
       "anyOf": [
         {
@@ -56,830 +1040,15 @@
         }
       ]
     },
-    "values/@allOf(1)@if@allOf(0).auth": {
-      "properties": {
-        "secret": {
-          "properties": {
-            "name": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "name"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "secret"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(1)@if@allOf(1)@not@allOf(0)": {
-      "properties": {
-        "auth": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)@not@allOf(0).auth"
-        }
-      },
-      "required": [
-        "auth"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(1)@if@allOf(1)@not@allOf(0).auth": {
-      "properties": {
-        "redisPasswordFile": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).auth"
-        }
-      },
-      "required": [
-        "redisPasswordFile"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(1)@if@allOf(1)@not@allOf(1)": {
-      "properties": {
-        "auth": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)@not@allOf(1).auth"
-        }
-      },
-      "required": [
-        "auth"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(1)@if@allOf(1)@not@allOf(1).auth": {
-      "properties": {
-        "redisPasswordFile": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)@not@allOf(1).auth.redisPasswordFile"
-        }
-      },
-      "required": [
-        "redisPasswordFile"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(1)@if@allOf(1)@not@allOf(1).auth.redisPasswordFile": {
-      "properties": {
-        "secret": {
-          "properties": {
-            "key": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "key"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "secret"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(1)@if@allOf(2)": {
-      "properties": {
-        "auth": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
-        }
-      },
-      "required": [
-        "auth"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(1)@if@allOf(2).auth": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(13)@if": {
-      "properties": {
-        "prometheusRule": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
-        }
-      },
-      "required": [
-        "prometheusRule"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(13)@then@allOf(0).customLabels@anyOf(0)": {
-      "not": {
-        "$ref": "#/$defs/t"
-      }
-    },
-    "values/@allOf(13)@then@allOf(0).customLabels@anyOf(1)": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "values/@allOf(13)@then@allOf(1).nameOverride@anyOf(0)": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "values/@allOf(13)@then@allOf(1).nameOverride@anyOf(2)": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "maxItems": 0,
-            "type": "array"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "null"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "maxProperties": 0,
-            "type": "object"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)"
-      },
-      "type": "object"
-    },
-    "values/@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
-        }
-      ],
-      "type": "string"
-    },
-    "values/@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)": {
-      "not": {
-        "pattern": "[ \\t]#"
-      }
-    },
-    "values/@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
-      }
-    },
-    "values/@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)": {
-      "not": {
-        "pattern": "[\\r\\n]"
-      }
-    },
-    "values/@allOf(13)@then@allOf(1).nameOverride@anyOf(3)": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(4)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(5)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(6)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(9)"
-        }
-      ],
-      "type": "string"
-    },
-    "values/@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(0)": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "values/@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(1)": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "values/@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(2)": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "values/@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(4)": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "values/@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(5)": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "values/@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(6)": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "values/@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(9)": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "values/@allOf(18)@if@anyOf(0)@allOf(0).redisTlsConfig": {
-      "properties": {
-        "serverKeyFile": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)@not@allOf(1).auth.redisPasswordFile"
-        }
-      },
-      "required": [
-        "serverKeyFile"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(18)@if@anyOf(0)@allOf(1).redisTlsConfig": {
-      "properties": {
-        "serverKeyFile": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).auth"
-        }
-      },
-      "required": [
-        "serverKeyFile"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(18)@if@anyOf(0)@allOf(2)": {
-      "properties": {
-        "redisTlsConfig": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
-        }
-      },
-      "required": [
-        "redisTlsConfig"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(18)@if@anyOf(1)@allOf(0).redisTlsConfig": {
-      "properties": {
-        "clientKeyFile": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).auth"
-        }
-      },
-      "required": [
-        "clientKeyFile"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(18)@if@anyOf(1)@allOf(1).redisTlsConfig": {
-      "properties": {
-        "clientKeyFile": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)@not@allOf(1).auth.redisPasswordFile"
-        }
-      },
-      "required": [
-        "clientKeyFile"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(18)@if@anyOf(2)@allOf(0).redisTlsConfig": {
-      "properties": {
-        "caCertFile": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).auth"
-        }
-      },
-      "required": [
-        "caCertFile"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(18)@if@anyOf(2)@allOf(1).redisTlsConfig": {
-      "properties": {
-        "caCertFile": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)@not@allOf(1).auth.redisPasswordFile"
-        }
-      },
-      "required": [
-        "caCertFile"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(18)@if@anyOf(3)@allOf(0).redisTlsConfig": {
-      "properties": {
-        "clientCertFile": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).auth"
-        }
-      },
-      "required": [
-        "clientCertFile"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(18)@if@anyOf(3)@allOf(1).redisTlsConfig": {
-      "properties": {
-        "clientCertFile": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)@not@allOf(1).auth.redisPasswordFile"
-        }
-      },
-      "required": [
-        "clientCertFile"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(18)@if@anyOf(4)@allOf(0).redisTlsConfig": {
-      "properties": {
-        "serverCertFile": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)@not@allOf(1).auth.redisPasswordFile"
-        }
-      },
-      "required": [
-        "serverCertFile"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(18)@if@anyOf(4)@allOf(1).redisTlsConfig": {
-      "properties": {
-        "serverCertFile": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).auth"
-        }
-      },
-      "required": [
-        "serverCertFile"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(19)@if@allOf(0)": {
-      "anyOf": [
-        {
-          "properties": {
-            "service": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "service": {}
-            },
-            "required": [
-              "service"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
-    "values/@allOf(19)@if@allOf(1)@anyOf(1).service": {
-      "properties": {
-        "type": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(22)@if@not": {
-      "properties": {
-        "redisAddressConfig": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
-        }
-      },
-      "required": [
-        "redisAddressConfig"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(22)@then.redisAddress@anyOf(1)": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(4)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(5)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(6)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(9)"
-        }
-      ],
-      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-      "type": "string"
-    },
-    "values/@allOf(22)@then.redisAddress@anyOf(2)": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/@allOf(22)@then.redisAddress@anyOf(4)": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/@allOf(22)@then.redisAddress@anyOf(5)": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "values/@allOf(22)@then.redisAddress@anyOf(6)": {
-      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-      "type": "null"
-    },
-    "values/@allOf(3)@if": {
-      "properties": {
-        "networkPolicy": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
-        }
-      },
-      "required": [
-        "networkPolicy"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(3)@then@allOf(0).service.port@oneOf(1)@anyOf(3)": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
-    },
-    "values/@allOf(31)@if": {
-      "properties": {
-        "rbac": {
-          "$ref": "#/$defs/values~1@allOf(31)@if.rbac"
-        }
-      },
-      "required": [
-        "rbac"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(31)@if.rbac": {
-      "properties": {
-        "create": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(6)@then@allOf(0).customLabels@anyOf(1)": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "$ref": "#/$defs/values~1@allOf(6)@then@allOf(0).customLabels@anyOf(1)@allOf(0)@additionalProperties"
-          },
-          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-          "type": [
-            "object",
-            "null"
-          ]
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(1)"
-        }
-      ]
-    },
-    "values/@allOf(6)@then@allOf(0).customLabels@anyOf(1)@allOf(0)@additionalProperties": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "values/@allOf(6)@then@allOf(1).nameOverride": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(4)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(5)"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)"
-        }
-      ]
-    },
-    "values/affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions": {
-      "description": "A list of node selector requirements by node's labels.",
-      "items": {
-        "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "values/affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items": {
-      "additionalProperties": false,
-      "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-      "properties": {
-        "key": {
-          "description": "The label key that the selector applies to.",
-          "type": "string"
-        },
-        "operator": {
-          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-          "type": "string"
-        },
-        "values": {
-          "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-          "items": {
-            "$ref": "#/$defs/values~1@allOf(6)@then@allOf(0).customLabels@anyOf(1)@allOf(0)@additionalProperties"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        }
-      },
-      "required": [
-        "key",
-        "operator"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "values/affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchFields": {
-      "description": "A list of node selector requirements by node's fields.",
-      "items": {
-        "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items": {
-      "additionalProperties": false,
-      "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
-      "properties": {
-        "podAffinityTerm": {
-          "additionalProperties": false,
-          "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
-          "properties": {
-            "labelSelector": {
-              "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
-            },
-            "matchLabelKeys": {
-              "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.matchLabelKeys"
-            },
-            "mismatchLabelKeys": {
-              "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.mismatchLabelKeys"
-            },
-            "namespaceSelector": {
-              "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
-            },
-            "namespaces": {
-              "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.namespaces"
-            },
-            "topologyKey": {
-              "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.topologyKey"
-            }
-          },
-          "required": [
-            "topologyKey"
-          ],
-          "type": "object"
-        },
-        "weight": {
-          "description": "weight associated with matching the corresponding podAffinityTerm, in the range 1-100.",
-          "format": "int32",
-          "type": "integer"
-        }
-      },
-      "required": [
-        "weight",
-        "podAffinityTerm"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector": {
-      "additionalProperties": false,
-      "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-      "properties": {
-        "matchExpressions": {
-          "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-          "items": {
-            "additionalProperties": false,
-            "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-            "properties": {
-              "key": {
-                "description": "key is the label key that the selector applies to.",
-                "type": "string"
-              },
-              "operator": {
-                "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                "type": "string"
-              },
-              "values": {
-                "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                "items": {
-                  "$ref": "#/$defs/values~1@allOf(6)@then@allOf(0).customLabels@anyOf(1)@allOf(0)@additionalProperties"
-                },
-                "type": [
-                  "array",
-                  "null"
-                ]
-              }
-            },
-            "required": [
-              "key",
-              "operator"
-            ],
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
-        "matchLabels": {
-          "additionalProperties": {
-            "$ref": "#/$defs/values~1@allOf(6)@then@allOf(0).customLabels@anyOf(1)@allOf(0)@additionalProperties"
-          },
-          "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-          "type": [
-            "object",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ],
-      "x-kubernetes-map-type": "atomic"
-    },
-    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.matchLabelKeys": {
-      "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-      "items": {
-        "$ref": "#/$defs/values~1@allOf(6)@then@allOf(0).customLabels@anyOf(1)@allOf(0)@additionalProperties"
-      },
-      "type": [
-        "array",
-        "null"
-      ],
-      "x-kubernetes-list-type": "atomic"
-    },
-    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.mismatchLabelKeys": {
-      "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-      "items": {
-        "$ref": "#/$defs/values~1@allOf(6)@then@allOf(0).customLabels@anyOf(1)@allOf(0)@additionalProperties"
-      },
-      "type": [
-        "array",
-        "null"
-      ],
-      "x-kubernetes-list-type": "atomic"
-    },
-    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.namespaces": {
-      "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
-      "items": {
-        "$ref": "#/$defs/values~1@allOf(6)@then@allOf(0).customLabels@anyOf(1)@allOf(0)@additionalProperties"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.topologyKey": {
-      "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
-      "type": "string"
-    },
-    "values/affinity@anyOf(1).podAffinity.requiredDuringSchedulingIgnoredDuringExecution@items": {
-      "additionalProperties": false,
-      "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
-      "properties": {
-        "labelSelector": {
-          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
-        },
-        "matchLabelKeys": {
-          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.matchLabelKeys"
-        },
-        "mismatchLabelKeys": {
-          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.mismatchLabelKeys"
-        },
-        "namespaceSelector": {
-          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
-        },
-        "namespaces": {
-          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.namespaces"
-        },
-        "topologyKey": {
-          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.topologyKey"
-        }
-      },
-      "required": [
-        "topologyKey"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "values/affinity@anyOf(2)": {
+    "values/affinity/fragment": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "values/annotations@allOf(0)": {
+    "values/annotations/fragment": {
       "additionalProperties": {
-        "$ref": "#/$defs/values~1@allOf(6)@then@allOf(0).customLabels@anyOf(1)@allOf(0)@additionalProperties"
+        "$ref": "#/$defs/constrains~1key+operator+values~1fragment"
       },
       "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
       "type": [
@@ -894,183 +1063,81 @@
         "name": {}
       }
     },
-    "values/auth@allOf(1)@if@allOf(1)": {
-      "not": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)@not@allOf(0).auth"
-          },
-          {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)@not@allOf(1).auth"
-          }
-        ]
-      }
-    },
-    "values/auth@allOf(1)@if@allOf(2)@anyOf(0)@not": {
-      "properties": {
-        "secret": {}
-      },
-      "required": [
-        "secret"
-      ],
-      "type": "object"
-    },
-    "values/auth@allOf(1)@if@allOf(2)@anyOf(1)": {
-      "properties": {
-        "secret": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "secret"
-      ],
-      "type": "object"
-    },
-    "values/auth@allOf(2)@then.redisPasswordFile.mountPath@anyOf(2)": {
+    "values/auth/fragment": {
       "allOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(0)"
+          "$ref": "#/$defs/constrains~1:t~1fragment@15"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(1)"
+          "$ref": "#/$defs/constrains~1:t~1fragment@9"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(2)"
+          "$ref": "#/$defs/constrains~1:t~1fragment@14"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+          "$ref": "#/$defs/constrains~1:t~1fragment@7"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(4)"
+          "$ref": "#/$defs/constrains~1:t~1fragment@10"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(5)"
+          "$ref": "#/$defs/constrains~1:t~1fragment@12"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(6)"
+          "$ref": "#/$defs/constrains~1:t~1fragment@13"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+          "$ref": "#/$defs/constrains~1:t~1fragment@6"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+          "$ref": "#/$defs/constrains~1:t~1fragment@8"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(9)"
+          "$ref": "#/$defs/constrains~1:t~1fragment@11"
         }
       ],
       "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
       "type": "string"
     },
-    "values/auth@allOf(5)@then@allOf(0).secret.name": {
+    "values/auth/fragment@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t~1fragment@4"
         },
         {
-          "$ref": "#/$defs/values~1auth@allOf(5)@then@allOf(0).secret.name@anyOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1auth@allOf(5)@then@allOf(0).secret.name@anyOf(5)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(4)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(5)"
-        }
-      ]
-    },
-    "values/auth@allOf(5)@then@allOf(0).secret.name@anyOf(1)": {
-      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-      "type": "null"
-    },
-    "values/auth@allOf(5)@then@allOf(0).secret.name@anyOf(5)": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(4)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(5)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(6)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(9)"
-        }
-      ],
-      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-      "type": "string"
-    },
-    "values/auth@allOf(7)@then.secret.key": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
+          "$ref": "#/$defs/constrains~1:t~1fragment"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(0)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@15"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(1)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@9"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(2)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@14"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@7"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(4)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@10"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(5)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@12"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(6)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@13"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@6"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@8"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(9)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@11"
             }
           ],
           "description": "The key of the secret to select from.  Must be a valid secret key.",
@@ -1078,17 +1145,176 @@
         }
       ]
     },
-    "values/env@anyOf(0)@items.valueFrom.configMapKeyRef.name": {
+    "values/env/fragment": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
         "string",
         "null"
       ]
     },
-    "values/env@anyOf(0)@items.valueFrom.resourceFieldRef.divisor": {
+    "values/fragment": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "values/fragment@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@15"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@14"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@12"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@13"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@11"
+        }
+      ],
+      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+      "type": "string"
+    },
+    "values/fragment@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@15"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@14"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@12"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@13"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@11"
+        }
+      ],
+      "type": "string"
+    },
+    "values/fragment@4": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/constrains~1key+operator+values~1fragment"
+          },
+          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        {
+          "$ref": "#/$defs/values~1fragment"
+        }
+      ]
+    },
+    "values/fragment@5": {
+      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+      "type": "null"
+    },
+    "values/fragment@6": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
+    },
+    "values/image/fragment": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@16"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@18"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@17"
+        }
+      ]
+    },
+    "values/nameOverride": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@16"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@18"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@17"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@3"
+        }
+      ]
+    },
+    "values/prometheusRule/fragment": {
+      "pattern": "\\{\\{",
+      "type": "string"
+    },
+    "values/resources.limits@additionalProperties": {
       "oneOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(6)@then@allOf(0).customLabels@anyOf(1)@allOf(0)@additionalProperties"
+          "$ref": "#/$defs/constrains~1key+operator+values~1fragment"
         },
         {
           "type": [
@@ -1097,219 +1323,6 @@
           ]
         }
       ]
-    },
-    "values/image@allOf(0).pullSecrets@allOf(0)@then@allOf(0)@additionalProperties": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1auth@allOf(5)@then@allOf(0).secret.name@anyOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1auth@allOf(5)@then@allOf(0).secret.name@anyOf(5)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(4)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(5)"
-        }
-      ]
-    },
-    "values/podSecurityContext@anyOf(1).seLinuxOptions": {
-      "additionalProperties": false,
-      "description": "SELinuxOptions are the labels to be applied to the container",
-      "properties": {
-        "level": {
-          "description": "Level is SELinux level label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "role": {
-          "description": "Role is a SELinux role label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "type": {
-          "description": "Type is a SELinux type label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "user": {
-          "description": "User is a SELinux user label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "values/podSecurityContext@anyOf(1).seccompProfile": {
-      "additionalProperties": false,
-      "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
-      "properties": {
-        "localhostProfile": {
-          "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "type": {
-          "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
-          "type": "string"
-        }
-      },
-      "required": [
-        "type"
-      ],
-      "type": [
-        "object",
-        "null"
-      ],
-      "x-kubernetes-unions": [
-        {
-          "discriminator": "type",
-          "fields-to-discriminateBy": {
-            "localhostProfile": "LocalhostProfile"
-          }
-        }
-      ]
-    },
-    "values/podSecurityContext@anyOf(1).windowsOptions": {
-      "additionalProperties": false,
-      "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
-      "properties": {
-        "gmsaCredentialSpec": {
-          "description": "GMSACredentialSpec is where the GMSA admission webhook (https://github.com/kubernetes-sigs/windows-gmsa) inlines the contents of the GMSA credential spec named by the GMSACredentialSpecName field.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "gmsaCredentialSpecName": {
-          "description": "GMSACredentialSpecName is the name of the GMSA credential spec to use.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "hostProcess": {
-          "description": "HostProcess determines if a container should be run as a 'Host Process' container. All of a Pod's containers must have the same effective HostProcess value (it is not allowed to have a mix of HostProcess containers and non-HostProcess containers). In addition, if HostProcess is true then HostNetwork must also be set to true.",
-          "type": [
-            "boolean",
-            "null"
-          ]
-        },
-        "runAsUserName": {
-          "description": "The UserName in Windows to run the entrypoint of the container process. Defaults to the user specified in image metadata if unspecified. May also be set in PodSecurityContext. If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "values/prometheusRule@allOf(0)@then@allOf(0).rules@anyOf(1)@items.alert@anyOf(1)": {
-      "pattern": "\\{\\{",
-      "type": "string"
-    },
-    "values/redisAddressConfig@allOf(2)@if@allOf(0)": {
-      "properties": {
-        "isSecret": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "isSecret"
-      ],
-      "type": "object"
-    },
-    "values/redisTlsConfig@allOf(1)@then.serverKeyFile.secret": {
-      "additionalProperties": {},
-      "properties": {
-        "key": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
-            },
-            {
-              "$ref": "#/$defs/values~1redisTlsConfig@allOf(1)@then.serverKeyFile.secret.key@anyOf(2)"
-            },
-            {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
-            }
-          ]
-        }
-      }
-    },
-    "values/redisTlsConfig@allOf(1)@then.serverKeyFile.secret.key@anyOf(2)": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(4)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(5)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(6)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(9)"
-        }
-      ],
-      "description": "key is the key to project.",
-      "type": "string"
-    },
-    "values/redisTlsConfig@allOf(10)@then.clientCertFile.secret": {
-      "additionalProperties": {},
-      "properties": {
-        "name": {
-          "$ref": "#/$defs/values~1auth@allOf(5)@then@allOf(0).secret.name"
-        }
-      }
     },
     "values/serviceMonitor.additionalRelabeling": {
       "anyOf": [
@@ -1322,19 +1335,6 @@
           "type": "array"
         }
       ]
-    },
-    "values/serviceMonitor.targets@anyOf(0)@additionalProperties": {
-      "additionalProperties": {},
-      "properties": {
-        "additionalMetricsRelabels": {
-          "$ref": "#/$defs/values~1serviceMonitor.additionalRelabeling"
-        },
-        "additionalRelabeling": {
-          "$ref": "#/$defs/values~1serviceMonitor.additionalRelabeling"
-        },
-        "interval": {},
-        "scrapeTimeout": {}
-      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1377,7 +1377,7 @@
           {
             "properties": {
               "auth": {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).auth"
+                "$ref": "#/$defs/constrains~1secret.name:t"
               }
             },
             "required": [
@@ -1389,16 +1389,16 @@
             "not": {
               "allOf": [
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)@not@allOf(0)"
+                  "$ref": "#/$defs/constrains~1auth.redisPasswordFile.secret.name:t"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)@not@allOf(1)"
+                  "$ref": "#/$defs/constrains~1auth.redisPasswordFile.secret.key:t"
                 }
               ]
             }
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2)"
+            "$ref": "#/$defs/constrains~1auth.enabled:t"
           }
         ]
       },
@@ -1478,7 +1478,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(3)@if"
+        "$ref": "#/$defs/constrains~1networkPolicy.enabled:t"
       },
       "then": {
         "allOf": [
@@ -1494,44 +1494,44 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@4"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(2)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@16"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(4)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@18"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(5)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@17"
                           },
                           {
                             "type": "null"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)"
+                            "$ref": "#/$defs/values~1fragment@3"
                           }
                         ]
                       },
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(2)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@16"
                           },
                           {
                             "type": "integer"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(4)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@18"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(3)@then@allOf(0).service.port@oneOf(1)@anyOf(3)"
+                            "$ref": "#/$defs/values~1fragment@6"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(5)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@17"
                           },
                           {
                             "type": "null"
@@ -1577,7 +1577,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(19)@if@allOf(0)"
+        "$ref": "#/$defs/constrains~1service+service=null"
       },
       "then": false
     },
@@ -1626,12 +1626,12 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(3)@if"
+            "$ref": "#/$defs/constrains~1networkPolicy.enabled:t"
           },
           {
             "properties": {
               "serviceAccount": {
-                "$ref": "#/$defs/values~1@allOf(31)@if.rbac"
+                "$ref": "#/$defs/constrains~1create:t"
               }
             },
             "required": [
@@ -1640,7 +1640,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(31)@if"
+            "$ref": "#/$defs/constrains~1rbac.create:t"
           }
         ]
       },
@@ -1652,10 +1652,10 @@
               "customLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+                    "$ref": "#/$defs/constrains~1:t@2"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(6)@then@allOf(0).customLabels@anyOf(1)"
+                    "$ref": "#/$defs/values~1fragment@4"
                   }
                 ],
                 "description": "global custom labels, applied to all resrouces"
@@ -1666,7 +1666,7 @@
             "additionalProperties": {},
             "properties": {
               "nameOverride": {
-                "$ref": "#/$defs/values~1@allOf(6)@then@allOf(1).nameOverride"
+                "$ref": "#/$defs/values~1nameOverride"
               }
             }
           }
@@ -1706,7 +1706,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(22)@if@not"
+        "$ref": "#/$defs/constrains~1redisAddressConfig.enabled:t"
       },
       "then": {
         "allOf": [
@@ -1823,7 +1823,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2)"
+        "$ref": "#/$defs/constrains~1auth.enabled:t"
       },
       "then": {
         "allOf": [
@@ -1865,7 +1865,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(13)@if"
+        "$ref": "#/$defs/constrains~1prometheusRule.enabled:t"
       },
       "then": {
         "allOf": [
@@ -1875,10 +1875,10 @@
               "customLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+                    "$ref": "#/$defs/constrains~1:t@2"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(1)"
+                    "$ref": "#/$defs/values~1fragment"
                   }
                 ],
                 "description": "global custom labels, applied to all resrouces"
@@ -1891,16 +1891,16 @@
               "nameOverride": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@4"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+                    "$ref": "#/$defs/constrains~1:t@2"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)"
+                    "$ref": "#/$defs/values~1fragment@3"
                   }
                 ]
               }
@@ -1971,16 +1971,16 @@
             "not": {
               "allOf": [
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)@not@allOf(0)"
+                  "$ref": "#/$defs/constrains~1auth.redisPasswordFile.secret.name:t"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)@not@allOf(1)"
+                  "$ref": "#/$defs/constrains~1auth.redisPasswordFile.secret.key:t"
                 }
               ]
             }
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2)"
+            "$ref": "#/$defs/constrains~1auth.enabled:t"
           }
         ]
       },
@@ -2003,10 +2003,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)@not@allOf(0)"
+            "$ref": "#/$defs/constrains~1auth.redisPasswordFile.secret.name:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2)"
+            "$ref": "#/$defs/constrains~1auth.enabled:t"
           }
         ]
       },
@@ -2062,7 +2062,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(0)@allOf(0).redisTlsConfig"
+                    "$ref": "#/$defs/constrains~1serverKeyFile.secret.key:t"
                   }
                 },
                 "required": [
@@ -2073,7 +2073,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(0)@allOf(1).redisTlsConfig"
+                    "$ref": "#/$defs/constrains~1serverKeyFile.secret.name:t"
                   }
                 },
                 "required": [
@@ -2082,7 +2082,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(0)@allOf(2)"
+                "$ref": "#/$defs/constrains~1redisTlsConfig.enabled:t"
               }
             ]
           },
@@ -2091,7 +2091,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(1)@allOf(0).redisTlsConfig"
+                    "$ref": "#/$defs/constrains~1clientKeyFile.secret.name:t"
                   }
                 },
                 "required": [
@@ -2102,7 +2102,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(1)@allOf(1).redisTlsConfig"
+                    "$ref": "#/$defs/constrains~1clientKeyFile.secret.key:t"
                   }
                 },
                 "required": [
@@ -2111,7 +2111,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(0)@allOf(2)"
+                "$ref": "#/$defs/constrains~1redisTlsConfig.enabled:t"
               }
             ]
           },
@@ -2120,7 +2120,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(2)@allOf(0).redisTlsConfig"
+                    "$ref": "#/$defs/constrains~1caCertFile.secret.name:t"
                   }
                 },
                 "required": [
@@ -2131,7 +2131,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(2)@allOf(1).redisTlsConfig"
+                    "$ref": "#/$defs/constrains~1caCertFile.secret.key:t"
                   }
                 },
                 "required": [
@@ -2140,7 +2140,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(0)@allOf(2)"
+                "$ref": "#/$defs/constrains~1redisTlsConfig.enabled:t"
               }
             ]
           },
@@ -2149,7 +2149,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(3)@allOf(0).redisTlsConfig"
+                    "$ref": "#/$defs/constrains~1clientCertFile.secret.name:t"
                   }
                 },
                 "required": [
@@ -2160,7 +2160,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(3)@allOf(1).redisTlsConfig"
+                    "$ref": "#/$defs/constrains~1clientCertFile.secret.key:t"
                   }
                 },
                 "required": [
@@ -2169,7 +2169,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(0)@allOf(2)"
+                "$ref": "#/$defs/constrains~1redisTlsConfig.enabled:t"
               }
             ]
           },
@@ -2178,7 +2178,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(4)@allOf(0).redisTlsConfig"
+                    "$ref": "#/$defs/constrains~1serverCertFile.secret.key:t"
                   }
                 },
                 "required": [
@@ -2189,7 +2189,7 @@
               {
                 "properties": {
                   "redisTlsConfig": {
-                    "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(4)@allOf(1).redisTlsConfig"
+                    "$ref": "#/$defs/constrains~1serverCertFile.secret.name:t"
                   }
                 },
                 "required": [
@@ -2198,7 +2198,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(0)@allOf(2)"
+                "$ref": "#/$defs/constrains~1redisTlsConfig.enabled:t"
               }
             ]
           }
@@ -2225,7 +2225,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(19)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1service+service=null"
           },
           {
             "anyOf": [
@@ -2251,7 +2251,7 @@
               {
                 "properties": {
                   "service": {
-                    "$ref": "#/$defs/values~1@allOf(19)@if@allOf(1)@anyOf(1).service"
+                    "$ref": "#/$defs/constrains~1type=null"
                   }
                 },
                 "required": [
@@ -2339,7 +2339,7 @@
     {
       "if": {
         "not": {
-          "$ref": "#/$defs/values~1@allOf(22)@if@not"
+          "$ref": "#/$defs/constrains~1redisAddressConfig.enabled:t"
         }
       },
       "then": {
@@ -2348,25 +2348,25 @@
           "redisAddress": {
             "anyOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
+                "$ref": "#/$defs/constrains~1:t~1fragment@4"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(1)"
+                "$ref": "#/$defs/values~1fragment@2"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(2)"
+                "$ref": "#/$defs/constrains~1:t~1fragment@16"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
+                "$ref": "#/$defs/constrains~1:t~1fragment"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(4)"
+                "$ref": "#/$defs/constrains~1:t~1fragment@18"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(5)"
+                "$ref": "#/$defs/constrains~1:t~1fragment@17"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(6)"
+                "$ref": "#/$defs/values~1fragment@5"
               }
             ],
             "description": "If serviceMonitor.multipleTarget is enabled, this configuration is actually not used"
@@ -2397,7 +2397,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(13)@if"
+            "$ref": "#/$defs/constrains~1prometheusRule.enabled:t"
           }
         ]
       },
@@ -2407,39 +2407,39 @@
           "nameOverride": {
             "anyOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+                "$ref": "#/$defs/constrains~1:t@2"
               },
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(0)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@15"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(1)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@9"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(2)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@14"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@7"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(4)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@10"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(5)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@12"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(6)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@13"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@6"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@8"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(9)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@11"
                   }
                 ],
                 "description": "Name of the rule group.",
@@ -2455,13 +2455,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)@not@allOf(0)"
+            "$ref": "#/$defs/constrains~1auth.redisPasswordFile.secret.name:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)@not@allOf(1)"
+            "$ref": "#/$defs/constrains~1auth.redisPasswordFile.secret.key:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2)"
+            "$ref": "#/$defs/constrains~1auth.enabled:t"
           }
         ]
       },
@@ -2525,7 +2525,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(0)@allOf(2)"
+        "$ref": "#/$defs/constrains~1redisTlsConfig.enabled:t"
       },
       "then": {
         "allOf": [
@@ -2863,7 +2863,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(31)@if"
+        "$ref": "#/$defs/constrains~1rbac.create:t"
       },
       "then": {
         "additionalProperties": {},
@@ -2874,49 +2874,49 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@4"
                   },
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(0)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@15"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(1)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@9"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(2)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@14"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@7"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(4)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@10"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(5)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@12"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(6)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@13"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@6"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@8"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(9)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@11"
                       }
                     ],
                     "description": "Name of the object being referenced.",
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+                    "$ref": "#/$defs/constrains~1:t@2"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment"
                   }
                 ],
                 "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
@@ -2931,7 +2931,7 @@
     "affinity": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t@2"
         },
         {
           "additionalProperties": false,
@@ -2952,10 +2952,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions"
+                            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values@2"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchFields"
+                            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values"
                           }
                         },
                         "type": "object",
@@ -2992,10 +2992,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions"
+                            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values@2"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchFields"
+                            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values"
                           }
                         },
                         "type": [
@@ -3029,7 +3029,7 @@
                 "preferredDuringSchedulingIgnoredDuringExecution": {
                   "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
                   "items": {
-                    "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items"
+                    "$ref": "#/$defs/constrains~1podAffinityTerm.labelSelector.matchExpressions@items.key+9more"
                   },
                   "type": [
                     "array",
@@ -3039,7 +3039,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.requiredDuringSchedulingIgnoredDuringExecution@items"
+                    "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more"
                   },
                   "type": [
                     "array",
@@ -3059,7 +3059,7 @@
                 "preferredDuringSchedulingIgnoredDuringExecution": {
                   "description": "The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
                   "items": {
-                    "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items"
+                    "$ref": "#/$defs/constrains~1podAffinityTerm.labelSelector.matchExpressions@items.key+9more"
                   },
                   "type": [
                     "array",
@@ -3069,7 +3069,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.requiredDuringSchedulingIgnoredDuringExecution@items"
+                    "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more"
                   },
                   "type": [
                     "array",
@@ -3086,7 +3086,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/values~1affinity@anyOf(2)"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         },
         {
           "type": "null"
@@ -3096,10 +3096,10 @@
     "annotations": {
       "allOf": [
         {
-          "$ref": "#/$defs/values~1annotations@allOf(0)"
+          "$ref": "#/$defs/values~1annotations~1fragment"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(1)"
+          "$ref": "#/$defs/values~1fragment"
         }
       ],
       "description": "deployment additional annotations and labels"
@@ -3109,7 +3109,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+            "$ref": "#/$defs/constrains~1enabled:t"
           },
           "then": {
             "additionalProperties": {},
@@ -3124,7 +3124,7 @@
                       "name": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@4"
                           },
                           {
                             "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
@@ -3133,53 +3133,53 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(0)"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@15"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(1)"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@9"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(2)"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@14"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@7"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(4)"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@10"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(5)"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@12"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(6)"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@13"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@6"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@8"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(9)"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@11"
                               }
                             ],
                             "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+                            "$ref": "#/$defs/constrains~1:t@2"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(2)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@16"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(4)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@18"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(5)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@17"
                           }
                         ]
                       }
@@ -3194,20 +3194,20 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
-                "$ref": "#/$defs/values~1auth@allOf(1)@if@allOf(1)"
+                "$ref": "#/$defs/constrains~1redisPasswordFile.secret.key:t+redisPasswordFile.secret.name:t"
               },
               {
                 "anyOf": [
                   {
                     "not": {
-                      "$ref": "#/$defs/values~1auth@allOf(1)@if@allOf(2)@anyOf(0)@not"
+                      "$ref": "#/$defs/constrains~1secret"
                     }
                   },
                   {
-                    "$ref": "#/$defs/values~1auth@allOf(1)@if@allOf(2)@anyOf(1)"
+                    "$ref": "#/$defs/constrains~1secret=null"
                   }
                 ]
               }
@@ -3219,10 +3219,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)@not@allOf(0).auth"
+                "$ref": "#/$defs/constrains~1redisPasswordFile.secret.name:t"
               }
             ]
           },
@@ -3236,13 +3236,13 @@
                   "mountPath": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@4"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/values~1auth@allOf(2)@then.redisPasswordFile.mountPath@anyOf(2)"
+                        "$ref": "#/$defs/values~1auth~1fragment"
                       }
                     ],
                     "description": "The secret key will be mounted into this path as a file\ne.g., if secret key is pass.json, the env variable\nREDIS_PASSWORD_FILE will be set to /auth/pass.json"
@@ -3256,15 +3256,15 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).auth"
+                  "$ref": "#/$defs/constrains~1secret.name:t"
                 }
               },
               {
-                "$ref": "#/$defs/values~1auth@allOf(1)@if@allOf(1)"
+                "$ref": "#/$defs/constrains~1redisPasswordFile.secret.key:t+redisPasswordFile.secret.name:t"
               }
             ]
           },
@@ -3274,25 +3274,25 @@
               "redisPassword": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@4"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(1)"
+                    "$ref": "#/$defs/values~1fragment@2"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(2)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@16"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(4)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@18"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(5)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@17"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(6)"
+                    "$ref": "#/$defs/values~1fragment@5"
                   }
                 ],
                 "description": "Redis password (when not stored in a secret)"
@@ -3308,7 +3308,7 @@
                   {
                     "properties": {
                       "redisPasswordFile": {
-                        "$ref": "#/$defs/values~1auth@allOf(1)@if@allOf(2)@anyOf(1)"
+                        "$ref": "#/$defs/constrains~1secret=null"
                       }
                     },
                     "required": [
@@ -3320,7 +3320,7 @@
                     "not": {
                       "properties": {
                         "redisPasswordFile": {
-                          "$ref": "#/$defs/values~1auth@allOf(1)@if@allOf(2)@anyOf(0)@not"
+                          "$ref": "#/$defs/constrains~1secret"
                         }
                       },
                       "required": [
@@ -3332,7 +3332,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -3342,10 +3342,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
-                "$ref": "#/$defs/values~1auth@allOf(1)@if@allOf(1)"
+                "$ref": "#/$defs/constrains~1redisPasswordFile.secret.key:t+redisPasswordFile.secret.name:t"
               }
             ]
           },
@@ -3359,7 +3359,7 @@
                     "description": "Use existing secret (ignores redisPassword)",
                     "properties": {
                       "name": {
-                        "$ref": "#/$defs/values~1auth@allOf(5)@then@allOf(0).secret.name"
+                        "$ref": "#/$defs/constrains~1:t"
                       }
                     }
                   }
@@ -3371,28 +3371,28 @@
                   "redisUser": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@4"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(1)"
+                        "$ref": "#/$defs/values~1fragment@2"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1:t@2"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(2)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@16"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(4)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@18"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(5)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@17"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(6)"
+                        "$ref": "#/$defs/values~1fragment@5"
                       }
                     ],
                     "description": "Redis user (version 6.X and above)"
@@ -3434,7 +3434,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -3444,13 +3444,13 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(0).auth"
+                "$ref": "#/$defs/constrains~1secret.name:t"
               },
               {
-                "$ref": "#/$defs/values~1auth@allOf(1)@if@allOf(1)"
+                "$ref": "#/$defs/constrains~1redisPasswordFile.secret.key:t+redisPasswordFile.secret.name:t"
               }
             ]
           },
@@ -3462,7 +3462,7 @@
                 "description": "Use existing secret (ignores redisPassword)",
                 "properties": {
                   "key": {
-                    "$ref": "#/$defs/values~1auth@allOf(7)@then.secret.key"
+                    "$ref": "#/$defs/values~1auth~1fragment@2"
                   }
                 }
               }
@@ -3506,12 +3506,12 @@
     "command": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t@2"
         },
         {
           "description": "Entrypoint array. Not executed within a shell. The container image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
           "items": {
-            "$ref": "#/$defs/values~1@allOf(6)@then@allOf(0).customLabels@anyOf(1)@allOf(0)@additionalProperties"
+            "$ref": "#/$defs/constrains~1key+operator+values~1fragment"
           },
           "type": "array"
         },
@@ -3523,13 +3523,13 @@
     "customLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t@2"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(6)@then@allOf(0).customLabels@anyOf(1)"
+          "$ref": "#/$defs/values~1fragment@4"
         },
         {
-          "$ref": "#/$defs/values~1affinity@anyOf(2)"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         }
       ],
       "description": "global custom labels, applied to all resrouces"
@@ -3566,7 +3566,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/values~1env@anyOf(0)@items.valueFrom.configMapKeyRef.name"
+                        "$ref": "#/$defs/values~1env~1fragment"
                       },
                       "optional": {
                         "description": "Specify whether the ConfigMap or its key must be defined",
@@ -3622,7 +3622,7 @@
                         ]
                       },
                       "divisor": {
-                        "$ref": "#/$defs/values~1env@anyOf(0)@items.valueFrom.resourceFieldRef.divisor"
+                        "$ref": "#/$defs/values~1resources.limits@additionalProperties"
                       },
                       "resource": {
                         "description": "Required: resource to select",
@@ -3647,7 +3647,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/values~1env@anyOf(0)@items.valueFrom.configMapKeyRef.name"
+                        "$ref": "#/$defs/values~1env~1fragment"
                       },
                       "optional": {
                         "description": "Specify whether the Secret or its key must be defined",
@@ -3686,10 +3686,10 @@
           "x-kubernetes-patch-strategy": "merge"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t@2"
         },
         {
-          "$ref": "#/$defs/values~1affinity@anyOf(2)"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         },
         {
           "type": "null"
@@ -3708,7 +3708,7 @@
           "type": "array"
         },
         {
-          "$ref": "#/$defs/values~1affinity@anyOf(2)"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         },
         {
           "type": "null"
@@ -3754,10 +3754,10 @@
                     "allOf": [
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/values~1image@allOf(0).pullSecrets@allOf(0)@then@allOf(0)@additionalProperties"
+                          "$ref": "#/$defs/values~1image~1fragment"
                         },
                         "items": {
-                          "$ref": "#/$defs/values~1image@allOf(0).pullSecrets@allOf(0)@then@allOf(0)@additionalProperties"
+                          "$ref": "#/$defs/values~1image~1fragment"
                         }
                       },
                       {
@@ -3781,55 +3781,55 @@
         "pullPolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@4"
             },
             {
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(2)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@16"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
+              "$ref": "#/$defs/constrains~1:t~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(4)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@18"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(5)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@17"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@15"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@9"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@14"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(4)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@10"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(5)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@12"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(6)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@13"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@6"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(9)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@11"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -3850,26 +3850,26 @@
     "labels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t@2"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(6)@then@allOf(0).customLabels@anyOf(1)"
+          "$ref": "#/$defs/values~1fragment@4"
         },
         {
-          "$ref": "#/$defs/values~1affinity@anyOf(2)"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         }
       ],
       "description": "prometheus.io/path: /metrics\nprometheus.io/port: \"9121\"\nprometheus.io/scrape: \"true\""
     },
     "nameOverride": {
-      "$ref": "#/$defs/values~1@allOf(6)@then@allOf(1).nameOverride"
+      "$ref": "#/$defs/values~1nameOverride"
     },
     "networkPolicy": {
       "additionalProperties": {},
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+            "$ref": "#/$defs/constrains~1enabled:t"
           },
           "then": {
             "additionalProperties": {},
@@ -3891,7 +3891,7 @@
                         "except": {
                           "description": "except is a slice of CIDRs that should not be included within an IPBlock Valid examples are \"192.168.1.0/24\" or \"2001:db8::/64\" Except values will be rejected if they are outside the cidr range",
                           "items": {
-                            "$ref": "#/$defs/values~1@allOf(6)@then@allOf(0).customLabels@anyOf(1)@allOf(0)@additionalProperties"
+                            "$ref": "#/$defs/constrains~1key+operator+values~1fragment"
                           },
                           "type": [
                             "array",
@@ -3908,10 +3908,10 @@
                       ]
                     },
                     "namespaceSelector": {
-                      "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
+                      "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
                     },
                     "podSelector": {
-                      "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
+                      "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
                     }
                   },
                   "type": [
@@ -3941,18 +3941,18 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t@2"
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/values~1@allOf(6)@then@allOf(0).customLabels@anyOf(1)@allOf(0)@additionalProperties"
+            "$ref": "#/$defs/constrains~1key+operator+values~1fragment"
           },
           "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
           "type": "object",
           "x-kubernetes-map-type": "atomic"
         },
         {
-          "$ref": "#/$defs/values~1affinity@anyOf(2)"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         },
         {
           "type": "null"
@@ -3962,7 +3962,7 @@
     "podSecurityContext": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t@2"
         },
         {
           "additionalProperties": false,
@@ -4007,10 +4007,10 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/values~1podSecurityContext@anyOf(1).seLinuxOptions"
+              "$ref": "#/$defs/constrains~1level+role+type+user"
             },
             "seccompProfile": {
-              "$ref": "#/$defs/values~1podSecurityContext@anyOf(1).seccompProfile"
+              "$ref": "#/$defs/constrains~1localhostProfile+type"
             },
             "supplementalGroups": {
               "description": "A list of groups applied to the first process run in each container, in addition to the container's primary GID, the fsGroup (if specified), and group memberships defined in the container image for the uid of the container process. If unspecified, no additional groups are added to any container. Note that group memberships defined in the container image for the uid of the container process are still effective, even if they are not included in this list. Note that this field cannot be set when spec.os.name is windows.",
@@ -4056,13 +4056,13 @@
               ]
             },
             "windowsOptions": {
-              "$ref": "#/$defs/values~1podSecurityContext@anyOf(1).windowsOptions"
+              "$ref": "#/$defs/constrains~1gmsaCredentialSpec+gmsaCredentialSpecName+hostProcess+runAsUserName"
             }
           },
           "type": "object"
         },
         {
-          "$ref": "#/$defs/values~1affinity@anyOf(2)"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         },
         {
           "type": "null"
@@ -4073,58 +4073,58 @@
     "priorityClassName": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t~1fragment@4"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t@2"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(2)"
+          "$ref": "#/$defs/constrains~1:t~1fragment@16"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
+          "$ref": "#/$defs/constrains~1:t~1fragment"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(4)"
+          "$ref": "#/$defs/constrains~1:t~1fragment@18"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(0)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@15"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(1)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@9"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(2)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@14"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@7"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(4)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@10"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(5)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@12"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(6)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@13"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@6"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@8"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(9)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@11"
             }
           ],
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(5)"
+          "$ref": "#/$defs/constrains~1:t~1fragment@17"
         },
         {
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -4137,7 +4137,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+            "$ref": "#/$defs/constrains~1enabled:t"
           },
           "then": {
             "allOf": [
@@ -4147,7 +4147,7 @@
                   "rules": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1:t@2"
                       },
                       {
                         "description": "List of alerting and recording rules.",
@@ -4162,7 +4162,7 @@
                                   "type": "string"
                                 },
                                 {
-                                  "$ref": "#/$defs/values~1prometheusRule@allOf(0)@then@allOf(0).rules@anyOf(1)@items.alert@anyOf(1)"
+                                  "$ref": "#/$defs/values~1prometheusRule~1fragment"
                                 }
                               ]
                             },
@@ -4170,7 +4170,7 @@
                               "additionalProperties": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/values~1prometheusRule@allOf(0)@then@allOf(0).rules@anyOf(1)@items.alert@anyOf(1)"
+                                    "$ref": "#/$defs/values~1prometheusRule~1fragment"
                                   },
                                   {
                                     "type": "string"
@@ -4186,7 +4186,7 @@
                                   "type": "integer"
                                 },
                                 {
-                                  "$ref": "#/$defs/values~1prometheusRule@allOf(0)@then@allOf(0).rules@anyOf(1)@items.alert@anyOf(1)"
+                                  "$ref": "#/$defs/values~1prometheusRule~1fragment"
                                 },
                                 {
                                   "type": "string"
@@ -4201,7 +4201,7 @@
                                   "type": "string"
                                 },
                                 {
-                                  "$ref": "#/$defs/values~1prometheusRule@allOf(0)@then@allOf(0).rules@anyOf(1)@items.alert@anyOf(1)"
+                                  "$ref": "#/$defs/values~1prometheusRule~1fragment"
                                 }
                               ]
                             },
@@ -4214,7 +4214,7 @@
                                   "type": "string"
                                 },
                                 {
-                                  "$ref": "#/$defs/values~1prometheusRule@allOf(0)@then@allOf(0).rules@anyOf(1)@items.alert@anyOf(1)"
+                                  "$ref": "#/$defs/values~1prometheusRule~1fragment"
                                 }
                               ]
                             },
@@ -4222,7 +4222,7 @@
                               "additionalProperties": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/values~1prometheusRule@allOf(0)@then@allOf(0).rules@anyOf(1)@items.alert@anyOf(1)"
+                                    "$ref": "#/$defs/values~1prometheusRule~1fragment"
                                   },
                                   {
                                     "type": "string"
@@ -4239,7 +4239,7 @@
                                   "type": "string"
                                 },
                                 {
-                                  "$ref": "#/$defs/values~1prometheusRule@allOf(0)@then@allOf(0).rules@anyOf(1)@items.alert@anyOf(1)"
+                                  "$ref": "#/$defs/values~1prometheusRule~1fragment"
                                 }
                               ]
                             }
@@ -4261,10 +4261,10 @@
                   "additionalLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1:t@2"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(1)"
+                        "$ref": "#/$defs/values~1fragment"
                       }
                     ]
                   }
@@ -4276,20 +4276,20 @@
                   "namespace": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1:t@2"
                       },
                       {
                         "allOf": [
                           {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@4"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
+                                "$ref": "#/$defs/constrains~1:t~1fragment"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)"
+                                "$ref": "#/$defs/values~1fragment@3"
                               }
                             ]
                           },
@@ -4333,7 +4333,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+            "$ref": "#/$defs/constrains~1enabled:t"
           },
           "then": {
             "additionalProperties": {},
@@ -4343,7 +4343,7 @@
                 "description": "Use an existing configmap or secret will ignore redisAddress",
                 "properties": {
                   "name": {
-                    "$ref": "#/$defs/values~1image@allOf(0).pullSecrets@allOf(0)@then@allOf(0)@additionalProperties"
+                    "$ref": "#/$defs/values~1image~1fragment"
                   }
                 }
               }
@@ -4354,7 +4354,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
                 "anyOf": [
@@ -4392,10 +4392,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1redisAddressConfig@allOf(2)@if@allOf(0)"
+                "$ref": "#/$defs/constrains~1isSecret:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -4407,7 +4407,7 @@
                 "description": "Use an existing configmap or secret will ignore redisAddress",
                 "properties": {
                   "key": {
-                    "$ref": "#/$defs/values~1auth@allOf(7)@then.secret.key"
+                    "$ref": "#/$defs/values~1auth~1fragment@2"
                   }
                 }
               }
@@ -4419,11 +4419,11 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/values~1redisAddressConfig@allOf(2)@if@allOf(0)"
+                  "$ref": "#/$defs/constrains~1isSecret:t"
                 }
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -4437,39 +4437,39 @@
                   "key": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@4"
                       },
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(0)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@15"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(1)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@9"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(2)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@14"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@7"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(4)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@10"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(5)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@12"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(6)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@13"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@6"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@8"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(9)"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@11"
                           }
                         ],
                         "description": "The key to select.",
@@ -4479,7 +4479,7 @@
                         "const": ""
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment"
                       }
                     ]
                   }
@@ -4518,7 +4518,7 @@
                   {
                     "properties": {
                       "serverKeyFile": {
-                        "$ref": "#/$defs/values~1auth@allOf(1)@if@allOf(2)@anyOf(1)"
+                        "$ref": "#/$defs/constrains~1secret=null"
                       }
                     },
                     "required": [
@@ -4530,7 +4530,7 @@
                     "not": {
                       "properties": {
                         "serverKeyFile": {
-                          "$ref": "#/$defs/values~1auth@allOf(1)@if@allOf(2)@anyOf(0)@not"
+                          "$ref": "#/$defs/constrains~1secret"
                         }
                       },
                       "required": [
@@ -4542,7 +4542,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -4552,10 +4552,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(0)@allOf(1).redisTlsConfig"
+                "$ref": "#/$defs/constrains~1serverKeyFile.secret.name:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -4567,7 +4567,7 @@
                 "description": "REDIS_EXPORTER_TLS_SERVER_KEY_FILE will be set to /tls/tls-server-key.key",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/values~1redisTlsConfig@allOf(1)@then.serverKeyFile.secret"
+                    "$ref": "#/$defs/constrains~1key:t"
                   }
                 }
               }
@@ -4578,10 +4578,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(1)@allOf(0).redisTlsConfig"
+                "$ref": "#/$defs/constrains~1clientKeyFile.secret.name:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -4593,7 +4593,7 @@
                 "description": "REDIS_EXPORTER_TLS_CLIENT_KEY_FILE  will be set to /tls/tls-client-key.key",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/values~1redisTlsConfig@allOf(1)@then.serverKeyFile.secret"
+                    "$ref": "#/$defs/constrains~1key:t"
                   }
                 }
               }
@@ -4632,7 +4632,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -4642,14 +4642,14 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
                 "anyOf": [
                   {
                     "properties": {
                       "clientCertFile": {
-                        "$ref": "#/$defs/values~1auth@allOf(1)@if@allOf(2)@anyOf(1)"
+                        "$ref": "#/$defs/constrains~1secret=null"
                       }
                     },
                     "required": [
@@ -4661,7 +4661,7 @@
                     "not": {
                       "properties": {
                         "clientCertFile": {
-                          "$ref": "#/$defs/values~1auth@allOf(1)@if@allOf(2)@anyOf(0)@not"
+                          "$ref": "#/$defs/constrains~1secret"
                         }
                       },
                       "required": [
@@ -4708,7 +4708,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -4722,7 +4722,7 @@
                   {
                     "properties": {
                       "caCertFile": {
-                        "$ref": "#/$defs/values~1auth@allOf(1)@if@allOf(2)@anyOf(1)"
+                        "$ref": "#/$defs/constrains~1secret=null"
                       }
                     },
                     "required": [
@@ -4734,7 +4734,7 @@
                     "not": {
                       "properties": {
                         "caCertFile": {
-                          "$ref": "#/$defs/values~1auth@allOf(1)@if@allOf(2)@anyOf(0)@not"
+                          "$ref": "#/$defs/constrains~1secret"
                         }
                       },
                       "required": [
@@ -4746,7 +4746,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -4756,10 +4756,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(4)@allOf(0).redisTlsConfig"
+                "$ref": "#/$defs/constrains~1serverCertFile.secret.key:t"
               }
             ]
           },
@@ -4771,7 +4771,7 @@
                 "description": "REDIS_EXPORTER_TLS_SERVER_CERT_FILE will be set to /tls/tls-server-cert.crt",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/values~1redisTlsConfig@allOf(10)@then.clientCertFile.secret"
+                    "$ref": "#/$defs/constrains~1name:t"
                   }
                 }
               }
@@ -4786,7 +4786,7 @@
                   {
                     "properties": {
                       "clientKeyFile": {
-                        "$ref": "#/$defs/values~1auth@allOf(1)@if@allOf(2)@anyOf(1)"
+                        "$ref": "#/$defs/constrains~1secret=null"
                       }
                     },
                     "required": [
@@ -4798,7 +4798,7 @@
                     "not": {
                       "properties": {
                         "clientKeyFile": {
-                          "$ref": "#/$defs/values~1auth@allOf(1)@if@allOf(2)@anyOf(0)@not"
+                          "$ref": "#/$defs/constrains~1secret"
                         }
                       },
                       "required": [
@@ -4810,7 +4810,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -4820,10 +4820,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(2)@allOf(0).redisTlsConfig"
+                "$ref": "#/$defs/constrains~1caCertFile.secret.name:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -4835,7 +4835,7 @@
                 "description": "REDIS_EXPORTER_TLS_CA_CERT_FILE will be set to /tls/tls-ca-cert.crt",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/values~1redisTlsConfig@allOf(1)@then.serverKeyFile.secret"
+                    "$ref": "#/$defs/constrains~1key:t"
                   }
                 }
               }
@@ -4846,10 +4846,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(3)@allOf(1).redisTlsConfig"
+                "$ref": "#/$defs/constrains~1clientCertFile.secret.key:t"
               }
             ]
           },
@@ -4861,7 +4861,7 @@
                 "description": "REDIS_EXPORTER_TLS_CLIENT_CERT_FILE will be set to /tls/tls-client-cert.crt",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/values~1redisTlsConfig@allOf(10)@then.clientCertFile.secret"
+                    "$ref": "#/$defs/constrains~1name:t"
                   }
                 }
               }
@@ -4872,10 +4872,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(4)@allOf(1).redisTlsConfig"
+                "$ref": "#/$defs/constrains~1serverCertFile.secret.name:t"
               }
             ]
           },
@@ -4887,7 +4887,7 @@
                 "description": "REDIS_EXPORTER_TLS_SERVER_CERT_FILE will be set to /tls/tls-server-cert.crt",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/values~1redisTlsConfig@allOf(1)@then.serverKeyFile.secret"
+                    "$ref": "#/$defs/constrains~1key:t"
                   }
                 }
               }
@@ -4898,10 +4898,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(1)@allOf(1).redisTlsConfig"
+                "$ref": "#/$defs/constrains~1clientKeyFile.secret.key:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -4913,7 +4913,7 @@
                 "description": "REDIS_EXPORTER_TLS_CLIENT_KEY_FILE  will be set to /tls/tls-client-key.key",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/values~1redisTlsConfig@allOf(10)@then.clientCertFile.secret"
+                    "$ref": "#/$defs/constrains~1name:t"
                   }
                 }
               }
@@ -4924,7 +4924,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
                 "anyOf": [
@@ -4990,7 +4990,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -4998,7 +4998,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+            "$ref": "#/$defs/constrains~1enabled:t"
           },
           "then": {
             "additionalProperties": {},
@@ -5006,13 +5006,13 @@
               "mountPath": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@4"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment"
                   },
                   {
-                    "$ref": "#/$defs/values~1auth@allOf(2)@then.redisPasswordFile.mountPath@anyOf(2)"
+                    "$ref": "#/$defs/values~1auth~1fragment"
                   }
                 ],
                 "description": "All secrets key about TLS config will be mounted into this path"
@@ -5024,10 +5024,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(3)@allOf(0).redisTlsConfig"
+                "$ref": "#/$defs/constrains~1clientCertFile.secret.name:t"
               }
             ]
           },
@@ -5039,7 +5039,7 @@
                 "description": "REDIS_EXPORTER_TLS_CLIENT_CERT_FILE will be set to /tls/tls-client-cert.crt",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/values~1redisTlsConfig@allOf(1)@then.serverKeyFile.secret"
+                    "$ref": "#/$defs/constrains~1key:t"
                   }
                 }
               }
@@ -5055,7 +5055,7 @@
                     "not": {
                       "properties": {
                         "serverCertFile": {
-                          "$ref": "#/$defs/values~1auth@allOf(1)@if@allOf(2)@anyOf(0)@not"
+                          "$ref": "#/$defs/constrains~1secret"
                         }
                       },
                       "required": [
@@ -5067,7 +5067,7 @@
                   {
                     "properties": {
                       "serverCertFile": {
-                        "$ref": "#/$defs/values~1auth@allOf(1)@if@allOf(2)@anyOf(1)"
+                        "$ref": "#/$defs/constrains~1secret=null"
                       }
                     },
                     "required": [
@@ -5078,7 +5078,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -5088,7 +5088,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
                 "anyOf": [
@@ -5126,10 +5126,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(2)@allOf(1).redisTlsConfig"
+                "$ref": "#/$defs/constrains~1caCertFile.secret.key:t"
               }
             ]
           },
@@ -5141,7 +5141,7 @@
                 "description": "REDIS_EXPORTER_TLS_CA_CERT_FILE will be set to /tls/tls-ca-cert.crt",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/values~1redisTlsConfig@allOf(10)@then.clientCertFile.secret"
+                    "$ref": "#/$defs/constrains~1name:t"
                   }
                 }
               }
@@ -5152,10 +5152,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(18)@if@anyOf(0)@allOf(0).redisTlsConfig"
+                "$ref": "#/$defs/constrains~1serverKeyFile.secret.key:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(2).auth"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -5167,7 +5167,7 @@
                 "description": "REDIS_EXPORTER_TLS_SERVER_KEY_FILE will be set to /tls/tls-server-key.key",
                 "properties": {
                   "secret": {
-                    "$ref": "#/$defs/values~1redisTlsConfig@allOf(10)@then.clientCertFile.secret"
+                    "$ref": "#/$defs/constrains~1name:t"
                   }
                 }
               }
@@ -5246,16 +5246,16 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(2)"
+          "$ref": "#/$defs/constrains~1:t~1fragment@16"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(4)"
+          "$ref": "#/$defs/constrains~1:t~1fragment@18"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(3)@then@allOf(0).service.port@oneOf(1)@anyOf(3)"
+          "$ref": "#/$defs/values~1fragment@6"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(5)"
+          "$ref": "#/$defs/constrains~1:t~1fragment@17"
         }
       ]
     },
@@ -5293,7 +5293,7 @@
         },
         "limits": {
           "additionalProperties": {
-            "$ref": "#/$defs/values~1env@anyOf(0)@items.valueFrom.resourceFieldRef.divisor"
+            "$ref": "#/$defs/values~1resources.limits@additionalProperties"
           },
           "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "type": [
@@ -5303,7 +5303,7 @@
         },
         "requests": {
           "additionalProperties": {
-            "$ref": "#/$defs/values~1env@anyOf(0)@items.valueFrom.resourceFieldRef.divisor"
+            "$ref": "#/$defs/values~1resources.limits@additionalProperties"
           },
           "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "type": [
@@ -5330,7 +5330,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "configmap": {
-                    "$ref": "#/$defs/values~1image@allOf(0).pullSecrets@allOf(0)@then@allOf(0)@additionalProperties"
+                    "$ref": "#/$defs/values~1image~1fragment"
                   }
                 }
               },
@@ -5340,13 +5340,13 @@
                   "keyname": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@4"
                       },
                       {
-                        "$ref": "#/$defs/values~1redisTlsConfig@allOf(1)@then.serverKeyFile.secret.key@anyOf(2)"
+                        "$ref": "#/$defs/constrains~1key:t~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment"
                       }
                     ]
                   }
@@ -5364,10 +5364,10 @@
     "securityContext": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t@2"
         },
         {
-          "$ref": "#/$defs/values~1affinity@anyOf(2)"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         },
         {
           "additionalProperties": false,
@@ -5387,7 +5387,7 @@
                 "add": {
                   "description": "Added capabilities",
                   "items": {
-                    "$ref": "#/$defs/values~1@allOf(6)@then@allOf(0).customLabels@anyOf(1)@allOf(0)@additionalProperties"
+                    "$ref": "#/$defs/constrains~1key+operator+values~1fragment"
                   },
                   "type": [
                     "array",
@@ -5397,7 +5397,7 @@
                 "drop": {
                   "description": "Removed capabilities",
                   "items": {
-                    "$ref": "#/$defs/values~1@allOf(6)@then@allOf(0).customLabels@anyOf(1)@allOf(0)@additionalProperties"
+                    "$ref": "#/$defs/constrains~1key+operator+values~1fragment"
                   },
                   "type": [
                     "array",
@@ -5455,13 +5455,13 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/values~1podSecurityContext@anyOf(1).seLinuxOptions"
+              "$ref": "#/$defs/constrains~1level+role+type+user"
             },
             "seccompProfile": {
-              "$ref": "#/$defs/values~1podSecurityContext@anyOf(1).seccompProfile"
+              "$ref": "#/$defs/constrains~1localhostProfile+type"
             },
             "windowsOptions": {
-              "$ref": "#/$defs/values~1podSecurityContext@anyOf(1).windowsOptions"
+              "$ref": "#/$defs/constrains~1gmsaCredentialSpec+gmsaCredentialSpecName+hostProcess+runAsUserName"
             }
           },
           "type": "object"
@@ -5489,7 +5489,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/values~1@allOf(19)@if@allOf(1)@anyOf(1).service"
+                "$ref": "#/$defs/constrains~1type=null"
               }
             ]
           },
@@ -5501,10 +5501,10 @@
         "annotations": {
           "allOf": [
             {
-              "$ref": "#/$defs/values~1annotations@allOf(0)"
+              "$ref": "#/$defs/values~1annotations~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(1)"
+              "$ref": "#/$defs/values~1fragment"
             }
           ]
         },
@@ -5513,13 +5513,13 @@
         "labels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+              "$ref": "#/$defs/constrains~1:t@2"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(6)@then@allOf(0).customLabels@anyOf(1)"
+              "$ref": "#/$defs/values~1fragment@4"
             },
             {
-              "$ref": "#/$defs/values~1affinity@anyOf(2)"
+              "$ref": "#/$defs/values~1affinity~1fragment"
             }
           ]
         },
@@ -5531,62 +5531,62 @@
               "type": "integer"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(3)@then@allOf(0).service.port@oneOf(1)@anyOf(3)"
+              "$ref": "#/$defs/values~1fragment@6"
             }
           ]
         },
         "portName": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@4"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(2)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@16"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
+              "$ref": "#/$defs/constrains~1:t~1fragment"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@15"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@9"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@14"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(4)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@10"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(5)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@12"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(6)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@13"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@6"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(9)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@11"
                 }
               ],
               "description": "The name of this port within the service. This must be a DNS_LABEL. All ports within a ServiceSpec must have unique names. When considering the endpoints for a Service, this must match the 'name' field in the EndpointPort. Optional if only one ServicePort is defined on this service.",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(4)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@18"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(5)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@17"
             },
             {
               "description": "The name of this port within the service. This must be a DNS_LABEL. All ports within a ServiceSpec must have unique names. When considering the endpoints for a Service, this must match the 'name' field in the EndpointPort. Optional if only one ServicePort is defined on this service.",
@@ -5601,7 +5601,7 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
+              "$ref": "#/$defs/constrains~1:t~1fragment"
             },
             {
               "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
@@ -5609,7 +5609,7 @@
               "type": "string"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)"
+              "$ref": "#/$defs/values~1fragment@3"
             }
           ]
         }
@@ -5624,7 +5624,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/values~1@allOf(31)@if.rbac"
+            "$ref": "#/$defs/constrains~1create:t"
           },
           "then": {
             "additionalProperties": {},
@@ -5634,60 +5634,60 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(0)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@15"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(1)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@9"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(2)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@14"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@7"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(4)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@10"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(5)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@12"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(6)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@13"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@6"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@8"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(9)"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@11"
                       }
                     ],
                     "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@4"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+                    "$ref": "#/$defs/constrains~1:t@2"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(2)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@16"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(4)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@18"
                   },
                   {
                     "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(5)"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@17"
                   }
                 ],
                 "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
@@ -5703,26 +5703,26 @@
         "name": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(0)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@4"
             },
             {
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+              "$ref": "#/$defs/constrains~1:t@2"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(2)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@16"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)"
+              "$ref": "#/$defs/constrains~1:t~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(4)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@18"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(22)@then.redisAddress@anyOf(5)"
+              "$ref": "#/$defs/constrains~1:t~1fragment@17"
             },
             {
               "type": "null"
@@ -5733,34 +5733,34 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@15"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@9"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@14"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(0)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(4)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@10"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(5)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@12"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(6)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@13"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(1)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@6"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(2)@additionalProperties@anyOf(2)@allOf(2)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then@allOf(1).nameOverride@anyOf(3)@allOf(9)"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@11"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -5795,13 +5795,13 @@
           "anyOf": [
             {
               "additionalProperties": {
-                "$ref": "#/$defs/values~1serviceMonitor.targets@anyOf(0)@additionalProperties"
+                "$ref": "#/$defs/constrains~1additionalMetricsRelabels+additionalRelabeling+interval+scrapeTimeout"
               },
               "type": "object"
             },
             {
               "items": {
-                "$ref": "#/$defs/values~1serviceMonitor.targets@anyOf(0)@additionalProperties"
+                "$ref": "#/$defs/constrains~1additionalMetricsRelabels+additionalRelabeling+interval+scrapeTimeout"
               },
               "type": "array"
             }
@@ -5863,7 +5863,7 @@
           "type": "array"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then@allOf(0).customLabels@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t@2"
         },
         {
           "type": "null"

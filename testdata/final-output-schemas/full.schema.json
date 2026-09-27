@@ -1,5 +1,31 @@
 {
   "$defs": {
+    "constrains/kind=ConfigMap": {
+      "properties": {
+        "kind": {
+          "enum": [
+            "ConfigMap"
+          ]
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    },
+    "constrains/kind=Service": {
+      "properties": {
+        "kind": {
+          "enum": [
+            "Service"
+          ]
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    },
     "t": {
       "anyOf": [
         {
@@ -25,45 +51,7 @@
         }
       ]
     },
-    "values/local@allOf(0)@if@allOf(0)": {
-      "properties": {
-        "kind": {
-          "enum": [
-            "Service"
-          ]
-        }
-      },
-      "required": [
-        "kind"
-      ],
-      "type": "object"
-    },
-    "values/local@allOf(0)@if@allOf(1)": {
-      "properties": {
-        "kind": {
-          "enum": [
-            "ConfigMap"
-          ]
-        }
-      },
-      "required": [
-        "kind"
-      ],
-      "type": "object"
-    },
-    "values/local@allOf(1)@then.setting@anyOf(1)": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/local@allOf(1)@then.setting@anyOf(2)": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/local@allOf(1)@then.setting@anyOf(4)": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "values/local@allOf(2)@then.setting@anyOf(4)@additionalProperties@anyOf(2)": {
+    "values/local/fragment": {
       "allOf": [
         {
           "not": {
@@ -83,6 +71,18 @@
       ],
       "type": "string"
     },
+    "values/local/fragment@2": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/local/fragment@3": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "values/local/fragment@4": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
     "values/replicas": {
       "anyOf": [
         {
@@ -96,17 +96,17 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/values~1local@allOf(1)@then.setting@anyOf(1)"
+          "$ref": "#/$defs/values~1local~1fragment@2"
         },
         {
-          "$ref": "#/$defs/values~1local@allOf(1)@then.setting@anyOf(2)"
+          "$ref": "#/$defs/values~1local~1fragment@4"
         },
         {
           "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/values~1local@allOf(1)@then.setting@anyOf(4)"
+          "$ref": "#/$defs/values~1local~1fragment@3"
         }
       ]
     }
@@ -457,10 +457,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1local@allOf(0)@if@allOf(0)"
+                "$ref": "#/$defs/constrains~1kind=Service"
               },
               {
-                "$ref": "#/$defs/values~1local@allOf(0)@if@allOf(1)"
+                "$ref": "#/$defs/constrains~1kind=ConfigMap"
               }
             ]
           },
@@ -475,7 +475,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/values~1local@allOf(0)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1kind=ConfigMap"
           },
           "then": {
             "additionalProperties": {},
@@ -487,17 +487,17 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/values~1local@allOf(1)@then.setting@anyOf(1)"
+                    "$ref": "#/$defs/values~1local~1fragment@2"
                   },
                   {
-                    "$ref": "#/$defs/values~1local@allOf(1)@then.setting@anyOf(2)"
+                    "$ref": "#/$defs/values~1local~1fragment@4"
                   },
                   {
                     "description": "Immutable, if set to true, ensures that data stored in the ConfigMap cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.",
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/values~1local@allOf(1)@then.setting@anyOf(4)"
+                    "$ref": "#/$defs/values~1local~1fragment@3"
                   },
                   {
                     "description": "Immutable, if set to true, ensures that data stored in the ConfigMap cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.",
@@ -512,11 +512,11 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1local@allOf(0)@if@allOf(0)"
+                "$ref": "#/$defs/constrains~1kind=Service"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/values~1local@allOf(0)@if@allOf(1)"
+                  "$ref": "#/$defs/constrains~1kind=ConfigMap"
                 }
               }
             ]
@@ -605,7 +605,7 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/values~1local@allOf(1)@then.setting@anyOf(1)"
+                    "$ref": "#/$defs/values~1local~1fragment@2"
                   },
                   {
                     "additionalProperties": {
@@ -618,7 +618,7 @@
                           "type": "integer"
                         },
                         {
-                          "$ref": "#/$defs/values~1local@allOf(2)@then.setting@anyOf(4)@additionalProperties@anyOf(2)"
+                          "$ref": "#/$defs/values~1local~1fragment"
                         },
                         {
                           "type": "number"
@@ -636,15 +636,15 @@
                       ]
                     },
                     "propertyNames": {
-                      "$ref": "#/$defs/values~1local@allOf(2)@then.setting@anyOf(4)@additionalProperties@anyOf(2)"
+                      "$ref": "#/$defs/values~1local~1fragment"
                     },
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/values~1local@allOf(1)@then.setting@anyOf(2)"
+                    "$ref": "#/$defs/values~1local~1fragment@4"
                   },
                   {
-                    "$ref": "#/$defs/values~1local@allOf(1)@then.setting@anyOf(4)"
+                    "$ref": "#/$defs/values~1local~1fragment@3"
                   }
                 ]
               }

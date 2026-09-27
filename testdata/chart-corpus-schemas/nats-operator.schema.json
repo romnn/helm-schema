@@ -1,153 +1,17 @@
 {
   "$defs": {
-    "helm-double-quoted-safe": {
-      "anyOf": [
-        {
-          "type": [
-            "boolean",
-            "integer",
-            "null",
-            "number"
-          ]
-        },
-        {
-          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
-          "type": "string"
-        },
-        {
-          "additionalProperties": {
-            "$ref": "#/$defs/helm-double-quoted-safe@anyOf(2)@additionalProperties"
-          },
-          "propertyNames": {
-            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
-          },
-          "type": "object"
-        },
-        {
-          "items": {
-            "$ref": "#/$defs/helm-double-quoted-safe@anyOf(2)@additionalProperties"
-          },
-          "type": "array"
-        }
-      ]
-    },
-    "helm-double-quoted-safe@anyOf(2)@additionalProperties": {
+    "constrains/:helm-double-quoted-safe": {
       "$ref": "#/$defs/helm-double-quoted-safe"
     },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
-      ]
+    "constrains/:t": {
+      "not": {
+        "$ref": "#/$defs/t"
+      }
     },
-    "values/@allOf(0)@if@allOf(0)": {
-      "properties": {
-        "cluster": {
-          "$ref": "#/$defs/values~1@allOf(0)@if@allOf(0).cluster"
-        }
-      },
-      "required": [
-        "cluster"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(0)@if@allOf(0).cluster": {
-      "properties": {
-        "metrics": {
-          "$ref": "#/$defs/values~1@allOf(0)@if@allOf(0).cluster.metrics"
-        }
-      },
-      "required": [
-        "metrics"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(0)@if@allOf(0).cluster.metrics": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(0)@if@allOf(1).cluster": {
-      "properties": {
-        "metrics": {
-          "properties": {
-            "servicemonitor": {
-              "$ref": "#/$defs/values~1@allOf(0)@if@allOf(0).cluster.metrics"
-            }
-          },
-          "required": [
-            "servicemonitor"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "metrics"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(0)@if@allOf(2)": {
-      "properties": {
-        "cluster": {
-          "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2).cluster"
-        }
-      },
-      "required": [
-        "cluster"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(0)@if@allOf(2).cluster": {
-      "properties": {
-        "create": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(1)@if@allOf(1)": {
-      "properties": {
-        "cluster": {
-          "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1).cluster"
-        }
-      },
-      "required": [
-        "cluster"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(1)@if@allOf(1).cluster": {
+    "constrains/auth.enabled:t": {
       "properties": {
         "auth": {
-          "$ref": "#/$defs/values~1@allOf(0)@if@allOf(0).cluster.metrics"
+          "$ref": "#/$defs/constrains~1enabled:t"
         }
       },
       "required": [
@@ -155,194 +19,18 @@
       ],
       "type": "object"
     },
-    "values/@allOf(10)@if@allOf(1).cluster": {
+    "constrains/cluster.auth.enabled:t": {
       "properties": {
-        "tls": {
-          "$ref": "#/$defs/values~1@allOf(0)@if@allOf(0).cluster.metrics"
+        "cluster": {
+          "$ref": "#/$defs/constrains~1auth.enabled:t"
         }
       },
       "required": [
-        "tls"
+        "cluster"
       ],
       "type": "object"
     },
-    "values/@allOf(13)@if@allOf(1)": {
-      "properties": {
-        "clusterScoped": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "clusterScoped"
-      ],
-      "type": "object"
-    },
-    "values/@allOf(13)@then.cluster.namespace@anyOf(0)": {
-      "not": {
-        "$ref": "#/$defs/t"
-      }
-    },
-    "values/@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)"
-        }
-      ]
-    },
-    "values/@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(0)": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "values/@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(1)": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "maxItems": 0,
-            "type": "array"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(1)@additionalProperties@anyOf(2)"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "null"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "maxProperties": 0,
-            "type": "object"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(1)@additionalProperties@anyOf(2)"
-      },
-      "type": "object"
-    },
-    "values/@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(1)@additionalProperties@anyOf(2)": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "values/@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(0)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(1)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(2)"
-        },
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(4)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(5)"
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(6)"
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        },
-        {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(9)"
-        }
-      ],
-      "type": "string"
-    },
-    "values/@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(0)": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "values/@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(1)": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "values/@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(2)": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "values/@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(4)": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "values/@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(5)": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "values/@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(6)": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "values/@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(9)": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "values/@allOf(15)@if@allOf(0)@not": {
+    "constrains/cluster.auth.users:t": {
       "properties": {
         "cluster": {
           "properties": {
@@ -369,41 +57,92 @@
       ],
       "type": "object"
     },
-    "values/@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(4)": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(5)": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "values/@allOf(6)@then@allOf(1).cluster.auth.users@anyOf(0)@additionalProperties": {
+    "constrains/cluster.create:t": {
       "properties": {
-        "username": {
-          "$ref": "#/$defs/helm-double-quoted-safe@anyOf(2)@additionalProperties"
+        "cluster": {
+          "$ref": "#/$defs/constrains~1create:t"
         }
       },
       "required": [
-        "username"
+        "cluster"
       ],
       "type": "object"
     },
-    "values/@allOf(6)@then@allOf(2).cluster.auth.users@anyOf(0)@additionalProperties": {
+    "constrains/cluster.metrics.enabled:t": {
       "properties": {
-        "password": {
-          "$ref": "#/$defs/helm-double-quoted-safe@anyOf(2)@additionalProperties"
+        "cluster": {
+          "$ref": "#/$defs/constrains~1metrics.enabled:t"
         }
       },
       "required": [
-        "password"
+        "cluster"
       ],
       "type": "object"
     },
-    "values/@allOf(6)@then@allOf(3).cluster.auth.users@anyOf(0)@items": {
+    "constrains/clusterScoped:t": {
+      "properties": {
+        "clusterScoped": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "clusterScoped"
+      ],
+      "type": "object"
+    },
+    "constrains/create:t": {
+      "properties": {
+        "create": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/metrics.enabled:t": {
+      "properties": {
+        "metrics": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "metrics"
+      ],
+      "type": "object"
+    },
+    "constrains/metrics.servicemonitor.enabled:t": {
+      "properties": {
+        "metrics": {
+          "properties": {
+            "servicemonitor": {
+              "$ref": "#/$defs/constrains~1enabled:t"
+            }
+          },
+          "required": [
+            "servicemonitor"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "metrics"
+      ],
+      "type": "object"
+    },
+    "constrains/password+permissions+username": {
       "additionalProperties": {},
       "properties": {
         "password": {},
@@ -412,49 +151,200 @@
       },
       "type": "object"
     },
-    "values/@allOf(9)@then@allOf(0).rollingUpdateMaxSurge": {
+    "constrains/password:helm-double-quoted-safe": {
+      "properties": {
+        "password": {
+          "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
+        }
+      },
+      "required": [
+        "password"
+      ],
+      "type": "object"
+    },
+    "constrains/tls.enabled:t": {
+      "properties": {
+        "tls": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "constrains/username:helm-double-quoted-safe": {
+      "properties": {
+        "username": {
+          "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
+        }
+      },
+      "required": [
+        "username"
+      ],
+      "type": "object"
+    },
+    "helm-double-quoted-safe": {
+      "anyOf": [
+        {
+          "type": [
+            "boolean",
+            "integer",
+            "null",
+            "number"
+          ]
+        },
+        {
+          "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$",
+          "type": "string"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
+          },
+          "propertyNames": {
+            "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
+          },
+          "type": "object"
+        },
+        {
+          "items": {
+            "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
+          },
+          "type": "array"
+        }
+      ]
+    },
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    },
+    "values/cluster/fragment": {
+      "$ref": "#/$defs/values~1cluster~1fragment@2"
+    },
+    "values/cluster/fragment@2": {
+      "$ref": "#/$defs/values~1fragment@5"
+    },
+    "values/cluster/fragment@3": {
+      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
+      "type": "string"
+    },
+    "values/cluster/fragment@4": {
+      "type": "object",
+      "x-kubernetes-preserve-unknown-fields": true
+    },
+    "values/fragment": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/$defs/values~1fragment@3"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/values~1fragment@3"
+      },
+      "type": "object"
+    },
+    "values/fragment@10": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "values/fragment@11": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "values/fragment@12": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "values/fragment@13": {
       "oneOf": [
         {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(0)"
+              "$ref": "#/$defs/values~1fragment@4"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)"
+              "$ref": "#/$defs/values~1fragment@14"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(1)"
+              "$ref": "#/$defs/values~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(4)"
+              "$ref": "#/$defs/values~1fragment@17"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(5)"
+              "$ref": "#/$defs/values~1fragment@16"
             },
             {
               "type": "null"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)"
+              "$ref": "#/$defs/values~1fragment@2"
             }
           ]
         },
         {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)"
+              "$ref": "#/$defs/values~1fragment@14"
             },
             {
               "type": "integer"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(4)"
+              "$ref": "#/$defs/values~1fragment@17"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(9)@then@allOf(0).rollingUpdateMaxSurge@oneOf(1)@anyOf(3)"
+              "$ref": "#/$defs/values~1fragment@15"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(5)"
+              "$ref": "#/$defs/values~1fragment@16"
             },
             {
               "type": "null"
@@ -463,27 +353,159 @@
         }
       ]
     },
-    "values/@allOf(9)@then@allOf(0).rollingUpdateMaxSurge@oneOf(1)@anyOf(3)": {
+    "values/fragment@14": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/fragment@15": {
       "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
-    "values/cluster@allOf(0)@then@allOf(0).resources@anyOf(0)": {
-      "type": "object",
-      "x-kubernetes-preserve-unknown-fields": true
-    },
-    "values/cluster@allOf(0)@then@allOf(1).metrics.enabled@anyOf(0)": {
-      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
+    "values/fragment@16": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
       "type": "string"
     },
-    "values/cluster@allOf(0)@then@allOf(11).configReload.pullPolicy": {
-      "$ref": "#/$defs/values~1cluster@allOf(0)@then@allOf(11).configReload.pullPolicy@ref"
+    "values/fragment@17": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
     },
-    "values/cluster@allOf(0)@then@allOf(11).configReload.pullPolicy@ref": {
-      "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)"
+    "values/fragment@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/values~1fragment@12"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@6"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@11"
+        },
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@7"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@9"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@10"
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@8"
+        }
+      ],
+      "type": "string"
     },
-    "values/livenessProbe@allOf(0)": {
+    "values/fragment@3": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "values/fragment@4": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "values/fragment@5": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1fragment@4"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@2"
+        }
+      ]
+    },
+    "values/fragment@6": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "values/fragment@7": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "values/fragment@8": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "values/fragment@9": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "values/podAnnotations/fragment": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "values/resources.limits@additionalProperties": {
+      "oneOf": [
+        {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      ]
+    },
+    "when/enabled:t/then/failureThreshold+initialDelaySeconds+periodSeconds+successThreshold+1more": {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(0)@if@allOf(0).cluster.metrics"
+        "$ref": "#/$defs/constrains~1enabled:t"
       },
       "then": {
         "allOf": [
@@ -493,7 +515,7 @@
               "failureThreshold": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)"
+                    "$ref": "#/$defs/values~1fragment@14"
                   },
                   {
                     "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
@@ -501,13 +523,13 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(4)"
+                    "$ref": "#/$defs/values~1fragment@17"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(9)@then@allOf(0).rollingUpdateMaxSurge@oneOf(1)@anyOf(3)"
+                    "$ref": "#/$defs/values~1fragment@15"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(5)"
+                    "$ref": "#/$defs/values~1fragment@16"
                   },
                   {
                     "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
@@ -524,7 +546,7 @@
               "initialDelaySeconds": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)"
+                    "$ref": "#/$defs/values~1fragment@14"
                   },
                   {
                     "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
@@ -532,13 +554,13 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(4)"
+                    "$ref": "#/$defs/values~1fragment@17"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(9)@then@allOf(0).rollingUpdateMaxSurge@oneOf(1)@anyOf(3)"
+                    "$ref": "#/$defs/values~1fragment@15"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(5)"
+                    "$ref": "#/$defs/values~1fragment@16"
                   },
                   {
                     "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
@@ -555,16 +577,16 @@
               "periodSeconds": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)"
+                    "$ref": "#/$defs/values~1fragment@14"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(4)"
+                    "$ref": "#/$defs/values~1fragment@17"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(9)@then@allOf(0).rollingUpdateMaxSurge@oneOf(1)@anyOf(3)"
+                    "$ref": "#/$defs/values~1fragment@15"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(5)"
+                    "$ref": "#/$defs/values~1fragment@16"
                   },
                   {
                     "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
@@ -586,7 +608,7 @@
               "successThreshold": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)"
+                    "$ref": "#/$defs/values~1fragment@14"
                   },
                   {
                     "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
@@ -599,13 +621,13 @@
                     "type": "integer"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(4)"
+                    "$ref": "#/$defs/values~1fragment@17"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(9)@then@allOf(0).rollingUpdateMaxSurge@oneOf(1)@anyOf(3)"
+                    "$ref": "#/$defs/values~1fragment@15"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(5)"
+                    "$ref": "#/$defs/values~1fragment@16"
                   }
                 ]
               }
@@ -627,16 +649,16 @@
                     "type": "integer"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)"
+                    "$ref": "#/$defs/values~1fragment@14"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(4)"
+                    "$ref": "#/$defs/values~1fragment@17"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(9)@then@allOf(0).rollingUpdateMaxSurge@oneOf(1)@anyOf(3)"
+                    "$ref": "#/$defs/values~1fragment@15"
                   },
                   {
-                    "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(5)"
+                    "$ref": "#/$defs/values~1fragment@16"
                   }
                 ]
               }
@@ -644,28 +666,6 @@
           }
         ]
       }
-    },
-    "values/podAnnotations@anyOf(1)": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "values/resources.limits@additionalProperties": {
-      "oneOf": [
-        {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        {
-          "type": [
-            "number",
-            "null"
-          ]
-        }
-      ]
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -675,12 +675,12 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1cluster.metrics.enabled:t"
           },
           {
             "properties": {
               "cluster": {
-                "$ref": "#/$defs/values~1@allOf(0)@if@allOf(1).cluster"
+                "$ref": "#/$defs/constrains~1metrics.servicemonitor.enabled:t"
               }
             },
             "required": [
@@ -689,7 +689,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2)"
+            "$ref": "#/$defs/constrains~1cluster.create:t"
           }
         ]
       },
@@ -752,10 +752,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2)"
+            "$ref": "#/$defs/constrains~1cluster.create:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1cluster.auth.enabled:t"
           }
         ]
       },
@@ -946,13 +946,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2)"
+            "$ref": "#/$defs/constrains~1cluster.create:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1cluster.auth.enabled:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(15)@if@allOf(0)@not"
+            "$ref": "#/$defs/constrains~1cluster.auth.users:t"
           }
         ]
       },
@@ -994,7 +994,7 @@
                         "anyOf": [
                           {
                             "additionalProperties": {
-                              "$ref": "#/$defs/values~1@allOf(6)@then@allOf(1).cluster.auth.users@anyOf(0)@additionalProperties"
+                              "$ref": "#/$defs/constrains~1username:helm-double-quoted-safe"
                             },
                             "type": "object"
                           },
@@ -1003,7 +1003,7 @@
                           },
                           {
                             "items": {
-                              "$ref": "#/$defs/values~1@allOf(6)@then@allOf(1).cluster.auth.users@anyOf(0)@additionalProperties"
+                              "$ref": "#/$defs/constrains~1username:helm-double-quoted-safe"
                             },
                             "type": "array"
                           }
@@ -1030,7 +1030,7 @@
                         "anyOf": [
                           {
                             "additionalProperties": {
-                              "$ref": "#/$defs/values~1@allOf(6)@then@allOf(2).cluster.auth.users@anyOf(0)@additionalProperties"
+                              "$ref": "#/$defs/constrains~1password:helm-double-quoted-safe"
                             },
                             "type": "object"
                           },
@@ -1039,7 +1039,7 @@
                           },
                           {
                             "items": {
-                              "$ref": "#/$defs/values~1@allOf(6)@then@allOf(2).cluster.auth.users@anyOf(0)@additionalProperties"
+                              "$ref": "#/$defs/constrains~1password:helm-double-quoted-safe"
                             },
                             "type": "array"
                           }
@@ -1066,13 +1066,13 @@
                         "anyOf": [
                           {
                             "items": {
-                              "$ref": "#/$defs/values~1@allOf(6)@then@allOf(3).cluster.auth.users@anyOf(0)@items"
+                              "$ref": "#/$defs/constrains~1password+permissions+username"
                             },
                             "type": "array"
                           },
                           {
                             "additionalProperties": {
-                              "$ref": "#/$defs/values~1@allOf(6)@then@allOf(3).cluster.auth.users@anyOf(0)@items"
+                              "$ref": "#/$defs/constrains~1password+permissions+username"
                             },
                             "type": "object"
                           },
@@ -1182,7 +1182,7 @@
         "additionalProperties": {},
         "properties": {
           "schedulerName": {
-            "$ref": "#/$defs/helm-double-quoted-safe@anyOf(2)@additionalProperties"
+            "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
           }
         }
       }
@@ -1207,7 +1207,7 @@
             "additionalProperties": {},
             "properties": {
               "rollingUpdateMaxSurge": {
-                "$ref": "#/$defs/values~1@allOf(9)@then@allOf(0).rollingUpdateMaxSurge"
+                "$ref": "#/$defs/values~1fragment@13"
               }
             }
           },
@@ -1215,7 +1215,7 @@
             "additionalProperties": {},
             "properties": {
               "rollingUpdateMaxUnavailable": {
-                "$ref": "#/$defs/values~1@allOf(9)@then@allOf(0).rollingUpdateMaxSurge"
+                "$ref": "#/$defs/values~1fragment@13"
               }
             }
           }
@@ -1226,12 +1226,12 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2)"
+            "$ref": "#/$defs/constrains~1cluster.create:t"
           },
           {
             "properties": {
               "cluster": {
-                "$ref": "#/$defs/values~1@allOf(10)@if@allOf(1).cluster"
+                "$ref": "#/$defs/constrains~1tls.enabled:t"
               }
             },
             "required": [
@@ -1322,10 +1322,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(0)"
+            "$ref": "#/$defs/constrains~1cluster.metrics.enabled:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2)"
+            "$ref": "#/$defs/constrains~1cluster.create:t"
           }
         ]
       },
@@ -1366,10 +1366,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2)"
+            "$ref": "#/$defs/constrains~1cluster.create:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(13)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1clusterScoped:t"
           }
         ]
       },
@@ -1382,12 +1382,12 @@
               "namespace": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(0)"
+                    "$ref": "#/$defs/constrains~1:t"
                   },
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)"
+                        "$ref": "#/$defs/values~1fragment@5"
                       },
                       {
                         "type": "string"
@@ -1423,14 +1423,14 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/values~1@allOf(15)@if@allOf(0)@not"
+              "$ref": "#/$defs/constrains~1cluster.auth.users:t"
             }
           },
           {
-            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2)"
+            "$ref": "#/$defs/constrains~1cluster.create:t"
           },
           {
-            "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1)"
+            "$ref": "#/$defs/constrains~1cluster.auth.enabled:t"
           },
           {
             "properties": {
@@ -1494,7 +1494,7 @@
                     "description": "Client Authentication\nref: https://github.com/nats-io/gnatsd#authentication\nnote: token not supported only user/password will work with this chart version",
                     "properties": {
                       "password": {
-                        "$ref": "#/$defs/helm-double-quoted-safe@anyOf(2)@additionalProperties"
+                        "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
                       }
                     }
                   }
@@ -1543,7 +1543,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(13)@if@allOf(1)"
+        "$ref": "#/$defs/constrains~1clusterScoped:t"
       },
       "then": {
         "additionalProperties": {},
@@ -1554,7 +1554,7 @@
               "namespace": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(0)"
+                    "$ref": "#/$defs/constrains~1:t"
                   },
                   {
                     "allOf": [
@@ -1565,30 +1565,30 @@
                             "type": "null"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(0)"
+                            "$ref": "#/$defs/values~1fragment@4"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)"
+                            "$ref": "#/$defs/values~1fragment@14"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(1)"
+                            "$ref": "#/$defs/values~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(4)"
+                            "$ref": "#/$defs/values~1fragment@17"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(5)"
+                            "$ref": "#/$defs/values~1fragment@16"
                           },
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(0)"
+                                "$ref": "#/$defs/values~1fragment@12"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(1)"
+                                "$ref": "#/$defs/values~1fragment@6"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(2)"
+                                "$ref": "#/$defs/values~1fragment@11"
                               },
                               {
                                 "not": {
@@ -1596,13 +1596,13 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(4)"
+                                "$ref": "#/$defs/values~1fragment@7"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(5)"
+                                "$ref": "#/$defs/values~1fragment@9"
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(6)"
+                                "$ref": "#/$defs/values~1fragment@10"
                               },
                               {
                                 "not": {
@@ -1615,7 +1615,7 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(9)"
+                                "$ref": "#/$defs/values~1fragment@8"
                               }
                             ],
                             "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
@@ -1638,7 +1638,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2)"
+        "$ref": "#/$defs/constrains~1cluster.create:t"
       },
       "then": {
         "allOf": [
@@ -2112,7 +2112,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2).cluster"
+            "$ref": "#/$defs/constrains~1create:t"
           },
           "then": {
             "allOf": [
@@ -2122,10 +2122,10 @@
                   "resources": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1cluster@allOf(0)@then@allOf(0).resources@anyOf(0)"
+                        "$ref": "#/$defs/values~1cluster~1fragment@4"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1:t"
                       }
                     ],
                     "description": "limits:\ncpu: 500m\nmemory: 512Mi\nrequests:\ncpu: 100m\nmemory: 256Mi"
@@ -2142,7 +2142,7 @@
                       "enabled": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1cluster@allOf(0)@then@allOf(1).metrics.enabled@anyOf(0)"
+                            "$ref": "#/$defs/values~1cluster~1fragment@3"
                           },
                           {
                             "type": "boolean"
@@ -2161,7 +2161,7 @@
                     "description": "Prometheus Metrics Exporter",
                     "properties": {
                       "tag": {
-                        "$ref": "#/$defs/values~1cluster@allOf(0)@then@allOf(11).configReload.pullPolicy"
+                        "$ref": "#/$defs/values~1cluster~1fragment"
                       }
                     }
                   }
@@ -2173,7 +2173,7 @@
                   "name": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)"
+                        "$ref": "#/$defs/values~1fragment@5"
                       },
                       {
                         "type": "string"
@@ -2190,7 +2190,7 @@
                     "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
                     "properties": {
                       "repository": {
-                        "$ref": "#/$defs/values~1cluster@allOf(0)@then@allOf(11).configReload.pullPolicy"
+                        "$ref": "#/$defs/values~1cluster~1fragment"
                       }
                     }
                   }
@@ -2206,7 +2206,7 @@
                       "enabled": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1cluster@allOf(0)@then@allOf(1).metrics.enabled@anyOf(0)"
+                            "$ref": "#/$defs/values~1cluster~1fragment@3"
                           },
                           {
                             "type": "boolean"
@@ -2227,10 +2227,10 @@
                       "resources": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1cluster@allOf(0)@then@allOf(0).resources@anyOf(0)"
+                            "$ref": "#/$defs/values~1cluster~1fragment@4"
                           },
                           {
-                            "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(0)"
+                            "$ref": "#/$defs/constrains~1:t"
                           }
                         ],
                         "description": "limits:\ncpu: 50m\nmemory: 32Mi\nrequests:\ncpu: 10m\nmemory: 32Mi"
@@ -2247,7 +2247,7 @@
                     "description": "Prometheus Metrics Exporter",
                     "properties": {
                       "pullPolicy": {
-                        "$ref": "#/$defs/values~1cluster@allOf(0)@then@allOf(11).configReload.pullPolicy"
+                        "$ref": "#/$defs/values~1cluster~1fragment"
                       }
                     }
                   }
@@ -2259,13 +2259,13 @@
                   "version": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(0)"
+                        "$ref": "#/$defs/values~1fragment@4"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(1)"
+                        "$ref": "#/$defs/values~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)"
+                        "$ref": "#/$defs/values~1fragment@2"
                       }
                     ],
                     "description": "Nats version\nImage tags are listed here: https://hub.docker.com/_/nats?tab=tags"
@@ -2278,10 +2278,10 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1cluster@allOf(0)@then@allOf(0).resources@anyOf(0)"
+                        "$ref": "#/$defs/values~1cluster~1fragment@4"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(0)"
+                        "$ref": "#/$defs/constrains~1:t"
                       }
                     ],
                     "description": "Optional custom annotations to add to Pods in the cluster"
@@ -2297,7 +2297,7 @@
                         "type": "integer"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(9)@then@allOf(0).rollingUpdateMaxSurge@oneOf(1)@anyOf(3)"
+                        "$ref": "#/$defs/values~1fragment@15"
                       }
                     ],
                     "description": "Cluster Size"
@@ -2312,7 +2312,7 @@
                     "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
                     "properties": {
                       "pullPolicy": {
-                        "$ref": "#/$defs/values~1cluster@allOf(0)@then@allOf(11).configReload.pullPolicy"
+                        "$ref": "#/$defs/values~1cluster~1fragment"
                       }
                     }
                   }
@@ -2326,7 +2326,7 @@
                     "description": "Prometheus Metrics Exporter",
                     "properties": {
                       "repository": {
-                        "$ref": "#/$defs/values~1cluster@allOf(0)@then@allOf(11).configReload.pullPolicy"
+                        "$ref": "#/$defs/values~1cluster~1fragment"
                       }
                     }
                   }
@@ -2340,7 +2340,7 @@
                     "description": "Configuration Reload\nNOTE: Only supported in Kubernetes v1.12+.",
                     "properties": {
                       "tag": {
-                        "$ref": "#/$defs/values~1cluster@allOf(0)@then@allOf(11).configReload.pullPolicy"
+                        "$ref": "#/$defs/values~1cluster~1fragment"
                       }
                     }
                   }
@@ -2353,10 +2353,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(0)@if@allOf(0).cluster"
+                "$ref": "#/$defs/constrains~1metrics.enabled:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2).cluster"
+                "$ref": "#/$defs/constrains~1create:t"
               },
               {
                 "anyOf": [
@@ -2438,7 +2438,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2).cluster"
+                "$ref": "#/$defs/constrains~1create:t"
               }
             ]
           },
@@ -2448,7 +2448,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2).cluster"
+                "$ref": "#/$defs/constrains~1create:t"
               },
               {
                 "anyOf": [
@@ -2486,7 +2486,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2).cluster"
+                "$ref": "#/$defs/constrains~1create:t"
               },
               {
                 "anyOf": [
@@ -2524,10 +2524,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2).cluster"
+                "$ref": "#/$defs/constrains~1create:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(1)@if@allOf(1).cluster"
+                "$ref": "#/$defs/constrains~1auth.enabled:t"
               }
             ]
           },
@@ -2541,7 +2541,7 @@
                   "enableServiceAccounts": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1cluster@allOf(0)@then@allOf(1).metrics.enabled@anyOf(0)"
+                        "$ref": "#/$defs/values~1cluster~1fragment@3"
                       },
                       {
                         "type": "boolean"
@@ -2558,13 +2558,13 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(0)@if@allOf(1).cluster"
+                "$ref": "#/$defs/constrains~1metrics.servicemonitor.enabled:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(0)@if@allOf(0).cluster"
+                "$ref": "#/$defs/constrains~1metrics.enabled:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2).cluster"
+                "$ref": "#/$defs/constrains~1create:t"
               }
             ]
           },
@@ -2580,7 +2580,7 @@
                     "description": "Prometheus Operator ServiceMonitor config",
                     "properties": {
                       "prometheusInstance": {
-                        "$ref": "#/$defs/values~1cluster@allOf(0)@then@allOf(11).configReload.pullPolicy"
+                        "$ref": "#/$defs/values~1cluster~1fragment"
                       }
                     }
                   }
@@ -2593,10 +2593,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(10)@if@allOf(1).cluster"
+                "$ref": "#/$defs/constrains~1tls.enabled:t"
               },
               {
-                "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2).cluster"
+                "$ref": "#/$defs/constrains~1create:t"
               }
             ]
           },
@@ -2609,7 +2609,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "routesSecret": {
-                        "$ref": "#/$defs/values~1cluster@allOf(0)@then@allOf(11).configReload.pullPolicy"
+                        "$ref": "#/$defs/values~1cluster~1fragment"
                       }
                     }
                   }
@@ -2622,7 +2622,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "serverSecret": {
-                        "$ref": "#/$defs/values~1cluster@allOf(0)@then@allOf(11).configReload.pullPolicy"
+                        "$ref": "#/$defs/values~1cluster~1fragment"
                       }
                     }
                   }
@@ -2635,7 +2635,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2).cluster"
+                "$ref": "#/$defs/constrains~1create:t"
               },
               {
                 "anyOf": [
@@ -2764,34 +2764,34 @@
         "pullPolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(0)"
+              "$ref": "#/$defs/values~1fragment@4"
             },
             {
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)"
+              "$ref": "#/$defs/values~1fragment@14"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(1)"
+              "$ref": "#/$defs/values~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(4)"
+              "$ref": "#/$defs/values~1fragment@17"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(5)"
+              "$ref": "#/$defs/values~1fragment@16"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(0)"
+                  "$ref": "#/$defs/values~1fragment@12"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(1)"
+                  "$ref": "#/$defs/values~1fragment@6"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(2)"
+                  "$ref": "#/$defs/values~1fragment@11"
                 },
                 {
                   "not": {
@@ -2799,13 +2799,13 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(4)"
+                  "$ref": "#/$defs/values~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(5)"
+                  "$ref": "#/$defs/values~1fragment@9"
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(6)"
+                  "$ref": "#/$defs/values~1fragment@10"
                 },
                 {
                   "not": {
@@ -2818,7 +2818,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(9)"
+                  "$ref": "#/$defs/values~1fragment@8"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -2843,7 +2843,7 @@
               "x-kubernetes-patch-strategy": "merge"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(0)"
+              "$ref": "#/$defs/constrains~1:t"
             }
           ]
         },
@@ -2859,7 +2859,7 @@
       "additionalProperties": {},
       "allOf": [
         {
-          "$ref": "#/$defs/values~1livenessProbe@allOf(0)"
+          "$ref": "#/$defs/when~1enabled:t~1then~1failureThreshold+initialDelaySeconds+periodSeconds+successThreshold+1more"
         }
       ],
       "description": "Configure extra options for liveness and readiness probes\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes",
@@ -2876,35 +2876,35 @@
     "nameOverride": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(0)"
+          "$ref": "#/$defs/values~1fragment@4"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)"
+          "$ref": "#/$defs/values~1fragment@14"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(1)"
+          "$ref": "#/$defs/values~1fragment"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(4)"
+          "$ref": "#/$defs/values~1fragment@17"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(5)"
+          "$ref": "#/$defs/values~1fragment@16"
         },
         {
           "type": "null"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)"
+          "$ref": "#/$defs/values~1fragment@2"
         }
       ]
     },
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "additionalProperties": {
@@ -2925,10 +2925,10 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1podAnnotations@anyOf(1)"
+          "$ref": "#/$defs/values~1podAnnotations~1fragment"
         },
         {
           "allOf": [
@@ -2959,7 +2959,7 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "allOf": [
@@ -2985,7 +2985,7 @@
           ]
         },
         {
-          "$ref": "#/$defs/values~1podAnnotations@anyOf(1)"
+          "$ref": "#/$defs/values~1podAnnotations~1fragment"
         }
       ],
       "description": "Additional pod labels\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/"
@@ -2997,7 +2997,7 @@
       "additionalProperties": {},
       "allOf": [
         {
-          "$ref": "#/$defs/values~1livenessProbe@allOf(0)"
+          "$ref": "#/$defs/when~1enabled:t~1then~1failureThreshold+initialDelaySeconds+periodSeconds+successThreshold+1more"
         }
       ],
       "properties": {
@@ -3023,16 +3023,16 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)"
+          "$ref": "#/$defs/values~1fragment@14"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(4)"
+          "$ref": "#/$defs/values~1fragment@17"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(9)@then@allOf(0).rollingUpdateMaxSurge@oneOf(1)@anyOf(3)"
+          "$ref": "#/$defs/values~1fragment@15"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(5)"
+          "$ref": "#/$defs/values~1fragment@16"
         }
       ],
       "description": "Set default Replica Count for the Operator"
@@ -3103,7 +3103,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(0).cluster.metrics"
+            "$ref": "#/$defs/constrains~1enabled:t"
           },
           "then": {
             "allOf": [
@@ -3113,10 +3113,10 @@
                   "fsGroup": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)"
+                        "$ref": "#/$defs/values~1fragment@14"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(4)"
+                        "$ref": "#/$defs/values~1fragment@17"
                       },
                       {
                         "description": "A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod:\n\n1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume. Note that this field cannot be set when spec.os.name is windows.",
@@ -3124,10 +3124,10 @@
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(9)@then@allOf(0).rollingUpdateMaxSurge@oneOf(1)@anyOf(3)"
+                        "$ref": "#/$defs/values~1fragment@15"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(5)"
+                        "$ref": "#/$defs/values~1fragment@16"
                       },
                       {
                         "description": "A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod:\n\n1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume. Note that this field cannot be set when spec.os.name is windows.",
@@ -3149,7 +3149,7 @@
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)"
+                        "$ref": "#/$defs/values~1fragment@14"
                       },
                       {
                         "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
@@ -3157,13 +3157,13 @@
                         "type": "integer"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(4)"
+                        "$ref": "#/$defs/values~1fragment@17"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(9)@then@allOf(0).rollingUpdateMaxSurge@oneOf(1)@anyOf(3)"
+                        "$ref": "#/$defs/values~1fragment@15"
                       },
                       {
-                        "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(5)"
+                        "$ref": "#/$defs/values~1fragment@16"
                       }
                     ]
                   }
@@ -3234,7 +3234,7 @@
           "type": "array"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(0)"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "type": "null"
@@ -3244,21 +3244,21 @@
     "updateStrategy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(0)"
+          "$ref": "#/$defs/values~1fragment@4"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)"
+          "$ref": "#/$defs/values~1fragment@14"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(0)"
+              "$ref": "#/$defs/values~1fragment@12"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(1)"
+              "$ref": "#/$defs/values~1fragment@6"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(2)"
+              "$ref": "#/$defs/values~1fragment@11"
             },
             {
               "not": {
@@ -3266,13 +3266,13 @@
               }
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(4)"
+              "$ref": "#/$defs/values~1fragment@7"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(5)"
+              "$ref": "#/$defs/values~1fragment@9"
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(6)"
+              "$ref": "#/$defs/values~1fragment@10"
             },
             {
               "not": {
@@ -3285,24 +3285,24 @@
               }
             },
             {
-              "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(2)@allOf(9)"
+              "$ref": "#/$defs/values~1fragment@8"
             }
           ],
           "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(13)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(1)"
+          "$ref": "#/$defs/values~1fragment"
         },
         {
           "description": "Type of deployment. Can be \"Recreate\" or \"RollingUpdate\". Default is RollingUpdate.",
           "type": "null"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(4)"
+          "$ref": "#/$defs/values~1fragment@17"
         },
         {
-          "$ref": "#/$defs/values~1@allOf(18)@then.cluster.namespace@anyOf(1)@allOf(0)@anyOf(5)"
+          "$ref": "#/$defs/values~1fragment@16"
         }
       ],
       "description": "rollingUpdateMaxSurge: 25%\nrollingUpdateMaxUnavailable: \"25%"
