@@ -217,6 +217,32 @@ const UNADJUDICATED_INTAKE: &[&str] = &[
     "zookeeper",
 ];
 
+/// Charts Helm cannot load at all, so it validates no values document for
+/// them; the coalescer must report exactly the registered reason. Every other
+/// chart must compose, and any other refusal fails the test.
+const HELM_UNLOADABLE_CHARTS: &[(&str, &str)] = &[("cert-manager", "Chart.yaml file is missing")];
+
+/// The chart's coalesced defaults against its schema: rejected where the
+/// corpus records a rejection, accepted everywhere else.
+fn assert_values_document(chart: &str, values_json: &Value, schema: &Value) {
+    if KNOWN_VALUES_REJECTIONS.contains(&chart) {
+        let errors = values_validation::validate_json_against_schema(values_json, schema);
+        assert!(
+            !errors.is_empty(),
+            "{chart}: values.yaml now validates; remove it from KNOWN_VALUES_REJECTIONS"
+        );
+    } else if QUARANTINED_FALSE_REJECTIONS.contains(&chart) {
+        let errors = values_validation::validate_json_against_schema(values_json, schema);
+        assert!(
+            !errors.is_empty(),
+            "{chart}: the false rejection is fixed. Adjudicate the new fixture and \
+             remove it from QUARANTINED_FALSE_REJECTIONS"
+        );
+    } else {
+        values_validation::assert_values_json_validates(values_json, schema);
+    }
+}
+
 fn assert_chart_schema_fixture(chart_id: ChartId) -> eyre::Result<()> {
     let chart = chart_id.relative_path();
     let spec = ArtifactId::Chart(chart_id).spec();
@@ -225,22 +251,30 @@ fn assert_chart_schema_fixture(chart_id: ChartId) -> eyre::Result<()> {
     };
     let schema = helm_schema_test_support::consume(spec.id)?;
 
-    let values_json = values_validation::values_yaml_as_json_for_path(chart)?;
-    if KNOWN_VALUES_REJECTIONS.contains(&chart) {
-        let errors = values_validation::validate_json_against_schema(&values_json, &schema);
-        assert!(
-            !errors.is_empty(),
-            "{chart}: values.yaml now validates; remove it from KNOWN_VALUES_REJECTIONS"
-        );
-    } else if QUARANTINED_FALSE_REJECTIONS.contains(&chart) {
-        let errors = values_validation::validate_json_against_schema(&values_json, &schema);
-        assert!(
-            !errors.is_empty(),
-            "{chart}: the false rejection is fixed. Adjudicate the new fixture and \
-             remove it from QUARANTINED_FALSE_REJECTIONS"
-        );
-    } else {
-        values_validation::assert_values_json_validates(&values_json, &schema);
+    let composed = test_util::helm_values::coalesce_chart_values(
+        &helm_schema_test_support::generate::chart_dir(chart),
+        Value::Object(serde_json::Map::new()),
+    );
+    let unloadable = HELM_UNLOADABLE_CHARTS
+        .iter()
+        .find(|(unloadable, _)| *unloadable == chart)
+        .map(|(_, reason)| *reason);
+    let values_json = match (unloadable, composed) {
+        (Some(reason), Err(test_util::helm_values::ValuesError::NotValidated(actual))) => {
+            assert!(
+                actual.contains(reason),
+                "{chart}: Helm refuses the chart for another reason than registered: {actual}"
+            );
+            None
+        }
+        (Some(_), Ok(_)) => {
+            eyre::bail!("{chart}: Helm loads this chart now; remove it from HELM_UNLOADABLE_CHARTS")
+        }
+        (_, Err(error)) => return Err(error).wrap_err("coalesce chart defaults"),
+        (None, Ok(values_json)) => Some(values_json),
+    };
+    if let Some(values_json) = &values_json {
+        assert_values_document(chart, values_json, &schema);
     }
 
     let fixture_path = test_util::workspace_root().join(fixture);
