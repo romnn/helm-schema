@@ -5209,6 +5209,25 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   433d2b40 in `round8-frontend`, target `round8-frontend-target`). Builders now: W1 rework 2, runner v6.6 +
   sweep classes (R2/R3 and the Go classes committed), frontend rework.
 
+- 23:50 (Sep 27) — **Runner v6.6 + sweep classes handed back (all nine items, red-then-green each, suite
+  green); sent to both reviewers.** Runner branch `runner-v6.6` in `round8-runner-v65`, HEAD 0395a25
+  (42d6e7f R1, 67c3db3 R9, a7c4d3c R2+R3, 0395a25 R4–R8; receipt version /8). Red on e6b574f: run-all exit
+  1 (lint 4, receipt 23, sweep 12, dump 1, py 7+1 failures); green on 0395a25: run-all exit 0 (10 suites, 474
+  checks, py 69) — `round8-runner-evidence/{red,green}/v66/`. Notable: a shared class table
+  `tests/helm-classes.json` (51 cases) byte-identical to `tools/helmsweep/testdata/helm-classes.json`
+  (drift possible — `cmp` them whenever either changes); `unresolved:unknown-lint-failure` refused as an
+  accepted class too; a STATUS-regex bug (padded nextest counters) that had hidden the whole
+  `final_output_policy` lane in landing 3's integration log is fixed; `cargo clean -p helm-schema-test-
+  support` before the producer build (cost unmeasured); `CLEARED_ENV` refuses a shell with `RUSTFLAGS`/
+  `CARGO_*` build settings (the orchestrator shell has none). Go: `round8-classify` 2a0551be
+  (`final.patch` sha 1276868e…), classify.go:29–30, go test -race 25 PASS, vet (incl. windows) clean,
+  `build:helmsweep` prints the release line. `landing-4.env` written with per-cell acceptances
+  (`cert-manager=lint:…loader`, `cert-manager=control:…loader`, `common=control:…library-chart`).
+  Reviews `review-runner-v66-{sol,astra}.md` (runs 73d3081f / 6b442c0c). Consequence for landing 4: the
+  candidate must carry the Go classifier patch alongside scratch (the sweep's Go and Python classes must
+  agree on the two unresolved rows), so landing 4 = scratch + classify on runner v6.6. Claude personal
+  account now 82 % weekly (resets Sep 28 10:00 local); builders running: W1 rework 2, frontend rework.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
