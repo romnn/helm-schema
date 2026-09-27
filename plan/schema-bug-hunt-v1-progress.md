@@ -4884,4 +4884,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   configuration class; `all` would cost 3–8 h on F23-sized changes for little gain). Chain
   relaunched with `landing-2.env` (BASELINE f7be7ba5, producer mode, cap 3, E run4).
 
+- 05:15 (Sep 27) — **Landing-2 run4 stopped at battery: runner v6.3 refuses helmsweep v1's
+  identity (no `helm-build` line).** Expected consequence of the review fix: v6.3 requires the
+  release-exact build line that only helmsweep v2 prints, and landing 2's candidate carries v1
+  (dump 7 min, unit, lint green again). Resolution: split `final-v2.patch` — a Go-only patch
+  (`tools/helmsweep` + Taskfile/typos/CI) goes onto landing 2 now (the sweep needs the fixed
+  driver; the battery in that tree still uses the CLI engine), the Rust resident-server client
+  becomes landing 3. helmsweep agent briefed; landing 2 restarts from dump after the Go-only
+  patch is applied (7 min dump + ~25 min to the sweep).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
