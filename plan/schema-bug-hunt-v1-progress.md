@@ -5317,6 +5317,31 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   moved. Open for the reviewers: Helm's messages show the scratch copy path (translate back?); wrapper
   errors print in the CLI's raw Debug form. Six other follow-up re-reviews still running.
 
+- 01:45 (Sep 28) — **All six re-reviews REWORK; three builders resumed (rework 3 for W1, rework 2 for
+  scratch and runner).** Saved as `review-{w1-rework2,scratch-rework1,runner-v66-rework1}-{sol,astra}.md`.
+  W1: the earlier cells pass (both reran the 39-row matrix), but W1's membership decoder turns pre-existing
+  shape imprecisions into rejections: `uniq` keeps the positional list (`last`/`index` select the wrong
+  input; both P1), `append`/`concat` invent fixed positions and `prepend` drops widened tails (astra P1),
+  escapes via zero-key `index`, projections `$outer.d` and pipelines through `and` (astra P1), D3 lost
+  through `merge`/`and`/`or`/`deepCopy`/`ternary`/`empty` composition (both P1), and W1's new truth facts
+  make `required (len .Values.m)` / `required (keys …)` reject `{}` although Helm accepts 0 and empty lists
+  (astra P1); the coarse D1 (`toYaml` cost) is accepted by both; `if $d`/`empty $d` after `unset` confirmed
+  pre-existing on main. Decision (brief `brief-w1-rework3.md`): membership keys are BARE values paths only —
+  the element-selection identity path is deleted rather than patched per function; escapes through
+  projections/zero-key index/and-or; D3 as a value property (validity flag or unknown-at-read with the
+  range consumer fixed); `required` fails only on nil/empty string; one full-schema test per cell.
+  Scratch: P1 the 7-day evidence prune deletes ANY old dir under `<target>/evidence`; P1 the marker basename
+  is unvalidated (empty stem → the package dir, `..`, an unrelated name); P2 Drop discards the marker on a
+  failed removal; P2 Go tests (`env_test.go:42`, `sweep_test.go:95 isolateEnv`) and `build:helmsweep`
+  still reach the system temp; P2 battery verdicts that return Ok but fail the final gate are never
+  preserved; P2 bundles keep absolute scratch paths and decoder failures lack their chart; P3 grouped
+  function alias escapes ast-grep. Brief `brief-scratch-rework2.md` (S8–S13). Runner: P1 `#[ignore]`d
+  tests leave the required lane set (both); P1/P2 `unable to detect chart at …: <cause>` wraps any
+  Chart.yaml read error (permission denied would be excused) and payload/multiline matches remain; P2
+  `RUSTUP_TOOLCHAIN` unbound, extensionless `config` unhashed; P3 CLI-log-only exit-7 case missing; V2/V3/
+  V4/V7 confirmed closed, `INSTALLATION FAILED:` is install-only (refused as unknown, fine). Brief
+  `brief-runner-v66-rework2.md` (V8–V11). Wrappers pre-landing follow-ups still running.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
