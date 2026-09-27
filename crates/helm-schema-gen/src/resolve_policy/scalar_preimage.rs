@@ -425,9 +425,9 @@ pub(super) fn scalar_string_preimage(
 }
 
 pub(super) fn helm_falsy_schema() -> Value {
-    SchemaNode::not(SchemaNode::reference(format!(
-        "#/$defs/{HELM_TRUTHY_DEFINITION_NAME}"
-    )))
+    SchemaNode::not(SchemaNode::reference(
+        helm_schema_json_schema_walk::definition_reference(HELM_TRUTHY_DEFINITION_NAME),
+    ))
     .into_value()
 }
 

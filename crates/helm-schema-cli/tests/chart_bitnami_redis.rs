@@ -68,12 +68,12 @@ fn pointer_through_refs<'schema>(
 ) -> Option<&'schema serde_json::Value> {
     let mut node = root;
     for segment in pointer.split('/').filter(|segment| !segment.is_empty()) {
-        while let Some(name) = node
+        while let Some(pointer) = node
             .get("$ref")
             .and_then(serde_json::Value::as_str)
-            .and_then(|reference| reference.strip_prefix("#/$defs/"))
+            .and_then(helm_schema_json_schema_walk::local_reference_fragment)
         {
-            node = root.pointer(&format!("/$defs/{name}"))?;
+            node = root.pointer(&pointer)?;
         }
         node = node.get(segment)?;
     }

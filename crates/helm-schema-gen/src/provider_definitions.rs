@@ -183,9 +183,9 @@ fn collect_referenced_definitions(
         Value::Object(object) => {
             if let Some(reference) = object.get("$ref").and_then(Value::as_str)
                 && let Some(name) = root_definition_name(reference)
-                && definitions_by_name.contains_key(name)
+                && definitions_by_name.contains_key(&name)
             {
-                referenced.insert(name.to_string());
+                referenced.insert(name);
             }
             for child in object.values() {
                 collect_referenced_definitions(child, definitions_by_name, referenced);
@@ -200,8 +200,8 @@ fn collect_referenced_definitions(
     }
 }
 
-fn root_definition_name(reference: &str) -> Option<&str> {
-    reference.strip_prefix("#/$defs/")?.split('/').next()
+fn root_definition_name(reference: &str) -> Option<String> {
+    helm_schema_json_schema_walk::parse_definition_reference(reference).map(|parsed| parsed.name)
 }
 
 #[derive(Debug)]

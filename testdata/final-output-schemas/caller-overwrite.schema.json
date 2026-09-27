@@ -51,7 +51,7 @@
         }
       ]
     },
-    "values/local/fragment": {
+    "values/local/string": {
       "allOf": [
         {
           "not": {
@@ -71,15 +71,15 @@
       ],
       "type": "string"
     },
-    "values/local/fragment@2": {
+    "values/local/string;pattern-a-za-z0-9-t": {
       "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
       "type": "string"
     },
-    "values/local/fragment@3": {
+    "values/local/string;pattern-null-null-null": {
       "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
       "type": "string"
     },
-    "values/local/fragment@4": {
+    "values/local/string;pattern-t": {
       "pattern": "^[ \\t]*(#.*)?$",
       "type": "string"
     },
@@ -96,17 +96,17 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/values~1local~1fragment@2"
+          "$ref": "#/$defs/values~1local~1string;pattern-a-za-z0-9-t"
         },
         {
-          "$ref": "#/$defs/values~1local~1fragment@4"
+          "$ref": "#/$defs/values~1local~1string;pattern-t"
         },
         {
           "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/values~1local~1fragment@3"
+          "$ref": "#/$defs/values~1local~1string;pattern-null-null-null"
         }
       ]
     }
@@ -488,17 +488,17 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/values~1local~1fragment@2"
+                    "$ref": "#/$defs/values~1local~1string;pattern-a-za-z0-9-t"
                   },
                   {
-                    "$ref": "#/$defs/values~1local~1fragment@4"
+                    "$ref": "#/$defs/values~1local~1string;pattern-t"
                   },
                   {
                     "description": "Immutable, if set to true, ensures that data stored in the ConfigMap cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.",
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/values~1local~1fragment@3"
+                    "$ref": "#/$defs/values~1local~1string;pattern-null-null-null"
                   },
                   {
                     "description": "Immutable, if set to true, ensures that data stored in the ConfigMap cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.",
@@ -606,7 +606,7 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/values~1local~1fragment@2"
+                    "$ref": "#/$defs/values~1local~1string;pattern-a-za-z0-9-t"
                   },
                   {
                     "additionalProperties": {
@@ -619,7 +619,7 @@
                           "type": "integer"
                         },
                         {
-                          "$ref": "#/$defs/values~1local~1fragment"
+                          "$ref": "#/$defs/values~1local~1string"
                         },
                         {
                           "type": "number"
@@ -637,15 +637,15 @@
                       ]
                     },
                     "propertyNames": {
-                      "$ref": "#/$defs/values~1local~1fragment"
+                      "$ref": "#/$defs/values~1local~1string"
                     },
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/values~1local~1fragment@4"
+                    "$ref": "#/$defs/values~1local~1string;pattern-t"
                   },
                   {
-                    "$ref": "#/$defs/values~1local~1fragment@3"
+                    "$ref": "#/$defs/values~1local~1string;pattern-null-null-null"
                   }
                 ]
               }

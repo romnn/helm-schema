@@ -15,13 +15,119 @@
           "additionalProperties": {},
           "properties": {
             "name": {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment@4"
+              "$ref": "#/$defs/constrains~1configMap.name~1anyOf~1null;name-of-the-referent+object+string+string;name-of-the-referent+3more"
             }
           }
         }
       }
     },
-    "constrains/configMap.name/fragment": {
+    "constrains/configMap.name/anyOf/null;name-of-the-referent+object+string+string;name-of-the-referent+3more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1configMap.name~1string@2"
+        },
+        {
+          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configMap.name~1object"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@3"
+            },
+            {
+              "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@8"
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@4"
+            },
+            {
+              "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@6"
+            },
+            {
+              "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@7"
+            },
+            {
+              "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern"
+            },
+            {
+              "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@5"
+            }
+          ],
+          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-null-null-null"
+        }
+      ]
+    },
+    "constrains/configMap.name/not/keywords/pattern": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
+    },
+    "constrains/configMap.name/not/keywords/pattern@2": {
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "constrains/configMap.name/not/keywords/pattern@3": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "constrains/configMap.name/not/keywords/pattern@4": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "constrains/configMap.name/not/keywords/pattern@5": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "constrains/configMap.name/not/keywords/pattern@6": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "constrains/configMap.name/not/keywords/pattern@7": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "constrains/configMap.name/not/keywords/pattern@8": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "constrains/configMap.name/not/keywords/pattern@9": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "constrains/configMap.name/object": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -32,7 +138,7 @@
             "type": "integer"
           },
           {
-            "$ref": "#/$defs/constrains~1configMap.name~1fragment@2"
+            "$ref": "#/$defs/constrains~1configMap.name~1string"
           },
           {
             "type": "number"
@@ -50,43 +156,11 @@
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/constrains~1configMap.name~1fragment@2"
+        "$ref": "#/$defs/constrains~1configMap.name~1string"
       },
       "type": "object"
     },
-    "constrains/configMap.name/fragment@10": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "constrains/configMap.name/fragment@11": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "constrains/configMap.name/fragment@12": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "constrains/configMap.name/fragment@13": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "constrains/configMap.name/fragment@14": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "constrains/configMap.name/fragment@15": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "constrains/configMap.name/fragment@16": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "constrains/configMap.name/fragment@2": {
+    "constrains/configMap.name/string": {
       "allOf": [
         {
           "not": {
@@ -94,15 +168,27 @@
           }
         },
         {
-          "$ref": "#/$defs/constrains~1configMap.name~1fragment@5"
+          "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern"
         },
         {
-          "$ref": "#/$defs/constrains~1configMap.name~1fragment@6"
+          "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@2"
         }
       ],
       "type": "string"
     },
-    "constrains/configMap.name/fragment@3": {
+    "constrains/configMap.name/string;pattern-a-za-z0-9-t": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "constrains/configMap.name/string;pattern-null-null-null": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "constrains/configMap.name/string;pattern-t": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "constrains/configMap.name/string@2": {
       "allOf": [
         {
           "not": {
@@ -119,92 +205,6 @@
         }
       ],
       "type": "string"
-    },
-    "constrains/configMap.name/fragment@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1configMap.name~1fragment@3"
-        },
-        {
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1configMap.name~1fragment@14"
-        },
-        {
-          "$ref": "#/$defs/constrains~1configMap.name~1fragment"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment@13"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment@7"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment@12"
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment@8"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment@10"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment@11"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment@5"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment@6"
-            },
-            {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment@9"
-            }
-          ],
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "string"
-        },
-        {
-          "$ref": "#/$defs/constrains~1configMap.name~1fragment@16"
-        },
-        {
-          "$ref": "#/$defs/constrains~1configMap.name~1fragment@15"
-        }
-      ]
-    },
-    "constrains/configMap.name/fragment@5": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
-      }
-    },
-    "constrains/configMap.name/fragment@6": {
-      "not": {
-        "pattern": "[\\r\\n]"
-      }
-    },
-    "constrains/configMap.name/fragment@7": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "constrains/configMap.name/fragment@8": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "constrains/configMap.name/fragment@9": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
     },
     "constrains/configMap=null": {
       "properties": {
@@ -1125,28 +1125,28 @@
         "image": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment@3"
+              "$ref": "#/$defs/constrains~1configMap.name~1string@2"
             },
             {
               "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment@14"
+              "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-a-za-z0-9-t"
             },
             {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment"
+              "$ref": "#/$defs/constrains~1configMap.name~1object"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@13"
+                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@9"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@7"
+                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@3"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@12"
+                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@8"
                 },
                 {
                   "not": {
@@ -1154,66 +1154,66 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@8"
+                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@4"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@10"
+                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@6"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@11"
+                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@7"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@5"
+                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@6"
+                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@2"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@9"
+                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@5"
                 }
               ],
               "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment@16"
+              "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-t"
             },
             {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment@15"
+              "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-null-null-null"
             }
           ]
         },
         "pullPolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment@3"
+              "$ref": "#/$defs/constrains~1configMap.name~1string@2"
             },
             {
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment@14"
+              "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-a-za-z0-9-t"
             },
             {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment"
+              "$ref": "#/$defs/constrains~1configMap.name~1object"
             },
             {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment@16"
+              "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-t"
             },
             {
-              "$ref": "#/$defs/constrains~1configMap.name~1fragment@15"
+              "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-null-null-null"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@13"
+                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@9"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@7"
+                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@3"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@12"
+                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@8"
                 },
                 {
                   "not": {
@@ -1221,22 +1221,22 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@8"
+                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@4"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@10"
+                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@6"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@11"
+                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@7"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@5"
+                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@6"
+                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@2"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1configMap.name~1fragment@9"
+                  "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@5"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -1324,7 +1324,7 @@
                       "name": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@3"
+                            "$ref": "#/$defs/constrains~1configMap.name~1string@2"
                           },
                           {
                             "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
@@ -1333,13 +1333,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@13"
+                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@9"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@7"
+                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@3"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@12"
+                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@8"
                               },
                               {
                                 "not": {
@@ -1347,38 +1347,38 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@8"
+                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@4"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@10"
+                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@6"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@11"
+                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@7"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@5"
+                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@6"
+                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@2"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@9"
+                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@5"
                               }
                             ],
                             "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@14"
+                            "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-a-za-z0-9-t"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1configMap.name~1fragment"
+                            "$ref": "#/$defs/constrains~1configMap.name~1object"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@16"
+                            "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-t"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@15"
+                            "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-null-null-null"
                           }
                         ]
                       }
@@ -1515,19 +1515,19 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@3"
+                            "$ref": "#/$defs/constrains~1configMap.name~1string@2"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@14"
+                            "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-a-za-z0-9-t"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1configMap.name~1fragment"
+                            "$ref": "#/$defs/constrains~1configMap.name~1object"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@16"
+                            "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-t"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@15"
+                            "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-null-null-null"
                           },
                           {
                             "type": "null"
@@ -1535,13 +1535,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@13"
+                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@9"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@7"
+                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@3"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@12"
+                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@8"
                               },
                               {
                                 "not": {
@@ -1549,22 +1549,22 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@8"
+                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@4"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@10"
+                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@6"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@11"
+                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@7"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@5"
+                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@6"
+                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@2"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1configMap.name~1fragment@9"
+                                "$ref": "#/$defs/constrains~1configMap.name~1not~1keywords~1pattern@5"
                               }
                             ],
                             "type": "string"
@@ -1574,17 +1574,17 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@14"
+                            "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-a-za-z0-9-t"
                           },
                           {
                             "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$",
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@16"
+                            "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-t"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1configMap.name~1fragment@15"
+                            "$ref": "#/$defs/constrains~1configMap.name~1string;pattern-null-null-null"
                           },
                           {
                             "type": "number"

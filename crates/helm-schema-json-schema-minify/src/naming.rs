@@ -29,12 +29,14 @@
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use helm_schema_json_schema_walk::{
-    ReferenceSiblings, SchemaTraversalContext, canonical_json_string, escape_json_pointer_segment,
-    schema_child_context_for_keyword, visit_subschemas, visit_subschemas_mut,
+    DefinitionReference, ReferenceSiblings, SchemaTraversalContext, canonical_json_string,
+    definition_reference, local_reference_fragment, parse_definition_reference,
+    schema_child_context_for_keyword, unescape_json_pointer_segment, visit_subschemas,
+    visit_subschemas_mut,
 };
 use serde_json::{Map, Value};
 
-use crate::{DEFINITION_REF_PREFIX, DEFINITIONS_KEY, base62, is_nested_resource};
+use crate::{DEFINITIONS_KEY, base62, is_nested_resource};
 
 /// Keywords whose identifiers or dynamic resolution the short rename does
 /// not model; a document using any of them keeps its names.
@@ -122,8 +124,8 @@ pub fn name_definitions(
 ///
 /// The most referenced definition receives the shortest key.
 /// Nothing is renamed, and the map is empty, unless every reference is a plain
-/// resolvable `#/…` pointer: a non-local, unresolved, anchor or
-/// percent-encoded reference, a dynamic or recursive reference, or a nested
+/// resolvable `#/…` pointer: a non-local, unresolved or anchor reference, a
+/// dynamic or recursive reference, or a nested
 /// identifier or anchor keeps the document's names.
 #[must_use]
 pub fn shorten_definition_names(schema: &Value) -> ShortenedSchema {
@@ -141,7 +143,7 @@ pub fn shorten_definition_names(schema: &Value) -> ShortenedSchema {
 }
 
 /// Replaces every short definition key that follows `$defs/` in `text` with
-/// its readable name, escaped as a JSON pointer segment.
+/// its readable name, spelled as in a `$ref` (see [`definition_reference`]).
 ///
 /// Error messages from Helm and JSON Schema validators locate schema
 /// positions as pointers, such as `file:///values.schema.json#/$defs/2b`.
@@ -161,13 +163,22 @@ pub fn expand_short_definition_names(
             .unwrap_or(after.len());
         let (key, remainder) = after.split_at(key_len);
         match readable_names.get(key) {
-            Some(readable) => expanded.push_str(&escape_json_pointer_segment(readable)),
+            Some(readable) => expanded.push_str(&definition_pointer_token(readable)),
             None => expanded.push_str(key),
         }
         rest = remainder;
     }
     expanded.push_str(rest);
     expanded
+}
+
+/// `name` as the token after `#/$defs/` in its `$ref`.
+fn definition_pointer_token(name: &str) -> String {
+    let reference = definition_reference(name);
+    reference
+        .get(definition_reference("").len()..)
+        .unwrap_or_default()
+        .to_string()
 }
 
 /// Renames root definitions and every reference to them at once.
@@ -401,10 +412,10 @@ fn erase_anonymous_references(
     anonymous: &BTreeMap<String, &[DefinitionOrigin]>,
 ) {
     if let Some(Value::String(reference)) = schema.get_mut("$ref")
-        && let Some((name, _)) = root_definition_reference(reference)
-        && anonymous.contains_key(&name)
+        && let Some(parsed) = parse_definition_reference(reference)
+        && anonymous.contains_key(&parsed.name)
     {
-        *reference = DEFINITION_REF_PREFIX.to_string();
+        *reference = definition_reference("");
     }
     visit_subschemas_mut(schema, ReferenceSiblings::Visit, &mut |child| {
         erase_anonymous_references(child, anonymous);
@@ -481,14 +492,14 @@ fn leaf_name(
         return schema.to_string();
     };
     if let Some(reference) = object.get("$ref").and_then(Value::as_str)
-        && let Some((name, suffix)) = root_definition_reference(reference)
-        && suffix.is_empty()
-        && let Some(body) = definitions.get(&name)
+        && let Some(parsed) = parse_definition_reference(reference)
+        && parsed.suffix.is_empty()
+        && let Some(body) = definitions.get(&parsed.name)
     {
-        if anonymous.contains_key(&name) && depth < LEAF_REFERENCE_DEPTH {
+        if anonymous.contains_key(&parsed.name) && depth < LEAF_REFERENCE_DEPTH {
             return leaf_name(body, definitions, anonymous, depth + 1);
         }
-        return format!(":{}", encode_document(&name));
+        return format!(":{}", encode_document(&parsed.name));
     }
     if let Some(kind) = object.get("type") {
         let mut name = match kind {
@@ -610,9 +621,9 @@ impl<'a> MeaningWalker<'a> {
         }
         self.budget -= 1;
         if let Some(reference) = object.get("$ref").and_then(Value::as_str)
-            && let Some((name, suffix)) = root_definition_reference(reference)
-            && suffix.is_empty()
-            && let Some((target, body)) = self.definitions.get_key_value(&name)
+            && let Some(parsed) = parse_definition_reference(reference)
+            && parsed.suffix.is_empty()
+            && let Some((target, body)) = self.definitions.get_key_value(&parsed.name)
         {
             if !self.anonymous.contains_key(target) {
                 insert_stated(paths, path, &format!(":{}", encode_document(target)));
@@ -859,9 +870,9 @@ fn collect_references<'a>(
         return;
     };
     if let Some(reference) = object.get("$ref").and_then(Value::as_str)
-        && let Some((name, suffix)) = root_definition_reference(reference)
-        && suffix.is_empty()
-        && let Some((target, _)) = definitions.get_key_value(&name)
+        && let Some(parsed) = parse_definition_reference(reference)
+        && parsed.suffix.is_empty()
+        && let Some((target, _)) = definitions.get_key_value(&parsed.name)
     {
         sites.push(Site {
             steps: steps.clone(),
@@ -961,7 +972,7 @@ fn origin_name(origin: &DefinitionOrigin) -> String {
         .pointer
         .split('/')
         .skip(1)
-        .map(|segment| segment.replace("~1", "/").replace("~0", "~"))
+        .map(unescape_json_pointer_segment)
         .collect::<VecDeque<_>>();
     let mut document = format!(
         "{}/{}",
@@ -1117,13 +1128,14 @@ fn short_definition_names(schema: &Value) -> BTreeMap<String, String> {
 
 fn rewrite_definition_references(schema: &mut Value, renames: &BTreeMap<String, String>) {
     if let Some(Value::String(reference)) = schema.get_mut("$ref")
-        && let Some((name, suffix)) = root_definition_reference(reference)
-        && let Some(renamed) = renames.get(&name)
+        && let Some(parsed) = parse_definition_reference(reference)
+        && let Some(renamed) = renames.get(&parsed.name)
     {
-        *reference = format!(
-            "{DEFINITION_REF_PREFIX}{}{suffix}",
-            escape_json_pointer_segment(renamed)
-        );
+        *reference = DefinitionReference {
+            name: renamed.clone(),
+            suffix: parsed.suffix,
+        }
+        .to_reference();
     }
     visit_subschemas_mut(schema, ReferenceSiblings::Visit, &mut |child| {
         if !is_nested_resource(child) {
@@ -1147,15 +1159,18 @@ fn uses_unmodelled_references(schema: &Value, is_root: bool) -> bool {
     found
 }
 
-/// Counts references per root definition; `false` when one is not a plain
-/// `#/…` pointer.
+/// Counts references per root definition; `false` when one is not a
+/// same-document JSON Pointer.
 fn count_definition_references(schema: &Value, counts: &mut BTreeMap<String, usize>) -> bool {
     if let Some(reference) = schema.get("$ref").and_then(Value::as_str) {
-        if reference.contains('%') || !(reference == "#" || reference.starts_with("#/")) {
+        let Some(fragment) = local_reference_fragment(reference) else {
+            return false;
+        };
+        if !(fragment.is_empty() || fragment.starts_with('/')) {
             return false;
         }
-        if let Some((name, _)) = root_definition_reference(reference)
-            && let Some(count) = counts.get_mut(&name)
+        if let Some(parsed) = parse_definition_reference(reference)
+            && let Some(count) = counts.get_mut(&parsed.name)
         {
             *count += 1;
         }
@@ -1167,14 +1182,4 @@ fn count_definition_references(schema: &Value, counts: &mut BTreeMap<String, usi
         }
     });
     faithful
-}
-
-/// Splits `#/$defs/<name><suffix>` into the unescaped name and the suffix.
-fn root_definition_reference(reference: &str) -> Option<(String, String)> {
-    let rest = reference.strip_prefix(DEFINITION_REF_PREFIX)?;
-    let (segment, suffix) = match rest.split_once('/') {
-        Some((segment, suffix)) => (segment, format!("/{suffix}")),
-        None => (rest, String::new()),
-    };
-    Some((segment.replace("~1", "/").replace("~0", "~"), suffix))
 }

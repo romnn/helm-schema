@@ -25,8 +25,8 @@ fn generated_reference_inlining_is_one_step_and_preserves_other_scopes() {
         "default": {"$ref": "#/$defs/1"}
     });
     let replacements = BTreeMap::from([
-        ("#/$defs/1".to_string(), json!({"$ref": "#/$defs/2"})),
-        ("#/$defs/2".to_string(), json!({"type": "string"})),
+        ("1".to_string(), json!({"$ref": "#/$defs/2"})),
+        ("2".to_string(), json!({"type": "string"})),
     ]);
 
     inline_generated_references(&mut schema, &replacements);

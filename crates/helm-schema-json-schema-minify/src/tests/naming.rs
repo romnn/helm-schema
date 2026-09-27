@@ -558,7 +558,7 @@ fn shortening_is_a_bijection_that_inverts_to_the_readable_document() -> eyre::Re
 }
 
 #[test]
-fn shortening_abstains_on_references_it_cannot_rewrite() {
+fn shortening_decodes_encoded_references_and_abstains_on_others() {
     let external = json!({
         "$defs": { "values/leaf": { "type": "string" } },
         "properties": { "a": { "$ref": "other.json#/$defs/values~1leaf" } }
@@ -599,9 +599,16 @@ fn shortening_abstains_on_references_it_cannot_rewrite() {
         "properties": { "a": { "$ref": "#leaf" } }
     });
 
+    // A percent-encoded pointer is decoded and rewritten, not skipped.
+    sim_assert_eq!(
+        have: shorten_definition_names(&encoded).schema,
+        want: json!({
+            "$defs": { "1": { "type": "string" } },
+            "properties": { "a": { "$ref": "#/$defs/1" } }
+        })
+    );
     for schema in [
         external,
-        encoded,
         dangling,
         dynamic,
         fragment_identifier,
@@ -841,4 +848,32 @@ fn leaves_are_named_by_what_they_are() {
 
 fn definitions_of(schema: &Value) -> Vec<String> {
     definitions(schema).into_keys().collect()
+}
+
+#[test]
+fn definition_names_with_pointer_and_percent_characters_round_trip() -> eyre::Result<()> {
+    let name = "values/a~b%c d";
+    let reference = helm_schema_json_schema_walk::definition_reference(name);
+    sim_assert_eq!(have: reference.as_str(), want: "#/$defs/values~1a~0b%25c%20d");
+    let parsed = helm_schema_json_schema_walk::parse_definition_reference(&reference)
+        .ok_or_eyre("the built reference parses")?;
+    sim_assert_eq!(have: parsed.name.as_str(), want: name);
+    sim_assert_eq!(have: parsed.suffix.as_str(), want: "");
+
+    let mut schema = json!({
+        "$defs": { "p1": { "type": "string" } },
+        "properties": { "a": { "$ref": "#/$defs/p1" } }
+    });
+    rename_definitions(
+        &mut schema,
+        &BTreeMap::from([("p1".to_string(), name.to_string())]),
+    );
+    sim_assert_eq!(have: reference_at(&schema, "/properties/a"), want: Some(reference.as_str()));
+    let pointer = helm_schema_json_schema_walk::local_reference_fragment(&reference)
+        .ok_or_eyre("a local reference")?;
+    sim_assert_eq!(have: schema.pointer(&pointer), want: Some(&json!({ "type": "string" })));
+    let validator = jsonschema::validator_for(&schema)?;
+    assert!(validator.is_valid(&json!({ "a": "text" })));
+    assert!(!validator.is_valid(&json!({ "a": 1 })));
+    Ok(())
 }

@@ -55,7 +55,7 @@ fn schema_node_for_values_path<'schema>(
 fn resolve_local_ref<'schema>(root: &'schema Value, node: &'schema Value) -> &'schema Value {
     node.get("$ref")
         .and_then(Value::as_str)
-        .and_then(|reference| reference.strip_prefix("#/$defs/"))
-        .and_then(|name| root.pointer(&format!("/$defs/{name}")))
+        .and_then(helm_schema_json_schema_walk::local_reference_fragment)
+        .and_then(|pointer| root.pointer(&pointer))
         .unwrap_or(node)
 }

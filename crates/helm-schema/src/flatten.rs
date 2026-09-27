@@ -498,7 +498,7 @@ fn existing_definition_names(schema: &Value) -> BTreeSet<String> {
 fn definition_ref(name: &str) -> Value {
     Value::Object(Map::from_iter([(
         "$ref".to_string(),
-        Value::String(format!("#/$defs/{name}")),
+        Value::String(helm_schema_json_schema_walk::definition_reference(name)),
     )]))
 }
 
