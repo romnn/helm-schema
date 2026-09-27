@@ -5066,4 +5066,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Lesson (added to the playbook): in a runner-managed clone stage only the files you edited.
   Chain restarted from dump, E `round8-landing3-run2`.
 
+- 17:20 (Sep 27) — **LANDING 3 ON MAIN (12f88398): readable `$defs` names.** Run2 on runner v6.4
+  (receipt sha d857d055…, finalized 17:06): dump 16:08–~16:13, unit, lint (→16:17), battery 13.6
+  min, integration 4.2 min, sweep 31.4 min (fast pass 13m36s over 156 charts, 1,270 compiles,
+  7,193 memo hits, 0 failures; CLI differential 543/543 agree; 0 new lint failures; 2 accepted
+  Helm refusals), finalize 10 s — **58 min end to end**. adopted.tsv empty; the 160 renamed
+  fixtures are in the branch, naming-only proof 160/160. Fixture keys are now source/meaning
+  paths (landing 2's content hashes are gone).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.

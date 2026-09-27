@@ -150,17 +150,20 @@ gates only, drop the stray mongodbcommunity hunk), regexp (`round8-regexp-eviden
 
 Everything the user queued as "basically ready" is on main. Nothing was pushed.
 
-- **main = 74139f94**: landing 1 (c02c01f8: F23 + okteto/graylog roster + Helm pool v2 +
-  helmsweep) and landing 2 (74139f94: corpus producer, perf1, stable `$defs` names, Helm value
-  coalescer + roster baseline pin, helmsweep v2, battery resident client, two test fixes).
-  Receipts: `/Volumes/T7/dev/round8-d3f23-landing3/receipt.json` and
-  `/Volumes/T7/dev/round8-landing2-run6/receipt.json`. Ledger entries 01:25 and 09:30 (Sep 27)
-  hold the step timings.
+- **main = 12f88398**: landing 1 (c02c01f8: F23 + okteto/graylog roster + Helm pool v2 +
+  helmsweep), landing 2 (74139f94: corpus producer, perf1, Helm value coalescer + roster baseline
+  pin, helmsweep v2, battery resident client, test fixes — its `$defs` naming used content-hash
+  keys, which the user rejected) and landing 3 (12f88398: readable source/meaning-named `$defs` in all
+  fixtures, explicit `helm-schema shorten` / `expand-defs`, producer `--helm-ready` companions,
+  runner v6.4, `$ref` handling via `referencing` + `fluent-uri`). Receipts:
+  `/Volumes/T7/dev/round8-d3f23-landing3/receipt.json`, `/Volumes/T7/dev/round8-landing2-run6/
+  receipt.json`, `/Volumes/T7/dev/round8-landing3-run2/receipt.json`. Ledger entries 01:25,
+  09:30 and 17:20 (Sep 27) hold the step timings.
 - **The landing chain now takes ~55 min end to end** (dump 3.5, unit 0.4, lint 1.7, battery 14,
-  integration 4, sweep 32 incl. the CLI differential, finalize). Runner = v6.3
+  integration 4, sweep 32 incl. the CLI differential, finalize). Runner = v6.4
   (`/Volumes/T7/dev/round8/runner`, branch `runner-v3-fail-closed`, merge 931672d + env commits;
   `SWEEP_ENGINE=helmsweep`, every roster row runs, `SWEEP_DIFF_CAP=3` by user decision, producer
-  dump mode with a frozen producer copy, receipt /6). Template env: `runner/landing-2.env`.
+  dump mode with a frozen producer copy, receipt /6). Template env: `runner/landing-3.env`.
   Worktrees `round8-runner-v6*` can be pruned (remove the dirs, then `git worktree prune`).
 - **Roster baseline coupling (design item):** the known-false-acceptance roster is observed as
   flips against `ROSTER_BASELINE` (f7be7ba5, pinned in `known_false_acceptances.rs`). The first
