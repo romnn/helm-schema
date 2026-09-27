@@ -610,24 +610,14 @@ impl Interpreter<'_> {
         escaped: Vec<DeferredNodes<'n>>,
     ) -> Vec<BranchStep<'n>> {
         if region.kind != ControlKind::If || index == 0 {
-            let mut steps = nodes
-                .into_iter()
-                .map(|node| BranchStep::Direct(vec![node]))
-                .collect::<Vec<_>>();
-            steps.extend(escaped.into_iter().map(BranchStep::Deferred));
-            return source_ordered_branch_steps(steps);
+            return undeferred_branch_steps(nodes, escaped);
         }
         let Some(candidate) = adopted
             .iter()
             .filter(|candidate| branch_window(region, candidate.view.node.span_start()).0 < index)
             .max_by_key(|candidate| candidate.view.node.span_start())
         else {
-            let mut steps = nodes
-                .into_iter()
-                .map(|node| BranchStep::Direct(vec![node]))
-                .collect::<Vec<_>>();
-            steps.extend(escaped.into_iter().map(BranchStep::Deferred));
-            return source_ordered_branch_steps(steps);
+            return undeferred_branch_steps(nodes, escaped);
         };
         let Some(shape) = self
             .body_facts
@@ -636,12 +626,7 @@ impl Interpreter<'_> {
             .get(&candidate.view.node.span_start())
             .copied()
         else {
-            let mut steps = nodes
-                .into_iter()
-                .map(|node| BranchStep::Direct(vec![node]))
-                .collect::<Vec<_>>();
-            steps.extend(escaped.into_iter().map(BranchStep::Deferred));
-            return source_ordered_branch_steps(steps);
+            return undeferred_branch_steps(nodes, escaped);
         };
         let parent = DeferredParent {
             shape,
@@ -652,12 +637,7 @@ impl Interpreter<'_> {
                 .unwrap_or_default(),
         };
         let Some(branch) = region.branches.get(index) else {
-            let mut steps = nodes
-                .into_iter()
-                .map(|node| BranchStep::Direct(vec![node]))
-                .collect::<Vec<_>>();
-            steps.extend(escaped.into_iter().map(BranchStep::Deferred));
-            return source_ordered_branch_steps(steps);
+            return undeferred_branch_steps(nodes, escaped);
         };
         let body_starts = branch
             .body
@@ -2237,6 +2217,20 @@ pub(super) struct DeferredNodes<'n> {
 enum BranchStep<'n> {
     Direct(Vec<NodeView<'n>>),
     Deferred(DeferredNodes<'n>),
+}
+
+/// Branch steps that keep every node in place, with only the escaped
+/// continuations deferred.
+fn undeferred_branch_steps<'n>(
+    nodes: Vec<NodeView<'n>>,
+    escaped: Vec<DeferredNodes<'n>>,
+) -> Vec<BranchStep<'n>> {
+    let mut steps = nodes
+        .into_iter()
+        .map(|node| BranchStep::Direct(vec![node]))
+        .collect::<Vec<_>>();
+    steps.extend(escaped.into_iter().map(BranchStep::Deferred));
+    source_ordered_branch_steps(steps)
 }
 
 fn source_ordered_branch_steps(mut steps: Vec<BranchStep<'_>>) -> Vec<BranchStep<'_>> {
