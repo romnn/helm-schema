@@ -5005,4 +5005,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   meaning, `when/<condition paths>/then/<constrained paths>`, read from the fragment's own schema,
   local `#n` only among same-named fragments, no allOf index; re-measure churn; re-dump.
 
+- 12:10 (Sep 27) — **Meaning names: churn level with hashes, 80% interpretable; two items before
+  landing.** `round8-defpaths` af39d05e/dafa8148 (`final.patch` sha c985a6bc…): guard fragments
+  named `when/<if paths>/then/<then paths>` or `constrains/<paths>` from their own schema
+  (operators `=v`, `!=v`, `:t`, `?`, `@items`, `@*`; `@N` only among equal names); no allOf index
+  in any name. Corpus: 66,998 `constrains/`, 17,188 `…/fragment@N` leaves (`{description,type}`
+  5,379, `{description,format,type}` 2,326, `{not}` 1,484, `{anyOf}` 1,248, …), 3,166 `values/`,
+  1,138 `when/`, 781 provider, 327 named. Churn replay: **2,777,443** changed lines (hash
+  2,777,877; floor 2,610,991). Naming-only proof 160/160, gates green, +625 LOC. Follow-ups
+  ordered: (1) builder names leaves by content (`<type>[:<format>]~<description slug>`, `not/…`,
+  `anyOf/…`) and makes the battery harness shorten schemas before Helm and back-translate Helm
+  errors (readable fixtures exceed Helm's limit on five charts); (2) runner v6.4: producer
+  `--helm-ready` companions accepted, sweep ships the candidate's `.helm.schema.json` (Python
+  mirror writer and its exit-6 rung deleted), baseline shortened with the candidate's own
+  `shorten` if needed, translated log copies beside the raw logs.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
