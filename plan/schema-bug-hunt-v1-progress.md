@@ -5155,6 +5155,29 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   the next runner track; frontend rework waits for a free builder slot (Claude personal account at 79 %).
   Runner v6.5 suite green on the worktree (10 suites + 61 py, `round8-runner-evidence/v65-run-all.txt`).
 
+- 22:35 (Sep 27) — **Runner v6.6 + sweep-classes builder launched; wrappers brief merged and parked.**
+  (Timestamps of the two entries above are ~20 min late: the reviews returned at ~22:25.) Runner v6.5
+  (worktree `round8-runner-v65`, e6b574f) got its red-then-green test: `tests/fake-cargo.sh` logs the
+  cargo env, `test_receipt.sh` requires dump/unit/lint to see `TMPDIR`/`GOTMPDIR` under the target — red on
+  a7ae237 (`round8-runner-evidence/v65-red-receipt.txt`, exit 1), green on v6.5 (`v65-green-receipt.txt`,
+  exit 0). Builder `runner-v66` (Opus; brief `round8/brief-runner-v66.md`): R1 delete the lint-residual
+  allowance; R2 `unresolved:loader` ("unable to detect chart") and `unresolved:library-chart` ("library
+  charts are not installable") in Python AND Go (clone `round8-classify` off 4ebf73ad, Go only); R3 per-cell
+  acceptance entries `chart=cell:class`, the new-lint-failure check always applies, `landing-4.env`
+  template; R4 step outputs hashed at step end and rechecked at finalize, battery coverage validated (160
+  charts, baseline sha, live flips > 0); R5 integration asserts every corpus lane ran; R6 producer manifest
+  root must equal canonical `$R` (+ `cargo clean -p helm-schema-test-support` if cheap); R7 unset then
+  export `HELM_SCHEMA_HELMSWEEP=$TARGET/helmsweep` and bind it; R8 clear `RUSTFLAGS`-class ambient
+  settings; R9 delete the readable-log copy step (`sweep_readable` and friends) so the wrappers can delete
+  `expand-defs`. The second wrapper design (`design-lint-template-wrappers-astra.md`) arrived; merged brief
+  `round8/brief-lint-template-wrappers.md` (decisions: whole-tree copy with materialized symlinks, no copy
+  without a root schema, always shorten, `tempdir_in` under the user's TMPDIR, INT/TERM handled, one
+  positional tail with optional `--`, byte-exact token translation with the prefix defect fixed red-first,
+  `helm::run` in the library + thin clap, invalid-regex fixture because Helm 4.2.3 value errors omit schema
+  locations, ≤ +350 net LOC target / 450 ceiling). Not launched: three builders are running (scratch, W1
+  rework 2, runner v6.6) and the personal Claude account is at 79 % weekly; frontend rework has priority
+  for the next free slot.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
