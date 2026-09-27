@@ -4862,4 +4862,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   the producer with the dump's command and, if the bytes match the manifest, re-run integration →
   sweep → finalize on the current receipt.
 
+- 04:35 (Sep 27) — Rebuilding the producer with the dump's command gave a THIRD sha (1658567b…):
+  the binary is not reproducible across invocations in the shared target dir (the provenance
+  build script and feature unification), so the interim re-run is off; landing 2 waits for runner
+  v6.3 (frozen producer copy) and restarts from dump (E `round8-landing2-run4`). `landing-2.env`
+  sets `SWEEP_DIFF_CAP=3` for now: with `all`, landing 2 would re-run F23's ~318 differing rows
+  through the CLI (heavy-chart cells 5–20 min each) although landing 1's differential already
+  adjudicated that sample; the default policy (all vs a cap) is a user decision recorded in the
+  receipt either way.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
