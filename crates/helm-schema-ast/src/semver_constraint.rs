@@ -12,6 +12,7 @@
 
 use std::fmt::Write as _;
 
+use nom::Parser as _;
 use nom::branch::alt;
 use nom::bytes::complete::{tag, take_while1};
 use nom::character::complete::{char, digit1, space0};
@@ -156,7 +157,7 @@ pub fn semver_constraint_matches_version(constraint: &str, version: &str) -> Opt
         return Some(regex::Regex::new(&pattern).ok()?.is_match(version));
     }
     if let Ok((_, (op, bound))) =
-        all_consuming(delimited(space0, concrete_comparator, space0))(constraint)
+        all_consuming(delimited(space0, concrete_comparator, space0)).parse(constraint)
         && !bound.pre.is_empty()
     {
         let version = Version::parse(version.strip_prefix('v').unwrap_or(version)).ok()?;
@@ -184,8 +185,9 @@ pub fn semver_constraint_matches_version(constraint: &str, version: &str) -> Opt
         });
     }
     let requirement = VersionReq::parse(constraint).ok().or_else(|| {
-        let (_, normalized) =
-            all_consuming(delimited(space0, masterminds_loose_caret, space0))(constraint).ok()?;
+        let (_, normalized) = all_consuming(delimited(space0, masterminds_loose_caret, space0))
+            .parse(constraint)
+            .ok()?;
         VersionReq::parse(&normalized).ok()
     })?;
     let version = Version::parse(version.strip_prefix(['v', 'V']).unwrap_or(version)).ok()?;
@@ -212,18 +214,19 @@ fn concrete_comparator(input: &str) -> nom::IResult<&str, (ComparisonOp, Version
                 Version::parse,
             ),
         ),
-    )(input)
+    )
+    .parse(input)
 }
 
 fn masterminds_loose_caret(input: &str) -> nom::IResult<&str, String> {
     let (input, _) = char('^')(input)?;
     let (input, _) = space0(input)?;
-    let (input, _) = opt(tag("v"))(input)?;
+    let (input, _) = opt(tag("v")).parse(input)?;
     let (input, major) = digit1(input)?;
-    let (input, minor) = opt(preceded(char('.'), digit1))(input)?;
+    let (input, minor) = opt(preceded(char('.'), digit1)).parse(input)?;
     let (input, _) = char('-')(input)?;
     let (input, prerelease) = semver_identifiers(input)?;
-    let (input, build) = opt(preceded(char('+'), semver_identifiers))(input)?;
+    let (input, build) = opt(preceded(char('+'), semver_identifiers)).parse(input)?;
 
     let minor = minor.unwrap_or("0");
     let build = build.map_or_else(String::new, |value| format!("+{value}"));
@@ -234,7 +237,8 @@ fn semver_identifiers(input: &str) -> nom::IResult<&str, &str> {
     recognize(pair(
         semver_identifier,
         many0(preceded(char('.'), semver_identifier)),
-    ))(input)
+    ))
+    .parse(input)
 }
 
 fn semver_identifier(input: &str) -> nom::IResult<&str, &str> {
