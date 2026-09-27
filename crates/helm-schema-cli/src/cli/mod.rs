@@ -2,6 +2,7 @@ mod chart_args;
 mod crd_args;
 mod diag_args;
 mod emission_args;
+mod expand_defs_args;
 mod inference_args;
 mod k8s_args;
 mod output_args;
@@ -17,6 +18,7 @@ pub use chart_args::ChartArgs;
 pub use crd_args::{CrdArgs, CrdVersionLookup};
 pub use diag_args::{DiagArgs, DiagFormat};
 pub use emission_args::{EmissionArgs, PolicyToggle};
+pub use expand_defs_args::ExpandDefsArgs;
 pub use inference_args::InferenceArgs;
 pub use k8s_args::{DEFAULT_AUTO_WINDOW, K8sArgs, K8sVersionFallback};
 pub use output_args::{DefsNames, OutputArgs};
@@ -114,4 +116,7 @@ pub enum Command {
     /// reviewed artifact; the map translates error messages that mention a
     /// short key back to readable names.
     Shorten(ShortenArgs),
+    /// Replace the short `$defs` keys a Helm or validator log mentions with
+    /// their readable names, using the map `shorten` wrote.
+    ExpandDefs(ExpandDefsArgs),
 }

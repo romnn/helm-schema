@@ -13,7 +13,7 @@ use helm_schema::chart_source::RootChartSource;
 use helm_schema::diagnostics::DiagnosticSink;
 use helm_schema::output::{
     FetchPolicy, HELM_MAX_CHART_FILE_BYTES, JsonOutputFormat, LoadBudget, PolicyInputOptions,
-    shorten_definition_names, write_schema_json_without_metrics,
+    expand_short_definition_names, shorten_definition_names, write_schema_json_without_metrics,
 };
 use helm_schema::{AnalysisSession, EngineResult};
 use serde_json::Value;
@@ -32,8 +32,10 @@ pub use helm_schema::{CliError, flatten, schema_override};
 /// Returns an error if chart discovery fails, a template/values file cannot be
 /// read/parsed, the schema cannot be generated, or output cannot be written.
 pub fn run(cli: Cli) -> EngineResult<()> {
-    if let Some(cli::Command::Shorten(args)) = &cli.command {
-        return shorten(args, cli.diag.diag_format);
+    match &cli.command {
+        Some(cli::Command::Shorten(args)) => return shorten(args, cli.diag.diag_format),
+        Some(cli::Command::ExpandDefs(args)) => return expand_defs(args),
+        None => {}
     }
     let trace_output = cli.perf.trace_output.clone();
     if let Some(trace_output) = trace_output {
@@ -179,6 +181,37 @@ fn shorten(args: &cli::ShortenArgs, diag_format: cli::DiagFormat) -> EngineResul
     }
     warn_over_helm_limit(written, true, diag_format);
     Ok(())
+}
+
+/// `helm-schema expand-defs`: the readable copy of text that mentions short
+/// `$defs` keys.
+fn expand_defs(args: &cli::ExpandDefsArgs) -> EngineResult<()> {
+    for path in [&args.map, &args.input, &args.output] {
+        if path.as_os_str() == "-" {
+            return Err(CliError::CliValidation(
+                "expand-defs reads and writes files; `-` is not accepted".to_string(),
+            ));
+        }
+    }
+    let read = |path: &Path| {
+        std::fs::read(path).map_err(|source| CliError::ReadText {
+            path: path.to_path_buf(),
+            source,
+        })
+    };
+    let readable_names: BTreeMap<String, String> = serde_json::from_slice(&read(&args.map)?)
+        .map_err(|source| CliError::ParseDefsMap {
+            path: args.map.clone(),
+            source,
+        })?;
+    let text = String::from_utf8_lossy(&read(&args.input)?).into_owned();
+    let expanded = expand_short_definition_names(&text, &readable_names);
+    let mut out = create_output_file(&args.output)?;
+    out.write_all(expanded.as_bytes())
+        .map_err(|source| CliError::WriteOutput {
+            path: args.output.clone(),
+            source,
+        })
 }
 
 /// Writes `schema` to `path`, or to standard output; returns the bytes written.
