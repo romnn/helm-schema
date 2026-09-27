@@ -4823,4 +4823,33 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   hit/miss/uncached moved to `w/<chart>/ops.tsv`, verdict files hold only key, exit codes,
   `cacheable` and class. Red vs 8627186: 28 + 10; green run-all exit 0 in 510 s (60/60).
 
+- 04:20 (Sep 27) — **helmsweep v2 hand-back: every review item fixed, parity re-proven.**
+  `round8-battery-go` branch `helmsweep-v2` (HEAD 33e753e5), `round8-battery-go-evidence/
+  final-v2.patch` (sha 2e2898a8…, 19 files, = diff c02c01f8), `handoff-v2.md`, `v2-*` logs.
+  (P1-1) `build:helmsweep` links the v4.2.3 release version, commit 43e8b7fe… and tree state with
+  CGO off as Helm's Makefile; `helmsweep version` prints `helm-build`, the task, the sweep and the
+  Rust client refuse any other build; `templates_see_the_release_capabilities_in_both_engines`
+  renders the whole `.Capabilities` object through CLI and helmsweep at 1.29.0 and 1.33.0 (red on
+  the old binary: `v4.2`, no commit). (P1-2) `--helm-env-clear` re-execs as a child under exactly
+  `HOME=<empty>` + `PATH=/usr/bin:/bin` before any package init (`env.go`), child refuses any
+  other env; sweep cache format 2; `TestHelmEnvClearPrecedesPackageInitialization` (a kubeconfig
+  with namespace `leaked` in the original HOME leaked on the old code in template AND lint).
+  (P1-3) `cacheability.go` parses every template incl. packaged dependencies at any depth with
+  `text/template/parse`; a chart calling any function on the battery's list, or failing to parse,
+  is uncacheable (`lookup` stays cacheable); `cells.tsv` gains `cacheable=yes|no` (`rows.tsv`
+  stays canonical 10 columns); `TestSweepNeverCachesANondeterministicChart` (old code: 10 hits on
+  a `randInt` chart). (P2) serve refuses stdin/URLs/relative paths/empty kube version; Rust client
+  600 s answer timeout, failed or late servers killed and reaped (old code hung 50 s and leaked
+  processes); per-render memory reported, servers over 128 MiB retired, lifetime RSS separate;
+  `EXE_SUFFIX`; explicit refusals for `HELM_DEBUG`, `HELM_DRIVER`, registry/repo config, plugins,
+  empty kube version; lint runs the CLI's root config init. Parity: sweep 639 cells / 0
+  disagreements, `rows.tsv` byte-equal (cold 7m12s; all 12 parity charts uncacheable — bitnami
+  `common` calls `keys`, grafana helpers `tpl` — so the Go sweep cache rarely hits on this corpus,
+  which is fine at this speed); battery `coverage.json` byte-identical to landing 1, 7,952 flip
+  lines identical between engines (734 s). Gates all green (go test -race 25, unit 115,
+  integration 54/54 both engines, lint/lint:fc residual only, GOOS=windows vet 0). Runner v6.3
+  briefed: read `cacheable` from `cells.tsv` (row cacheable iff all cells yes; absent = no), keep
+  `rows.tsv` canonical, record and require `helm-build`. Landing 3 = helmsweep v2 + battery-go on
+  main after landing 2, on runner v6.2+v6.3.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
