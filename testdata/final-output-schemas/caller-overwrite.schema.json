@@ -1,90 +1,5 @@
 {
   "$defs": {
-    "h0d6da7ea663d": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "h17cbfadf198d": {
-      "anyOf": [
-        {
-          "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
-          "format": "int32",
-          "type": "integer"
-        },
-        {
-          "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
-          "format": "int32",
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/h0d6da7ea663d"
-        },
-        {
-          "$ref": "#/$defs/h89bc4e1169b0"
-        },
-        {
-          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-          "type": "string"
-        },
-        {
-          "$ref": "#/$defs/h5b7699abf0ec"
-        }
-      ]
-    },
-    "h196d63c012e8": {
-      "properties": {
-        "kind": {
-          "enum": [
-            "Service"
-          ]
-        }
-      },
-      "required": [
-        "kind"
-      ],
-      "type": "object"
-    },
-    "h3394d7d8572c": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "h5b7699abf0ec": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "h89bc4e1169b0": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "hc0dd4738db2b": {
-      "properties": {
-        "kind": {
-          "enum": [
-            "ConfigMap"
-          ]
-        }
-      },
-      "required": [
-        "kind"
-      ],
-      "type": "object"
-    },
     "t": {
       "anyOf": [
         {
@@ -107,6 +22,91 @@
         },
         {
           "const": true
+        }
+      ]
+    },
+    "values/local@allOf(0)@if@allOf(0)": {
+      "properties": {
+        "kind": {
+          "enum": [
+            "Service"
+          ]
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    },
+    "values/local@allOf(0)@if@allOf(1)": {
+      "properties": {
+        "kind": {
+          "enum": [
+            "ConfigMap"
+          ]
+        }
+      },
+      "required": [
+        "kind"
+      ],
+      "type": "object"
+    },
+    "values/local@allOf(1)@then.setting@anyOf(1)": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/local@allOf(1)@then.setting@anyOf(2)": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/local@allOf(1)@then.setting@anyOf(4)": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "values/local@allOf(2)@then.setting@anyOf(4)@additionalProperties@anyOf(2)": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "values/replicas": {
+      "anyOf": [
+        {
+          "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+          "format": "int32",
+          "type": "integer"
+        },
+        {
+          "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+          "format": "int32",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/values~1local@allOf(1)@then.setting@anyOf(1)"
+        },
+        {
+          "$ref": "#/$defs/values~1local@allOf(1)@then.setting@anyOf(2)"
+        },
+        {
+          "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/values~1local@allOf(1)@then.setting@anyOf(4)"
         }
       ]
     }
@@ -458,10 +458,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/h196d63c012e8"
+                "$ref": "#/$defs/values~1local@allOf(0)@if@allOf(0)"
               },
               {
-                "$ref": "#/$defs/hc0dd4738db2b"
+                "$ref": "#/$defs/values~1local@allOf(0)@if@allOf(1)"
               }
             ]
           },
@@ -476,7 +476,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/hc0dd4738db2b"
+            "$ref": "#/$defs/values~1local@allOf(0)@if@allOf(1)"
           },
           "then": {
             "additionalProperties": {},
@@ -488,17 +488,17 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/h0d6da7ea663d"
+                    "$ref": "#/$defs/values~1local@allOf(1)@then.setting@anyOf(1)"
                   },
                   {
-                    "$ref": "#/$defs/h89bc4e1169b0"
+                    "$ref": "#/$defs/values~1local@allOf(1)@then.setting@anyOf(2)"
                   },
                   {
                     "description": "Immutable, if set to true, ensures that data stored in the ConfigMap cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.",
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/h5b7699abf0ec"
+                    "$ref": "#/$defs/values~1local@allOf(1)@then.setting@anyOf(4)"
                   },
                   {
                     "description": "Immutable, if set to true, ensures that data stored in the ConfigMap cannot be updated (only object metadata can be modified). If not set to true, the field can be modified at any time. Defaulted to nil.",
@@ -513,11 +513,11 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/h196d63c012e8"
+                "$ref": "#/$defs/values~1local@allOf(0)@if@allOf(0)"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/hc0dd4738db2b"
+                  "$ref": "#/$defs/values~1local@allOf(0)@if@allOf(1)"
                 }
               }
             ]
@@ -606,7 +606,7 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/h0d6da7ea663d"
+                    "$ref": "#/$defs/values~1local@allOf(1)@then.setting@anyOf(1)"
                   },
                   {
                     "additionalProperties": {
@@ -619,7 +619,7 @@
                           "type": "integer"
                         },
                         {
-                          "$ref": "#/$defs/h3394d7d8572c"
+                          "$ref": "#/$defs/values~1local@allOf(2)@then.setting@anyOf(4)@additionalProperties@anyOf(2)"
                         },
                         {
                           "type": "number"
@@ -637,15 +637,15 @@
                       ]
                     },
                     "propertyNames": {
-                      "$ref": "#/$defs/h3394d7d8572c"
+                      "$ref": "#/$defs/values~1local@allOf(2)@then.setting@anyOf(4)@additionalProperties@anyOf(2)"
                     },
                     "type": "object"
                   },
                   {
-                    "$ref": "#/$defs/h89bc4e1169b0"
+                    "$ref": "#/$defs/values~1local@allOf(1)@then.setting@anyOf(2)"
                   },
                   {
-                    "$ref": "#/$defs/h5b7699abf0ec"
+                    "$ref": "#/$defs/values~1local@allOf(1)@then.setting@anyOf(4)"
                   }
                 ]
               }
@@ -679,7 +679,7 @@
       "type": "object"
     },
     "replicas": {
-      "$ref": "#/$defs/h17cbfadf198d"
+      "$ref": "#/$defs/values~1replicas"
     },
     "requiredText": {},
     "version": {
@@ -743,7 +743,7 @@
             "additionalProperties": {},
             "properties": {
               "replicas": {
-                "$ref": "#/$defs/h17cbfadf198d"
+                "$ref": "#/$defs/values~1replicas"
               }
             }
           }

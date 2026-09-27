@@ -1,93 +1,83 @@
 {
   "$defs": {
-    "h0d6da7ea663d": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "h0e4014154904": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "h0ea28231dff2": {
-      "additionalProperties": {},
-      "properties": {
-        "configMap": {
-          "additionalProperties": {},
-          "properties": {
-            "key": {},
-            "name": {}
-          }
-        }
-      }
-    },
-    "h1760b2f63aa3": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "h196c6e8dc5c1": {
-      "additionalProperties": {},
-      "properties": {
-        "configMap": {
-          "type": "object"
-        }
-      }
-    },
-    "h20714c901020": {
+    "t": {
       "anyOf": [
         {
-          "allOf": [
-            {
-              "$ref": "#/$defs/h34961135e4a6"
-            },
-            {
-              "$ref": "#/$defs/hd1b6579bde08"
-            }
-          ]
+          "minProperties": 1,
+          "type": "object"
         },
         {
-          "allOf": [
-            {
-              "not": {
-                "$ref": "#/$defs/h6c0a57ff7033"
-              }
-            },
-            {
-              "properties": {
-                "operator": {
-                  "$ref": "#/$defs/hf47dd0fb3ca5"
-                }
-              },
-              "required": [
-                "operator"
-              ],
-              "type": "object"
-            },
-            {
-              "$ref": "#/$defs/hd1b6579bde08"
-            }
-          ]
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
         }
       ]
     },
-    "h3394d7d8572c": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "$ref": "#/$defs/haeffa472167f"
-        },
-        {
-          "$ref": "#/$defs/hc75fdaf6f4ac"
+    "values/@allOf(0)@if@allOf(1)": {
+      "properties": {
+        "nats": {
+          "$ref": "#/$defs/t"
         }
+      },
+      "required": [
+        "nats"
       ],
-      "type": "string"
+      "type": "object"
     },
-    "h34961135e4a6": {
+    "values/@allOf(0)@if@allOf(2)": {
+      "not": {
+        "anyOf": [
+          {
+            "not": {
+              "properties": {
+                "nats": {}
+              },
+              "required": [
+                "nats"
+              ],
+              "type": "object"
+            }
+          },
+          {
+            "properties": {
+              "nats": {
+                "enum": [
+                  null
+                ]
+              }
+            },
+            "required": [
+              "nats"
+            ],
+            "type": "object"
+          }
+        ]
+      }
+    },
+    "values/@allOf(1)@if": {
+      "properties": {
+        "operator": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "values/@allOf(10)@if@allOf(0)": {
       "not": {
         "anyOf": [
           {
@@ -117,17 +107,7 @@
         ]
       }
     },
-    "h4174f29f69e0": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "h424d50bcce86": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "h52544b87339d": {
+    "values/@allOf(10)@if@allOf(1)": {
       "anyOf": [
         {
           "not": {
@@ -171,16 +151,135 @@
         }
       ]
     },
-    "h589952769b45": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
+    "values/@allOf(11)@if@allOf(0)": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/values~1@allOf(10)@if@allOf(0)"
+            },
+            {
+              "$ref": "#/$defs/values~1@allOf(1)@if"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "properties": {
+                "operator": {
+                  "$ref": "#/$defs/values~1@allOf(11)@if@allOf(0)@anyOf(1)@allOf(0).operator"
+                }
+              },
+              "required": [
+                "operator"
+              ],
+              "type": "object"
+            },
+            {
+              "not": {
+                "$ref": "#/$defs/values~1@allOf(10)@if@allOf(1)"
+              }
+            },
+            {
+              "$ref": "#/$defs/values~1@allOf(1)@if"
+            }
+          ]
+        }
+      ]
+    },
+    "values/@allOf(11)@if@allOf(0)@anyOf(1)@allOf(0).operator": {
+      "properties": {
+        "operatorjwt": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "operatorjwt"
+      ],
+      "type": "object"
+    },
+    "values/@allOf(11)@if@allOf(1)@anyOf(0).operator.operatorjwt": {
+      "properties": {
+        "configMap": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "configMap"
+      ],
+      "type": "object"
+    },
+    "values/@allOf(11)@if@allOf(1)@anyOf(1)@not.operator.operatorjwt": {
+      "properties": {
+        "configMap": {}
+      },
+      "required": [
+        "configMap"
+      ],
+      "type": "object"
+    },
+    "values/@allOf(13)@if.store": {
+      "properties": {
+        "type": {
+          "enum": [
+            "file"
+          ]
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "type": "object"
+    },
+    "values/@allOf(2)@then@allOf(0).operator.operatorjwt": {
+      "additionalProperties": {},
+      "properties": {
+        "configMap": {
+          "type": "object"
+        }
       }
     },
-    "h5b7699abf0ec": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
+    "values/@allOf(3)@if@allOf(1)": {
+      "anyOf": [
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/values~1@allOf(10)@if@allOf(0)"
+            },
+            {
+              "$ref": "#/$defs/values~1@allOf(1)@if"
+            }
+          ]
+        },
+        {
+          "allOf": [
+            {
+              "not": {
+                "$ref": "#/$defs/values~1@allOf(3)@if@allOf(1)@anyOf(1)@allOf(0)@not"
+              }
+            },
+            {
+              "properties": {
+                "operator": {
+                  "$ref": "#/$defs/values~1@allOf(3)@if@allOf(1)@anyOf(1)@allOf(1).operator"
+                }
+              },
+              "required": [
+                "operator"
+              ],
+              "type": "object"
+            },
+            {
+              "$ref": "#/$defs/values~1@allOf(1)@if"
+            }
+          ]
+        }
+      ]
     },
-    "h6c0a57ff7033": {
+    "values/@allOf(3)@if@allOf(1)@anyOf(1)@allOf(0)@not": {
       "anyOf": [
         {
           "not": {
@@ -224,44 +323,18 @@
         }
       ]
     },
-    "h7782a46088d4": {
-      "anyOf": [
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/h34961135e4a6"
-            },
-            {
-              "$ref": "#/$defs/hd1b6579bde08"
-            }
-          ]
-        },
-        {
-          "allOf": [
-            {
-              "properties": {
-                "operator": {
-                  "$ref": "#/$defs/h96050137b25b"
-                }
-              },
-              "required": [
-                "operator"
-              ],
-              "type": "object"
-            },
-            {
-              "not": {
-                "$ref": "#/$defs/h52544b87339d"
-              }
-            },
-            {
-              "$ref": "#/$defs/hd1b6579bde08"
-            }
-          ]
+    "values/@allOf(3)@if@allOf(1)@anyOf(1)@allOf(1).operator": {
+      "properties": {
+        "systemaccountjwt": {
+          "$ref": "#/$defs/t"
         }
-      ]
+      },
+      "required": [
+        "systemaccountjwt"
+      ],
+      "type": "object"
     },
-    "h7a6313f8dd4a": {
+    "values/accountserver.image@anyOf(0)": {
       "allOf": [
         {
           "not": {
@@ -279,56 +352,11 @@
       ],
       "type": "string"
     },
-    "h7a6b0101552f": {
-      "additionalProperties": {},
-      "properties": {
-        "configMap": {
-          "additionalProperties": {},
-          "properties": {
-            "name": {
-              "$ref": "#/$defs/providerSchema_e461da162b07"
-            }
-          }
-        }
-      }
-    },
-    "h89bc4e1169b0": {
-      "pattern": "^[ \\t]*(#.*)?$",
+    "values/accountserver.image@anyOf(2)": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
       "type": "string"
     },
-    "h96050137b25b": {
-      "properties": {
-        "operatorjwt": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "operatorjwt"
-      ],
-      "type": "object"
-    },
-    "h9810b646fad3": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "ha57525005582": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "ha60cd5f2cd8a": {
-      "properties": {
-        "nats": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "nats"
-      ],
-      "type": "object"
-    },
-    "hab02c23921d2": {
+    "values/accountserver.image@anyOf(3)": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -339,7 +367,7 @@
             "type": "integer"
           },
           {
-            "$ref": "#/$defs/h3394d7d8572c"
+            "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)"
           },
           {
             "type": "number"
@@ -357,16 +385,80 @@
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/h3394d7d8572c"
+        "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)"
       },
       "type": "object"
     },
-    "haeffa472167f": {
+    "values/accountserver.image@anyOf(3)@additionalProperties@anyOf(2)": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
+        },
+        {
+          "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
+        }
+      ],
+      "type": "string"
+    },
+    "values/accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "hb590b645b546": {
+    "values/accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)": {
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "values/accountserver.image@anyOf(4)@allOf(0)": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "values/accountserver.image@anyOf(4)@allOf(1)": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "values/accountserver.image@anyOf(4)@allOf(2)": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "values/accountserver.image@anyOf(4)@allOf(4)": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "values/accountserver.image@anyOf(4)@allOf(5)": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "values/accountserver.image@anyOf(4)@allOf(6)": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "values/accountserver.image@anyOf(4)@allOf(9)": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "values/accountserver.image@anyOf(5)": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/accountserver.image@anyOf(6)": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "values/accountserver.resources.limits@additionalProperties": {
       "oneOf": [
         {
           "type": [
@@ -382,123 +474,56 @@
         }
       ]
     },
-    "hc40665dfa4a3": {
-      "not": {
-        "anyOf": [
-          {
-            "not": {
-              "properties": {
-                "nats": {}
-              },
-              "required": [
-                "nats"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "properties": {
-              "nats": {
-                "enum": [
-                  null
-                ]
-              }
-            },
-            "required": [
-              "nats"
-            ],
-            "type": "object"
-          }
-        ]
-      }
-    },
-    "hc75fdaf6f4ac": {
-      "not": {
-        "pattern": "[\\r\\n]"
-      }
-    },
-    "hc8e5835648fa": {
+    "values/operator.operatorjwt": {
+      "additionalProperties": {},
       "properties": {
         "configMap": {
-          "enum": [
-            null
-          ]
+          "additionalProperties": {},
+          "properties": {
+            "key": {},
+            "name": {}
+          }
         }
-      },
-      "required": [
-        "configMap"
-      ],
-      "type": "object"
+      }
     },
-    "hcf69204d15a2": {
+    "values/operator@allOf(0)@then.systemaccountjwt": {
+      "additionalProperties": {},
       "properties": {
-        "type": {
-          "enum": [
-            "file"
-          ]
+        "configMap": {
+          "additionalProperties": {},
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/values~1operator@allOf(0)@then.systemaccountjwt.configMap.name"
+            }
+          }
         }
-      },
-      "required": [
-        "type"
-      ],
-      "type": "object"
+      }
     },
-    "hd1b6579bde08": {
-      "properties": {
-        "operator": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "operator"
-      ],
-      "type": "object"
-    },
-    "hecc518bcabcd": {
-      "properties": {
-        "configMap": {}
-      },
-      "required": [
-        "configMap"
-      ],
-      "type": "object"
-    },
-    "hf47dd0fb3ca5": {
-      "properties": {
-        "systemaccountjwt": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "systemaccountjwt"
-      ],
-      "type": "object"
-    },
-    "providerSchema_e461da162b07": {
+    "values/operator@allOf(0)@then.systemaccountjwt.configMap.name": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h7a6313f8dd4a"
+          "$ref": "#/$defs/values~1accountserver.image@anyOf(0)"
         },
         {
           "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
           "type": "null"
         },
         {
-          "$ref": "#/$defs/h0d6da7ea663d"
+          "$ref": "#/$defs/values~1accountserver.image@anyOf(2)"
         },
         {
-          "$ref": "#/$defs/hab02c23921d2"
+          "$ref": "#/$defs/values~1accountserver.image@anyOf(3)"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/h4174f29f69e0"
+              "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(0)"
             },
             {
-              "$ref": "#/$defs/h1760b2f63aa3"
+              "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(1)"
             },
             {
-              "$ref": "#/$defs/h424d50bcce86"
+              "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(2)"
             },
             {
               "not": {
@@ -506,57 +531,32 @@
               }
             },
             {
-              "$ref": "#/$defs/ha57525005582"
+              "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(4)"
             },
             {
-              "$ref": "#/$defs/h0e4014154904"
+              "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(5)"
             },
             {
-              "$ref": "#/$defs/h589952769b45"
+              "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(6)"
             },
             {
-              "$ref": "#/$defs/haeffa472167f"
+              "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
             },
             {
-              "$ref": "#/$defs/hc75fdaf6f4ac"
+              "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
             },
             {
-              "$ref": "#/$defs/h9810b646fad3"
+              "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(9)"
             }
           ],
           "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/h89bc4e1169b0"
+          "$ref": "#/$defs/values~1accountserver.image@anyOf(5)"
         },
         {
-          "$ref": "#/$defs/h5b7699abf0ec"
-        }
-      ]
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
+          "$ref": "#/$defs/values~1accountserver.image@anyOf(6)"
         }
       ]
     }
@@ -628,10 +628,10 @@
             ]
           },
           {
-            "$ref": "#/$defs/ha60cd5f2cd8a"
+            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(1)"
           },
           {
-            "$ref": "#/$defs/hc40665dfa4a3"
+            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2)"
           }
         ]
       },
@@ -639,7 +639,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/hd1b6579bde08"
+        "$ref": "#/$defs/values~1@allOf(1)@if"
       },
       "then": {
         "additionalProperties": {},
@@ -652,7 +652,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h7782a46088d4"
+        "$ref": "#/$defs/values~1@allOf(11)@if@allOf(0)"
       },
       "then": {
         "allOf": [
@@ -663,7 +663,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "operatorjwt": {
-                    "$ref": "#/$defs/h196c6e8dc5c1"
+                    "$ref": "#/$defs/values~1@allOf(2)@then@allOf(0).operator.operatorjwt"
                   }
                 }
               }
@@ -696,7 +696,7 @@
                     "operator": {
                       "properties": {
                         "systemaccountjwt": {
-                          "$ref": "#/$defs/hecc518bcabcd"
+                          "$ref": "#/$defs/values~1@allOf(11)@if@allOf(1)@anyOf(1)@not.operator.operatorjwt"
                         }
                       },
                       "required": [
@@ -716,7 +716,7 @@
                   "operator": {
                     "properties": {
                       "systemaccountjwt": {
-                        "$ref": "#/$defs/hc8e5835648fa"
+                        "$ref": "#/$defs/values~1@allOf(11)@if@allOf(1)@anyOf(0).operator.operatorjwt"
                       }
                     },
                     "required": [
@@ -733,7 +733,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/h20714c901020"
+            "$ref": "#/$defs/values~1@allOf(3)@if@allOf(1)"
           }
         ]
       },
@@ -741,7 +741,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h20714c901020"
+        "$ref": "#/$defs/values~1@allOf(3)@if@allOf(1)"
       },
       "then": {
         "allOf": [
@@ -752,7 +752,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "systemaccountjwt": {
-                    "$ref": "#/$defs/h196c6e8dc5c1"
+                    "$ref": "#/$defs/values~1@allOf(2)@then@allOf(0).operator.operatorjwt"
                   }
                 }
               }
@@ -778,10 +778,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/ha60cd5f2cd8a"
+            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(1)"
           },
           {
-            "$ref": "#/$defs/hc40665dfa4a3"
+            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2)"
           }
         ]
       },
@@ -833,13 +833,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h34961135e4a6"
+            "$ref": "#/$defs/values~1@allOf(10)@if@allOf(0)"
           },
           {
-            "$ref": "#/$defs/hd1b6579bde08"
+            "$ref": "#/$defs/values~1@allOf(1)@if"
           },
           {
-            "$ref": "#/$defs/h6c0a57ff7033"
+            "$ref": "#/$defs/values~1@allOf(3)@if@allOf(1)@anyOf(1)@allOf(0)@not"
           }
         ]
       },
@@ -880,7 +880,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/ha60cd5f2cd8a"
+            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(1)"
           },
           {
             "anyOf": [
@@ -927,7 +927,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/hc40665dfa4a3"
+            "$ref": "#/$defs/values~1@allOf(0)@if@allOf(2)"
           }
         ]
       },
@@ -953,13 +953,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h34961135e4a6"
+            "$ref": "#/$defs/values~1@allOf(10)@if@allOf(0)"
           },
           {
-            "$ref": "#/$defs/h52544b87339d"
+            "$ref": "#/$defs/values~1@allOf(10)@if@allOf(1)"
           },
           {
-            "$ref": "#/$defs/hd1b6579bde08"
+            "$ref": "#/$defs/values~1@allOf(1)@if"
           }
         ]
       },
@@ -969,7 +969,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h7782a46088d4"
+            "$ref": "#/$defs/values~1@allOf(11)@if@allOf(0)"
           },
           {
             "anyOf": [
@@ -978,7 +978,7 @@
                   "operator": {
                     "properties": {
                       "operatorjwt": {
-                        "$ref": "#/$defs/hc8e5835648fa"
+                        "$ref": "#/$defs/values~1@allOf(11)@if@allOf(1)@anyOf(0).operator.operatorjwt"
                       }
                     },
                     "required": [
@@ -998,7 +998,7 @@
                     "operator": {
                       "properties": {
                         "operatorjwt": {
-                          "$ref": "#/$defs/hecc518bcabcd"
+                          "$ref": "#/$defs/values~1@allOf(11)@if@allOf(1)@anyOf(1)@not.operator.operatorjwt"
                         }
                       },
                       "required": [
@@ -1054,7 +1054,7 @@
       "if": {
         "properties": {
           "store": {
-            "$ref": "#/$defs/hcf69204d15a2"
+            "$ref": "#/$defs/values~1@allOf(13)@if.store"
           }
         },
         "required": [
@@ -1125,28 +1125,28 @@
         "image": {
           "anyOf": [
             {
-              "$ref": "#/$defs/h7a6313f8dd4a"
+              "$ref": "#/$defs/values~1accountserver.image@anyOf(0)"
             },
             {
               "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/h0d6da7ea663d"
+              "$ref": "#/$defs/values~1accountserver.image@anyOf(2)"
             },
             {
-              "$ref": "#/$defs/hab02c23921d2"
+              "$ref": "#/$defs/values~1accountserver.image@anyOf(3)"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/h4174f29f69e0"
+                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(0)"
                 },
                 {
-                  "$ref": "#/$defs/h1760b2f63aa3"
+                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(1)"
                 },
                 {
-                  "$ref": "#/$defs/h424d50bcce86"
+                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(2)"
                 },
                 {
                   "not": {
@@ -1154,66 +1154,66 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/ha57525005582"
+                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(4)"
                 },
                 {
-                  "$ref": "#/$defs/h0e4014154904"
+                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(5)"
                 },
                 {
-                  "$ref": "#/$defs/h589952769b45"
+                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(6)"
                 },
                 {
-                  "$ref": "#/$defs/haeffa472167f"
+                  "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
                 },
                 {
-                  "$ref": "#/$defs/hc75fdaf6f4ac"
+                  "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
                 },
                 {
-                  "$ref": "#/$defs/h9810b646fad3"
+                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(9)"
                 }
               ],
               "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/h89bc4e1169b0"
+              "$ref": "#/$defs/values~1accountserver.image@anyOf(5)"
             },
             {
-              "$ref": "#/$defs/h5b7699abf0ec"
+              "$ref": "#/$defs/values~1accountserver.image@anyOf(6)"
             }
           ]
         },
         "pullPolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/h7a6313f8dd4a"
+              "$ref": "#/$defs/values~1accountserver.image@anyOf(0)"
             },
             {
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/h0d6da7ea663d"
+              "$ref": "#/$defs/values~1accountserver.image@anyOf(2)"
             },
             {
-              "$ref": "#/$defs/hab02c23921d2"
+              "$ref": "#/$defs/values~1accountserver.image@anyOf(3)"
             },
             {
-              "$ref": "#/$defs/h89bc4e1169b0"
+              "$ref": "#/$defs/values~1accountserver.image@anyOf(5)"
             },
             {
-              "$ref": "#/$defs/h5b7699abf0ec"
+              "$ref": "#/$defs/values~1accountserver.image@anyOf(6)"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/h4174f29f69e0"
+                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(0)"
                 },
                 {
-                  "$ref": "#/$defs/h1760b2f63aa3"
+                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(1)"
                 },
                 {
-                  "$ref": "#/$defs/h424d50bcce86"
+                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(2)"
                 },
                 {
                   "not": {
@@ -1221,22 +1221,22 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/ha57525005582"
+                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(4)"
                 },
                 {
-                  "$ref": "#/$defs/h0e4014154904"
+                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(5)"
                 },
                 {
-                  "$ref": "#/$defs/h589952769b45"
+                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(6)"
                 },
                 {
-                  "$ref": "#/$defs/haeffa472167f"
+                  "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
                 },
                 {
-                  "$ref": "#/$defs/hc75fdaf6f4ac"
+                  "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
                 },
                 {
-                  "$ref": "#/$defs/h9810b646fad3"
+                  "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(9)"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -1278,7 +1278,7 @@
             },
             "limits": {
               "additionalProperties": {
-                "$ref": "#/$defs/hb590b645b546"
+                "$ref": "#/$defs/values~1accountserver.resources.limits@additionalProperties"
               },
               "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
               "type": [
@@ -1288,7 +1288,7 @@
             },
             "requests": {
               "additionalProperties": {
-                "$ref": "#/$defs/hb590b645b546"
+                "$ref": "#/$defs/values~1accountserver.resources.limits@additionalProperties"
               },
               "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
               "type": [
@@ -1324,7 +1324,7 @@
                       "name": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/h7a6313f8dd4a"
+                            "$ref": "#/$defs/values~1accountserver.image@anyOf(0)"
                           },
                           {
                             "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
@@ -1333,13 +1333,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/h4174f29f69e0"
+                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(0)"
                               },
                               {
-                                "$ref": "#/$defs/h1760b2f63aa3"
+                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(1)"
                               },
                               {
-                                "$ref": "#/$defs/h424d50bcce86"
+                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(2)"
                               },
                               {
                                 "not": {
@@ -1347,38 +1347,38 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/ha57525005582"
+                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(4)"
                               },
                               {
-                                "$ref": "#/$defs/h0e4014154904"
+                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(5)"
                               },
                               {
-                                "$ref": "#/$defs/h589952769b45"
+                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(6)"
                               },
                               {
-                                "$ref": "#/$defs/haeffa472167f"
+                                "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
                               },
                               {
-                                "$ref": "#/$defs/hc75fdaf6f4ac"
+                                "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
                               },
                               {
-                                "$ref": "#/$defs/h9810b646fad3"
+                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(9)"
                               }
                             ],
                             "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/h0d6da7ea663d"
+                            "$ref": "#/$defs/values~1accountserver.image@anyOf(2)"
                           },
                           {
-                            "$ref": "#/$defs/hab02c23921d2"
+                            "$ref": "#/$defs/values~1accountserver.image@anyOf(3)"
                           },
                           {
-                            "$ref": "#/$defs/h89bc4e1169b0"
+                            "$ref": "#/$defs/values~1accountserver.image@anyOf(5)"
                           },
                           {
-                            "$ref": "#/$defs/h5b7699abf0ec"
+                            "$ref": "#/$defs/values~1accountserver.image@anyOf(6)"
                           }
                         ]
                       }
@@ -1416,7 +1416,7 @@
                 "$ref": "#/$defs/t"
               },
               {
-                "$ref": "#/$defs/hf47dd0fb3ca5"
+                "$ref": "#/$defs/values~1@allOf(3)@if@allOf(1)@anyOf(1)@allOf(1).operator"
               }
             ]
           },
@@ -1424,7 +1424,7 @@
             "additionalProperties": {},
             "properties": {
               "systemaccountjwt": {
-                "$ref": "#/$defs/h7a6b0101552f"
+                "$ref": "#/$defs/values~1operator@allOf(0)@then.systemaccountjwt"
               }
             }
           }
@@ -1436,7 +1436,7 @@
                 "$ref": "#/$defs/t"
               },
               {
-                "$ref": "#/$defs/h96050137b25b"
+                "$ref": "#/$defs/values~1@allOf(11)@if@allOf(0)@anyOf(1)@allOf(0).operator"
               }
             ]
           },
@@ -1444,7 +1444,7 @@
             "additionalProperties": {},
             "properties": {
               "operatorjwt": {
-                "$ref": "#/$defs/h7a6b0101552f"
+                "$ref": "#/$defs/values~1operator@allOf(0)@then.systemaccountjwt"
               }
             }
           }
@@ -1452,10 +1452,10 @@
       ],
       "properties": {
         "operatorjwt": {
-          "$ref": "#/$defs/h0ea28231dff2"
+          "$ref": "#/$defs/values~1operator.operatorjwt"
         },
         "systemaccountjwt": {
-          "$ref": "#/$defs/h0ea28231dff2"
+          "$ref": "#/$defs/values~1operator.operatorjwt"
         }
       }
     },
@@ -1494,7 +1494,7 @@
                 ]
               },
               {
-                "$ref": "#/$defs/hcf69204d15a2"
+                "$ref": "#/$defs/values~1@allOf(13)@if.store"
               }
             ]
           },
@@ -1502,7 +1502,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/hcf69204d15a2"
+            "$ref": "#/$defs/values~1@allOf(13)@if.store"
           },
           "then": {
             "additionalProperties": {},
@@ -1515,19 +1515,19 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/h7a6313f8dd4a"
+                            "$ref": "#/$defs/values~1accountserver.image@anyOf(0)"
                           },
                           {
-                            "$ref": "#/$defs/h0d6da7ea663d"
+                            "$ref": "#/$defs/values~1accountserver.image@anyOf(2)"
                           },
                           {
-                            "$ref": "#/$defs/hab02c23921d2"
+                            "$ref": "#/$defs/values~1accountserver.image@anyOf(3)"
                           },
                           {
-                            "$ref": "#/$defs/h89bc4e1169b0"
+                            "$ref": "#/$defs/values~1accountserver.image@anyOf(5)"
                           },
                           {
-                            "$ref": "#/$defs/h5b7699abf0ec"
+                            "$ref": "#/$defs/values~1accountserver.image@anyOf(6)"
                           },
                           {
                             "type": "null"
@@ -1535,13 +1535,13 @@
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/h4174f29f69e0"
+                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(0)"
                               },
                               {
-                                "$ref": "#/$defs/h1760b2f63aa3"
+                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(1)"
                               },
                               {
-                                "$ref": "#/$defs/h424d50bcce86"
+                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(2)"
                               },
                               {
                                 "not": {
@@ -1549,22 +1549,22 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/ha57525005582"
+                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(4)"
                               },
                               {
-                                "$ref": "#/$defs/h0e4014154904"
+                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(5)"
                               },
                               {
-                                "$ref": "#/$defs/h589952769b45"
+                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(6)"
                               },
                               {
-                                "$ref": "#/$defs/haeffa472167f"
+                                "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(1)"
                               },
                               {
-                                "$ref": "#/$defs/hc75fdaf6f4ac"
+                                "$ref": "#/$defs/values~1accountserver.image@anyOf(3)@additionalProperties@anyOf(2)@allOf(2)"
                               },
                               {
-                                "$ref": "#/$defs/h9810b646fad3"
+                                "$ref": "#/$defs/values~1accountserver.image@anyOf(4)@allOf(9)"
                               }
                             ],
                             "type": "string"
@@ -1574,17 +1574,17 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/h0d6da7ea663d"
+                            "$ref": "#/$defs/values~1accountserver.image@anyOf(2)"
                           },
                           {
                             "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$",
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/h89bc4e1169b0"
+                            "$ref": "#/$defs/values~1accountserver.image@anyOf(5)"
                           },
                           {
-                            "$ref": "#/$defs/h5b7699abf0ec"
+                            "$ref": "#/$defs/values~1accountserver.image@anyOf(6)"
                           },
                           {
                             "type": "number"

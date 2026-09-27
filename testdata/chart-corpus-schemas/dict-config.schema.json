@@ -1,236 +1,5 @@
 {
   "$defs": {
-    "h0d6da7ea663d": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "h0e4014154904": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "h1760b2f63aa3": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "h3394d7d8572c": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "h5b7699abf0ec": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "h7a4733fcd854": {
-      "oneOf": [
-        {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/h7a6313f8dd4a"
-            },
-            {
-              "$ref": "#/$defs/h0d6da7ea663d"
-            },
-            {
-              "$ref": "#/$defs/hab02c23921d2"
-            },
-            {
-              "$ref": "#/$defs/h89bc4e1169b0"
-            },
-            {
-              "$ref": "#/$defs/h5b7699abf0ec"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "allOf": [
-                {
-                  "not": {
-                    "pattern": "^[-?:]([ \\t]|$)"
-                  }
-                },
-                {
-                  "$ref": "#/$defs/h1760b2f63aa3"
-                },
-                {
-                  "not": {
-                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[ \\t]#"
-                  }
-                },
-                {
-                  "$ref": "#/$defs/ha57525005582"
-                },
-                {
-                  "$ref": "#/$defs/h0e4014154904"
-                },
-                {
-                  "not": {
-                    "pattern": "^(|~|null|Null|NULL)$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": ":[ \\t]|:$"
-                  }
-                },
-                {
-                  "not": {
-                    "pattern": "[\\r\\n]"
-                  }
-                },
-                {
-                  "$ref": "#/$defs/h9810b646fad3"
-                }
-              ],
-              "type": "string"
-            }
-          ]
-        },
-        {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/h0d6da7ea663d"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "$ref": "#/$defs/h89bc4e1169b0"
-            },
-            {
-              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/h5b7699abf0ec"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        }
-      ]
-    },
-    "h7a6313f8dd4a": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "h89bc4e1169b0": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "h9810b646fad3": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "ha57525005582": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "hab02c23921d2": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "maxItems": 0,
-            "type": "array"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "$ref": "#/$defs/h3394d7d8572c"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "null"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "maxProperties": 0,
-            "type": "object"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/h3394d7d8572c"
-      },
-      "type": "object"
-    },
-    "hd0c575f604db": {
-      "properties": {
-        "ingress": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/t"
-            },
-            {
-              "type": "object"
-            }
-          ]
-        }
-      },
-      "required": [
-        "ingress"
-      ],
-      "type": "object"
-    },
-    "hd9dd13dbcbf3": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "providerSchema_e274d9a692bc": {
-      "$ref": "#/$defs/h7a4733fcd854"
-    },
     "t": {
       "anyOf": [
         {
@@ -255,6 +24,237 @@
           "const": true
         }
       ]
+    },
+    "values/@allOf(1)@if.podDisruptionBudget": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "values/@allOf(2)@if@anyOf(0)@allOf(1)": {
+      "properties": {
+        "ingress": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/t"
+            },
+            {
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
+    },
+    "values/ingress@allOf(0)@then.className@anyOf(0)": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "values/ingress@allOf(0)@then.className@anyOf(2)": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/ingress@allOf(0)@then.className@anyOf(3)": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(3)@additionalProperties@anyOf(2)"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(3)@additionalProperties@anyOf(2)"
+      },
+      "type": "object"
+    },
+    "values/ingress@allOf(0)@then.className@anyOf(3)@additionalProperties@anyOf(2)": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "values/ingress@allOf(0)@then.className@anyOf(5)": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/ingress@allOf(0)@then.className@anyOf(6)": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "values/ingress@allOf(0)@then.className@anyOf(7)@allOf(1)": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "values/ingress@allOf(0)@then.className@anyOf(7)@allOf(4)": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "values/ingress@allOf(0)@then.className@anyOf(7)@allOf(5)": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "values/ingress@allOf(0)@then.className@anyOf(7)@allOf(9)": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "values/podDisruptionBudget@allOf(0)@then@allOf(0).maxUnavailable@anyOf(0)": {
+      "oneOf": [
+        {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(0)"
+            },
+            {
+              "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(2)"
+            },
+            {
+              "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(3)"
+            },
+            {
+              "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(5)"
+            },
+            {
+              "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(6)"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "allOf": [
+                {
+                  "not": {
+                    "pattern": "^[-?:]([ \\t]|$)"
+                  }
+                },
+                {
+                  "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(7)@allOf(1)"
+                },
+                {
+                  "not": {
+                    "pattern": "^[!&*#{}\\[\\],|>@`%]"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[ \\t]#"
+                  }
+                },
+                {
+                  "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(7)@allOf(4)"
+                },
+                {
+                  "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(7)@allOf(5)"
+                },
+                {
+                  "not": {
+                    "pattern": "^(|~|null|Null|NULL)$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": ":[ \\t]|:$"
+                  }
+                },
+                {
+                  "not": {
+                    "pattern": "[\\r\\n]"
+                  }
+                },
+                {
+                  "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(7)@allOf(9)"
+                }
+              ],
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(2)"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(5)"
+            },
+            {
+              "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(6)"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        }
+      ]
+    },
+    "values/podDisruptionBudget@allOf(0)@then@allOf(1).minAvailable": {
+      "$ref": "#/$defs/values~1podDisruptionBudget@allOf(0)@then@allOf(0).maxUnavailable@anyOf(0)"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -295,7 +295,7 @@
       "if": {
         "properties": {
           "podDisruptionBudget": {
-            "$ref": "#/$defs/hd9dd13dbcbf3"
+            "$ref": "#/$defs/values~1@allOf(1)@if.podDisruptionBudget"
           }
         },
         "required": [
@@ -342,7 +342,7 @@
               {
                 "properties": {
                   "ingress": {
-                    "$ref": "#/$defs/hd9dd13dbcbf3"
+                    "$ref": "#/$defs/values~1@allOf(1)@if.podDisruptionBudget"
                   }
                 },
                 "required": [
@@ -351,7 +351,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/hd0c575f604db"
+                "$ref": "#/$defs/values~1@allOf(2)@if@anyOf(0)@allOf(1)"
               }
             ]
           },
@@ -388,7 +388,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/hd0c575f604db"
+                "$ref": "#/$defs/values~1@allOf(2)@if@anyOf(0)@allOf(1)"
               }
             ]
           }
@@ -412,7 +412,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/hd9dd13dbcbf3"
+                "$ref": "#/$defs/values~1@allOf(1)@if.podDisruptionBudget"
               },
               {
                 "anyOf": [
@@ -432,7 +432,7 @@
               "className": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/h7a6313f8dd4a"
+                    "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(0)"
                   },
                   {
                     "not": {
@@ -440,20 +440,20 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/h0d6da7ea663d"
+                    "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(2)"
                   },
                   {
-                    "$ref": "#/$defs/hab02c23921d2"
+                    "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(3)"
                   },
                   {
                     "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/h89bc4e1169b0"
+                    "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(5)"
                   },
                   {
-                    "$ref": "#/$defs/h5b7699abf0ec"
+                    "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(6)"
                   },
                   {
                     "allOf": [
@@ -463,7 +463,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/h1760b2f63aa3"
+                        "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(7)@allOf(1)"
                       },
                       {
                         "not": {
@@ -476,10 +476,10 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/ha57525005582"
+                        "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(7)@allOf(4)"
                       },
                       {
-                        "$ref": "#/$defs/h0e4014154904"
+                        "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(7)@allOf(5)"
                       },
                       {
                         "not": {
@@ -497,7 +497,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/h9810b646fad3"
+                        "$ref": "#/$defs/values~1ingress@allOf(0)@then.className@anyOf(7)@allOf(9)"
                       }
                     ],
                     "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
@@ -519,7 +519,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/hd9dd13dbcbf3"
+            "$ref": "#/$defs/values~1@allOf(1)@if.podDisruptionBudget"
           },
           "then": {
             "allOf": [
@@ -529,7 +529,7 @@
                   "maxUnavailable": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/h7a4733fcd854"
+                        "$ref": "#/$defs/values~1podDisruptionBudget@allOf(0)@then@allOf(0).maxUnavailable@anyOf(0)"
                       },
                       {
                         "not": {
@@ -544,7 +544,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "minAvailable": {
-                    "$ref": "#/$defs/providerSchema_e274d9a692bc"
+                    "$ref": "#/$defs/values~1podDisruptionBudget@allOf(0)@then@allOf(1).minAvailable"
                   }
                 }
               }

@@ -1,6 +1,147 @@
 {
   "$defs": {
-    "h031df6a1ba38": {
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    },
+    "values/@allOf(0)@if": {
+      "properties": {
+        "defaultFelixConfiguration": {
+          "$ref": "#/$defs/values~1@allOf(0)@if.defaultFelixConfiguration"
+        }
+      },
+      "required": [
+        "defaultFelixConfiguration"
+      ],
+      "type": "object"
+    },
+    "values/@allOf(0)@if.defaultFelixConfiguration": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "values/@allOf(1)@if": {
+      "properties": {
+        "imagePullSecrets": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "imagePullSecrets"
+      ],
+      "type": "object"
+    },
+    "values/@allOf(1)@then@allOf(0).imagePullSecrets@anyOf(0)": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "values/@allOf(1)@then@allOf(0).imagePullSecrets@anyOf(2)": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "values/@allOf(1)@then@allOf(1).imagePullSecrets@anyOf(0)@propertyNames@allOf(0)": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "values/@allOf(1)@then@allOf(1).imagePullSecrets@anyOf(0)@propertyNames@allOf(1)": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "values/@allOf(11)@if@allOf(0)": {
+      "properties": {
+        "whisker": {
+          "$ref": "#/$defs/values~1@allOf(0)@if.defaultFelixConfiguration"
+        }
+      },
+      "required": [
+        "whisker"
+      ],
+      "type": "object"
+    },
+    "values/@allOf(11)@if@allOf(1)": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "whisker": {}
+            },
+            "required": [
+              "whisker"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "whisker": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "whisker"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "values/@allOf(13)@if": {
+      "properties": {
+        "goldmane": {
+          "$ref": "#/$defs/values~1@allOf(0)@if.defaultFelixConfiguration"
+        }
+      },
+      "required": [
+        "goldmane"
+      ],
+      "type": "object"
+    },
+    "values/@allOf(15)@if@allOf(0)": {
+      "properties": {
+        "apiServer": {
+          "$ref": "#/$defs/values~1@allOf(0)@if.defaultFelixConfiguration"
+        }
+      },
+      "required": [
+        "apiServer"
+      ],
+      "type": "object"
+    },
+    "values/@allOf(15)@if@allOf(1)": {
       "anyOf": [
         {
           "not": {
@@ -28,364 +169,7 @@
         }
       ]
     },
-    "h0326ae605759": {
-      "properties": {
-        "kubernetesProvider": {}
-      },
-      "required": [
-        "kubernetesProvider"
-      ],
-      "type": "object"
-    },
-    "h08ba5a39d8a0": {
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
-    },
-    "h0a76b03aa294": {
-      "additionalProperties": {
-        "$ref": "#/$defs/h995dc72fe4f6"
-      },
-      "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-      "type": "object"
-    },
-    "h0d6da7ea663d": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "h0e4014154904": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "h12f555b76f7b": {
-      "description": "SkipInterface enables IP auto-detection based on interfaces that do not match the given regex.",
-      "type": "string"
-    },
-    "h14556f32bf86": {
-      "description": "CIDRS enables IP auto-detection based on which addresses on the nodes are within one of the provided CIDRs.",
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
-    },
-    "h16d818c893a0": {
-      "additionalProperties": false,
-      "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
-      "properties": {
-        "podAffinityTerm": {
-          "additionalProperties": false,
-          "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
-          "properties": {
-            "labelSelector": {
-              "$ref": "#/$defs/ha9537dbdf639"
-            },
-            "matchLabelKeys": {
-              "$ref": "#/$defs/hb38ec1200366"
-            },
-            "mismatchLabelKeys": {
-              "$ref": "#/$defs/hf963a4a3a925"
-            },
-            "namespaceSelector": {
-              "$ref": "#/$defs/ha9537dbdf639"
-            },
-            "namespaces": {
-              "$ref": "#/$defs/hbfd0ca057049"
-            },
-            "topologyKey": {
-              "$ref": "#/$defs/h795767c92c3b"
-            }
-          },
-          "required": [
-            "topologyKey"
-          ],
-          "type": "object"
-        },
-        "weight": {
-          "$ref": "#/$defs/h1ca664ab19a6"
-        }
-      },
-      "required": [
-        "weight",
-        "podAffinityTerm"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "h1760b2f63aa3": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "h183650483fd7": {
-      "additionalProperties": false,
-      "description": "Metadata is a subset of a Kubernetes object's metadata that is added to the DaemonSet.",
-      "properties": {
-        "annotations": {
-          "$ref": "#/$defs/hd43accdcc64a"
-        },
-        "labels": {
-          "$ref": "#/$defs/h7cfe8bccd65f"
-        }
-      },
-      "type": "object"
-    },
-    "h1ca664ab19a6": {
-      "description": "weight associated with matching the corresponding podAffinityTerm, in the range 1-100.",
-      "format": "int32",
-      "type": "integer"
-    },
-    "h1d552b5b01f9": {
-      "description": "A list of node selector requirements by node's labels.",
-      "items": {
-        "$ref": "#/$defs/h86cd446cfae7"
-      },
-      "type": "array"
-    },
-    "h204dce47f82e": {
-      "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. \n This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. \n This field is immutable. It can only be set for containers.",
-      "items": {
-        "additionalProperties": false,
-        "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-        "properties": {
-          "name": {
-            "$ref": "#/$defs/h7330da05f78d"
-          }
-        },
-        "required": [
-          "name"
-        ],
-        "type": "object"
-      },
-      "type": "array",
-      "x-kubernetes-list-map-keys": [
-        "name"
-      ],
-      "x-kubernetes-list-type": "map"
-    },
-    "h3394d7d8572c": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "[ \\t]#"
-          }
-        },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "h39db8db5beeb": {
-      "additionalProperties": false,
-      "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
-      "properties": {
-        "podAffinityTerm": {
-          "additionalProperties": false,
-          "description": "Required. A pod affinity term, associated with the corresponding weight.",
-          "properties": {
-            "labelSelector": {
-              "$ref": "#/$defs/h47bf5075cb01"
-            },
-            "namespaceSelector": {
-              "$ref": "#/$defs/ha131d7729508"
-            },
-            "namespaces": {
-              "$ref": "#/$defs/h771b0cb43a02"
-            },
-            "topologyKey": {
-              "$ref": "#/$defs/h795767c92c3b"
-            }
-          },
-          "required": [
-            "topologyKey"
-          ],
-          "type": "object"
-        },
-        "weight": {
-          "$ref": "#/$defs/h1ca664ab19a6"
-        }
-      },
-      "required": [
-        "podAffinityTerm",
-        "weight"
-      ],
-      "type": "object"
-    },
-    "h3d4a0bef4a8a": {
-      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "h3d829cecaa22": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "defaultFelixConfiguration": {}
-            },
-            "required": [
-              "defaultFelixConfiguration"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "defaultFelixConfiguration": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "defaultFelixConfiguration"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "h3f1f2c825608": {
-      "properties": {
-        "apiServer": {
-          "$ref": "#/$defs/hd9dd13dbcbf3"
-        }
-      },
-      "required": [
-        "apiServer"
-      ],
-      "type": "object"
-    },
-    "h4148cd62ed45": {
-      "pattern": "^([aA][cC][cC][eE][pP][tT]|[rR][eE][tT][uU][rR][nN])?$",
-      "type": "string"
-    },
-    "h41706f64aba0": {
-      "pattern": "^(([0-9]*(\\.[0-9]*)?(ms|s|h|m|us)+)+|Auto)$",
-      "type": "string"
-    },
-    "h4174f29f69e0": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "h42475f13e178": {
-      "description": "Kubernetes configures Calico to detect node addresses based on the Kubernetes API.",
-      "enum": [
-        "NodeInternalIP"
-      ],
-      "type": "string"
-    },
-    "h424d50bcce86": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "h4733b1db7dbf": {
-      "properties": {
-        "installation": {
-          "$ref": "#/$defs/hd9dd13dbcbf3"
-        }
-      },
-      "required": [
-        "installation"
-      ],
-      "type": "object"
-    },
-    "h47bf5075cb01": {
-      "additionalProperties": false,
-      "description": "A label query over a set of resources, in this case pods.",
-      "properties": {
-        "matchExpressions": {
-          "$ref": "#/$defs/h8c8d9fe895da"
-        },
-        "matchLabels": {
-          "$ref": "#/$defs/h7b271da5b4ad"
-        }
-      },
-      "type": "object",
-      "x-kubernetes-map-type": "atomic"
-    },
-    "h4c2716164efb": {
-      "additionalProperties": false,
-      "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-      "properties": {
-        "key": {
-          "$ref": "#/$defs/h91e0c7b1adac"
-        },
-        "operator": {
-          "$ref": "#/$defs/h5cfcb8f75935"
-        },
-        "values": {
-          "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-          "items": {
-            "$ref": "#/$defs/h56bd48f38e6b"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        }
-      },
-      "required": [
-        "key",
-        "operator"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "h526c09af9597": {
-      "additionalProperties": false,
-      "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
-      "properties": {
-        "labelSelector": {
-          "$ref": "#/$defs/ha9537dbdf639"
-        },
-        "matchLabelKeys": {
-          "$ref": "#/$defs/hb38ec1200366"
-        },
-        "mismatchLabelKeys": {
-          "$ref": "#/$defs/hf963a4a3a925"
-        },
-        "namespaceSelector": {
-          "$ref": "#/$defs/ha9537dbdf639"
-        },
-        "namespaces": {
-          "$ref": "#/$defs/hbfd0ca057049"
-        },
-        "topologyKey": {
-          "$ref": "#/$defs/h795767c92c3b"
-        }
-      },
-      "required": [
-        "topologyKey"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "h56bd48f38e6b": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "h56cf45ed9ddb": {
+    "values/@allOf(16)@if@allOf(0)@anyOf(0).installation": {
       "properties": {
         "kubernetesProvider": {
           "enum": [
@@ -398,116 +182,16 @@
       ],
       "type": "object"
     },
-    "h572d3a022764": {
-      "anyOf": [
-        {
-          "type": "integer"
-        },
-        {
-          "type": "string"
-        }
-      ],
-      "pattern": "^.*",
-      "x-kubernetes-int-or-string": true
-    },
-    "h5ac9542ed984": {
-      "additionalProperties": false,
-      "description": "The pod this Toleration is attached to tolerates any taint that matches the triple <key,value,effect> using the matching operator <operator>.",
+    "values/@allOf(16)@if@allOf(0)@anyOf(1)@not.installation": {
       "properties": {
-        "effect": {
-          "$ref": "#/$defs/h61abcfe9c283"
-        },
-        "key": {
-          "description": "Key is the taint key that the toleration applies to. Empty means match all taint keys. If the key is empty, operator must be Exists; this combination means to match all values and all keys.",
-          "type": "string"
-        },
-        "operator": {
-          "$ref": "#/$defs/ha26928b9e4dc"
-        },
-        "tolerationSeconds": {
-          "description": "TolerationSeconds represents the period of time the toleration (which must be of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default, it is not set, which means tolerate the taint forever (do not evict). Zero and negative values will be treated as 0 (evict immediately) by the system.",
-          "format": "int64",
-          "type": "integer"
-        },
-        "value": {
-          "description": "Value is the taint value the toleration matches to. If the operator is Exists, the value should be empty, otherwise just a regular string.",
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
-    "h5b7699abf0ec": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "h5cfcb8f75935": {
-      "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-      "type": "string"
-    },
-    "h61abcfe9c283": {
-      "description": "Effect indicates the taint effect to match. Empty means match all taint effects. When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.",
-      "type": "string"
-    },
-    "h63f926268676": {
-      "description": "A list of node selector requirements by node's fields.",
-      "items": {
-        "$ref": "#/$defs/h4c2716164efb"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "h6d094dae3f37": {
-      "additionalProperties": false,
-      "description": "An empty preferred scheduling term matches all objects with implicit weight 0 (i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).",
-      "properties": {
-        "preference": {
-          "additionalProperties": false,
-          "description": "A node selector term, associated with the corresponding weight.",
-          "properties": {
-            "matchExpressions": {
-              "$ref": "#/$defs/h1d552b5b01f9"
-            },
-            "matchFields": {
-              "$ref": "#/$defs/hf85a44a0fa7e"
-            }
-          },
-          "type": "object",
-          "x-kubernetes-map-type": "atomic"
-        },
-        "weight": {
-          "$ref": "#/$defs/h71731d271710"
-        }
+        "kubernetesProvider": {}
       },
       "required": [
-        "preference",
-        "weight"
+        "kubernetesProvider"
       ],
       "type": "object"
     },
-    "h7084a2ebe8ea": {
-      "pattern": "^([dD][rR][oO][pP]|[rR][eE][jJ][eE][cC][tT])?$",
-      "type": "string"
-    },
-    "h71731d271710": {
-      "description": "Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.",
-      "format": "int32",
-      "type": "integer"
-    },
-    "h729486562dc1": {
-      "description": "key is the label key that the selector applies to.",
-      "type": "string"
-    },
-    "h7330da05f78d": {
-      "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
-      "type": "string"
-    },
-    "h763eab2948ab": {
-      "description": "CanReach enables IP auto-detection based on which source address on the node is used to reach the specified IP or domain.",
-      "type": "string"
-    },
-    "h764de2d99a91": {
+    "values/@allOf(16)@if@allOf(1)": {
       "anyOf": [
         {
           "not": {
@@ -535,43 +219,76 @@
         }
       ]
     },
-    "h771b0cb43a02": {
-      "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
-    },
-    "h795767c92c3b": {
-      "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
-      "type": "string"
-    },
-    "h7a6313f8dd4a": {
-      "allOf": [
+    "values/@allOf(2)@if": {
+      "anyOf": [
         {
           "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
+            "properties": {
+              "defaultFelixConfiguration": {}
+            },
+            "required": [
+              "defaultFelixConfiguration"
+            ],
+            "type": "object"
           }
         },
         {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
+          "properties": {
+            "defaultFelixConfiguration": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "defaultFelixConfiguration"
+          ],
+          "type": "object"
         }
-      ],
-      "type": "string"
+      ]
     },
-    "h7b271da5b4ad": {
-      "additionalProperties": {
-        "type": "string"
+    "values/@allOf(22)@if@allOf(1)": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "goldmane": {}
+            },
+            "required": [
+              "goldmane"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "goldmane": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "goldmane"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "values/@allOf(23)@if@allOf(0)@anyOf(0).certs": {
+      "properties": {
+        "node": {
+          "enum": [
+            null
+          ]
+        }
       },
-      "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+      "required": [
+        "node"
+      ],
       "type": "object"
     },
-    "h7cb949ed4252": {
+    "values/@allOf(23)@if@allOf(1)": {
       "anyOf": [
         {
           "properties": {
@@ -599,25 +316,18 @@
         }
       ]
     },
-    "h7cfe8bccd65f": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Labels is a map of string keys and values that may match replicaset and service selectors. Each of these key/value pairs are added to the object's labels provided the key does not already exist in the object's labels.",
-      "type": "object"
-    },
-    "h84b4d0f0f211": {
+    "values/@allOf(5)@if": {
       "properties": {
-        "goldmane": {
-          "$ref": "#/$defs/hd9dd13dbcbf3"
+        "installation": {
+          "$ref": "#/$defs/values~1@allOf(0)@if.defaultFelixConfiguration"
         }
       },
       "required": [
-        "goldmane"
+        "installation"
       ],
       "type": "object"
     },
-    "h851e06d39329": {
+    "values/@allOf(8)@if@allOf(0)@anyOf(0).certs": {
       "properties": {
         "typha": {
           "enum": [
@@ -630,15 +340,449 @@
       ],
       "type": "object"
     },
-    "h86cd446cfae7": {
+    "values/additionalLabels@anyOf(0)": {
+      "not": {
+        "$ref": "#/$defs/t"
+      }
+    },
+    "values/additionalLabels@anyOf(1)": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/values~1additionalLabels@anyOf(1)@allOf(0)@additionalProperties"
+          },
+          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        {
+          "$ref": "#/$defs/values~1@allOf(1)@then@allOf(0).imagePullSecrets@anyOf(2)"
+        }
+      ]
+    },
+    "values/additionalLabels@anyOf(1)@allOf(0)@additionalProperties": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "values/additionalLabels@anyOf(2)": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "values/affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions": {
+      "description": "A list of node selector requirements by node's labels.",
+      "items": {
+        "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "values/affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items": {
       "additionalProperties": false,
       "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
       "properties": {
         "key": {
-          "$ref": "#/$defs/h91e0c7b1adac"
+          "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key"
         },
         "operator": {
-          "$ref": "#/$defs/h5cfcb8f75935"
+          "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.operator"
+        },
+        "values": {
+          "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
+          "items": {
+            "$ref": "#/$defs/values~1additionalLabels@anyOf(1)@allOf(0)@additionalProperties"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "key",
+        "operator"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "values/affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key": {
+      "description": "The label key that the selector applies to.",
+      "type": "string"
+    },
+    "values/affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.operator": {
+      "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
+      "type": "string"
+    },
+    "values/affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchFields": {
+      "description": "A list of node selector requirements by node's fields.",
+      "items": {
+        "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "values/affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.weight": {
+      "description": "Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.",
+      "format": "int32",
+      "type": "integer"
+    },
+    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items": {
+      "additionalProperties": false,
+      "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
+      "properties": {
+        "podAffinityTerm": {
+          "additionalProperties": false,
+          "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+          "properties": {
+            "labelSelector": {
+              "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
+            },
+            "matchLabelKeys": {
+              "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.matchLabelKeys"
+            },
+            "mismatchLabelKeys": {
+              "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.mismatchLabelKeys"
+            },
+            "namespaceSelector": {
+              "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
+            },
+            "namespaces": {
+              "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.namespaces"
+            },
+            "topologyKey": {
+              "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.topologyKey"
+            }
+          },
+          "required": [
+            "topologyKey"
+          ],
+          "type": "object"
+        },
+        "weight": {
+          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.weight"
+        }
+      },
+      "required": [
+        "weight",
+        "podAffinityTerm"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector": {
+      "additionalProperties": false,
+      "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+      "properties": {
+        "matchExpressions": {
+          "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+          "items": {
+            "additionalProperties": false,
+            "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+            "properties": {
+              "key": {
+                "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector.matchExpressions@items.key"
+              },
+              "operator": {
+                "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector.matchExpressions@items.operator"
+              },
+              "values": {
+                "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                "items": {
+                  "$ref": "#/$defs/values~1additionalLabels@anyOf(1)@allOf(0)@additionalProperties"
+                },
+                "type": [
+                  "array",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "key",
+              "operator"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "matchLabels": {
+          "additionalProperties": {
+            "$ref": "#/$defs/values~1additionalLabels@anyOf(1)@allOf(0)@additionalProperties"
+          },
+          "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-map-type": "atomic"
+    },
+    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector.matchExpressions@items.key": {
+      "description": "key is the label key that the selector applies to.",
+      "type": "string"
+    },
+    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector.matchExpressions@items.operator": {
+      "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+      "type": "string"
+    },
+    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.matchLabelKeys": {
+      "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+      "items": {
+        "$ref": "#/$defs/values~1additionalLabels@anyOf(1)@allOf(0)@additionalProperties"
+      },
+      "type": [
+        "array",
+        "null"
+      ],
+      "x-kubernetes-list-type": "atomic"
+    },
+    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.mismatchLabelKeys": {
+      "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+      "items": {
+        "$ref": "#/$defs/values~1additionalLabels@anyOf(1)@allOf(0)@additionalProperties"
+      },
+      "type": [
+        "array",
+        "null"
+      ],
+      "x-kubernetes-list-type": "atomic"
+    },
+    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.namespaces": {
+      "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
+      "items": {
+        "$ref": "#/$defs/values~1additionalLabels@anyOf(1)@allOf(0)@additionalProperties"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.topologyKey": {
+      "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
+      "type": "string"
+    },
+    "values/affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.weight": {
+      "description": "weight associated with matching the corresponding podAffinityTerm, in the range 1-100.",
+      "format": "int32",
+      "type": "integer"
+    },
+    "values/affinity@anyOf(1).podAffinity.requiredDuringSchedulingIgnoredDuringExecution@items": {
+      "additionalProperties": false,
+      "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+      "properties": {
+        "labelSelector": {
+          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
+        },
+        "matchLabelKeys": {
+          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.matchLabelKeys"
+        },
+        "mismatchLabelKeys": {
+          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.mismatchLabelKeys"
+        },
+        "namespaceSelector": {
+          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
+        },
+        "namespaces": {
+          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.namespaces"
+        },
+        "topologyKey": {
+          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.topologyKey"
+        }
+      },
+      "required": [
+        "topologyKey"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.metadata": {
+      "additionalProperties": false,
+      "description": "Metadata is a subset of a Kubernetes object's metadata that is added to the Deployment.",
+      "properties": {
+        "annotations": {
+          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.metadata.annotations"
+        },
+        "labels": {
+          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.metadata.labels"
+        }
+      },
+      "type": "object"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.metadata.annotations": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Annotations is a map of arbitrary non-identifying metadata. Each of these key/value pairs are added to the object's annotations provided the key does not already exist in the object's annotations.",
+      "type": "object"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.metadata.labels": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "Labels is a map of string keys and values that may match replicaset and service selectors. Each of these key/value pairs are added to the object's labels provided the key does not already exist in the object's labels.",
+      "type": "object"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.metadata": {
+      "additionalProperties": false,
+      "description": "Metadata is a subset of a Kubernetes object's metadata that is added to the pod's metadata.",
+      "properties": {
+        "annotations": {
+          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.metadata.annotations"
+        },
+        "labels": {
+          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.metadata.labels"
+        }
+      },
+      "type": "object"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)": {
+      "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref": {
+      "additionalProperties": false,
+      "properties": {
+        "nodeAffinity": {
+          "additionalProperties": false,
+          "description": "Describes node affinity scheduling rules for the pod.",
+          "properties": {
+            "preferredDuringSchedulingIgnoredDuringExecution": {
+              "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node matches the corresponding matchExpressions; the node(s) with the highest sum are the most preferred.",
+              "items": {
+                "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items"
+              },
+              "type": "array"
+            },
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "additionalProperties": false,
+              "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to an update), the system may or may not try to eventually evict the pod from its node.",
+              "properties": {
+                "nodeSelectorTerms": {
+                  "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms"
+                }
+              },
+              "required": [
+                "nodeSelectorTerms"
+              ],
+              "type": "object",
+              "x-kubernetes-map-type": "atomic"
+            }
+          },
+          "type": "object"
+        },
+        "podAffinity": {
+          "additionalProperties": false,
+          "description": "Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).",
+          "properties": {
+            "preferredDuringSchedulingIgnoredDuringExecution": {
+              "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
+              "items": {
+                "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items"
+              },
+              "type": "array"
+            },
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
+              "items": {
+                "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.requiredDuringSchedulingIgnoredDuringExecution@items"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        },
+        "podAntiAffinity": {
+          "additionalProperties": false,
+          "description": "Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).",
+          "properties": {
+            "preferredDuringSchedulingIgnoredDuringExecution": {
+              "description": "The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
+              "items": {
+                "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items"
+              },
+              "type": "array"
+            },
+            "requiredDuringSchedulingIgnoredDuringExecution": {
+              "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
+              "items": {
+                "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.requiredDuringSchedulingIgnoredDuringExecution@items"
+              },
+              "type": "array"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items": {
+      "additionalProperties": false,
+      "description": "An empty preferred scheduling term matches all objects with implicit weight 0 (i.e. it's a no-op). A null preferred scheduling term matches no objects (i.e. is also a no-op).",
+      "properties": {
+        "preference": {
+          "additionalProperties": false,
+          "description": "A node selector term, associated with the corresponding weight.",
+          "properties": {
+            "matchExpressions": {
+              "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions"
+            },
+            "matchFields": {
+              "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchFields"
+            }
+          },
+          "type": "object",
+          "x-kubernetes-map-type": "atomic"
+        },
+        "weight": {
+          "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.weight"
+        }
+      },
+      "required": [
+        "preference",
+        "weight"
+      ],
+      "type": "object"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions": {
+      "description": "A list of node selector requirements by node's labels.",
+      "items": {
+        "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items"
+      },
+      "type": "array"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items": {
+      "additionalProperties": false,
+      "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+      "properties": {
+        "key": {
+          "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key"
+        },
+        "operator": {
+          "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.operator"
         },
         "values": {
           "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
@@ -654,11 +798,245 @@
       ],
       "type": "object"
     },
-    "h89bc4e1169b0": {
-      "pattern": "^[ \\t]*(#.*)?$",
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchFields": {
+      "description": "A list of node selector requirements by node's fields.",
+      "items": {
+        "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items"
+      },
+      "type": "array"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms": {
+      "description": "Required. A list of node selector terms. The terms are ORed.",
+      "items": {
+        "additionalProperties": false,
+        "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
+        "properties": {
+          "matchExpressions": {
+            "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions"
+          },
+          "matchFields": {
+            "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchFields"
+          }
+        },
+        "type": "object",
+        "x-kubernetes-map-type": "atomic"
+      },
+      "type": "array"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items": {
+      "additionalProperties": false,
+      "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
+      "properties": {
+        "podAffinityTerm": {
+          "additionalProperties": false,
+          "description": "Required. A pod affinity term, associated with the corresponding weight.",
+          "properties": {
+            "labelSelector": {
+              "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
+            },
+            "namespaceSelector": {
+              "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.namespaceSelector"
+            },
+            "namespaces": {
+              "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.namespaces"
+            },
+            "topologyKey": {
+              "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.topologyKey"
+            }
+          },
+          "required": [
+            "topologyKey"
+          ],
+          "type": "object"
+        },
+        "weight": {
+          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.weight"
+        }
+      },
+      "required": [
+        "podAffinityTerm",
+        "weight"
+      ],
+      "type": "object"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector": {
+      "additionalProperties": false,
+      "description": "A label query over a set of resources, in this case pods.",
+      "properties": {
+        "matchExpressions": {
+          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector.matchExpressions"
+        },
+        "matchLabels": {
+          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector.matchLabels"
+        }
+      },
+      "type": "object",
+      "x-kubernetes-map-type": "atomic"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector.matchExpressions": {
+      "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+      "items": {
+        "additionalProperties": false,
+        "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+        "properties": {
+          "key": {
+            "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector.matchExpressions@items.key"
+          },
+          "operator": {
+            "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector.matchExpressions@items.operator"
+          },
+          "values": {
+            "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "key",
+          "operator"
+        ],
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector.matchLabels": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+      "type": "object"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.namespaceSelector": {
+      "additionalProperties": false,
+      "description": "A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means \"this pod's namespace\". An empty selector ({}) matches all namespaces.",
+      "properties": {
+        "matchExpressions": {
+          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector.matchExpressions"
+        },
+        "matchLabels": {
+          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector.matchLabels"
+        }
+      },
+      "type": "object",
+      "x-kubernetes-map-type": "atomic"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.namespaces": {
+      "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.requiredDuringSchedulingIgnoredDuringExecution@items": {
+      "additionalProperties": false,
+      "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+      "properties": {
+        "labelSelector": {
+          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
+        },
+        "namespaceSelector": {
+          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.namespaceSelector"
+        },
+        "namespaces": {
+          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.namespaces"
+        },
+        "topologyKey": {
+          "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.topologyKey"
+        }
+      },
+      "required": [
+        "topologyKey"
+      ],
+      "type": "object"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.claims": {
+      "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container. \n This is an alpha field and requires enabling the DynamicResourceAllocation feature gate. \n This field is immutable. It can only be set for containers.",
+      "items": {
+        "additionalProperties": false,
+        "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+        "properties": {
+          "name": {
+            "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.claims@items.name"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": "object"
+      },
+      "type": "array",
+      "x-kubernetes-list-map-keys": [
+        "name"
+      ],
+      "x-kubernetes-list-type": "map"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.claims@items.name": {
+      "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
       "type": "string"
     },
-    "h8a635c204606": {
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.limits": {
+      "additionalProperties": {
+        "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.limits@additionalProperties"
+      },
+      "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "type": "object"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.limits@additionalProperties": {
+      "anyOf": [
+        {
+          "type": "integer"
+        },
+        {
+          "type": "string"
+        }
+      ],
+      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
+      "x-kubernetes-int-or-string": true
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.requests": {
+      "additionalProperties": {
+        "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.limits@additionalProperties"
+      },
+      "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "type": "object"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.tolerations@items": {
+      "additionalProperties": false,
+      "description": "The pod this Toleration is attached to tolerates any taint that matches the triple <key,value,effect> using the matching operator <operator>.",
+      "properties": {
+        "effect": {
+          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.tolerations@items.effect"
+        },
+        "key": {
+          "description": "Key is the taint key that the toleration applies to. Empty means match all taint keys. If the key is empty, operator must be Exists; this combination means to match all values and all keys.",
+          "type": "string"
+        },
+        "operator": {
+          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.tolerations@items.operator"
+        },
+        "tolerationSeconds": {
+          "description": "TolerationSeconds represents the period of time the toleration (which must be of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default, it is not set, which means tolerate the taint forever (do not evict). Zero and negative values will be treated as 0 (evict immediately) by the system.",
+          "format": "int64",
+          "type": "integer"
+        },
+        "value": {
+          "description": "Value is the taint value the toleration matches to. If the operator is Exists, the value should be empty, otherwise just a regular string.",
+          "type": "string"
+        }
+      },
+      "type": "object"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.tolerations@items.effect": {
+      "description": "Effect indicates the taint effect to match. Empty means match all taint effects. When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.",
+      "type": "string"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.tolerations@items.operator": {
+      "description": "Operator represents a key's relationship to the value. Valid operators are Exists and Equal. Defaults to Equal. Exists is equivalent to wildcard for value, so that a pod can tolerate all taints of a particular category.",
+      "type": "string"
+    },
+    "values/apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.topologySpreadConstraints": {
       "description": "TopologySpreadConstraints describes how a group of pods ought to spread across topology domains. Scheduler will schedule pods in a way which abides by the constraints. All topologySpreadConstraints are ANDed.",
       "items": {
         "additionalProperties": false,
@@ -669,10 +1047,10 @@
             "description": "LabelSelector is used to find matching pods. Pods that match this label selector are counted to determine the number of pods in their corresponding topology domain.",
             "properties": {
               "matchExpressions": {
-                "$ref": "#/$defs/h8c8d9fe895da"
+                "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector.matchExpressions"
               },
               "matchLabels": {
-                "$ref": "#/$defs/h7b271da5b4ad"
+                "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector.matchLabels"
               }
             },
             "type": "object",
@@ -722,86 +1100,22 @@
       },
       "type": "array"
     },
-    "h8be9bbde27ae": {
-      "$ref": "#/$defs/providerShared_c7b8916f82ca"
-    },
-    "h8c7479972794": {
-      "additionalProperties": false,
-      "description": "Metadata is a subset of a Kubernetes object's metadata that is added to the pod's metadata.",
-      "properties": {
-        "annotations": {
-          "$ref": "#/$defs/hd43accdcc64a"
-        },
-        "labels": {
-          "$ref": "#/$defs/h7cfe8bccd65f"
-        }
-      },
-      "type": "object"
-    },
-    "h8c8d9fe895da": {
-      "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-      "items": {
-        "additionalProperties": false,
-        "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-        "properties": {
-          "key": {
-            "$ref": "#/$defs/h729486562dc1"
-          },
-          "operator": {
-            "$ref": "#/$defs/hf3f813b1cb28"
-          },
-          "values": {
-            "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-            "items": {
-              "type": "string"
-            },
-            "type": "array"
-          }
-        },
-        "required": [
-          "key",
-          "operator"
-        ],
-        "type": "object"
-      },
-      "type": "array"
-    },
-    "h8d21519bcbb8": {
-      "description": "Interface enables IP auto-detection based on interfaces that match the given regex.",
+    "values/defaultFelixConfiguration@allOf(0)@then.bpfConntrackTimeouts.creationGracePeriod": {
+      "pattern": "^(([0-9]*(\\.[0-9]*)?(ms|s|h|m|us)+)+|Auto)$",
       "type": "string"
     },
-    "h91e0c7b1adac": {
-      "description": "The label key that the selector applies to.",
+    "values/defaultFelixConfiguration@allOf(0)@then.bpfHostNetworkedNATWithoutCTLB": {
+      "enum": [
+        "Enabled",
+        "Disabled"
+      ],
       "type": "string"
     },
-    "h9399abf298b8": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "$ref": "#/$defs/h56bd48f38e6b"
-          },
-          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-          "type": [
-            "object",
-            "null"
-          ]
-        },
-        {
-          "$ref": "#/$defs/hcecdfbfc3065"
-        }
-      ]
+    "values/defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod": {
+      "pattern": "^([0-9]+(\\\\.[0-9]+)?(ms|s|m|h))*$",
+      "type": "string"
     },
-    "h97f1f236072d": {
-      "not": {
-        "$ref": "#/$defs/t"
-      }
-    },
-    "h9810b646fad3": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "h995dc72fe4f6": {
+    "values/defaultFelixConfiguration@allOf(0)@then.bpfPSNATPorts": {
       "anyOf": [
         {
           "type": "integer"
@@ -810,98 +1124,10 @@
           "type": "string"
         }
       ],
-      "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
+      "pattern": "^.*",
       "x-kubernetes-int-or-string": true
     },
-    "h9bf40a39de2f": {
-      "properties": {
-        "defaultFelixConfiguration": {
-          "$ref": "#/$defs/hd9dd13dbcbf3"
-        }
-      },
-      "required": [
-        "defaultFelixConfiguration"
-      ],
-      "type": "object"
-    },
-    "h9c565b5c3a9e": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "goldmane": {}
-            },
-            "required": [
-              "goldmane"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "goldmane": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "goldmane"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "h9da7e547fbad": {
-      "additionalProperties": false,
-      "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
-      "properties": {
-        "labelSelector": {
-          "$ref": "#/$defs/h47bf5075cb01"
-        },
-        "namespaceSelector": {
-          "$ref": "#/$defs/ha131d7729508"
-        },
-        "namespaces": {
-          "$ref": "#/$defs/h771b0cb43a02"
-        },
-        "topologyKey": {
-          "$ref": "#/$defs/h795767c92c3b"
-        }
-      },
-      "required": [
-        "topologyKey"
-      ],
-      "type": "object"
-    },
-    "ha12290afbe78": {
-      "description": "FirstFound uses default interface matching parameters to select an interface, performing best-effort filtering based on well-known interface names.",
-      "type": "boolean"
-    },
-    "ha131d7729508": {
-      "additionalProperties": false,
-      "description": "A label query over the set of namespaces that the term applies to. The term is applied to the union of the namespaces selected by this field and the ones listed in the namespaces field. null selector and null or empty namespaces list means \"this pod's namespace\". An empty selector ({}) matches all namespaces.",
-      "properties": {
-        "matchExpressions": {
-          "$ref": "#/$defs/h8c8d9fe895da"
-        },
-        "matchLabels": {
-          "$ref": "#/$defs/h7b271da5b4ad"
-        }
-      },
-      "type": "object",
-      "x-kubernetes-map-type": "atomic"
-    },
-    "ha26928b9e4dc": {
-      "description": "Operator represents a key's relationship to the value. Valid operators are Exists and Equal. Defaults to Equal. Exists is equivalent to wildcard for value, so that a pod can tolerate all taints of a particular category.",
-      "type": "string"
-    },
-    "ha57525005582": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "ha7ef5bffb4f9": {
+    "values/defaultFelixConfiguration@allOf(0)@then.failsafeInboundHostPorts": {
       "items": {
         "additionalProperties": false,
         "properties": {
@@ -922,65 +1148,77 @@
       },
       "type": "array"
     },
-    "ha9537dbdf639": {
+    "values/defaultFelixConfiguration@allOf(0)@then.iptablesFilterAllowAction": {
+      "pattern": "^([aA][cC][cC][eE][pP][tT]|[rR][eE][tT][uU][rR][nN])?$",
+      "type": "string"
+    },
+    "values/defaultFelixConfiguration@allOf(0)@then.iptablesFilterDenyAction": {
+      "pattern": "^([dD][rR][oO][pP]|[rR][eE][jJ][eE][cC][tT])?$",
+      "type": "string"
+    },
+    "values/defaultFelixConfiguration@allOf(0)@then.logSeverityFile": {
+      "pattern": "^([tT][rR][aA][cC][eE]|[dD][eE][bB][uU][gG]|[iI][nN][fF][oO]|[wW][aA][rR][nN][iI][nN][gG]|[eE][rR][rR][oO][rR]|[fF][aA][tT][aA][lL])?$",
+      "type": "string"
+    },
+    "values/defaultFelixConfiguration@allOf(0)@then.routeTableRange": {
       "additionalProperties": false,
-      "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
       "properties": {
-        "matchExpressions": {
-          "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-          "items": {
-            "additionalProperties": false,
-            "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-            "properties": {
-              "key": {
-                "$ref": "#/$defs/h729486562dc1"
-              },
-              "operator": {
-                "$ref": "#/$defs/hf3f813b1cb28"
-              },
-              "values": {
-                "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                "items": {
-                  "$ref": "#/$defs/h56bd48f38e6b"
-                },
-                "type": [
-                  "array",
-                  "null"
-                ]
-              }
-            },
-            "required": [
-              "key",
-              "operator"
-            ],
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ]
+        "max": {
+          "type": "integer"
         },
-        "matchLabels": {
-          "additionalProperties": {
-            "$ref": "#/$defs/h56bd48f38e6b"
-          },
-          "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-          "type": [
-            "object",
-            "null"
-          ]
+        "min": {
+          "type": "integer"
         }
       },
-      "type": [
-        "object",
-        "null"
+      "required": [
+        "max",
+        "min"
       ],
-      "x-kubernetes-map-type": "atomic"
+      "type": "object"
     },
-    "hab02c23921d2": {
+    "values/dnsPolicy@anyOf(0)": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "values/dnsPolicy@anyOf(2)": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/dnsPolicy@anyOf(3)@allOf(1)": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "values/dnsPolicy@anyOf(3)@allOf(4)": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "values/dnsPolicy@anyOf(3)@allOf(5)": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "values/dnsPolicy@anyOf(3)@allOf(9)": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "values/dnsPolicy@anyOf(4)": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -991,7 +1229,7 @@
             "type": "integer"
           },
           {
-            "$ref": "#/$defs/h3394d7d8572c"
+            "$ref": "#/$defs/values~1dnsPolicy@anyOf(4)@additionalProperties@anyOf(2)"
           },
           {
             "type": "number"
@@ -1009,35 +1247,85 @@
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/h3394d7d8572c"
+        "$ref": "#/$defs/values~1dnsPolicy@anyOf(4)@additionalProperties@anyOf(2)"
       },
       "type": "object"
     },
-    "hb0bfc99d645c": {
-      "description": "A list of node selector requirements by node's labels.",
-      "items": {
-        "$ref": "#/$defs/h4c2716164efb"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "hb38ec1200366": {
-      "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-      "items": {
-        "$ref": "#/$defs/h56bd48f38e6b"
-      },
-      "type": [
-        "array",
-        "null"
+    "values/dnsPolicy@anyOf(4)@additionalProperties@anyOf(2)": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        }
       ],
-      "x-kubernetes-list-type": "atomic"
+      "type": "string"
     },
-    "hb590b645b546": {
+    "values/dnsPolicy@anyOf(5)": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/dnsPolicy@anyOf(7)": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "values/installation@allOf(1)@then.calicoNetwork.nodeAddressAutodetectionV4.canReach": {
+      "description": "CanReach enables IP auto-detection based on which source address on the node is used to reach the specified IP or domain.",
+      "type": "string"
+    },
+    "values/installation@allOf(1)@then.calicoNetwork.nodeAddressAutodetectionV4.cidrs": {
+      "description": "CIDRS enables IP auto-detection based on which addresses on the nodes are within one of the provided CIDRs.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "values/installation@allOf(1)@then.calicoNetwork.nodeAddressAutodetectionV4.firstFound": {
+      "description": "FirstFound uses default interface matching parameters to select an interface, performing best-effort filtering based on well-known interface names.",
+      "type": "boolean"
+    },
+    "values/installation@allOf(1)@then.calicoNetwork.nodeAddressAutodetectionV4.interface": {
+      "description": "Interface enables IP auto-detection based on interfaces that match the given regex.",
+      "type": "string"
+    },
+    "values/installation@allOf(1)@then.calicoNetwork.nodeAddressAutodetectionV4.kubernetes": {
+      "description": "Kubernetes configures Calico to detect node addresses based on the Kubernetes API.",
+      "enum": [
+        "NodeInternalIP"
+      ],
+      "type": "string"
+    },
+    "values/installation@allOf(1)@then.calicoNetwork.nodeAddressAutodetectionV4.skipInterface": {
+      "description": "SkipInterface enables IP auto-detection based on interfaces that do not match the given regex.",
+      "type": "string"
+    },
+    "values/installation@allOf(1)@then.calicoNodeDaemonSet.metadata": {
+      "additionalProperties": false,
+      "description": "Metadata is a subset of a Kubernetes object's metadata that is added to the DaemonSet.",
+      "properties": {
+        "annotations": {
+          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.metadata.annotations"
+        },
+        "labels": {
+          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.metadata.labels"
+        }
+      },
+      "type": "object"
+    },
+    "values/resources@anyOf(2).limits@additionalProperties": {
       "oneOf": [
         {
-          "$ref": "#/$defs/h56bd48f38e6b"
+          "$ref": "#/$defs/values~1additionalLabels@anyOf(1)@allOf(0)@additionalProperties"
         },
         {
           "type": [
@@ -1047,299 +1335,11 @@
         }
       ]
     },
-    "hb732532d8c9c": {
-      "pattern": "^([0-9]+(\\\\.[0-9]+)?(ms|s|m|h))*$",
-      "type": "string"
-    },
-    "hb9383c7084d7": {
-      "properties": {
-        "whisker": {
-          "$ref": "#/$defs/hd9dd13dbcbf3"
-        }
-      },
-      "required": [
-        "whisker"
-      ],
-      "type": "object"
-    },
-    "hbfd0ca057049": {
-      "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
-      "items": {
-        "$ref": "#/$defs/h56bd48f38e6b"
-      },
+    "values/tigeraOperator.env@anyOf(0)@items.valueFrom.configMapKeyRef.name": {
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
-        "array",
+        "string",
         "null"
-      ]
-    },
-    "hc87ea1de3200": {
-      "additionalProperties": false,
-      "description": "Metadata is a subset of a Kubernetes object's metadata that is added to the Deployment.",
-      "properties": {
-        "annotations": {
-          "$ref": "#/$defs/hd43accdcc64a"
-        },
-        "labels": {
-          "$ref": "#/$defs/h7cfe8bccd65f"
-        }
-      },
-      "type": "object"
-    },
-    "hcecdfbfc3065": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "hd43accdcc64a": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "Annotations is a map of arbitrary non-identifying metadata. Each of these key/value pairs are added to the object's annotations provided the key does not already exist in the object's annotations.",
-      "type": "object"
-    },
-    "hd99594356446": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "hd9dd13dbcbf3": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "hda372ea0dd6c": {
-      "properties": {
-        "imagePullSecrets": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "imagePullSecrets"
-      ],
-      "type": "object"
-    },
-    "hdf45e8b2e2b8": {
-      "properties": {
-        "node": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "node"
-      ],
-      "type": "object"
-    },
-    "hdfb5cd193eba": {
-      "additionalProperties": {
-        "$ref": "#/$defs/h995dc72fe4f6"
-      },
-      "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-      "type": "object"
-    },
-    "he9355bd77ba3": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "whisker": {}
-            },
-            "required": [
-              "whisker"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "whisker": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "whisker"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "he9417fad046e": {
-      "enum": [
-        "Enabled",
-        "Disabled"
-      ],
-      "type": "string"
-    },
-    "hf3f813b1cb28": {
-      "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-      "type": "string"
-    },
-    "hf3fabbad9524": {
-      "description": "Required. A list of node selector terms. The terms are ORed.",
-      "items": {
-        "additionalProperties": false,
-        "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
-        "properties": {
-          "matchExpressions": {
-            "$ref": "#/$defs/h1d552b5b01f9"
-          },
-          "matchFields": {
-            "$ref": "#/$defs/hf85a44a0fa7e"
-          }
-        },
-        "type": "object",
-        "x-kubernetes-map-type": "atomic"
-      },
-      "type": "array"
-    },
-    "hf7a74d706cc9": {
-      "pattern": "^([tT][rR][aA][cC][eE]|[dD][eE][bB][uU][gG]|[iI][nN][fF][oO]|[wW][aA][rR][nN][iI][nN][gG]|[eE][rR][rR][oO][rR]|[fF][aA][tT][aA][lL])?$",
-      "type": "string"
-    },
-    "hf85a44a0fa7e": {
-      "description": "A list of node selector requirements by node's fields.",
-      "items": {
-        "$ref": "#/$defs/h86cd446cfae7"
-      },
-      "type": "array"
-    },
-    "hf963a4a3a925": {
-      "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-      "items": {
-        "$ref": "#/$defs/h56bd48f38e6b"
-      },
-      "type": [
-        "array",
-        "null"
-      ],
-      "x-kubernetes-list-type": "atomic"
-    },
-    "hfda3678f961a": {
-      "additionalProperties": false,
-      "properties": {
-        "max": {
-          "type": "integer"
-        },
-        "min": {
-          "type": "integer"
-        }
-      },
-      "required": [
-        "max",
-        "min"
-      ],
-      "type": "object"
-    },
-    "providerShared_c7b8916f82ca": {
-      "additionalProperties": false,
-      "properties": {
-        "nodeAffinity": {
-          "additionalProperties": false,
-          "description": "Describes node affinity scheduling rules for the pod.",
-          "properties": {
-            "preferredDuringSchedulingIgnoredDuringExecution": {
-              "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node matches the corresponding matchExpressions; the node(s) with the highest sum are the most preferred.",
-              "items": {
-                "$ref": "#/$defs/h6d094dae3f37"
-              },
-              "type": "array"
-            },
-            "requiredDuringSchedulingIgnoredDuringExecution": {
-              "additionalProperties": false,
-              "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to an update), the system may or may not try to eventually evict the pod from its node.",
-              "properties": {
-                "nodeSelectorTerms": {
-                  "$ref": "#/$defs/hf3fabbad9524"
-                }
-              },
-              "required": [
-                "nodeSelectorTerms"
-              ],
-              "type": "object",
-              "x-kubernetes-map-type": "atomic"
-            }
-          },
-          "type": "object"
-        },
-        "podAffinity": {
-          "additionalProperties": false,
-          "description": "Describes pod affinity scheduling rules (e.g. co-locate this pod in the same node, zone, etc. as some other pod(s)).",
-          "properties": {
-            "preferredDuringSchedulingIgnoredDuringExecution": {
-              "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
-              "items": {
-                "$ref": "#/$defs/h39db8db5beeb"
-              },
-              "type": "array"
-            },
-            "requiredDuringSchedulingIgnoredDuringExecution": {
-              "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
-              "items": {
-                "$ref": "#/$defs/h9da7e547fbad"
-              },
-              "type": "array"
-            }
-          },
-          "type": "object"
-        },
-        "podAntiAffinity": {
-          "additionalProperties": false,
-          "description": "Describes pod anti-affinity scheduling rules (e.g. avoid putting this pod in the same node, zone, etc. as some other pod(s)).",
-          "properties": {
-            "preferredDuringSchedulingIgnoredDuringExecution": {
-              "description": "The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
-              "items": {
-                "$ref": "#/$defs/h39db8db5beeb"
-              },
-              "type": "array"
-            },
-            "requiredDuringSchedulingIgnoredDuringExecution": {
-              "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
-              "items": {
-                "$ref": "#/$defs/h9da7e547fbad"
-              },
-              "type": "array"
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
-        }
       ]
     }
   },
@@ -1348,7 +1348,7 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/h9bf40a39de2f"
+        "$ref": "#/$defs/values~1@allOf(0)@if"
       },
       "then": {
         "additionalProperties": {},
@@ -1361,7 +1361,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/hda372ea0dd6c"
+        "$ref": "#/$defs/values~1@allOf(1)@if"
       },
       "then": {
         "allOf": [
@@ -1371,13 +1371,13 @@
               "imagePullSecrets": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/h08ba5a39d8a0"
+                    "$ref": "#/$defs/values~1@allOf(1)@then@allOf(0).imagePullSecrets@anyOf(0)"
                   },
                   {
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/hcecdfbfc3065"
+                    "$ref": "#/$defs/values~1@allOf(1)@then@allOf(0).imagePullSecrets@anyOf(2)"
                   }
                 ],
                 "description": "imagePullSecrets is a special helm field which, when specified, creates a secret\ncontaining the pull secret which is used to pull all images deployed by this helm chart and the resulting operator.\nthis field is a map where the key is the desired secret name and the value is the contents of the imagePullSecret.\nExample: --set-file imagePullSecrets.gcr=./pull-secret.json"
@@ -1393,10 +1393,10 @@
                     "propertyNames": {
                       "allOf": [
                         {
-                          "$ref": "#/$defs/h4174f29f69e0"
+                          "$ref": "#/$defs/values~1@allOf(1)@then@allOf(1).imagePullSecrets@anyOf(0)@propertyNames@allOf(0)"
                         },
                         {
-                          "$ref": "#/$defs/h424d50bcce86"
+                          "$ref": "#/$defs/values~1@allOf(1)@then@allOf(1).imagePullSecrets@anyOf(0)@propertyNames@allOf(1)"
                         },
                         {
                           "not": {
@@ -1433,25 +1433,25 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h3d829cecaa22"
+        "$ref": "#/$defs/values~1@allOf(2)@if"
       },
       "then": false
     },
     {
       "if": {
-        "$ref": "#/$defs/h7cb949ed4252"
+        "$ref": "#/$defs/values~1@allOf(23)@if@allOf(1)"
       },
       "then": false
     },
     {
       "if": {
-        "$ref": "#/$defs/he9355bd77ba3"
+        "$ref": "#/$defs/values~1@allOf(11)@if@allOf(1)"
       },
       "then": false
     },
     {
       "if": {
-        "$ref": "#/$defs/h4733b1db7dbf"
+        "$ref": "#/$defs/values~1@allOf(5)@if"
       },
       "then": {
         "allOf": [
@@ -1484,7 +1484,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h9c565b5c3a9e"
+        "$ref": "#/$defs/values~1@allOf(22)@if@allOf(1)"
       },
       "then": false
     },
@@ -1492,10 +1492,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h9bf40a39de2f"
+            "$ref": "#/$defs/values~1@allOf(0)@if"
           },
           {
-            "$ref": "#/$defs/h3d829cecaa22"
+            "$ref": "#/$defs/values~1@allOf(2)@if"
           }
         ]
       },
@@ -1509,7 +1509,7 @@
               {
                 "properties": {
                   "certs": {
-                    "$ref": "#/$defs/h851e06d39329"
+                    "$ref": "#/$defs/values~1@allOf(8)@if@allOf(0)@anyOf(0).certs"
                   }
                 },
                 "required": [
@@ -1539,7 +1539,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/h7cb949ed4252"
+            "$ref": "#/$defs/values~1@allOf(23)@if@allOf(1)"
           }
         ]
       },
@@ -1549,10 +1549,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h764de2d99a91"
+            "$ref": "#/$defs/values~1@allOf(16)@if@allOf(1)"
           },
           {
-            "$ref": "#/$defs/h4733b1db7dbf"
+            "$ref": "#/$defs/values~1@allOf(5)@if"
           }
         ]
       },
@@ -1564,7 +1564,7 @@
           {
             "properties": {
               "installation": {
-                "$ref": "#/$defs/hda372ea0dd6c"
+                "$ref": "#/$defs/values~1@allOf(1)@if"
               }
             },
             "required": [
@@ -1573,7 +1573,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/hda372ea0dd6c"
+            "$ref": "#/$defs/values~1@allOf(1)@if"
           }
         ]
       },
@@ -1597,10 +1597,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/hb9383c7084d7"
+            "$ref": "#/$defs/values~1@allOf(11)@if@allOf(0)"
           },
           {
-            "$ref": "#/$defs/he9355bd77ba3"
+            "$ref": "#/$defs/values~1@allOf(11)@if@allOf(1)"
           }
         ]
       },
@@ -1639,7 +1639,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h84b4d0f0f211"
+        "$ref": "#/$defs/values~1@allOf(13)@if"
       },
       "then": {
         "additionalProperties": {},
@@ -1668,10 +1668,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h3f1f2c825608"
+            "$ref": "#/$defs/values~1@allOf(15)@if@allOf(0)"
           },
           {
-            "$ref": "#/$defs/h031df6a1ba38"
+            "$ref": "#/$defs/values~1@allOf(15)@if@allOf(1)"
           }
         ]
       },
@@ -1685,7 +1685,7 @@
               {
                 "properties": {
                   "installation": {
-                    "$ref": "#/$defs/h56cf45ed9ddb"
+                    "$ref": "#/$defs/values~1@allOf(16)@if@allOf(0)@anyOf(0).installation"
                   }
                 },
                 "required": [
@@ -1697,7 +1697,7 @@
                 "not": {
                   "properties": {
                     "installation": {
-                      "$ref": "#/$defs/h0326ae605759"
+                      "$ref": "#/$defs/values~1@allOf(16)@if@allOf(0)@anyOf(1)@not.installation"
                     }
                   },
                   "required": [
@@ -1709,7 +1709,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/h764de2d99a91"
+            "$ref": "#/$defs/values~1@allOf(16)@if@allOf(1)"
           }
         ]
       },
@@ -1717,13 +1717,13 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h764de2d99a91"
+        "$ref": "#/$defs/values~1@allOf(16)@if@allOf(1)"
       },
       "then": false
     },
     {
       "if": {
-        "$ref": "#/$defs/hb9383c7084d7"
+        "$ref": "#/$defs/values~1@allOf(11)@if@allOf(0)"
       },
       "then": {
         "additionalProperties": {},
@@ -1737,7 +1737,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h031df6a1ba38"
+        "$ref": "#/$defs/values~1@allOf(15)@if@allOf(1)"
       },
       "then": false
     },
@@ -1814,10 +1814,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h84b4d0f0f211"
+            "$ref": "#/$defs/values~1@allOf(13)@if"
           },
           {
-            "$ref": "#/$defs/h9c565b5c3a9e"
+            "$ref": "#/$defs/values~1@allOf(22)@if@allOf(1)"
           }
         ]
       },
@@ -1831,7 +1831,7 @@
               {
                 "properties": {
                   "certs": {
-                    "$ref": "#/$defs/hdf45e8b2e2b8"
+                    "$ref": "#/$defs/values~1@allOf(23)@if@allOf(0)@anyOf(0).certs"
                   }
                 },
                 "required": [
@@ -1861,7 +1861,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/h7cb949ed4252"
+            "$ref": "#/$defs/values~1@allOf(23)@if@allOf(1)"
           }
         ]
       },
@@ -1869,7 +1869,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h3f1f2c825608"
+        "$ref": "#/$defs/values~1@allOf(15)@if@allOf(0)"
       },
       "then": {
         "additionalProperties": {},
@@ -1886,13 +1886,13 @@
     "additionalLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1additionalLabels@anyOf(0)"
         },
         {
-          "$ref": "#/$defs/h9399abf298b8"
+          "$ref": "#/$defs/values~1additionalLabels@anyOf(1)"
         },
         {
-          "$ref": "#/$defs/hd99594356446"
+          "$ref": "#/$defs/values~1additionalLabels@anyOf(2)"
         }
       ],
       "description": "Common labels for all resources created by this chart"
@@ -1900,7 +1900,7 @@
     "affinity": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1additionalLabels@anyOf(0)"
         },
         {
           "additionalProperties": false,
@@ -1921,17 +1921,17 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/hb0bfc99d645c"
+                            "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/h63f926268676"
+                            "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchFields"
                           }
                         },
                         "type": "object",
                         "x-kubernetes-map-type": "atomic"
                       },
                       "weight": {
-                        "$ref": "#/$defs/h71731d271710"
+                        "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.weight"
                       }
                     },
                     "required": [
@@ -1959,10 +1959,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/hb0bfc99d645c"
+                            "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/h63f926268676"
+                            "$ref": "#/$defs/values~1affinity@anyOf(1).nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchFields"
                           }
                         },
                         "type": [
@@ -1996,7 +1996,7 @@
                 "preferredDuringSchedulingIgnoredDuringExecution": {
                   "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
                   "items": {
-                    "$ref": "#/$defs/h16d818c893a0"
+                    "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items"
                   },
                   "type": [
                     "array",
@@ -2006,7 +2006,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/h526c09af9597"
+                    "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.requiredDuringSchedulingIgnoredDuringExecution@items"
                   },
                   "type": [
                     "array",
@@ -2026,7 +2026,7 @@
                 "preferredDuringSchedulingIgnoredDuringExecution": {
                   "description": "The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
                   "items": {
-                    "$ref": "#/$defs/h16d818c893a0"
+                    "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items"
                   },
                   "type": [
                     "array",
@@ -2036,7 +2036,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/h526c09af9597"
+                    "$ref": "#/$defs/values~1affinity@anyOf(1).podAffinity.requiredDuringSchedulingIgnoredDuringExecution@items"
                   },
                   "type": [
                     "array",
@@ -2053,7 +2053,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/hd99594356446"
+          "$ref": "#/$defs/values~1additionalLabels@anyOf(2)"
         },
         {
           "type": "null"
@@ -2066,7 +2066,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/hd9dd13dbcbf3"
+            "$ref": "#/$defs/values~1@allOf(0)@if.defaultFelixConfiguration"
           },
           "then": {
             "additionalProperties": false,
@@ -2077,7 +2077,7 @@
                 "description": "APIServerDeployment configures the calico-apiserver (or tigera-apiserver in Enterprise) Deployment. If used in conjunction with ControlPlaneNodeSelector or ControlPlaneTolerations, then these overrides take precedence.",
                 "properties": {
                   "metadata": {
-                    "$ref": "#/$defs/hc87ea1de3200"
+                    "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.metadata"
                   },
                   "spec": {
                     "additionalProperties": false,
@@ -2095,7 +2095,7 @@
                         "description": "Template describes the API server Deployment pod that will be created.",
                         "properties": {
                           "metadata": {
-                            "$ref": "#/$defs/h8c7479972794"
+                            "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.metadata"
                           },
                           "spec": {
                             "additionalProperties": false,
@@ -2104,7 +2104,7 @@
                               "affinity": {
                                 "allOf": [
                                   {
-                                    "$ref": "#/$defs/h8be9bbde27ae"
+                                    "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)"
                                   }
                                 ],
                                 "description": "Affinity is a group of affinity scheduling rules for the API server pods. If specified, this overrides any affinity that may be set on the API server Deployment. If omitted, the API server Deployment will use its default value for affinity. WARNING: Please note that this field will override the default API server Deployment affinity."
@@ -2128,13 +2128,13 @@
                                       "description": "Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named API server Deployment container's resources. If omitted, the API server Deployment will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence.",
                                       "properties": {
                                         "claims": {
-                                          "$ref": "#/$defs/h204dce47f82e"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.claims"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/h0a76b03aa294"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.limits"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/hdfb5cd193eba"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.requests"
                                         }
                                       },
                                       "type": "object"
@@ -2165,13 +2165,13 @@
                                       "description": "Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named API server Deployment init container's resources. If omitted, the API server Deployment will use its default value for this init container's resources.",
                                       "properties": {
                                         "claims": {
-                                          "$ref": "#/$defs/h204dce47f82e"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.claims"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/h0a76b03aa294"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.limits"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/hdfb5cd193eba"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.requests"
                                         }
                                       },
                                       "type": "object"
@@ -2194,12 +2194,12 @@
                               "tolerations": {
                                 "description": "Tolerations is the API server pod's tolerations. If specified, this overrides any tolerations that may be set on the API server Deployment. If omitted, the API server Deployment will use its default value for tolerations. WARNING: Please note that this field will override the default API server Deployment tolerations.",
                                 "items": {
-                                  "$ref": "#/$defs/h5ac9542ed984"
+                                  "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.tolerations@items"
                                 },
                                 "type": "array"
                               },
                               "topologySpreadConstraints": {
-                                "$ref": "#/$defs/h8a635c204606"
+                                "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.topologySpreadConstraints"
                               }
                             },
                             "type": "object"
@@ -2240,7 +2240,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/h851e06d39329"
+                "$ref": "#/$defs/values~1@allOf(8)@if@allOf(0)@anyOf(0).certs"
               },
               {
                 "not": {
@@ -2261,7 +2261,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/hdf45e8b2e2b8"
+                "$ref": "#/$defs/values~1@allOf(23)@if@allOf(0)@anyOf(0).certs"
               },
               {
                 "not": {
@@ -2307,7 +2307,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/hd9dd13dbcbf3"
+            "$ref": "#/$defs/values~1@allOf(0)@if.defaultFelixConfiguration"
           },
           "then": {
             "additionalProperties": false,
@@ -2366,34 +2366,34 @@
                 "additionalProperties": false,
                 "properties": {
                   "creationGracePeriod": {
-                    "$ref": "#/$defs/h41706f64aba0"
+                    "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfConntrackTimeouts.creationGracePeriod"
                   },
                   "genericTimeout": {
-                    "$ref": "#/$defs/h41706f64aba0"
+                    "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfConntrackTimeouts.creationGracePeriod"
                   },
                   "icmpTimeout": {
-                    "$ref": "#/$defs/h41706f64aba0"
+                    "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfConntrackTimeouts.creationGracePeriod"
                   },
                   "tcpEstablished": {
-                    "$ref": "#/$defs/h41706f64aba0"
+                    "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfConntrackTimeouts.creationGracePeriod"
                   },
                   "tcpFinsSeen": {
-                    "$ref": "#/$defs/h41706f64aba0"
+                    "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfConntrackTimeouts.creationGracePeriod"
                   },
                   "tcpResetSeen": {
-                    "$ref": "#/$defs/h41706f64aba0"
+                    "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfConntrackTimeouts.creationGracePeriod"
                   },
                   "tcpSynSent": {
-                    "$ref": "#/$defs/h41706f64aba0"
+                    "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfConntrackTimeouts.creationGracePeriod"
                   },
                   "udpTimeout": {
-                    "$ref": "#/$defs/h41706f64aba0"
+                    "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfConntrackTimeouts.creationGracePeriod"
                   }
                 },
                 "type": "object"
               },
               "bpfDSROptoutCIDRs": {
-                "$ref": "#/$defs/h08ba5a39d8a0"
+                "$ref": "#/$defs/values~1@allOf(1)@then@allOf(0).imagePullSecrets@anyOf(0)"
               },
               "bpfDataIfacePattern": {
                 "type": "string"
@@ -2412,7 +2412,7 @@
                 "type": "string"
               },
               "bpfExcludeCIDRsFromNAT": {
-                "$ref": "#/$defs/h08ba5a39d8a0"
+                "$ref": "#/$defs/values~1@allOf(1)@then@allOf(0).imagePullSecrets@anyOf(0)"
               },
               "bpfExportBufferSizeMB": {
                 "type": "integer"
@@ -2425,13 +2425,13 @@
                 "type": "string"
               },
               "bpfForceTrackPacketsFromIfaces": {
-                "$ref": "#/$defs/h08ba5a39d8a0"
+                "$ref": "#/$defs/values~1@allOf(1)@then@allOf(0).imagePullSecrets@anyOf(0)"
               },
               "bpfHostConntrackBypass": {
                 "type": "boolean"
               },
               "bpfHostNetworkedNATWithoutCTLB": {
-                "$ref": "#/$defs/he9417fad046e"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfHostNetworkedNATWithoutCTLB"
               },
               "bpfJITHardening": {
                 "allOf": [
@@ -2451,13 +2451,13 @@
                 "type": "boolean"
               },
               "bpfKubeProxyMinSyncPeriod": {
-                "$ref": "#/$defs/hb732532d8c9c"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod"
               },
               "bpfL3IfacePattern": {
                 "type": "string"
               },
               "bpfLogFilters": {
-                "$ref": "#/$defs/hcecdfbfc3065"
+                "$ref": "#/$defs/values~1@allOf(1)@then@allOf(0).imagePullSecrets@anyOf(2)"
               },
               "bpfLogLevel": {
                 "pattern": "^([oO][fF][fF]|[iI][nN][fF][oO]|[dD][eE][bB][uU][gG])?$",
@@ -2502,16 +2502,16 @@
                 "type": "integer"
               },
               "bpfPSNATPorts": {
-                "$ref": "#/$defs/h572d3a022764"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfPSNATPorts"
               },
               "bpfPolicyDebugEnabled": {
                 "type": "boolean"
               },
               "bpfProfiling": {
-                "$ref": "#/$defs/he9417fad046e"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfHostNetworkedNATWithoutCTLB"
               },
               "bpfRedirectToPeer": {
-                "$ref": "#/$defs/he9417fad046e"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfHostNetworkedNATWithoutCTLB"
               },
               "cgroupV2Path": {
                 "type": "string"
@@ -2539,13 +2539,13 @@
                 "type": "integer"
               },
               "debugSimulateCalcGraphHangAfter": {
-                "$ref": "#/$defs/hb732532d8c9c"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod"
               },
               "debugSimulateDataplaneApplyDelay": {
-                "$ref": "#/$defs/hb732532d8c9c"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod"
               },
               "debugSimulateDataplaneHangAfter": {
-                "$ref": "#/$defs/hb732532d8c9c"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod"
               },
               "defaultEndpointToHostAction": {
                 "pattern": "^([dD][rR][oO][pP]|[aA][cC][cC][eE][pP][tT]|[rR][eE][tT][uU][rR][nN])?$",
@@ -2565,7 +2565,7 @@
               },
               "enabled": {},
               "endpointReportingDelay": {
-                "$ref": "#/$defs/hb732532d8c9c"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod"
               },
               "endpointReportingEnabled": {
                 "type": "boolean"
@@ -2574,13 +2574,13 @@
                 "type": "string"
               },
               "externalNodesList": {
-                "$ref": "#/$defs/h08ba5a39d8a0"
+                "$ref": "#/$defs/values~1@allOf(1)@then@allOf(0).imagePullSecrets@anyOf(0)"
               },
               "failsafeInboundHostPorts": {
-                "$ref": "#/$defs/ha7ef5bffb4f9"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.failsafeInboundHostPorts"
               },
               "failsafeOutboundHostPorts": {
-                "$ref": "#/$defs/ha7ef5bffb4f9"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.failsafeInboundHostPorts"
               },
               "featureDetectOverride": {
                 "pattern": "^([a-zA-Z0-9-_]+=(true|false|),)*([a-zA-Z0-9-_]+=(true|false|))?$",
@@ -2591,13 +2591,13 @@
                 "type": "string"
               },
               "floatingIPs": {
-                "$ref": "#/$defs/he9417fad046e"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfHostNetworkedNATWithoutCTLB"
               },
               "flowLogsCollectorDebugTrace": {
                 "type": "boolean"
               },
               "flowLogsFlushInterval": {
-                "$ref": "#/$defs/hb732532d8c9c"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod"
               },
               "flowLogsGoldmaneServer": {
                 "type": "string"
@@ -2663,10 +2663,10 @@
                 "type": "string"
               },
               "interfaceRefreshInterval": {
-                "$ref": "#/$defs/hb732532d8c9c"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod"
               },
               "ipForwarding": {
-                "$ref": "#/$defs/he9417fad046e"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfHostNetworkedNATWithoutCTLB"
               },
               "ipipEnabled": {
                 "type": "boolean"
@@ -2675,7 +2675,7 @@
                 "type": "integer"
               },
               "ipsetsRefreshInterval": {
-                "$ref": "#/$defs/hb732532d8c9c"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod"
               },
               "iptablesBackend": {
                 "enum": [
@@ -2687,16 +2687,16 @@
                 "type": "string"
               },
               "iptablesFilterAllowAction": {
-                "$ref": "#/$defs/h4148cd62ed45"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.iptablesFilterAllowAction"
               },
               "iptablesFilterDenyAction": {
-                "$ref": "#/$defs/h7084a2ebe8ea"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.iptablesFilterDenyAction"
               },
               "iptablesLockProbeInterval": {
-                "$ref": "#/$defs/hb732532d8c9c"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod"
               },
               "iptablesMangleAllowAction": {
-                "$ref": "#/$defs/h4148cd62ed45"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.iptablesFilterAllowAction"
               },
               "iptablesMarkMask": {
                 "format": "int32",
@@ -2706,17 +2706,17 @@
                 "type": "string"
               },
               "iptablesPostWriteCheckInterval": {
-                "$ref": "#/$defs/hb732532d8c9c"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod"
               },
               "iptablesRefreshInterval": {
-                "$ref": "#/$defs/hb732532d8c9c"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod"
               },
               "ipv6Support": {
                 "type": "boolean"
               },
               "kubeNodePortRanges": {
                 "items": {
-                  "$ref": "#/$defs/h572d3a022764"
+                  "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfPSNATPorts"
                 },
                 "type": "array"
               },
@@ -2740,13 +2740,13 @@
                 "type": "string"
               },
               "logSeverityFile": {
-                "$ref": "#/$defs/hf7a74d706cc9"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.logSeverityFile"
               },
               "logSeverityScreen": {
-                "$ref": "#/$defs/hf7a74d706cc9"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.logSeverityFile"
               },
               "logSeveritySys": {
-                "$ref": "#/$defs/hf7a74d706cc9"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.logSeverityFile"
               },
               "maxIpsetSize": {
                 "type": "integer"
@@ -2771,19 +2771,19 @@
                 "type": "string"
               },
               "natPortRange": {
-                "$ref": "#/$defs/h572d3a022764"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfPSNATPorts"
               },
               "netlinkTimeout": {
-                "$ref": "#/$defs/hb732532d8c9c"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod"
               },
               "nftablesFilterAllowAction": {
-                "$ref": "#/$defs/h4148cd62ed45"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.iptablesFilterAllowAction"
               },
               "nftablesFilterDenyAction": {
-                "$ref": "#/$defs/h7084a2ebe8ea"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.iptablesFilterDenyAction"
               },
               "nftablesMangleAllowAction": {
-                "$ref": "#/$defs/h4148cd62ed45"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.iptablesFilterAllowAction"
               },
               "nftablesMarkMask": {
                 "format": "int32",
@@ -2808,7 +2808,7 @@
                 "type": "string"
               },
               "programClusterRoutes": {
-                "$ref": "#/$defs/he9417fad046e"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfHostNetworkedNATWithoutCTLB"
               },
               "prometheusGoMetricsEnabled": {
                 "type": "boolean"
@@ -2844,16 +2844,16 @@
                 "type": "boolean"
               },
               "reportingInterval": {
-                "$ref": "#/$defs/hb732532d8c9c"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod"
               },
               "reportingTTL": {
-                "$ref": "#/$defs/hb732532d8c9c"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod"
               },
               "requireMTUFile": {
                 "type": "boolean"
               },
               "routeRefreshInterval": {
-                "$ref": "#/$defs/hb732532d8c9c"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod"
               },
               "routeSource": {
                 "pattern": "^([wW][oO][rR][kKK][lL][oO][aA][dD][iI][pP][sSſ]|[cC][aA][lL][iI][cC][oO][iI][pP][aA][mM])?$",
@@ -2863,11 +2863,11 @@
                 "type": "boolean"
               },
               "routeTableRange": {
-                "$ref": "#/$defs/hfda3678f961a"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.routeTableRange"
               },
               "routeTableRanges": {
                 "items": {
-                  "$ref": "#/$defs/hfda3678f961a"
+                  "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.routeTableRange"
                 },
                 "type": "array"
               },
@@ -2882,10 +2882,10 @@
                 "type": "boolean"
               },
               "usageReportingInitialDelay": {
-                "$ref": "#/$defs/hb732532d8c9c"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod"
               },
               "usageReportingInterval": {
-                "$ref": "#/$defs/hb732532d8c9c"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod"
               },
               "useInternalDataplaneDriver": {
                 "type": "boolean"
@@ -2906,7 +2906,7 @@
                 "type": "integer"
               },
               "windowsManageFirewallRules": {
-                "$ref": "#/$defs/he9417fad046e"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfHostNetworkedNATWithoutCTLB"
               },
               "wireguardEnabled": {
                 "type": "boolean"
@@ -2924,7 +2924,7 @@
                 "type": "string"
               },
               "wireguardKeepAlive": {
-                "$ref": "#/$defs/hb732532d8c9c"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod"
               },
               "wireguardListeningPort": {
                 "type": "integer"
@@ -2952,7 +2952,7 @@
                 "type": "boolean"
               },
               "xdpRefreshInterval": {
-                "$ref": "#/$defs/hb732532d8c9c"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration@allOf(0)@then.bpfKubeProxyMinSyncPeriod"
               }
             },
             "type": "object"
@@ -2967,10 +2967,10 @@
     "dnsConfig": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1additionalLabels@anyOf(0)"
         },
         {
-          "$ref": "#/$defs/hd99594356446"
+          "$ref": "#/$defs/values~1additionalLabels@anyOf(2)"
         },
         {
           "type": "null"
@@ -2982,7 +2982,7 @@
             "nameservers": {
               "description": "A list of DNS name server IP addresses. This will be appended to the base nameservers generated from DNSPolicy. Duplicated nameservers will be removed.",
               "items": {
-                "$ref": "#/$defs/h56bd48f38e6b"
+                "$ref": "#/$defs/values~1additionalLabels@anyOf(1)@allOf(0)@additionalProperties"
               },
               "type": [
                 "array",
@@ -3003,7 +3003,7 @@
                     ]
                   },
                   "value": {
-                    "$ref": "#/$defs/h56bd48f38e6b"
+                    "$ref": "#/$defs/values~1additionalLabels@anyOf(1)@allOf(0)@additionalProperties"
                   }
                 },
                 "type": [
@@ -3019,7 +3019,7 @@
             "searches": {
               "description": "A list of DNS search domains for host-name lookup. This will be appended to the base search paths generated from DNSPolicy. Duplicated search paths will be removed.",
               "items": {
-                "$ref": "#/$defs/h56bd48f38e6b"
+                "$ref": "#/$defs/values~1additionalLabels@anyOf(1)@allOf(0)@additionalProperties"
               },
               "type": [
                 "array",
@@ -3035,24 +3035,24 @@
     "dnsPolicy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h7a6313f8dd4a"
+          "$ref": "#/$defs/values~1dnsPolicy@anyOf(0)"
         },
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1additionalLabels@anyOf(0)"
         },
         {
-          "$ref": "#/$defs/h0d6da7ea663d"
+          "$ref": "#/$defs/values~1dnsPolicy@anyOf(2)"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/h4174f29f69e0"
+              "$ref": "#/$defs/values~1@allOf(1)@then@allOf(1).imagePullSecrets@anyOf(0)@propertyNames@allOf(0)"
             },
             {
-              "$ref": "#/$defs/h1760b2f63aa3"
+              "$ref": "#/$defs/values~1dnsPolicy@anyOf(3)@allOf(1)"
             },
             {
-              "$ref": "#/$defs/h424d50bcce86"
+              "$ref": "#/$defs/values~1@allOf(1)@then@allOf(1).imagePullSecrets@anyOf(0)@propertyNames@allOf(1)"
             },
             {
               "not": {
@@ -3060,10 +3060,10 @@
               }
             },
             {
-              "$ref": "#/$defs/ha57525005582"
+              "$ref": "#/$defs/values~1dnsPolicy@anyOf(3)@allOf(4)"
             },
             {
-              "$ref": "#/$defs/h0e4014154904"
+              "$ref": "#/$defs/values~1dnsPolicy@anyOf(3)@allOf(5)"
             },
             {
               "not": {
@@ -3081,24 +3081,24 @@
               }
             },
             {
-              "$ref": "#/$defs/h9810b646fad3"
+              "$ref": "#/$defs/values~1dnsPolicy@anyOf(3)@allOf(9)"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/hab02c23921d2"
+          "$ref": "#/$defs/values~1dnsPolicy@anyOf(4)"
         },
         {
-          "$ref": "#/$defs/h89bc4e1169b0"
+          "$ref": "#/$defs/values~1dnsPolicy@anyOf(5)"
         },
         {
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
           "type": "null"
         },
         {
-          "$ref": "#/$defs/h5b7699abf0ec"
+          "$ref": "#/$defs/values~1dnsPolicy@anyOf(7)"
         }
       ],
       "description": "DNS policy for the tigera/operator pod. Set \"None\" with a dnsConfig listing cluster and node\nresolvers where cluster DNS is not reachable at install time, such as EKS with kube-proxy disabled."
@@ -3122,11 +3122,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/h0326ae605759"
+                  "$ref": "#/$defs/values~1@allOf(16)@if@allOf(0)@anyOf(1)@not.installation"
                 }
               },
               {
-                "$ref": "#/$defs/h56cf45ed9ddb"
+                "$ref": "#/$defs/values~1@allOf(16)@if@allOf(0)@anyOf(0).installation"
               }
             ]
           },
@@ -3134,7 +3134,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/hd9dd13dbcbf3"
+            "$ref": "#/$defs/values~1@allOf(0)@if.defaultFelixConfiguration"
           },
           "then": {
             "additionalProperties": false,
@@ -3145,7 +3145,7 @@
                 "description": "CalicoKubeControllersDeployment configures the calico-kube-controllers Deployment. If used in conjunction with the deprecated ComponentResources, then these overrides take precedence.",
                 "properties": {
                   "metadata": {
-                    "$ref": "#/$defs/hc87ea1de3200"
+                    "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.metadata"
                   },
                   "spec": {
                     "additionalProperties": false,
@@ -3163,7 +3163,7 @@
                         "description": "Template describes the calico-kube-controllers Deployment pod that will be created.",
                         "properties": {
                           "metadata": {
-                            "$ref": "#/$defs/h8c7479972794"
+                            "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.metadata"
                           },
                           "spec": {
                             "additionalProperties": false,
@@ -3172,7 +3172,7 @@
                               "affinity": {
                                 "allOf": [
                                   {
-                                    "$ref": "#/$defs/h8be9bbde27ae"
+                                    "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)"
                                   }
                                 ],
                                 "description": "Affinity is a group of affinity scheduling rules for the calico-kube-controllers pods. If specified, this overrides any affinity that may be set on the calico-kube-controllers Deployment. If omitted, the calico-kube-controllers Deployment will use its default value for affinity. WARNING: Please note that this field will override the default calico-kube-controllers Deployment affinity."
@@ -3195,13 +3195,13 @@
                                       "description": "Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named calico-kube-controllers Deployment container's resources. If omitted, the calico-kube-controllers Deployment will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence.",
                                       "properties": {
                                         "claims": {
-                                          "$ref": "#/$defs/h204dce47f82e"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.claims"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/h0a76b03aa294"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.limits"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/hdfb5cd193eba"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.requests"
                                         }
                                       },
                                       "type": "object"
@@ -3224,7 +3224,7 @@
                               "tolerations": {
                                 "description": "Tolerations is the calico-kube-controllers pod's tolerations. If specified, this overrides any tolerations that may be set on the calico-kube-controllers Deployment. If omitted, the calico-kube-controllers Deployment will use its default value for tolerations. WARNING: Please note that this field will override the default calico-kube-controllers Deployment tolerations.",
                                 "items": {
-                                  "$ref": "#/$defs/h5ac9542ed984"
+                                  "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.tolerations@items"
                                 },
                                 "type": "array"
                               }
@@ -3362,22 +3362,22 @@
                     "description": "NodeAddressAutodetectionV4 specifies an approach to automatically detect node IPv4 addresses. If not specified, will use default auto-detection settings to acquire an IPv4 address for each node.",
                     "properties": {
                       "canReach": {
-                        "$ref": "#/$defs/h763eab2948ab"
+                        "$ref": "#/$defs/values~1installation@allOf(1)@then.calicoNetwork.nodeAddressAutodetectionV4.canReach"
                       },
                       "cidrs": {
-                        "$ref": "#/$defs/h14556f32bf86"
+                        "$ref": "#/$defs/values~1installation@allOf(1)@then.calicoNetwork.nodeAddressAutodetectionV4.cidrs"
                       },
                       "firstFound": {
-                        "$ref": "#/$defs/ha12290afbe78"
+                        "$ref": "#/$defs/values~1installation@allOf(1)@then.calicoNetwork.nodeAddressAutodetectionV4.firstFound"
                       },
                       "interface": {
-                        "$ref": "#/$defs/h8d21519bcbb8"
+                        "$ref": "#/$defs/values~1installation@allOf(1)@then.calicoNetwork.nodeAddressAutodetectionV4.interface"
                       },
                       "kubernetes": {
-                        "$ref": "#/$defs/h42475f13e178"
+                        "$ref": "#/$defs/values~1installation@allOf(1)@then.calicoNetwork.nodeAddressAutodetectionV4.kubernetes"
                       },
                       "skipInterface": {
-                        "$ref": "#/$defs/h12f555b76f7b"
+                        "$ref": "#/$defs/values~1installation@allOf(1)@then.calicoNetwork.nodeAddressAutodetectionV4.skipInterface"
                       }
                     },
                     "type": "object"
@@ -3387,22 +3387,22 @@
                     "description": "NodeAddressAutodetectionV6 specifies an approach to automatically detect node IPv6 addresses. If not specified, IPv6 addresses will not be auto-detected.",
                     "properties": {
                       "canReach": {
-                        "$ref": "#/$defs/h763eab2948ab"
+                        "$ref": "#/$defs/values~1installation@allOf(1)@then.calicoNetwork.nodeAddressAutodetectionV4.canReach"
                       },
                       "cidrs": {
-                        "$ref": "#/$defs/h14556f32bf86"
+                        "$ref": "#/$defs/values~1installation@allOf(1)@then.calicoNetwork.nodeAddressAutodetectionV4.cidrs"
                       },
                       "firstFound": {
-                        "$ref": "#/$defs/ha12290afbe78"
+                        "$ref": "#/$defs/values~1installation@allOf(1)@then.calicoNetwork.nodeAddressAutodetectionV4.firstFound"
                       },
                       "interface": {
-                        "$ref": "#/$defs/h8d21519bcbb8"
+                        "$ref": "#/$defs/values~1installation@allOf(1)@then.calicoNetwork.nodeAddressAutodetectionV4.interface"
                       },
                       "kubernetes": {
-                        "$ref": "#/$defs/h42475f13e178"
+                        "$ref": "#/$defs/values~1installation@allOf(1)@then.calicoNetwork.nodeAddressAutodetectionV4.kubernetes"
                       },
                       "skipInterface": {
-                        "$ref": "#/$defs/h12f555b76f7b"
+                        "$ref": "#/$defs/values~1installation@allOf(1)@then.calicoNetwork.nodeAddressAutodetectionV4.skipInterface"
                       }
                     },
                     "type": "object"
@@ -3448,7 +3448,7 @@
                 "description": "CalicoNodeDaemonSet configures the calico-node DaemonSet. If used in conjunction with the deprecated ComponentResources, then these overrides take precedence.",
                 "properties": {
                   "metadata": {
-                    "$ref": "#/$defs/h183650483fd7"
+                    "$ref": "#/$defs/values~1installation@allOf(1)@then.calicoNodeDaemonSet.metadata"
                   },
                   "spec": {
                     "additionalProperties": false,
@@ -3466,7 +3466,7 @@
                         "description": "Template describes the calico-node DaemonSet pod that will be created.",
                         "properties": {
                           "metadata": {
-                            "$ref": "#/$defs/h8c7479972794"
+                            "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.metadata"
                           },
                           "spec": {
                             "additionalProperties": false,
@@ -3475,7 +3475,7 @@
                               "affinity": {
                                 "allOf": [
                                   {
-                                    "$ref": "#/$defs/h8be9bbde27ae"
+                                    "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)"
                                   }
                                 ],
                                 "description": "Affinity is a group of affinity scheduling rules for the calico-node pods. If specified, this overrides any affinity that may be set on the calico-node DaemonSet. If omitted, the calico-node DaemonSet will use its default value for affinity. WARNING: Please note that this field will override the default calico-node DaemonSet affinity."
@@ -3498,13 +3498,13 @@
                                       "description": "Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named calico-node DaemonSet container's resources. If omitted, the calico-node DaemonSet will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence.",
                                       "properties": {
                                         "claims": {
-                                          "$ref": "#/$defs/h204dce47f82e"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.claims"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/h0a76b03aa294"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.limits"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/hdfb5cd193eba"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.requests"
                                         }
                                       },
                                       "type": "object"
@@ -3540,13 +3540,13 @@
                                       "description": "Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named calico-node DaemonSet init container's resources. If omitted, the calico-node DaemonSet will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence.",
                                       "properties": {
                                         "claims": {
-                                          "$ref": "#/$defs/h204dce47f82e"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.claims"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/h0a76b03aa294"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.limits"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/hdfb5cd193eba"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.requests"
                                         }
                                       },
                                       "type": "object"
@@ -3569,7 +3569,7 @@
                               "tolerations": {
                                 "description": "Tolerations is the calico-node pod's tolerations. If specified, this overrides any tolerations that may be set on the calico-node DaemonSet. If omitted, the calico-node DaemonSet will use its default value for tolerations. WARNING: Please note that this field will override the default calico-node DaemonSet tolerations.",
                                 "items": {
-                                  "$ref": "#/$defs/h5ac9542ed984"
+                                  "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.tolerations@items"
                                 },
                                 "type": "array"
                               }
@@ -3590,7 +3590,7 @@
                 "description": "CalicoNodeWindowsDaemonSet configures the calico-node-windows DaemonSet.",
                 "properties": {
                   "metadata": {
-                    "$ref": "#/$defs/h183650483fd7"
+                    "$ref": "#/$defs/values~1installation@allOf(1)@then.calicoNodeDaemonSet.metadata"
                   },
                   "spec": {
                     "additionalProperties": false,
@@ -3608,7 +3608,7 @@
                         "description": "Template describes the calico-node-windows DaemonSet pod that will be created.",
                         "properties": {
                           "metadata": {
-                            "$ref": "#/$defs/h8c7479972794"
+                            "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.metadata"
                           },
                           "spec": {
                             "additionalProperties": false,
@@ -3617,7 +3617,7 @@
                               "affinity": {
                                 "allOf": [
                                   {
-                                    "$ref": "#/$defs/h8be9bbde27ae"
+                                    "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)"
                                   }
                                 ],
                                 "description": "Affinity is a group of affinity scheduling rules for the calico-node-windows pods. If specified, this overrides any affinity that may be set on the calico-node-windows DaemonSet. If omitted, the calico-node-windows DaemonSet will use its default value for affinity. WARNING: Please note that this field will override the default calico-node-windows DaemonSet affinity."
@@ -3640,13 +3640,13 @@
                                       "description": "Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named calico-node-windows DaemonSet container's resources. If omitted, the calico-node-windows DaemonSet will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence.",
                                       "properties": {
                                         "claims": {
-                                          "$ref": "#/$defs/h204dce47f82e"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.claims"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/h0a76b03aa294"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.limits"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/hdfb5cd193eba"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.requests"
                                         }
                                       },
                                       "type": "object"
@@ -3682,13 +3682,13 @@
                                       "description": "Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named calico-node-windows DaemonSet init container's resources. If omitted, the calico-node-windows DaemonSet will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence.",
                                       "properties": {
                                         "claims": {
-                                          "$ref": "#/$defs/h204dce47f82e"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.claims"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/h0a76b03aa294"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.limits"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/hdfb5cd193eba"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.requests"
                                         }
                                       },
                                       "type": "object"
@@ -3711,7 +3711,7 @@
                               "tolerations": {
                                 "description": "Tolerations is the calico-node-windows pod's tolerations. If specified, this overrides any tolerations that may be set on the calico-node-windows DaemonSet. If omitted, the calico-node-windows DaemonSet will use its default value for tolerations. WARNING: Please note that this field will override the default calico-node-windows DaemonSet tolerations.",
                                 "items": {
-                                  "$ref": "#/$defs/h5ac9542ed984"
+                                  "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.tolerations@items"
                                 },
                                 "type": "array"
                               }
@@ -3732,7 +3732,7 @@
                 "description": "Deprecated. The CalicoWindowsUpgradeDaemonSet is deprecated and will be removed from the API in the future. CalicoWindowsUpgradeDaemonSet configures the calico-windows-upgrade DaemonSet.",
                 "properties": {
                   "metadata": {
-                    "$ref": "#/$defs/hc87ea1de3200"
+                    "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.metadata"
                   },
                   "spec": {
                     "additionalProperties": false,
@@ -3750,7 +3750,7 @@
                         "description": "Template describes the calico-windows-upgrade DaemonSet pod that will be created.",
                         "properties": {
                           "metadata": {
-                            "$ref": "#/$defs/h8c7479972794"
+                            "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.metadata"
                           },
                           "spec": {
                             "additionalProperties": false,
@@ -3759,7 +3759,7 @@
                               "affinity": {
                                 "allOf": [
                                   {
-                                    "$ref": "#/$defs/h8be9bbde27ae"
+                                    "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)"
                                   }
                                 ],
                                 "description": "Affinity is a group of affinity scheduling rules for the calico-windows-upgrade pods. If specified, this overrides any affinity that may be set on the calico-windows-upgrade DaemonSet. If omitted, the calico-windows-upgrade DaemonSet will use its default value for affinity. WARNING: Please note that this field will override the default calico-windows-upgrade DaemonSet affinity."
@@ -3782,13 +3782,13 @@
                                       "description": "Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named calico-windows-upgrade DaemonSet container's resources. If omitted, the calico-windows-upgrade DaemonSet will use its default value for this container's resources.",
                                       "properties": {
                                         "claims": {
-                                          "$ref": "#/$defs/h204dce47f82e"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.claims"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/h0a76b03aa294"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.limits"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/hdfb5cd193eba"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.requests"
                                         }
                                       },
                                       "type": "object"
@@ -3811,7 +3811,7 @@
                               "tolerations": {
                                 "description": "Tolerations is the calico-windows-upgrade pod's tolerations. If specified, this overrides any tolerations that may be set on the calico-windows-upgrade DaemonSet. If omitted, the calico-windows-upgrade DaemonSet will use its default value for tolerations. WARNING: Please note that this field will override the default calico-windows-upgrade DaemonSet tolerations.",
                                 "items": {
-                                  "$ref": "#/$defs/h5ac9542ed984"
+                                  "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.tolerations@items"
                                 },
                                 "type": "array"
                               }
@@ -3933,13 +3933,13 @@
                       "description": "ResourceRequirements allows customization of limits and requests for compute resources such as cpu and memory.",
                       "properties": {
                         "claims": {
-                          "$ref": "#/$defs/h204dce47f82e"
+                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.claims"
                         },
                         "limits": {
-                          "$ref": "#/$defs/h0a76b03aa294"
+                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.limits"
                         },
                         "requests": {
-                          "$ref": "#/$defs/hdfb5cd193eba"
+                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.requests"
                         }
                       },
                       "type": "object"
@@ -3968,7 +3968,7 @@
               "controlPlaneTolerations": {
                 "description": "ControlPlaneTolerations specify tolerations which are then globally applied to all resources created by the operator.",
                 "items": {
-                  "$ref": "#/$defs/h5ac9542ed984"
+                  "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.tolerations@items"
                 },
                 "type": "array"
               },
@@ -3977,7 +3977,7 @@
                 "description": "CSINodeDriverDaemonSet configures the csi-node-driver DaemonSet.",
                 "properties": {
                   "metadata": {
-                    "$ref": "#/$defs/h183650483fd7"
+                    "$ref": "#/$defs/values~1installation@allOf(1)@then.calicoNodeDaemonSet.metadata"
                   },
                   "spec": {
                     "additionalProperties": false,
@@ -3995,7 +3995,7 @@
                         "description": "Template describes the csi-node-driver DaemonSet pod that will be created.",
                         "properties": {
                           "metadata": {
-                            "$ref": "#/$defs/h8c7479972794"
+                            "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.metadata"
                           },
                           "spec": {
                             "additionalProperties": false,
@@ -4004,7 +4004,7 @@
                               "affinity": {
                                 "allOf": [
                                   {
-                                    "$ref": "#/$defs/h8be9bbde27ae"
+                                    "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)"
                                   }
                                 ],
                                 "description": "Affinity is a group of affinity scheduling rules for the csi-node-driver pods. If specified, this overrides any affinity that may be set on the csi-node-driver DaemonSet. If omitted, the csi-node-driver DaemonSet will use its default value for affinity. WARNING: Please note that this field will override the default csi-node-driver DaemonSet affinity."
@@ -4027,13 +4027,13 @@
                                       "description": "Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named csi-node-driver DaemonSet container's resources. If omitted, the csi-node-driver DaemonSet will use its default value for this container's resources.",
                                       "properties": {
                                         "claims": {
-                                          "$ref": "#/$defs/h204dce47f82e"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.claims"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/h0a76b03aa294"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.limits"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/hdfb5cd193eba"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.requests"
                                         }
                                       },
                                       "type": "object"
@@ -4056,7 +4056,7 @@
                               "tolerations": {
                                 "description": "Tolerations is the csi-node-driver pod's tolerations. If specified, this overrides any tolerations that may be set on the csi-node-driver DaemonSet. If omitted, the csi-node-driver DaemonSet will use its default value for tolerations. WARNING: Please note that this field will override the default csi-node-driver DaemonSet tolerations.",
                                 "items": {
-                                  "$ref": "#/$defs/h5ac9542ed984"
+                                  "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.tolerations@items"
                                 },
                                 "type": "array"
                               }
@@ -4247,7 +4247,7 @@
                       "preferredDuringSchedulingIgnoredDuringExecution": {
                         "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions.",
                         "items": {
-                          "$ref": "#/$defs/h6d094dae3f37"
+                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items"
                         },
                         "type": "array"
                       },
@@ -4256,7 +4256,7 @@
                         "description": "WARNING: Please note that if the affinity requirements specified by this field are not met at scheduling time, the pod will NOT be scheduled onto the node. There is no fallback to another affinity rules with this setting. This may cause networking disruption or even catastrophic failure! PreferredDuringSchedulingIgnoredDuringExecution should be used for affinity unless there is a specific well understood reason to use RequiredDuringSchedulingIgnoredDuringExecution and you can guarantee that the RequiredDuringSchedulingIgnoredDuringExecution will always have sufficient nodes to satisfy the requirement. NOTE: RequiredDuringSchedulingIgnoredDuringExecution is set by default for AKS nodes, to avoid scheduling Typhas on virtual-nodes. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to an update), the system may or may not try to eventually evict the pod from its node.",
                         "properties": {
                           "nodeSelectorTerms": {
-                            "$ref": "#/$defs/hf3fabbad9524"
+                            "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)@ref.nodeAffinity.requiredDuringSchedulingIgnoredDuringExecution.nodeSelectorTerms"
                           }
                         },
                         "required": [
@@ -4276,7 +4276,7 @@
                 "description": "TyphaDeployment configures the typha Deployment. If used in conjunction with the deprecated ComponentResources or TyphaAffinity, then these overrides take precedence.",
                 "properties": {
                   "metadata": {
-                    "$ref": "#/$defs/hc87ea1de3200"
+                    "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.metadata"
                   },
                   "spec": {
                     "additionalProperties": false,
@@ -4332,7 +4332,7 @@
                         "description": "Template describes the typha Deployment pod that will be created.",
                         "properties": {
                           "metadata": {
-                            "$ref": "#/$defs/h8c7479972794"
+                            "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.metadata"
                           },
                           "spec": {
                             "additionalProperties": false,
@@ -4341,7 +4341,7 @@
                               "affinity": {
                                 "allOf": [
                                   {
-                                    "$ref": "#/$defs/h8be9bbde27ae"
+                                    "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.affinity@allOf(0)"
                                   }
                                 ],
                                 "description": "Affinity is a group of affinity scheduling rules for the typha pods. If specified, this overrides any affinity that may be set on the typha Deployment. If omitted, the typha Deployment will use its default value for affinity. If used in conjunction with the deprecated TyphaAffinity, then this value takes precedence. WARNING: Please note that this field will override the default calico-typha Deployment affinity."
@@ -4364,13 +4364,13 @@
                                       "description": "Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named typha Deployment container's resources. If omitted, the typha Deployment will use its default value for this container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence.",
                                       "properties": {
                                         "claims": {
-                                          "$ref": "#/$defs/h204dce47f82e"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.claims"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/h0a76b03aa294"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.limits"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/hdfb5cd193eba"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.requests"
                                         }
                                       },
                                       "type": "object"
@@ -4401,13 +4401,13 @@
                                       "description": "Resources allows customization of limits and requests for compute resources such as cpu and memory. If specified, this overrides the named typha Deployment init container's resources. If omitted, the typha Deployment will use its default value for this init container's resources. If used in conjunction with the deprecated ComponentResources, then this value takes precedence.",
                                       "properties": {
                                         "claims": {
-                                          "$ref": "#/$defs/h204dce47f82e"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.claims"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/h0a76b03aa294"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.limits"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/hdfb5cd193eba"
+                                          "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.requests"
                                         }
                                       },
                                       "type": "object"
@@ -4435,12 +4435,12 @@
                               "tolerations": {
                                 "description": "Tolerations is the typha pod's tolerations. If specified, this overrides any tolerations that may be set on the typha Deployment. If omitted, the typha Deployment will use its default value for tolerations. WARNING: Please note that this field will override the default calico-typha Deployment tolerations.",
                                 "items": {
-                                  "$ref": "#/$defs/h5ac9542ed984"
+                                  "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.tolerations@items"
                                 },
                                 "type": "array"
                               },
                               "topologySpreadConstraints": {
-                                "$ref": "#/$defs/h8a635c204606"
+                                "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.topologySpreadConstraints"
                               }
                             },
                             "type": "object"
@@ -4529,7 +4529,7 @@
       "anyOf": [
         {
           "additionalProperties": {
-            "$ref": "#/$defs/h56bd48f38e6b"
+            "$ref": "#/$defs/values~1additionalLabels@anyOf(1)@allOf(0)@additionalProperties"
           },
           "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
           "properties": {
@@ -4541,7 +4541,7 @@
           "x-kubernetes-map-type": "atomic"
         },
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1additionalLabels@anyOf(0)"
         },
         {
           "type": "null"
@@ -4552,16 +4552,16 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1additionalLabels@anyOf(0)"
         },
         {
-          "$ref": "#/$defs/hd99594356446"
+          "$ref": "#/$defs/values~1additionalLabels@anyOf(2)"
         },
         {
           "allOf": [
             {
               "additionalProperties": {
-                "$ref": "#/$defs/h56bd48f38e6b"
+                "$ref": "#/$defs/values~1additionalLabels@anyOf(1)@allOf(0)@additionalProperties"
               },
               "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
               "type": [
@@ -4570,7 +4570,7 @@
               ]
             },
             {
-              "$ref": "#/$defs/hcecdfbfc3065"
+              "$ref": "#/$defs/values~1@allOf(1)@then@allOf(0).imagePullSecrets@anyOf(2)"
             }
           ]
         }
@@ -4580,13 +4580,13 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1additionalLabels@anyOf(0)"
         },
         {
-          "$ref": "#/$defs/h9399abf298b8"
+          "$ref": "#/$defs/values~1additionalLabels@anyOf(1)"
         },
         {
-          "$ref": "#/$defs/hd99594356446"
+          "$ref": "#/$defs/values~1additionalLabels@anyOf(2)"
         }
       ],
       "description": "Custom labels for the tigera/operator pod."
@@ -4594,30 +4594,30 @@
     "priorityClassName": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h7a6313f8dd4a"
+          "$ref": "#/$defs/values~1dnsPolicy@anyOf(0)"
         },
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1additionalLabels@anyOf(0)"
         },
         {
-          "$ref": "#/$defs/h0d6da7ea663d"
+          "$ref": "#/$defs/values~1dnsPolicy@anyOf(2)"
         },
         {
-          "$ref": "#/$defs/hab02c23921d2"
+          "$ref": "#/$defs/values~1dnsPolicy@anyOf(4)"
         },
         {
-          "$ref": "#/$defs/h89bc4e1169b0"
+          "$ref": "#/$defs/values~1dnsPolicy@anyOf(5)"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/h4174f29f69e0"
+              "$ref": "#/$defs/values~1@allOf(1)@then@allOf(1).imagePullSecrets@anyOf(0)@propertyNames@allOf(0)"
             },
             {
-              "$ref": "#/$defs/h1760b2f63aa3"
+              "$ref": "#/$defs/values~1dnsPolicy@anyOf(3)@allOf(1)"
             },
             {
-              "$ref": "#/$defs/h424d50bcce86"
+              "$ref": "#/$defs/values~1@allOf(1)@then@allOf(1).imagePullSecrets@anyOf(0)@propertyNames@allOf(1)"
             },
             {
               "not": {
@@ -4625,10 +4625,10 @@
               }
             },
             {
-              "$ref": "#/$defs/ha57525005582"
+              "$ref": "#/$defs/values~1dnsPolicy@anyOf(3)@allOf(4)"
             },
             {
-              "$ref": "#/$defs/h0e4014154904"
+              "$ref": "#/$defs/values~1dnsPolicy@anyOf(3)@allOf(5)"
             },
             {
               "not": {
@@ -4646,14 +4646,14 @@
               }
             },
             {
-              "$ref": "#/$defs/h9810b646fad3"
+              "$ref": "#/$defs/values~1dnsPolicy@anyOf(3)@allOf(9)"
             }
           ],
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/h5b7699abf0ec"
+          "$ref": "#/$defs/values~1dnsPolicy@anyOf(7)"
         },
         {
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -4665,10 +4665,10 @@
     "resources": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1additionalLabels@anyOf(0)"
         },
         {
-          "$ref": "#/$defs/hd99594356446"
+          "$ref": "#/$defs/values~1additionalLabels@anyOf(2)"
         },
         {
           "additionalProperties": false,
@@ -4681,7 +4681,7 @@
                 "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
                 "properties": {
                   "name": {
-                    "$ref": "#/$defs/h7330da05f78d"
+                    "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.containers@items.resources.claims@items.name"
                   }
                 },
                 "required": [
@@ -4703,7 +4703,7 @@
             },
             "limits": {
               "additionalProperties": {
-                "$ref": "#/$defs/hb590b645b546"
+                "$ref": "#/$defs/values~1resources@anyOf(2).limits@additionalProperties"
               },
               "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
               "type": [
@@ -4713,7 +4713,7 @@
             },
             "requests": {
               "additionalProperties": {
-                "$ref": "#/$defs/hb590b645b546"
+                "$ref": "#/$defs/values~1resources@anyOf(2).limits@additionalProperties"
               },
               "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
               "type": [
@@ -4766,7 +4766,7 @@
                             "type": "string"
                           },
                           "name": {
-                            "$ref": "#/$defs/h3d4a0bef4a8a"
+                            "$ref": "#/$defs/values~1tigeraOperator.env@anyOf(0)@items.valueFrom.configMapKeyRef.name"
                           },
                           "optional": {
                             "description": "Specify whether the ConfigMap or its key must be defined",
@@ -4822,7 +4822,7 @@
                             ]
                           },
                           "divisor": {
-                            "$ref": "#/$defs/hb590b645b546"
+                            "$ref": "#/$defs/values~1resources@anyOf(2).limits@additionalProperties"
                           },
                           "resource": {
                             "description": "Required: resource to select",
@@ -4847,7 +4847,7 @@
                             "type": "string"
                           },
                           "name": {
-                            "$ref": "#/$defs/h3d4a0bef4a8a"
+                            "$ref": "#/$defs/values~1tigeraOperator.env@anyOf(0)@items.valueFrom.configMapKeyRef.name"
                           },
                           "optional": {
                             "description": "Specify whether the Secret or its key must be defined",
@@ -4886,7 +4886,7 @@
               "x-kubernetes-patch-strategy": "merge"
             },
             {
-              "$ref": "#/$defs/h97f1f236072d"
+              "$ref": "#/$defs/values~1additionalLabels@anyOf(0)"
             },
             {
               "type": "null"
@@ -4905,18 +4905,18 @@
         "version": {
           "anyOf": [
             {
-              "$ref": "#/$defs/h7a6313f8dd4a"
+              "$ref": "#/$defs/values~1dnsPolicy@anyOf(0)"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/h4174f29f69e0"
+                  "$ref": "#/$defs/values~1@allOf(1)@then@allOf(1).imagePullSecrets@anyOf(0)@propertyNames@allOf(0)"
                 },
                 {
-                  "$ref": "#/$defs/h1760b2f63aa3"
+                  "$ref": "#/$defs/values~1dnsPolicy@anyOf(3)@allOf(1)"
                 },
                 {
-                  "$ref": "#/$defs/h424d50bcce86"
+                  "$ref": "#/$defs/values~1@allOf(1)@then@allOf(1).imagePullSecrets@anyOf(0)@propertyNames@allOf(1)"
                 },
                 {
                   "not": {
@@ -4924,10 +4924,10 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/ha57525005582"
+                  "$ref": "#/$defs/values~1dnsPolicy@anyOf(3)@allOf(4)"
                 },
                 {
-                  "$ref": "#/$defs/h0e4014154904"
+                  "$ref": "#/$defs/values~1dnsPolicy@anyOf(3)@allOf(5)"
                 },
                 {
                   "not": {
@@ -4945,23 +4945,23 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/h9810b646fad3"
+                  "$ref": "#/$defs/values~1dnsPolicy@anyOf(3)@allOf(9)"
                 }
               ],
               "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/h0d6da7ea663d"
+              "$ref": "#/$defs/values~1dnsPolicy@anyOf(2)"
             },
             {
-              "$ref": "#/$defs/hab02c23921d2"
+              "$ref": "#/$defs/values~1dnsPolicy@anyOf(4)"
             },
             {
-              "$ref": "#/$defs/h89bc4e1169b0"
+              "$ref": "#/$defs/values~1dnsPolicy@anyOf(5)"
             },
             {
-              "$ref": "#/$defs/h5b7699abf0ec"
+              "$ref": "#/$defs/values~1dnsPolicy@anyOf(7)"
             },
             {
               "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
@@ -4975,7 +4975,7 @@
     "tolerations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1additionalLabels@anyOf(0)"
         },
         {
           "description": "If specified, the pod's tolerations.",
@@ -4988,7 +4988,7 @@
                   "effect": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/h61abcfe9c283"
+                        "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.tolerations@items.effect"
                       },
                       {
                         "type": "null"
@@ -5005,7 +5005,7 @@
                   "operator": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/ha26928b9e4dc"
+                        "$ref": "#/$defs/values~1apiServer@allOf(0)@then.apiServerDeployment.spec.template.spec.tolerations@items.operator"
                       },
                       {
                         "type": "null"

@@ -1,6 +1,31 @@
 {
   "$defs": {
-    "h17cbfadf198d": {
+    "t": {
+      "anyOf": [
+        {
+          "minProperties": 1,
+          "type": "object"
+        },
+        {
+          "not": {
+            "const": 0
+          },
+          "type": "number"
+        },
+        {
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "minItems": 1,
+          "type": "array"
+        },
+        {
+          "const": true
+        }
+      ]
+    },
+    "values/replicas": {
       "anyOf": [
         {
           "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
@@ -27,31 +52,6 @@
         {
           "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
           "type": "string"
-        }
-      ]
-    },
-    "t": {
-      "anyOf": [
-        {
-          "minProperties": 1,
-          "type": "object"
-        },
-        {
-          "not": {
-            "const": 0
-          },
-          "type": "number"
-        },
-        {
-          "minLength": 1,
-          "type": "string"
-        },
-        {
-          "minItems": 1,
-          "type": "array"
-        },
-        {
-          "const": true
         }
       ]
     }
@@ -154,7 +154,7 @@
       "type": "object"
     },
     "replicas": {
-      "$ref": "#/$defs/h17cbfadf198d"
+      "$ref": "#/$defs/values~1replicas"
     },
     "requiredText": {},
     "version": {
@@ -218,7 +218,7 @@
             "additionalProperties": {},
             "properties": {
               "replicas": {
-                "$ref": "#/$defs/h17cbfadf198d"
+                "$ref": "#/$defs/values~1replicas"
               }
             }
           }

@@ -32,6 +32,7 @@ CLI **parse** errors are not part of the JSON contract: clap writes a plain-text
 | `LocalOverrideUnreadable` | A hand-maintained override claimed a resource but its file is unreadable. A hard error: the chain does **not** fall through. |
 | `CacheLayoutInvalidated` | A managed cache root's layout predated the binary; it was wiped and will be repopulated. See [Caching]({{< relref "caching.md" >}}). |
 | `CacheLayoutForwardIncompatible` | A managed cache root carries a marker *newer* than the binary; the binary refuses to mutate it. |
+| `SchemaExceedsHelmFileLimit` | The written schema is larger than Helm's 5 MiB chart-file limit. The file is written unchanged; ship a shortened copy (`--shorten-defs --compact` or `helm-schema shorten`). |
 
 ## Reading them
 
