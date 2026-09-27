@@ -4905,4 +4905,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   combined tree (with `SCHEMA_HELM_ENGINE=cli` as the bisecting switch), one chain replaces two.
   Chain relaunched from dump (E `round8-landing2-run5`).
 
+- 06:20 (Sep 27) — **Landing-2 run5: dump, unit, lint, BATTERY GREEN (14 min, in-process engine),
+  integration 833/835 — two test-only failures.** (1) `helm_adjudication_records_each_outcome_
+  once`: the roster-pin commit added `unreachable_cases` to the outcome record but its expected
+  JSON was not updated (the default nextest profile never runs this integration test) — fixed
+  by me on the landing branch (one line, test green). (2) `chart_corpus cert_manager`: the
+  coalescer port correctly reports `NotValidated: Chart.yaml file is missing` (the corpus chart
+  has no Chart.yaml; the sweep accepts it as `unresolved:loader`) but the CLI corpus test treats
+  it as an error — coalescer agent briefed to assert that outcome for exactly the registered
+  chart (no general fallback). The producer `--verify` with the frozen binary passed before
+  integration (v6.3 fix confirmed). After the fix: re-run from unit (test-only change, dump valid).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
