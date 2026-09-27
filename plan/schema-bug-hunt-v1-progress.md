@@ -5183,6 +5183,32 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   v65-run-all.txt` exit 0). Every landing step now runs with `TMPDIR`/`GOTMPDIR` under `$TARGET`.
   Builders running: scratch, W1 rework 2, runner v6.6 + sweep classes. No Codex run pending.
 
+- 23:45 (Sep 27) — **Scratch track handed back (e0b36675, 3 commits, +592/−379 over 54 files, production
+  LOC delta 0, no fixture moved); sent to both reviewers; frontend rework launched in the freed slot.**
+  Mechanism: `crates/test-util/src/scratch.rs` — `ScratchDir::new(label)` under `<target>/tmp/<crate>/
+  <label>-<pid>-<n>` (`$CARGO_TARGET_DIR` else workspace `target/`), removed on drop, `keep()` opts out;
+  liveness by an OS-released advisory lock `<target>/tmp/.owners/<pid>.lock` held for the process lifetime
+  (the builder's first version used sysinfo pid liveness, which missed live processes under nextest's
+  process storm and deleted live scratch — 49 failures — so it was replaced in 574e5693 and the dependency
+  dropped); `sweep()` removes dirs whose owner lock is free or missing. Every inventoried call site
+  switched, incl. the adjudication evidence dirs, chart copies, yaml-decoder dirs, the Helm root (which now
+  carries `tmp/`, passed as `TMPDIR` to every Helm and helmsweep child — helmsweep's only temp use follows
+  it), `cold_provider_cache_root`, the producer's override dir and the live tests' own roots; `SCHEMA_DUMP`
+  files go to `<target>/tmp/<name>`. Guards: clippy `disallowed-methods` for the four tempfile
+  constructors; ast-grep rule `test-scratch-not-system-temp` (severity error) for `std::env::temp_dir` in
+  test paths; `tempfile` dev-dependency dropped from five crates. Test `killed_process_scratch_is_swept_and_
+  live_scratch_is_kept` (fails exit 100 without the sweep). Gates on e0b36675 (`round8-scratch-evidence/`):
+  fmt 0; `task lint` 0 (no residual); `lint:fc` 0 (51 PASS); ast-grep 0 (4/4 rule tests); unit 1587/1587;
+  integration 850/850 (24 skipped); system temp gained 0 entries during the integration run; goldilocks
+  live battery slice against the roster baseline with `TMPDIR` unset: 1 passed, 597 probes, 0 flips, Helm
+  root under `target/tmp/helm-schema/helm-root-…`. Open points the reviewers were asked about: adjudication
+  evidence is now swept by the NEXT test process on the same target dir; `TMPDIR=<helm root>/tmp` entered
+  the recorded child environment (replay-store key?); tests that spawn `helm` outside the harness still
+  inherit the caller's `TMPDIR`. Reviews `review-scratch-prelanding-{sol,astra}.md` (runs be7d3a37 /
+  908ce142). Frontend rework launched (Opus; brief `brief-frontend-rework.md`; branch `frontend-main` off
+  433d2b40 in `round8-frontend`, target `round8-frontend-target`). Builders now: W1 rework 2, runner v6.6 +
+  sweep classes (R2/R3 and the Go classes committed), frontend rework.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
