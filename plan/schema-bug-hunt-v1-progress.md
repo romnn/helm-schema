@@ -4737,4 +4737,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   landings went in on parity evidence without a cross-vendor review; this review closes that gap
   post hoc. Landing-2 chain: dump running (producer mode).
 
+- 03:25 (Sep 27) — **Landing-2 chain: dump (producer mode, 7 min), unit, lint GREEN; battery
+  FAILED at the roster check.** `schema_emission_profiles.rs:251` "roster entries that no longer
+  fail alike": 237 rows over 7 charts (redmine 134, okteto 61, spinnaker 22, graylog 9, oncall 5,
+  weblate 4, dify 2), all `(KubernetesRejects, RejectsItsDefaults, F…)` — one systematic cause
+  under the coalescer's exact three-document composition (the baseline for this landing is
+  c02c01f8, the same production code, so there are no semantic flips; the charts are the ones
+  whose parent `global` reaches dependencies). Coalescer agent resumed in `round8-landing2-fix`
+  (clone of the landing branch): find the changed field and its cause first — a harness/coalescer
+  defect is fixed once, a Helm-correct reclassification is applied mechanically and confirmed
+  against real Helm on ≥3 rows per chart — then per-chart battery slices, `fix.patch` on
+  d734629c, `roster-readjudication.md`. Producer dump mode worked (first real run: 7 min).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
