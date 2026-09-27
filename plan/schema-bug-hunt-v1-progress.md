@@ -5089,6 +5089,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   "airflow/oncall `\u` URL patterns do not compile in Helm" is a related but separate emitter
   defect and is still open.
 
+- 18:10 (Sep 27) — **Cleanup: 11 stale wait-loops stopped; 70 GB of leaked test scratch deleted
+  (with the user's approval) from the system temp folder.** Root cause: tests create scratch with
+  `tempfile` in the default system temp dir and killed runs never clean up; the agreed "scratch
+  under target/" rule was recorded only as a hygiene note. Now the first-priority item in hand-off
+  §6 (test-util helper under `<target>/tmp`, stale sweep, helmsweep/Helm homes, runner `TMPDIR`
+  for every step, clippy `disallowed-methods`, a sweep test). Playbook: both Codex reviewers
+  (sol + astra) on every review.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
