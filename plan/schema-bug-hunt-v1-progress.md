@@ -5275,6 +5275,33 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   conditions kept only where they bind), classify `eb973656` (top-level error form + negatives), runner
   `861c765` (V1 exact lane identities). Internal disk 72 GB free, system temp 67 MB, load ~9.
 
+- 00:50 (Sep 28) — **Three hand-backs (W1 rework 2, scratch rework 1, runner v6.6 rework 1); six
+  re-reviews started as `follow_up` turns on the original Codex runs** (offsets in
+  `round8/followups-pending.tsv`; the collector does not see follow-up turns, so the answers are saved by
+  hand). W1 (`track/w1-main` 38bc2f0d, `final-v3.patch` sha 4f44437e…): 37-row Helm matrix
+  (`rework2/matrix.txt`) — every reviewer cell accepted where Helm renders, every D4 `go: true` cell
+  rejected; D1 built as "any use except a pure read marks the local mutable" in `EvalEnv.mutable_locals`
+  (the named-call matcher deleted); D2 `resized_sequence` widens `rest`/`initial`/`compact`/`slice`;
+  D3 only at the `len`/`keys` copy points (stripping at every read made a `range` subject's truth unknown
+  and broke `rerooted_worker_set_merges_keep_layered_provider_payloads`); D4 needed no change
+  (`concrete_collection_len` already gives literal `dict`/`list` a constant length). Deviations for the
+  reviewers: `reverse`/`uniq`/`append`/`prepend`/`concat`/`without`/`chunk`/`sortAlpha` not widened (127
+  corpus templates range over `… | uniq`); D1's coverage cost (`if len $d` + `toYaml $d` no longer rejects);
+  a sound narrowing ("mutable only if a mutation site exists in the body or a reached helper") prototyped
+  and held back. 15 new full-schema tests, red 12/20 on the pre-fix tree, green 20/20; fmt/lint/lint:fc/
+  ast-grep 0, unit 1610/1610, chart_corpus 124/157 — 33 charts drift from W1's first commits (byte-identical
+  between pre-fix and rework-2 CLI); LOC +192 vs main. Scratch (a31c8147, `final.patch` sha 9da467ef…, 85
+  files, LOC delta 0): owner `<pid>-<nonce>`, root lock `.sweep.lock` around registration and sweep, dead
+  owner's lock held through removal; markers BESIDE the dirs (inside broke the chart-archive single-root
+  check and would ship inside charts); root `<target>/scratch`, evidence copied (not moved) to
+  `<target>/evidence` with a 7-day prune; `TMP`/`TEMP`/`TMPDIR` for children; helmsweep keeps the four
+  temp vars across its re-exec; `test:helmsweep` and 24 direct `helm` spawns routed; ast-grep import forms;
+  three new interleaving tests; unit 1590, integration 850, goldilocks slice 0 flips. Runner v6.6 rework
+  (276c453; classify eb973656, `final.patch` sha 9af04539…): V1 lanes from `cargo nextest list` JSON, V2
+  inventory derived by `receipt end` and re-derived at finalize, V3 allowlist `loader`/`library-chart`/
+  `missing-dependency`/`kube-version-incompatible` and missing log = exit 2 in both engines, V4/V5/V6/V7
+  done, table 59 cases; run-all 488 checks + 78 py green, red at 0395a25 and e6b574f.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
