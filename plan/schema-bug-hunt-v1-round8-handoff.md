@@ -148,43 +148,44 @@ gates only, drop the stray mongodbcommunity hunk), regexp (`round8-regexp-eviden
 
 Everything the user queued as "basically ready" is on main. Nothing was pushed.
 
-- **main = 74139f94**: landing 1 (c02c01f8: F23 + okteto/graylog roster + Helm pool v2 + helmsweep)
-  and landing 2 (74139f94: corpus producer, perf1, stable  names, Helm value coalescer +
-  roster baseline pin, helmsweep v2, battery resident client, two test fixes). Receipts:
-  , . Ledger entries 01:25 and 09:30 (Sep 27) hold the step timings.
+- **main = 74139f94**: landing 1 (c02c01f8: F23 + okteto/graylog roster + Helm pool v2 +
+  helmsweep) and landing 2 (74139f94: corpus producer, perf1, stable `$defs` names, Helm value
+  coalescer + roster baseline pin, helmsweep v2, battery resident client, two test fixes).
+  Receipts: `/Volumes/T7/dev/round8-d3f23-landing3/receipt.json` and
+  `/Volumes/T7/dev/round8-landing2-run6/receipt.json`. Ledger entries 01:25 and 09:30 (Sep 27)
+  hold the step timings.
 - **The landing chain now takes ~55 min end to end** (dump 3.5, unit 0.4, lint 1.7, battery 14,
   integration 4, sweep 32 incl. the CLI differential, finalize). Runner = v6.3
-  (, branch , HEAD 931672d + env commits;
-  , every roster row runs,  by user decision, producer
-  dump mode with a frozen producer copy, receipt /6). Template env: .
-  Worktrees  can be pruned ( after removing the dirs).
+  (`/Volumes/T7/dev/round8/runner`, branch `runner-v3-fail-closed`, merge 931672d + env commits;
+  `SWEEP_ENGINE=helmsweep`, every roster row runs, `SWEEP_DIFF_CAP=3` by user decision, producer
+  dump mode with a frozen producer copy, receipt /6). Template env: `runner/landing-2.env`.
+  Worktrees `round8-runner-v6*` can be pruned (remove the dirs, then `git worktree prune`).
 - **Roster baseline coupling (design item):** the known-false-acceptance roster is observed as
-  flips against  (f7be7ba5, pinned in ). The first
-  SEMANTIC landing that changes production behaviour must keep BASELINE=f7be7ba5 for the battery
-  (the pin refuses anything else); when the baseline is advanced, rows that predate it stop being
-  observable as flips and need an absolute home (their K8s-rejects evidence is absolute). Decide
-  before the first semantic landing.
+  flips against `ROSTER_BASELINE` (f7be7ba5, pinned in `known_false_acceptances.rs`). The first
+  SEMANTIC landing must keep BASELINE=f7be7ba5 for the battery (the pin refuses anything else);
+  when the baseline is advanced, rows that predate it stop being observable as flips and need an
+  absolute home (their K8s-rejects evidence is absolute). Decide before the first semantic landing.
 - **Next landings (semantic; each needs review/rework first, §3):** W1 rework (green, needs a
   Codex re-review), frontend phase 1 (green, 0 fixtures moved, unreviewed; conflicts with F9/W4),
   F75 (over budget, one regression), F1 and F2 checkpoints, k8s D1–D3 (not started), B6 stack
-  (blocked on the agent-container fix, brief ).
+  (blocked on the agent-container fix, brief `brief-agent-container-defect-astra.md`).
 - **Hygiene follow-ups found while landing:** (1) the battery harness leaks multi-GB temp dirs
-  under the system temp folder when killed (69 GB found; fixed for the runner via GOTMPDIR/TMPDIR
-  under , not yet in the harness — create them under the target dir and sweep stale ones
-  at start); (2) the emitted airflow and oncall schemas do not compile in Helm ( escapes in
-  URL , ledger 17:45 Sep 26) — emitter fix + test; (3) the sweep classifiers (Python
-   AND Go  must agree) should give "unable to detect chart" a loader
-  class and "library charts are not installable" a  class instead of the catch-all
-  (today accepted per chart in ); (4) helmsweep's  build step is
-  unverified on native Windows; (5) the Go sweep cache rarely hits on this corpus (bitnami
-   calls , grafana helpers ) — fine at this speed, but the cacheability list
-  could distinguish  (order-only) if the sweep ever needs it; (6) 
-  compile time in Helm dominates every lint (openebs 4–10 min): emitting  instead of
-   measured 3.5× faster on okteto — a separate output-policy candidate.
-- **Review debt:** helmsweep v1 + runner v5/v6 landed on parity evidence before the cross-vendor
-  review; the review () was then applied in helmsweep v2 and
-  runner v6.2/v6.3. Landing 2's assembly and the runner versions v5.1–v6.3 had no separate Codex
-  review; queue one review of the runner () and of the landing-2
-  conflict resolutions () when the next session starts.
-- Old evidence dirs ,  are history only.
-- Codex runs all collected (); no agent running at hand-off.
+  under the system temp folder when killed (69 GB found; the runner now sets GOTMPDIR/TMPDIR
+  under `$TARGET`, the harness itself should create its temp roots under the target dir and
+  sweep stale ones at start); (2) the emitted airflow and oncall schemas do not compile in Helm
+  (`\u` escapes in URL `pattern`; ledger 17:45 Sep 26) — emitter fix + test; (3) the sweep
+  classifiers (Python `classify_helm` and Go `classify.go` must agree) should give "unable to
+  detect chart" a loader class and "library charts are not installable" a `library-chart` class
+  instead of the catch-all (today accepted per chart in `landing-2.env`); (4) helmsweep's
+  `stage.sh` build step is unverified on native Windows; (5) the Go sweep cache rarely hits on
+  this corpus (bitnami `common` calls `keys`, grafana helpers call `tpl`) — fine at this speed;
+  (6) Helm's compile of `values.schema.json` dominates every lint (openebs 4–10 min): emitting
+  `definitions` instead of `$defs` measured 3.5× faster on okteto — a separate output-policy
+  candidate.
+- **Review debt:** helmsweep v1 and runner v5/v6 landed on parity evidence before the cross-
+  vendor review; that review (`review-helmsweep-battery-go-astra.md`) was then applied in
+  helmsweep v2 and runner v6.2/v6.3. The landing-2 assembly (`round8-landing2-evidence/
+  conflicts.md`) and runner v5.1–v6.3 (`round8-runner-evidence/handoff.md`) had no separate Codex
+  review; queue one when the next session starts.
+- Old evidence dirs `round8-d3f23-landing`, `round8-d3f23-landing2`, `round8-landing2-run` to
+  `-run5` are history only. Codex runs all collected (`round8/codex-runs.tsv`); no agent running.

@@ -4948,14 +4948,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   agree) should give these their own classes — `unresolved:loader` for "unable to detect chart"
   and `unresolved:library-chart` for library charts — instead of the catch-all.
 
-- 09:30 (Sep 27) — **LANDING 2 ON MAIN (74139f94): producer, perf1, stable \ names, coalescer +
-  roster baseline pin, helmsweep v2, battery resident client, two test fixes.** Run6 on runner
-  v6.3 (receipt sha 828b6707…, finalized 09:21): dump 3.5 min (producer mode, frozen binary),
-  unit 22 s, lint 1.7 min, battery 13.8 min (in-process engine), integration 4 min, sweep 31.7
-  min = fast pass 14m00s over all 156 charts (1,247 compiles, 7,126 memo hits, 0 failures) + CLI
-  differential 181 rows / 543 cells (543/543 agree) + gate (0 new lint failures; 2 accepted Helm
-  refusals: cert-manager without Chart.yaml, library chart ), finalize 4 s. **Whole chain
-  55 min.** adopted.tsv empty (the 160 renamed fixtures travel in 972d6510). Every landing the
-  user queued has now landed; the hand-off §6 is rewritten as the final state.
+- 09:30 (Sep 27) — **LANDING 2 ON MAIN (74139f94): producer, perf1, stable `$defs` names,
+  coalescer + roster baseline pin, helmsweep v2, battery resident client, two test fixes.** Run6
+  on runner v6.3 (receipt sha 828b6707…, finalized 09:21): dump 3.5 min (producer mode, frozen
+  binary), unit 22 s, lint 1.7 min, battery 13.8 min (in-process engine), integration 4 min,
+  sweep 31.7 min = fast pass 14m00s over all 156 charts (1,247 compiles, 7,126 memo hits, 0
+  failures) + CLI differential 181 rows / 543 cells (543/543 agree) + gate (0 new lint failures;
+  2 accepted Helm refusals: cert-manager without Chart.yaml, library chart `common`), finalize
+  4 s. **Whole chain 55 min.** adopted.tsv empty (the 160 renamed fixtures travel in 972d6510).
+  Every landing the user queued has now landed; hand-off §6 is rewritten as the final state.
 
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
