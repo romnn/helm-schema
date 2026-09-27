@@ -5074,4 +5074,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   fixtures are in the branch, naming-only proof 160/160. Fixture keys are now source/meaning
   paths (landing 2's content hashes are gone).
 
-Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
+- 20:30 (Sep 27) — **Dependency upgrade and regex-dialect fix on main (ea025719..430ba851); agent
+  skills (72af2492).** A cooldown upgrade moved nom 7→8, jsonschema/referencing 0.47→0.56, regress
+  0.12 and tree-sitter 0.27. jsonschema 0.56 checks `format: "regex"` with a strict ECMA-262
+  `u`-mode parser, so zalando's CRD pattern `^\ *(…)\ *$` failed metaschema validation. Provider
+  and chart patterns now drop superfluous RE2 escapes (located with `regex-syntax`; class `&`/`~`
+  become hex, `\<`/`\>` literals; colliding `patternProperties` keys keep their spellings), reviewed
+  over three rounds by two cross-vendor reviewers. The zalando fixture changed spelling only. The
+  battery normalizes baselines read from old commits the same way, since `f7be7ba5`'s zalando
+  fixture no longer compiles otherwise. Battery against `ROSTER_BASELINE` with
+  `SCHEMA_ACCEPTANCE_ALLOW_MATCHED_FLIPS=1`: charts_checked=160, flips=7936, all adjudicated, 0 from
+  zalando; `test:all` green. Also: the `control.rs:604` lint residual is fixed (756e4f59);
+  helmsweep and docs/ are excluded from cooldown so Helm stays pinned. The hand-off's open item
+  "airflow/oncall `\u` URL patterns do not compile in Helm" is a related but separate emitter
+  defect and is still open.
+
+Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
+review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
+roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
+rules: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`;
+every fix lands with a minimal red-then-green regression test.

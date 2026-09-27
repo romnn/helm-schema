@@ -10,7 +10,7 @@ hand-off, then the ledger's last entries.
 | What | Where |
 |---|---|
 | Resume point, open work, final status | `plan/schema-bug-hunt-v1-round8-handoff.md` (§6 = status) |
-| Chronological ledger (every decision, result, timing) | `plan/schema-bug-hunt-v1-progress.md` — append before the line starting `Next: resume d3f23 first` |
+| Chronological ledger (every decision, result, timing) | `plan/schema-bug-hunt-v1-progress.md` — append before the trailing line starting `Next:` |
 | Bug-hunt findings (F1…F83) and campaign rules | `plan/schema-bug-hunt-v1.md` (never edit) |
 | Builder/reviewer protocol | `plan/schema-bug-hunt-protocol-v2.md` (copy of `/Volumes/T7/dev/round8/PROTOCOL.md`) |
 | Landing runner (its own git repo) | `/Volumes/T7/dev/round8/runner/` — `README.md`, `run-landing.sh`, `landing.py`, `landing-*.env`, `tests/run-all.sh` |

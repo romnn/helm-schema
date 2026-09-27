@@ -58,8 +58,8 @@
   6. `cargo nextest run --profile integration -p helm-schema-cli --test schema_dialect_hygiene --run-ignored all`
   7. `cargo nextest run --workspace --profile integration --no-fail-fast`
   8. The runner’s dump, battery, and sweep steps.
-- Require the ignored dialect test to run at least one test and pass every selected test. Require the battery to report exactly `1 test run: 1 passed`; omitting `--run-ignored all` makes it vacuous.
-- Accept a failed `task lint` or `task lint:fc` only when the runner verifies its **sole** located diagnostic equals `ACCEPTED_LINT_RESIDUAL='crates/helm-schema-ir/src/fragment_eval/control.rs:604 too_many_lines'` and all other messages are dependent build summaries. Record its actual nonzero exit, accepted residual, and `coverage=partial`: dependent crates were not linted. Any other diagnostic fails the gate.
+- Require the dialect hygiene test (no longer `#[ignore]`d; `--run-ignored all` still selects it) to run at least one test and pass every selected test. Require the battery to report exactly `1 test run: 1 passed`; omitting `--run-ignored all` makes it vacuous.
+- `task lint` and `task lint:fc` must pass with no diagnostics. The former accepted residual (`control.rs:604 too_many_lines` in `branch_steps`) was fixed on main in 756e4f59, so no lint residual is accepted any more.
 - Before declaring the campaign round final, satisfy the repository’s additional `task test:integration` and `task test:all` requirements; for schema-semantic changes, run its downstream luup2 gate. Report their exits separately. Do not substitute a runner step silently for a differently specified `AGENTS.md` command.
 
 ## 5. Heavy steps
