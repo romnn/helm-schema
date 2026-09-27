@@ -4871,4 +4871,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   adjudicated that sample; the default policy (all vs a cap) is a user decision recorded in the
   receipt either way.
 
+- 04:50 (Sep 27) — **Runner v6.3 merged (af961ed, includes v6.2); landing 2 restarted from dump
+  (run4).** v6.3: `cacheable` read per cell from helmsweep v2's `cells.tsv` (row cacheable iff all
+  three cells yes; missing column/file = no), value in `ops.tsv`, verdict files back to 10
+  canonical columns; `helmsweep version` must print exactly one `helm-build` line, recorded and
+  required; frozen producer: dump copies `$TARGET/debug/corpus_generation` to `$E/producer/`
+  (0555), binds its sha (= manifest's), every later `--verify` and boundary uses/re-hashes the
+  copy (rebuilt target binary no longer refuses, tampered copy does); `tests/lib.sh` resolves the
+  real `TMPDIR` path; 4 tests with a never-run second condition fixed. Red vs b30317d: sweep 21,
+  dump 3, 6 unit; green run-all exit 0 (10 suites, 60/60). User decisions: `SWEEP_DIFF_CAP=3`
+  stays (the memoized engine is Helm's code; parity 897/897; driver-contract tests guard the
+  configuration class; `all` would cost 3–8 h on F23-sized changes for little gain). Chain
+  relaunched with `landing-2.env` (BASELINE f7be7ba5, producer mode, cap 3, E run4).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
