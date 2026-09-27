@@ -48,8 +48,23 @@ comes from:
 - `values/agents.containers.agent.securityContext`: a position in the values
   schema. When the same content occurs in several places, the smallest path
   wins, so a name changes only when a smaller occurrence is added or removed;
-- `helm-double-quoted-safe@anyOf(1)@items`: a position below a named
-  definition.
+- `when/agents.enabled:t+agents.mode=fast/then/agents.image`: a conditional
+  fragment without a stable position (it sits below an `allOf`/`anyOf` arm,
+  whose index shifts when an unrelated arm is added), named by the values
+  paths its `if` tests and its `then`/`else` constrain;
+- `constrains/image.pullPolicy+image.tag`: any other such fragment, named by
+  the values paths it constrains;
+- `values/agents/fragment`: such a fragment that constrains no path, named
+  after the nearest stable path above it.
+
+A path in a `when/` or `constrains/` name carries the operator its schema
+states: `=v` for `const`/`enum`, `!=v` for a negated one, `:name` for a
+reference to a named definition (`:t` is Helm truthiness), `?` for a key that
+is only required; `@items` and `@*` step into array items and map values.
+Paths are sorted and joined by `+`; a long list ends in `+Nmore`, long values
+and names are cut and marked `...`. Fragments with equal names are numbered
+`@2`, `@3`, … in the order of their content, so an unrelated fragment never
+renames them.
 
 Property steps are written `.name`; every other step carries an `@` marker,
 such as `@items`, `@additionalProperties`, `@anyOf(1)`, `@then`, or
@@ -63,9 +78,9 @@ instead, visiting object keys in sorted order and the definitions in the
 order they are first reached. Named building blocks such as `helm-truthy`
 keep their names.
 
-Conditional arms under `allOf`/`anyOf` are identified by their index, and
-arms are ordered by content, so adding or removing a conditional can shift
-the index of later arms and rename the definitions below them.
+`--defs-names destination` names are positions and do cross `allOf`/`anyOf`
+indexes, so adding or removing a conditional can rename the definitions below
+later arms.
 
 ## `$ref` handling
 

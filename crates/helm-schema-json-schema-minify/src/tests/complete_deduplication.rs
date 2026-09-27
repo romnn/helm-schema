@@ -308,8 +308,8 @@ fn incoming_pointer_keeps_logical_array_positions() -> eyre::Result<()> {
     });
     let minimized = minimize(schema.clone());
     let expected = json!({
-        "$defs": {"values/@allOf(0)": payload(), "usesIndex": {"$ref": "#/allOf/1"}},
-        "allOf": [{"$ref": "#/$defs/values~1@allOf(0)"}, {"$ref": "#/$defs/values~1@allOf(0)"}]
+        "$defs": {"values/fragment": payload(), "usesIndex": {"$ref": "#/allOf/1"}},
+        "allOf": [{"$ref": "#/$defs/values~1fragment"}, {"$ref": "#/$defs/values~1fragment"}]
     });
     sim_assert_eq!(have: &minimized, want: &expected);
     equivalent_validation(&schema, &minimized, &[json!("abc"), json!("a")])

@@ -8,7 +8,10 @@
 //! A readable name is a schema path.
 //! [`DefinitionNames::Source`] names a definition after where its content
 //! comes from: the source document and JSON pointer a caller records for it,
-//! or else the smallest source path among the positions that reference it.
+//! or else the smallest stable source path among the positions that
+//! reference it, or else, below `allOf`/`anyOf` arms whose index is not
+//! stable, the values paths it tests and constrains (`when/…/then/…`,
+//! `constrains/…`).
 //! [`DefinitionNames::Destination`] names it after its first reference in a
 //! canonical traversal of the document.
 //!
@@ -26,7 +29,7 @@
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
 use helm_schema_json_schema_walk::{
-    ReferenceSiblings, SchemaTraversalContext, escape_json_pointer_segment,
+    ReferenceSiblings, SchemaTraversalContext, canonical_json_string, escape_json_pointer_segment,
     schema_child_context_for_keyword, visit_subschemas, visit_subschemas_mut,
 };
 use serde_json::{Map, Value};
@@ -188,16 +191,20 @@ pub fn rename_definitions(schema: &mut Value, renames: &BTreeMap<String, String>
     rewrite_definition_references(schema, renames);
 }
 
-/// Source names: a recorded origin, else the smallest source path of the
-/// positions referencing the definition.
+/// Source names: a recorded origin; else the smallest stable source path of
+/// the positions referencing the definition; else its meaning.
 ///
-/// The source path of a position is its container's source plus the steps
-/// below it: `values` for the document root, the name of a named or
-/// origin-named definition, or the computed name of another anonymous one.
+/// The source path of a position is its container's name plus the steps
+/// below it, where the container is the document (`values`), a named or
+/// origin-named definition, or an anonymous definition named by position.
+/// A path is stable when it crosses no array index: an `allOf`/`anyOf` arm
+/// index shifts whenever an unrelated arm is inserted.
+/// A definition without a stable path is named by what it constrains (see
+/// [`meaning_name`]); equal meanings are told apart by `@2`, `@3`, … in the
+/// order of their content, so an unrelated fragment never renames them.
 /// A definition is named once every container referencing it is, so each
-/// minimum is exact.
-/// A reference cycle among unnamed definitions is broken at the smallest
-/// name reachable from outside it.
+/// minimum is exact; a reference cycle among unnamed definitions is broken
+/// at its first handle.
 fn source_names(
     schema: &Value,
     definitions: &Map<String, Value>,
@@ -217,28 +224,7 @@ fn source_names(
         }
     }
 
-    // Every referencing position, grouped by the definition it references.
-    let mut references = BTreeMap::<&str, Vec<(Option<&str>, String)>>::new();
-    let mut containers = vec![(None, schema)];
-    for (name, body) in definitions {
-        containers.push((Some(name.as_str()), body));
-    }
-    for (container, body) in containers {
-        let mut sites = Vec::new();
-        collect_references(
-            body,
-            definitions,
-            container.is_none(),
-            &mut String::new(),
-            &mut sites,
-        );
-        for (steps, target) in sites {
-            references
-                .entry(target)
-                .or_default()
-                .push((container, steps));
-        }
-    }
+    let references = references_by_target(schema, definitions);
 
     // Unnamed definitions wait for the unnamed containers that reference them.
     let mut waiting = BTreeMap::<&str, BTreeSet<&str>>::new();
@@ -247,11 +233,8 @@ fn source_names(
         if names.contains_key(handle) {
             continue;
         }
-        let Some(sites) = references.get(handle.as_str()) else {
-            continue;
-        };
         let mut containers = BTreeSet::new();
-        for (container, _) in sites {
+        for (container, _) in references.get(handle.as_str()).into_iter().flatten() {
             if let Some(container) = container
                 && !names.contains_key(*container)
             {
@@ -268,28 +251,32 @@ fn source_names(
         .filter(|(_, containers)| containers.is_empty())
         .map(|(handle, _)| *handle)
         .collect::<BTreeSet<_>>();
-    while !waiting.is_empty() {
-        let (handle, name) = if let Some(handle) = ready.pop_first() {
-            let Some(name) = smallest_source(&references, &names, handle) else {
-                continue;
-            };
-            (handle, name)
-        } else {
-            let mut smallest: Option<(String, &str)> = None;
-            for handle in waiting.keys() {
-                if let Some(name) = smallest_source(&references, &names, handle)
-                    && smallest.as_ref().is_none_or(|(least, _)| name < *least)
-                {
-                    smallest = Some((name, handle));
-                }
-            }
-            let Some((name, handle)) = smallest else {
-                break;
-            };
-            (handle, name)
-        };
+    // Meaning names, without their ordinals; they never prefix other names.
+    let mut meanings = BTreeMap::<String, Vec<&str>>::new();
+    let mut by_meaning = BTreeMap::new();
+    while let Some(handle) = ready.pop_first().or_else(|| waiting.keys().next().copied()) {
         waiting.remove(handle);
-        names.insert(handle.to_string(), unique_name(name, &mut taken));
+        let sites = references
+            .get(handle)
+            .map(Vec::as_slice)
+            .unwrap_or_default();
+        let (stable, ancestor) = position_names(sites, &names, &by_meaning);
+        if let Some(name) = stable {
+            names.insert(handle.to_string(), unique_name(name, &mut taken));
+        } else if let Some(body) = definitions.get(handle) {
+            let (meaning, ancestor) =
+                if let Some(meaning) = meaning_name(body, definitions, anonymous) {
+                    (meaning.clone(), meaning)
+                } else {
+                    // Without constrained paths, the fragment is named after
+                    // the nearest stable path above it.
+                    let ancestor = ancestor.unwrap_or_else(|| ROOT_DOCUMENT.to_string());
+                    (format!("{ancestor}/fragment"), ancestor)
+                };
+            names.insert(handle.to_string(), meaning.clone());
+            meanings.entry(meaning).or_default().push(handle);
+            by_meaning.insert(handle, ancestor);
+        }
         for dependent in dependents.get(handle).into_iter().flatten() {
             if let Some(containers) = waiting.get_mut(dependent) {
                 containers.remove(handle);
@@ -297,6 +284,18 @@ fn source_names(
                     ready.insert(dependent);
                 }
             }
+        }
+    }
+    for (meaning, mut handles) in meanings {
+        if handles.len() > 1 {
+            handles.sort_by_cached_key(|handle| {
+                let mut body = definitions.get(*handle).cloned().unwrap_or_default();
+                erase_anonymous_references(&mut body, anonymous);
+                (canonical_json_string(&body), *handle)
+            });
+        }
+        for handle in handles {
+            names.insert(handle.to_string(), unique_name(meaning.clone(), &mut taken));
         }
     }
     // Unreferenced definitions have no source path and keep their handles.
@@ -308,27 +307,341 @@ fn source_names(
     names
 }
 
-/// The smallest source path among the references to `handle` whose
-/// containers are named.
-fn smallest_source(
-    references: &BTreeMap<&str, Vec<(Option<&str>, String)>>,
+/// Every plain reference to a root definition, from the document or a
+/// definition body, grouped by the definition it references.
+fn references_by_target<'a>(
+    schema: &'a Value,
+    definitions: &'a Map<String, Value>,
+) -> BTreeMap<&'a str, Vec<(Option<&'a str>, Site<'a>)>> {
+    let mut references = BTreeMap::<&str, Vec<(Option<&str>, Site<'_>)>>::new();
+    let mut containers = vec![(None, schema)];
+    for (name, body) in definitions {
+        containers.push((Some(name.as_str()), body));
+    }
+    for (container, body) in containers {
+        let mut sites = Vec::new();
+        collect_references(
+            body,
+            definitions,
+            container.is_none(),
+            &mut String::new(),
+            None,
+            &mut sites,
+        );
+        for site in sites {
+            references
+                .entry(site.target)
+                .or_default()
+                .push((container, site));
+        }
+    }
+    references
+}
+
+/// The smallest stable source path among `sites` whose containers are named
+/// by position, and the smallest stable prefix of any of them: the nearest
+/// named ancestor.
+///
+/// `by_meaning` maps each container named by meaning to the ancestor its
+/// own fragments take: its meaning, or the ancestor it was named after.
+fn position_names(
+    sites: &[(Option<&str>, Site<'_>)],
     names: &BTreeMap<String, String>,
-    handle: &str,
-) -> Option<String> {
-    let mut smallest: Option<String> = None;
-    for (container, steps) in references.get(handle).into_iter().flatten() {
-        let candidate = match container {
-            None => join_path(ROOT_DOCUMENT, steps, true),
+    by_meaning: &BTreeMap<&str, String>,
+) -> (Option<String>, Option<String>) {
+    let mut stable: Option<String> = None;
+    let mut ancestor: Option<String> = None;
+    for (container, site) in sites {
+        let (prefix, is_document) = match container {
+            None => (ROOT_DOCUMENT, true),
             Some(container) => match names.get(*container) {
-                Some(prefix) => join_path(prefix, steps, false),
+                Some(prefix) => (prefix.as_str(), false),
                 None => continue,
             },
         };
-        if smallest.as_ref().is_none_or(|least| candidate < *least) {
-            smallest = Some(candidate);
+        if let Some(container) = container
+            && let Some(ancestor_of_container) = by_meaning.get(container)
+        {
+            // Below a fragment named by meaning, its name is the ancestor.
+            if ancestor
+                .as_ref()
+                .is_none_or(|least| ancestor_of_container < least)
+            {
+                ancestor = Some(ancestor_of_container.clone());
+            }
+            continue;
+        }
+        if site.first_index.is_none() {
+            let candidate = join_path(prefix, &site.steps, is_document);
+            if stable.as_ref().is_none_or(|least| candidate < *least) {
+                stable = Some(candidate);
+            }
+        }
+        let stable_steps = site
+            .steps
+            .get(..site.first_index.unwrap_or(site.steps.len()))
+            .unwrap_or_default();
+        let candidate = if stable_steps.is_empty() {
+            prefix.to_string()
+        } else {
+            join_path(prefix, stable_steps, is_document)
+        };
+        if ancestor.as_ref().is_none_or(|least| candidate < *least) {
+            ancestor = Some(candidate);
         }
     }
-    smallest
+    (stable, ancestor)
+}
+
+/// Replaces references to anonymous definitions, whose handles are not
+/// stable, with one placeholder.
+fn erase_anonymous_references(
+    schema: &mut Value,
+    anonymous: &BTreeMap<String, &[DefinitionOrigin]>,
+) {
+    if let Some(Value::String(reference)) = schema.get_mut("$ref")
+        && let Some((name, _)) = root_definition_reference(reference)
+        && anonymous.contains_key(&name)
+    {
+        *reference = DEFINITION_REF_PREFIX.to_string();
+    }
+    visit_subschemas_mut(schema, ReferenceSiblings::Visit, &mut |child| {
+        erase_anonymous_references(child, anonymous);
+    });
+}
+
+/// Longest rendered path list in a meaning name before the rest is counted.
+const MEANING_LIST_CHARS: usize = 80;
+
+/// Characters of a stated value kept in a meaning name.
+const MEANING_VALUE_CHARS: usize = 20;
+
+/// Longest meaning name; a longer one is cut and marked `...`.
+const MEANING_NAME_CHARS: usize = 200;
+
+/// Schema nodes one meaning walk may visit.
+const MEANING_WALK_BUDGET: usize = 4_000;
+
+/// The name of a fragment after the values paths it constrains, read from
+/// its own schema: `when/<paths its if tests>/then/<paths its then
+/// constrains>` (and `/else/…`) for a conditional, `constrains/<paths>`
+/// otherwise; `None` when it constrains no path.
+///
+/// A path carries the operator its schema states: `=v` for `const` or
+/// `enum`, `!=v` for a negated one, `:name` for a reference to a named
+/// definition, `?` for a key that is only required.
+/// References to anonymous definitions are followed.
+fn meaning_name(
+    body: &Value,
+    definitions: &Map<String, Value>,
+    anonymous: &BTreeMap<String, &[DefinitionOrigin]>,
+) -> Option<String> {
+    let mut walker = MeaningWalker {
+        definitions,
+        anonymous,
+        visited: BTreeSet::new(),
+        budget: MEANING_WALK_BUDGET,
+    };
+    if let Some(condition) = body.get("if") {
+        let mut name = format!("when/{}", walker.path_list(condition));
+        for branch in ["then", "else"] {
+            if let Some(schema) = body.get(branch) {
+                let paths = walker.path_list(schema);
+                name = format!("{name}/{branch}/{paths}");
+            }
+        }
+        return Some(cut_name(&name));
+    }
+    let paths = walker.paths(body);
+    (!paths.is_empty()).then(|| cut_name(&format!("constrains/{}", render_path_list(&paths))))
+}
+
+/// `name`, cut to [`MEANING_NAME_CHARS`] characters.
+fn cut_name(name: &str) -> String {
+    if name.chars().count() <= MEANING_NAME_CHARS {
+        return name.to_string();
+    }
+    let cut = name
+        .chars()
+        .take(MEANING_NAME_CHARS - 3)
+        .collect::<String>();
+    format!("{cut}...")
+}
+
+struct MeaningWalker<'a> {
+    definitions: &'a Map<String, Value>,
+    anonymous: &'a BTreeMap<String, &'a [DefinitionOrigin]>,
+    visited: BTreeSet<&'a str>,
+    budget: usize,
+}
+
+impl<'a> MeaningWalker<'a> {
+    fn path_list(&mut self, schema: &'a Value) -> String {
+        if *schema == Value::Bool(false) {
+            return "fail".to_string();
+        }
+        let paths = self.paths(schema);
+        if paths.is_empty() {
+            "any".to_string()
+        } else {
+            render_path_list(&paths)
+        }
+    }
+
+    fn paths(&mut self, schema: &'a Value) -> BTreeSet<String> {
+        let mut paths = BTreeSet::new();
+        self.walk(schema, "", &mut paths);
+        paths
+    }
+
+    fn walk(&mut self, schema: &'a Value, path: &str, paths: &mut BTreeSet<String>) {
+        let Value::Object(object) = schema else {
+            return;
+        };
+        if self.budget == 0 {
+            return;
+        }
+        self.budget -= 1;
+        if let Some(reference) = object.get("$ref").and_then(Value::as_str)
+            && let Some((name, suffix)) = root_definition_reference(reference)
+            && suffix.is_empty()
+            && let Some((target, body)) = self.definitions.get_key_value(&name)
+        {
+            if !self.anonymous.contains_key(target) {
+                paths.insert(format!("{path}:{}", encode_document(target)));
+            } else if self.visited.insert(target.as_str()) {
+                self.walk(body, path, paths);
+            }
+        }
+        if let Some(value) = object.get("const") {
+            paths.insert(format!("{path}={}", render_value(value)));
+        }
+        if let Some(Value::Array(values)) = object.get("enum") {
+            paths.insert(format!("{path}={}", render_values(values)));
+        }
+        if let Some(negated) = object.get("not") {
+            if let Some(value) = negated.get("const") {
+                paths.insert(format!("{path}!={}", render_value(value)));
+            } else if let Some(Value::Array(values)) = negated.get("enum") {
+                paths.insert(format!("{path}!={}", render_values(values)));
+            } else {
+                self.walk(negated, path, paths);
+            }
+        }
+        if let Some(Value::Object(properties)) = object.get("properties") {
+            let mut keys = properties.keys().collect::<Vec<_>>();
+            keys.sort_unstable();
+            for key in keys {
+                let Some(child) = properties.get(key) else {
+                    continue;
+                };
+                let child_path = join_property(path, key);
+                let before = paths.len();
+                self.walk(child, &child_path, paths);
+                if paths.len() == before {
+                    paths.insert(child_path);
+                }
+            }
+        }
+        if let Some(Value::Array(required)) = object.get("required") {
+            for key in required.iter().filter_map(Value::as_str) {
+                let child_path = join_property(path, key);
+                let constrained = paths
+                    .range(child_path.clone()..)
+                    .next()
+                    .is_some_and(|existing| existing.starts_with(&child_path));
+                if !constrained {
+                    paths.insert(format!("{child_path}?"));
+                }
+            }
+        }
+        for keyword in ["allOf", "anyOf", "oneOf"] {
+            if let Some(Value::Array(arms)) = object.get(keyword) {
+                for arm in arms {
+                    self.walk(arm, path, paths);
+                }
+            }
+        }
+        for keyword in ["if", "then", "else"] {
+            if let Some(branch) = object.get(keyword) {
+                self.walk(branch, path, paths);
+            }
+        }
+        match object.get("items") {
+            Some(Value::Array(items)) => {
+                for item in items {
+                    self.walk(item, &format!("{path}@items"), paths);
+                }
+            }
+            Some(items) => self.walk(items, &format!("{path}@items"), paths),
+            None => {}
+        }
+        if let Some(additional) = object.get("additionalProperties") {
+            self.walk(additional, &format!("{path}@*"), paths);
+        }
+        if let Some(Value::Object(patterns)) = object.get("patternProperties") {
+            for pattern in patterns.values() {
+                self.walk(pattern, &format!("{path}@*"), paths);
+            }
+        }
+    }
+}
+
+fn join_property(path: &str, key: &str) -> String {
+    if path.is_empty() {
+        encode_key(key)
+    } else {
+        format!("{path}.{}", encode_key(key))
+    }
+}
+
+/// Sorted paths joined by `+`, the tail past [`MEANING_LIST_CHARS`] counted
+/// as `+Nmore`.
+fn render_path_list(paths: &BTreeSet<String>) -> String {
+    let mut rendered = String::new();
+    let mut listed = 0;
+    for path in paths {
+        if listed > 0 && rendered.len() + 1 + path.len() > MEANING_LIST_CHARS {
+            break;
+        }
+        if listed > 0 {
+            rendered.push('+');
+        }
+        rendered.push_str(path);
+        listed += 1;
+    }
+    if listed < paths.len() {
+        rendered = format!("{rendered}+{}more", paths.len() - listed);
+    }
+    rendered
+}
+
+/// A stated value, its text cut to [`MEANING_VALUE_CHARS`] characters.
+fn render_value(value: &Value) -> String {
+    let text = match value {
+        Value::String(text) => text.clone(),
+        Value::Null | Value::Bool(_) | Value::Number(_) => return value.to_string(),
+        Value::Array(_) | Value::Object(_) => value.to_string(),
+    };
+    if text.chars().count() <= MEANING_VALUE_CHARS {
+        return encode_key(&text);
+    }
+    let cut = text.chars().take(MEANING_VALUE_CHARS).collect::<String>();
+    encode_key(&format!("{cut}..."))
+}
+
+/// Up to three values joined by `,`, the rest counted.
+fn render_values(values: &[Value]) -> String {
+    let mut rendered = values
+        .iter()
+        .take(3)
+        .map(render_value)
+        .collect::<Vec<_>>()
+        .join(",");
+    if values.len() > 3 {
+        rendered = format!("{rendered},+{}more", values.len() - 3);
+    }
+    rendered
 }
 
 /// Destination names: the path of the first reference in a canonical
@@ -376,9 +689,10 @@ fn destination_names(
                 definitions,
                 container.is_none(),
                 &mut String::new(),
+                None,
                 &mut sites,
             );
-            for (steps, target) in sites {
+            for Site { steps, target, .. } in sites {
                 if !reached.insert(target) {
                     continue;
                 }
@@ -401,18 +715,30 @@ fn destination_names(
     names
 }
 
-/// Collects `(steps, definition)` for every plain reference to a root
-/// definition below `schema`, in canonical order: object keys sorted, array
-/// items in order.
+/// A plain reference to a root definition, as reached from its container.
+struct Site<'a> {
+    /// The rendered path from the container to the reference.
+    steps: String,
+    /// Length of `steps` before its first array index, when it has one.
+    ///
+    /// An index names a position in `allOf`/`anyOf`/…, which shifts when an
+    /// unrelated arm is inserted, so a path through one is not a stable name.
+    first_index: Option<usize>,
+    /// The referenced definition.
+    target: &'a str,
+}
+
+/// Collects every plain reference to a root definition below `schema`, in
+/// canonical order: object keys sorted, array items in order.
 ///
-/// `steps` is the rendered path from `schema` to the reference.
 /// The root `$defs` of the document is skipped when `is_document_root`.
 fn collect_references<'a>(
     schema: &Value,
     definitions: &'a Map<String, Value>,
     is_document_root: bool,
     steps: &mut String,
-    sites: &mut Vec<(String, &'a str)>,
+    first_index: Option<usize>,
+    sites: &mut Vec<Site<'a>>,
 ) {
     let Value::Object(object) = schema else {
         return;
@@ -422,7 +748,11 @@ fn collect_references<'a>(
         && suffix.is_empty()
         && let Some((target, _)) = definitions.get_key_value(&name)
     {
-        sites.push((steps.clone(), target.as_str()));
+        sites.push(Site {
+            steps: steps.clone(),
+            first_index,
+            target: target.as_str(),
+        });
     }
     let mut keys = object.keys().collect::<Vec<_>>();
     keys.sort_unstable();
@@ -441,13 +771,14 @@ fn collect_references<'a>(
             ) => {
                 for (index, item) in items.iter().enumerate() {
                     push_step(steps, key, Some(&index.to_string()));
-                    collect_child(item, definitions, steps, sites);
+                    let first_index = first_index.or(Some(length));
+                    collect_child(item, definitions, steps, first_index, sites);
                     steps.truncate(length);
                 }
             }
             (SchemaTraversalContext::Schema, _) => {
                 push_step(steps, key, None);
-                collect_child(value, definitions, steps, sites);
+                collect_child(value, definitions, steps, first_index, sites);
                 steps.truncate(length);
             }
             (SchemaTraversalContext::SchemaMapValues, Value::Object(entries)) => {
@@ -463,7 +794,7 @@ fn collect_references<'a>(
                     } else {
                         push_step(steps, key, Some(&encode_key(entry_key)));
                     }
-                    collect_child(entry, definitions, steps, sites);
+                    collect_child(entry, definitions, steps, first_index, sites);
                     steps.truncate(length);
                 }
             }
@@ -476,10 +807,11 @@ fn collect_child<'a>(
     schema: &Value,
     definitions: &'a Map<String, Value>,
     steps: &mut String,
-    sites: &mut Vec<(String, &'a str)>,
+    first_index: Option<usize>,
+    sites: &mut Vec<Site<'a>>,
 ) {
     if !is_nested_resource(schema) {
-        collect_references(schema, definitions, false, steps, sites);
+        collect_references(schema, definitions, false, steps, first_index, sites);
     }
 }
 

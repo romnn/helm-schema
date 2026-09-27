@@ -143,10 +143,11 @@ fn source_names_are_recorded_origins_or_the_smallest_referencing_path() {
     name_definitions(&mut schema, &handles(), DefinitionNames::Source);
 
     // The k8s pointer names an OpenAPI type; the CRD definition takes the
-    // smaller of its two origins; `7` is referenced from `values/api…` and
-    // from inside the k8s type, which sorts first; `8` is reached only
-    // through anonymous definitions and takes the smaller of their paths;
-    // `9` sits below the named helper.
+    // smaller of its two origins; `7` is referenced from `values/api…` below
+    // an `anyOf` index and from inside the k8s type, whose path is stable;
+    // `8` is reached only through anonymous definitions and takes the
+    // smaller of their paths; `9` sits below an index in the named helper
+    // and constrains no path, so it is named after that ancestor.
     sim_assert_eq!(
         have: schema,
         want: renamed_document(&[
@@ -158,7 +159,7 @@ fn source_names_are_recorded_origins_or_the_smallest_referencing_path() {
             ("providerShared1", "values/web.'app.kubernetes.io/name'"),
             ("7", "k8s/io.k8s.api.core.v1.SecurityContext.capabilities"),
             ("8", "k8s/io.k8s.api.core.v1.SecurityContext.capabilities.add"),
-            ("9", "helm-double-quoted-safe@anyOf(1)@items"),
+            ("9", "helm-double-quoted-safe/fragment"),
         ])
     );
 }
@@ -354,9 +355,9 @@ fn cycle_through_a_named_helper_keeps_its_names() {
     ));
     let helper_edited = minimize(document(helper("^[A-Z]*$"), None));
 
-    // The helper reference also occurs inside the helper, whose path sorts
-    // before `values/a`.
-    let name = Some("#/$defs/helm-double-quoted-safe@anyOf(1)@additionalProperties");
+    // The helper reference also occurs inside the helper, but only below an
+    // `anyOf` index, which is not a stable name.
+    let name = Some("#/$defs/values~1a");
     sim_assert_eq!(have: reference_at(&before, "/properties/a"), want: name);
     sim_assert_eq!(have: reference_at(&inserted, "/properties/a"), want: name);
     sim_assert_eq!(have: reference_at(&helper_edited, "/properties/a"), want: name);
@@ -642,4 +643,158 @@ fn helm_errors_translate_back_to_readable_names() {
         "#}
         .to_string()
     );
+}
+
+/// A document whose root `allOf` holds guard fragments, each used twice so
+/// the minifier extracts it.
+fn guarded(arms: &[Value]) -> Value {
+    let mut all_of = Vec::new();
+    for arm in arms {
+        all_of.push(arm.clone());
+        all_of.push(json!({ "not": arm }));
+    }
+    json!({
+        "$defs": { "t": { "not": { "const": false } } },
+        "allOf": all_of,
+        "properties": { "agents": { "type": "object" } },
+        "type": "object"
+    })
+}
+
+fn guard(flag: &str, field: &str) -> Value {
+    json!({
+        "if": {
+            "properties": {
+                "agents": {
+                    "properties": { flag: { "$ref": "#/$defs/t" }, "mode": { "const": "fast" } },
+                    "required": [flag]
+                }
+            },
+            "required": ["agents"]
+        },
+        "then": {
+            "properties": {
+                "agents": {
+                    "properties": { field: { "minLength": 12, "type": "string" } },
+                    "required": [field]
+                }
+            }
+        }
+    })
+}
+
+#[test]
+fn guard_fragments_are_named_by_what_they_test_and_constrain() {
+    let before = minimize(guarded(&[guard("enabled", "image")]));
+    // An unrelated guard inserted before it shifts every `allOf` index.
+    let after = minimize(guarded(&[
+        guard("debug", "logLevel"),
+        guard("enabled", "image"),
+    ]));
+
+    let name = "when/agents.enabled:t+agents.mode=fast/then/agents.image";
+    sim_assert_eq!(
+        have: definitions(&before).into_keys().collect::<Vec<_>>(),
+        want: vec!["t".to_string(), name.to_string()]
+    );
+    let after_definitions = definitions(&after);
+    sim_assert_eq!(
+        have: after_definitions.keys().cloned().collect::<Vec<_>>(),
+        want: vec![
+            "t".to_string(),
+            "when/agents.debug:t+agents.mode=fast/then/agents.logLevel".to_string(),
+            name.to_string(),
+        ]
+    );
+    sim_assert_eq!(have: after_definitions.get(name), want: definitions(&before).get(name));
+}
+
+#[test]
+fn equal_meanings_are_ordered_by_content_not_by_handle_or_position() {
+    let short = json!({ "properties": { "a": { "maxLength": 3 } } });
+    let long = json!({ "properties": { "a": { "maxLength": 300 } } });
+    // The same two fragments under swapped handles and arm positions.
+    let document = |first: &Value, second: &Value| {
+        json!({
+            "$defs": { "1": first, "2": second },
+            "anyOf": [{ "$ref": "#/$defs/1" }, { "$ref": "#/$defs/2" }]
+        })
+    };
+    let anonymous = BTreeMap::from([("1".to_string(), Vec::new()), ("2".to_string(), Vec::new())]);
+    let names = |mut schema: Value| {
+        name_definitions(&mut schema, &anonymous, DefinitionNames::Source);
+        definitions(&schema)
+    };
+
+    let want = BTreeMap::from([
+        ("constrains/a".to_string(), long.clone()),
+        ("constrains/a@2".to_string(), short.clone()),
+    ]);
+    sim_assert_eq!(have: names(document(&short, &long)), want: want.clone());
+    sim_assert_eq!(have: names(document(&long, &short)), want: want);
+}
+
+#[test]
+fn meaning_names_state_operators_and_count_long_lists() {
+    let mut properties = Map::new();
+    for index in 0..12 {
+        properties.insert(format!("field{index:02}"), json!({ "type": "integer" }));
+    }
+    let wide = json!({ "properties": properties, "required": ["extra"] });
+    let fragment = json!({
+        "properties": {
+            "kind": { "enum": ["a", "b c", 3, true, null] },
+            "mode": { "not": { "const": "off" } },
+            "nested": { "items": { "properties": { "name": { "const": "x" } } } }
+        }
+    });
+    let mut schema = json!({
+        "$defs": { "1": wide, "2": fragment },
+        "anyOf": [{ "$ref": "#/$defs/1" }, { "$ref": "#/$defs/2" }]
+    });
+    let anonymous = BTreeMap::from([("1".to_string(), Vec::new()), ("2".to_string(), Vec::new())]);
+
+    name_definitions(&mut schema, &anonymous, DefinitionNames::Source);
+
+    sim_assert_eq!(
+        have: definitions(&schema).into_keys().collect::<Vec<_>>(),
+        want: vec![
+            "constrains/extra?+field00+field01+field02+field03+field04+field05+field06+field07+field08+3more",
+            "constrains/kind=a,'b(20)c',3,+2more+mode!=off+nested@items.name=x",
+        ]
+    );
+}
+
+#[test]
+fn long_values_and_names_are_cut() -> eyre::Result<()> {
+    let mut deep = json!({ "const": "x".repeat(50) });
+    for level in 0..30 {
+        deep = json!({ "properties": { format!("level{level:02}"): deep } });
+    }
+    let mut schema = json!({
+        "$defs": { "1": deep },
+        "anyOf": [{ "$ref": "#/$defs/1" }]
+    });
+    let anonymous = BTreeMap::from([("1".to_string(), Vec::new())]);
+
+    name_definitions(&mut schema, &anonymous, DefinitionNames::Source);
+
+    let names = definitions(&schema).into_keys().collect::<Vec<_>>();
+    let [name] = names.as_slice() else {
+        eyre::bail!("one definition expected: {names:?}");
+    };
+    sim_assert_eq!(have: name.chars().count(), want: 200);
+    assert!(name.starts_with("constrains/level29.level28."), "{name}");
+    assert!(name.ends_with("..."), "{name}");
+
+    let mut short = json!({
+        "$defs": { "1": { "properties": { "config": { "const": "y".repeat(50) } } } },
+        "anyOf": [{ "$ref": "#/$defs/1" }]
+    });
+    name_definitions(&mut short, &anonymous, DefinitionNames::Source);
+    sim_assert_eq!(
+        have: definitions(&short).into_keys().collect::<Vec<_>>(),
+        want: vec![format!("constrains/config='{}...'", "y".repeat(20))]
+    );
+    Ok(())
 }
