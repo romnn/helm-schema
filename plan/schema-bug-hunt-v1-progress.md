@@ -4712,4 +4712,29 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   complete run-all exit 0 in 480 s (57/57). `landing-2.env`: `DUMP_MODE=producer`, fresh E
   `round8-landing2-run2`; chain relaunched from dump.
 
+- 03:15 (Sep 27) — **Battery in-process renders hand-back: byte-identical parity, modest speed
+  gain; queued as landing 3.** `round8-battery-go` (HEAD a9f40039 on c02c01f8; `round8-battery-
+  go-evidence/final.patch` sha 429d80d7…, 11 files, `handoff.md`, `parity.txt`, `timings.txt`).
+  `tools/helmsweep/serve.go cmdServe`: JSON-lines server, one SERIAL server per concurrent render
+  (a shared concurrent server that re-ran renders that logged serialized everything on charts
+  like dify — aborted at 1,281 s), stdout/stderr written to requested paths, malformed request/
+  unwritable output/panic → `error` never a verdict; `templateRun` now prints stdout as the CLI
+  (manifest, then hooks). Rust `helm_invocation.rs`: `SCHEMA_HELM_ENGINE=helmsweep|cli`,
+  `ResidentPool` (:657) hands renders to idle servers and drops failed ones; cache key v3 binds
+  engine, program sha256 and the full `helmsweep version`; pool/reservation/policy unchanged.
+  Parity with landing 1's battery (same inputs, both engines, twice): `coverage.json` byte-
+  identical, 7,952 HELM_FLIP lines identical; 7 render cases byte-for-byte vs the CLI (manifest,
+  `fail`, type error, non-table subchart scope, bad values YAML, invalid kube version,
+  deprecation log). Timings: 656/716 s vs 781/1,020 s CLI (host load 10–40); summed coalesce
+  119 vs 522 s, decode 161 vs 556 s, render 2,864 vs 3,494 s — render time is Helm's own template
+  work. Tests: Go `serve_test.go` ×3 (incl. 4 servers under `-race`), Rust `the_resident_server_
+  renders_exactly_as_the_cli` (red without per-render log capture), `resident_protocol_failures_
+  are_harness_failures`, key-field test extended. Gates: fmt 0, unit 115, integration 52/52 in
+  both engines, lint/lint:fc residual only, go vet/test 0 (21), build/test:helmsweep 0, typos 0.
+  Open: the runner must build helmsweep before the battery and integration steps (runner v6.1
+  briefed to the runner agent, worktree); Windows CI unverified for `stage.sh`. Codex review of
+  helmsweep (landed) + battery-go (candidate) launched (astra) — the helmsweep/runner v5/v6
+  landings went in on parity evidence without a cross-vendor review; this review closes that gap
+  post hoc. Landing-2 chain: dump running (producer mode).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
