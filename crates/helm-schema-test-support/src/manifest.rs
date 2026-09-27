@@ -204,6 +204,96 @@ pub struct ManifestEntry {
     pub size: u64,
     /// Artifact SHA-256.
     pub sha256: String,
+    /// The Helm-ready copy of a schema artifact, when the producer ran with
+    /// `--helm-ready`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub helm_ready: Option<HelmReadyFiles>,
+}
+
+/// A schema artifact as handed to Helm: `$defs` renamed to short keys,
+/// compact JSON plus a newline, and the map from each short key back to its
+/// readable name.
+///
+/// Both are derived from the artifact's bytes alone, so they are evidence
+/// exactly when the artifact is.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct HelmReadyFiles {
+    /// The shortened schema.
+    pub schema: CompanionFile,
+    /// The short-to-readable name map, pretty JSON plus a newline.
+    pub defs_map: CompanionFile,
+}
+
+/// One file derived from an artifact.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CompanionFile {
+    /// Path relative to the output directory.
+    pub file: String,
+    /// Size in bytes.
+    pub size: u64,
+    /// SHA-256.
+    pub sha256: String,
+}
+
+impl CompanionFile {
+    /// The record of `bytes` written at `file`.
+    #[must_use]
+    pub fn new(file: String, bytes: &[u8]) -> CompanionFile {
+        CompanionFile {
+            file,
+            size: u64::try_from(bytes.len()).unwrap_or(u64::MAX),
+            sha256: sha256_hex(bytes),
+        }
+    }
+}
+
+/// A file derived from an artifact, with its bytes.
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct DerivedFile {
+    /// Path relative to the output directory.
+    pub file: String,
+    /// The file's bytes.
+    pub bytes: Vec<u8>,
+}
+
+/// The Helm-ready schema and name map of a schema artifact's `bytes`, in that
+/// order, or `None` for an artifact Helm never reads.
+///
+/// # Errors
+///
+/// Returns an error when `bytes` are not JSON.
+pub fn helm_ready_files(
+    spec: &ArtifactSpec,
+    bytes: &[u8],
+) -> Result<Option<[DerivedFile; 2]>, serde_json::Error> {
+    let shipped = match &spec.recipe {
+        GenerationRecipe::Chart(chart) => chart.minimize,
+        GenerationRecipe::FinalPolicy(_) => true,
+        GenerationRecipe::Template(_) | GenerationRecipe::Ir(_) => false,
+    };
+    if !shipped {
+        return Ok(None);
+    }
+    let schema: Value = serde_json::from_slice(bytes)?;
+    let shortened = helm_schema_json_schema_minify::shorten_definition_names(&schema);
+    let mut schema_bytes = serde_json::to_vec(&shortened.schema)?;
+    schema_bytes.push(b'\n');
+    let mut map_bytes = serde_json::to_vec_pretty(&shortened.readable_names)?;
+    map_bytes.push(b'\n');
+    let base = spec
+        .dump_name
+        .strip_suffix(".schema.json")
+        .unwrap_or(&spec.dump_name);
+    Ok(Some([
+        DerivedFile {
+            file: format!("{INTERNAL_DIR}/{base}.helm.schema.json"),
+            bytes: schema_bytes,
+        },
+        DerivedFile {
+            file: format!("{INTERNAL_DIR}/{base}.defs-map.json"),
+            bytes: map_bytes,
+        },
+    ]))
 }
 
 impl ManifestEntry {
@@ -222,6 +312,7 @@ impl ManifestEntry {
             inputs_sha256,
             size: u64::try_from(bytes.len()).unwrap_or(u64::MAX),
             sha256: sha256_hex(bytes),
+            helm_ready: None,
         }
     }
 
@@ -391,14 +482,20 @@ pub fn read_artifact(
 pub fn verify_all(dir: &Path, manifest: &Manifest) -> Result<(), ProvenanceError> {
     check_structure(dir, manifest)?;
     let mut inputs = InputDigester::new(test_util::workspace_testdata());
+    let mut listed = BTreeSet::new();
     for spec in registry::registry() {
-        read_artifact(dir, manifest, &spec, &mut inputs)?;
+        let bytes = read_artifact(dir, manifest, &spec, &mut inputs)?;
+        let key = spec.id.key();
+        let Some(entry) = manifest.artifacts.iter().find(|entry| entry.key == key) else {
+            continue;
+        };
+        listed.insert(entry.file.clone());
+        if let Some(helm_ready) = &entry.helm_ready {
+            verify_helm_ready(dir, &spec, &bytes, helm_ready)?;
+            listed.insert(helm_ready.schema.file.clone());
+            listed.insert(helm_ready.defs_map.file.clone());
+        }
     }
-    let mut listed = manifest
-        .artifacts
-        .iter()
-        .map(|entry| entry.file.clone())
-        .collect::<BTreeSet<_>>();
     listed.extend([MANIFEST_FILE, INTERNAL_DIR, LOCK_FILE].map(str::to_string));
     let mut foreign = Vec::new();
     for listing in [dir.to_path_buf(), dir.join(INTERNAL_DIR)] {
@@ -430,6 +527,37 @@ pub fn verify_all(dir: &Path, manifest: &Manifest) -> Result<(), ProvenanceError
             files: foreign,
         })
     }
+}
+
+/// Checks that the Helm-ready files of an artifact are its recorded
+/// derivation from `bytes`.
+fn verify_helm_ready(
+    dir: &Path,
+    spec: &ArtifactSpec,
+    bytes: &[u8],
+    helm_ready: &HelmReadyFiles,
+) -> Result<(), ProvenanceError> {
+    let artifact = dir.join(artifact_file(spec));
+    let derived = helm_ready_files(spec, bytes)
+        .map_err(|source| ProvenanceError::Parse {
+            path: artifact.clone(),
+            source,
+        })?
+        .ok_or(ProvenanceError::ArtifactBytes { path: artifact })?;
+    for (recorded, derived) in [&helm_ready.schema, &helm_ready.defs_map]
+        .into_iter()
+        .zip(derived)
+    {
+        let path = dir.join(&derived.file);
+        let have = std::fs::read(&path).map_err(|source| ProvenanceError::Io {
+            path: path.clone(),
+            source,
+        })?;
+        if *recorded != CompanionFile::new(derived.file, &derived.bytes) || have != derived.bytes {
+            return Err(ProvenanceError::ArtifactBytes { path });
+        }
+    }
+    Ok(())
 }
 
 /// Digests the files each recipe reads besides the source tree.

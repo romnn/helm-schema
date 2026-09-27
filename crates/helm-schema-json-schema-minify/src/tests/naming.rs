@@ -623,23 +623,23 @@ fn helm_errors_translate_back_to_readable_names() {
         ("1".to_string(), "values/web".to_string()),
     ]);
     // Recorded from `helm lint` (Helm v4.3.0) on a shortened schema.
-    let helm_error = indoc::indoc! {r##"
+    let helm_error = indoc::indoc! {r#"
         [ERROR] templates/: values don't meet the specifications of the schema(s) in the following chart(s):
         refchk:
         "file:///values.schema.json#/$defs/2b" is not valid against metaschema: jsonschema validation failed with 'http://json-schema.org/draft-07/schema#'
         - at '/pattern': '^(?=x)' is not valid regex: error parsing regexp: invalid or unsupported Perl syntax: `(?=`
         json-pointer in "file:///values.schema.json#/$defs/1/properties/a" not found; $defs/21 and $defs/1b stay
-    "##};
+    "#};
 
     sim_assert_eq!(
         have: expand_short_definition_names(helm_error, &readable_names),
-        want: indoc::indoc! {r##"
+        want: indoc::indoc! {r#"
             [ERROR] templates/: values don't meet the specifications of the schema(s) in the following chart(s):
             refchk:
             "file:///values.schema.json#/$defs/k8s~1io.k8s.api.core.v1.Probe.exec" is not valid against metaschema: jsonschema validation failed with 'http://json-schema.org/draft-07/schema#'
             - at '/pattern': '^(?=x)' is not valid regex: error parsing regexp: invalid or unsupported Perl syntax: `(?=`
             json-pointer in "file:///values.schema.json#/$defs/values~1web/properties/a" not found; $defs/21 and $defs/1b stay
-        "##}
+        "#}
         .to_string()
     );
 }

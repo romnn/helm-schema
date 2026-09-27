@@ -19,8 +19,8 @@ use serde_json::Value;
 use vfs::VfsPath;
 
 use crate::manifest::{
-    self, BuildProvenance, HARNESS_VERSION, INTERNAL_DIR, InputDigester, LOCK_FILE, MANIFEST_FILE,
-    Manifest, ManifestEntry,
+    self, BuildProvenance, CompanionFile, HARNESS_VERSION, HelmReadyFiles, INTERNAL_DIR,
+    InputDigester, LOCK_FILE, MANIFEST_FILE, Manifest, ManifestEntry,
 };
 use crate::registry::{
     self, ArtifactSpec, ChartRecipe, GenerationRecipe, IrRecipe, PROVIDER_BUNDLE, PolicyRecipe,
@@ -296,6 +296,10 @@ pub fn generate(recipe: &GenerationRecipe) -> eyre::Result<Vec<u8>> {
 
 /// Generates the whole registry into `out` and then publishes its manifest.
 ///
+/// With `helm_ready`, every schema artifact Helm reads also gets its
+/// Helm-ready copy and name map under `internal/` (see
+/// [`manifest::helm_ready_files`]), recorded in its manifest entry.
+///
 /// `build` is the provenance compiled into the running producer; the run is
 /// refused when it differs from the tree on disk, so a stale executable cannot
 /// certify current sources. The manifest is removed first and written last,
@@ -308,7 +312,12 @@ pub fn generate(recipe: &GenerationRecipe) -> eyre::Result<Vec<u8>> {
 ///
 /// Returns an error when the build is stale, `out` is owned by another run,
 /// any artifact fails, or any check fails.
-pub fn produce(out: &Path, jobs: usize, build: &BuildProvenance) -> eyre::Result<Manifest> {
+pub fn produce(
+    out: &Path,
+    jobs: usize,
+    build: &BuildProvenance,
+    helm_ready: bool,
+) -> eyre::Result<Manifest> {
     build.check_current()?;
     let specs = registry::registry();
     registry::validate(&specs)?;
@@ -326,7 +335,7 @@ pub fn produce(out: &Path, jobs: usize, build: &BuildProvenance) -> eyre::Result
                 out.display()
             )
         })?;
-    let produced = produce_locked(out, jobs, build, &specs);
+    let produced = produce_locked(out, jobs, build, &specs, helm_ready);
     let released =
         std::fs::remove_file(&lock).wrap_err_with(|| format!("remove {}", lock.display()));
     let manifest = produced?;
@@ -339,13 +348,14 @@ fn produce_locked(
     jobs: usize,
     build: &BuildProvenance,
     specs: &[ArtifactSpec],
+    helm_ready: bool,
 ) -> eyre::Result<Manifest> {
     let manifest_path = out.join(MANIFEST_FILE);
     if manifest_path.exists() {
         std::fs::remove_file(&manifest_path)
             .wrap_err_with(|| format!("remove stale {}", manifest_path.display()))?;
     }
-    let artifacts = produce_entries(specs, out, jobs)?;
+    let artifacts = produce_entries(specs, out, jobs, helm_ready)?;
     let executable = std::env::current_exe().wrap_err("locate the producer executable")?;
     let manifest = Manifest {
         harness_version: HARNESS_VERSION,
@@ -378,6 +388,7 @@ pub fn produce_entries(
     specs: &[ArtifactSpec],
     out: &Path,
     jobs: usize,
+    helm_ready: bool,
 ) -> eyre::Result<Vec<ManifestEntry>> {
     std::fs::create_dir_all(out.join(INTERNAL_DIR))
         .wrap_err_with(|| format!("create {}", out.display()))?;
@@ -400,7 +411,7 @@ pub fn produce_entries(
                         else {
                             return done;
                         };
-                        done.push((index, produce_one(spec, inputs, out)));
+                        done.push((index, produce_one(spec, inputs, out, helm_ready)));
                     }
                 })
             })
@@ -434,9 +445,25 @@ pub fn produce_entries(
     Ok(entries)
 }
 
-fn produce_one(spec: &ArtifactSpec, inputs: &str, out: &Path) -> eyre::Result<ManifestEntry> {
+fn produce_one(
+    spec: &ArtifactSpec,
+    inputs: &str,
+    out: &Path,
+    helm_ready: bool,
+) -> eyre::Result<ManifestEntry> {
     let bytes = generate(&spec.recipe).wrap_err_with(|| format!("generate {}", spec.id.key()))?;
-    let entry = ManifestEntry::new(spec, inputs.to_string(), &bytes);
+    let mut entry = ManifestEntry::new(spec, inputs.to_string(), &bytes);
+    if helm_ready
+        && let Some([schema, defs_map]) = manifest::helm_ready_files(spec, &bytes)
+            .wrap_err_with(|| format!("shorten {}", spec.id.key()))?
+    {
+        write_atomically(&out.join(&schema.file), &schema.bytes)?;
+        write_atomically(&out.join(&defs_map.file), &defs_map.bytes)?;
+        entry.helm_ready = Some(HelmReadyFiles {
+            schema: CompanionFile::new(schema.file, &schema.bytes),
+            defs_map: CompanionFile::new(defs_map.file, &defs_map.bytes),
+        });
+    }
     write_atomically(&out.join(&entry.file), &bytes)?;
     Ok(entry)
 }

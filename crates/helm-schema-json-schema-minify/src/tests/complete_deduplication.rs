@@ -66,7 +66,7 @@ fn reference_siblings_remain_visible_to_definition_sharing() -> eyre::Result<()>
     });
     let minimized = minimize(schema.clone());
     let expected = json!({
-        "$defs": {"left@2": repeated, "left": {"$ref": "#/$defs/left@2"}, "right": {"$ref": "#/$defs/left@2"}},
+        "$defs": {"left@ref": repeated, "left": {"$ref": "#/$defs/left@ref"}, "right": {"$ref": "#/$defs/left@ref"}},
         "$ref": "#/$defs/left"
     });
     sim_assert_eq!(have: &minimized, want: &expected);
@@ -263,7 +263,7 @@ fn complete_definition_bodies_share_while_original_names_remain() -> eyre::Resul
     });
     let minimized = minimize(schema.clone());
     let expected = json!({
-        "$defs": {"left@2": repeated, "left": {"$ref": "#/$defs/left@2"}, "right": {"$ref": "#/$defs/left@2"}},
+        "$defs": {"left@ref": repeated, "left": {"$ref": "#/$defs/left@ref"}, "right": {"$ref": "#/$defs/left@ref"}},
         "properties": {"left": {"$ref": "#/$defs/left"}, "right": {"$ref": "#/$defs/right"}}
     });
     sim_assert_eq!(have: &minimized, want: &expected);
@@ -285,8 +285,8 @@ fn recursive_definition_edges_preserve_finite_tree_validation() -> eyre::Result<
         "first": {"$ref": "#/$defs/tree"}, "second": tree
     }});
     let minimized = minimize(schema.clone());
-    let expected = json!({"$defs": {"tree@2": tree, "tree": {"$ref": "#/$defs/tree@2"}}, "properties": {
-        "first": {"$ref": "#/$defs/tree"}, "second": {"$ref": "#/$defs/tree@2"}
+    let expected = json!({"$defs": {"tree@ref": tree, "tree": {"$ref": "#/$defs/tree@ref"}}, "properties": {
+        "first": {"$ref": "#/$defs/tree"}, "second": {"$ref": "#/$defs/tree@ref"}
     }});
     sim_assert_eq!(have: &minimized, want: &expected);
     equivalent_validation(

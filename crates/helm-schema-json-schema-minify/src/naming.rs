@@ -16,6 +16,7 @@
 //! an `@` marker, such as `@items`, `@anyOf(1)` or `@patternProperties('(5e)a')`.
 //! A name uses only characters a URI fragment carries unencoded, so it is a
 //! valid `$ref` target once escaped as a JSON pointer segment.
+//! A reference at the root of a definition body adds the step `@ref`.
 //! A name that is already taken receives an `@2`, `@3`, … suffix.
 //!
 //! [`shorten_definition_names`] is a bijective rename of a finished document
@@ -268,25 +269,24 @@ fn source_names(
         .map(|(handle, _)| *handle)
         .collect::<BTreeSet<_>>();
     while !waiting.is_empty() {
-        let (handle, name) = match ready.pop_first() {
-            Some(handle) => match smallest_source(&references, &names, handle) {
-                Some(name) => (handle, name),
-                None => continue,
-            },
-            None => {
-                let mut smallest: Option<(String, &str)> = None;
-                for handle in waiting.keys() {
-                    if let Some(name) = smallest_source(&references, &names, handle)
-                        && smallest.as_ref().is_none_or(|(least, _)| name < *least)
-                    {
-                        smallest = Some((name, handle));
-                    }
+        let (handle, name) = if let Some(handle) = ready.pop_first() {
+            let Some(name) = smallest_source(&references, &names, handle) else {
+                continue;
+            };
+            (handle, name)
+        } else {
+            let mut smallest: Option<(String, &str)> = None;
+            for handle in waiting.keys() {
+                if let Some(name) = smallest_source(&references, &names, handle)
+                    && smallest.as_ref().is_none_or(|(least, _)| name < *least)
+                {
+                    smallest = Some((name, handle));
                 }
-                let Some((name, handle)) = smallest else {
-                    break;
-                };
-                (handle, name)
             }
+            let Some((name, handle)) = smallest else {
+                break;
+            };
+            (handle, name)
         };
         waiting.remove(handle);
         names.insert(handle.to_string(), unique_name(name, &mut taken));
@@ -435,19 +435,18 @@ fn collect_references<'a>(
         };
         let length = steps.len();
         match (schema_child_context_for_keyword(key), value) {
-            (SchemaTraversalContext::Schema, Value::Array(items))
-            | (SchemaTraversalContext::SchemaArray, Value::Array(items)) => {
+            (
+                SchemaTraversalContext::Schema | SchemaTraversalContext::SchemaArray,
+                Value::Array(items),
+            ) => {
                 for (index, item) in items.iter().enumerate() {
-                    steps.push('@');
-                    steps.push_str(key);
-                    steps.push_str(&format!("({index})"));
+                    push_step(steps, key, Some(&index.to_string()));
                     collect_child(item, definitions, steps, sites);
                     steps.truncate(length);
                 }
             }
             (SchemaTraversalContext::Schema, _) => {
-                steps.push('@');
-                steps.push_str(key);
+                push_step(steps, key, None);
                 collect_child(value, definitions, steps, sites);
                 steps.truncate(length);
             }
@@ -462,11 +461,7 @@ fn collect_references<'a>(
                         steps.push('.');
                         steps.push_str(&encode_key(entry_key));
                     } else {
-                        steps.push('@');
-                        steps.push_str(key);
-                        steps.push('(');
-                        steps.push_str(&encode_key(entry_key));
-                        steps.push(')');
+                        push_step(steps, key, Some(&encode_key(entry_key)));
                     }
                     collect_child(entry, definitions, steps, sites);
                     steps.truncate(length);
@@ -490,8 +485,14 @@ fn collect_child<'a>(
 
 /// `prefix` followed by rendered `steps`; below a source document the first
 /// property step drops its dot and the document is separated by `/`.
+///
+/// A reference at the root of a definition body is the step `@ref` below the
+/// definition's name.
 fn join_path(prefix: &str, steps: &str, prefix_is_document: bool) -> String {
     if !prefix_is_document {
+        if steps.is_empty() {
+            return format!("{prefix}@ref");
+        }
         return format!("{prefix}{steps}");
     }
     let steps = steps.strip_prefix('.').unwrap_or(steps);
@@ -543,21 +544,21 @@ fn origin_name(origin: &DefinitionOrigin) -> String {
                     steps.push('.');
                     steps.push_str(&encode_key(&entry));
                 } else {
-                    steps.push_str(&format!("@{keyword}({})", encode_key(&entry)));
+                    push_step(&mut steps, &keyword, Some(&encode_key(&entry)));
                 }
             }
             SchemaTraversalContext::SchemaArray => {
                 let index = segments.pop_front().unwrap_or_default();
-                steps.push_str(&format!("@{keyword}({})", encode_key(&index)));
+                push_step(&mut steps, &keyword, Some(&encode_key(&index)));
             }
             _ => {
                 // A numeric segment is an index: keywords are never numeric.
                 match segments.front() {
                     Some(index) if index.parse::<usize>().is_ok() => {
-                        steps.push_str(&format!("@{keyword}({index})"));
+                        push_step(&mut steps, &keyword, Some(index));
                         segments.pop_front();
                     }
-                    _ => steps.push_str(&format!("@{}", encode_key(&keyword))),
+                    _ => push_step(&mut steps, &encode_key(&keyword), None),
                 }
             }
         }
@@ -580,11 +581,31 @@ fn encode_key(key: &str) -> String {
         if character.is_ascii_alphanumeric() || "-._~!$&*+,;=:@/?".contains(character) {
             quoted.push(character);
         } else {
-            quoted.push_str(&format!("({:x})", u32::from(character)));
+            push_escaped(&mut quoted, character);
         }
     }
     quoted.push('\'');
     quoted
+}
+
+/// Appends the step `@keyword`, or `@keyword(argument)` for an index or a
+/// map key.
+fn push_step(steps: &mut String, keyword: &str, argument: Option<&str>) {
+    steps.push('@');
+    steps.push_str(keyword);
+    if let Some(argument) = argument {
+        steps.push('(');
+        steps.push_str(argument);
+        steps.push(')');
+    }
+}
+
+/// Appends a character a URI fragment cannot carry as `(hex)`.
+fn push_escaped(out: &mut String, character: char) {
+    let hex = format!("{:x}", u32::from(character));
+    out.push('(');
+    out.push_str(&hex);
+    out.push(')');
 }
 
 /// A document identity, whose `/`-separated segments and dots stay bare.
@@ -595,7 +616,7 @@ fn encode_document(document: &str) -> String {
         if character.is_ascii_alphanumeric() || matches!(character, '_' | '-' | '.' | '/') {
             encoded.push(character);
         } else {
-            encoded.push_str(&format!("({:x})", u32::from(character)));
+            push_escaped(&mut encoded, character);
         }
     }
     encoded

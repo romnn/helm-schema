@@ -23,7 +23,7 @@ const ID: ArtifactId = ArtifactId::Ir(IrId::NatsService);
 
 /// Writes a complete manifest whose only real artifact is [`ID`].
 fn forge(out: &Path) -> eyre::Result<Manifest> {
-    let real = generate::produce_entries(&[ID.spec()], out, 1)?
+    let real = generate::produce_entries(&[ID.spec()], out, 1, false)?
         .pop()
         .ok_or_eyre("no entry produced")?;
     let mut artifacts = Vec::new();
@@ -246,7 +246,7 @@ fn stale_compiled_producer_refuses_to_produce() -> eyre::Result<()> {
     let out = tempfile::tempdir()?;
     let mut stale = BuildProvenance::compiled();
     stale.source_sha256 = "0".repeat(64);
-    let Err(error) = generate::produce(out.path(), 1, &stale) else {
+    let Err(error) = generate::produce(out.path(), 1, &stale, false) else {
         eyre::bail!("a stale producer produced");
     };
     eyre::ensure!(
@@ -264,7 +264,7 @@ fn stale_compiled_producer_refuses_to_produce() -> eyre::Result<()> {
 fn producer_refuses_an_owned_output_directory() -> eyre::Result<()> {
     let out = tempfile::tempdir()?;
     std::fs::write(out.path().join(LOCK_FILE), b"")?;
-    let Err(error) = generate::produce(out.path(), 1, &BuildProvenance::compiled()) else {
+    let Err(error) = generate::produce(out.path(), 1, &BuildProvenance::compiled(), false) else {
         eyre::bail!("the producer ignored another run's lock");
     };
     eyre::ensure!(
@@ -283,4 +283,49 @@ fn local_generation_compares_with_the_committed_fixture() {
         "crates/helm-schema-ir/tests/fixtures/surveyor_hpa.ir.json".to_string(),
     );
     let _ignored = consume_from(None, &spec);
+}
+
+#[test]
+fn helm_ready_companions_are_the_shortened_artifact_and_its_name_map() -> eyre::Result<()> {
+    let out = tempfile::tempdir()?;
+    let spec = ArtifactId::FinalPolicy(registry::PolicyId::Full).spec();
+    let entry = generate::produce_entries(&[spec.clone(), ID.spec()], out.path(), 1, true)?;
+    let [schema_entry, ir_entry] = entry.as_slice() else {
+        eyre::bail!("two entries expected");
+    };
+    sim_assert_eq!(have: ir_entry.helm_ready.as_ref(), want: None);
+    let helm_ready = schema_entry
+        .helm_ready
+        .as_ref()
+        .ok_or_eyre("schema artifacts get Helm-ready companions")?;
+    sim_assert_eq!(
+        have: [&helm_ready.schema.file, &helm_ready.defs_map.file],
+        want: [
+            "internal/helm-schema.final-output.full.helm.schema.json",
+            "internal/helm-schema.final-output.full.defs-map.json",
+        ]
+    );
+
+    let artifact: Value =
+        serde_json::from_slice(&std::fs::read(out.path().join(&schema_entry.file))?)?;
+    let shortened: Value =
+        serde_json::from_slice(&std::fs::read(out.path().join(&helm_ready.schema.file))?)?;
+    let readable_names: std::collections::BTreeMap<String, String> =
+        serde_json::from_slice(&std::fs::read(out.path().join(&helm_ready.defs_map.file))?)?;
+    assert!(
+        !readable_names.is_empty(),
+        "the full fixture has definitions"
+    );
+    let mut restored = shortened.clone();
+    helm_schema_json_schema_minify::rename_definitions(&mut restored, &readable_names);
+    sim_assert_eq!(have: restored, want: artifact);
+    let defs = shortened
+        .get("$defs")
+        .and_then(Value::as_object)
+        .ok_or_eyre("shortened definitions expected")?;
+    sim_assert_eq!(
+        have: defs.keys().cloned().collect::<std::collections::BTreeSet<_>>(),
+        want: readable_names.keys().cloned().collect()
+    );
+    Ok(())
 }

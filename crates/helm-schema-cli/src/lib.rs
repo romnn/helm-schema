@@ -146,13 +146,14 @@ fn run_inner(cli: Cli) -> EngineResult<()> {
     let schema = generated?;
 
     let json_format = cli.output.json_format();
+    let output = cli.output.output;
     if !cli.output.shorten_defs {
-        let bytes = write_schema(cli.output.output.as_deref(), &schema, json_format)?;
+        let bytes = write_schema(output.as_deref(), &schema, json_format)?;
         warn_over_helm_limit(bytes, false, cli.diag.diag_format);
         return Ok(());
     }
     let shortened = shorten_definition_names(&schema);
-    let bytes = write_schema(cli.output.output.as_deref(), &shortened.schema, json_format)?;
+    let bytes = write_schema(output.as_deref(), &shortened.schema, json_format)?;
     if let Some(path) = &cli.output.defs_map {
         write_definition_map(path, &shortened.readable_names)?;
     }
