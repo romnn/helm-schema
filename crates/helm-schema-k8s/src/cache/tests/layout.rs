@@ -5,6 +5,9 @@ use test_util::prelude::sim_assert_eq;
 
 use super::{cache_home_for, default_cache_dir};
 
+/// An override variable no environment sets, so the default cache home applies.
+const UNSET_CACHE_ROOT_VAR: &str = "HELM_SCHEMA_TEST_CACHE_ROOT_UNSET";
+
 /// A scripted environment for [`cache_home_for`], so both platform branches
 /// run under every host OS in CI. The logic under test is variable
 /// precedence, not path syntax, so values are built with [`abs`].
@@ -47,10 +50,7 @@ fn abs(tail: &str) -> PathBuf {
 /// over the same chart from different directories consulted different caches.
 #[test]
 fn default_cache_dir_is_always_absolute() {
-    let root = default_cache_dir(
-        "HELM_SCHEMA_TEST_CACHE_ROOT_UNSET",
-        "kubernetes-json-schema",
-    );
+    let root = default_cache_dir(UNSET_CACHE_ROOT_VAR, "kubernetes-json-schema");
     assert!(
         root.is_absolute(),
         "cache root must be absolute, got {}",
@@ -61,11 +61,8 @@ fn default_cache_dir_is_always_absolute() {
 /// The leaf keeps the two managed roots apart under one cache home.
 #[test]
 fn default_cache_dir_separates_managed_roots_by_leaf() {
-    let k8s = default_cache_dir(
-        "HELM_SCHEMA_TEST_CACHE_ROOT_UNSET",
-        "kubernetes-json-schema",
-    );
-    let crd = default_cache_dir("HELM_SCHEMA_TEST_CACHE_ROOT_UNSET", "crds-catalog");
+    let k8s = default_cache_dir(UNSET_CACHE_ROOT_VAR, "kubernetes-json-schema");
+    let crd = default_cache_dir(UNSET_CACHE_ROOT_VAR, "crds-catalog");
 
     assert_ne!(k8s, crd, "managed roots must not share a directory");
     sim_assert_eq!(have: k8s.parent(), want: crd.parent());

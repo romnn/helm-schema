@@ -51,6 +51,49 @@ struct ProbeCoverageReport {
 // A non-zero allowance must land before the live run whose widening relies on it.
 const PREREGISTERED_ACCEPTANCE_FLIP_ALLOWANCE: usize = 0;
 
+/// Adjudicates screened flips live with the pinned Helm when set.
+const ADJUDICATE_WITH_HELM_VAR: &str = "ADJUDICATE_WITH_HELM";
+/// The commit whose fixtures are the baseline.
+const BASELINE_REF_VAR: &str = "SCHEMA_ACCEPTANCE_BASELINE_REF";
+/// The producer dump the candidate schemas are read from.
+const CANDIDATE_DUMP_VAR: &str = "SCHEMA_ACCEPTANCE_CANDIDATE_DUMP";
+/// Skips the pre-registered flip count when every flip is matched.
+const ALLOW_MATCHED_FLIPS_VAR: &str = "SCHEMA_ACCEPTANCE_ALLOW_MATCHED_FLIPS";
+/// Restricts the battery to one fixture stem.
+const CHART_VAR: &str = "SCHEMA_ACCEPTANCE_CHART";
+/// Where the probe coverage report is written.
+const COVERAGE_REPORT_VAR: &str = "SCHEMA_PROBE_COVERAGE_REPORT";
+/// Where the per-chart Helm cost report is written, if anywhere.
+const INVOCATION_REPORT_VAR: &str = "SCHEMA_HELM_INVOCATION_REPORT";
+/// The chart directory of an external schema pair.
+const EXTERNAL_CHART_VAR: &str = "SCHEMA_ACCEPTANCE_EXTERNAL_CHART";
+/// The baseline schema file of an external schema pair.
+const BASELINE_SCHEMA_VAR: &str = "SCHEMA_ACCEPTANCE_BASELINE_SCHEMA";
+/// The candidate schema file of an external schema pair.
+const CANDIDATE_SCHEMA_VAR: &str = "SCHEMA_ACCEPTANCE_CANDIDATE_SCHEMA";
+/// The directory of legacy lean schemas the lean transition compares against.
+const LEGACY_LEAN_SCHEMA_DIR_VAR: &str = "LEGACY_LEAN_SCHEMA_DIR";
+/// Overrides the offline Kubernetes schema bundle the adjudication validates against.
+const K8S_CACHE_VAR: &str = "SCHEMA_ACCEPTANCE_K8S_CACHE";
+/// Restricts the lean-profile dump ([`test_util::SCHEMA_DUMP_VAR`]) to one chart.
+const DUMP_CHART_VAR: &str = "SCHEMA_DUMP_CHART";
+
+/// Whether screened flips are adjudicated live with the pinned Helm.
+fn adjudicates_live() -> bool {
+    std::env::var_os(ADJUDICATE_WITH_HELM_VAR).is_some()
+}
+
+fn baseline_ref() -> eyre::Result<String> {
+    std::env::var(BASELINE_REF_VAR)
+        .wrap_err_with(|| format!("{BASELINE_REF_VAR} must name the comparison commit"))
+}
+
+fn coverage_report_path() -> eyre::Result<std::path::PathBuf> {
+    std::env::var_os(COVERAGE_REPORT_VAR)
+        .map(std::path::PathBuf::from)
+        .ok_or_else(|| eyre::eyre!("{COVERAGE_REPORT_VAR} must name the report file"))
+}
+
 #[derive(Debug, Default, Serialize)]
 struct HelmAdjudicationCoverage {
     enabled: bool,
@@ -845,7 +888,7 @@ struct ChartCost {
 
 /// Writes the per-chart cost report `SCHEMA_HELM_INVOCATION_REPORT` names, if any.
 fn write_invocation_report(costs: &[ChartCost], pool: Option<&PoolReport>) -> eyre::Result<()> {
-    let Some(path) = std::env::var_os("SCHEMA_HELM_INVOCATION_REPORT") else {
+    let Some(path) = std::env::var_os(INVOCATION_REPORT_VAR) else {
         return Ok(());
     };
     let path = std::path::PathBuf::from(path);
@@ -864,7 +907,7 @@ const LEAN_FIXTURE_CHARTS: &[&str] = &[
 #[test]
 fn lean_profile_schemas_match_their_separate_fixture_lane() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
-    let dump_chart = std::env::var("SCHEMA_DUMP_CHART").ok();
+    let dump_chart = std::env::var(DUMP_CHART_VAR).ok();
     for chart in LEAN_FIXTURE_CHARTS {
         if dump_chart
             .as_deref()
@@ -876,7 +919,7 @@ fn lean_profile_schemas_match_their_separate_fixture_lane() -> eyre::Result<()> 
         let fixture_path = test_util::workspace_testdata()
             .join("emission-profile-schemas/lean")
             .join(format!("{chart}.schema.json"));
-        if std::env::var("SCHEMA_DUMP").is_ok() {
+        if std::env::var(test_util::SCHEMA_DUMP_VAR).is_ok() {
             let dump_path = std::env::temp_dir().join(format!(
                 "helm-schema.emission-profile.lean.{chart}.schema.json"
             ));
@@ -1743,17 +1786,13 @@ fn round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed() -> eyre:
     for chart in &coverage {
         validate_probe_coverage(chart)?;
     }
-    let baseline_ref = std::env::var("SCHEMA_ACCEPTANCE_BASELINE_REF")
-        .wrap_err("SCHEMA_ACCEPTANCE_BASELINE_REF must name the comparison commit")?;
+    let baseline_ref = baseline_ref()?;
     let report = ProbeCoverageReport {
         baseline_ref,
         charts: coverage,
         helm_adjudication,
     };
-    let report_path = std::path::PathBuf::from(
-        std::env::var_os("SCHEMA_PROBE_COVERAGE_REPORT")
-            .ok_or_eyre("SCHEMA_PROBE_COVERAGE_REPORT must name the report file")?,
-    );
+    let report_path = coverage_report_path()?;
     if let Some(parent) = report_path.parent() {
         std::fs::create_dir_all(parent).wrap_err_with(|| format!("create {}", parent.display()))?;
     }
@@ -1804,11 +1843,10 @@ fn a_live_battery_needs_the_roster_baseline() {
 #[ignore = "maintenance: compares the Round 74 dump and records probe coverage"]
 fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
-    if std::env::var("ADJUDICATE_WITH_HELM").is_ok() {
+    if adjudicates_live() {
         // The shared runner checks the pinned Helm release once per process.
         helm_invocation::HelmRunner::shared()?;
-        let baseline_ref = std::env::var("SCHEMA_ACCEPTANCE_BASELINE_REF")
-            .wrap_err("SCHEMA_ACCEPTANCE_BASELINE_REF must name the comparison commit")?;
+        let baseline_ref = baseline_ref()?;
         let resolved = std::process::Command::new("git")
             .args([
                 "rev-parse",
@@ -1836,17 +1874,13 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
     for chart in &coverage {
         validate_probe_coverage(chart)?;
     }
-    let baseline_ref = std::env::var("SCHEMA_ACCEPTANCE_BASELINE_REF")
-        .wrap_err("SCHEMA_ACCEPTANCE_BASELINE_REF must name the comparison commit")?;
+    let baseline_ref = baseline_ref()?;
     let report = ProbeCoverageReport {
         baseline_ref,
         charts: coverage,
         helm_adjudication,
     };
-    let report_path = std::path::PathBuf::from(
-        std::env::var_os("SCHEMA_PROBE_COVERAGE_REPORT")
-            .ok_or_eyre("SCHEMA_PROBE_COVERAGE_REPORT must name the report file")?,
-    );
+    let report_path = coverage_report_path()?;
     if let Some(parent) = report_path.parent() {
         std::fs::create_dir_all(parent).wrap_err_with(|| format!("create {}", parent.display()))?;
     }
@@ -1869,7 +1903,7 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
         KNOWN_FALSE_ACCEPTANCES,
         KNOWN_UNDECIDED_ACCEPTANCES,
     )?;
-    if std::env::var_os("SCHEMA_ACCEPTANCE_ALLOW_MATCHED_FLIPS").is_none() {
+    if std::env::var_os(ALLOW_MATCHED_FLIPS_VAR).is_none() {
         eyre::ensure!(
             flips.len() == PREREGISTERED_ACCEPTANCE_FLIP_ALLOWANCE,
             "fixture acceptance flips differ from the pre-registered count:\n{}",
@@ -1894,25 +1928,25 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
 fn external_schema_pair_flips_are_helm_adjudicated() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
     eyre::ensure!(
-        std::env::var("ADJUDICATE_WITH_HELM").is_ok(),
-        "external schema comparison requires ADJUDICATE_WITH_HELM"
+        adjudicates_live(),
+        "external schema comparison requires {ADJUDICATE_WITH_HELM_VAR}"
     );
     let chart = std::path::PathBuf::from(
-        std::env::var_os("SCHEMA_ACCEPTANCE_EXTERNAL_CHART")
-            .ok_or_eyre("SCHEMA_ACCEPTANCE_EXTERNAL_CHART must name the chart directory")?,
+        std::env::var_os(EXTERNAL_CHART_VAR)
+            .ok_or_else(|| eyre::eyre!("{EXTERNAL_CHART_VAR} must name the chart directory"))?,
     );
     let baseline: serde_json::Value = serde_json::from_str(
         &std::fs::read_to_string(
-            std::env::var_os("SCHEMA_ACCEPTANCE_BASELINE_SCHEMA")
-                .ok_or_eyre("SCHEMA_ACCEPTANCE_BASELINE_SCHEMA must name a schema")?,
+            std::env::var_os(BASELINE_SCHEMA_VAR)
+                .ok_or_else(|| eyre::eyre!("{BASELINE_SCHEMA_VAR} must name a schema"))?,
         )
         .wrap_err("read external baseline schema")?,
     )
     .wrap_err("parse external baseline schema")?;
     let candidate: serde_json::Value = serde_json::from_str(
         &std::fs::read_to_string(
-            std::env::var_os("SCHEMA_ACCEPTANCE_CANDIDATE_SCHEMA")
-                .ok_or_eyre("SCHEMA_ACCEPTANCE_CANDIDATE_SCHEMA must name a schema")?,
+            std::env::var_os(CANDIDATE_SCHEMA_VAR)
+                .ok_or_else(|| eyre::eyre!("{CANDIDATE_SCHEMA_VAR} must name a schema"))?,
         )
         .wrap_err("read external candidate schema")?,
     )
@@ -1965,8 +1999,7 @@ fn corpus_acceptance_flips() -> eyre::Result<(usize, usize, Vec<String>, Vec<Pro
 }
 
 fn corpus_acceptance_comparison() -> eyre::Result<AcceptanceComparison> {
-    let baseline_ref = std::env::var("SCHEMA_ACCEPTANCE_BASELINE_REF")
-        .wrap_err("SCHEMA_ACCEPTANCE_BASELINE_REF must name the comparison commit")?;
+    let baseline_ref = baseline_ref()?;
     let fixture_dir = test_util::workspace_testdata().join("chart-corpus-schemas");
     let mut fixture_paths = std::fs::read_dir(&fixture_dir)
         .wrap_err_with(|| format!("read {}", fixture_dir.display()))?
@@ -1975,7 +2008,7 @@ fn corpus_acceptance_comparison() -> eyre::Result<AcceptanceComparison> {
     fixture_paths.sort();
 
     let mut charts = Vec::new();
-    let chart_filter = std::env::var("SCHEMA_ACCEPTANCE_CHART").ok();
+    let chart_filter = std::env::var(CHART_VAR).ok();
     for fixture_path in fixture_paths {
         let Some(filename) = fixture_path.file_name().and_then(|name| name.to_str()) else {
             continue;
@@ -2048,12 +2081,12 @@ fn read_acceptance_candidate(
     fixture_path: &std::path::Path,
     dump_filename: &str,
 ) -> eyre::Result<serde_json::Value> {
-    let candidate_path = if let Some(dir) = std::env::var_os("SCHEMA_ACCEPTANCE_CANDIDATE_DUMP") {
+    let candidate_path = if let Some(dir) = std::env::var_os(CANDIDATE_DUMP_VAR) {
         std::path::PathBuf::from(dir).join(dump_filename)
     } else {
         eyre::ensure!(
-            std::env::var_os("ADJUDICATE_WITH_HELM").is_none(),
-            "live adjudication requires SCHEMA_ACCEPTANCE_CANDIDATE_DUMP"
+            !adjudicates_live(),
+            "live adjudication requires {CANDIDATE_DUMP_VAR}"
         );
         fixture_path.to_path_buf()
     };
@@ -2194,11 +2227,11 @@ struct AdjudicatedProbe {
 /// Screens every chart and adjudicates every screened flip on the pool,
 /// then folds the outcomes in chart and probe order.
 fn compare_charts(charts: Vec<ComparedChart>) -> eyre::Result<AcceptanceComparison> {
-    let adjudicate_live = std::env::var("ADJUDICATE_WITH_HELM").is_ok();
+    let adjudicate_live = adjudicates_live();
     let limits = PoolLimits::from_env()?;
     // Custom resources are judged by the CRD schemas pinned beside the bundle.
     let kubernetes = if adjudicate_live {
-        let cache = std::env::var_os("SCHEMA_ACCEPTANCE_K8S_CACHE").map_or_else(
+        let cache = std::env::var_os(K8S_CACHE_VAR).map_or_else(
             || test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
             std::path::PathBuf::from,
         );
@@ -3196,14 +3229,14 @@ fn existing_configmap_name_tightenings_match_kubernetes_rejections() -> eyre::Re
 #[ignore = "maintenance: requires LEGACY_LEAN_SCHEMA_DIR"]
 fn middle_lean_transition_has_only_preregistered_tightenings() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
-    let baseline_dir = std::path::PathBuf::from(
-        std::env::var("LEGACY_LEAN_SCHEMA_DIR")
-            .wrap_err("LEGACY_LEAN_SCHEMA_DIR must contain legacy lean schemas")?,
-    );
+    let baseline_dir =
+        std::path::PathBuf::from(std::env::var(LEGACY_LEAN_SCHEMA_DIR_VAR).wrap_err_with(
+            || format!("{LEGACY_LEAN_SCHEMA_DIR_VAR} must contain legacy lean schemas"),
+        )?);
     let mut probes_checked = 0;
     let mut tightenings = Vec::new();
     let mut inverse = Vec::new();
-    let adjudicate_live = std::env::var("ADJUDICATE_WITH_HELM").is_ok();
+    let adjudicate_live = adjudicates_live();
     if adjudicate_live {
         let output = std::process::Command::new("helm")
             .args(["version", "--template", "{{.Version}}"])

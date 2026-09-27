@@ -184,7 +184,7 @@ fn generates_schema_for_fixture_chart_without_k8s_provider() -> eyre::Result<()>
         "dormant ingress host members stay unconstrained"
     );
 
-    if std::env::var("SCHEMA_DUMP").is_ok() {
+    if std::env::var(test_util::SCHEMA_DUMP_VAR).is_ok() {
         let path =
             std::env::temp_dir().join("helm-schema.cli.full-fixture.disable-k8s.schema.json");
         std::fs::write(

@@ -32,6 +32,13 @@ use serde::{Deserialize, Serialize};
 use sha2::{Digest as _, Sha256};
 use wait4::Wait4 as _;
 
+/// Names a persistent Helm invocation store.
+const INVOCATION_CACHE_VAR: &str = "SCHEMA_HELM_INVOCATION_CACHE";
+/// Selects the Helm engine: `helmsweep` (the default) or `cli`.
+const ENGINE_VAR: &str = "SCHEMA_HELM_ENGINE";
+/// Names the helmsweep program instead of the one in the target directory.
+const HELMSWEEP_VAR: &str = "HELM_SCHEMA_HELMSWEEP";
+
 /// The pinned Helm release every adjudication runs.
 const PINNED_HELM_VERSION: &str = "v4.2.3";
 
@@ -258,7 +265,7 @@ impl HelmRunner {
     pub(crate) fn shared() -> eyre::Result<&'static Self> {
         SHARED_RUNNER
             .get_or_init(|| {
-                let runner = match std::env::var_os("SCHEMA_HELM_INVOCATION_CACHE") {
+                let runner = match std::env::var_os(INVOCATION_CACHE_VAR) {
                     Some(root) => Self::new(&PathBuf::from(root).join("v2"), true),
                     None => tempfile::Builder::new()
                         .prefix("helm-schema-helm-root-")
@@ -281,12 +288,12 @@ impl HelmRunner {
     /// Returns an error for an unknown engine, a missing or unpinned engine
     /// program, or a `root` that cannot be created.
     pub(crate) fn new(root: &Path, replay: bool) -> eyre::Result<Self> {
-        match std::env::var("SCHEMA_HELM_ENGINE").as_deref() {
+        match std::env::var(ENGINE_VAR).as_deref() {
             Ok("cli") => Self::with_program(root, replay, find_helm()?),
             Ok("helmsweep") | Err(std::env::VarError::NotPresent) => {
                 Self::with_helmsweep(root, replay, find_helmsweep()?, RENDER_TIMEOUT)
             }
-            other => eyre::bail!("SCHEMA_HELM_ENGINE must be cli or helmsweep, not {other:?}"),
+            other => eyre::bail!("{ENGINE_VAR} must be cli or helmsweep, not {other:?}"),
         }
     }
 
@@ -951,7 +958,7 @@ fn publish_entry(
 /// `HELM_SCHEMA_HELMSWEEP`, else `helmsweep` in the target directory this
 /// test binary was built into (`task build:helmsweep` puts it there).
 pub(crate) fn find_helmsweep() -> eyre::Result<PathBuf> {
-    if let Some(path) = std::env::var_os("HELM_SCHEMA_HELMSWEEP") {
+    if let Some(path) = std::env::var_os(HELMSWEEP_VAR) {
         return Ok(PathBuf::from(path).canonicalize()?);
     }
     let executable = std::env::current_exe()?;
@@ -963,8 +970,8 @@ pub(crate) fn find_helmsweep() -> eyre::Result<PathBuf> {
     let program = target.join(format!("helmsweep{}", std::env::consts::EXE_SUFFIX));
     eyre::ensure!(
         program.is_file(),
-        "no helmsweep at {}: run `task build:helmsweep`, set HELM_SCHEMA_HELMSWEEP, \
-         or SCHEMA_HELM_ENGINE=cli",
+        "no helmsweep at {}: run `task build:helmsweep`, set {HELMSWEEP_VAR}, \
+         or {ENGINE_VAR}=cli",
         program.display()
     );
     Ok(program.canonicalize()?)

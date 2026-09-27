@@ -14,6 +14,10 @@ pub mod sexpr;
 #[doc(hidden)]
 pub use similar_asserts::assert_eq as __similar_assert_eq;
 
+/// When set, schema tests also write the schema they generate to the system
+/// temporary directory for inspection.
+pub const SCHEMA_DUMP_VAR: &str = "SCHEMA_DUMP";
+
 /// Asserts that `have` equals `want` and renders a readable diff on failure.
 ///
 /// The `have:` and `want:` labels are required so failure output identifies the
