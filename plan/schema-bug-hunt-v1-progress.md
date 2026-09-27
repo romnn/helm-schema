@@ -4684,4 +4684,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `conflicts.md`, `handoff.md`). Chain launched 01:48 on runner v5.1 with `landing-2.env`
   (BASELINE c02c01f8, E `round8-landing2-run`, target `round7-integrate`).
 
+- 02:40 (Sep 27) — **Landing-2 chain stopped at dump: the legacy dump cannot classify the
+  producer's fixture lanes.** dump rc 1 "beyond fixture mismatches", `dump-classification.tsv`
+  empty: the producer replaced `chart_schema_case!`/`schema_roundtrip` with `helm-schema-test-
+  support::consume()` (panics at `consume.rs:66` "the locally generated artifact differs from
+  its fixture") so the legacy expected-artifact parser finds no lanes; every failure is in fact
+  the expected naming diff (`$defs` "1" → "h0d6da7ea663d" etc. in 154 chart-corpus + 3 lean + 3
+  final-output files). Fix: runner v6 (runner agent, worktree) = `DUMP_MODE=producer` on the
+  producer as landed (one `corpus_generation --out --jobs` run + `--verify` before adoption and
+  before integration; delete the v3 Python re-implementation of the old digests; bind the
+  producer binary sha and the manifest's build id; keep legacy for older candidates; red-then-
+  green with a fake producer; full run-all). Then landing 2 restarts from dump in producer mode.
+  Battery in-process work (landing 3) still running on `round7-f4`.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
