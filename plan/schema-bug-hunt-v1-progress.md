@@ -4815,4 +4815,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   candidate's own output (same code), so run3's adoption should find them already matching. The
   merge message for landing 2 will say so.
 
+- 04:05 (Sep 27) — **Runner v6.2 ready (b30317d, worktree `round8-runner-v62`), merge deferred
+  until the landing-2 chain finishes.** `SWEEP_DIFF_CAP` knob bound in the receipt, default `all`;
+  gate exit 7 on any differential cell missing its fast or CLI log; rows carry helmsweep's
+  `cacheable` column, absence = `no` (never stored/replayed, hits on `no` rows refused; until
+  helmsweep v2 emits the column no CLI verdict is cached, and `SWEEP_ENGINE=cli` runs uncached);
+  hit/miss/uncached moved to `w/<chart>/ops.tsv`, verdict files hold only key, exit codes,
+  `cacheable` and class. Red vs 8627186: 28 + 10; green run-all exit 0 in 510 s (60/60).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
