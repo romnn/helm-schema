@@ -4756,4 +4756,35 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   choose the engine. Red vs 011b6b3: 6 checks; green run-all exit 0 in 384 s (57/57). Landing 2
   restarts from dump on this runner once the roster fix lands (7 min; script hashes are bound).
 
+- 03:45 (Sep 27) — **Cross-vendor review of helmsweep (landed) + battery-go: REWORK; three P1
+  defects in the LANDED driver.** astra (`review-helmsweep-battery-go-astra.md`) independently
+  confirmed the parity evidence (639/639, 258/258, byte-identical coverage across four battery
+  runs, both 7,952-line flip sequences) but "those observations do not establish general CLI
+  equivalence": (P1-1) `.Capabilities.HelmVersion` is wrong — the build omits Helm's release
+  ldflags, the module reports `v4.2` with empty git fields; REPRODUCED CLI rc 0 vs helmsweep rc 1
+  on descheduler with a `tpl` override checking the version → fix the ldflags to the v4.2.3
+  release values and add a full-`.Capabilities` differential; (P1-2) environment clearing too
+  late (`helm.go:33` after client-go init read `RecommendedHomeFile`) → re-exec under the clean
+  env before package init, invalidate the cache namespace; (P1-3) both sweep caches replay
+  nondeterministic verdicts (`randInt`/`now`/dynamic `tpl` alternate pass/reject on identical
+  inputs; REPRODUCED) → apply the battery's cacheability policy via Go's `text/template/parse`
+  and a per-row `cacheable` column honoured by the Python cache; (P1-4, B) the runner executed
+  an absent/stale server before the build — already addressed by runner v6.1; (P2) stdin transport
+  deadlocks the resident protocol (reject `-`, bounded failure handling, reap failed servers at
+  `helm_invocation.rs:774/:791`), idle resident servers escape the memory reservation, Windows
+  `helm.exe` (`EXE_SUFFIX`). Narrowing: empty `--kube-version`, `HELM_DEBUG`, registry init and
+  lint root-config init are not reproduced → refuse explicitly. The differential "is a regression
+  sample, not a fail-closed proof of unsampled rows": remove the cap of 3, require both logs,
+  add driver-contract fixtures, exhaustive frozen-roster parity after driver/Helm changes.
+  Artifact bytes carry operational metadata (cache flags, timings) → separate them. Memo
+  concurrency judged sound; stage.sh verification strong. Consequence for landing 1: its sweep
+  verdicts for any corpus template reading `.Capabilities.HelmVersion` could differ from the CLI
+  (none in the 258-cell sample); every row is re-swept on the next landing on the fixed driver.
+  Actions: helmsweep agent → `helmsweep-v2` on `battery-go` (all items + parity re-runs →
+  `final-v2.patch`); runner agent → v6.2 (`SWEEP_DIFF_CAP` default all, both logs required,
+  `cacheable` column honoured fail-closed, metadata separated). Landing 3 = helmsweep v2 +
+  battery-go after landing 2. Decision for the user: the uncapped differential's CLI cost per
+  landing (landing 1 had 318 differing rows of 1,548 paired logs; heavy-chart cells cost
+  5–20 min each) vs. the review's soundness argument.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
