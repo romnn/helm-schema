@@ -209,7 +209,9 @@ where
         }
 
         let definition_name = self.definition_name_for_target(target, depth + 1);
-        ref_object(format!("#/$defs/{definition_name}"))
+        ref_object(helm_schema_json_schema_walk::definition_reference(
+            &definition_name,
+        ))
     }
 
     fn definition_name_for_target(&mut self, target: SourceBundleNode, depth: usize) -> String {

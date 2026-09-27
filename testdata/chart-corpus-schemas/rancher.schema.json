@@ -1,95 +1,240 @@
 {
   "$defs": {
-    "h0285edad6d21": {
+    "constrains/antiAffinity=required": {
       "properties": {
-        "volumeKind": {
+        "antiAffinity": {
           "enum": [
-            "configMap"
+            "required"
           ]
         }
       },
       "required": [
-        "volumeKind"
+        "antiAffinity"
       ],
       "type": "object"
     },
-    "h04ed125f2f4f": {
-      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-      "type": "null"
+    "constrains/auditLog.destination=sidecar": {
+      "properties": {
+        "auditLog": {
+          "$ref": "#/$defs/constrains~1destination=sidecar"
+        }
+      },
+      "required": [
+        "auditLog"
+      ],
+      "type": "object"
     },
-    "h0d6da7ea663d": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
+    "constrains/auditLog.enabled:t": {
+      "properties": {
+        "auditLog": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "auditLog"
+      ],
+      "type": "object"
     },
-    "h0e4014154904": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "h1015e2c13b78": {
+    "constrains/certificateRefs@items.kind+certificateRefs@items.name+2more": {
       "additionalProperties": {},
       "properties": {
-        "hostname": {},
-        "name": {},
-        "port": {},
-        "protocol": {},
-        "tls": {
-          "$ref": "#/$defs/hb1d29fa99936"
+        "certificateRefs": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/constrains~1kind+name+namespace"
+              },
+              "type": "array"
+            },
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/constrains~1kind+name+namespace"
+              },
+              "type": "object"
+            }
+          ]
+        },
+        "mode": {}
+      }
+    },
+    "constrains/claims@items.name+limits+requests": {
+      "additionalProperties": false,
+      "description": "ResourceRequirements describes the compute resource requirements.",
+      "properties": {
+        "claims": {
+          "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
+          "items": {
+            "additionalProperties": false,
+            "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
+            "properties": {
+              "name": {
+                "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ],
+          "x-kubernetes-list-map-keys": [
+            "name"
+          ],
+          "x-kubernetes-list-type": "map"
+        },
+        "limits": {
+          "additionalProperties": {
+            "$ref": "#/$defs/constrains~1claims@items.name+limits+requests~1oneOf~1number,null+string,null"
+          },
+          "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "requests": {
+          "additionalProperties": {
+            "$ref": "#/$defs/constrains~1claims@items.name+limits+requests~1oneOf~1number,null+string,null"
+          },
+          "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+          "type": [
+            "object",
+            "null"
+          ]
         }
-      }
+      },
+      "type": "object"
     },
-    "h10dc9a560bec": {
-      "not": {
-        "pattern": "[ \\t]#"
-      }
-    },
-    "h1212e96248aa": {
-      "allOf": [
+    "constrains/claims@items.name+limits+requests/oneOf/number,null+string,null": {
+      "oneOf": [
         {
-          "$ref": "#/$defs/h1015e2c13b78"
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      ]
+    },
+    "constrains/customLogos.enabled:t": {
+      "properties": {
+        "customLogos": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "customLogos"
+      ],
+      "type": "object"
+    },
+    "constrains/customLogos.volumeKind='persistentVolumeClai...'": {
+      "properties": {
+        "customLogos": {
+          "$ref": "#/$defs/constrains~1volumeKind='persistentVolumeClai...'"
+        }
+      },
+      "required": [
+        "customLogos"
+      ],
+      "type": "object"
+    },
+    "constrains/customLogos.volumeName:t": {
+      "properties": {
+        "customLogos": {
+          "$ref": "#/$defs/constrains~1volumeName:t"
+        }
+      },
+      "required": [
+        "customLogos"
+      ],
+      "type": "object"
+    },
+    "constrains/destination=hostPath": {
+      "properties": {
+        "destination": {
+          "enum": [
+            "hostPath"
+          ]
+        }
+      },
+      "required": [
+        "destination"
+      ],
+      "type": "object"
+    },
+    "constrains/destination=sidecar": {
+      "properties": {
+        "destination": {
+          "enum": [
+            "sidecar"
+          ]
+        }
+      },
+      "required": [
+        "destination"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/gateway.gatewayClass+ingress.tls.source=letsEncrypt": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt"
         },
         {
           "properties": {
-            "name": {
-              "not": {
-                "type": "null"
-              }
+            "gateway": {
+              "properties": {
+                "gatewayClass": {
+                  "$ref": "#/$defs/constrains~1tls.source=letsEncrypt"
+                }
+              },
+              "required": [
+                "gatewayClass"
+              ],
+              "type": "object"
             }
           },
           "required": [
-            "name"
+            "gateway"
           ],
           "type": "object"
         }
       ]
     },
-    "h1232b839e063": {
-      "properties": {
-        "volumeName": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "volumeName"
-      ],
-      "type": "object"
-    },
-    "h1760b2f63aa3": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "h17a10f47413e": {
+    "constrains/hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more": {
       "allOf": [
         {
-          "$ref": "#/$defs/h1015e2c13b78"
+          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls.certificateRefs@items.kind+3more@2"
         },
         {
           "anyOf": [
             {
               "properties": {
                 "tls": {
-                  "$ref": "#/$defs/h97f1f236072d"
+                  "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
                 }
               }
             },
@@ -119,7 +264,134 @@
         }
       ]
     },
-    "h17adfc38be1b": {
+    "constrains/hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more/not/:t": {
+      "not": {
+        "$ref": "#/$defs/t"
+      }
+    },
+    "constrains/hostname+name+port+protocol+tls.certificateRefs@items.kind+3more": {
+      "additionalProperties": {},
+      "properties": {
+        "hostname": {},
+        "name": {},
+        "port": {},
+        "protocol": {},
+        "tls": {
+          "$ref": "#/$defs/constrains~1certificateRefs@items.kind+certificateRefs@items.name+2more"
+        }
+      },
+      "type": "object"
+    },
+    "constrains/hostname+name+port+protocol+tls.certificateRefs@items.kind+3more@2": {
+      "additionalProperties": {},
+      "properties": {
+        "hostname": {},
+        "name": {},
+        "port": {},
+        "protocol": {},
+        "tls": {
+          "$ref": "#/$defs/constrains~1certificateRefs@items.kind+certificateRefs@items.name+2more"
+        }
+      }
+    },
+    "constrains/hostname+name+port+protocol+tls.certificateRefs@items.kind+3more@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls.certificateRefs@items.kind+3more@2"
+        },
+        {
+          "properties": {
+            "name": {
+              "not": {
+                "type": "null"
+              }
+            }
+          },
+          "required": [
+            "name"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/hostname+name+port+protocol+tls.certificateRefs@items.kind+3more@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls.certificateRefs@items.kind+3more@2"
+        },
+        {
+          "properties": {
+            "port": {
+              "not": {
+                "type": "null"
+              }
+            }
+          },
+          "required": [
+            "port"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/hostname+name+port+protocol+tls.certificateRefs@items.kind+3more@5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls.certificateRefs@items.kind+3more@2"
+        },
+        {
+          "properties": {
+            "protocol": {
+              "not": {
+                "type": "null"
+              }
+            }
+          },
+          "required": [
+            "protocol"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/image+image=null": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1image=null"
+        },
+        {
+          "not": {
+            "properties": {
+              "image": {}
+            },
+            "required": [
+              "image"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "constrains/image.registry:t": {
+      "properties": {
+        "image": {
+          "properties": {
+            "registry": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "registry"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
+    },
+    "constrains/image=null": {
       "properties": {
         "image": {
           "enum": [
@@ -132,294 +404,101 @@
       ],
       "type": "object"
     },
-    "h1a9044f6b601": {
+    "constrains/ingress": {
+      "properties": {
+        "ingress": {}
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
+    },
+    "constrains/ingress.enabled:t": {
+      "properties": {
+        "ingress": {
+          "$ref": "#/$defs/constrains~1enabled:t"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
+    },
+    "constrains/ingress.enabled:t+networkExposure.type=gateway": {
+      "not": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1networkExposure.type=gateway"
+          },
+          {
+            "not": {
+              "$ref": "#/$defs/constrains~1ingress.enabled:t"
+            }
+          }
+        ]
+      }
+    },
+    "constrains/ingress.tls.source=letsEncrypt": {
+      "properties": {
+        "ingress": {
+          "$ref": "#/$defs/constrains~1tls.source=letsEncrypt"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
+    },
+    "constrains/ingress.tls.source=letsEncrypt+ingress.tls.source=rancher": {
       "anyOf": [
         {
-          "not": {
-            "properties": {
-              "preUpgrade": {}
-            },
-            "required": [
-              "preUpgrade"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt"
         },
         {
           "properties": {
-            "preUpgrade": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "preUpgrade"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "h1d52fdccc9fa": {
-      "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-      "format": "int32",
-      "type": "integer"
-    },
-    "h22c00c475ec4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h4174f29f69e0"
-        },
-        {
-          "$ref": "#/$defs/h1760b2f63aa3"
-        },
-        {
-          "$ref": "#/$defs/h424d50bcce86"
-        },
-        {
-          "$ref": "#/$defs/h10dc9a560bec"
-        },
-        {
-          "$ref": "#/$defs/ha57525005582"
-        },
-        {
-          "$ref": "#/$defs/h0e4014154904"
-        },
-        {
-          "$ref": "#/$defs/h589952769b45"
-        },
-        {
-          "$ref": "#/$defs/haeffa472167f"
-        },
-        {
-          "$ref": "#/$defs/hc75fdaf6f4ac"
-        },
-        {
-          "$ref": "#/$defs/h9810b646fad3"
-        }
-      ],
-      "description": "Name is the name of the referent.",
-      "maxLength": 253,
-      "minLength": 1,
-      "type": "string"
-    },
-    "h29c2e670fd64": {
-      "$ref": "#/$defs/helm-double-quoted-safe"
-    },
-    "h2f45aba33a25": {
-      "properties": {
-        "antiAffinity": {
-          "enum": [
-            "required"
-          ]
-        }
-      },
-      "required": [
-        "antiAffinity"
-      ],
-      "type": "object"
-    },
-    "h30362f1f0ccb": {
-      "anyOf": [
-        {
-          "properties": {
-            "tls": {
-              "not": {
-                "enum": [
-                  "external"
-                ]
-              }
-            }
-          },
-          "required": [
-            "tls"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "$ref": "#/$defs/h3a7a1cc178ff"
-          }
-        }
-      ]
-    },
-    "h314784e35fe9": {
-      "additionalProperties": {},
-      "properties": {
-        "name": {}
-      },
-      "type": "object"
-    },
-    "h3394d7d8572c": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h10dc9a560bec"
-        },
-        {
-          "$ref": "#/$defs/haeffa472167f"
-        },
-        {
-          "$ref": "#/$defs/hc75fdaf6f4ac"
-        }
-      ],
-      "type": "string"
-    },
-    "h34ecb46685f5": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h4174f29f69e0"
-        },
-        {
-          "$ref": "#/$defs/h1760b2f63aa3"
-        },
-        {
-          "$ref": "#/$defs/h424d50bcce86"
-        },
-        {
-          "$ref": "#/$defs/h10dc9a560bec"
-        },
-        {
-          "$ref": "#/$defs/ha57525005582"
-        },
-        {
-          "$ref": "#/$defs/h0e4014154904"
-        },
-        {
-          "$ref": "#/$defs/h589952769b45"
-        },
-        {
-          "$ref": "#/$defs/haeffa472167f"
-        },
-        {
-          "$ref": "#/$defs/hc75fdaf6f4ac"
-        },
-        {
-          "$ref": "#/$defs/h9810b646fad3"
-        }
-      ],
-      "type": "string"
-    },
-    "h3a7a1cc178ff": {
-      "properties": {
-        "tls": {}
-      },
-      "required": [
-        "tls"
-      ],
-      "type": "object"
-    },
-    "h3b6a2518d579": {
-      "properties": {
-        "customLogos": {
-          "$ref": "#/$defs/h877a6a99a7df"
-        }
-      },
-      "required": [
-        "customLogos"
-      ],
-      "type": "object"
-    },
-    "h3d4a0bef4a8a": {
-      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "h3e02211edd3a": {
-      "properties": {
-        "customLogos": {
-          "$ref": "#/$defs/hd9dd13dbcbf3"
-        }
-      },
-      "required": [
-        "customLogos"
-      ],
-      "type": "object"
-    },
-    "h3f8e92d0cf87": {
-      "additionalProperties": {},
-      "properties": {
-        "namespace": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/h97f1f236072d"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/h4174f29f69e0"
-                },
-                {
-                  "$ref": "#/$defs/h1760b2f63aa3"
-                },
-                {
-                  "$ref": "#/$defs/h424d50bcce86"
-                },
-                {
-                  "$ref": "#/$defs/h10dc9a560bec"
-                },
-                {
-                  "$ref": "#/$defs/ha57525005582"
-                },
-                {
-                  "$ref": "#/$defs/h0e4014154904"
-                },
-                {
-                  "$ref": "#/$defs/h589952769b45"
-                },
-                {
-                  "$ref": "#/$defs/haeffa472167f"
-                },
-                {
-                  "$ref": "#/$defs/hc75fdaf6f4ac"
-                },
-                {
-                  "$ref": "#/$defs/h9810b646fad3"
+            "ingress": {
+              "properties": {
+                "tls": {
+                  "properties": {
+                    "source": {
+                      "enum": [
+                        "rancher"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "source"
+                  ],
+                  "type": "object"
                 }
+              },
+              "required": [
+                "tls"
               ],
-              "description": "Namespace is the namespace of the referenced object. When unspecified, the local\nnamespace is inferred.\n\nNote that when a namespace different than the local namespace is specified,\na ReferenceGrant object is required in the referent namespace to allow that\nnamespace's owner to accept the reference. See the ReferenceGrant\ndocumentation for details.\n\nSupport: Core",
-              "maxLength": 63,
-              "minLength": 1,
-              "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
-    "h4174f29f69e0": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "h424d50bcce86": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "h450bb0fe7a05": {
-      "properties": {
-        "networkExposure": {
-          "properties": {
-            "type": {
-              "enum": [
-                "ingress"
-              ]
+              "type": "object"
             }
           },
           "required": [
-            "type"
+            "ingress"
           ],
           "type": "object"
         }
+      ]
+    },
+    "constrains/ingress=null": {
+      "properties": {
+        "ingress": {
+          "enum": [
+            null
+          ]
+        }
       },
       "required": [
-        "networkExposure"
+        "ingress"
       ],
       "type": "object"
     },
-    "h4c2716164efb": {
+    "constrains/key+operator+values": {
       "additionalProperties": false,
       "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
       "properties": {
@@ -454,131 +533,359 @@
         "null"
       ]
     },
-    "h589952769b45": {
+    "constrains/kind+name+namespace": {
+      "additionalProperties": {},
+      "properties": {
+        "kind": {},
+        "name": {},
+        "namespace": {}
+      }
+    },
+    "constrains/kind:t": {
+      "additionalProperties": {},
+      "properties": {
+        "kind": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+                }
+              ],
+              "default": "Secret",
+              "description": "Kind is kind of the referent. For example \"Secret\".",
+              "maxLength": 63,
+              "minLength": 1,
+              "pattern": "^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    "constrains/kind:t/not/keywords/pattern": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
+    },
+    "constrains/kind:t/not/keywords/pattern@10": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "constrains/kind:t/not/keywords/pattern@2": {
+      "not": {
+        "pattern": "[ \\t]#"
+      }
+    },
+    "constrains/kind:t/not/keywords/pattern@3": {
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "constrains/kind:t/not/keywords/pattern@4": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "constrains/kind:t/not/keywords/pattern@5": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "constrains/kind:t/not/keywords/pattern@6": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "constrains/kind:t/not/keywords/pattern@7": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "constrains/kind:t/not/keywords/pattern@8": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "h5b7699abf0ec": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
+    "constrains/kind:t/not/keywords/pattern@9": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
     },
-    "h5bd3f1abed80": {
-      "additionalProperties": false,
-      "description": "ResourceRequirements describes the compute resource requirements.",
-      "properties": {
-        "claims": {
-          "description": "Claims lists the names of resources, defined in spec.resourceClaims, that are used by this container.\n\nThis is an alpha field and requires enabling the DynamicResourceAllocation feature gate.\n\nThis field is immutable. It can only be set for containers.",
-          "items": {
-            "additionalProperties": false,
-            "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
-            "properties": {
-              "name": {
-                "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
-                "type": "string"
-              }
-            },
-            "required": [
-              "name"
-            ],
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ],
-          "x-kubernetes-list-map-keys": [
-            "name"
-          ],
-          "x-kubernetes-list-type": "map"
-        },
-        "limits": {
-          "additionalProperties": {
-            "$ref": "#/$defs/hb590b645b546"
-          },
-          "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-          "type": [
-            "object",
-            "null"
-          ]
-        },
-        "requests": {
-          "additionalProperties": {
-            "$ref": "#/$defs/hb590b645b546"
-          },
-          "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-          "type": [
-            "object",
-            "null"
-          ]
-        }
-      },
-      "type": "object"
-    },
-    "h5bfc37ccafb2": {
-      "properties": {
-        "auditLog": {
-          "$ref": "#/$defs/h988254b9812c"
-        }
-      },
-      "required": [
-        "auditLog"
-      ],
-      "type": "object"
-    },
-    "h60d1eba8a7dc": {
-      "properties": {
-        "customLogos": {
-          "$ref": "#/$defs/h1232b839e063"
-        }
-      },
-      "required": [
-        "customLogos"
-      ],
-      "type": "object"
-    },
-    "h635d215ab343": {
+    "constrains/name": {
       "additionalProperties": {},
       "properties": {
         "name": {
-          "$ref": "#/$defs/h22c00c475ec4"
+          "$ref": "#/$defs/constrains~1name~1string;name-is-the-name"
         }
       }
     },
-    "h66e5b6a8755a": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
-    },
-    "h676507e09d5c": {
-      "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-      "format": "int32",
-      "type": "null"
-    },
-    "h69179414c431": {
-      "anyOf": [
+    "constrains/name/string;name-is-the-name": {
+      "allOf": [
         {
-          "$ref": "#/$defs/h17adfc38be1b"
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
         },
         {
-          "not": {
-            "properties": {
-              "image": {}
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+        }
+      ],
+      "description": "Name is the name of the referent.",
+      "maxLength": 253,
+      "minLength": 1,
+      "type": "string"
+    },
+    "constrains/name@2": {
+      "additionalProperties": {},
+      "properties": {
+        "name": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
             },
-            "required": [
-              "image"
-            ],
-            "type": "object"
-          }
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+            },
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+            },
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+            },
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+            },
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+            },
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+            },
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+            }
+          ],
+          "description": "Name is the name of the Listener. This name MUST be unique within a\nGateway.\n\nSupport: Core",
+          "maxLength": 253,
+          "minLength": 1,
+          "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
+          "type": "string"
+        }
+      }
+    },
+    "constrains/name@3": {
+      "additionalProperties": {},
+      "properties": {
+        "name": {}
+      },
+      "type": "object"
+    },
+    "constrains/namespace:t": {
+      "additionalProperties": {},
+      "properties": {
+        "namespace": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+                }
+              ],
+              "description": "Namespace is the namespace of the referenced object. When unspecified, the local\nnamespace is inferred.\n\nNote that when a namespace different than the local namespace is specified,\na ReferenceGrant object is required in the referent namespace to allow that\nnamespace's owner to accept the reference. See the ReferenceGrant\ndocumentation for details.\n\nSupport: Core",
+              "maxLength": 63,
+              "minLength": 1,
+              "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    "constrains/networkExposure.type=gateway": {
+      "properties": {
+        "networkExposure": {
+          "properties": {
+            "type": {
+              "enum": [
+                "gateway"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "networkExposure"
+      ],
+      "type": "object"
+    },
+    "constrains/networkExposure.type=gateway+tls+tls!=external+tls=external": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1tls=external"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1networkExposure.type=gateway"
+            },
+            {
+              "$ref": "#/$defs/constrains~1tls+tls!=external"
+            }
+          ]
         }
       ]
     },
-    "h6919117f2b2a": {
+    "constrains/networkExposure.type=gateway+tls=external": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1tls=external"
+        },
+        {
+          "$ref": "#/$defs/constrains~1networkExposure.type=gateway"
+        }
+      ]
+    },
+    "constrains/networkExposure.type=ingress": {
+      "properties": {
+        "networkExposure": {
+          "properties": {
+            "type": {
+              "enum": [
+                "ingress"
+              ]
+            }
+          },
+          "required": [
+            "type"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "networkExposure"
+      ],
+      "type": "object"
+    },
+    "constrains/port": {
+      "additionalProperties": {},
+      "properties": {
+        "port": {
+          "$ref": "#/$defs/constrains~1port~1anyOf~1integer:int32;port-is-the-network+string"
+        }
+      }
+    },
+    "constrains/port/anyOf/integer:int32;port-is-the-network+string": {
+      "anyOf": [
+        {
+          "description": "Port is the network port. Multiple listeners may use the\nsame port, subject to the Listener compatibility rules.\n\nSupport: Core",
+          "format": "int32",
+          "maximum": 65535,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "constrains/postDelete.enabled:t": {
       "properties": {
         "postDelete": {
-          "$ref": "#/$defs/hd9dd13dbcbf3"
+          "$ref": "#/$defs/constrains~1enabled:t"
         }
       },
       "required": [
@@ -586,126 +893,138 @@
       ],
       "type": "object"
     },
-    "h6a502aa20cfd": {
-      "properties": {
-        "image": {
+    "constrains/preUpgrade+preUpgrade=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "preUpgrade": {}
+            },
+            "required": [
+              "preUpgrade"
+            ],
+            "type": "object"
+          }
+        },
+        {
           "properties": {
-            "registry": {
-              "$ref": "#/$defs/t"
+            "preUpgrade": {
+              "enum": [
+                null
+              ]
             }
           },
           "required": [
-            "registry"
+            "preUpgrade"
           ],
           "type": "object"
         }
+      ]
+    },
+    "constrains/protocol": {
+      "additionalProperties": {},
+      "properties": {
+        "protocol": {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+            },
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+            },
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+            },
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+            },
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+            },
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+            },
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+            },
+            {
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+            }
+          ],
+          "description": "Protocol specifies the network protocol this listener expects to receive.\n\nSupport: Core",
+          "maxLength": 255,
+          "minLength": 1,
+          "pattern": "^[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?$|[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*\\/[A-Za-z0-9]+$",
+          "type": "string"
+        }
+      }
+    },
+    "constrains/registry": {
+      "additionalProperties": {},
+      "properties": {
+        "registry": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "constrains/source": {
+      "additionalProperties": {},
+      "properties": {
+        "source": {
+          "description": "options: rancher, letsEncrypt, secret",
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
+    },
+    "constrains/tls": {
+      "properties": {
+        "tls": {}
       },
       "required": [
-        "image"
+        "tls"
       ],
       "type": "object"
     },
-    "h6be26bccb1b0": {
+    "constrains/tls+tls!=external": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h7a6313f8dd4a"
+          "properties": {
+            "tls": {
+              "not": {
+                "enum": [
+                  "external"
+                ]
+              }
+            }
+          },
+          "required": [
+            "tls"
+          ],
+          "type": "object"
         },
         {
-          "$ref": "#/$defs/h0d6da7ea663d"
-        },
-        {
-          "$ref": "#/$defs/hab02c23921d2"
-        },
-        {
-          "$ref": "#/$defs/h89bc4e1169b0"
-        },
-        {
-          "$ref": "#/$defs/h5b7699abf0ec"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/h34ecb46685f5"
+          "not": {
+            "$ref": "#/$defs/constrains~1tls"
+          }
         }
       ]
     },
-    "h6d359ccaee1b": {
-      "properties": {
-        "ingress": {}
-      },
-      "required": [
-        "ingress"
-      ],
-      "type": "object"
-    },
-    "h6f0ee0cdb23f": {
-      "additionalProperties": {},
-      "properties": {
-        "failureThreshold": {
-          "$ref": "#/$defs/ha5a64d80ca4c"
-        },
-        "initialDelaySeconds": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/h97f1f236072d"
-            },
-            {
-              "$ref": "#/$defs/h0d6da7ea663d"
-            },
-            {
-              "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-              "format": "int32",
-              "type": "null"
-            },
-            {
-              "$ref": "#/$defs/h89bc4e1169b0"
-            },
-            {
-              "$ref": "#/$defs/h66e5b6a8755a"
-            },
-            {
-              "$ref": "#/$defs/h5b7699abf0ec"
-            },
-            {
-              "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-              "format": "int32",
-              "type": "integer"
-            }
-          ]
-        },
-        "periodSeconds": {
-          "$ref": "#/$defs/hc1c654aad8fa"
-        },
-        "timeoutSeconds": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/h676507e09d5c"
-            },
-            {
-              "$ref": "#/$defs/h1d52fdccc9fa"
-            },
-            {
-              "$ref": "#/$defs/h0d6da7ea663d"
-            },
-            {
-              "$ref": "#/$defs/h89bc4e1169b0"
-            },
-            {
-              "$ref": "#/$defs/h66e5b6a8755a"
-            },
-            {
-              "$ref": "#/$defs/h5b7699abf0ec"
-            }
-          ]
-        }
-      },
-      "type": "object"
-    },
-    "h73f0ed729864": {
+    "constrains/tls.certificateRefs:t+tls:t": {
       "allOf": [
         {
-          "$ref": "#/$defs/hf2be86d5d841"
+          "$ref": "#/$defs/constrains~1tls:t"
         },
         {
           "properties": {
@@ -728,284 +1047,7 @@
         }
       ]
     },
-    "h75293f1a6901": {
-      "if": {
-        "$ref": "#/$defs/h73f0ed729864"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "tls": {
-            "additionalProperties": {},
-            "properties": {
-              "certificateRefs": {
-                "additionalProperties": {
-                  "$ref": "#/$defs/h3f8e92d0cf87"
-                },
-                "items": {
-                  "$ref": "#/$defs/h3f8e92d0cf87"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "h7574bac09700": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/hc55bc025c196"
-        },
-        {
-          "properties": {
-            "ingress": {
-              "properties": {
-                "tls": {
-                  "properties": {
-                    "source": {
-                      "enum": [
-                        "rancher"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "source"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "tls"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "ingress"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "h779d9ff04b0e": {
-      "anyOf": [
-        {
-          "description": "Port is the network port. Multiple listeners may use the\nsame port, subject to the Listener compatibility rules.\n\nSupport: Core",
-          "format": "int32",
-          "maximum": 65535,
-          "minimum": 1,
-          "type": "integer"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "h7a6313f8dd4a": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "h7c64702ca20f": {
-      "additionalProperties": {},
-      "properties": {
-        "port": {
-          "$ref": "#/$defs/h779d9ff04b0e"
-        }
-      }
-    },
-    "h7e26bab4b11d": {
-      "additionalProperties": {},
-      "properties": {
-        "name": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/h4174f29f69e0"
-            },
-            {
-              "$ref": "#/$defs/h1760b2f63aa3"
-            },
-            {
-              "$ref": "#/$defs/h424d50bcce86"
-            },
-            {
-              "$ref": "#/$defs/h10dc9a560bec"
-            },
-            {
-              "$ref": "#/$defs/ha57525005582"
-            },
-            {
-              "$ref": "#/$defs/h0e4014154904"
-            },
-            {
-              "$ref": "#/$defs/h589952769b45"
-            },
-            {
-              "$ref": "#/$defs/haeffa472167f"
-            },
-            {
-              "$ref": "#/$defs/hc75fdaf6f4ac"
-            },
-            {
-              "$ref": "#/$defs/h9810b646fad3"
-            }
-          ],
-          "description": "Name is the name of the Listener. This name MUST be unique within a\nGateway.\n\nSupport: Core",
-          "maxLength": 253,
-          "minLength": 1,
-          "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*$",
-          "type": "string"
-        }
-      }
-    },
-    "h815e849a93e8": {
-      "properties": {
-        "auditLog": {
-          "$ref": "#/$defs/hd9dd13dbcbf3"
-        }
-      },
-      "required": [
-        "auditLog"
-      ],
-      "type": "object"
-    },
-    "h841249ba986e": {
-      "description": "Optional: Image-specific registry override\nregistry: \"\""
-    },
-    "h877a6a99a7df": {
-      "properties": {
-        "volumeKind": {
-          "enum": [
-            "persistentVolumeClaim"
-          ]
-        }
-      },
-      "required": [
-        "volumeKind"
-      ],
-      "type": "object"
-    },
-    "h89995605e7c7": {
-      "properties": {
-        "networkExposure": {
-          "properties": {
-            "type": {
-              "enum": [
-                "gateway"
-              ]
-            }
-          },
-          "required": [
-            "type"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "networkExposure"
-      ],
-      "type": "object"
-    },
-    "h89bc4e1169b0": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "h8ec24937a2ec": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-          "type": [
-            "object",
-            "null"
-          ]
-        },
-        {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        }
-      ]
-    },
-    "h9714efba09d4": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h4174f29f69e0"
-        },
-        {
-          "$ref": "#/$defs/h1760b2f63aa3"
-        },
-        {
-          "$ref": "#/$defs/h424d50bcce86"
-        },
-        {
-          "$ref": "#/$defs/h10dc9a560bec"
-        },
-        {
-          "$ref": "#/$defs/ha57525005582"
-        },
-        {
-          "$ref": "#/$defs/h0e4014154904"
-        },
-        {
-          "$ref": "#/$defs/h589952769b45"
-        },
-        {
-          "$ref": "#/$defs/haeffa472167f"
-        },
-        {
-          "$ref": "#/$defs/hc75fdaf6f4ac"
-        },
-        {
-          "$ref": "#/$defs/h9810b646fad3"
-        }
-      ],
-      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-      "type": "string"
-    },
-    "h97f1f236072d": {
-      "not": {
-        "$ref": "#/$defs/t"
-      }
-    },
-    "h9810b646fad3": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "h988254b9812c": {
-      "properties": {
-        "destination": {
-          "enum": [
-            "sidecar"
-          ]
-        }
-      },
-      "required": [
-        "destination"
-      ],
-      "type": "object"
-    },
-    "h98e988d3f2de": {
+    "constrains/tls.source=letsEncrypt": {
       "properties": {
         "tls": {
           "properties": {
@@ -1026,498 +1068,10 @@
       ],
       "type": "object"
     },
-    "h9eb705590629": {
-      "if": {
-        "$ref": "#/$defs/hf2be86d5d841"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "tls": {
-            "additionalProperties": {},
-            "properties": {
-              "mode": {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/h4174f29f69e0"
-                  },
-                  {
-                    "$ref": "#/$defs/h1760b2f63aa3"
-                  },
-                  {
-                    "$ref": "#/$defs/h424d50bcce86"
-                  },
-                  {
-                    "$ref": "#/$defs/h10dc9a560bec"
-                  },
-                  {
-                    "$ref": "#/$defs/ha57525005582"
-                  },
-                  {
-                    "$ref": "#/$defs/h0e4014154904"
-                  },
-                  {
-                    "$ref": "#/$defs/h589952769b45"
-                  },
-                  {
-                    "$ref": "#/$defs/haeffa472167f"
-                  },
-                  {
-                    "$ref": "#/$defs/hc75fdaf6f4ac"
-                  },
-                  {
-                    "$ref": "#/$defs/h9810b646fad3"
-                  }
-                ],
-                "default": "Terminate",
-                "description": "Mode defines the TLS behavior for the TLS session initiated by the client.\nThere are two possible modes:\n\n- Terminate: The TLS session between the downstream client and the\n  Gateway is terminated at the Gateway. This mode requires certificates\n  to be specified in some way, such as populating the certificateRefs\n  field.\n- Passthrough: The TLS session is NOT terminated by the Gateway. This\n  implies that the Gateway can't decipher the TLS stream except for\n  the ClientHello message of the TLS protocol. The certificateRefs field\n  is ignored in this mode.\n\nSupport: Core",
-                "enum": [
-                  "Terminate",
-                  "Passthrough"
-                ],
-                "type": "string"
-              }
-            }
-          }
-        }
-      }
-    },
-    "h9f3193589251": {
-      "properties": {
-        "destination": {
-          "enum": [
-            "hostPath"
-          ]
-        }
-      },
-      "required": [
-        "destination"
-      ],
-      "type": "object"
-    },
-    "h9f7324ada955": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/hc55bc025c196"
-        },
-        {
-          "properties": {
-            "gateway": {
-              "properties": {
-                "gatewayClass": {
-                  "$ref": "#/$defs/h98e988d3f2de"
-                }
-              },
-              "required": [
-                "gatewayClass"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "gateway"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "ha04eb665bcf0": {
-      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-      "type": "null"
-    },
-    "ha25dae7e81f8": {
-      "if": {
-        "$ref": "#/$defs/h73f0ed729864"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "tls": {
-            "additionalProperties": {},
-            "properties": {
-              "certificateRefs": {
-                "additionalProperties": {
-                  "$ref": "#/$defs/hc3feeaf91aa6"
-                },
-                "items": {
-                  "$ref": "#/$defs/hc3feeaf91aa6"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "ha57525005582": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "ha5a64d80ca4c": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/h0d6da7ea663d"
-        },
-        {
-          "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
-          "format": "int32",
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/h89bc4e1169b0"
-        },
-        {
-          "$ref": "#/$defs/h66e5b6a8755a"
-        },
-        {
-          "$ref": "#/$defs/h5b7699abf0ec"
-        },
-        {
-          "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
-          "format": "int32",
-          "type": "integer"
-        }
-      ]
-    },
-    "ha840ddbf6d2a": {
-      "properties": {
-        "ingress": {
-          "$ref": "#/$defs/hd9dd13dbcbf3"
-        }
-      },
-      "required": [
-        "ingress"
-      ],
-      "type": "object"
-    },
-    "ha8974124b32f": {
-      "not": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/h89995605e7c7"
-          },
-          {
-            "not": {
-              "$ref": "#/$defs/ha840ddbf6d2a"
-            }
-          }
-        ]
-      }
-    },
-    "hab02c23921d2": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "maxItems": 0,
-            "type": "array"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "$ref": "#/$defs/h3394d7d8572c"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "null"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "maxProperties": 0,
-            "type": "object"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/h3394d7d8572c"
-      },
-      "type": "object"
-    },
-    "hae42dc9e09d9": {
-      "if": {
-        "$ref": "#/$defs/h73f0ed729864"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "tls": {
-            "additionalProperties": {},
-            "properties": {
-              "certificateRefs": {
-                "additionalProperties": {
-                  "$ref": "#/$defs/h635d215ab343"
-                },
-                "items": {
-                  "$ref": "#/$defs/h635d215ab343"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "haeffa472167f": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
-      }
-    },
-    "hb186f730bf99": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/h7a6313f8dd4a"
-        },
-        {
-          "$ref": "#/$defs/h04ed125f2f4f"
-        },
-        {
-          "$ref": "#/$defs/h97f1f236072d"
-        },
-        {
-          "$ref": "#/$defs/h0d6da7ea663d"
-        },
-        {
-          "$ref": "#/$defs/hab02c23921d2"
-        },
-        {
-          "$ref": "#/$defs/h89bc4e1169b0"
-        },
-        {
-          "$ref": "#/$defs/h5b7699abf0ec"
-        },
-        {
-          "$ref": "#/$defs/h9714efba09d4"
-        }
-      ]
-    },
-    "hb1d29fa99936": {
-      "additionalProperties": {},
-      "properties": {
-        "certificateRefs": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/hb93db8a8d8ba"
-              },
-              "type": "array"
-            },
-            {
-              "additionalProperties": {
-                "$ref": "#/$defs/hb93db8a8d8ba"
-              },
-              "type": "object"
-            }
-          ]
-        },
-        "mode": {}
-      }
-    },
-    "hb24fe7afed0f": {
-      "additionalProperties": {},
-      "properties": {
-        "source": {
-          "description": "options: rancher, letsEncrypt, secret",
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      }
-    },
-    "hb590b645b546": {
-      "oneOf": [
-        {
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        {
-          "type": [
-            "number",
-            "null"
-          ]
-        }
-      ]
-    },
-    "hb6872605efcf": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/h877a6a99a7df"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/h0285edad6d21"
-            },
-            {
-              "$ref": "#/$defs/h1232b839e063"
-            }
-          ]
-        }
-      ]
-    },
-    "hb8b86ad471fa": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/he2869ac716af"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/h89995605e7c7"
-            },
-            {
-              "$ref": "#/$defs/h30362f1f0ccb"
-            }
-          ]
-        }
-      ]
-    },
-    "hb93db8a8d8ba": {
-      "additionalProperties": {},
-      "properties": {
-        "kind": {},
-        "name": {},
-        "namespace": {}
-      }
-    },
-    "hbda718cee346": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h1015e2c13b78"
-        },
-        {
-          "properties": {
-            "port": {
-              "not": {
-                "type": "null"
-              }
-            }
-          },
-          "required": [
-            "port"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "hc1131c3fad8c": {
-      "properties": {
-        "ingress": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "ingress"
-      ],
-      "type": "object"
-    },
-    "hc1c654aad8fa": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/h0d6da7ea663d"
-        },
-        {
-          "$ref": "#/$defs/h89bc4e1169b0"
-        },
-        {
-          "$ref": "#/$defs/h66e5b6a8755a"
-        },
-        {
-          "$ref": "#/$defs/h5b7699abf0ec"
-        },
-        {
-          "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-          "format": "int32",
-          "type": "integer"
-        },
-        {
-          "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-          "format": "int32",
-          "type": "null"
-        }
-      ]
-    },
-    "hc3feeaf91aa6": {
-      "additionalProperties": {},
-      "properties": {
-        "kind": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/h97f1f236072d"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/h4174f29f69e0"
-                },
-                {
-                  "$ref": "#/$defs/h1760b2f63aa3"
-                },
-                {
-                  "$ref": "#/$defs/h424d50bcce86"
-                },
-                {
-                  "$ref": "#/$defs/h10dc9a560bec"
-                },
-                {
-                  "$ref": "#/$defs/ha57525005582"
-                },
-                {
-                  "$ref": "#/$defs/h0e4014154904"
-                },
-                {
-                  "$ref": "#/$defs/h589952769b45"
-                },
-                {
-                  "$ref": "#/$defs/haeffa472167f"
-                },
-                {
-                  "$ref": "#/$defs/hc75fdaf6f4ac"
-                },
-                {
-                  "$ref": "#/$defs/h9810b646fad3"
-                }
-              ],
-              "default": "Secret",
-              "description": "Kind is kind of the referent. For example \"Secret\".",
-              "maxLength": 63,
-              "minLength": 1,
-              "pattern": "^[a-zA-Z]([-a-zA-Z0-9]*[a-zA-Z0-9])?$",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
-    "hc55bc025c196": {
-      "properties": {
-        "ingress": {
-          "$ref": "#/$defs/h98e988d3f2de"
-        }
-      },
-      "required": [
-        "ingress"
-      ],
-      "type": "object"
-    },
-    "hc75fdaf6f4ac": {
-      "not": {
-        "pattern": "[\\r\\n]"
-      }
-    },
-    "hcdf1b8e53432": {
+    "constrains/tls:t": {
       "properties": {
         "tls": {
-          "enum": [
-            null
-          ]
+          "$ref": "#/$defs/t"
         }
       },
       "required": [
@@ -1525,78 +1079,7 @@
       ],
       "type": "object"
     },
-    "hd4be77a1634c": {
-      "additionalProperties": {},
-      "properties": {
-        "hostname": {},
-        "name": {},
-        "port": {},
-        "protocol": {},
-        "tls": {
-          "$ref": "#/$defs/hb1d29fa99936"
-        }
-      },
-      "type": "object"
-    },
-    "hd8f0299c8e21": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h1015e2c13b78"
-        },
-        {
-          "properties": {
-            "protocol": {
-              "not": {
-                "type": "null"
-              }
-            }
-          },
-          "required": [
-            "protocol"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "hd99594356446": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "hd9dd13dbcbf3": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "hdc88a0b4917a": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/he2869ac716af"
-        },
-        {
-          "$ref": "#/$defs/h89995605e7c7"
-        }
-      ]
-    },
-    "hdda3c43b9107": {
-      "additionalProperties": {},
-      "properties": {
-        "registry": {
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      }
-    },
-    "he2869ac716af": {
+    "constrains/tls=external": {
       "not": {
         "properties": {
           "tls": {
@@ -1611,49 +1094,72 @@
         "type": "object"
       }
     },
-    "hec30c029d389": {
-      "additionalProperties": {},
+    "constrains/tls=null": {
       "properties": {
-        "protocol": {
+        "tls": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "tls"
+      ],
+      "type": "object"
+    },
+    "constrains/volumeKind='persistentVolumeClai...'": {
+      "properties": {
+        "volumeKind": {
+          "enum": [
+            "persistentVolumeClaim"
+          ]
+        }
+      },
+      "required": [
+        "volumeKind"
+      ],
+      "type": "object"
+    },
+    "constrains/volumeKind='persistentVolumeClai...'+volumeKind=configMap+volumeName:t": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1volumeKind='persistentVolumeClai...'"
+        },
+        {
           "allOf": [
             {
-              "$ref": "#/$defs/h4174f29f69e0"
+              "$ref": "#/$defs/constrains~1volumeKind=configMap"
             },
             {
-              "$ref": "#/$defs/h1760b2f63aa3"
-            },
-            {
-              "$ref": "#/$defs/h424d50bcce86"
-            },
-            {
-              "$ref": "#/$defs/h10dc9a560bec"
-            },
-            {
-              "$ref": "#/$defs/ha57525005582"
-            },
-            {
-              "$ref": "#/$defs/h0e4014154904"
-            },
-            {
-              "$ref": "#/$defs/h589952769b45"
-            },
-            {
-              "$ref": "#/$defs/haeffa472167f"
-            },
-            {
-              "$ref": "#/$defs/hc75fdaf6f4ac"
-            },
-            {
-              "$ref": "#/$defs/h9810b646fad3"
+              "$ref": "#/$defs/constrains~1volumeName:t"
             }
-          ],
-          "description": "Protocol specifies the network protocol this listener expects to receive.\n\nSupport: Core",
-          "maxLength": 255,
-          "minLength": 1,
-          "pattern": "^[a-zA-Z0-9]([-a-zA-Z0-9]*[a-zA-Z0-9])?$|[a-z0-9]([-a-z0-9]*[a-z0-9])?(\\.[a-z0-9]([-a-z0-9]*[a-z0-9])?)*\\/[A-Za-z0-9]+$",
-          "type": "string"
+          ]
         }
-      }
+      ]
+    },
+    "constrains/volumeKind=configMap": {
+      "properties": {
+        "volumeKind": {
+          "enum": [
+            "configMap"
+          ]
+        }
+      },
+      "required": [
+        "volumeKind"
+      ],
+      "type": "object"
+    },
+    "constrains/volumeName:t": {
+      "properties": {
+        "volumeName": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "volumeName"
+      ],
+      "type": "object"
     },
     "helm-double-quoted-safe": {
       "anyOf": [
@@ -1671,7 +1177,7 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/h29c2e670fd64"
+            "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
           },
           "propertyNames": {
             "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
@@ -1680,107 +1186,14 @@
         },
         {
           "items": {
-            "$ref": "#/$defs/h29c2e670fd64"
+            "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
           },
           "type": "array"
         }
       ]
     },
-    "hf2be86d5d841": {
-      "properties": {
-        "tls": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "tls"
-      ],
-      "type": "object"
-    },
-    "hf618b57f672d": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/h04ed125f2f4f"
-        },
-        {
-          "$ref": "#/$defs/h97f1f236072d"
-        },
-        {
-          "$ref": "#/$defs/hab02c23921d2"
-        },
-        {
-          "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-          "pattern": "^[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "$ref": "#/$defs/h34ecb46685f5"
-        }
-      ]
-    },
-    "hfb494174da3e": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/h7a6313f8dd4a"
-        },
-        {
-          "$ref": "#/$defs/hffb701a37495"
-        },
-        {
-          "$ref": "#/$defs/h97f1f236072d"
-        },
-        {
-          "$ref": "#/$defs/h0d6da7ea663d"
-        },
-        {
-          "$ref": "#/$defs/hab02c23921d2"
-        },
-        {
-          "$ref": "#/$defs/h89bc4e1169b0"
-        },
-        {
-          "$ref": "#/$defs/h5b7699abf0ec"
-        },
-        {
-          "$ref": "#/$defs/ha04eb665bcf0"
-        }
-      ]
-    },
-    "hffb701a37495": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h4174f29f69e0"
-        },
-        {
-          "$ref": "#/$defs/h1760b2f63aa3"
-        },
-        {
-          "$ref": "#/$defs/h424d50bcce86"
-        },
-        {
-          "$ref": "#/$defs/h10dc9a560bec"
-        },
-        {
-          "$ref": "#/$defs/ha57525005582"
-        },
-        {
-          "$ref": "#/$defs/h0e4014154904"
-        },
-        {
-          "$ref": "#/$defs/h589952769b45"
-        },
-        {
-          "$ref": "#/$defs/haeffa472167f"
-        },
-        {
-          "$ref": "#/$defs/hc75fdaf6f4ac"
-        },
-        {
-          "$ref": "#/$defs/h9810b646fad3"
-        }
-      ],
-      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-      "type": "string"
+    "helm-double-quoted-safe/:helm-double-quoted-safe": {
+      "$ref": "#/$defs/helm-double-quoted-safe"
     },
     "t": {
       "anyOf": [
@@ -1806,6 +1219,593 @@
           "const": true
         }
       ]
+    },
+    "values/aggregationRegistrationTimeout": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1string@3"
+        },
+        {
+          "$ref": "#/$defs/values~1string;variable-references-var-name-are"
+        },
+        {
+          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+        },
+        {
+          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/values~1object"
+        },
+        {
+          "$ref": "#/$defs/values~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/values~1string;pattern-null-null-null"
+        },
+        {
+          "$ref": "#/$defs/values~1null;variable-references-var-name-are"
+        }
+      ]
+    },
+    "values/allOf/object+object,null;annotations-is-an-unstructured": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "values/anyOf/null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1string@3"
+        },
+        {
+          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/values~1object"
+        },
+        {
+          "$ref": "#/$defs/values~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/values~1string;pattern-null-null-null"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/values~1string"
+        }
+      ]
+    },
+    "values/auditLog/null;image-pull-policy-one": {
+      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+      "type": "null"
+    },
+    "values/auditLog/string;image-pull-policy-one": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+        }
+      ],
+      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+      "type": "string"
+    },
+    "values/extraEnv/string,null;name-of-the-referent": {
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "values/extraNodeSelectorTerms/object": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "values/image.repository": {
+      "description": "Optional: Image-specific registry override\nregistry: \"\""
+    },
+    "values/livenessProbe": {
+      "additionalProperties": {},
+      "properties": {
+        "failureThreshold": {
+          "$ref": "#/$defs/values~1livenessProbe.failureThreshold"
+        },
+        "initialDelaySeconds": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+            },
+            {
+              "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+              "format": "int32",
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/values~1string;pattern-t"
+            },
+            {
+              "$ref": "#/$defs/values~1livenessProbe.failureThreshold~1string;pattern-0-1-9"
+            },
+            {
+              "$ref": "#/$defs/values~1string;pattern-null-null-null"
+            },
+            {
+              "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+              "format": "int32",
+              "type": "integer"
+            }
+          ]
+        },
+        "periodSeconds": {
+          "$ref": "#/$defs/values~1livenessProbe.periodSeconds"
+        },
+        "timeoutSeconds": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/values~1livenessProbe.timeoutSeconds~1null:int32;number-of-seconds-after"
+            },
+            {
+              "$ref": "#/$defs/values~1livenessProbe.timeoutSeconds~1integer:int32;number-of-seconds-after"
+            },
+            {
+              "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+            },
+            {
+              "$ref": "#/$defs/values~1string;pattern-t"
+            },
+            {
+              "$ref": "#/$defs/values~1livenessProbe.failureThreshold~1string;pattern-0-1-9"
+            },
+            {
+              "$ref": "#/$defs/values~1string;pattern-null-null-null"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "values/livenessProbe.failureThreshold": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
+          "format": "int32",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/values~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/values~1livenessProbe.failureThreshold~1string;pattern-0-1-9"
+        },
+        {
+          "$ref": "#/$defs/values~1string;pattern-null-null-null"
+        },
+        {
+          "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
+          "format": "int32",
+          "type": "integer"
+        }
+      ]
+    },
+    "values/livenessProbe.failureThreshold/string;pattern-0-1-9": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
+    },
+    "values/livenessProbe.periodSeconds": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/values~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/values~1livenessProbe.failureThreshold~1string;pattern-0-1-9"
+        },
+        {
+          "$ref": "#/$defs/values~1string;pattern-null-null-null"
+        },
+        {
+          "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+          "format": "int32",
+          "type": "integer"
+        },
+        {
+          "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+          "format": "int32",
+          "type": "null"
+        }
+      ]
+    },
+    "values/livenessProbe.timeoutSeconds/integer:int32;number-of-seconds-after": {
+      "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+      "format": "int32",
+      "type": "integer"
+    },
+    "values/livenessProbe.timeoutSeconds/null:int32;number-of-seconds-after": {
+      "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+      "format": "int32",
+      "type": "null"
+    },
+    "values/null;variable-references-var-name-are": {
+      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+      "type": "null"
+    },
+    "values/object": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/$defs/values~1string@2"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/values~1string@2"
+      },
+      "type": "object"
+    },
+    "values/preUpgrade.pullPolicy": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1auditLog~1null;image-pull-policy-one"
+        },
+        {
+          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+        },
+        {
+          "$ref": "#/$defs/values~1object"
+        },
+        {
+          "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+          "pattern": "^[ \\t]*(#.*)?$",
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/values~1string"
+        }
+      ]
+    },
+    "values/rancherImagePullPolicy": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1string@3"
+        },
+        {
+          "$ref": "#/$defs/values~1auditLog~1null;image-pull-policy-one"
+        },
+        {
+          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+        },
+        {
+          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/values~1object"
+        },
+        {
+          "$ref": "#/$defs/values~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/values~1string;pattern-null-null-null"
+        },
+        {
+          "$ref": "#/$defs/values~1auditLog~1string;image-pull-policy-one"
+        }
+      ]
+    },
+    "values/string": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+        }
+      ],
+      "type": "string"
+    },
+    "values/string;pattern-a-za-z0-9-t": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/string;pattern-null-null-null": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "values/string;pattern-t": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/string;variable-references-var-name-are": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+        }
+      ],
+      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+      "type": "string"
+    },
+    "values/string@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+        }
+      ],
+      "type": "string"
+    },
+    "values/string@3": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "when/tls.certificateRefs:t+tls:t/then/tls.certificateRefs@items.kind:t": {
+      "if": {
+        "$ref": "#/$defs/constrains~1tls.certificateRefs:t+tls:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tls": {
+            "additionalProperties": {},
+            "properties": {
+              "certificateRefs": {
+                "additionalProperties": {
+                  "$ref": "#/$defs/constrains~1kind:t"
+                },
+                "items": {
+                  "$ref": "#/$defs/constrains~1kind:t"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "when/tls.certificateRefs:t+tls:t/then/tls.certificateRefs@items.name": {
+      "if": {
+        "$ref": "#/$defs/constrains~1tls.certificateRefs:t+tls:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tls": {
+            "additionalProperties": {},
+            "properties": {
+              "certificateRefs": {
+                "additionalProperties": {
+                  "$ref": "#/$defs/constrains~1name"
+                },
+                "items": {
+                  "$ref": "#/$defs/constrains~1name"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "when/tls.certificateRefs:t+tls:t/then/tls.certificateRefs@items.namespace:t": {
+      "if": {
+        "$ref": "#/$defs/constrains~1tls.certificateRefs:t+tls:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tls": {
+            "additionalProperties": {},
+            "properties": {
+              "certificateRefs": {
+                "additionalProperties": {
+                  "$ref": "#/$defs/constrains~1namespace:t"
+                },
+                "items": {
+                  "$ref": "#/$defs/constrains~1namespace:t"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "when/tls:t/then/tls.mode=Terminate,Passthrough": {
+      "if": {
+        "$ref": "#/$defs/constrains~1tls:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tls": {
+            "additionalProperties": {},
+            "properties": {
+              "mode": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+                  }
+                ],
+                "default": "Terminate",
+                "description": "Mode defines the TLS behavior for the TLS session initiated by the client.\nThere are two possible modes:\n\n- Terminate: The TLS session between the downstream client and the\n  Gateway is terminated at the Gateway. This mode requires certificates\n  to be specified in some way, such as populating the certificateRefs\n  field.\n- Passthrough: The TLS session is NOT terminated by the Gateway. This\n  implies that the Gateway can't decipher the TLS stream except for\n  the ClientHello message of the TLS protocol. The certificateRefs field\n  is ignored in this mode.\n\nSupport: Core",
+                "enum": [
+                  "Terminate",
+                  "Passthrough"
+                ],
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1815,19 +1815,19 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/he2869ac716af"
+            "$ref": "#/$defs/constrains~1tls=external"
           },
           {
-            "$ref": "#/$defs/h9f7324ada955"
+            "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt"
           },
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/ha840ddbf6d2a"
+                "$ref": "#/$defs/constrains~1ingress.enabled:t"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/h89995605e7c7"
+                  "$ref": "#/$defs/constrains~1networkExposure.type=gateway"
                 }
               }
             ]
@@ -1849,45 +1849,45 @@
                       "class": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/h7a6313f8dd4a"
+                            "$ref": "#/$defs/values~1string@3"
                           },
                           {
                             "const": ""
                           },
                           {
-                            "$ref": "#/$defs/hab02c23921d2"
+                            "$ref": "#/$defs/values~1object"
                           },
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/h4174f29f69e0"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
                               },
                               {
-                                "$ref": "#/$defs/h1760b2f63aa3"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
                               },
                               {
-                                "$ref": "#/$defs/h424d50bcce86"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
                               },
                               {
-                                "$ref": "#/$defs/h10dc9a560bec"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
                               },
                               {
-                                "$ref": "#/$defs/ha57525005582"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
                               },
                               {
-                                "$ref": "#/$defs/h0e4014154904"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
                               },
                               {
-                                "$ref": "#/$defs/h589952769b45"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
                               },
                               {
-                                "$ref": "#/$defs/haeffa472167f"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
                               },
                               {
-                                "$ref": "#/$defs/hc75fdaf6f4ac"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
                               },
                               {
-                                "$ref": "#/$defs/h9810b646fad3"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
                               }
                             ],
                             "description": "This field configures the annotation `kubernetes.io/ingress.class` when\ncreating Ingress resources to solve ACME challenges that use this\nchallenge solver. Only one of `class`, `name` or `ingressClassName` may\nbe specified.",
@@ -1948,12 +1948,12 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h815e849a93e8"
+            "$ref": "#/$defs/constrains~1auditLog.enabled:t"
           },
           {
             "properties": {
               "auditLog": {
-                "$ref": "#/$defs/h9f3193589251"
+                "$ref": "#/$defs/constrains~1destination=hostPath"
               }
             },
             "required": [
@@ -2018,7 +2018,7 @@
             "description": "Rancher image configuration",
             "properties": {
               "pullPolicy": {
-                "$ref": "#/$defs/hb186f730bf99"
+                "$ref": "#/$defs/values~1rancherImagePullPolicy"
               }
             }
           }
@@ -2033,7 +2033,7 @@
           "description": "Traditional Ingress configuration\nReadme for details and instruction on adding tls secrets.",
           "properties": {
             "tls": {
-              "$ref": "#/$defs/hb24fe7afed0f"
+              "$ref": "#/$defs/constrains~1source"
             }
           }
         }
@@ -2043,10 +2043,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/he2869ac716af"
+            "$ref": "#/$defs/constrains~1tls=external"
           },
           {
-            "$ref": "#/$defs/h89995605e7c7"
+            "$ref": "#/$defs/constrains~1networkExposure.type=gateway"
           },
           {
             "not": {
@@ -2107,46 +2107,46 @@
                           "secretName": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/h7a6313f8dd4a"
+                                "$ref": "#/$defs/values~1string@3"
                               },
                               {
                                 "allOf": [
                                   {
-                                    "$ref": "#/$defs/h4174f29f69e0"
+                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
                                   },
                                   {
-                                    "$ref": "#/$defs/h1760b2f63aa3"
+                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
                                   },
                                   {
-                                    "$ref": "#/$defs/h424d50bcce86"
+                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
                                   },
                                   {
-                                    "$ref": "#/$defs/h10dc9a560bec"
+                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
                                   },
                                   {
-                                    "$ref": "#/$defs/ha57525005582"
+                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
                                   },
                                   {
-                                    "$ref": "#/$defs/h0e4014154904"
+                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
                                   },
                                   {
-                                    "$ref": "#/$defs/h589952769b45"
+                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
                                   },
                                   {
-                                    "$ref": "#/$defs/haeffa472167f"
+                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
                                   },
                                   {
-                                    "$ref": "#/$defs/hc75fdaf6f4ac"
+                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
                                   },
                                   {
-                                    "$ref": "#/$defs/h9810b646fad3"
+                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
                                   }
                                 ],
                                 "description": "Name of the Secret resource that will be automatically created and\nmanaged by this Certificate resource. It will be populated with a\nprivate key and certificate, signed by the denoted issuer. The Secret\nresource lives in the same namespace as the Certificate resource.",
                                 "type": "string"
                               },
                               {
-                                "$ref": "#/$defs/hab02c23921d2"
+                                "$ref": "#/$defs/values~1object"
                               }
                             ]
                           }
@@ -2164,13 +2164,13 @@
               "hostname": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/h7a6313f8dd4a"
+                    "$ref": "#/$defs/values~1string@3"
                   },
                   {
-                    "$ref": "#/$defs/hab02c23921d2"
+                    "$ref": "#/$defs/values~1object"
                   },
                   {
-                    "$ref": "#/$defs/h34ecb46685f5"
+                    "$ref": "#/$defs/values~1string"
                   }
                 ]
               }
@@ -2181,7 +2181,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/hb8b86ad471fa"
+        "$ref": "#/$defs/constrains~1networkExposure.type=gateway+tls+tls!=external+tls=external"
       },
       "then": {
         "additionalProperties": {},
@@ -2219,7 +2219,7 @@
         "additionalProperties": {},
         "properties": {
           "features": {
-            "$ref": "#/$defs/h29c2e670fd64"
+            "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
           }
         }
       }
@@ -2272,7 +2272,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/hdc88a0b4917a"
+            "$ref": "#/$defs/constrains~1networkExposure.type=gateway+tls=external"
           }
         ]
       },
@@ -2298,7 +2298,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h6919117f2b2a"
+        "$ref": "#/$defs/constrains~1postDelete.enabled:t"
       },
       "then": {
         "allOf": [
@@ -2313,7 +2313,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "tag": {
-                        "$ref": "#/$defs/h29c2e670fd64"
+                        "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
                       }
                     }
                   }
@@ -2340,7 +2340,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h3e02211edd3a"
+        "$ref": "#/$defs/constrains~1customLogos.enabled:t"
       },
       "then": {
         "additionalProperties": {},
@@ -2406,7 +2406,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h7574bac09700"
+        "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt+ingress.tls.source=rancher"
       },
       "then": {
         "additionalProperties": {},
@@ -2485,11 +2485,11 @@
         "anyOf": [
           {
             "not": {
-              "$ref": "#/$defs/h6d359ccaee1b"
+              "$ref": "#/$defs/constrains~1ingress"
             }
           },
           {
-            "$ref": "#/$defs/hc1131c3fad8c"
+            "$ref": "#/$defs/constrains~1ingress=null"
           }
         ]
       },
@@ -2587,11 +2587,11 @@
         "anyOf": [
           {
             "not": {
-              "$ref": "#/$defs/h2f45aba33a25"
+              "$ref": "#/$defs/constrains~1antiAffinity=required"
             }
           },
           {
-            "$ref": "#/$defs/h2f45aba33a25"
+            "$ref": "#/$defs/constrains~1antiAffinity=required"
           }
         ]
       },
@@ -2601,10 +2601,10 @@
           "topologyKey": {
             "anyOf": [
               {
-                "$ref": "#/$defs/h97f1f236072d"
+                "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
               },
               {
-                "$ref": "#/$defs/hab02c23921d2"
+                "$ref": "#/$defs/values~1object"
               },
               {
                 "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
@@ -2647,7 +2647,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/h7574bac09700"
+            "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt+ingress.tls.source=rancher"
           }
         ]
       },
@@ -2657,10 +2657,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/ha840ddbf6d2a"
+            "$ref": "#/$defs/constrains~1ingress.enabled:t"
           },
           {
-            "$ref": "#/$defs/h450bb0fe7a05"
+            "$ref": "#/$defs/constrains~1networkExposure.type=ingress"
           }
         ]
       },
@@ -2676,58 +2676,58 @@
                   "ingressClassName": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/h7a6313f8dd4a"
+                        "$ref": "#/$defs/values~1string@3"
                       },
                       {
-                        "$ref": "#/$defs/h97f1f236072d"
+                        "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/h0d6da7ea663d"
+                        "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
                       },
                       {
-                        "$ref": "#/$defs/hab02c23921d2"
+                        "$ref": "#/$defs/values~1object"
                       },
                       {
                         "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/h89bc4e1169b0"
+                        "$ref": "#/$defs/values~1string;pattern-t"
                       },
                       {
-                        "$ref": "#/$defs/h5b7699abf0ec"
+                        "$ref": "#/$defs/values~1string;pattern-null-null-null"
                       },
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/h4174f29f69e0"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
                           },
                           {
-                            "$ref": "#/$defs/h1760b2f63aa3"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
                           },
                           {
-                            "$ref": "#/$defs/h424d50bcce86"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
                           },
                           {
-                            "$ref": "#/$defs/h10dc9a560bec"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
                           },
                           {
-                            "$ref": "#/$defs/ha57525005582"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
                           },
                           {
-                            "$ref": "#/$defs/h0e4014154904"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
                           },
                           {
-                            "$ref": "#/$defs/h589952769b45"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
                           },
                           {
-                            "$ref": "#/$defs/haeffa472167f"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
                           },
                           {
-                            "$ref": "#/$defs/hc75fdaf6f4ac"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
                           },
                           {
-                            "$ref": "#/$defs/h9810b646fad3"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
                           }
                         ],
                         "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
@@ -2760,10 +2760,10 @@
                   "extraAnnotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/h97f1f236072d"
+                        "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/h8ec24937a2ec"
+                        "$ref": "#/$defs/values~1allOf~1object+object,null;annotations-is-an-unstructured"
                       }
                     ]
                   }
@@ -2823,25 +2823,25 @@
           "noProxy": {
             "anyOf": [
               {
-                "$ref": "#/$defs/h7a6313f8dd4a"
+                "$ref": "#/$defs/values~1string@3"
               },
               {
-                "$ref": "#/$defs/hffb701a37495"
+                "$ref": "#/$defs/values~1string;variable-references-var-name-are"
               },
               {
-                "$ref": "#/$defs/h0d6da7ea663d"
+                "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
               },
               {
-                "$ref": "#/$defs/hab02c23921d2"
+                "$ref": "#/$defs/values~1object"
               },
               {
-                "$ref": "#/$defs/h89bc4e1169b0"
+                "$ref": "#/$defs/values~1string;pattern-t"
               },
               {
-                "$ref": "#/$defs/h5b7699abf0ec"
+                "$ref": "#/$defs/values~1string;pattern-null-null-null"
               },
               {
-                "$ref": "#/$defs/ha04eb665bcf0"
+                "$ref": "#/$defs/values~1null;variable-references-var-name-are"
               }
             ],
             "description": "comma separated list of domains or ip addresses that will not use the proxy"
@@ -2882,7 +2882,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h69179414c431"
+        "$ref": "#/$defs/constrains~1image+image=null"
       },
       "then": false
     },
@@ -2890,7 +2890,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h89995605e7c7"
+            "$ref": "#/$defs/constrains~1networkExposure.type=gateway"
           },
           {
             "anyOf": [
@@ -2944,7 +2944,7 @@
       "if": {
         "properties": {
           "preUpgrade": {
-            "$ref": "#/$defs/h6a502aa20cfd"
+            "$ref": "#/$defs/constrains~1image.registry:t"
           }
         },
         "required": [
@@ -2960,7 +2960,7 @@
             "description": "Rancher pre-upgrade hook\nImportant: update build.yaml when this default image needs to be changed, then run `go generate`.",
             "properties": {
               "image": {
-                "$ref": "#/$defs/hdda3c43b9107"
+                "$ref": "#/$defs/constrains~1registry"
               }
             }
           }
@@ -3002,10 +3002,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h9f7324ada955"
+            "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt"
           },
           {
-            "$ref": "#/$defs/ha8974124b32f"
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+networkExposure.type=gateway"
           },
           {
             "anyOf": [
@@ -3013,7 +3013,7 @@
                 "not": {
                   "properties": {
                     "letsEncrypt": {
-                      "$ref": "#/$defs/h6d359ccaee1b"
+                      "$ref": "#/$defs/constrains~1ingress"
                     }
                   },
                   "required": [
@@ -3025,7 +3025,7 @@
               {
                 "properties": {
                   "letsEncrypt": {
-                    "$ref": "#/$defs/hc1131c3fad8c"
+                    "$ref": "#/$defs/constrains~1ingress=null"
                   }
                 },
                 "required": [
@@ -3036,7 +3036,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/h30362f1f0ccb"
+            "$ref": "#/$defs/constrains~1tls+tls!=external"
           }
         ]
       },
@@ -3052,7 +3052,7 @@
                   "gateway": {
                     "properties": {
                       "gatewayClass": {
-                        "$ref": "#/$defs/hcdf1b8e53432"
+                        "$ref": "#/$defs/constrains~1tls=null"
                       }
                     },
                     "required": [
@@ -3072,7 +3072,7 @@
                     "gateway": {
                       "properties": {
                         "gatewayClass": {
-                          "$ref": "#/$defs/h3a7a1cc178ff"
+                          "$ref": "#/$defs/constrains~1tls"
                         }
                       },
                       "required": [
@@ -3090,7 +3090,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/hb8b86ad471fa"
+            "$ref": "#/$defs/constrains~1networkExposure.type=gateway+tls+tls!=external+tls=external"
           }
         ]
       },
@@ -3161,7 +3161,7 @@
         "additionalProperties": {},
         "properties": {
           "noDefaultAdmin": {
-            "$ref": "#/$defs/h29c2e670fd64"
+            "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
           }
         }
       }
@@ -3170,7 +3170,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h7574bac09700"
+            "$ref": "#/$defs/constrains~1ingress.tls.source=letsEncrypt+ingress.tls.source=rancher"
           },
           {
             "properties": {
@@ -3264,13 +3264,13 @@
             "anyOf": [
               {
                 "additionalProperties": {
-                  "$ref": "#/$defs/h314784e35fe9"
+                  "$ref": "#/$defs/constrains~1name@3"
                 },
                 "type": "object"
               },
               {
                 "items": {
-                  "$ref": "#/$defs/h314784e35fe9"
+                  "$ref": "#/$defs/constrains~1name@3"
                 },
                 "type": "array"
               },
@@ -3289,7 +3289,7 @@
           {
             "properties": {
               "auditLog": {
-                "$ref": "#/$defs/h6a502aa20cfd"
+                "$ref": "#/$defs/constrains~1image.registry:t"
               }
             },
             "required": [
@@ -3298,10 +3298,10 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/h815e849a93e8"
+            "$ref": "#/$defs/constrains~1auditLog.enabled:t"
           },
           {
-            "$ref": "#/$defs/h5bfc37ccafb2"
+            "$ref": "#/$defs/constrains~1auditLog.destination=sidecar"
           }
         ]
       },
@@ -3331,7 +3331,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/hdc88a0b4917a"
+        "$ref": "#/$defs/constrains~1networkExposure.type=gateway+tls=external"
       },
       "then": {
         "allOf": [
@@ -3365,10 +3365,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/he2869ac716af"
+            "$ref": "#/$defs/constrains~1tls=external"
           },
           {
-            "$ref": "#/$defs/h89995605e7c7"
+            "$ref": "#/$defs/constrains~1networkExposure.type=gateway"
           }
         ]
       },
@@ -3438,7 +3438,7 @@
                         "description": "Must match the GatewayClass's configured entrypoints",
                         "properties": {
                           "https": {
-                            "$ref": "#/$defs/h779d9ff04b0e"
+                            "$ref": "#/$defs/constrains~1port~1anyOf~1integer:int32;port-is-the-network+string"
                           }
                         }
                       }
@@ -3511,7 +3511,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "secretName": {
-                            "$ref": "#/$defs/h22c00c475ec4"
+                            "$ref": "#/$defs/constrains~1name~1string;name-is-the-name"
                           }
                         }
                       }
@@ -3541,7 +3541,7 @@
             }
           },
           {
-            "$ref": "#/$defs/h6a502aa20cfd"
+            "$ref": "#/$defs/constrains~1image.registry:t"
           }
         ]
       },
@@ -3587,14 +3587,14 @@
           },
           {
             "not": {
-              "$ref": "#/$defs/h60d1eba8a7dc"
+              "$ref": "#/$defs/constrains~1customLogos.volumeName:t"
             }
           },
           {
-            "$ref": "#/$defs/h3b6a2518d579"
+            "$ref": "#/$defs/constrains~1customLogos.volumeKind='persistentVolumeClai...'"
           },
           {
-            "$ref": "#/$defs/h3e02211edd3a"
+            "$ref": "#/$defs/constrains~1customLogos.enabled:t"
           }
         ]
       },
@@ -3620,7 +3620,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/ha840ddbf6d2a"
+            "$ref": "#/$defs/constrains~1ingress.enabled:t"
           },
           {
             "properties": {
@@ -3642,7 +3642,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/h450bb0fe7a05"
+            "$ref": "#/$defs/constrains~1networkExposure.type=ingress"
           }
         ]
       },
@@ -3668,10 +3668,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/he2869ac716af"
+            "$ref": "#/$defs/constrains~1tls=external"
           },
           {
-            "$ref": "#/$defs/h9f7324ada955"
+            "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt"
           }
         ]
       },
@@ -3699,42 +3699,42 @@
                   "email": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/h7a6313f8dd4a"
+                        "$ref": "#/$defs/values~1string@3"
                       },
                       {
-                        "$ref": "#/$defs/hab02c23921d2"
+                        "$ref": "#/$defs/values~1object"
                       },
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/h4174f29f69e0"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
                           },
                           {
-                            "$ref": "#/$defs/h1760b2f63aa3"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
                           },
                           {
-                            "$ref": "#/$defs/h424d50bcce86"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
                           },
                           {
-                            "$ref": "#/$defs/h10dc9a560bec"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
                           },
                           {
-                            "$ref": "#/$defs/ha57525005582"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
                           },
                           {
-                            "$ref": "#/$defs/h0e4014154904"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
                           },
                           {
-                            "$ref": "#/$defs/h589952769b45"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
                           },
                           {
-                            "$ref": "#/$defs/haeffa472167f"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
                           },
                           {
-                            "$ref": "#/$defs/hc75fdaf6f4ac"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
                           },
                           {
-                            "$ref": "#/$defs/h9810b646fad3"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
                           }
                         ],
                         "description": "Email is the email address to be associated with the ACME account.\nThis field is optional, but it is strongly recommended to be set.\nIt will be used to contact you in case of issues with your account or\ncertificates, including expiry notification emails.\nThis field may be updated after the account is initially registered.",
@@ -3769,7 +3769,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h89995605e7c7"
+            "$ref": "#/$defs/constrains~1networkExposure.type=gateway"
           },
           {
             "anyOf": [
@@ -3874,10 +3874,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h815e849a93e8"
+            "$ref": "#/$defs/constrains~1auditLog.enabled:t"
           },
           {
-            "$ref": "#/$defs/h5bfc37ccafb2"
+            "$ref": "#/$defs/constrains~1auditLog.destination=sidecar"
           }
         ]
       },
@@ -3932,10 +3932,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h9f7324ada955"
+            "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt"
           },
           {
-            "$ref": "#/$defs/h30362f1f0ccb"
+            "$ref": "#/$defs/constrains~1tls+tls!=external"
           }
         ]
       },
@@ -3973,7 +3973,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h89995605e7c7"
+        "$ref": "#/$defs/constrains~1networkExposure.type=gateway"
       },
       "then": {
         "allOf": [
@@ -3995,7 +3995,7 @@
                           },
                           {
                             "additionalProperties": {
-                              "$ref": "#/$defs/hbda718cee346"
+                              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls.certificateRefs@items.kind+3more@4"
                             },
                             "type": "object"
                           },
@@ -4004,7 +4004,7 @@
                           },
                           {
                             "items": {
-                              "$ref": "#/$defs/hbda718cee346"
+                              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls.certificateRefs@items.kind+3more@4"
                             },
                             "type": "array"
                           }
@@ -4029,11 +4029,11 @@
                     "properties": {
                       "additionalListeners": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/h7e26bab4b11d"
+                          "$ref": "#/$defs/constrains~1name@2"
                         },
                         "description": "Additional listener configs\n- name: http\nprotocol: HTTP\nport: 80\nhostname: \"*.example.com\"\n- name: https\nprotocol: HTTPS\nport: 443\nhostname: \"*.example.com\"\ntls:\nmode: Terminate\ncertificateRefs:\n- name: app-tls\nkind: Secret",
                         "items": {
-                          "$ref": "#/$defs/h7e26bab4b11d"
+                          "$ref": "#/$defs/constrains~1name@2"
                         }
                       }
                     }
@@ -4069,13 +4069,13 @@
                           },
                           {
                             "items": {
-                              "$ref": "#/$defs/h17a10f47413e"
+                              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more"
                             },
                             "type": "array"
                           },
                           {
                             "additionalProperties": {
-                              "$ref": "#/$defs/h17a10f47413e"
+                              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more"
                             },
                             "type": "object"
                           },
@@ -4105,13 +4105,13 @@
                         "anyOf": [
                           {
                             "additionalProperties": {
-                              "$ref": "#/$defs/hd4be77a1634c"
+                              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls.certificateRefs@items.kind+3more"
                             },
                             "type": "object"
                           },
                           {
                             "items": {
-                              "$ref": "#/$defs/hd4be77a1634c"
+                              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls.certificateRefs@items.kind+3more"
                             },
                             "type": "array"
                           },
@@ -4192,11 +4192,11 @@
                     "properties": {
                       "additionalListeners": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/h9eb705590629"
+                          "$ref": "#/$defs/when~1tls:t~1then~1tls.mode=Terminate,Passthrough"
                         },
                         "description": "Additional listener configs\n- name: http\nprotocol: HTTP\nport: 80\nhostname: \"*.example.com\"\n- name: https\nprotocol: HTTPS\nport: 443\nhostname: \"*.example.com\"\ntls:\nmode: Terminate\ncertificateRefs:\n- name: app-tls\nkind: Secret",
                         "items": {
-                          "$ref": "#/$defs/h9eb705590629"
+                          "$ref": "#/$defs/when~1tls:t~1then~1tls.mode=Terminate,Passthrough"
                         }
                       }
                     }
@@ -4217,11 +4217,11 @@
                     "properties": {
                       "additionalListeners": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/ha25dae7e81f8"
+                          "$ref": "#/$defs/when~1tls.certificateRefs:t+tls:t~1then~1tls.certificateRefs@items.kind:t"
                         },
                         "description": "Additional listener configs\n- name: http\nprotocol: HTTP\nport: 80\nhostname: \"*.example.com\"\n- name: https\nprotocol: HTTPS\nport: 443\nhostname: \"*.example.com\"\ntls:\nmode: Terminate\ncertificateRefs:\n- name: app-tls\nkind: Secret",
                         "items": {
-                          "$ref": "#/$defs/ha25dae7e81f8"
+                          "$ref": "#/$defs/when~1tls.certificateRefs:t+tls:t~1then~1tls.certificateRefs@items.kind:t"
                         }
                       }
                     }
@@ -4244,7 +4244,7 @@
                         "anyOf": [
                           {
                             "items": {
-                              "$ref": "#/$defs/h1212e96248aa"
+                              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls.certificateRefs@items.kind+3more@3"
                             },
                             "type": "array"
                           },
@@ -4254,7 +4254,7 @@
                           },
                           {
                             "additionalProperties": {
-                              "$ref": "#/$defs/h1212e96248aa"
+                              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls.certificateRefs@items.kind+3more@3"
                             },
                             "type": "object"
                           },
@@ -4300,34 +4300,34 @@
                       "name": {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/h4174f29f69e0"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
                           },
                           {
-                            "$ref": "#/$defs/h1760b2f63aa3"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
                           },
                           {
-                            "$ref": "#/$defs/h424d50bcce86"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
                           },
                           {
-                            "$ref": "#/$defs/h10dc9a560bec"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
                           },
                           {
-                            "$ref": "#/$defs/ha57525005582"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
                           },
                           {
-                            "$ref": "#/$defs/h0e4014154904"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
                           },
                           {
-                            "$ref": "#/$defs/h589952769b45"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
                           },
                           {
-                            "$ref": "#/$defs/haeffa472167f"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
                           },
                           {
-                            "$ref": "#/$defs/hc75fdaf6f4ac"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
                           },
                           {
-                            "$ref": "#/$defs/h9810b646fad3"
+                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
                           }
                         ],
                         "description": "Set to the Gateway class name (k3s/rke2: traefik)",
@@ -4355,7 +4355,7 @@
                         "anyOf": [
                           {
                             "items": {
-                              "$ref": "#/$defs/hd8f0299c8e21"
+                              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls.certificateRefs@items.kind+3more@5"
                             },
                             "type": "array"
                           },
@@ -4368,7 +4368,7 @@
                           },
                           {
                             "additionalProperties": {
-                              "$ref": "#/$defs/hd8f0299c8e21"
+                              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls.certificateRefs@items.kind+3more@5"
                             },
                             "type": "object"
                           }
@@ -4415,7 +4415,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/h97f1f236072d"
+                            "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
                           },
                           {
                             "additionalProperties": {
@@ -4443,11 +4443,11 @@
                     "properties": {
                       "additionalListeners": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/h75293f1a6901"
+                          "$ref": "#/$defs/when~1tls.certificateRefs:t+tls:t~1then~1tls.certificateRefs@items.namespace:t"
                         },
                         "description": "Additional listener configs\n- name: http\nprotocol: HTTP\nport: 80\nhostname: \"*.example.com\"\n- name: https\nprotocol: HTTPS\nport: 443\nhostname: \"*.example.com\"\ntls:\nmode: Terminate\ncertificateRefs:\n- name: app-tls\nkind: Secret",
                         "items": {
-                          "$ref": "#/$defs/h75293f1a6901"
+                          "$ref": "#/$defs/when~1tls.certificateRefs:t+tls:t~1then~1tls.certificateRefs@items.namespace:t"
                         }
                       }
                     }
@@ -4471,7 +4471,7 @@
                         "description": "Must match the GatewayClass's configured entrypoints",
                         "properties": {
                           "http": {
-                            "$ref": "#/$defs/h779d9ff04b0e"
+                            "$ref": "#/$defs/constrains~1port~1anyOf~1integer:int32;port-is-the-network+string"
                           }
                         }
                       }
@@ -4493,11 +4493,11 @@
                     "properties": {
                       "additionalListeners": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/h7c64702ca20f"
+                          "$ref": "#/$defs/constrains~1port"
                         },
                         "description": "Additional listener configs\n- name: http\nprotocol: HTTP\nport: 80\nhostname: \"*.example.com\"\n- name: https\nprotocol: HTTPS\nport: 443\nhostname: \"*.example.com\"\ntls:\nmode: Terminate\ncertificateRefs:\n- name: app-tls\nkind: Secret",
                         "items": {
-                          "$ref": "#/$defs/h7c64702ca20f"
+                          "$ref": "#/$defs/constrains~1port"
                         }
                       }
                     }
@@ -4561,11 +4561,11 @@
                     "properties": {
                       "additionalListeners": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/hec30c029d389"
+                          "$ref": "#/$defs/constrains~1protocol"
                         },
                         "description": "Additional listener configs\n- name: http\nprotocol: HTTP\nport: 80\nhostname: \"*.example.com\"\n- name: https\nprotocol: HTTPS\nport: 443\nhostname: \"*.example.com\"\ntls:\nmode: Terminate\ncertificateRefs:\n- name: app-tls\nkind: Secret",
                         "items": {
-                          "$ref": "#/$defs/hec30c029d389"
+                          "$ref": "#/$defs/constrains~1protocol"
                         }
                       }
                     }
@@ -4586,11 +4586,11 @@
                     "properties": {
                       "additionalListeners": {
                         "additionalProperties": {
-                          "$ref": "#/$defs/hae42dc9e09d9"
+                          "$ref": "#/$defs/when~1tls.certificateRefs:t+tls:t~1then~1tls.certificateRefs@items.name"
                         },
                         "description": "Additional listener configs\n- name: http\nprotocol: HTTP\nport: 80\nhostname: \"*.example.com\"\n- name: https\nprotocol: HTTPS\nport: 443\nhostname: \"*.example.com\"\ntls:\nmode: Terminate\ncertificateRefs:\n- name: app-tls\nkind: Secret",
                         "items": {
-                          "$ref": "#/$defs/hae42dc9e09d9"
+                          "$ref": "#/$defs/when~1tls.certificateRefs:t+tls:t~1then~1tls.certificateRefs@items.name"
                         }
                       }
                     }
@@ -4605,34 +4605,34 @@
               "hostname": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/h4174f29f69e0"
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
                   },
                   {
-                    "$ref": "#/$defs/h1760b2f63aa3"
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
                   },
                   {
-                    "$ref": "#/$defs/h424d50bcce86"
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
                   },
                   {
-                    "$ref": "#/$defs/h10dc9a560bec"
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
                   },
                   {
-                    "$ref": "#/$defs/ha57525005582"
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
                   },
                   {
-                    "$ref": "#/$defs/h0e4014154904"
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
                   },
                   {
-                    "$ref": "#/$defs/h589952769b45"
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
                   },
                   {
-                    "$ref": "#/$defs/haeffa472167f"
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
                   },
                   {
-                    "$ref": "#/$defs/hc75fdaf6f4ac"
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
                   },
                   {
-                    "$ref": "#/$defs/h9810b646fad3"
+                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
                   }
                 ],
                 "description": "Hostname is the fully qualified domain name of a network host. This matches\nthe RFC 1123 definition of a hostname with 2 notable exceptions:\n\n 1. IPs are not allowed.\n 2. A hostname may be prefixed with a wildcard label (`*.`). The wildcard\n    label must appear by itself as the first label.\n\nHostname can be \"precise\" which is a domain name without the terminating\ndot of a network host (e.g. \"foo.example.com\") or \"wildcard\", which is a\ndomain name prefixed with a single wildcard label (e.g. `*.example.com`).\n\nNote that as per RFC1035 and RFC1123, a *label* must consist of lower case\nalphanumeric characters or '-', and must start and end with an alphanumeric\ncharacter. No other punctuation is allowed.",
@@ -4650,22 +4650,22 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h3e02211edd3a"
+            "$ref": "#/$defs/constrains~1customLogos.enabled:t"
           },
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/h3b6a2518d579"
+                "$ref": "#/$defs/constrains~1customLogos.volumeKind='persistentVolumeClai...'"
               },
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/h60d1eba8a7dc"
+                    "$ref": "#/$defs/constrains~1customLogos.volumeName:t"
                   },
                   {
                     "properties": {
                       "customLogos": {
-                        "$ref": "#/$defs/h0285edad6d21"
+                        "$ref": "#/$defs/constrains~1volumeKind=configMap"
                       }
                     },
                     "required": [
@@ -4716,13 +4716,13 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h1a9044f6b601"
+        "$ref": "#/$defs/constrains~1preUpgrade+preUpgrade=null"
       },
       "then": false
     },
     {
       "if": {
-        "$ref": "#/$defs/he2869ac716af"
+        "$ref": "#/$defs/constrains~1tls=external"
       },
       "then": {
         "additionalProperties": {},
@@ -4735,7 +4735,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "tls": {
-                    "$ref": "#/$defs/hb24fe7afed0f"
+                    "$ref": "#/$defs/constrains~1source"
                   }
                 }
               }
@@ -4783,13 +4783,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h9f7324ada955"
+            "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt"
           },
           {
-            "$ref": "#/$defs/ha8974124b32f"
+            "$ref": "#/$defs/constrains~1ingress.enabled:t+networkExposure.type=gateway"
           },
           {
-            "$ref": "#/$defs/h30362f1f0ccb"
+            "$ref": "#/$defs/constrains~1tls+tls!=external"
           }
         ]
       },
@@ -4812,10 +4812,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h9f7324ada955"
+            "$ref": "#/$defs/constrains~1gateway.gatewayClass+ingress.tls.source=letsEncrypt"
           },
           {
-            "$ref": "#/$defs/h30362f1f0ccb"
+            "$ref": "#/$defs/constrains~1tls+tls!=external"
           },
           {
             "anyOf": [
@@ -4853,7 +4853,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h1a9044f6b601"
+            "$ref": "#/$defs/constrains~1preUpgrade+preUpgrade=null"
           },
           {
             "anyOf": [
@@ -4879,7 +4879,7 @@
               {
                 "properties": {
                   "preUpgrade": {
-                    "$ref": "#/$defs/h17adfc38be1b"
+                    "$ref": "#/$defs/constrains~1image=null"
                   }
                 },
                 "required": [
@@ -4925,7 +4925,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/hdc88a0b4917a"
+            "$ref": "#/$defs/constrains~1networkExposure.type=gateway+tls=external"
           }
         ]
       },
@@ -4940,7 +4940,7 @@
                 "not": {
                   "properties": {
                     "ingress": {
-                      "$ref": "#/$defs/h3a7a1cc178ff"
+                      "$ref": "#/$defs/constrains~1tls"
                     }
                   },
                   "required": [
@@ -4952,7 +4952,7 @@
               {
                 "properties": {
                   "ingress": {
-                    "$ref": "#/$defs/hcdf1b8e53432"
+                    "$ref": "#/$defs/constrains~1tls=null"
                   }
                 },
                 "required": [
@@ -4966,11 +4966,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/h6d359ccaee1b"
+                  "$ref": "#/$defs/constrains~1ingress"
                 }
               },
               {
-                "$ref": "#/$defs/hc1131c3fad8c"
+                "$ref": "#/$defs/constrains~1ingress=null"
               }
             ]
           }
@@ -4982,13 +4982,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/ha840ddbf6d2a"
+            "$ref": "#/$defs/constrains~1ingress.enabled:t"
           },
           {
-            "$ref": "#/$defs/he2869ac716af"
+            "$ref": "#/$defs/constrains~1tls=external"
           },
           {
-            "$ref": "#/$defs/h450bb0fe7a05"
+            "$ref": "#/$defs/constrains~1networkExposure.type=ingress"
           }
         ]
       },
@@ -4998,7 +4998,7 @@
             "additionalProperties": {},
             "properties": {
               "hostname": {
-                "$ref": "#/$defs/h6be26bccb1b0"
+                "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
               }
             }
           },
@@ -5019,55 +5019,55 @@
                             "type": "null"
                           },
                           {
-                            "$ref": "#/$defs/h7a6313f8dd4a"
+                            "$ref": "#/$defs/values~1string@3"
                           },
                           {
-                            "$ref": "#/$defs/h0d6da7ea663d"
+                            "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
                           },
                           {
-                            "$ref": "#/$defs/hab02c23921d2"
+                            "$ref": "#/$defs/values~1object"
                           },
                           {
-                            "$ref": "#/$defs/h89bc4e1169b0"
+                            "$ref": "#/$defs/values~1string;pattern-t"
                           },
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/h4174f29f69e0"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
                               },
                               {
-                                "$ref": "#/$defs/h1760b2f63aa3"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
                               },
                               {
-                                "$ref": "#/$defs/h424d50bcce86"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
                               },
                               {
-                                "$ref": "#/$defs/h10dc9a560bec"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
                               },
                               {
-                                "$ref": "#/$defs/ha57525005582"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
                               },
                               {
-                                "$ref": "#/$defs/h0e4014154904"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
                               },
                               {
-                                "$ref": "#/$defs/h589952769b45"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
                               },
                               {
-                                "$ref": "#/$defs/haeffa472167f"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
                               },
                               {
-                                "$ref": "#/$defs/hc75fdaf6f4ac"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
                               },
                               {
-                                "$ref": "#/$defs/h9810b646fad3"
+                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
                               }
                             ],
                             "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/h5b7699abf0ec"
+                            "$ref": "#/$defs/values~1string;pattern-null-null-null"
                           }
                         ]
                       }
@@ -5086,7 +5086,7 @@
           {
             "properties": {
               "postDelete": {
-                "$ref": "#/$defs/h6a502aa20cfd"
+                "$ref": "#/$defs/constrains~1image.registry:t"
               }
             },
             "required": [
@@ -5095,7 +5095,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/h6919117f2b2a"
+            "$ref": "#/$defs/constrains~1postDelete.enabled:t"
           }
         ]
       },
@@ -5107,7 +5107,7 @@
             "description": "Rancher post-delete hook\nImportant: update build.yaml when this default image needs to be changed, then run `go generate`.",
             "properties": {
               "image": {
-                "$ref": "#/$defs/hdda3c43b9107"
+                "$ref": "#/$defs/constrains~1registry"
               }
             }
           }
@@ -5126,7 +5126,7 @@
       "description": "Control how the Rancher agents validate TLS connections\nValid options: strict, or system-store\nNote, for new installations empty will default to strict on 2.9+, or system-store on 2.8 or older"
     },
     "aggregationRegistrationTimeout": {
-      "$ref": "#/$defs/hfb494174da3e"
+      "$ref": "#/$defs/values~1aggregationRegistrationTimeout"
     },
     "antiAffinity": {
       "anyOf": [
@@ -5150,10 +5150,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/h988254b9812c"
+                "$ref": "#/$defs/constrains~1destination=sidecar"
               },
               {
-                "$ref": "#/$defs/hd9dd13dbcbf3"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -5165,10 +5165,10 @@
                   "resources": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/h97f1f236072d"
+                        "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/h5bd3f1abed80"
+                        "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
                       },
                       {
                         "type": "null"
@@ -5188,25 +5188,25 @@
                       "pullPolicy": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/h7a6313f8dd4a"
+                            "$ref": "#/$defs/values~1string@3"
                           },
                           {
-                            "$ref": "#/$defs/h04ed125f2f4f"
+                            "$ref": "#/$defs/values~1auditLog~1null;image-pull-policy-one"
                           },
                           {
-                            "$ref": "#/$defs/h0d6da7ea663d"
+                            "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
                           },
                           {
-                            "$ref": "#/$defs/hab02c23921d2"
+                            "$ref": "#/$defs/values~1object"
                           },
                           {
-                            "$ref": "#/$defs/h89bc4e1169b0"
+                            "$ref": "#/$defs/values~1string;pattern-t"
                           },
                           {
-                            "$ref": "#/$defs/h5b7699abf0ec"
+                            "$ref": "#/$defs/values~1string;pattern-null-null-null"
                           },
                           {
-                            "$ref": "#/$defs/h9714efba09d4"
+                            "$ref": "#/$defs/values~1auditLog~1string;image-pull-policy-one"
                           }
                         ],
                         "description": "Optional: Image-specific pullPolicy Override\noptions: Always, Never, IfNotPresent"
@@ -5222,10 +5222,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/hd9dd13dbcbf3"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
-                "$ref": "#/$defs/h9f3193589251"
+                "$ref": "#/$defs/constrains~1destination=hostPath"
               }
             ]
           },
@@ -5235,42 +5235,42 @@
               "hostPath": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/h7a6313f8dd4a"
+                    "$ref": "#/$defs/values~1string@3"
                   },
                   {
-                    "$ref": "#/$defs/hab02c23921d2"
+                    "$ref": "#/$defs/values~1object"
                   },
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/h4174f29f69e0"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
                       },
                       {
-                        "$ref": "#/$defs/h1760b2f63aa3"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
                       },
                       {
-                        "$ref": "#/$defs/h424d50bcce86"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
                       },
                       {
-                        "$ref": "#/$defs/h10dc9a560bec"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
                       },
                       {
-                        "$ref": "#/$defs/ha57525005582"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
                       },
                       {
-                        "$ref": "#/$defs/h0e4014154904"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
                       },
                       {
-                        "$ref": "#/$defs/h589952769b45"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
                       },
                       {
-                        "$ref": "#/$defs/haeffa472167f"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
                       },
                       {
-                        "$ref": "#/$defs/hc75fdaf6f4ac"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
                       },
                       {
-                        "$ref": "#/$defs/h9810b646fad3"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
                       }
                     ],
                     "description": "path of the directory on the host. If the path is a symlink, it will follow the link to the real path. More info: https://kubernetes.io/docs/concepts/storage/volumes#hostpath",
@@ -5285,13 +5285,13 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/h988254b9812c"
+                "$ref": "#/$defs/constrains~1destination=sidecar"
               },
               {
-                "$ref": "#/$defs/hd9dd13dbcbf3"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
-                "$ref": "#/$defs/h69179414c431"
+                "$ref": "#/$defs/constrains~1image+image=null"
               }
             ]
           },
@@ -5361,7 +5361,7 @@
     "busyboxImage": {},
     "busyboxImagePullPolicy": {},
     "cacheSyncTimeout": {
-      "$ref": "#/$defs/hfb494174da3e"
+      "$ref": "#/$defs/values~1aggregationRegistrationTimeout"
     },
     "certmanager": {
       "additionalProperties": {},
@@ -5377,10 +5377,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/hd9dd13dbcbf3"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
-                "$ref": "#/$defs/h877a6a99a7df"
+                "$ref": "#/$defs/constrains~1volumeKind='persistentVolumeClai...'"
               }
             ]
           },
@@ -5390,49 +5390,49 @@
               "volumeName": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/h7a6313f8dd4a"
+                    "$ref": "#/$defs/values~1string@3"
                   },
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/h4174f29f69e0"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
                       },
                       {
-                        "$ref": "#/$defs/h1760b2f63aa3"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
                       },
                       {
-                        "$ref": "#/$defs/h424d50bcce86"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
                       },
                       {
-                        "$ref": "#/$defs/h10dc9a560bec"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
                       },
                       {
-                        "$ref": "#/$defs/ha57525005582"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
                       },
                       {
-                        "$ref": "#/$defs/h0e4014154904"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
                       },
                       {
-                        "$ref": "#/$defs/h589952769b45"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
                       },
                       {
-                        "$ref": "#/$defs/haeffa472167f"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
                       },
                       {
-                        "$ref": "#/$defs/hc75fdaf6f4ac"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
                       },
                       {
-                        "$ref": "#/$defs/h9810b646fad3"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
                       }
                     ],
                     "description": "claimName is the name of a PersistentVolumeClaim in the same namespace as the pod using this volume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims",
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/h97f1f236072d"
+                    "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
                   },
                   {
-                    "$ref": "#/$defs/hab02c23921d2"
+                    "$ref": "#/$defs/values~1object"
                   }
                 ]
               }
@@ -5443,17 +5443,17 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/hb6872605efcf"
+                "$ref": "#/$defs/constrains~1volumeKind='persistentVolumeClai...'+volumeKind=configMap+volumeName:t"
               },
               {
-                "$ref": "#/$defs/h0285edad6d21"
+                "$ref": "#/$defs/constrains~1volumeKind=configMap"
               },
               {
-                "$ref": "#/$defs/hd9dd13dbcbf3"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/h877a6a99a7df"
+                  "$ref": "#/$defs/constrains~1volumeKind='persistentVolumeClai...'"
                 }
               }
             ]
@@ -5464,59 +5464,59 @@
               "volumeName": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/h7a6313f8dd4a"
+                    "$ref": "#/$defs/values~1string@3"
                   },
                   {
                     "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/h0d6da7ea663d"
+                    "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
                   },
                   {
-                    "$ref": "#/$defs/hab02c23921d2"
+                    "$ref": "#/$defs/values~1object"
                   },
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/h4174f29f69e0"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
                       },
                       {
-                        "$ref": "#/$defs/h1760b2f63aa3"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
                       },
                       {
-                        "$ref": "#/$defs/h424d50bcce86"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
                       },
                       {
-                        "$ref": "#/$defs/h10dc9a560bec"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
                       },
                       {
-                        "$ref": "#/$defs/ha57525005582"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
                       },
                       {
-                        "$ref": "#/$defs/h0e4014154904"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
                       },
                       {
-                        "$ref": "#/$defs/h589952769b45"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
                       },
                       {
-                        "$ref": "#/$defs/haeffa472167f"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
                       },
                       {
-                        "$ref": "#/$defs/hc75fdaf6f4ac"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
                       },
                       {
-                        "$ref": "#/$defs/h9810b646fad3"
+                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
                       }
                     ],
                     "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/h89bc4e1169b0"
+                    "$ref": "#/$defs/values~1string;pattern-t"
                   },
                   {
-                    "$ref": "#/$defs/h5b7699abf0ec"
+                    "$ref": "#/$defs/values~1string;pattern-null-null-null"
                   }
                 ]
               }
@@ -5527,10 +5527,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/hb6872605efcf"
+                "$ref": "#/$defs/constrains~1volumeKind='persistentVolumeClai...'+volumeKind=configMap+volumeName:t"
               },
               {
-                "$ref": "#/$defs/hd9dd13dbcbf3"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
                 "anyOf": [
@@ -5640,7 +5640,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/h3d4a0bef4a8a"
+                        "$ref": "#/$defs/values~1extraEnv~1string,null;name-of-the-referent"
                       },
                       "optional": {
                         "description": "Specify whether the ConfigMap or its key must be defined",
@@ -5696,7 +5696,7 @@
                         ]
                       },
                       "divisor": {
-                        "$ref": "#/$defs/hb590b645b546"
+                        "$ref": "#/$defs/constrains~1claims@items.name+limits+requests~1oneOf~1number,null+string,null"
                       },
                       "resource": {
                         "description": "Required: resource to select",
@@ -5721,7 +5721,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/h3d4a0bef4a8a"
+                        "$ref": "#/$defs/values~1extraEnv~1string,null;name-of-the-referent"
                       },
                       "optional": {
                         "description": "Specify whether the Secret or its key must be defined",
@@ -5760,7 +5760,7 @@
           "x-kubernetes-patch-strategy": "merge"
         },
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
         },
         {
           "type": "null"
@@ -5776,7 +5776,7 @@
             "matchExpressions": {
               "description": "A list of node selector requirements by node's labels.",
               "items": {
-                "$ref": "#/$defs/h4c2716164efb"
+                "$ref": "#/$defs/constrains~1key+operator+values"
               },
               "type": [
                 "array",
@@ -5786,7 +5786,7 @@
             "matchFields": {
               "description": "A list of node selector requirements by node's fields.",
               "items": {
-                "$ref": "#/$defs/h4c2716164efb"
+                "$ref": "#/$defs/constrains~1key+operator+values"
               },
               "type": [
                 "array",
@@ -5798,10 +5798,10 @@
           "x-kubernetes-map-type": "atomic"
         },
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
         },
         {
-          "$ref": "#/$defs/hd99594356446"
+          "$ref": "#/$defs/values~1extraNodeSelectorTerms~1object"
         },
         {
           "type": "null"
@@ -5881,10 +5881,10 @@
           "type": "array"
         },
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
         },
         {
-          "$ref": "#/$defs/hd99594356446"
+          "$ref": "#/$defs/values~1extraNodeSelectorTerms~1object"
         },
         {
           "type": "null"
@@ -5956,7 +5956,7 @@
         "pullPolicy": {},
         "registry": {},
         "repository": {
-          "$ref": "#/$defs/h841249ba986e"
+          "$ref": "#/$defs/values~1image.repository"
         },
         "tag": {
           "description": "Defaults to .Chart.appVersion\nrancher/rancher image tag. https://hub.docker.com/r/rancher/rancher/tags/"
@@ -5975,11 +5975,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/h3a7a1cc178ff"
+                  "$ref": "#/$defs/constrains~1tls"
                 }
               },
               {
-                "$ref": "#/$defs/hcdf1b8e53432"
+                "$ref": "#/$defs/constrains~1tls=null"
               }
             ]
           },
@@ -6041,50 +6041,50 @@
       }
     },
     "livenessProbe": {
-      "$ref": "#/$defs/h6f0ee0cdb23f"
+      "$ref": "#/$defs/values~1livenessProbe"
     },
     "nameOverride": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h7a6313f8dd4a"
+          "$ref": "#/$defs/values~1string@3"
         },
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
         },
         {
-          "$ref": "#/$defs/hab02c23921d2"
+          "$ref": "#/$defs/values~1object"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/h4174f29f69e0"
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
             },
             {
-              "$ref": "#/$defs/h1760b2f63aa3"
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
             },
             {
-              "$ref": "#/$defs/h424d50bcce86"
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
             },
             {
-              "$ref": "#/$defs/h10dc9a560bec"
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
             },
             {
-              "$ref": "#/$defs/ha57525005582"
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
             },
             {
-              "$ref": "#/$defs/h0e4014154904"
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
             },
             {
-              "$ref": "#/$defs/h589952769b45"
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
             },
             {
-              "$ref": "#/$defs/haeffa472167f"
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
             },
             {
-              "$ref": "#/$defs/hc75fdaf6f4ac"
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
             },
             {
-              "$ref": "#/$defs/h9810b646fad3"
+              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
             }
           ],
           "description": "Name of the container specified as a DNS_LABEL. Each container in a pod must have a unique name (DNS_LABEL). Cannot be updated.",
@@ -6131,10 +6131,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/hd9dd13dbcbf3"
+                "$ref": "#/$defs/constrains~1enabled:t"
               },
               {
-                "$ref": "#/$defs/h69179414c431"
+                "$ref": "#/$defs/constrains~1image+image=null"
               }
             ]
           },
@@ -6142,13 +6142,13 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/hd9dd13dbcbf3"
+            "$ref": "#/$defs/constrains~1enabled:t"
           },
           "then": {
             "additionalProperties": {},
             "properties": {
               "pullPolicy": {
-                "$ref": "#/$defs/hf618b57f672d"
+                "$ref": "#/$defs/values~1preUpgrade.pullPolicy"
               }
             }
           }
@@ -6165,7 +6165,7 @@
           "properties": {
             "registry": {},
             "repository": {
-              "$ref": "#/$defs/h841249ba986e"
+              "$ref": "#/$defs/values~1image.repository"
             },
             "tag": {}
           }
@@ -6185,7 +6185,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/h69179414c431"
+            "$ref": "#/$defs/constrains~1image+image=null"
           },
           "then": false
         }
@@ -6197,7 +6197,7 @@
           "properties": {
             "registry": {},
             "repository": {
-              "$ref": "#/$defs/h841249ba986e"
+              "$ref": "#/$defs/values~1image.repository"
             },
             "tag": {
               "description": "Optional: Image-specific pull policy override\npullPolicy: \"Always\""
@@ -6206,7 +6206,7 @@
           "type": "object"
         },
         "pullPolicy": {
-          "$ref": "#/$defs/hf618b57f672d"
+          "$ref": "#/$defs/values~1preUpgrade.pullPolicy"
         }
       },
       "type": "object"
@@ -6216,55 +6216,55 @@
         {
           "anyOf": [
             {
-              "$ref": "#/$defs/h7a6313f8dd4a"
+              "$ref": "#/$defs/values~1string@3"
             },
             {
-              "$ref": "#/$defs/h0d6da7ea663d"
+              "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
             },
             {
-              "$ref": "#/$defs/hab02c23921d2"
+              "$ref": "#/$defs/values~1object"
             },
             {
-              "$ref": "#/$defs/h89bc4e1169b0"
+              "$ref": "#/$defs/values~1string;pattern-t"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/h4174f29f69e0"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
                 },
                 {
-                  "$ref": "#/$defs/h1760b2f63aa3"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
                 },
                 {
-                  "$ref": "#/$defs/h424d50bcce86"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
                 },
                 {
-                  "$ref": "#/$defs/h10dc9a560bec"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
                 },
                 {
-                  "$ref": "#/$defs/ha57525005582"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
                 },
                 {
-                  "$ref": "#/$defs/h0e4014154904"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
                 },
                 {
-                  "$ref": "#/$defs/h589952769b45"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
                 },
                 {
-                  "$ref": "#/$defs/haeffa472167f"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
                 },
                 {
-                  "$ref": "#/$defs/hc75fdaf6f4ac"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
                 },
                 {
-                  "$ref": "#/$defs/h9810b646fad3"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
                 }
               ],
               "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/h5b7699abf0ec"
+              "$ref": "#/$defs/values~1string;pattern-null-null-null"
             },
             {
               "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -6273,7 +6273,7 @@
           ]
         },
         {
-          "$ref": "#/$defs/h6be26bccb1b0"
+          "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
         }
       ],
       "description": "Set priorityClassName to avoid eviction"
@@ -6282,11 +6282,11 @@
       "description": "If you are using certs signed by a private CA set to 'true' and set the 'tls-ca'\nin the 'cattle-system' namespace. See the README.md for details"
     },
     "proxy": {
-      "$ref": "#/$defs/hfb494174da3e"
+      "$ref": "#/$defs/values~1aggregationRegistrationTimeout"
     },
     "rancherImage": {},
     "rancherImagePullPolicy": {
-      "$ref": "#/$defs/hb186f730bf99"
+      "$ref": "#/$defs/values~1rancherImagePullPolicy"
     },
     "rancherImageTag": {},
     "rancherNamespaces": {
@@ -6299,7 +6299,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/hd9dd13dbcbf3"
+            "$ref": "#/$defs/constrains~1enabled:t"
           },
           "then": {
             "additionalProperties": {}
@@ -6309,7 +6309,7 @@
       "description": "Control additional labels and annotations on namespaces create by Rancher."
     },
     "readinessProbe": {
-      "$ref": "#/$defs/h6f0ee0cdb23f"
+      "$ref": "#/$defs/values~1livenessProbe"
     },
     "replicas": {
       "description": "Number of Rancher server replicas. Setting to negative number will dynamically between 0 and the abs(replicas) based on available nodes.\nof available nodes in the cluster"
@@ -6317,13 +6317,13 @@
     "resources": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
         },
         {
-          "$ref": "#/$defs/hd99594356446"
+          "$ref": "#/$defs/values~1extraNodeSelectorTerms~1object"
         },
         {
-          "$ref": "#/$defs/h5bd3f1abed80"
+          "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
         },
         {
           "type": "null"
@@ -6338,13 +6338,13 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/h97f1f236072d"
+              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
             },
             {
-              "$ref": "#/$defs/hd99594356446"
+              "$ref": "#/$defs/values~1extraNodeSelectorTerms~1object"
             },
             {
-              "$ref": "#/$defs/h8ec24937a2ec"
+              "$ref": "#/$defs/values~1allOf~1object+object,null;annotations-is-an-unstructured"
             }
           ]
         },
@@ -6360,56 +6360,56 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/h4174f29f69e0"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
                 },
                 {
-                  "$ref": "#/$defs/h1760b2f63aa3"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
                 },
                 {
-                  "$ref": "#/$defs/h424d50bcce86"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
                 },
                 {
-                  "$ref": "#/$defs/h10dc9a560bec"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
                 },
                 {
-                  "$ref": "#/$defs/ha57525005582"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
                 },
                 {
-                  "$ref": "#/$defs/h0e4014154904"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
                 },
                 {
-                  "$ref": "#/$defs/h589952769b45"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
                 },
                 {
-                  "$ref": "#/$defs/haeffa472167f"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
                 },
                 {
-                  "$ref": "#/$defs/hc75fdaf6f4ac"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
                 },
                 {
-                  "$ref": "#/$defs/h9810b646fad3"
+                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
                 }
               ],
               "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/h7a6313f8dd4a"
+              "$ref": "#/$defs/values~1string@3"
             },
             {
-              "$ref": "#/$defs/h97f1f236072d"
+              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
             },
             {
-              "$ref": "#/$defs/h0d6da7ea663d"
+              "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
             },
             {
-              "$ref": "#/$defs/hab02c23921d2"
+              "$ref": "#/$defs/values~1object"
             },
             {
-              "$ref": "#/$defs/h89bc4e1169b0"
+              "$ref": "#/$defs/values~1string;pattern-t"
             },
             {
-              "$ref": "#/$defs/h5b7699abf0ec"
+              "$ref": "#/$defs/values~1string;pattern-null-null-null"
             }
           ]
         }
@@ -6420,30 +6420,30 @@
       "additionalProperties": {},
       "properties": {
         "failureThreshold": {
-          "$ref": "#/$defs/ha5a64d80ca4c"
+          "$ref": "#/$defs/values~1livenessProbe.failureThreshold"
         },
         "periodSeconds": {
-          "$ref": "#/$defs/hc1c654aad8fa"
+          "$ref": "#/$defs/values~1livenessProbe.periodSeconds"
         },
         "timeoutSeconds": {
           "anyOf": [
             {
-              "$ref": "#/$defs/h676507e09d5c"
+              "$ref": "#/$defs/values~1livenessProbe.timeoutSeconds~1null:int32;number-of-seconds-after"
             },
             {
-              "$ref": "#/$defs/h1d52fdccc9fa"
+              "$ref": "#/$defs/values~1livenessProbe.timeoutSeconds~1integer:int32;number-of-seconds-after"
             },
             {
-              "$ref": "#/$defs/h0d6da7ea663d"
+              "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
             },
             {
-              "$ref": "#/$defs/h89bc4e1169b0"
+              "$ref": "#/$defs/values~1string;pattern-t"
             },
             {
-              "$ref": "#/$defs/h66e5b6a8755a"
+              "$ref": "#/$defs/values~1livenessProbe.failureThreshold~1string;pattern-0-1-9"
             },
             {
-              "$ref": "#/$defs/h5b7699abf0ec"
+              "$ref": "#/$defs/values~1string;pattern-null-null-null"
             }
           ],
           "description": "should be ready within 2 minutes"

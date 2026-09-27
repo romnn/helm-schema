@@ -1,461 +1,26 @@
 {
   "$defs": {
-    "h01290ed0389c": {
-      "properties": {
-        "secret": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "secret"
-      ],
-      "type": "object"
-    },
-    "h03740d6afdc2": {
-      "properties": {
-        "readinessProbe": {}
-      },
-      "required": [
-        "readinessProbe"
-      ],
-      "type": "object"
-    },
-    "h0d6da7ea663d": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "h0e4014154904": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "h10dc9a560bec": {
-      "not": {
-        "pattern": "[ \\t]#"
-      }
-    },
-    "h167e8d2beef9": {
-      "additionalProperties": false,
-      "description": "SELinuxOptions are the labels to be applied to the container",
-      "properties": {
-        "level": {
-          "description": "Level is SELinux level label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "role": {
-          "description": "Role is a SELinux role label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "type": {
-          "description": "Type is a SELinux type label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        },
-        "user": {
-          "description": "User is a SELinux user label that applies to the container.",
-          "type": [
-            "string",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "h16d818c893a0": {
-      "additionalProperties": false,
-      "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
-      "properties": {
-        "podAffinityTerm": {
-          "additionalProperties": false,
-          "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
-          "properties": {
-            "labelSelector": {
-              "$ref": "#/$defs/ha9537dbdf639"
-            },
-            "matchLabelKeys": {
-              "$ref": "#/$defs/hb38ec1200366"
-            },
-            "mismatchLabelKeys": {
-              "$ref": "#/$defs/hf963a4a3a925"
-            },
-            "namespaceSelector": {
-              "$ref": "#/$defs/ha9537dbdf639"
-            },
-            "namespaces": {
-              "$ref": "#/$defs/hbfd0ca057049"
-            },
-            "topologyKey": {
-              "$ref": "#/$defs/h795767c92c3b"
-            }
-          },
-          "required": [
-            "topologyKey"
-          ],
-          "type": "object"
-        },
-        "weight": {
-          "description": "weight associated with matching the corresponding podAffinityTerm, in the range 1-100.",
-          "format": "int32",
-          "type": "integer"
-        }
-      },
-      "required": [
-        "weight",
-        "podAffinityTerm"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "h1760b2f63aa3": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "h2590b58864f8": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h4174f29f69e0"
-        },
-        {
-          "$ref": "#/$defs/h1760b2f63aa3"
-        },
-        {
-          "$ref": "#/$defs/h424d50bcce86"
-        },
-        {
-          "$ref": "#/$defs/h10dc9a560bec"
-        },
-        {
-          "$ref": "#/$defs/ha57525005582"
-        },
-        {
-          "$ref": "#/$defs/h0e4014154904"
-        },
-        {
-          "$ref": "#/$defs/h589952769b45"
-        },
-        {
-          "$ref": "#/$defs/haeffa472167f"
-        },
-        {
-          "$ref": "#/$defs/hc75fdaf6f4ac"
-        },
-        {
-          "$ref": "#/$defs/h9810b646fad3"
-        }
-      ],
-      "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
-      "type": "string"
-    },
-    "h29c2e670fd64": {
-      "$ref": "#/$defs/helm-double-quoted-safe"
-    },
-    "h2a8893c4b842": {
-      "properties": {
-        "rbac": {
-          "$ref": "#/$defs/hd5b36c6ea778"
-        }
-      },
-      "required": [
-        "rbac"
-      ],
-      "type": "object"
-    },
-    "h2ec474ed13b8": {
-      "properties": {
-        "readinessProbe": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "readinessProbe"
-      ],
-      "type": "object"
-    },
-    "h3394d7d8572c": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h10dc9a560bec"
-        },
-        {
-          "$ref": "#/$defs/haeffa472167f"
-        },
-        {
-          "$ref": "#/$defs/hc75fdaf6f4ac"
-        }
-      ],
-      "type": "string"
-    },
-    "h34ecb46685f5": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h4174f29f69e0"
-        },
-        {
-          "$ref": "#/$defs/h1760b2f63aa3"
-        },
-        {
-          "$ref": "#/$defs/h424d50bcce86"
-        },
-        {
-          "$ref": "#/$defs/h10dc9a560bec"
-        },
-        {
-          "$ref": "#/$defs/ha57525005582"
-        },
-        {
-          "$ref": "#/$defs/h0e4014154904"
-        },
-        {
-          "$ref": "#/$defs/h589952769b45"
-        },
-        {
-          "$ref": "#/$defs/haeffa472167f"
-        },
-        {
-          "$ref": "#/$defs/hc75fdaf6f4ac"
-        },
-        {
-          "$ref": "#/$defs/h9810b646fad3"
-        }
-      ],
-      "type": "string"
-    },
-    "h3641cbfe38f1": {
-      "properties": {
-        "grafanaDashboard": {
-          "$ref": "#/$defs/hd5b36c6ea778"
-        }
-      },
-      "required": [
-        "grafanaDashboard"
-      ],
-      "type": "object"
-    },
-    "h4174f29f69e0": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "h42097bbd84cc": {
-      "properties": {
-        "clusterWide": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "clusterWide"
-      ],
-      "type": "object"
-    },
-    "h4221e27a0556": {
-      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-      "type": "null"
-    },
-    "h424d50bcce86": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "h4a3bf48a4843": {
-      "allOf": [
-        {
-          "if": {
-            "$ref": "#/$defs/hd5b36c6ea778"
-          },
-          "then": {
-            "additionalProperties": {},
-            "properties": {
-              "failurePolicy": {
-                "$ref": "#/$defs/providerSchema_8e568763903b"
-              }
-            }
-          }
-        }
-      ]
-    },
-    "h4c2716164efb": {
-      "additionalProperties": false,
-      "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-      "properties": {
-        "key": {
-          "description": "The label key that the selector applies to.",
-          "type": "string"
-        },
-        "operator": {
-          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-          "type": "string"
-        },
-        "values": {
-          "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-          "items": {
-            "$ref": "#/$defs/h56bd48f38e6b"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        }
-      },
-      "required": [
-        "key",
-        "operator"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "h526c09af9597": {
-      "additionalProperties": false,
-      "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
-      "properties": {
-        "labelSelector": {
-          "$ref": "#/$defs/ha9537dbdf639"
-        },
-        "matchLabelKeys": {
-          "$ref": "#/$defs/hb38ec1200366"
-        },
-        "mismatchLabelKeys": {
-          "$ref": "#/$defs/hf963a4a3a925"
-        },
-        "namespaceSelector": {
-          "$ref": "#/$defs/ha9537dbdf639"
-        },
-        "namespaces": {
-          "$ref": "#/$defs/hbfd0ca057049"
-        },
-        "topologyKey": {
-          "$ref": "#/$defs/h795767c92c3b"
-        }
-      },
-      "required": [
-        "topologyKey"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "h53fc60614240": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h4174f29f69e0"
-        },
-        {
-          "$ref": "#/$defs/h1760b2f63aa3"
-        },
-        {
-          "$ref": "#/$defs/h424d50bcce86"
-        },
-        {
-          "$ref": "#/$defs/h10dc9a560bec"
-        },
-        {
-          "$ref": "#/$defs/ha57525005582"
-        },
-        {
-          "$ref": "#/$defs/h0e4014154904"
-        },
-        {
-          "$ref": "#/$defs/h589952769b45"
-        },
-        {
-          "$ref": "#/$defs/haeffa472167f"
-        },
-        {
-          "$ref": "#/$defs/hc75fdaf6f4ac"
-        },
-        {
-          "$ref": "#/$defs/h9810b646fad3"
-        }
-      ],
-      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-      "type": "string"
-    },
-    "h56bd48f38e6b": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "h589952769b45": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "h590c7e7de299": {
-      "properties": {
-        "startupProbe": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "startupProbe"
-      ],
-      "type": "object"
-    },
-    "h5b7699abf0ec": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "h63f926268676": {
+    "constrains/@items.key+@items.operator+@items.values": {
       "description": "A list of node selector requirements by node's fields.",
       "items": {
-        "$ref": "#/$defs/h4c2716164efb"
+        "$ref": "#/$defs/constrains~1key+operator+values"
       },
       "type": [
         "array",
         "null"
       ]
     },
-    "h66e5b6a8755a": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
-    },
-    "h6be26bccb1b0": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/h7a6313f8dd4a"
-        },
-        {
-          "$ref": "#/$defs/h0d6da7ea663d"
-        },
-        {
-          "$ref": "#/$defs/hab02c23921d2"
-        },
-        {
-          "$ref": "#/$defs/h89bc4e1169b0"
-        },
-        {
-          "$ref": "#/$defs/h5b7699abf0ec"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/h34ecb46685f5"
-        }
+    "constrains/@items.key+@items.operator+@items.values@2": {
+      "description": "A list of node selector requirements by node's labels.",
+      "items": {
+        "$ref": "#/$defs/constrains~1key+operator+values"
+      },
+      "type": [
+        "array",
+        "null"
       ]
     },
-    "h6e08ce5151f5": {
+    "constrains/action=replace,Replace,keep,+19more+modulus+regex+replacement+separator+2more": {
       "additionalProperties": false,
       "description": "RelabelConfig allows dynamic rewriting of the label set for targets, alerts,\nscraped samples and remote write samples.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
       "properties": {
@@ -520,183 +85,21 @@
       },
       "type": "object"
     },
-    "h70b8dbe03b5c": {
-      "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
-      "type": "null"
-    },
-    "h737e923dc1b9": {
+    "constrains/clusterWide:t": {
       "properties": {
-        "create": {
-          "enum": [
-            null
-          ]
+        "clusterWide": {
+          "$ref": "#/$defs/t"
         }
       },
       "required": [
-        "create"
+        "clusterWide"
       ],
       "type": "object"
     },
-    "h775337e086af": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/h7a6313f8dd4a"
-        },
-        {
-          "$ref": "#/$defs/h97f1f236072d"
-        },
-        {
-          "$ref": "#/$defs/hab02c23921d2"
-        },
-        {
-          "$ref": "#/$defs/h34ecb46685f5"
-        }
-      ]
-    },
-    "h795767c92c3b": {
-      "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
-      "type": "string"
-    },
-    "h7a6313f8dd4a": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "h7c202e1c8eed": {
-      "properties": {
-        "webhook": {
-          "properties": {
-            "validating": {
-              "$ref": "#/$defs/hd5b36c6ea778"
-            }
-          },
-          "required": [
-            "validating"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "webhook"
-      ],
-      "type": "object"
-    },
-    "h7dc4ebafa90d": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/h70b8dbe03b5c"
-        },
-        {
-          "$ref": "#/$defs/h7a6313f8dd4a"
-        },
-        {
-          "$ref": "#/$defs/h97f1f236072d"
-        },
-        {
-          "$ref": "#/$defs/h0d6da7ea663d"
-        },
-        {
-          "$ref": "#/$defs/hab02c23921d2"
-        },
-        {
-          "$ref": "#/$defs/h89bc4e1169b0"
-        },
-        {
-          "$ref": "#/$defs/h5b7699abf0ec"
-        },
-        {
-          "$ref": "#/$defs/h2590b58864f8"
-        }
-      ]
-    },
-    "h89bc4e1169b0": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "h89c7ed16a6fc": {
-      "properties": {
-        "livenessProbe": {}
-      },
-      "required": [
-        "livenessProbe"
-      ],
-      "type": "object"
-    },
-    "h8bd53f944daf": {
-      "anyOf": [
-        {
-          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-          "type": "string"
-        },
-        {
-          "$ref": "#/$defs/hf3b4de68759a"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "h8ec24937a2ec": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "$ref": "#/$defs/h56bd48f38e6b"
-          },
-          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-          "type": [
-            "object",
-            "null"
-          ]
-        },
-        {
-          "$ref": "#/$defs/hcecdfbfc3065"
-        }
-      ]
-    },
-    "h9399abf298b8": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "$ref": "#/$defs/h56bd48f38e6b"
-          },
-          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-          "type": [
-            "object",
-            "null"
-          ]
-        },
-        {
-          "$ref": "#/$defs/hcecdfbfc3065"
-        }
-      ]
-    },
-    "h97f1f236072d": {
-      "not": {
-        "$ref": "#/$defs/t"
-      }
-    },
-    "h9810b646fad3": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "h98f6e5bca561": {
+    "constrains/config.create:t": {
       "properties": {
         "config": {
-          "$ref": "#/$defs/hd5b36c6ea778"
+          "$ref": "#/$defs/constrains~1create:t"
         }
       },
       "required": [
@@ -704,183 +107,153 @@
       ],
       "type": "object"
     },
-    "h9b34a6fdf351": {
+    "constrains/create": {
       "properties": {
-        "validating": {}
+        "create": {}
       },
       "required": [
-        "validating"
+        "create"
       ],
       "type": "object"
     },
-    "h9c594d41cd8b": {
+    "constrains/create:t": {
+      "properties": {
+        "create": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "create"
+      ],
+      "type": "object"
+    },
+    "constrains/create:t+failurePolicy": {
+      "allOf": [
+        {
+          "if": {
+            "$ref": "#/$defs/constrains~1create:t"
+          },
+          "then": {
+            "additionalProperties": {},
+            "properties": {
+              "failurePolicy": {
+                "$ref": "#/$defs/constrains~1create:t+failurePolicy~1anyOf~1null;failurepolicy-defines-how-unrecognized+object+string+4more"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "constrains/create:t+failurePolicy/anyOf/null;failurepolicy-defines-how-unrecognized+object+string+4more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h7a6313f8dd4a"
-        },
-        {
-          "$ref": "#/$defs/h97f1f236072d"
-        },
-        {
-          "$ref": "#/$defs/h0d6da7ea663d"
-        },
-        {
-          "$ref": "#/$defs/hab02c23921d2"
-        },
-        {
-          "$ref": "#/$defs/h89bc4e1169b0"
-        },
-        {
-          "$ref": "#/$defs/h5b7699abf0ec"
-        },
-        {
+          "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
           "type": "null"
         },
         {
-          "$ref": "#/$defs/h34ecb46685f5"
-        }
-      ]
-    },
-    "h9d2220a5f361": {
-      "allOf": [
-        {
-          "type": "object"
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string@2"
         },
         {
-          "anyOf": [
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1object"
+        },
+        {
+          "allOf": [
             {
-              "not": {
-                "properties": {
-                  "grafanaDashboard": {
-                    "$ref": "#/$defs/he5c044e06206"
-                  }
-                },
-                "required": [
-                  "grafanaDashboard"
-                ],
-                "type": "object"
-              }
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@10"
             },
             {
-              "properties": {
-                "grafanaDashboard": {
-                  "$ref": "#/$defs/h737e923dc1b9"
-                }
-              },
-              "required": [
-                "grafanaDashboard"
-              ],
-              "type": "object"
-            }
-          ]
-        }
-      ]
-    },
-    "ha2c871a5cc16": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "monitoring": {
-                "type": "object"
-              }
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@4"
             },
-            "required": [
-              "monitoring"
-            ],
-            "type": "object"
-          }
+            {
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@5"
+            },
+            {
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@7"
+            },
+            {
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@8"
+            },
+            {
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern"
+            },
+            {
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@3"
+            },
+            {
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@6"
+            }
+          ],
+          "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
+          "type": "string"
         },
         {
-          "properties": {
-            "monitoring": {
-              "$ref": "#/$defs/h9d2220a5f361"
-            }
-          },
-          "required": [
-            "monitoring"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
         },
         {
-          "properties": {
-            "monitoring": {
-              "$ref": "#/$defs/h3641cbfe38f1"
-            }
-          },
-          "required": [
-            "monitoring"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
         }
       ]
     },
-    "ha57525005582": {
+    "constrains/create:t+failurePolicy/not/keywords/pattern": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
+    },
+    "constrains/create:t+failurePolicy/not/keywords/pattern@10": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "constrains/create:t+failurePolicy/not/keywords/pattern@2": {
+      "not": {
+        "pattern": "[ \\t]#"
+      }
+    },
+    "constrains/create:t+failurePolicy/not/keywords/pattern@3": {
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "constrains/create:t+failurePolicy/not/keywords/pattern@4": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "constrains/create:t+failurePolicy/not/keywords/pattern@5": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "ha9537dbdf639": {
-      "additionalProperties": false,
-      "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
-      "properties": {
-        "matchExpressions": {
-          "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-          "items": {
-            "additionalProperties": false,
-            "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-            "properties": {
-              "key": {
-                "description": "key is the label key that the selector applies to.",
-                "type": "string"
-              },
-              "operator": {
-                "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                "type": "string"
-              },
-              "values": {
-                "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                "items": {
-                  "$ref": "#/$defs/h56bd48f38e6b"
-                },
-                "type": [
-                  "array",
-                  "null"
-                ]
-              }
-            },
-            "required": [
-              "key",
-              "operator"
-            ],
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
-        "matchLabels": {
-          "additionalProperties": {
-            "$ref": "#/$defs/h56bd48f38e6b"
-          },
-          "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-          "type": [
-            "object",
-            "null"
-          ]
-        }
-      },
-      "type": [
-        "object",
-        "null"
-      ],
-      "x-kubernetes-map-type": "atomic"
+    "constrains/create:t+failurePolicy/not/keywords/pattern@6": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
     },
-    "hab02c23921d2": {
+    "constrains/create:t+failurePolicy/not/keywords/pattern@7": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "constrains/create:t+failurePolicy/not/keywords/pattern@8": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "constrains/create:t+failurePolicy/not/keywords/pattern@9": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "constrains/create:t+failurePolicy/object": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -891,7 +264,7 @@
             "type": "integer"
           },
           {
-            "$ref": "#/$defs/h3394d7d8572c"
+            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string"
           },
           {
             "type": "number"
@@ -909,67 +282,68 @@
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/h3394d7d8572c"
+        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string"
       },
       "type": "object"
     },
-    "haeffa472167f": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
-      }
+    "constrains/create:t+failurePolicy/string": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@3"
+        }
+      ],
+      "type": "string"
     },
-    "haf4032d2d1f6": {
+    "constrains/create:t+failurePolicy/string;pattern-a-za-z0-9-t": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "constrains/create:t+failurePolicy/string;pattern-null-null-null": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "constrains/create:t+failurePolicy/string;pattern-t": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "constrains/create:t+failurePolicy/string@2": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "constrains/create=null": {
       "properties": {
-        "webhook": {
-          "properties": {
-            "mutating": {
-              "$ref": "#/$defs/hd5b36c6ea778"
-            }
-          },
-          "required": [
-            "mutating"
-          ],
-          "type": "object"
+        "create": {
+          "enum": [
+            null
+          ]
         }
       },
       "required": [
-        "webhook"
+        "create"
       ],
       "type": "object"
     },
-    "hb0bfc99d645c": {
-      "description": "A list of node selector requirements by node's labels.",
-      "items": {
-        "$ref": "#/$defs/h4c2716164efb"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "hb38ec1200366": {
-      "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-      "items": {
-        "$ref": "#/$defs/h56bd48f38e6b"
-      },
-      "type": [
-        "array",
-        "null"
-      ],
-      "x-kubernetes-list-type": "atomic"
-    },
-    "hbc7b75a5b26b": {
-      "properties": {
-        "podMonitorEnabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "podMonitorEnabled"
-      ],
-      "type": "object"
-    },
-    "hbde315d93d36": {
+    "constrains/data+data=null": {
       "anyOf": [
         {
           "properties": {
@@ -997,129 +371,7 @@
         }
       ]
     },
-    "hbf63031b4ad0": {
-      "properties": {
-        "mutating": {}
-      },
-      "required": [
-        "mutating"
-      ],
-      "type": "object"
-    },
-    "hbfd0ca057049": {
-      "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
-      "items": {
-        "$ref": "#/$defs/h56bd48f38e6b"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "hc6909747d40e": {
-      "properties": {
-        "validating": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "validating"
-      ],
-      "type": "object"
-    },
-    "hc75fdaf6f4ac": {
-      "not": {
-        "pattern": "[\\r\\n]"
-      }
-    },
-    "hc931fc494eaa": {
-      "properties": {
-        "startupProbe": {}
-      },
-      "required": [
-        "startupProbe"
-      ],
-      "type": "object"
-    },
-    "hcab913ddb734": {
-      "properties": {
-        "livenessProbe": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "livenessProbe"
-      ],
-      "type": "object"
-    },
-    "hcad5969d5026": {
-      "additionalProperties": {},
-      "properties": {
-        "initialDelaySeconds": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/h97f1f236072d"
-            },
-            {
-              "$ref": "#/$defs/h0d6da7ea663d"
-            },
-            {
-              "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-              "format": "int32",
-              "type": "null"
-            },
-            {
-              "$ref": "#/$defs/h89bc4e1169b0"
-            },
-            {
-              "$ref": "#/$defs/h66e5b6a8755a"
-            },
-            {
-              "$ref": "#/$defs/h5b7699abf0ec"
-            },
-            {
-              "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-              "format": "int32",
-              "type": "integer"
-            }
-          ]
-        }
-      },
-      "type": "object"
-    },
-    "hcecdfbfc3065": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "hd02c2d7fbb46": {
-      "properties": {
-        "serviceAccount": {
-          "$ref": "#/$defs/hd5b36c6ea778"
-        }
-      },
-      "required": [
-        "serviceAccount"
-      ],
-      "type": "object"
-    },
-    "hd5b36c6ea778": {
-      "properties": {
-        "create": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "hd7dca754622e": {
+    "constrains/gmsaCredentialSpec+gmsaCredentialSpecName+hostProcess+runAsUserName": {
       "additionalProperties": false,
       "description": "WindowsSecurityContextOptions contain Windows-specific options and credentials.",
       "properties": {
@@ -1157,58 +409,7 @@
         "null"
       ]
     },
-    "hd8b85bfec90a": {
-      "additionalProperties": {},
-      "properties": {
-        "create": {},
-        "failurePolicy": {}
-      },
-      "type": "object"
-    },
-    "hd99594356446": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "he29be3bc100f": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "webhook": {}
-            },
-            "required": [
-              "webhook"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "webhook": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "webhook"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "he5c044e06206": {
-      "properties": {
-        "create": {}
-      },
-      "required": [
-        "create"
-      ],
-      "type": "object"
-    },
-    "he5d3ed30962c": {
+    "constrains/grafanaDashboard+grafanaDashboard=null": {
       "anyOf": [
         {
           "properties": {
@@ -1236,32 +437,326 @@
         }
       ]
     },
-    "he743df46060c": {
-      "anyOf": [
+    "constrains/grafanaDashboard.create+grafanaDashboard.create=null": {
+      "allOf": [
         {
-          "$ref": "#/$defs/h53fc60614240"
+          "type": "object"
         },
         {
-          "$ref": "#/$defs/h7a6313f8dd4a"
-        },
-        {
-          "$ref": "#/$defs/h0d6da7ea663d"
-        },
-        {
-          "$ref": "#/$defs/hab02c23921d2"
-        },
-        {
-          "$ref": "#/$defs/h89bc4e1169b0"
-        },
-        {
-          "$ref": "#/$defs/h4221e27a0556"
-        },
-        {
-          "$ref": "#/$defs/h5b7699abf0ec"
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "grafanaDashboard": {
+                    "$ref": "#/$defs/constrains~1create"
+                  }
+                },
+                "required": [
+                  "grafanaDashboard"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "grafanaDashboard": {
+                  "$ref": "#/$defs/constrains~1create=null"
+                }
+              },
+              "required": [
+                "grafanaDashboard"
+              ],
+              "type": "object"
+            }
+          ]
         }
       ]
     },
-    "heb40104c0c7f": {
+    "constrains/grafanaDashboard.create:t": {
+      "properties": {
+        "grafanaDashboard": {
+          "$ref": "#/$defs/constrains~1create:t"
+        }
+      },
+      "required": [
+        "grafanaDashboard"
+      ],
+      "type": "object"
+    },
+    "constrains/key+operator+values": {
+      "additionalProperties": false,
+      "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+      "properties": {
+        "key": {
+          "description": "The label key that the selector applies to.",
+          "type": "string"
+        },
+        "operator": {
+          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
+          "type": "string"
+        },
+        "values": {
+          "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
+          "items": {
+            "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "key",
+        "operator"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "constrains/key+operator+values/string,null": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "constrains/labelSelector.matchExpressions@items.key+8more": {
+      "additionalProperties": false,
+      "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+      "properties": {
+        "labelSelector": {
+          "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
+        },
+        "matchLabelKeys": {
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set"
+        },
+        "mismatchLabelKeys": {
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set"
+        },
+        "namespaceSelector": {
+          "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
+        },
+        "namespaces": {
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;namespaces-specifies-a-static"
+        },
+        "topologyKey": {
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1string;this-pod-should-be"
+        }
+      },
+      "required": [
+        "topologyKey"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "constrains/labelSelector.matchExpressions@items.key+8more/array,null;matchlabelkeys-is-a-set": {
+      "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+      "items": {
+        "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+      },
+      "type": [
+        "array",
+        "null"
+      ],
+      "x-kubernetes-list-type": "atomic"
+    },
+    "constrains/labelSelector.matchExpressions@items.key+8more/array,null;mismatchlabelkeys-is-a-set": {
+      "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+      "items": {
+        "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+      },
+      "type": [
+        "array",
+        "null"
+      ],
+      "x-kubernetes-list-type": "atomic"
+    },
+    "constrains/labelSelector.matchExpressions@items.key+8more/array,null;namespaces-specifies-a-static": {
+      "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
+      "items": {
+        "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "constrains/labelSelector.matchExpressions@items.key+8more/string;this-pod-should-be": {
+      "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
+      "type": "string"
+    },
+    "constrains/level+role+type+user": {
+      "additionalProperties": false,
+      "description": "SELinuxOptions are the labels to be applied to the container",
+      "properties": {
+        "level": {
+          "description": "Level is SELinux level label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "role": {
+          "description": "Role is a SELinux role label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "type": {
+          "description": "Type is a SELinux type label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "user": {
+          "description": "User is a SELinux user label that applies to the container.",
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "constrains/livenessProbe": {
+      "properties": {
+        "livenessProbe": {}
+      },
+      "required": [
+        "livenessProbe"
+      ],
+      "type": "object"
+    },
+    "constrains/livenessProbe=null": {
+      "properties": {
+        "livenessProbe": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "livenessProbe"
+      ],
+      "type": "object"
+    },
+    "constrains/matchExpressions@items.key+matchExpressions@items.operator+2more": {
+      "additionalProperties": false,
+      "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+      "properties": {
+        "matchExpressions": {
+          "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+          "items": {
+            "additionalProperties": false,
+            "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+            "properties": {
+              "key": {
+                "description": "key is the label key that the selector applies to.",
+                "type": "string"
+              },
+              "operator": {
+                "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                "type": "string"
+              },
+              "values": {
+                "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                "items": {
+                  "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+                },
+                "type": [
+                  "array",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "key",
+              "operator"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "matchLabels": {
+          "additionalProperties": {
+            "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+          },
+          "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-map-type": "atomic"
+    },
+    "constrains/monitoring+monitoring.grafanaDashboard.create+2more": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "monitoring": {
+                "type": "object"
+              }
+            },
+            "required": [
+              "monitoring"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "monitoring": {
+              "$ref": "#/$defs/constrains~1grafanaDashboard.create+grafanaDashboard.create=null"
+            }
+          },
+          "required": [
+            "monitoring"
+          ],
+          "type": "object"
+        },
+        {
+          "properties": {
+            "monitoring": {
+              "$ref": "#/$defs/constrains~1grafanaDashboard.create:t"
+            }
+          },
+          "required": [
+            "monitoring"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/mutating": {
+      "properties": {
+        "mutating": {}
+      },
+      "required": [
+        "mutating"
+      ],
+      "type": "object"
+    },
+    "constrains/mutating=null": {
       "properties": {
         "mutating": {
           "enum": [
@@ -1271,6 +766,229 @@
       },
       "required": [
         "mutating"
+      ],
+      "type": "object"
+    },
+    "constrains/podAffinityTerm.labelSelector.matchExpressions@items.key+9more": {
+      "additionalProperties": false,
+      "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
+      "properties": {
+        "podAffinityTerm": {
+          "additionalProperties": false,
+          "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+          "properties": {
+            "labelSelector": {
+              "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
+            },
+            "matchLabelKeys": {
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set"
+            },
+            "mismatchLabelKeys": {
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set"
+            },
+            "namespaceSelector": {
+              "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
+            },
+            "namespaces": {
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;namespaces-specifies-a-static"
+            },
+            "topologyKey": {
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1string;this-pod-should-be"
+            }
+          },
+          "required": [
+            "topologyKey"
+          ],
+          "type": "object"
+        },
+        "weight": {
+          "description": "weight associated with matching the corresponding podAffinityTerm, in the range 1-100.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "weight",
+        "podAffinityTerm"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "constrains/podMonitorEnabled:t": {
+      "properties": {
+        "podMonitorEnabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "podMonitorEnabled"
+      ],
+      "type": "object"
+    },
+    "constrains/rbac.create:t": {
+      "properties": {
+        "rbac": {
+          "$ref": "#/$defs/constrains~1create:t"
+        }
+      },
+      "required": [
+        "rbac"
+      ],
+      "type": "object"
+    },
+    "constrains/readinessProbe": {
+      "properties": {
+        "readinessProbe": {}
+      },
+      "required": [
+        "readinessProbe"
+      ],
+      "type": "object"
+    },
+    "constrains/readinessProbe=null": {
+      "properties": {
+        "readinessProbe": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "readinessProbe"
+      ],
+      "type": "object"
+    },
+    "constrains/secret:t": {
+      "properties": {
+        "secret": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "secret"
+      ],
+      "type": "object"
+    },
+    "constrains/serviceAccount.create:t": {
+      "properties": {
+        "serviceAccount": {
+          "$ref": "#/$defs/constrains~1create:t"
+        }
+      },
+      "required": [
+        "serviceAccount"
+      ],
+      "type": "object"
+    },
+    "constrains/startupProbe": {
+      "properties": {
+        "startupProbe": {}
+      },
+      "required": [
+        "startupProbe"
+      ],
+      "type": "object"
+    },
+    "constrains/startupProbe=null": {
+      "properties": {
+        "startupProbe": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "startupProbe"
+      ],
+      "type": "object"
+    },
+    "constrains/validating": {
+      "properties": {
+        "validating": {}
+      },
+      "required": [
+        "validating"
+      ],
+      "type": "object"
+    },
+    "constrains/validating=null": {
+      "properties": {
+        "validating": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "validating"
+      ],
+      "type": "object"
+    },
+    "constrains/webhook+webhook=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "webhook": {}
+            },
+            "required": [
+              "webhook"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "webhook": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "webhook"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/webhook.mutating.create:t": {
+      "properties": {
+        "webhook": {
+          "properties": {
+            "mutating": {
+              "$ref": "#/$defs/constrains~1create:t"
+            }
+          },
+          "required": [
+            "mutating"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "webhook"
+      ],
+      "type": "object"
+    },
+    "constrains/webhook.validating.create:t": {
+      "properties": {
+        "webhook": {
+          "properties": {
+            "validating": {
+              "$ref": "#/$defs/constrains~1create:t"
+            }
+          },
+          "required": [
+            "validating"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "webhook"
       ],
       "type": "object"
     },
@@ -1290,7 +1008,7 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/h29c2e670fd64"
+            "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
           },
           "propertyNames": {
             "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
@@ -1299,92 +1017,14 @@
         },
         {
           "items": {
-            "$ref": "#/$defs/h29c2e670fd64"
+            "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
           },
           "type": "array"
         }
       ]
     },
-    "hf3b4de68759a": {
-      "pattern": "\\{\\{",
-      "type": "string"
-    },
-    "hf740962e5988": {
-      "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "hf963a4a3a925": {
-      "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-      "items": {
-        "$ref": "#/$defs/h56bd48f38e6b"
-      },
-      "type": [
-        "array",
-        "null"
-      ],
-      "x-kubernetes-list-type": "atomic"
-    },
-    "providerSchema_8e568763903b": {
-      "anyOf": [
-        {
-          "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/h7a6313f8dd4a"
-        },
-        {
-          "$ref": "#/$defs/h0d6da7ea663d"
-        },
-        {
-          "$ref": "#/$defs/hab02c23921d2"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/h4174f29f69e0"
-            },
-            {
-              "$ref": "#/$defs/h1760b2f63aa3"
-            },
-            {
-              "$ref": "#/$defs/h424d50bcce86"
-            },
-            {
-              "$ref": "#/$defs/h10dc9a560bec"
-            },
-            {
-              "$ref": "#/$defs/ha57525005582"
-            },
-            {
-              "$ref": "#/$defs/h0e4014154904"
-            },
-            {
-              "$ref": "#/$defs/h589952769b45"
-            },
-            {
-              "$ref": "#/$defs/haeffa472167f"
-            },
-            {
-              "$ref": "#/$defs/hc75fdaf6f4ac"
-            },
-            {
-              "$ref": "#/$defs/h9810b646fad3"
-            }
-          ],
-          "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
-          "type": "string"
-        },
-        {
-          "$ref": "#/$defs/h89bc4e1169b0"
-        },
-        {
-          "$ref": "#/$defs/h5b7699abf0ec"
-        }
-      ]
+    "helm-double-quoted-safe/:helm-double-quoted-safe": {
+      "$ref": "#/$defs/helm-double-quoted-safe"
     },
     "t": {
       "anyOf": [
@@ -1410,6 +1050,366 @@
           "const": true
         }
       ]
+    },
+    "values/additionalArgs/anyOf/null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/values~1string"
+        }
+      ]
+    },
+    "values/additionalEnv/anyOf/null+string;name-of-the-referent+string;pattern-": {
+      "anyOf": [
+        {
+          "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/values~1additionalEnv~1string;pattern-"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "values/additionalEnv/string;pattern-": {
+      "pattern": "\\{\\{",
+      "type": "string"
+    },
+    "values/affinity/object": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "values/allOf/object+object,null;annotations-is-an-unstructured": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+          },
+          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        {
+          "$ref": "#/$defs/values~1object"
+        }
+      ]
+    },
+    "values/anyOf/not/:t+object+string": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string@2"
+        },
+        {
+          "$ref": "#/$defs/values~1not~1:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1object"
+        },
+        {
+          "$ref": "#/$defs/values~1string"
+        }
+      ]
+    },
+    "values/config/anyOf/null;name-must-be-unique+object+string+string;name-must-be-unique+3more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1config~1string;name-must-be-unique"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/values~1config~1null;name-must-be-unique"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
+        }
+      ]
+    },
+    "values/config/null;name-must-be-unique": {
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": "null"
+    },
+    "values/config/string;name-must-be-unique": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@6"
+        }
+      ],
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": "string"
+    },
+    "values/containerSecurityContext/string,null;localhostprofile-indicates-a-profile": {
+      "description": "localhostProfile indicates a profile defined in a file on the node should be used. The profile must be preconfigured on the node to work. Must be a descending path, relative to the kubelet's configured seccomp profile location. Must be set if type is \"Localhost\". Must NOT be set for any other type.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "values/monitoring.grafanaDashboard/allOf/object+object,null;map-of-string-keys": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+          },
+          "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        {
+          "$ref": "#/$defs/values~1object"
+        }
+      ]
+    },
+    "values/monitoring.grafanaDashboard/null;namespace-defines-the-space": {
+      "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
+      "type": "null"
+    },
+    "values/monitoring.grafanaDashboard/string;namespace-defines-the-space": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@6"
+        }
+      ],
+      "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
+      "type": "string"
+    },
+    "values/nameOverride": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string@2"
+        },
+        {
+          "$ref": "#/$defs/values~1not~1:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/values~1string"
+        }
+      ]
+    },
+    "values/namespaceOverride": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1monitoring.grafanaDashboard~1null;namespace-defines-the-space"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string@2"
+        },
+        {
+          "$ref": "#/$defs/values~1not~1:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
+        },
+        {
+          "$ref": "#/$defs/values~1monitoring.grafanaDashboard~1string;namespace-defines-the-space"
+        }
+      ]
+    },
+    "values/not/:t": {
+      "not": {
+        "$ref": "#/$defs/t"
+      }
+    },
+    "values/object": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "values/string": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@6"
+        }
+      ],
+      "type": "string"
+    },
+    "values/string;pattern-0-1-9": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
+    },
+    "values/webhook.livenessProbe": {
+      "additionalProperties": {},
+      "properties": {
+        "initialDelaySeconds": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/values~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
+            },
+            {
+              "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+              "format": "int32",
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
+            },
+            {
+              "$ref": "#/$defs/values~1string;pattern-0-1-9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
+            },
+            {
+              "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+              "format": "int32",
+              "type": "integer"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "values/webhook.mutating": {
+      "additionalProperties": {},
+      "properties": {
+        "create": {},
+        "failurePolicy": {}
+      },
+      "type": "object"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1417,7 +1417,7 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/h2a8893c4b842"
+        "$ref": "#/$defs/constrains~1rbac.create:t"
       },
       "then": {
         "allOf": [
@@ -1427,58 +1427,58 @@
               "namespaceOverride": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/h7a6313f8dd4a"
+                    "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string@2"
                   },
                   {
-                    "$ref": "#/$defs/h97f1f236072d"
+                    "$ref": "#/$defs/values~1not~1:t"
                   },
                   {
-                    "$ref": "#/$defs/h0d6da7ea663d"
+                    "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
                   },
                   {
-                    "$ref": "#/$defs/hab02c23921d2"
+                    "$ref": "#/$defs/constrains~1create:t+failurePolicy~1object"
                   },
                   {
-                    "$ref": "#/$defs/h89bc4e1169b0"
+                    "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
                   },
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/h4174f29f69e0"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@10"
                       },
                       {
-                        "$ref": "#/$defs/h1760b2f63aa3"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@4"
                       },
                       {
-                        "$ref": "#/$defs/h424d50bcce86"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@9"
                       },
                       {
-                        "$ref": "#/$defs/h10dc9a560bec"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@2"
                       },
                       {
-                        "$ref": "#/$defs/ha57525005582"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@5"
                       },
                       {
-                        "$ref": "#/$defs/h0e4014154904"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@7"
                       },
                       {
-                        "$ref": "#/$defs/h589952769b45"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@8"
                       },
                       {
-                        "$ref": "#/$defs/haeffa472167f"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern"
                       },
                       {
-                        "$ref": "#/$defs/hc75fdaf6f4ac"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@3"
                       },
                       {
-                        "$ref": "#/$defs/h9810b646fad3"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@6"
                       }
                     ],
                     "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/h5b7699abf0ec"
+                    "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
                   },
                   {
                     "description": "Namespace of the referenced object.  If the object kind is non-namespace, such as \"User\" or \"Group\", and this value is not empty the Authorizer should report an error.",
@@ -1515,49 +1515,49 @@
                   "name": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/h7a6313f8dd4a"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string@2"
                       },
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/h4174f29f69e0"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@10"
                           },
                           {
-                            "$ref": "#/$defs/h1760b2f63aa3"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@4"
                           },
                           {
-                            "$ref": "#/$defs/h424d50bcce86"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@9"
                           },
                           {
-                            "$ref": "#/$defs/h10dc9a560bec"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@2"
                           },
                           {
-                            "$ref": "#/$defs/ha57525005582"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@5"
                           },
                           {
-                            "$ref": "#/$defs/h0e4014154904"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@7"
                           },
                           {
-                            "$ref": "#/$defs/h589952769b45"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@8"
                           },
                           {
-                            "$ref": "#/$defs/haeffa472167f"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern"
                           },
                           {
-                            "$ref": "#/$defs/hc75fdaf6f4ac"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@3"
                           },
                           {
-                            "$ref": "#/$defs/h9810b646fad3"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@6"
                           }
                         ],
                         "description": "Name of the object being referenced.",
                         "type": "string"
                       },
                       {
-                        "$ref": "#/$defs/h97f1f236072d"
+                        "$ref": "#/$defs/values~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/hab02c23921d2"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1object"
                       }
                     ],
                     "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template."
@@ -1618,7 +1618,7 @@
       "if": {
         "properties": {
           "monitoring": {
-            "$ref": "#/$defs/hbc7b75a5b26b"
+            "$ref": "#/$defs/constrains~1podMonitorEnabled:t"
           }
         },
         "required": [
@@ -1634,10 +1634,10 @@
               "commonAnnotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/h97f1f236072d"
+                    "$ref": "#/$defs/values~1not~1:t"
                   },
                   {
-                    "$ref": "#/$defs/hcecdfbfc3065"
+                    "$ref": "#/$defs/values~1object"
                   }
                 ],
                 "description": "Annotations to be added to all other resources."
@@ -1648,7 +1648,7 @@
             "additionalProperties": {},
             "properties": {
               "namespaceOverride": {
-                "$ref": "#/$defs/h775337e086af"
+                "$ref": "#/$defs/values~1anyOf~1not~1:t+object+string"
               }
             }
           },
@@ -1656,7 +1656,7 @@
             "additionalProperties": {},
             "properties": {
               "nameOverride": {
-                "$ref": "#/$defs/h775337e086af"
+                "$ref": "#/$defs/values~1anyOf~1not~1:t+object+string"
               }
             }
           }
@@ -1727,7 +1727,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/he29be3bc100f"
+        "$ref": "#/$defs/constrains~1webhook+webhook=null"
       },
       "then": false
     },
@@ -1771,7 +1771,7 @@
                 "not": {
                   "properties": {
                     "webhook": {
-                      "$ref": "#/$defs/hbf63031b4ad0"
+                      "$ref": "#/$defs/constrains~1mutating"
                     }
                   },
                   "required": [
@@ -1783,7 +1783,7 @@
               {
                 "properties": {
                   "webhook": {
-                    "$ref": "#/$defs/heb40104c0c7f"
+                    "$ref": "#/$defs/constrains~1mutating=null"
                   }
                 },
                 "required": [
@@ -1794,7 +1794,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/he29be3bc100f"
+            "$ref": "#/$defs/constrains~1webhook+webhook=null"
           }
         ]
       },
@@ -1813,7 +1813,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h98f6e5bca561"
+        "$ref": "#/$defs/constrains~1config.create:t"
       },
       "then": {
         "additionalProperties": {},
@@ -1829,7 +1829,7 @@
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/h56bd48f38e6b"
+                          "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
                         },
                         "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
                         "type": "object"
@@ -1837,12 +1837,12 @@
                     ]
                   },
                   {
-                    "$ref": "#/$defs/hcecdfbfc3065"
+                    "$ref": "#/$defs/values~1object"
                   }
                 ]
               },
               {
-                "$ref": "#/$defs/h97f1f236072d"
+                "$ref": "#/$defs/values~1not~1:t"
               }
             ],
             "description": "Annotations to be added to all other resources."
@@ -1854,13 +1854,13 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/hd02c2d7fbb46"
+            "$ref": "#/$defs/constrains~1serviceAccount.create:t"
           },
           {
-            "$ref": "#/$defs/h2a8893c4b842"
+            "$ref": "#/$defs/constrains~1rbac.create:t"
           },
           {
-            "$ref": "#/$defs/haf4032d2d1f6"
+            "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
           }
         ]
       },
@@ -1870,10 +1870,10 @@
           "commonAnnotations": {
             "anyOf": [
               {
-                "$ref": "#/$defs/h97f1f236072d"
+                "$ref": "#/$defs/values~1not~1:t"
               },
               {
-                "$ref": "#/$defs/h8ec24937a2ec"
+                "$ref": "#/$defs/values~1allOf~1object+object,null;annotations-is-an-unstructured"
               }
             ],
             "description": "Annotations to be added to all other resources."
@@ -1888,7 +1888,7 @@
           "additionalProperties": {},
           "properties": {
             "repository": {
-              "$ref": "#/$defs/h29c2e670fd64"
+              "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
             }
           }
         }
@@ -1903,7 +1903,7 @@
                 "not": {
                   "properties": {
                     "webhook": {
-                      "$ref": "#/$defs/h89c7ed16a6fc"
+                      "$ref": "#/$defs/constrains~1livenessProbe"
                     }
                   },
                   "required": [
@@ -1915,7 +1915,7 @@
               {
                 "properties": {
                   "webhook": {
-                    "$ref": "#/$defs/hcab913ddb734"
+                    "$ref": "#/$defs/constrains~1livenessProbe=null"
                   }
                 },
                 "required": [
@@ -1926,7 +1926,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/he29be3bc100f"
+            "$ref": "#/$defs/constrains~1webhook+webhook=null"
           }
         ]
       },
@@ -1936,19 +1936,19 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/hd02c2d7fbb46"
+            "$ref": "#/$defs/constrains~1serviceAccount.create:t"
           },
           {
-            "$ref": "#/$defs/h2a8893c4b842"
+            "$ref": "#/$defs/constrains~1rbac.create:t"
           },
           {
-            "$ref": "#/$defs/haf4032d2d1f6"
+            "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
           },
           {
-            "$ref": "#/$defs/h7c202e1c8eed"
+            "$ref": "#/$defs/constrains~1webhook.validating.create:t"
           },
           {
-            "$ref": "#/$defs/h98f6e5bca561"
+            "$ref": "#/$defs/constrains~1config.create:t"
           }
         ]
       },
@@ -1956,7 +1956,7 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/h9c594d41cd8b"
+            "$ref": "#/$defs/values~1nameOverride"
           }
         }
       }
@@ -2056,7 +2056,7 @@
                 "not": {
                   "properties": {
                     "webhook": {
-                      "$ref": "#/$defs/h9b34a6fdf351"
+                      "$ref": "#/$defs/constrains~1validating"
                     }
                   },
                   "required": [
@@ -2068,7 +2068,7 @@
               {
                 "properties": {
                   "webhook": {
-                    "$ref": "#/$defs/hc6909747d40e"
+                    "$ref": "#/$defs/constrains~1validating=null"
                   }
                 },
                 "required": [
@@ -2079,7 +2079,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/he29be3bc100f"
+            "$ref": "#/$defs/constrains~1webhook+webhook=null"
           }
         ]
       },
@@ -2089,7 +2089,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/he29be3bc100f"
+            "$ref": "#/$defs/constrains~1webhook+webhook=null"
           },
           {
             "anyOf": [
@@ -2097,7 +2097,7 @@
                 "not": {
                   "properties": {
                     "webhook": {
-                      "$ref": "#/$defs/hc931fc494eaa"
+                      "$ref": "#/$defs/constrains~1startupProbe"
                     }
                   },
                   "required": [
@@ -2109,7 +2109,7 @@
               {
                 "properties": {
                   "webhook": {
-                    "$ref": "#/$defs/h590c7e7de299"
+                    "$ref": "#/$defs/constrains~1startupProbe=null"
                   }
                 },
                 "required": [
@@ -2156,7 +2156,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h7c202e1c8eed"
+        "$ref": "#/$defs/constrains~1webhook.validating.create:t"
       },
       "then": {
         "additionalProperties": {},
@@ -2167,10 +2167,10 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/h97f1f236072d"
+                    "$ref": "#/$defs/values~1not~1:t"
                   },
                   {
-                    "$ref": "#/$defs/h8ec24937a2ec"
+                    "$ref": "#/$defs/values~1allOf~1object+object,null;annotations-is-an-unstructured"
                   }
                 ]
               }
@@ -2183,7 +2183,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/hd02c2d7fbb46"
+            "$ref": "#/$defs/constrains~1serviceAccount.create:t"
           },
           {
             "allOf": [
@@ -2191,7 +2191,7 @@
                 "not": {
                   "properties": {
                     "config": {
-                      "$ref": "#/$defs/h01290ed0389c"
+                      "$ref": "#/$defs/constrains~1secret:t"
                     }
                   },
                   "required": [
@@ -2201,7 +2201,7 @@
                 }
               },
               {
-                "$ref": "#/$defs/h98f6e5bca561"
+                "$ref": "#/$defs/constrains~1config.create:t"
               }
             ]
           },
@@ -2229,7 +2229,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/h2a8893c4b842"
+                "$ref": "#/$defs/constrains~1rbac.create:t"
               }
             ]
           }
@@ -2239,7 +2239,7 @@
         "additionalProperties": {},
         "properties": {
           "namespaceOverride": {
-            "$ref": "#/$defs/h7dc4ebafa90d"
+            "$ref": "#/$defs/values~1namespaceOverride"
           }
         }
       }
@@ -2252,7 +2252,7 @@
               {
                 "properties": {
                   "webhook": {
-                    "$ref": "#/$defs/h2ec474ed13b8"
+                    "$ref": "#/$defs/constrains~1readinessProbe=null"
                   }
                 },
                 "required": [
@@ -2264,7 +2264,7 @@
                 "not": {
                   "properties": {
                     "webhook": {
-                      "$ref": "#/$defs/h03740d6afdc2"
+                      "$ref": "#/$defs/constrains~1readinessProbe"
                     }
                   },
                   "required": [
@@ -2276,7 +2276,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/he29be3bc100f"
+            "$ref": "#/$defs/constrains~1webhook+webhook=null"
           }
         ]
       },
@@ -2290,7 +2290,7 @@
               "monitoring": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/he5d3ed30962c"
+                    "$ref": "#/$defs/constrains~1grafanaDashboard+grafanaDashboard=null"
                   },
                   {
                     "type": "object"
@@ -2304,7 +2304,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/ha2c871a5cc16"
+            "$ref": "#/$defs/constrains~1monitoring+monitoring.grafanaDashboard.create+2more"
           },
           {
             "anyOf": [
@@ -2357,13 +2357,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h98f6e5bca561"
+            "$ref": "#/$defs/constrains~1config.create:t"
           },
           {
             "not": {
               "properties": {
                 "config": {
-                  "$ref": "#/$defs/h42097bbd84cc"
+                  "$ref": "#/$defs/constrains~1clusterWide:t"
                 }
               },
               "required": [
@@ -2394,7 +2394,7 @@
       "additionalProperties": {},
       "properties": {
         "namespaceOverride": {
-          "$ref": "#/$defs/h29c2e670fd64"
+          "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
         }
       }
     },
@@ -2424,7 +2424,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/ha2c871a5cc16"
+        "$ref": "#/$defs/constrains~1monitoring+monitoring.grafanaDashboard.create+2more"
       },
       "then": {
         "additionalProperties": {},
@@ -2444,10 +2444,10 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/haf4032d2d1f6"
+            "$ref": "#/$defs/constrains~1webhook.mutating.create:t"
           },
           {
-            "$ref": "#/$defs/h7c202e1c8eed"
+            "$ref": "#/$defs/constrains~1webhook.validating.create:t"
           }
         ]
       },
@@ -2486,45 +2486,45 @@
               "namespaceOverride": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/h7a6313f8dd4a"
+                    "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string@2"
                   },
                   {
-                    "$ref": "#/$defs/h97f1f236072d"
+                    "$ref": "#/$defs/values~1not~1:t"
                   },
                   {
-                    "$ref": "#/$defs/hab02c23921d2"
+                    "$ref": "#/$defs/constrains~1create:t+failurePolicy~1object"
                   },
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/h4174f29f69e0"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@10"
                       },
                       {
-                        "$ref": "#/$defs/h1760b2f63aa3"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@4"
                       },
                       {
-                        "$ref": "#/$defs/h424d50bcce86"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@9"
                       },
                       {
-                        "$ref": "#/$defs/h10dc9a560bec"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@2"
                       },
                       {
-                        "$ref": "#/$defs/ha57525005582"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@5"
                       },
                       {
-                        "$ref": "#/$defs/h0e4014154904"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@7"
                       },
                       {
-                        "$ref": "#/$defs/h589952769b45"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@8"
                       },
                       {
-                        "$ref": "#/$defs/haeffa472167f"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern"
                       },
                       {
-                        "$ref": "#/$defs/hc75fdaf6f4ac"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@3"
                       },
                       {
-                        "$ref": "#/$defs/h9810b646fad3"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@6"
                       }
                     ],
                     "description": "`namespace` is the namespace of the service. Required",
@@ -2543,42 +2543,42 @@
                   "name": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/h7a6313f8dd4a"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string@2"
                       },
                       {
-                        "$ref": "#/$defs/hab02c23921d2"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1object"
                       },
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/h4174f29f69e0"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@10"
                           },
                           {
-                            "$ref": "#/$defs/h1760b2f63aa3"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@4"
                           },
                           {
-                            "$ref": "#/$defs/h424d50bcce86"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@9"
                           },
                           {
-                            "$ref": "#/$defs/h10dc9a560bec"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@2"
                           },
                           {
-                            "$ref": "#/$defs/ha57525005582"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@5"
                           },
                           {
-                            "$ref": "#/$defs/h0e4014154904"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@7"
                           },
                           {
-                            "$ref": "#/$defs/h589952769b45"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@8"
                           },
                           {
-                            "$ref": "#/$defs/haeffa472167f"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern"
                           },
                           {
-                            "$ref": "#/$defs/hc75fdaf6f4ac"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@3"
                           },
                           {
-                            "$ref": "#/$defs/h9810b646fad3"
+                            "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@6"
                           }
                         ],
                         "description": "`name` is the name of the service. Required",
@@ -2605,10 +2605,10 @@
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/h0d6da7ea663d"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
                       },
                       {
-                        "$ref": "#/$defs/h89bc4e1169b0"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
                       },
                       {
                         "description": "If specified, the port on the service that hosting webhook. Default to 443 for backward compatibility. `port` should be a valid port number (1-65535, inclusive).",
@@ -2616,10 +2616,10 @@
                         "type": "integer"
                       },
                       {
-                        "$ref": "#/$defs/h66e5b6a8755a"
+                        "$ref": "#/$defs/values~1string;pattern-0-1-9"
                       },
                       {
-                        "$ref": "#/$defs/h5b7699abf0ec"
+                        "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
                       }
                     ]
                   }
@@ -2639,10 +2639,10 @@
           "items": {
             "anyOf": [
               {
-                "$ref": "#/$defs/hab02c23921d2"
+                "$ref": "#/$defs/constrains~1create:t+failurePolicy~1object"
               },
               {
-                "$ref": "#/$defs/h89bc4e1169b0"
+                "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
               },
               {
                 "type": "null"
@@ -2656,7 +2656,7 @@
         },
         {
           "items": {
-            "$ref": "#/$defs/h6be26bccb1b0"
+            "$ref": "#/$defs/values~1additionalArgs~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
           },
           "type": "array"
         },
@@ -2665,7 +2665,7 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/h6be26bccb1b0"
+            "$ref": "#/$defs/values~1additionalArgs~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
           },
           "type": "object"
         }
@@ -2687,7 +2687,7 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/hf3b4de68759a"
+                    "$ref": "#/$defs/values~1additionalEnv~1string;pattern-"
                   }
                 ]
               },
@@ -2698,7 +2698,7 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/hf3b4de68759a"
+                    "$ref": "#/$defs/values~1additionalEnv~1string;pattern-"
                   },
                   {
                     "type": "null"
@@ -2720,12 +2720,12 @@
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/hf3b4de68759a"
+                            "$ref": "#/$defs/values~1additionalEnv~1string;pattern-"
                           }
                         ]
                       },
                       "name": {
-                        "$ref": "#/$defs/h8bd53f944daf"
+                        "$ref": "#/$defs/values~1additionalEnv~1anyOf~1null+string;name-of-the-referent+string;pattern-"
                       },
                       "optional": {
                         "description": "Specify whether the ConfigMap or its key must be defined",
@@ -2755,7 +2755,7 @@
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/hf3b4de68759a"
+                            "$ref": "#/$defs/values~1additionalEnv~1string;pattern-"
                           },
                           {
                             "type": "null"
@@ -2769,7 +2769,7 @@
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/hf3b4de68759a"
+                            "$ref": "#/$defs/values~1additionalEnv~1string;pattern-"
                           }
                         ]
                       }
@@ -2790,7 +2790,7 @@
                       "containerName": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/hf3b4de68759a"
+                            "$ref": "#/$defs/values~1additionalEnv~1string;pattern-"
                           },
                           {
                             "type": "null"
@@ -2808,7 +2808,7 @@
                               {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/hf3b4de68759a"
+                                    "$ref": "#/$defs/values~1additionalEnv~1string;pattern-"
                                   },
                                   {
                                     "type": "null"
@@ -2827,7 +2827,7 @@
                             ]
                           },
                           {
-                            "$ref": "#/$defs/hf3b4de68759a"
+                            "$ref": "#/$defs/values~1additionalEnv~1string;pattern-"
                           }
                         ]
                       },
@@ -2838,7 +2838,7 @@
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/hf3b4de68759a"
+                            "$ref": "#/$defs/values~1additionalEnv~1string;pattern-"
                           }
                         ]
                       }
@@ -2863,12 +2863,12 @@
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/hf3b4de68759a"
+                            "$ref": "#/$defs/values~1additionalEnv~1string;pattern-"
                           }
                         ]
                       },
                       "name": {
-                        "$ref": "#/$defs/h8bd53f944daf"
+                        "$ref": "#/$defs/values~1additionalEnv~1anyOf~1null+string;name-of-the-referent+string;pattern-"
                       },
                       "optional": {
                         "description": "Specify whether the Secret or its key must be defined",
@@ -2907,7 +2907,7 @@
           "x-kubernetes-patch-strategy": "merge"
         },
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1not~1:t"
         },
         {
           "type": "null"
@@ -2918,7 +2918,7 @@
     "affinity": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1not~1:t"
         },
         {
           "additionalProperties": false,
@@ -2939,10 +2939,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/hb0bfc99d645c"
+                            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values@2"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/h63f926268676"
+                            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values"
                           }
                         },
                         "type": "object",
@@ -2979,10 +2979,10 @@
                         "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                         "properties": {
                           "matchExpressions": {
-                            "$ref": "#/$defs/hb0bfc99d645c"
+                            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values@2"
                           },
                           "matchFields": {
-                            "$ref": "#/$defs/h63f926268676"
+                            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values"
                           }
                         },
                         "type": [
@@ -3016,7 +3016,7 @@
                 "preferredDuringSchedulingIgnoredDuringExecution": {
                   "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
                   "items": {
-                    "$ref": "#/$defs/h16d818c893a0"
+                    "$ref": "#/$defs/constrains~1podAffinityTerm.labelSelector.matchExpressions@items.key+9more"
                   },
                   "type": [
                     "array",
@@ -3026,7 +3026,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/h526c09af9597"
+                    "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more"
                   },
                   "type": [
                     "array",
@@ -3046,7 +3046,7 @@
                 "preferredDuringSchedulingIgnoredDuringExecution": {
                   "description": "The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
                   "items": {
-                    "$ref": "#/$defs/h16d818c893a0"
+                    "$ref": "#/$defs/constrains~1podAffinityTerm.labelSelector.matchExpressions@items.key+9more"
                   },
                   "type": [
                     "array",
@@ -3056,7 +3056,7 @@
                 "requiredDuringSchedulingIgnoredDuringExecution": {
                   "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
                   "items": {
-                    "$ref": "#/$defs/h526c09af9597"
+                    "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more"
                   },
                   "type": [
                     "array",
@@ -3073,7 +3073,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/hd99594356446"
+          "$ref": "#/$defs/values~1affinity~1object"
         },
         {
           "type": "null"
@@ -3084,13 +3084,13 @@
     "commonAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1not~1:t"
         },
         {
-          "$ref": "#/$defs/hd99594356446"
+          "$ref": "#/$defs/values~1affinity~1object"
         },
         {
-          "$ref": "#/$defs/h8ec24937a2ec"
+          "$ref": "#/$defs/values~1allOf~1object+object,null;annotations-is-an-unstructured"
         }
       ],
       "description": "Annotations to be added to all other resources."
@@ -3102,14 +3102,14 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/h42097bbd84cc"
+                "$ref": "#/$defs/constrains~1clusterWide:t"
               },
               {
-                "$ref": "#/$defs/hd5b36c6ea778"
+                "$ref": "#/$defs/constrains~1create:t"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/h01290ed0389c"
+                  "$ref": "#/$defs/constrains~1secret:t"
                 }
               }
             ]
@@ -3132,7 +3132,7 @@
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/h56bd48f38e6b"
+                      "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
                     },
                     "description": "Data contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field. The keys stored in Data must not overlap with the keys in the BinaryData field, this is enforced during validation process.",
                     "type": "object"
@@ -3148,7 +3148,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/hd5b36c6ea778"
+            "$ref": "#/$defs/constrains~1create:t"
           },
           "then": {
             "additionalProperties": {},
@@ -3156,7 +3156,7 @@
               "name": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/he743df46060c"
+                    "$ref": "#/$defs/values~1config~1anyOf~1null;name-must-be-unique+object+string+string;name-must-be-unique+3more"
                   },
                   {
                     "type": "string"
@@ -3172,17 +3172,17 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/h42097bbd84cc"
+                  "$ref": "#/$defs/constrains~1clusterWide:t"
                 }
               },
               {
-                "$ref": "#/$defs/hd5b36c6ea778"
+                "$ref": "#/$defs/constrains~1create:t"
               },
               {
-                "$ref": "#/$defs/hbde315d93d36"
+                "$ref": "#/$defs/constrains~1data+data=null"
               },
               {
-                "$ref": "#/$defs/h01290ed0389c"
+                "$ref": "#/$defs/constrains~1secret:t"
               }
             ]
           },
@@ -3193,18 +3193,18 @@
             "allOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/h42097bbd84cc"
+                  "$ref": "#/$defs/constrains~1clusterWide:t"
                 }
               },
               {
-                "$ref": "#/$defs/hd5b36c6ea778"
+                "$ref": "#/$defs/constrains~1create:t"
               },
               {
-                "$ref": "#/$defs/hbde315d93d36"
+                "$ref": "#/$defs/constrains~1data+data=null"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/h01290ed0389c"
+                  "$ref": "#/$defs/constrains~1secret:t"
                 }
               }
             ]
@@ -3261,7 +3261,7 @@
                     "add": {
                       "description": "Added capabilities",
                       "items": {
-                        "$ref": "#/$defs/h56bd48f38e6b"
+                        "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
                       },
                       "type": [
                         "array",
@@ -3354,7 +3354,7 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/h167e8d2beef9"
+              "$ref": "#/$defs/constrains~1level+role+type+user"
             },
             "seccompProfile": {
               "anyOf": [
@@ -3363,7 +3363,7 @@
                   "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
                   "properties": {
                     "localhostProfile": {
-                      "$ref": "#/$defs/hf740962e5988"
+                      "$ref": "#/$defs/values~1containerSecurityContext~1string,null;localhostprofile-indicates-a-profile"
                     },
                     "type": {
                       "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
@@ -3389,7 +3389,7 @@
               ]
             },
             "windowsOptions": {
-              "$ref": "#/$defs/hd7dca754622e"
+              "$ref": "#/$defs/constrains~1gmsaCredentialSpec+gmsaCredentialSpecName+hostProcess+runAsUserName"
             }
           },
           "type": "object"
@@ -3412,62 +3412,62 @@
     "dnsPolicy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h7a6313f8dd4a"
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string@2"
         },
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1not~1:t"
         },
         {
-          "$ref": "#/$defs/h0d6da7ea663d"
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/h4174f29f69e0"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@10"
             },
             {
-              "$ref": "#/$defs/h1760b2f63aa3"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@4"
             },
             {
-              "$ref": "#/$defs/h424d50bcce86"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@9"
             },
             {
-              "$ref": "#/$defs/h10dc9a560bec"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@2"
             },
             {
-              "$ref": "#/$defs/ha57525005582"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@5"
             },
             {
-              "$ref": "#/$defs/h0e4014154904"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@7"
             },
             {
-              "$ref": "#/$defs/h589952769b45"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@8"
             },
             {
-              "$ref": "#/$defs/haeffa472167f"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern"
             },
             {
-              "$ref": "#/$defs/hc75fdaf6f4ac"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@3"
             },
             {
-              "$ref": "#/$defs/h9810b646fad3"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@6"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/hab02c23921d2"
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1object"
         },
         {
-          "$ref": "#/$defs/h89bc4e1169b0"
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
         },
         {
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
           "type": "null"
         },
         {
-          "$ref": "#/$defs/h5b7699abf0ec"
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
         }
       ]
     },
@@ -3488,16 +3488,16 @@
           "type": "string"
         },
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1not~1:t"
         },
         {
-          "$ref": "#/$defs/h0d6da7ea663d"
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
         },
         {
-          "$ref": "#/$defs/h89bc4e1169b0"
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
         },
         {
-          "$ref": "#/$defs/h5b7699abf0ec"
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
         }
       ]
     },
@@ -3507,55 +3507,55 @@
         "pullPolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/h7a6313f8dd4a"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string@2"
             },
             {
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/h0d6da7ea663d"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
             },
             {
-              "$ref": "#/$defs/hab02c23921d2"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1object"
             },
             {
-              "$ref": "#/$defs/h89bc4e1169b0"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
             },
             {
-              "$ref": "#/$defs/h5b7699abf0ec"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/h4174f29f69e0"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@10"
                 },
                 {
-                  "$ref": "#/$defs/h1760b2f63aa3"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@4"
                 },
                 {
-                  "$ref": "#/$defs/h424d50bcce86"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@9"
                 },
                 {
-                  "$ref": "#/$defs/h10dc9a560bec"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@2"
                 },
                 {
-                  "$ref": "#/$defs/ha57525005582"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@5"
                 },
                 {
-                  "$ref": "#/$defs/h0e4014154904"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@7"
                 },
                 {
-                  "$ref": "#/$defs/h589952769b45"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@8"
                 },
                 {
-                  "$ref": "#/$defs/haeffa472167f"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern"
                 },
                 {
-                  "$ref": "#/$defs/hc75fdaf6f4ac"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@3"
                 },
                 {
-                  "$ref": "#/$defs/h9810b646fad3"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@6"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -3573,7 +3573,7 @@
     "imagePullSecrets": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1not~1:t"
         },
         {
           "type": "null"
@@ -3611,7 +3611,7 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/he5d3ed30962c"
+                "$ref": "#/$defs/constrains~1grafanaDashboard+grafanaDashboard=null"
               },
               {
                 "type": "object"
@@ -3619,10 +3619,10 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/h9d2220a5f361"
+                    "$ref": "#/$defs/constrains~1grafanaDashboard.create+grafanaDashboard.create=null"
                   },
                   {
-                    "$ref": "#/$defs/h3641cbfe38f1"
+                    "$ref": "#/$defs/constrains~1grafanaDashboard.create:t"
                   }
                 ]
               }
@@ -3632,7 +3632,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/hbc7b75a5b26b"
+            "$ref": "#/$defs/constrains~1podMonitorEnabled:t"
           },
           "then": {
             "allOf": [
@@ -3642,10 +3642,10 @@
                   "podMonitorAdditionalLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/h97f1f236072d"
+                        "$ref": "#/$defs/values~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/hcecdfbfc3065"
+                        "$ref": "#/$defs/values~1object"
                       }
                     ],
                     "description": "Additional labels for the podMonitor"
@@ -3658,12 +3658,12 @@
                   "podMonitorMetricRelabelings": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/h97f1f236072d"
+                        "$ref": "#/$defs/values~1not~1:t"
                       },
                       {
                         "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
                         "items": {
-                          "$ref": "#/$defs/h6e08ce5151f5"
+                          "$ref": "#/$defs/constrains~1action=replace,Replace,keep,+19more+modulus+regex+replacement+separator+2more"
                         },
                         "type": "array"
                       }
@@ -3680,12 +3680,12 @@
                       {
                         "description": "relabelings defines the relabeling rules to apply the target's\nmetadata labels.\n\nThe Operator automatically adds relabelings for a few standard Kubernetes fields.\n\nThe original scrape job's name is available via the `__tmp_prometheus_job_name` label.\n\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config",
                         "items": {
-                          "$ref": "#/$defs/h6e08ce5151f5"
+                          "$ref": "#/$defs/constrains~1action=replace,Replace,keep,+19more+modulus+regex+replacement+separator+2more"
                         },
                         "type": "array"
                       },
                       {
-                        "$ref": "#/$defs/h97f1f236072d"
+                        "$ref": "#/$defs/values~1not~1:t"
                       }
                     ],
                     "description": "Relabel configurations to apply to samples before scraping."
@@ -3711,14 +3711,14 @@
               "if": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/h737e923dc1b9"
+                    "$ref": "#/$defs/constrains~1create=null"
                   },
                   {
-                    "$ref": "#/$defs/hd5b36c6ea778"
+                    "$ref": "#/$defs/constrains~1create:t"
                   },
                   {
                     "not": {
-                      "$ref": "#/$defs/he5c044e06206"
+                      "$ref": "#/$defs/constrains~1create"
                     }
                   }
                 ]
@@ -3731,10 +3731,10 @@
                       "labels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/h97f1f236072d"
+                            "$ref": "#/$defs/values~1not~1:t"
                           },
                           {
-                            "$ref": "#/$defs/h9399abf298b8"
+                            "$ref": "#/$defs/values~1monitoring.grafanaDashboard~1allOf~1object+object,null;map-of-string-keys"
                           }
                         ],
                         "description": "Labels that ConfigMaps should have to get configured in Grafana."
@@ -3747,32 +3747,32 @@
                       "namespace": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/h97f1f236072d"
+                            "$ref": "#/$defs/values~1not~1:t"
                           },
                           {
                             "allOf": [
                               {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/h70b8dbe03b5c"
+                                    "$ref": "#/$defs/values~1monitoring.grafanaDashboard~1null;namespace-defines-the-space"
                                   },
                                   {
-                                    "$ref": "#/$defs/h7a6313f8dd4a"
+                                    "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string@2"
                                   },
                                   {
-                                    "$ref": "#/$defs/h0d6da7ea663d"
+                                    "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
                                   },
                                   {
-                                    "$ref": "#/$defs/hab02c23921d2"
+                                    "$ref": "#/$defs/constrains~1create:t+failurePolicy~1object"
                                   },
                                   {
-                                    "$ref": "#/$defs/h89bc4e1169b0"
+                                    "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
                                   },
                                   {
-                                    "$ref": "#/$defs/h5b7699abf0ec"
+                                    "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
                                   },
                                   {
-                                    "$ref": "#/$defs/h2590b58864f8"
+                                    "$ref": "#/$defs/values~1monitoring.grafanaDashboard~1string;namespace-defines-the-space"
                                   }
                                 ]
                               },
@@ -3792,10 +3792,10 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/h97f1f236072d"
+                            "$ref": "#/$defs/values~1not~1:t"
                           },
                           {
-                            "$ref": "#/$defs/h8ec24937a2ec"
+                            "$ref": "#/$defs/values~1allOf~1object+object,null;annotations-is-an-unstructured"
                           }
                         ],
                         "description": "Annotations that ConfigMaps can have to get configured in Grafana."
@@ -3808,7 +3808,7 @@
                       "configMapName": {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/he743df46060c"
+                            "$ref": "#/$defs/values~1config~1anyOf~1null;name-must-be-unique+object+string+string;name-must-be-unique+3more"
                           },
                           {
                             "type": "string"
@@ -3872,7 +3872,7 @@
         "name": {
           "allOf": [
             {
-              "$ref": "#/$defs/he743df46060c"
+              "$ref": "#/$defs/values~1config~1anyOf~1null;name-must-be-unique+object+string+string;name-must-be-unique+3more"
             },
             {
               "type": "string"
@@ -3891,26 +3891,26 @@
       "type": "object"
     },
     "nameOverride": {
-      "$ref": "#/$defs/h9c594d41cd8b"
+      "$ref": "#/$defs/values~1nameOverride"
     },
     "namespaceOverride": {
-      "$ref": "#/$defs/h7dc4ebafa90d"
+      "$ref": "#/$defs/values~1namespaceOverride"
     },
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1not~1:t"
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/h56bd48f38e6b"
+            "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
           },
           "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
           "type": "object",
           "x-kubernetes-map-type": "atomic"
         },
         {
-          "$ref": "#/$defs/hd99594356446"
+          "$ref": "#/$defs/values~1affinity~1object"
         },
         {
           "type": "null"
@@ -3921,13 +3921,13 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1not~1:t"
         },
         {
-          "$ref": "#/$defs/hd99594356446"
+          "$ref": "#/$defs/values~1affinity~1object"
         },
         {
-          "$ref": "#/$defs/h8ec24937a2ec"
+          "$ref": "#/$defs/values~1allOf~1object+object,null;annotations-is-an-unstructured"
         }
       ],
       "description": "Annotations to be added to the pod."
@@ -3935,13 +3935,13 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1not~1:t"
         },
         {
-          "$ref": "#/$defs/h9399abf298b8"
+          "$ref": "#/$defs/values~1monitoring.grafanaDashboard~1allOf~1object+object,null;map-of-string-keys"
         },
         {
-          "$ref": "#/$defs/hd99594356446"
+          "$ref": "#/$defs/values~1affinity~1object"
         }
       ],
       "description": "Labels to be added to the pod."
@@ -3995,7 +3995,7 @@
               ]
             },
             "seLinuxOptions": {
-              "$ref": "#/$defs/h167e8d2beef9"
+              "$ref": "#/$defs/constrains~1level+role+type+user"
             },
             "seccompProfile": {
               "anyOf": [
@@ -4004,7 +4004,7 @@
                   "description": "SeccompProfile defines a pod/container's seccomp profile settings. Only one profile source may be set.",
                   "properties": {
                     "localhostProfile": {
-                      "$ref": "#/$defs/hf740962e5988"
+                      "$ref": "#/$defs/values~1containerSecurityContext~1string,null;localhostprofile-indicates-a-profile"
                     },
                     "type": {
                       "description": "fsGroup: 2000",
@@ -4073,7 +4073,7 @@
               ]
             },
             "windowsOptions": {
-              "$ref": "#/$defs/hd7dca754622e"
+              "$ref": "#/$defs/constrains~1gmsaCredentialSpec+gmsaCredentialSpecName+hostProcess+runAsUserName"
             }
           },
           "type": "object"
@@ -4087,58 +4087,58 @@
     "priorityClassName": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h7a6313f8dd4a"
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string@2"
         },
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1not~1:t"
         },
         {
-          "$ref": "#/$defs/h0d6da7ea663d"
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
         },
         {
-          "$ref": "#/$defs/hab02c23921d2"
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1object"
         },
         {
-          "$ref": "#/$defs/h89bc4e1169b0"
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/h4174f29f69e0"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@10"
             },
             {
-              "$ref": "#/$defs/h1760b2f63aa3"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@4"
             },
             {
-              "$ref": "#/$defs/h424d50bcce86"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@9"
             },
             {
-              "$ref": "#/$defs/h10dc9a560bec"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@2"
             },
             {
-              "$ref": "#/$defs/ha57525005582"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@5"
             },
             {
-              "$ref": "#/$defs/h0e4014154904"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@7"
             },
             {
-              "$ref": "#/$defs/h589952769b45"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@8"
             },
             {
-              "$ref": "#/$defs/haeffa472167f"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern"
             },
             {
-              "$ref": "#/$defs/hc75fdaf6f4ac"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@3"
             },
             {
-              "$ref": "#/$defs/h9810b646fad3"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@6"
             }
           ],
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/h5b7699abf0ec"
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
         },
         {
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -4173,16 +4173,16 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/h0d6da7ea663d"
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
         },
         {
-          "$ref": "#/$defs/h89bc4e1169b0"
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
         },
         {
-          "$ref": "#/$defs/h66e5b6a8755a"
+          "$ref": "#/$defs/values~1string;pattern-0-1-9"
         },
         {
-          "$ref": "#/$defs/h5b7699abf0ec"
+          "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
         }
       ]
     },
@@ -4222,7 +4222,7 @@
           "additionalProperties": {
             "oneOf": [
               {
-                "$ref": "#/$defs/h56bd48f38e6b"
+                "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
               },
               {
                 "type": [
@@ -4242,7 +4242,7 @@
           "additionalProperties": {
             "oneOf": [
               {
-                "$ref": "#/$defs/h56bd48f38e6b"
+                "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
               },
               {
                 "type": [
@@ -4270,12 +4270,12 @@
         "ipFamilies": {
           "anyOf": [
             {
-              "$ref": "#/$defs/h97f1f236072d"
+              "$ref": "#/$defs/values~1not~1:t"
             },
             {
               "description": "IPFamilies is a list of IP families (e.g. IPv4, IPv6) assigned to this service. This field is usually assigned automatically based on cluster configuration and the ipFamilyPolicy field. If this field is specified manually, the requested family is available in the cluster, and ipFamilyPolicy allows it, it will be used; otherwise creation of the service will fail. This field is conditionally mutable: it allows for adding or removing a secondary IP family, but it does not allow changing the primary IP family of the Service. Valid values are \"IPv4\" and \"IPv6\".  This field only applies to Services of types ClusterIP, NodePort, and LoadBalancer, and does apply to \"headless\" services. This field will be wiped when updating a Service to type ExternalName.\n\nThis field may hold a maximum of two entries (dual-stack families, in either order).  These families must correspond to the values of the clusterIPs field, if specified. Both clusterIPs and ipFamilies are governed by the ipFamilyPolicy field.",
               "items": {
-                "$ref": "#/$defs/h56bd48f38e6b"
+                "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
               },
               "type": "array",
               "x-kubernetes-list-type": "atomic"
@@ -4289,58 +4289,58 @@
         "ipFamilyPolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/h7a6313f8dd4a"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string@2"
             },
             {
-              "$ref": "#/$defs/h97f1f236072d"
+              "$ref": "#/$defs/values~1not~1:t"
             },
             {
-              "$ref": "#/$defs/h0d6da7ea663d"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
             },
             {
-              "$ref": "#/$defs/hab02c23921d2"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1object"
             },
             {
-              "$ref": "#/$defs/h89bc4e1169b0"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
             },
             {
               "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/h5b7699abf0ec"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/h4174f29f69e0"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@10"
                 },
                 {
-                  "$ref": "#/$defs/h1760b2f63aa3"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@4"
                 },
                 {
-                  "$ref": "#/$defs/h424d50bcce86"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@9"
                 },
                 {
-                  "$ref": "#/$defs/h10dc9a560bec"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@2"
                 },
                 {
-                  "$ref": "#/$defs/ha57525005582"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@5"
                 },
                 {
-                  "$ref": "#/$defs/h0e4014154904"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@7"
                 },
                 {
-                  "$ref": "#/$defs/h589952769b45"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@8"
                 },
                 {
-                  "$ref": "#/$defs/haeffa472167f"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern"
                 },
                 {
-                  "$ref": "#/$defs/hc75fdaf6f4ac"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@3"
                 },
                 {
-                  "$ref": "#/$defs/h9810b646fad3"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@6"
                 }
               ],
               "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
@@ -4352,7 +4352,7 @@
         "name": {
           "allOf": [
             {
-              "$ref": "#/$defs/he743df46060c"
+              "$ref": "#/$defs/values~1config~1anyOf~1null;name-must-be-unique+object+string+string;name-must-be-unique+3more"
             },
             {
               "type": "string"
@@ -4368,7 +4368,7 @@
               "type": "integer"
             },
             {
-              "$ref": "#/$defs/h66e5b6a8755a"
+              "$ref": "#/$defs/values~1string;pattern-0-1-9"
             }
           ]
         },
@@ -4381,53 +4381,53 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/h4174f29f69e0"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@10"
                 },
                 {
-                  "$ref": "#/$defs/h1760b2f63aa3"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@4"
                 },
                 {
-                  "$ref": "#/$defs/h424d50bcce86"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@9"
                 },
                 {
-                  "$ref": "#/$defs/h10dc9a560bec"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@2"
                 },
                 {
-                  "$ref": "#/$defs/ha57525005582"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@5"
                 },
                 {
-                  "$ref": "#/$defs/h0e4014154904"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@7"
                 },
                 {
-                  "$ref": "#/$defs/h589952769b45"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@8"
                 },
                 {
-                  "$ref": "#/$defs/haeffa472167f"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern"
                 },
                 {
-                  "$ref": "#/$defs/hc75fdaf6f4ac"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@3"
                 },
                 {
-                  "$ref": "#/$defs/h9810b646fad3"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@6"
                 }
               ],
               "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/h7a6313f8dd4a"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string@2"
             },
             {
-              "$ref": "#/$defs/h0d6da7ea663d"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
             },
             {
-              "$ref": "#/$defs/hab02c23921d2"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1object"
             },
             {
-              "$ref": "#/$defs/h89bc4e1169b0"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
             },
             {
-              "$ref": "#/$defs/h5b7699abf0ec"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
             }
           ]
         }
@@ -4442,7 +4442,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/hd5b36c6ea778"
+            "$ref": "#/$defs/constrains~1create:t"
           },
           "then": {
             "additionalProperties": {},
@@ -4450,28 +4450,28 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/h53fc60614240"
+                    "$ref": "#/$defs/values~1config~1string;name-must-be-unique"
                   },
                   {
-                    "$ref": "#/$defs/h7a6313f8dd4a"
+                    "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string@2"
                   },
                   {
-                    "$ref": "#/$defs/h97f1f236072d"
+                    "$ref": "#/$defs/values~1not~1:t"
                   },
                   {
-                    "$ref": "#/$defs/h0d6da7ea663d"
+                    "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
                   },
                   {
-                    "$ref": "#/$defs/hab02c23921d2"
+                    "$ref": "#/$defs/constrains~1create:t+failurePolicy~1object"
                   },
                   {
-                    "$ref": "#/$defs/h89bc4e1169b0"
+                    "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
                   },
                   {
-                    "$ref": "#/$defs/h4221e27a0556"
+                    "$ref": "#/$defs/values~1config~1null;name-must-be-unique"
                   },
                   {
-                    "$ref": "#/$defs/h5b7699abf0ec"
+                    "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
                   }
                 ],
                 "description": "The name of the service account to use.\nIf not set and create is true, a name is generated using the fullname template."
@@ -4487,26 +4487,26 @@
         "name": {
           "anyOf": [
             {
-              "$ref": "#/$defs/h7a6313f8dd4a"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string@2"
             },
             {
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/h97f1f236072d"
+              "$ref": "#/$defs/values~1not~1:t"
             },
             {
-              "$ref": "#/$defs/h0d6da7ea663d"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
             },
             {
-              "$ref": "#/$defs/hab02c23921d2"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1object"
             },
             {
-              "$ref": "#/$defs/h89bc4e1169b0"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
             },
             {
-              "$ref": "#/$defs/h5b7699abf0ec"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
             },
             {
               "type": "string"
@@ -4514,34 +4514,34 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/h4174f29f69e0"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@10"
                 },
                 {
-                  "$ref": "#/$defs/h1760b2f63aa3"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@4"
                 },
                 {
-                  "$ref": "#/$defs/h424d50bcce86"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@9"
                 },
                 {
-                  "$ref": "#/$defs/h10dc9a560bec"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@2"
                 },
                 {
-                  "$ref": "#/$defs/ha57525005582"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@5"
                 },
                 {
-                  "$ref": "#/$defs/h0e4014154904"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@7"
                 },
                 {
-                  "$ref": "#/$defs/h589952769b45"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@8"
                 },
                 {
-                  "$ref": "#/$defs/haeffa472167f"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern"
                 },
                 {
-                  "$ref": "#/$defs/hc75fdaf6f4ac"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@3"
                 },
                 {
-                  "$ref": "#/$defs/h9810b646fad3"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1not~1keywords~1pattern@6"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -4606,7 +4606,7 @@
           "type": "array"
         },
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1not~1:t"
         },
         {
           "type": "null"
@@ -4623,12 +4623,12 @@
             "description": "TopologySpreadConstraint specifies how to spread matching pods among the given topology.",
             "properties": {
               "labelSelector": {
-                "$ref": "#/$defs/ha9537dbdf639"
+                "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
               },
               "matchLabelKeys": {
                 "description": "MatchLabelKeys is a set of pod label keys to select the pods over which spreading will be calculated. The keys are used to lookup values from the incoming pod labels, those key-value labels are ANDed with labelSelector to select the group of existing pods over which spreading will be calculated for the incoming pod. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. MatchLabelKeys cannot be set when LabelSelector isn't set. Keys that don't exist in the incoming pod labels will be ignored. A null or empty list means only match against labelSelector.\n\nThis is a beta field and requires the MatchLabelKeysInPodTopologySpread feature gate to be enabled (enabled by default).",
                 "items": {
-                  "$ref": "#/$defs/h56bd48f38e6b"
+                  "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
                 },
                 "type": [
                   "array",
@@ -4692,7 +4692,7 @@
           "x-kubernetes-patch-strategy": "merge"
         },
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1not~1:t"
         },
         {
           "type": "null"
@@ -4713,7 +4713,7 @@
                 "maxSurge": {
                   "oneOf": [
                     {
-                      "$ref": "#/$defs/h56bd48f38e6b"
+                      "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
                     },
                     {
                       "type": [
@@ -4726,7 +4726,7 @@
                 "maxUnavailable": {
                   "oneOf": [
                     {
-                      "$ref": "#/$defs/h56bd48f38e6b"
+                      "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
                     },
                     {
                       "type": [
@@ -4753,10 +4753,10 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/values~1not~1:t"
         },
         {
-          "$ref": "#/$defs/hd99594356446"
+          "$ref": "#/$defs/values~1affinity~1object"
         },
         {
           "type": "null"
@@ -4771,11 +4771,11 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/heb40104c0c7f"
+                "$ref": "#/$defs/constrains~1mutating=null"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/hbf63031b4ad0"
+                  "$ref": "#/$defs/constrains~1mutating"
                 }
               }
             ]
@@ -4786,7 +4786,7 @@
           "additionalProperties": {},
           "properties": {
             "mutating": {
-              "$ref": "#/$defs/h4a3bf48a4843"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy"
             }
           }
         },
@@ -4794,11 +4794,11 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/h2ec474ed13b8"
+                "$ref": "#/$defs/constrains~1readinessProbe=null"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/h03740d6afdc2"
+                  "$ref": "#/$defs/constrains~1readinessProbe"
                 }
               }
             ]
@@ -4809,11 +4809,11 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/hcab913ddb734"
+                "$ref": "#/$defs/constrains~1livenessProbe=null"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/h89c7ed16a6fc"
+                  "$ref": "#/$defs/constrains~1livenessProbe"
                 }
               }
             ]
@@ -4825,11 +4825,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/hc931fc494eaa"
+                  "$ref": "#/$defs/constrains~1startupProbe"
                 }
               },
               {
-                "$ref": "#/$defs/h590c7e7de299"
+                "$ref": "#/$defs/constrains~1startupProbe=null"
               }
             ]
           },
@@ -4840,11 +4840,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/h9b34a6fdf351"
+                  "$ref": "#/$defs/constrains~1validating"
                 }
               },
               {
-                "$ref": "#/$defs/hc6909747d40e"
+                "$ref": "#/$defs/constrains~1validating=null"
               }
             ]
           },
@@ -4854,7 +4854,7 @@
           "additionalProperties": {},
           "properties": {
             "validating": {
-              "$ref": "#/$defs/h4a3bf48a4843"
+              "$ref": "#/$defs/constrains~1create:t+failurePolicy"
             }
           }
         }
@@ -4862,10 +4862,10 @@
       "description": "The webhook configuration.",
       "properties": {
         "livenessProbe": {
-          "$ref": "#/$defs/hcad5969d5026"
+          "$ref": "#/$defs/values~1webhook.livenessProbe"
         },
         "mutating": {
-          "$ref": "#/$defs/hd8b85bfec90a"
+          "$ref": "#/$defs/values~1webhook.mutating"
         },
         "port": {
           "anyOf": [
@@ -4875,12 +4875,12 @@
               "type": "integer"
             },
             {
-              "$ref": "#/$defs/h66e5b6a8755a"
+              "$ref": "#/$defs/values~1string;pattern-0-1-9"
             }
           ]
         },
         "readinessProbe": {
-          "$ref": "#/$defs/hcad5969d5026"
+          "$ref": "#/$defs/values~1webhook.livenessProbe"
         },
         "startupProbe": {
           "additionalProperties": {},
@@ -4888,10 +4888,10 @@
             "failureThreshold": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/h97f1f236072d"
+                  "$ref": "#/$defs/values~1not~1:t"
                 },
                 {
-                  "$ref": "#/$defs/h0d6da7ea663d"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
                 },
                 {
                   "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
@@ -4899,13 +4899,13 @@
                   "type": "null"
                 },
                 {
-                  "$ref": "#/$defs/h89bc4e1169b0"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
                 },
                 {
-                  "$ref": "#/$defs/h66e5b6a8755a"
+                  "$ref": "#/$defs/values~1string;pattern-0-1-9"
                 },
                 {
-                  "$ref": "#/$defs/h5b7699abf0ec"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
                 },
                 {
                   "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
@@ -4917,19 +4917,19 @@
             "periodSeconds": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/h97f1f236072d"
+                  "$ref": "#/$defs/values~1not~1:t"
                 },
                 {
-                  "$ref": "#/$defs/h0d6da7ea663d"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-a-za-z0-9-t"
                 },
                 {
-                  "$ref": "#/$defs/h89bc4e1169b0"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-t"
                 },
                 {
-                  "$ref": "#/$defs/h66e5b6a8755a"
+                  "$ref": "#/$defs/values~1string;pattern-0-1-9"
                 },
                 {
-                  "$ref": "#/$defs/h5b7699abf0ec"
+                  "$ref": "#/$defs/constrains~1create:t+failurePolicy~1string;pattern-null-null-null"
                 },
                 {
                   "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
@@ -4947,7 +4947,7 @@
           "type": "object"
         },
         "validating": {
-          "$ref": "#/$defs/hd8b85bfec90a"
+          "$ref": "#/$defs/values~1webhook.mutating"
         }
       },
       "required": [

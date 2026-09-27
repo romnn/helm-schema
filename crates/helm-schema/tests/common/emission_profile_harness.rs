@@ -1108,7 +1108,8 @@ fn generate_schema(
         .map(|mut generated| {
             generated.schema = helm_schema_json_schema_minify::minimize_schema(
                 generated.schema,
-                &generated.definition_names,
+                &generated.definition_origins,
+                helm_schema_json_schema_minify::DefinitionNames::Source,
             );
             generated
         })

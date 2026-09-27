@@ -1,6 +1,5 @@
 use std::collections::{BTreeMap, BTreeSet, VecDeque};
 
-use percent_encoding::percent_decode_str;
 use serde_json::Value;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
@@ -179,19 +178,21 @@ fn collect_reference(reference: &str, referenced: &mut BTreeSet<DefinitionId>) -
 }
 
 fn definition_id_from_reference(reference: &str) -> Result<Option<DefinitionId>, ()> {
-    let Some(fragment) = reference.strip_prefix('#') else {
-        return Ok(None);
+    let Some(fragment) = helm_schema_json_schema_walk::local_reference_fragment(reference) else {
+        // A same-document reference that is no valid URI reference may
+        // address any definition.
+        return if reference.starts_with('#') {
+            Err(())
+        } else {
+            Ok(None)
+        };
     };
     if !fragment.starts_with('/') {
         return Ok(None);
     }
-    if has_invalid_percent_encoding(fragment) {
-        return Err(());
-    }
-    let decoded_fragment = percent_decode_str(fragment).decode_utf8().map_err(|_| ())?;
-    let decoded_segments = decoded_fragment
+    let decoded_segments = fragment
         .split('/')
-        .map(decode_json_pointer_segment)
+        .map(helm_schema_json_schema_walk::unescape_json_pointer_segment)
         .collect::<Vec<_>>();
     let [root, keyword, name, ..] = decoded_segments.as_slice() else {
         return Ok(None);
@@ -203,20 +204,6 @@ fn definition_id_from_reference(reference: &str) -> Result<Option<DefinitionId>,
         }));
     }
     Ok(None)
-}
-
-fn has_invalid_percent_encoding(segment: &str) -> bool {
-    segment.as_bytes().iter().enumerate().any(|(index, byte)| {
-        *byte == b'%'
-            && segment
-                .as_bytes()
-                .get(index + 1..index + 3)
-                .is_none_or(|digits| !digits.iter().all(u8::is_ascii_hexdigit))
-    })
-}
-
-fn decode_json_pointer_segment(segment: &str) -> String {
-    segment.replace("~1", "/").replace("~0", "~")
 }
 
 #[cfg(test)]

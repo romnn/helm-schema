@@ -1,8 +1,30 @@
 use std::path::PathBuf;
 
-use clap::Args;
+use clap::{Args, ValueEnum};
 
-use helm_schema::output::{EmitRequest, JsonOutputFormat, OutputPipelineOptions, ReferencePolicy};
+use helm_schema::output::{
+    DefinitionNames, EmitRequest, JsonOutputFormat, OutputPipelineOptions, ReferencePolicy,
+};
+
+/// How readable output names the `$defs` entries helm-schema creates.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, ValueEnum)]
+pub enum DefsNames {
+    /// The schema path the definition's content comes from, such as
+    /// `k8s/io.k8s.api.core.v1.Probe` or `values/web.securityContext`.
+    #[default]
+    Source,
+    /// The schema path of the definition's first reference.
+    Destination,
+}
+
+impl From<DefsNames> for DefinitionNames {
+    fn from(names: DefsNames) -> Self {
+        match names {
+            DefsNames::Source => Self::Source,
+            DefsNames::Destination => Self::Destination,
+        }
+    }
+}
 
 /// Destination, serialization, reference, and minimization options.
 #[derive(Args, Debug, Clone)]
@@ -42,6 +64,23 @@ pub struct OutputArgs {
     /// downstream validator.
     #[arg(long = "no-minimize", action = clap::ArgAction::SetFalse)]
     pub minimize: bool,
+
+    /// How to name the `$defs` entries helm-schema creates.
+    #[arg(long, value_enum, default_value_t = DefsNames::Source)]
+    pub defs_names: DefsNames,
+
+    /// Rename every `$defs` entry to a short key before writing, for a schema
+    /// that is handed to Helm directly.
+    ///
+    /// Helm refuses chart files over 5 MiB; short names and `--compact` keep
+    /// large schemas under that limit. Error messages that mention a short
+    /// key translate back through the `--defs-map` file.
+    #[arg(long)]
+    pub shorten_defs: bool,
+
+    /// Write the map from each short `$defs` key to its readable name here.
+    #[arg(long, value_name = "PATH", requires = "shorten_defs")]
+    pub defs_map: Option<PathBuf>,
 }
 
 impl OutputArgs {
@@ -51,6 +90,7 @@ impl OutputArgs {
             output: OutputPipelineOptions {
                 strip_descriptions: self.strip_descriptions,
                 minimize: self.minimize,
+                definition_names: self.defs_names.into(),
             },
         }
     }

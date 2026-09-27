@@ -21,7 +21,7 @@ pub(crate) fn definition_name(style: QuotedScalarStyle) -> &'static str {
 }
 
 pub(crate) fn reference_schema(style: QuotedScalarStyle, templated: bool) -> Value {
-    let reference = json!({ "$ref": format!("#/$defs/{}", definition_name(style)) });
+    let reference = json!({ "$ref": helm_schema_json_schema_walk::definition_reference(definition_name(style)) });
     if templated {
         json!({
             "anyOf": [
@@ -53,7 +53,7 @@ pub(crate) fn definition_schema(style: QuotedScalarStyle) -> Value {
 }
 
 pub(crate) fn value_references(value: &Value, style: QuotedScalarStyle) -> bool {
-    let needle = format!("#/$defs/{}", definition_name(style));
+    let needle = helm_schema_json_schema_walk::definition_reference(definition_name(style));
     references_pointer(value, &needle)
 }
 

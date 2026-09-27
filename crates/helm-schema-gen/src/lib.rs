@@ -186,12 +186,13 @@ pub struct GeneratedValuesSchema {
     /// Fact-level accounting before caller-owned overrides and
     /// output-pipeline transforms.
     pub emission_report: EmissionReport,
-    /// The final name of each private definition handle in `schema`.
+    /// Every private definition handle in `schema`, with the provider
+    /// documents and pointers its content came from.
     ///
-    /// Apply them only after every size-driven extraction decision, as
+    /// Name them only after every size-driven extraction decision, as
     /// `helm_schema_json_schema_minify::minimize_schema` does, so no readable
     /// spelling influences those decisions.
-    pub definition_names: BTreeMap<String, String>,
+    pub definition_origins: BTreeMap<String, Vec<helm_schema_json_schema_minify::DefinitionOrigin>>,
 }
 
 /// Generates a JSON Schema and the fact-level accounting from the same emitter run.
@@ -203,7 +204,7 @@ pub fn generate_values_schema_with_report(input: ValuesSchemaInput<'_>) -> Gener
     GeneratedValuesSchema {
         schema: completed.schema,
         emission_report: completed.emission_report,
-        definition_names: completed.definition_names,
+        definition_origins: completed.definition_origins,
     }
 }
 

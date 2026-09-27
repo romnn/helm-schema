@@ -14,6 +14,7 @@ fn request(reference_policy: ReferencePolicy) -> PreparedEmitRequest {
         output: OutputPipelineOptions {
             strip_descriptions: false,
             minimize: false,
+            definition_names: helm_schema_json_schema_minify::DefinitionNames::Source,
         },
     })
 }

@@ -138,5 +138,19 @@ pub fn format_diagnostic_text(diagnostic: &Diagnostic) -> String {
                 disabled_knobs.join(", ")
             )
         }
+        Diagnostic::SchemaExceedsHelmFileLimit {
+            bytes,
+            limit,
+            shortened: false,
+        } => format!(
+            "warning: the schema is {bytes} bytes, over Helm's {limit}-byte chart-file limit, so Helm will refuse the chart; ship a copy with short definition names instead (`--shorten-defs --compact`, or `helm-schema shorten`)"
+        ),
+        Diagnostic::SchemaExceedsHelmFileLimit {
+            bytes,
+            limit,
+            shortened: true,
+        } => format!(
+            "warning: the schema is {bytes} bytes even with short definition names, over Helm's {limit}-byte chart-file limit, so Helm will refuse the chart"
+        ),
     }
 }

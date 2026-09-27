@@ -72,6 +72,11 @@ fn sample_variants() -> Vec<Diagnostic> {
             disabled_knobs: vec!["terminal-clauses".to_string()],
             explicit: false,
         },
+        Diagnostic::SchemaExceedsHelmFileLimit {
+            bytes: 6_000_000,
+            limit: 5_242_880,
+            shortened: false,
+        },
     ]
 }
 

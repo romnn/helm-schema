@@ -35,26 +35,56 @@ Some `$defs` entries appear across many charts:
 | Definition | Meaning |
 |---|---|
 | `helm-truthy` | Helm's notion of "truthy" — anything other than `false`, `0`, `""`, an empty list, or an empty map. Used to model `if`/`with` guards precisely rather than assuming a boolean. |
-| An int-or-string pattern (e.g. `h0123456789ab`) | Accepts Helm's quoted-integer form (`"3"`) alongside a numeric field, because a quoted number renders and validates the same as the bare number. |
+| An int-or-string pattern (e.g. `values/replicas@anyOf(1)`) | Accepts Helm's quoted-integer form (`"3"`) alongside a numeric field, because a quoted number renders and validates the same as the bare number. |
 
-Interned definitions are named after their content: `h` plus the first twelve
-hex digits of a SHA-256 digest of the definition (longer only when two digests
-share those digits). Shared Kubernetes/CRD subtrees are named
-`providerSchema_…`, `providerShared_…`, or after their provider source
-(`providerSource_…`). Named building blocks such as `helm-truthy` keep their
-names and act as identity boundaries: changing one does not rename the
-definitions that reference it.
+Every `$defs` entry `helm-schema` creates is named by a schema path. By
+default (`--defs-names source`) the path says where the definition's content
+comes from:
 
-A name stays the same as long as the definition's content, the names of the
-definitions it references, the order of its `allOf`/`anyOf` arms, and the set
-of names already in use stay the same. So an unrelated chart edit usually
-leaves the other definitions untouched, with two exceptions:
+- `k8s/io.k8s.api.core.v1.SecurityContext`,
+  `k8s/deployment-apps-v1/spec.template.spec.containers@items`,
+  `crd/monitoring.coreos.com/prometheus_v1/spec.containers@items`: a Kubernetes
+  or CRD schema, named by its type or document and the pointer inside it;
+- `values/agents.containers.agent.securityContext`: a position in the values
+  schema. When the same content occurs in several places, the smallest path
+  wins, so a name changes only when a smaller occurrence is added or removed;
+- `when/agents.enabled:t+agents.mode=fast/then/agents.image`: a conditional
+  fragment without a stable position (it sits below an `allOf`/`anyOf` arm,
+  whose index shifts when an unrelated arm is added), named by the values
+  paths its `if` tests and its `then`/`else` constrain;
+- `constrains/image.pullPolicy+image.tag`: any other such fragment, named by
+  the values paths it constrains;
+- `values/agents/string:uri;image-repository-to-pull`: such a fragment that
+  constrains no values path (a leaf), named by what it is below the nearest
+  stable path above it: its `type` with `:format`, `=value` and the first
+  words of its description (or `;pattern-…`), `not/<inner>`,
+  `anyOf/<member>+<member>`, `:name` for a named definition, or
+  `keywords/<its keywords>`.
 
-- `allOf`/`anyOf` arms are ordered by internal handles of shared
-  Kubernetes/CRD subtrees, so a new, unrelated provider subtree can reorder
-  arms and rename the definitions that contain them.
-- Two definitions with equal digests get `-2`, `-3`, … suffixes in an
-  internal order that an unrelated edit can change.
+A path in a `when/` or `constrains/` name carries the operator its schema
+states: `=v` for `const`/`enum`, `!=v` for a negated one, `:name` for a
+reference to a named definition (`:t` is Helm truthiness), `?` for a key that
+is only required; `@items` and `@*` step into array items and map values.
+Paths are sorted and joined by `+`; a long list ends in `+Nmore`, long values
+and names are cut and marked `...`. Fragments with equal names are numbered
+`@2`, `@3`, … in the order of their content, so an unrelated fragment never
+renames them.
+
+Property steps are written `.name`; every other step carries an `@` marker,
+such as `@items`, `@additionalProperties`, `@anyOf(1)`, `@then`, or
+`@patternProperties('(5e)a')`. A property name other than letters, digits,
+`_` and `-` is quoted, and characters a URI fragment cannot carry are written
+as `(hex)`. A reference at the root of a definition adds `@ref`, and a name
+that is already taken receives an `@2`, `@3`, … suffix.
+
+`--defs-names destination` names each definition after its first reference
+instead, visiting object keys in sorted order and the definitions in the
+order they are first reached. Named building blocks such as `helm-truthy`
+keep their names.
+
+`--defs-names destination` names are positions and do cross `allOf`/`anyOf`
+indexes, so adding or removing a conditional can rename the definitions below
+later arms.
 
 ## `$ref` handling
 
@@ -83,18 +113,23 @@ downstream validator compilation larger.
 
 ## Size limit
 
-Helm refuses chart files larger than 5 MiB (5,242,880 bytes). When the
-requested output would exceed that, `helm-schema` falls back one step at a
-time, taking each step only when the previous one is still too large:
+Helm refuses chart files larger than 5 MiB (5,242,880 bytes). `helm-schema`
+never changes the format or the names of its output to fit: when the written
+schema is larger, it warns and names the fix. Ship Helm a shortened copy,
+with every `$defs` entry renamed to a short base-62 key (the most referenced
+definition getting the shortest one), usually as compact JSON:
 
-1. pretty JSON with readable definition names (the default);
-2. compact JSON with readable definition names (where `--compact` starts);
-3. compact JSON with every root definition renamed to a short base-62 key,
-   the most referenced definition getting the shortest one. This is a
-   one-to-one rename of the same schema.
+```bash
+# generate and shorten in one step
+helm-schema ./mychart --compact --shorten-defs --defs-map defs-map.json -o values.schema.json
+# or shorten a reviewed readable schema
+helm-schema shorten values.readable.json values.schema.json --map defs-map.json --compact
+```
 
-If even the last step exceeds the limit, generation fails with an error
-instead of writing a file Helm cannot load.
+Shortening is a one-to-one rename of the same schema. The map file lists the
+readable name of every short key, so a Helm or validator error that mentions
+`#/$defs/2b` can be translated back
+(`helm_schema::output::expand_short_definition_names`).
 
 ## Emission profiles
 

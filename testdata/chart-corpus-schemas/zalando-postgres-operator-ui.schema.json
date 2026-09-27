@@ -1,80 +1,45 @@
 {
   "$defs": {
-    "h054810944dcc": {
-      "additionalProperties": {},
+    "constrains/@items.hosts": {
+      "additionalProperties": {
+        "$ref": "#/$defs/constrains~1hosts"
+      },
+      "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
+      "items": {
+        "$ref": "#/$defs/constrains~1hosts"
+      }
+    },
+    "constrains/@items.paths": {
+      "additionalProperties": {
+        "$ref": "#/$defs/constrains~1paths"
+      },
+      "items": {
+        "$ref": "#/$defs/constrains~1paths"
+      }
+    },
+    "constrains/create:t": {
       "properties": {
-        "paths": {
-          "$ref": "#/$defs/hd5a11afe7131"
-        }
-      }
-    },
-    "h0d6da7ea663d": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "h0e4014154904": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "h10dc9a560bec": {
-      "not": {
-        "pattern": "[ \\t]#"
-      }
-    },
-    "h16d818c893a0": {
-      "additionalProperties": false,
-      "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
-      "properties": {
-        "podAffinityTerm": {
-          "additionalProperties": false,
-          "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
-          "properties": {
-            "labelSelector": {
-              "$ref": "#/$defs/ha9537dbdf639"
-            },
-            "matchLabelKeys": {
-              "$ref": "#/$defs/hb38ec1200366"
-            },
-            "mismatchLabelKeys": {
-              "$ref": "#/$defs/hf963a4a3a925"
-            },
-            "namespaceSelector": {
-              "$ref": "#/$defs/ha9537dbdf639"
-            },
-            "namespaces": {
-              "$ref": "#/$defs/hbfd0ca057049"
-            },
-            "topologyKey": {
-              "$ref": "#/$defs/h795767c92c3b"
-            }
-          },
-          "required": [
-            "topologyKey"
-          ],
-          "type": "object"
-        },
-        "weight": {
-          "description": "weight associated with matching the corresponding podAffinityTerm, in the range 1-100.",
-          "format": "int32",
-          "type": "integer"
+        "create": {
+          "$ref": "#/$defs/t"
         }
       },
       "required": [
-        "weight",
-        "podAffinityTerm"
+        "create"
       ],
-      "type": [
-        "object",
-        "null"
-      ]
+      "type": "object"
     },
-    "h1760b2f63aa3": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
     },
-    "h2959ce400e35": {
+    "constrains/envs+envs=null": {
       "anyOf": [
         {
           "properties": {
@@ -102,232 +67,17 @@
         }
       ]
     },
-    "h29c2e670fd64": {
-      "$ref": "#/$defs/helm-double-quoted-safe"
-    },
-    "h2a8893c4b842": {
-      "properties": {
-        "rbac": {
-          "$ref": "#/$defs/hd5b36c6ea778"
-        }
-      },
-      "required": [
-        "rbac"
-      ],
-      "type": "object"
-    },
-    "h3394d7d8572c": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h10dc9a560bec"
-        },
-        {
-          "$ref": "#/$defs/haeffa472167f"
-        },
-        {
-          "$ref": "#/$defs/hc75fdaf6f4ac"
-        }
-      ],
-      "type": "string"
-    },
-    "h3d4a0bef4a8a": {
-      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "h4174f29f69e0": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "h4221e27a0556": {
-      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-      "type": "null"
-    },
-    "h424d50bcce86": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "h4c2716164efb": {
-      "additionalProperties": false,
-      "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-      "properties": {
-        "key": {
-          "description": "The label key that the selector applies to.",
-          "type": "string"
-        },
-        "operator": {
-          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-          "type": "string"
-        },
-        "values": {
-          "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
-          "items": {
-            "$ref": "#/$defs/h56bd48f38e6b"
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        }
-      },
-      "required": [
-        "key",
-        "operator"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "h4d59e63f834e": {
+    "constrains/host+paths": {
       "additionalProperties": {},
       "properties": {
-        "hosts": {
-          "$ref": "#/$defs/h84d4bc8415e5"
-        },
-        "secretName": {}
+        "host": {},
+        "paths": {
+          "$ref": "#/$defs/constrains~1host+paths~1anyOf~1array+object"
+        }
       },
       "type": "object"
     },
-    "h526c09af9597": {
-      "additionalProperties": false,
-      "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
-      "properties": {
-        "labelSelector": {
-          "$ref": "#/$defs/ha9537dbdf639"
-        },
-        "matchLabelKeys": {
-          "$ref": "#/$defs/hb38ec1200366"
-        },
-        "mismatchLabelKeys": {
-          "$ref": "#/$defs/hf963a4a3a925"
-        },
-        "namespaceSelector": {
-          "$ref": "#/$defs/ha9537dbdf639"
-        },
-        "namespaces": {
-          "$ref": "#/$defs/hbfd0ca057049"
-        },
-        "topologyKey": {
-          "$ref": "#/$defs/h795767c92c3b"
-        }
-      },
-      "required": [
-        "topologyKey"
-      ],
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "h53fc60614240": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/h4174f29f69e0"
-        },
-        {
-          "$ref": "#/$defs/h1760b2f63aa3"
-        },
-        {
-          "$ref": "#/$defs/h424d50bcce86"
-        },
-        {
-          "$ref": "#/$defs/h10dc9a560bec"
-        },
-        {
-          "$ref": "#/$defs/ha57525005582"
-        },
-        {
-          "$ref": "#/$defs/h0e4014154904"
-        },
-        {
-          "$ref": "#/$defs/h589952769b45"
-        },
-        {
-          "$ref": "#/$defs/haeffa472167f"
-        },
-        {
-          "$ref": "#/$defs/hc75fdaf6f4ac"
-        },
-        {
-          "$ref": "#/$defs/h9810b646fad3"
-        }
-      ],
-      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-      "type": "string"
-    },
-    "h56bd48f38e6b": {
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "h589952769b45": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "h5b7699abf0ec": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "h61a85f5cf2ed": {
-      "additionalProperties": {
-        "$ref": "#/$defs/h054810944dcc"
-      },
-      "items": {
-        "$ref": "#/$defs/h054810944dcc"
-      }
-    },
-    "h63f926268676": {
-      "description": "A list of node selector requirements by node's fields.",
-      "items": {
-        "$ref": "#/$defs/h4c2716164efb"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "h66e5b6a8755a": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
-    },
-    "h795767c92c3b": {
-      "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
-      "type": "string"
-    },
-    "h7a6313f8dd4a": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "h7c00b5f44fec": {
-      "additionalProperties": {},
-      "properties": {
-        "hosts": {
-          "$ref": "#/$defs/hd5a11afe7131"
-        }
-      }
-    },
-    "h84d4bc8415e5": {
+    "constrains/host+paths/anyOf/array+object": {
       "anyOf": [
         {
           "additionalProperties": {},
@@ -339,173 +89,73 @@
         }
       ]
     },
-    "h89bc4e1169b0": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "h8ec24937a2ec": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "$ref": "#/$defs/h56bd48f38e6b"
-          },
-          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-          "type": [
-            "object",
-            "null"
-          ]
-        },
-        {
-          "additionalProperties": {
-            "type": "string"
-          },
-          "type": "object"
-        }
-      ]
-    },
-    "h958ed69927a1": {
+    "constrains/hosts": {
       "additionalProperties": {},
       "properties": {
-        "secretName": {
+        "hosts": {
+          "$ref": "#/$defs/constrains~1hosts~1array,integer,null,object"
+        }
+      }
+    },
+    "constrains/hosts+secretName": {
+      "additionalProperties": {},
+      "properties": {
+        "hosts": {
+          "$ref": "#/$defs/constrains~1host+paths~1anyOf~1array+object"
+        },
+        "secretName": {}
+      },
+      "type": "object"
+    },
+    "constrains/hosts/array,integer,null,object": {
+      "type": [
+        "array",
+        "integer",
+        "null",
+        "object"
+      ]
+    },
+    "constrains/hosts:t": {
+      "additionalProperties": {},
+      "properties": {
+        "hosts": {
           "anyOf": [
             {
-              "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
+              "$ref": "#/$defs/constrains~1hosts:t~1not~1:t"
+            },
+            {
+              "type": "object"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "description": "hosts is a list of hosts included in the TLS certificate. The values in this list must match the name/s used in the tlsSecret. Defaults to the wildcard host setting for the loadbalancer controller fulfilling this Ingress, if left unspecified.",
+              "items": {
+                "$ref": "#/$defs/values~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.values@items"
+              },
+              "type": "array",
+              "x-kubernetes-list-type": "atomic"
+            },
+            {
               "type": "null"
             },
             {
-              "$ref": "#/$defs/h7a6313f8dd4a"
-            },
-            {
-              "$ref": "#/$defs/h0d6da7ea663d"
-            },
-            {
-              "$ref": "#/$defs/hab02c23921d2"
-            },
-            {
-              "$ref": "#/$defs/h89bc4e1169b0"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/h4174f29f69e0"
-                },
-                {
-                  "$ref": "#/$defs/h1760b2f63aa3"
-                },
-                {
-                  "$ref": "#/$defs/h424d50bcce86"
-                },
-                {
-                  "$ref": "#/$defs/h10dc9a560bec"
-                },
-                {
-                  "$ref": "#/$defs/ha57525005582"
-                },
-                {
-                  "$ref": "#/$defs/h0e4014154904"
-                },
-                {
-                  "$ref": "#/$defs/h589952769b45"
-                },
-                {
-                  "$ref": "#/$defs/haeffa472167f"
-                },
-                {
-                  "$ref": "#/$defs/hc75fdaf6f4ac"
-                },
-                {
-                  "$ref": "#/$defs/h9810b646fad3"
-                }
-              ],
-              "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/h5b7699abf0ec"
+              "type": "array"
             }
           ]
         }
       }
     },
-    "h97f1f236072d": {
+    "constrains/hosts:t/not/:t": {
       "not": {
         "$ref": "#/$defs/t"
       }
     },
-    "h9810b646fad3": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "h9c594d41cd8b": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/h7a6313f8dd4a"
-        },
-        {
-          "$ref": "#/$defs/h97f1f236072d"
-        },
-        {
-          "$ref": "#/$defs/h0d6da7ea663d"
-        },
-        {
-          "$ref": "#/$defs/hab02c23921d2"
-        },
-        {
-          "$ref": "#/$defs/h89bc4e1169b0"
-        },
-        {
-          "$ref": "#/$defs/h5b7699abf0ec"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/h4174f29f69e0"
-            },
-            {
-              "$ref": "#/$defs/h1760b2f63aa3"
-            },
-            {
-              "$ref": "#/$defs/h424d50bcce86"
-            },
-            {
-              "$ref": "#/$defs/h10dc9a560bec"
-            },
-            {
-              "$ref": "#/$defs/ha57525005582"
-            },
-            {
-              "$ref": "#/$defs/h0e4014154904"
-            },
-            {
-              "$ref": "#/$defs/h589952769b45"
-            },
-            {
-              "$ref": "#/$defs/haeffa472167f"
-            },
-            {
-              "$ref": "#/$defs/hc75fdaf6f4ac"
-            },
-            {
-              "$ref": "#/$defs/h9810b646fad3"
-            }
-          ],
-          "type": "string"
-        }
-      ]
-    },
-    "ha57525005582": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "ha840ddbf6d2a": {
+    "constrains/ingress.enabled:t": {
       "properties": {
         "ingress": {
-          "$ref": "#/$defs/hd9dd13dbcbf3"
+          "$ref": "#/$defs/constrains~1enabled:t"
         }
       },
       "required": [
@@ -513,67 +163,124 @@
       ],
       "type": "object"
     },
-    "ha9537dbdf639": {
-      "additionalProperties": false,
-      "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+    "constrains/paths": {
+      "additionalProperties": {},
       "properties": {
-        "matchExpressions": {
-          "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
-          "items": {
-            "additionalProperties": false,
-            "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
-            "properties": {
-              "key": {
-                "description": "key is the label key that the selector applies to.",
-                "type": "string"
-              },
-              "operator": {
-                "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
-                "type": "string"
-              },
-              "values": {
-                "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
-                "items": {
-                  "$ref": "#/$defs/h56bd48f38e6b"
-                },
-                "type": [
-                  "array",
-                  "null"
-                ]
-              }
-            },
-            "required": [
-              "key",
-              "operator"
-            ],
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "type": [
-            "array",
-            "null"
-          ]
-        },
-        "matchLabels": {
-          "additionalProperties": {
-            "$ref": "#/$defs/h56bd48f38e6b"
-          },
-          "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
-          "type": [
-            "object",
-            "null"
-          ]
+        "paths": {
+          "$ref": "#/$defs/constrains~1hosts~1array,integer,null,object"
         }
-      },
-      "type": [
-        "object",
-        "null"
-      ],
-      "x-kubernetes-map-type": "atomic"
+      }
     },
-    "hab02c23921d2": {
+    "constrains/paths/anyOf/null;path-is-matched-against+object+string+string;path-is-matched-against+3more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1paths~1string@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1object"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@10"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@4"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@5"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@7"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@8"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@3"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@6"
+            }
+          ],
+          "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1string;pattern-null-null-null"
+        }
+      ]
+    },
+    "constrains/paths/not/keywords/pattern": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
+    },
+    "constrains/paths/not/keywords/pattern@10": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "constrains/paths/not/keywords/pattern@2": {
+      "not": {
+        "pattern": "[ \\t]#"
+      }
+    },
+    "constrains/paths/not/keywords/pattern@3": {
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "constrains/paths/not/keywords/pattern@4": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "constrains/paths/not/keywords/pattern@5": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "constrains/paths/not/keywords/pattern@6": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "constrains/paths/not/keywords/pattern@7": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "constrains/paths/not/keywords/pattern@8": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "constrains/paths/not/keywords/pattern@9": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "constrains/paths/object": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -584,7 +291,7 @@
             "type": "integer"
           },
           {
-            "$ref": "#/$defs/h3394d7d8572c"
+            "$ref": "#/$defs/constrains~1paths~1string"
           },
           {
             "type": "number"
@@ -602,75 +309,143 @@
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/h3394d7d8572c"
+        "$ref": "#/$defs/constrains~1paths~1string"
       },
       "type": "object"
     },
-    "haeffa472167f": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
-      }
-    },
-    "hb0bfc99d645c": {
-      "description": "A list of node selector requirements by node's labels.",
-      "items": {
-        "$ref": "#/$defs/h4c2716164efb"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "hb38ec1200366": {
-      "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-      "items": {
-        "$ref": "#/$defs/h56bd48f38e6b"
-      },
-      "type": [
-        "array",
-        "null"
-      ],
-      "x-kubernetes-list-type": "atomic"
-    },
-    "hb590b645b546": {
-      "oneOf": [
+    "constrains/paths/string": {
+      "allOf": [
         {
-          "$ref": "#/$defs/h56bd48f38e6b"
+          "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@2"
         },
         {
-          "type": [
-            "number",
-            "null"
-          ]
+          "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@3"
         }
-      ]
+      ],
+      "type": "string"
     },
-    "hbd81cd4618f6": {
+    "constrains/paths/string;pattern-a-za-z0-9-t": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "constrains/paths/string;pattern-null-null-null": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "constrains/paths/string;pattern-t": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "constrains/paths/string@2": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "constrains/paths@2": {
       "additionalProperties": {},
       "properties": {
-        "host": {},
         "paths": {
-          "$ref": "#/$defs/h84d4bc8415e5"
+          "additionalProperties": {
+            "$ref": "#/$defs/constrains~1paths~1anyOf~1null;path-is-matched-against+object+string+string;path-is-matched-against+3more"
+          },
+          "items": {
+            "$ref": "#/$defs/constrains~1paths~1anyOf~1null;path-is-matched-against+object+string+string;path-is-matched-against+3more"
+          }
         }
-      },
-      "type": "object"
-    },
-    "hbfd0ca057049": {
-      "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
-      "items": {
-        "$ref": "#/$defs/h56bd48f38e6b"
-      },
-      "type": [
-        "array",
-        "null"
-      ]
-    },
-    "hc75fdaf6f4ac": {
-      "not": {
-        "pattern": "[\\r\\n]"
       }
     },
-    "hcb49f3898a93": {
+    "constrains/rbac.create:t": {
+      "properties": {
+        "rbac": {
+          "$ref": "#/$defs/constrains~1create:t"
+        }
+      },
+      "required": [
+        "rbac"
+      ],
+      "type": "object"
+    },
+    "constrains/secretName": {
+      "additionalProperties": {},
+      "properties": {
+        "secretName": {
+          "anyOf": [
+            {
+              "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1string@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1string;pattern-a-za-z0-9-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1object"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1string;pattern-t"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@10"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@4"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@9"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@2"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@5"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@7"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@8"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@3"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@6"
+                }
+              ],
+              "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1string;pattern-null-null-null"
+            }
+          ]
+        }
+      }
+    },
+    "constrains/teams=null": {
       "properties": {
         "teams": {
           "enum": [
@@ -683,154 +458,16 @@
       ],
       "type": "object"
     },
-    "hd59354734d80": {
-      "additionalProperties": {
-        "$ref": "#/$defs/h7c00b5f44fec"
-      },
-      "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
-      "items": {
-        "$ref": "#/$defs/h7c00b5f44fec"
-      }
-    },
-    "hd5a11afe7131": {
-      "type": [
-        "array",
-        "integer",
-        "null",
-        "object"
-      ]
-    },
-    "hd5b36c6ea778": {
+    "constrains/tls:t": {
       "properties": {
-        "create": {
+        "tls": {
           "$ref": "#/$defs/t"
         }
       },
       "required": [
-        "create"
+        "tls"
       ],
       "type": "object"
-    },
-    "hd99594356446": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "hd9dd13dbcbf3": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "he6452a200b4a": {
-      "additionalProperties": {},
-      "properties": {
-        "hosts": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/h97f1f236072d"
-            },
-            {
-              "type": "object"
-            },
-            {
-              "type": "integer"
-            },
-            {
-              "description": "hosts is a list of hosts included in the TLS certificate. The values in this list must match the name/s used in the tlsSecret. Defaults to the wildcard host setting for the loadbalancer controller fulfilling this Ingress, if left unspecified.",
-              "items": {
-                "$ref": "#/$defs/h56bd48f38e6b"
-              },
-              "type": "array",
-              "x-kubernetes-list-type": "atomic"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "array"
-            }
-          ]
-        }
-      }
-    },
-    "he6968c78757c": {
-      "additionalProperties": {},
-      "properties": {
-        "paths": {
-          "additionalProperties": {
-            "$ref": "#/$defs/he819db291e6b"
-          },
-          "items": {
-            "$ref": "#/$defs/he819db291e6b"
-          }
-        }
-      }
-    },
-    "he819db291e6b": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/h7a6313f8dd4a"
-        },
-        {
-          "$ref": "#/$defs/h0d6da7ea663d"
-        },
-        {
-          "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/hab02c23921d2"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/h4174f29f69e0"
-            },
-            {
-              "$ref": "#/$defs/h1760b2f63aa3"
-            },
-            {
-              "$ref": "#/$defs/h424d50bcce86"
-            },
-            {
-              "$ref": "#/$defs/h10dc9a560bec"
-            },
-            {
-              "$ref": "#/$defs/ha57525005582"
-            },
-            {
-              "$ref": "#/$defs/h0e4014154904"
-            },
-            {
-              "$ref": "#/$defs/h589952769b45"
-            },
-            {
-              "$ref": "#/$defs/haeffa472167f"
-            },
-            {
-              "$ref": "#/$defs/hc75fdaf6f4ac"
-            },
-            {
-              "$ref": "#/$defs/h9810b646fad3"
-            }
-          ],
-          "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-          "type": "string"
-        },
-        {
-          "$ref": "#/$defs/h89bc4e1169b0"
-        },
-        {
-          "$ref": "#/$defs/h5b7699abf0ec"
-        }
-      ]
     },
     "helm-double-quoted-safe": {
       "anyOf": [
@@ -848,7 +485,7 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/h29c2e670fd64"
+            "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
           },
           "propertyNames": {
             "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
@@ -857,33 +494,14 @@
         },
         {
           "items": {
-            "$ref": "#/$defs/h29c2e670fd64"
+            "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
           },
           "type": "array"
         }
       ]
     },
-    "hf2be86d5d841": {
-      "properties": {
-        "tls": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "tls"
-      ],
-      "type": "object"
-    },
-    "hf963a4a3a925": {
-      "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
-      "items": {
-        "$ref": "#/$defs/h56bd48f38e6b"
-      },
-      "type": [
-        "array",
-        "null"
-      ],
-      "x-kubernetes-list-type": "atomic"
+    "helm-double-quoted-safe/:helm-double-quoted-safe": {
+      "$ref": "#/$defs/helm-double-quoted-safe"
     },
     "t": {
       "anyOf": [
@@ -909,6 +527,388 @@
           "const": true
         }
       ]
+    },
+    "values/affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions": {
+      "description": "A list of node selector requirements by node's labels.",
+      "items": {
+        "$ref": "#/$defs/values~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "values/affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items": {
+      "additionalProperties": false,
+      "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+      "properties": {
+        "key": {
+          "description": "The label key that the selector applies to.",
+          "type": "string"
+        },
+        "operator": {
+          "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
+          "type": "string"
+        },
+        "values": {
+          "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
+          "items": {
+            "$ref": "#/$defs/values~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.values@items"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "key",
+        "operator"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "values/affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.values@items": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "values/affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchFields": {
+      "description": "A list of node selector requirements by node's fields.",
+      "items": {
+        "$ref": "#/$defs/values~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "values/affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items": {
+      "additionalProperties": false,
+      "description": "The weights of all of the matched WeightedPodAffinityTerm fields are added per-node to find the most preferred node(s)",
+      "properties": {
+        "podAffinityTerm": {
+          "additionalProperties": false,
+          "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+          "properties": {
+            "labelSelector": {
+              "$ref": "#/$defs/values~1affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
+            },
+            "matchLabelKeys": {
+              "$ref": "#/$defs/values~1affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.matchLabelKeys"
+            },
+            "mismatchLabelKeys": {
+              "$ref": "#/$defs/values~1affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.mismatchLabelKeys"
+            },
+            "namespaceSelector": {
+              "$ref": "#/$defs/values~1affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
+            },
+            "namespaces": {
+              "$ref": "#/$defs/values~1affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.namespaces"
+            },
+            "topologyKey": {
+              "$ref": "#/$defs/values~1affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.topologyKey"
+            }
+          },
+          "required": [
+            "topologyKey"
+          ],
+          "type": "object"
+        },
+        "weight": {
+          "description": "weight associated with matching the corresponding podAffinityTerm, in the range 1-100.",
+          "format": "int32",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "weight",
+        "podAffinityTerm"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "values/affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector": {
+      "additionalProperties": false,
+      "description": "A label selector is a label query over a set of resources. The result of matchLabels and matchExpressions are ANDed. An empty label selector matches all objects. A null label selector matches no objects.",
+      "properties": {
+        "matchExpressions": {
+          "description": "matchExpressions is a list of label selector requirements. The requirements are ANDed.",
+          "items": {
+            "additionalProperties": false,
+            "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
+            "properties": {
+              "key": {
+                "description": "key is the label key that the selector applies to.",
+                "type": "string"
+              },
+              "operator": {
+                "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
+                "type": "string"
+              },
+              "values": {
+                "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
+                "items": {
+                  "$ref": "#/$defs/values~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.values@items"
+                },
+                "type": [
+                  "array",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "key",
+              "operator"
+            ],
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "matchLabels": {
+          "additionalProperties": {
+            "$ref": "#/$defs/values~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.values@items"
+          },
+          "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
+          "type": [
+            "object",
+            "null"
+          ]
+        }
+      },
+      "type": [
+        "object",
+        "null"
+      ],
+      "x-kubernetes-map-type": "atomic"
+    },
+    "values/affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.matchLabelKeys": {
+      "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+      "items": {
+        "$ref": "#/$defs/values~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.values@items"
+      },
+      "type": [
+        "array",
+        "null"
+      ],
+      "x-kubernetes-list-type": "atomic"
+    },
+    "values/affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.mismatchLabelKeys": {
+      "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
+      "items": {
+        "$ref": "#/$defs/values~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.values@items"
+      },
+      "type": [
+        "array",
+        "null"
+      ],
+      "x-kubernetes-list-type": "atomic"
+    },
+    "values/affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.namespaces": {
+      "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
+      "items": {
+        "$ref": "#/$defs/values~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.values@items"
+      },
+      "type": [
+        "array",
+        "null"
+      ]
+    },
+    "values/affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.topologyKey": {
+      "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
+      "type": "string"
+    },
+    "values/affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution@items": {
+      "additionalProperties": false,
+      "description": "Defines a set of pods (namely those matching the labelSelector relative to the given namespace(s)) that this pod should be co-located (affinity) or not co-located (anti-affinity) with, where co-located is defined as running on a node whose value of the label with key <topologyKey> matches that of any node on which a pod of the set of pods is running",
+      "properties": {
+        "labelSelector": {
+          "$ref": "#/$defs/values~1affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
+        },
+        "matchLabelKeys": {
+          "$ref": "#/$defs/values~1affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.matchLabelKeys"
+        },
+        "mismatchLabelKeys": {
+          "$ref": "#/$defs/values~1affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.mismatchLabelKeys"
+        },
+        "namespaceSelector": {
+          "$ref": "#/$defs/values~1affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.labelSelector"
+        },
+        "namespaces": {
+          "$ref": "#/$defs/values~1affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.namespaces"
+        },
+        "topologyKey": {
+          "$ref": "#/$defs/values~1affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.podAffinityTerm.topologyKey"
+        }
+      },
+      "required": [
+        "topologyKey"
+      ],
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "values/extraEnvs/oneOf/number,null+string,null": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/values~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.values@items"
+        },
+        {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      ]
+    },
+    "values/extraEnvs/string,null;name-of-the-referent": {
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "values/ingress/allOf/object+object,null;annotations-is-an-unstructured": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/values~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.values@items"
+          },
+          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "type": "object"
+        }
+      ]
+    },
+    "values/nameOverride": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1paths~1string@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1hosts:t~1not~1:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1string;pattern-null-null-null"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@10"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@4"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@5"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@7"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@8"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@3"
+            },
+            {
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@6"
+            }
+          ],
+          "type": "string"
+        }
+      ]
+    },
+    "values/null;name-must-be-unique": {
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": "null"
+    },
+    "values/podAnnotations/object": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "values/replicaCount/string;pattern-0-1-9": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
+    },
+    "values/string;name-must-be-unique": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@6"
+        }
+      ],
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": "string"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -949,12 +949,12 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/ha840ddbf6d2a"
+            "$ref": "#/$defs/constrains~1ingress.enabled:t"
           },
           {
             "properties": {
               "serviceAccount": {
-                "$ref": "#/$defs/hd5b36c6ea778"
+                "$ref": "#/$defs/constrains~1create:t"
               }
             },
             "required": [
@@ -963,7 +963,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/h2a8893c4b842"
+            "$ref": "#/$defs/constrains~1rbac.create:t"
           }
         ]
       },
@@ -971,7 +971,7 @@
         "additionalProperties": {},
         "properties": {
           "nameOverride": {
-            "$ref": "#/$defs/h9c594d41cd8b"
+            "$ref": "#/$defs/values~1nameOverride"
           }
         }
       }
@@ -980,14 +980,14 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h2959ce400e35"
+            "$ref": "#/$defs/constrains~1envs+envs=null"
           },
           {
             "anyOf": [
               {
                 "properties": {
                   "envs": {
-                    "$ref": "#/$defs/hcb49f3898a93"
+                    "$ref": "#/$defs/constrains~1teams=null"
                   }
                 },
                 "required": [
@@ -1053,7 +1053,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h2959ce400e35"
+        "$ref": "#/$defs/constrains~1envs+envs=null"
       },
       "then": false
     },
@@ -1123,12 +1123,12 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/ha840ddbf6d2a"
+            "$ref": "#/$defs/constrains~1ingress.enabled:t"
           },
           {
             "properties": {
               "ingress": {
-                "$ref": "#/$defs/hf2be86d5d841"
+                "$ref": "#/$defs/constrains~1tls:t"
               }
             },
             "required": [
@@ -1149,7 +1149,7 @@
                 "anyOf": [
                   {
                     "items": {
-                      "$ref": "#/$defs/h4d59e63f834e"
+                      "$ref": "#/$defs/constrains~1hosts+secretName"
                     },
                     "type": "array"
                   },
@@ -1159,7 +1159,7 @@
                   },
                   {
                     "additionalProperties": {
-                      "$ref": "#/$defs/h4d59e63f834e"
+                      "$ref": "#/$defs/constrains~1hosts+secretName"
                     },
                     "type": "object"
                   },
@@ -1176,7 +1176,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/ha840ddbf6d2a"
+        "$ref": "#/$defs/constrains~1ingress.enabled:t"
       },
       "then": {
         "allOf": [
@@ -1188,7 +1188,7 @@
                 "description": "configure UI ingress. If needed: \"enabled: true\"",
                 "properties": {
                   "hosts": {
-                    "$ref": "#/$defs/h61a85f5cf2ed"
+                    "$ref": "#/$defs/constrains~1@items.paths"
                   }
                 }
               }
@@ -1205,13 +1205,13 @@
                     "anyOf": [
                       {
                         "items": {
-                          "$ref": "#/$defs/hbd81cd4618f6"
+                          "$ref": "#/$defs/constrains~1host+paths"
                         },
                         "type": "array"
                       },
                       {
                         "additionalProperties": {
-                          "$ref": "#/$defs/hbd81cd4618f6"
+                          "$ref": "#/$defs/constrains~1host+paths"
                         },
                         "type": "object"
                       },
@@ -1236,7 +1236,7 @@
                 "description": "configure UI ingress. If needed: \"enabled: true\"",
                 "properties": {
                   "tls": {
-                    "$ref": "#/$defs/hd59354734d80"
+                    "$ref": "#/$defs/constrains~1@items.hosts"
                   }
                 }
               }
@@ -1322,7 +1322,7 @@
           "description": "configure ui image",
           "properties": {
             "repository": {
-              "$ref": "#/$defs/h29c2e670fd64"
+              "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
             }
           }
         }
@@ -1336,7 +1336,7 @@
           "description": "configure ui image",
           "properties": {
             "registry": {
-              "$ref": "#/$defs/h29c2e670fd64"
+              "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
             }
           }
         }
@@ -1367,7 +1367,7 @@
           "description": "configure ui image",
           "properties": {
             "tag": {
-              "$ref": "#/$defs/h29c2e670fd64"
+              "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
             }
           }
         }
@@ -1381,7 +1381,7 @@
           "description": "configure UI ENVs",
           "properties": {
             "teams": {
-              "$ref": "#/$defs/hd5a11afe7131"
+              "$ref": "#/$defs/constrains~1hosts~1array,integer,null,object"
             }
           }
         }
@@ -1413,7 +1413,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h2a8893c4b842"
+        "$ref": "#/$defs/constrains~1rbac.create:t"
       },
       "then": {
         "additionalProperties": {},
@@ -1424,74 +1424,74 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/h97f1f236072d"
+                    "$ref": "#/$defs/constrains~1hosts:t~1not~1:t"
                   },
                   {
                     "allOf": [
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/h53fc60614240"
+                            "$ref": "#/$defs/values~1string;name-must-be-unique"
                           },
                           {
-                            "$ref": "#/$defs/h7a6313f8dd4a"
+                            "$ref": "#/$defs/constrains~1paths~1string@2"
                           },
                           {
-                            "$ref": "#/$defs/h0d6da7ea663d"
+                            "$ref": "#/$defs/constrains~1paths~1string;pattern-a-za-z0-9-t"
                           },
                           {
-                            "$ref": "#/$defs/hab02c23921d2"
+                            "$ref": "#/$defs/constrains~1paths~1object"
                           },
                           {
-                            "$ref": "#/$defs/h89bc4e1169b0"
+                            "$ref": "#/$defs/constrains~1paths~1string;pattern-t"
                           },
                           {
-                            "$ref": "#/$defs/h4221e27a0556"
+                            "$ref": "#/$defs/values~1null;name-must-be-unique"
                           },
                           {
-                            "$ref": "#/$defs/h5b7699abf0ec"
+                            "$ref": "#/$defs/constrains~1paths~1string;pattern-null-null-null"
                           }
                         ]
                       },
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/h7a6313f8dd4a"
+                            "$ref": "#/$defs/constrains~1paths~1string@2"
                           },
                           {
-                            "$ref": "#/$defs/hab02c23921d2"
+                            "$ref": "#/$defs/constrains~1paths~1object"
                           },
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/h4174f29f69e0"
+                                "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@10"
                               },
                               {
-                                "$ref": "#/$defs/h1760b2f63aa3"
+                                "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@4"
                               },
                               {
-                                "$ref": "#/$defs/h424d50bcce86"
+                                "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@9"
                               },
                               {
-                                "$ref": "#/$defs/h10dc9a560bec"
+                                "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@2"
                               },
                               {
-                                "$ref": "#/$defs/ha57525005582"
+                                "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@5"
                               },
                               {
-                                "$ref": "#/$defs/h0e4014154904"
+                                "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@7"
                               },
                               {
-                                "$ref": "#/$defs/h589952769b45"
+                                "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@8"
                               },
                               {
-                                "$ref": "#/$defs/haeffa472167f"
+                                "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern"
                               },
                               {
-                                "$ref": "#/$defs/hc75fdaf6f4ac"
+                                "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@3"
                               },
                               {
-                                "$ref": "#/$defs/h9810b646fad3"
+                                "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@6"
                               }
                             ],
                             "description": "Name is the name of resource being referenced",
@@ -1530,10 +1530,10 @@
                     "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                     "properties": {
                       "matchExpressions": {
-                        "$ref": "#/$defs/hb0bfc99d645c"
+                        "$ref": "#/$defs/values~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions"
                       },
                       "matchFields": {
-                        "$ref": "#/$defs/h63f926268676"
+                        "$ref": "#/$defs/values~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchFields"
                       }
                     },
                     "type": "object",
@@ -1570,10 +1570,10 @@
                     "description": "A null or empty node selector term matches no objects. The requirements of them are ANDed. The TopologySelectorTerm type implements a subset of the NodeSelectorTerm.",
                     "properties": {
                       "matchExpressions": {
-                        "$ref": "#/$defs/hb0bfc99d645c"
+                        "$ref": "#/$defs/values~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions"
                       },
                       "matchFields": {
-                        "$ref": "#/$defs/h63f926268676"
+                        "$ref": "#/$defs/values~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchFields"
                       }
                     },
                     "type": [
@@ -1607,7 +1607,7 @@
             "preferredDuringSchedulingIgnoredDuringExecution": {
               "description": "The scheduler will prefer to schedule pods to nodes that satisfy the affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
               "items": {
-                "$ref": "#/$defs/h16d818c893a0"
+                "$ref": "#/$defs/values~1affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items"
               },
               "type": [
                 "array",
@@ -1617,7 +1617,7 @@
             "requiredDuringSchedulingIgnoredDuringExecution": {
               "description": "If the affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
               "items": {
-                "$ref": "#/$defs/h526c09af9597"
+                "$ref": "#/$defs/values~1affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution@items"
               },
               "type": [
                 "array",
@@ -1637,7 +1637,7 @@
             "preferredDuringSchedulingIgnoredDuringExecution": {
               "description": "The scheduler will prefer to schedule pods to nodes that satisfy the anti-affinity expressions specified by this field, but it may choose a node that violates one or more of the expressions. The node that is most preferred is the one with the greatest sum of weights, i.e. for each node that meets all of the scheduling requirements (resource request, requiredDuringScheduling anti-affinity expressions, etc.), compute a sum by iterating through the elements of this field and adding \"weight\" to the sum if the node has pods which matches the corresponding podAffinityTerm; the node(s) with the highest sum are the most preferred.",
               "items": {
-                "$ref": "#/$defs/h16d818c893a0"
+                "$ref": "#/$defs/values~1affinity.podAffinity.preferredDuringSchedulingIgnoredDuringExecution@items"
               },
               "type": [
                 "array",
@@ -1647,7 +1647,7 @@
             "requiredDuringSchedulingIgnoredDuringExecution": {
               "description": "If the anti-affinity requirements specified by this field are not met at scheduling time, the pod will not be scheduled onto the node. If the anti-affinity requirements specified by this field cease to be met at some point during pod execution (e.g. due to a pod label update), the system may or may not try to eventually evict the pod from its node. When there are multiple elements, the lists of nodes corresponding to each podAffinityTerm are intersected, i.e. all terms must be satisfied.",
               "items": {
-                "$ref": "#/$defs/h526c09af9597"
+                "$ref": "#/$defs/values~1affinity.podAffinity.requiredDuringSchedulingIgnoredDuringExecution@items"
               },
               "type": [
                 "array",
@@ -1673,7 +1673,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/hcb49f3898a93"
+                "$ref": "#/$defs/constrains~1teams=null"
               },
               {
                 "not": {
@@ -1696,55 +1696,55 @@
         "appUrl": {
           "anyOf": [
             {
-              "$ref": "#/$defs/h7a6313f8dd4a"
+              "$ref": "#/$defs/constrains~1paths~1string@2"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/h4174f29f69e0"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@10"
                 },
                 {
-                  "$ref": "#/$defs/h1760b2f63aa3"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@4"
                 },
                 {
-                  "$ref": "#/$defs/h424d50bcce86"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@9"
                 },
                 {
-                  "$ref": "#/$defs/h10dc9a560bec"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@2"
                 },
                 {
-                  "$ref": "#/$defs/ha57525005582"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@5"
                 },
                 {
-                  "$ref": "#/$defs/h0e4014154904"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@7"
                 },
                 {
-                  "$ref": "#/$defs/h589952769b45"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@8"
                 },
                 {
-                  "$ref": "#/$defs/haeffa472167f"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern"
                 },
                 {
-                  "$ref": "#/$defs/hc75fdaf6f4ac"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@3"
                 },
                 {
-                  "$ref": "#/$defs/h9810b646fad3"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@6"
                 }
               ],
               "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/h0d6da7ea663d"
+              "$ref": "#/$defs/constrains~1paths~1string;pattern-a-za-z0-9-t"
             },
             {
-              "$ref": "#/$defs/hab02c23921d2"
+              "$ref": "#/$defs/constrains~1paths~1object"
             },
             {
-              "$ref": "#/$defs/h89bc4e1169b0"
+              "$ref": "#/$defs/constrains~1paths~1string;pattern-t"
             },
             {
-              "$ref": "#/$defs/h5b7699abf0ec"
+              "$ref": "#/$defs/constrains~1paths~1string;pattern-null-null-null"
             },
             {
               "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
@@ -1814,7 +1814,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/h3d4a0bef4a8a"
+                        "$ref": "#/$defs/values~1extraEnvs~1string,null;name-of-the-referent"
                       },
                       "optional": {
                         "description": "Specify whether the ConfigMap or its key must be defined",
@@ -1870,7 +1870,7 @@
                         ]
                       },
                       "divisor": {
-                        "$ref": "#/$defs/hb590b645b546"
+                        "$ref": "#/$defs/values~1extraEnvs~1oneOf~1number,null+string,null"
                       },
                       "resource": {
                         "description": "Required: resource to select",
@@ -1895,7 +1895,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/h3d4a0bef4a8a"
+                        "$ref": "#/$defs/values~1extraEnvs~1string,null;name-of-the-referent"
                       },
                       "optional": {
                         "description": "Specify whether the Secret or its key must be defined",
@@ -1934,7 +1934,7 @@
           "x-kubernetes-patch-strategy": "merge"
         },
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/constrains~1hosts:t~1not~1:t"
         },
         {
           "type": "null"
@@ -1950,55 +1950,55 @@
         "pullPolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/h7a6313f8dd4a"
+              "$ref": "#/$defs/constrains~1paths~1string@2"
             },
             {
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/h0d6da7ea663d"
+              "$ref": "#/$defs/constrains~1paths~1string;pattern-a-za-z0-9-t"
             },
             {
-              "$ref": "#/$defs/hab02c23921d2"
+              "$ref": "#/$defs/constrains~1paths~1object"
             },
             {
-              "$ref": "#/$defs/h89bc4e1169b0"
+              "$ref": "#/$defs/constrains~1paths~1string;pattern-t"
             },
             {
-              "$ref": "#/$defs/h5b7699abf0ec"
+              "$ref": "#/$defs/constrains~1paths~1string;pattern-null-null-null"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/h4174f29f69e0"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@10"
                 },
                 {
-                  "$ref": "#/$defs/h1760b2f63aa3"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@4"
                 },
                 {
-                  "$ref": "#/$defs/h424d50bcce86"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@9"
                 },
                 {
-                  "$ref": "#/$defs/h10dc9a560bec"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@2"
                 },
                 {
-                  "$ref": "#/$defs/ha57525005582"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@5"
                 },
                 {
-                  "$ref": "#/$defs/h0e4014154904"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@7"
                 },
                 {
-                  "$ref": "#/$defs/h589952769b45"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@8"
                 },
                 {
-                  "$ref": "#/$defs/haeffa472167f"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern"
                 },
                 {
-                  "$ref": "#/$defs/hc75fdaf6f4ac"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@3"
                 },
                 {
-                  "$ref": "#/$defs/h9810b646fad3"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@6"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -2015,7 +2015,7 @@
     "imagePullSecrets": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/constrains~1hosts:t~1not~1:t"
         },
         {
           "type": "null"
@@ -2027,7 +2027,7 @@
             "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
             "properties": {
               "name": {
-                "$ref": "#/$defs/h3d4a0bef4a8a"
+                "$ref": "#/$defs/values~1extraEnvs~1string,null;name-of-the-referent"
               }
             },
             "type": [
@@ -2047,7 +2047,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/hd9dd13dbcbf3"
+            "$ref": "#/$defs/constrains~1enabled:t"
           },
           "then": {
             "allOf": [
@@ -2056,10 +2056,10 @@
                 "properties": {
                   "hosts": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/he6968c78757c"
+                      "$ref": "#/$defs/constrains~1paths@2"
                     },
                     "items": {
-                      "$ref": "#/$defs/he6968c78757c"
+                      "$ref": "#/$defs/constrains~1paths@2"
                     }
                   }
                 }
@@ -2070,58 +2070,58 @@
                   "ingressClassName": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/h7a6313f8dd4a"
+                        "$ref": "#/$defs/constrains~1paths~1string@2"
                       },
                       {
-                        "$ref": "#/$defs/h97f1f236072d"
+                        "$ref": "#/$defs/constrains~1hosts:t~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/h0d6da7ea663d"
+                        "$ref": "#/$defs/constrains~1paths~1string;pattern-a-za-z0-9-t"
                       },
                       {
-                        "$ref": "#/$defs/hab02c23921d2"
+                        "$ref": "#/$defs/constrains~1paths~1object"
                       },
                       {
                         "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/h89bc4e1169b0"
+                        "$ref": "#/$defs/constrains~1paths~1string;pattern-t"
                       },
                       {
-                        "$ref": "#/$defs/h5b7699abf0ec"
+                        "$ref": "#/$defs/constrains~1paths~1string;pattern-null-null-null"
                       },
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/h4174f29f69e0"
+                            "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@10"
                           },
                           {
-                            "$ref": "#/$defs/h1760b2f63aa3"
+                            "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@4"
                           },
                           {
-                            "$ref": "#/$defs/h424d50bcce86"
+                            "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@9"
                           },
                           {
-                            "$ref": "#/$defs/h10dc9a560bec"
+                            "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@2"
                           },
                           {
-                            "$ref": "#/$defs/ha57525005582"
+                            "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@5"
                           },
                           {
-                            "$ref": "#/$defs/h0e4014154904"
+                            "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@7"
                           },
                           {
-                            "$ref": "#/$defs/h589952769b45"
+                            "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@8"
                           },
                           {
-                            "$ref": "#/$defs/haeffa472167f"
+                            "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern"
                           },
                           {
-                            "$ref": "#/$defs/hc75fdaf6f4ac"
+                            "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@3"
                           },
                           {
-                            "$ref": "#/$defs/h9810b646fad3"
+                            "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@6"
                           }
                         ],
                         "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
@@ -2138,10 +2138,10 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/h97f1f236072d"
+                        "$ref": "#/$defs/constrains~1hosts:t~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/h8ec24937a2ec"
+                        "$ref": "#/$defs/values~1ingress~1allOf~1object+object,null;annotations-is-an-unstructured"
                       }
                     ]
                   }
@@ -2151,7 +2151,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "hosts": {
-                    "$ref": "#/$defs/h61a85f5cf2ed"
+                    "$ref": "#/$defs/constrains~1@items.paths"
                   }
                 }
               },
@@ -2159,7 +2159,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "tls": {
-                    "$ref": "#/$defs/hd59354734d80"
+                    "$ref": "#/$defs/constrains~1@items.hosts"
                   }
                 }
               }
@@ -2170,10 +2170,10 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/hf2be86d5d841"
+                "$ref": "#/$defs/constrains~1tls:t"
               },
               {
-                "$ref": "#/$defs/hd9dd13dbcbf3"
+                "$ref": "#/$defs/constrains~1enabled:t"
               }
             ]
           },
@@ -2184,11 +2184,11 @@
                 "properties": {
                   "tls": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/h958ed69927a1"
+                      "$ref": "#/$defs/constrains~1secretName"
                     },
                     "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
                     "items": {
-                      "$ref": "#/$defs/h958ed69927a1"
+                      "$ref": "#/$defs/constrains~1secretName"
                     }
                   }
                 }
@@ -2198,11 +2198,11 @@
                 "properties": {
                   "tls": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/he6452a200b4a"
+                      "$ref": "#/$defs/constrains~1hosts:t"
                     },
                     "description": "- secretName: ui-tls\nhosts:\n- ui.exmaple.org",
                     "items": {
-                      "$ref": "#/$defs/he6452a200b4a"
+                      "$ref": "#/$defs/constrains~1hosts:t"
                     }
                   }
                 }
@@ -2226,11 +2226,11 @@
       "type": "object"
     },
     "nameOverride": {
-      "$ref": "#/$defs/h9c594d41cd8b"
+      "$ref": "#/$defs/values~1nameOverride"
     },
     "nodeSelector": {
       "additionalProperties": {
-        "$ref": "#/$defs/h56bd48f38e6b"
+        "$ref": "#/$defs/values~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.values@items"
       },
       "description": "Node labels for pod assignment\nRef: https://kubernetes.io/docs/user-guide/node-selection/",
       "type": [
@@ -2242,13 +2242,13 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/constrains~1hosts:t~1not~1:t"
         },
         {
-          "$ref": "#/$defs/hd99594356446"
+          "$ref": "#/$defs/values~1podAnnotations~1object"
         },
         {
-          "$ref": "#/$defs/h8ec24937a2ec"
+          "$ref": "#/$defs/values~1ingress~1allOf~1object+object,null;annotations-is-an-unstructured"
         }
       ],
       "description": "Extra pod annotations"
@@ -2256,58 +2256,58 @@
     "priorityClassName": {
       "anyOf": [
         {
-          "$ref": "#/$defs/h7a6313f8dd4a"
+          "$ref": "#/$defs/constrains~1paths~1string@2"
         },
         {
-          "$ref": "#/$defs/h97f1f236072d"
+          "$ref": "#/$defs/constrains~1hosts:t~1not~1:t"
         },
         {
-          "$ref": "#/$defs/h0d6da7ea663d"
+          "$ref": "#/$defs/constrains~1paths~1string;pattern-a-za-z0-9-t"
         },
         {
-          "$ref": "#/$defs/hab02c23921d2"
+          "$ref": "#/$defs/constrains~1paths~1object"
         },
         {
-          "$ref": "#/$defs/h89bc4e1169b0"
+          "$ref": "#/$defs/constrains~1paths~1string;pattern-t"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/h4174f29f69e0"
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@10"
             },
             {
-              "$ref": "#/$defs/h1760b2f63aa3"
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@4"
             },
             {
-              "$ref": "#/$defs/h424d50bcce86"
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@9"
             },
             {
-              "$ref": "#/$defs/h10dc9a560bec"
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@2"
             },
             {
-              "$ref": "#/$defs/ha57525005582"
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@5"
             },
             {
-              "$ref": "#/$defs/h0e4014154904"
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@7"
             },
             {
-              "$ref": "#/$defs/h589952769b45"
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@8"
             },
             {
-              "$ref": "#/$defs/haeffa472167f"
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern"
             },
             {
-              "$ref": "#/$defs/hc75fdaf6f4ac"
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@3"
             },
             {
-              "$ref": "#/$defs/h9810b646fad3"
+              "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@6"
             }
           ],
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/h5b7699abf0ec"
+          "$ref": "#/$defs/constrains~1paths~1string;pattern-null-null-null"
         },
         {
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -2338,16 +2338,16 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/h0d6da7ea663d"
+          "$ref": "#/$defs/constrains~1paths~1string;pattern-a-za-z0-9-t"
         },
         {
-          "$ref": "#/$defs/h89bc4e1169b0"
+          "$ref": "#/$defs/constrains~1paths~1string;pattern-t"
         },
         {
-          "$ref": "#/$defs/h66e5b6a8755a"
+          "$ref": "#/$defs/values~1replicaCount~1string;pattern-0-1-9"
         },
         {
-          "$ref": "#/$defs/h5b7699abf0ec"
+          "$ref": "#/$defs/constrains~1paths~1string;pattern-null-null-null"
         }
       ]
     },
@@ -2389,7 +2389,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/hb590b645b546"
+                    "$ref": "#/$defs/values~1extraEnvs~1oneOf~1number,null+string,null"
                   },
                   "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -2411,7 +2411,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/hb590b645b546"
+                    "$ref": "#/$defs/values~1extraEnvs~1oneOf~1number,null+string,null"
                   },
                   "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -2471,19 +2471,19 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/h97f1f236072d"
+                    "$ref": "#/$defs/constrains~1hosts:t~1not~1:t"
                   },
                   {
-                    "$ref": "#/$defs/h0d6da7ea663d"
+                    "$ref": "#/$defs/constrains~1paths~1string;pattern-a-za-z0-9-t"
                   },
                   {
-                    "$ref": "#/$defs/h89bc4e1169b0"
+                    "$ref": "#/$defs/constrains~1paths~1string;pattern-t"
                   },
                   {
-                    "$ref": "#/$defs/h66e5b6a8755a"
+                    "$ref": "#/$defs/values~1replicaCount~1string;pattern-0-1-9"
                   },
                   {
-                    "$ref": "#/$defs/h5b7699abf0ec"
+                    "$ref": "#/$defs/constrains~1paths~1string;pattern-null-null-null"
                   }
                 ]
               }
@@ -2496,13 +2496,13 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/h97f1f236072d"
+              "$ref": "#/$defs/constrains~1hosts:t~1not~1:t"
             },
             {
-              "$ref": "#/$defs/hd99594356446"
+              "$ref": "#/$defs/values~1podAnnotations~1object"
             },
             {
-              "$ref": "#/$defs/h8ec24937a2ec"
+              "$ref": "#/$defs/values~1ingress~1allOf~1object+object,null;annotations-is-an-unstructured"
             }
           ],
           "description": "If the type of the service is NodePort a port can be specified using the nodePort field\nIf the nodePort field is not specified, or if it has no value, then a random port is used\nnodePort: 32521"
@@ -2516,7 +2516,7 @@
               "type": "integer"
             },
             {
-              "$ref": "#/$defs/h66e5b6a8755a"
+              "$ref": "#/$defs/values~1replicaCount~1string;pattern-0-1-9"
             }
           ]
         },
@@ -2529,53 +2529,53 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/h4174f29f69e0"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@10"
                 },
                 {
-                  "$ref": "#/$defs/h1760b2f63aa3"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@4"
                 },
                 {
-                  "$ref": "#/$defs/h424d50bcce86"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@9"
                 },
                 {
-                  "$ref": "#/$defs/h10dc9a560bec"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@2"
                 },
                 {
-                  "$ref": "#/$defs/ha57525005582"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@5"
                 },
                 {
-                  "$ref": "#/$defs/h0e4014154904"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@7"
                 },
                 {
-                  "$ref": "#/$defs/h589952769b45"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@8"
                 },
                 {
-                  "$ref": "#/$defs/haeffa472167f"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern"
                 },
                 {
-                  "$ref": "#/$defs/hc75fdaf6f4ac"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@3"
                 },
                 {
-                  "$ref": "#/$defs/h9810b646fad3"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@6"
                 }
               ],
               "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/h7a6313f8dd4a"
+              "$ref": "#/$defs/constrains~1paths~1string@2"
             },
             {
-              "$ref": "#/$defs/h0d6da7ea663d"
+              "$ref": "#/$defs/constrains~1paths~1string;pattern-a-za-z0-9-t"
             },
             {
-              "$ref": "#/$defs/hab02c23921d2"
+              "$ref": "#/$defs/constrains~1paths~1object"
             },
             {
-              "$ref": "#/$defs/h89bc4e1169b0"
+              "$ref": "#/$defs/constrains~1paths~1string;pattern-t"
             },
             {
-              "$ref": "#/$defs/h5b7699abf0ec"
+              "$ref": "#/$defs/constrains~1paths~1string;pattern-null-null-null"
             }
           ]
         }
@@ -2590,7 +2590,7 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/hd5b36c6ea778"
+            "$ref": "#/$defs/constrains~1create:t"
           },
           "then": {
             "additionalProperties": {},
@@ -2598,28 +2598,28 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/h53fc60614240"
+                    "$ref": "#/$defs/values~1string;name-must-be-unique"
                   },
                   {
-                    "$ref": "#/$defs/h7a6313f8dd4a"
+                    "$ref": "#/$defs/constrains~1paths~1string@2"
                   },
                   {
-                    "$ref": "#/$defs/h97f1f236072d"
+                    "$ref": "#/$defs/constrains~1hosts:t~1not~1:t"
                   },
                   {
-                    "$ref": "#/$defs/h0d6da7ea663d"
+                    "$ref": "#/$defs/constrains~1paths~1string;pattern-a-za-z0-9-t"
                   },
                   {
-                    "$ref": "#/$defs/hab02c23921d2"
+                    "$ref": "#/$defs/constrains~1paths~1object"
                   },
                   {
-                    "$ref": "#/$defs/h89bc4e1169b0"
+                    "$ref": "#/$defs/constrains~1paths~1string;pattern-t"
                   },
                   {
-                    "$ref": "#/$defs/h4221e27a0556"
+                    "$ref": "#/$defs/values~1null;name-must-be-unique"
                   },
                   {
-                    "$ref": "#/$defs/h5b7699abf0ec"
+                    "$ref": "#/$defs/constrains~1paths~1string;pattern-null-null-null"
                   }
                 ],
                 "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
@@ -2635,26 +2635,26 @@
         "name": {
           "anyOf": [
             {
-              "$ref": "#/$defs/h7a6313f8dd4a"
+              "$ref": "#/$defs/constrains~1paths~1string@2"
             },
             {
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/h97f1f236072d"
+              "$ref": "#/$defs/constrains~1hosts:t~1not~1:t"
             },
             {
-              "$ref": "#/$defs/h0d6da7ea663d"
+              "$ref": "#/$defs/constrains~1paths~1string;pattern-a-za-z0-9-t"
             },
             {
-              "$ref": "#/$defs/hab02c23921d2"
+              "$ref": "#/$defs/constrains~1paths~1object"
             },
             {
-              "$ref": "#/$defs/h89bc4e1169b0"
+              "$ref": "#/$defs/constrains~1paths~1string;pattern-t"
             },
             {
-              "$ref": "#/$defs/h5b7699abf0ec"
+              "$ref": "#/$defs/constrains~1paths~1string;pattern-null-null-null"
             },
             {
               "type": "null"
@@ -2662,34 +2662,34 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/h4174f29f69e0"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@10"
                 },
                 {
-                  "$ref": "#/$defs/h1760b2f63aa3"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@4"
                 },
                 {
-                  "$ref": "#/$defs/h424d50bcce86"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@9"
                 },
                 {
-                  "$ref": "#/$defs/h10dc9a560bec"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@2"
                 },
                 {
-                  "$ref": "#/$defs/ha57525005582"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@5"
                 },
                 {
-                  "$ref": "#/$defs/h0e4014154904"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@7"
                 },
                 {
-                  "$ref": "#/$defs/h589952769b45"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@8"
                 },
                 {
-                  "$ref": "#/$defs/haeffa472167f"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern"
                 },
                 {
-                  "$ref": "#/$defs/hc75fdaf6f4ac"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@3"
                 },
                 {
-                  "$ref": "#/$defs/h9810b646fad3"
+                  "$ref": "#/$defs/constrains~1paths~1not~1keywords~1pattern@6"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",

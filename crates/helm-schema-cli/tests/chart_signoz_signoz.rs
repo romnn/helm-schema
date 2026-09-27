@@ -742,12 +742,12 @@ fn schema_accepts_string_type(root: &Value, schema: &Value) -> bool {
 }
 
 fn resolve_local_ref<'schema>(root: &'schema Value, mut schema: &'schema Value) -> &'schema Value {
-    while let Some(name) = schema
+    while let Some(pointer) = schema
         .get("$ref")
         .and_then(Value::as_str)
-        .and_then(|reference| reference.strip_prefix("#/$defs/"))
+        .and_then(helm_schema_json_schema_walk::local_reference_fragment)
     {
-        let Some(resolved) = root.get("$defs").and_then(|defs| defs.get(name)) else {
+        let Some(resolved) = root.pointer(&pointer) else {
             return schema;
         };
         schema = resolved;
@@ -791,8 +791,8 @@ fn schema_values_at_pointer<'schema>(
     // Interned subtrees live in root-level `$defs`; follow local refs so
     // pointer-based assertions see through the output interning.
     if let Some(reference) = object.get("$ref").and_then(Value::as_str)
-        && let Some(name) = reference.strip_prefix("#/$defs/")
-        && let Some(target) = root.pointer(&format!("/$defs/{name}"))
+        && let Some(pointer) = helm_schema_json_schema_walk::local_reference_fragment(reference)
+        && let Some(target) = root.pointer(&pointer)
     {
         schema_values_at_pointer(root, target, segments, matches);
     }

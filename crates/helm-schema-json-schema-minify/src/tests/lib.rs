@@ -8,7 +8,7 @@ mod naming;
 
 /// Minimizes a schema that has no private definition handles.
 fn minimize(schema: Value) -> Value {
-    minimize_schema(schema, &BTreeMap::new())
+    minimize_schema(schema, &BTreeMap::new(), DefinitionNames::Source)
 }
 
 #[test]
@@ -25,8 +25,8 @@ fn generated_reference_inlining_is_one_step_and_preserves_other_scopes() {
         "default": {"$ref": "#/$defs/1"}
     });
     let replacements = BTreeMap::from([
-        ("#/$defs/1".to_string(), json!({"$ref": "#/$defs/2"})),
-        ("#/$defs/2".to_string(), json!({"type": "string"})),
+        ("1".to_string(), json!({"$ref": "#/$defs/2"})),
+        ("2".to_string(), json!({"type": "string"})),
     ]);
 
     inline_generated_references(&mut schema, &replacements);
@@ -85,7 +85,7 @@ fn repeated_property_schemas_move_to_defs() {
         have: result,
         want: json!({
             "$defs": {
-                "hf0936da3b7c0": {
+                "values/left": {
                     "type": "object",
                     "additionalProperties": false,
                     "properties": {
@@ -97,8 +97,8 @@ fn repeated_property_schemas_move_to_defs() {
             "$schema": "http://json-schema.org/draft-07/schema#",
             "type": "object",
             "properties": {
-                "left": { "$ref": "#/$defs/hf0936da3b7c0" },
-                "right": { "$ref": "#/$defs/hf0936da3b7c0" }
+                "left": { "$ref": "#/$defs/values~1left" },
+                "right": { "$ref": "#/$defs/values~1left" }
             }
         })
     );
@@ -127,7 +127,7 @@ fn non_schema_keyword_payloads_are_not_replaced() {
         have: result,
         want: json!({
             "$defs": {
-                "h2b9e4402ce33": {
+                "values/left": {
                     "type": "object",
                     "required": ["name", "namespace"],
                     "enum": [{"kind": "A"}, {"kind": "B"}]
@@ -135,8 +135,8 @@ fn non_schema_keyword_payloads_are_not_replaced() {
             },
             "type": "object",
             "properties": {
-                "left": { "$ref": "#/$defs/h2b9e4402ce33" },
-                "right": { "$ref": "#/$defs/h2b9e4402ce33" }
+                "left": { "$ref": "#/$defs/values~1left" },
+                "right": { "$ref": "#/$defs/values~1left" }
             }
         })
     );
@@ -238,7 +238,7 @@ fn repeated_schemas_may_reference_unchanged_root_definitions() {
         have: result,
         want: json!({
             "$defs": {
-                "h78679c096c30": {
+                "values/left": {
                     "allOf": [
                         {
                             "properties": {
@@ -258,8 +258,8 @@ fn repeated_schemas_may_reference_unchanged_root_definitions() {
                 }
             },
             "properties": {
-                "left": { "$ref": "#/$defs/h78679c096c30" },
-                "right": { "$ref": "#/$defs/h78679c096c30" }
+                "left": { "$ref": "#/$defs/values~1left" },
+                "right": { "$ref": "#/$defs/values~1left" }
             },
             "type": "object"
         })
@@ -326,11 +326,11 @@ fn property_names_that_look_like_ref_keywords_do_not_block_extraction() {
     let result = minimize(schema);
     sim_assert_eq!(
         have: result.pointer("/properties/left/$ref"),
-        want: Some(&Value::String("#/$defs/hc7be211819b2".to_string()))
+        want: Some(&Value::String("#/$defs/values~1left".to_string()))
     );
     sim_assert_eq!(
         have: result.pointer("/properties/right/$ref"),
-        want: Some(&Value::String("#/$defs/hc7be211819b2".to_string()))
+        want: Some(&Value::String("#/$defs/values~1left".to_string()))
     );
 }
 
@@ -373,11 +373,11 @@ fn existing_defs_names_are_not_reused() {
         want: json!({
             "$defs": {
                 "1": { "type": "null" },
-                "h08529119e013": repeated
+                "values/left": repeated
             },
             "properties": {
-                "left": { "$ref": "#/$defs/h08529119e013" },
-                "right": { "$ref": "#/$defs/h08529119e013" }
+                "left": { "$ref": "#/$defs/values~1left" },
+                "right": { "$ref": "#/$defs/values~1left" }
             }
         })
     );
@@ -430,14 +430,14 @@ fn equivalent_junctor_grouping_produces_one_stable_definition() {
     sim_assert_eq!(have: regrouped, want: minimized.clone());
     sim_assert_eq!(
         have: minimized.pointer("/properties/left/$ref"),
-        want: Some(&Value::String("#/$defs/h9a84c6f3caf4".to_string()))
+        want: Some(&Value::String("#/$defs/values~1left".to_string()))
     );
     sim_assert_eq!(
         have: minimized.pointer("/properties/right/$ref"),
-        want: Some(&Value::String("#/$defs/h9a84c6f3caf4".to_string()))
+        want: Some(&Value::String("#/$defs/values~1left".to_string()))
     );
     sim_assert_eq!(
-        have: minimized.pointer("/$defs/h9a84c6f3caf4/allOf").and_then(Value::as_array).map(Vec::len),
+        have: minimized.pointer("/$defs/values~1left/allOf").and_then(Value::as_array).map(Vec::len),
         want: Some(3)
     );
 }

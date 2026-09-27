@@ -1,307 +1,6 @@
 {
   "$defs": {
-    "h027ff635154a": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "prometheusagents": {}
-                },
-                "required": [
-                  "prometheusagents"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "prometheusagents": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "prometheusagents"
-              ],
-              "type": "object"
-            }
-          ]
-        }
-      ]
-    },
-    "h05eed1c328ed": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "servicemonitors": {}
-                },
-                "required": [
-                  "servicemonitors"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "servicemonitors": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "servicemonitors"
-              ],
-              "type": "object"
-            }
-          ]
-        }
-      ]
-    },
-    "h129356c5c699": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "anyOf": [
-            {
-              "properties": {
-                "prometheusrules": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "prometheusrules"
-              ],
-              "type": "object"
-            },
-            {
-              "not": {
-                "properties": {
-                  "prometheusrules": {}
-                },
-                "required": [
-                  "prometheusrules"
-                ],
-                "type": "object"
-              }
-            }
-          ]
-        }
-      ]
-    },
-    "h3bdf61021d31": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "crds": {}
-            },
-            "required": [
-              "crds"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "crds": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "crds"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "h3cefc6936ae9": {
-      "not": {
-        "properties": {
-          "crds": {
-            "type": "object"
-          }
-        },
-        "required": [
-          "crds"
-        ],
-        "type": "object"
-      }
-    },
-    "h4c022abc26ee": {
-      "allOf": [
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "alertmanagers": {}
-                },
-                "required": [
-                  "alertmanagers"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "alertmanagers": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "alertmanagers"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "type": "object"
-        }
-      ]
-    },
-    "h54d0021234d2": {
-      "allOf": [
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "scrapeconfigs": {}
-                },
-                "required": [
-                  "scrapeconfigs"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "scrapeconfigs": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "scrapeconfigs"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "type": "object"
-        }
-      ]
-    },
-    "h7995f812e054": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "thanosrulers": {}
-                },
-                "required": [
-                  "thanosrulers"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "thanosrulers": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "thanosrulers"
-              ],
-              "type": "object"
-            }
-          ]
-        }
-      ]
-    },
-    "h9086bc0e5922": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "anyOf": [
-            {
-              "not": {
-                "properties": {
-                  "podmonitors": {}
-                },
-                "required": [
-                  "podmonitors"
-                ],
-                "type": "object"
-              }
-            },
-            {
-              "properties": {
-                "podmonitors": {
-                  "enum": [
-                    null
-                  ]
-                }
-              },
-              "required": [
-                "podmonitors"
-              ],
-              "type": "object"
-            }
-          ]
-        }
-      ]
-    },
-    "ha30c34ab0207": {
-      "description": "enabled defines if the CRD should be installed",
-      "type": "boolean"
-    },
-    "hd9dd13dbcbf3": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
-    },
-    "he831afe94a55": {
+    "constrains/alertmanagerconfigs+alertmanagerconfigs=null": {
       "allOf": [
         {
           "anyOf": [
@@ -336,7 +35,94 @@
         }
       ]
     },
-    "hef005a101f48": {
+    "constrains/alertmanagers+alertmanagers=null": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "alertmanagers": {}
+                },
+                "required": [
+                  "alertmanagers"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "alertmanagers": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "alertmanagers"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/crds": {
+      "not": {
+        "properties": {
+          "crds": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "crds"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/crds+crds=null": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "crds": {}
+            },
+            "required": [
+              "crds"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "crds": {
+              "enum": [
+                null
+              ]
+            }
+          },
+          "required": [
+            "crds"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/enabled:t": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/podmonitors+podmonitors=null": {
       "allOf": [
         {
           "type": "object"
@@ -344,34 +130,34 @@
         {
           "anyOf": [
             {
+              "not": {
+                "properties": {
+                  "podmonitors": {}
+                },
+                "required": [
+                  "podmonitors"
+                ],
+                "type": "object"
+              }
+            },
+            {
               "properties": {
-                "prometheuses": {
+                "podmonitors": {
                   "enum": [
                     null
                   ]
                 }
               },
               "required": [
-                "prometheuses"
+                "podmonitors"
               ],
               "type": "object"
-            },
-            {
-              "not": {
-                "properties": {
-                  "prometheuses": {}
-                },
-                "required": [
-                  "prometheuses"
-                ],
-                "type": "object"
-              }
             }
           ]
         }
       ]
     },
-    "hf0b180ca131a": {
+    "constrains/probes+probes=null": {
       "allOf": [
         {
           "anyOf": [
@@ -406,6 +192,216 @@
         }
       ]
     },
+    "constrains/prometheusagents+prometheusagents=null": {
+      "allOf": [
+        {
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "prometheusagents": {}
+                },
+                "required": [
+                  "prometheusagents"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "prometheusagents": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "prometheusagents"
+              ],
+              "type": "object"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/prometheuses+prometheuses=null": {
+      "allOf": [
+        {
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "prometheuses": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "prometheuses"
+              ],
+              "type": "object"
+            },
+            {
+              "not": {
+                "properties": {
+                  "prometheuses": {}
+                },
+                "required": [
+                  "prometheuses"
+                ],
+                "type": "object"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/prometheusrules+prometheusrules=null": {
+      "allOf": [
+        {
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "properties": {
+                "prometheusrules": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "prometheusrules"
+              ],
+              "type": "object"
+            },
+            {
+              "not": {
+                "properties": {
+                  "prometheusrules": {}
+                },
+                "required": [
+                  "prometheusrules"
+                ],
+                "type": "object"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/scrapeconfigs+scrapeconfigs=null": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "scrapeconfigs": {}
+                },
+                "required": [
+                  "scrapeconfigs"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "scrapeconfigs": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "scrapeconfigs"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/servicemonitors+servicemonitors=null": {
+      "allOf": [
+        {
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "servicemonitors": {}
+                },
+                "required": [
+                  "servicemonitors"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "servicemonitors": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "servicemonitors"
+              ],
+              "type": "object"
+            }
+          ]
+        }
+      ]
+    },
+    "constrains/thanosrulers+thanosrulers=null": {
+      "allOf": [
+        {
+          "type": "object"
+        },
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "thanosrulers": {}
+                },
+                "required": [
+                  "thanosrulers"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "thanosrulers": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "thanosrulers"
+              ],
+              "type": "object"
+            }
+          ]
+        }
+      ]
+    },
     "t": {
       "anyOf": [
         {
@@ -430,6 +426,10 @@
           "const": true
         }
       ]
+    },
+    "values/crds.alertmanagerconfigs.enabled": {
+      "description": "enabled defines if the CRD should be installed",
+      "type": "boolean"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -439,17 +439,17 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h3bdf61021d31"
+            "$ref": "#/$defs/constrains~1crds+crds=null"
           },
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/h3cefc6936ae9"
+                "$ref": "#/$defs/constrains~1crds"
               },
               {
                 "properties": {
                   "crds": {
-                    "$ref": "#/$defs/he831afe94a55"
+                    "$ref": "#/$defs/constrains~1alertmanagerconfigs+alertmanagerconfigs=null"
                   }
                 },
                 "required": [
@@ -479,17 +479,17 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h3bdf61021d31"
+            "$ref": "#/$defs/constrains~1crds+crds=null"
           },
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/h3cefc6936ae9"
+                "$ref": "#/$defs/constrains~1crds"
               },
               {
                 "properties": {
                   "crds": {
-                    "$ref": "#/$defs/hf0b180ca131a"
+                    "$ref": "#/$defs/constrains~1probes+probes=null"
                   }
                 },
                 "required": [
@@ -507,17 +507,17 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h3bdf61021d31"
+            "$ref": "#/$defs/constrains~1crds+crds=null"
           },
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/h3cefc6936ae9"
+                "$ref": "#/$defs/constrains~1crds"
               },
               {
                 "properties": {
                   "crds": {
-                    "$ref": "#/$defs/h05eed1c328ed"
+                    "$ref": "#/$defs/constrains~1servicemonitors+servicemonitors=null"
                   }
                 },
                 "required": [
@@ -535,14 +535,14 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h3bdf61021d31"
+            "$ref": "#/$defs/constrains~1crds+crds=null"
           },
           {
             "anyOf": [
               {
                 "properties": {
                   "crds": {
-                    "$ref": "#/$defs/h7995f812e054"
+                    "$ref": "#/$defs/constrains~1thanosrulers+thanosrulers=null"
                   }
                 },
                 "required": [
@@ -551,7 +551,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/h3cefc6936ae9"
+                "$ref": "#/$defs/constrains~1crds"
               }
             ]
           }
@@ -563,135 +563,17 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h3bdf61021d31"
+            "$ref": "#/$defs/constrains~1crds+crds=null"
           },
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/h3cefc6936ae9"
+                "$ref": "#/$defs/constrains~1crds"
               },
               {
                 "properties": {
                   "crds": {
-                    "$ref": "#/$defs/hef005a101f48"
-                  }
-                },
-                "required": [
-                  "crds"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/h3bdf61021d31"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "crds": {
-                    "$ref": "#/$defs/h027ff635154a"
-                  }
-                },
-                "required": [
-                  "crds"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/h3cefc6936ae9"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/h3bdf61021d31"
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "crds": {
-                    "$ref": "#/$defs/h129356c5c699"
-                  }
-                },
-                "required": [
-                  "crds"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/h3cefc6936ae9"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/h3bdf61021d31"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/h3cefc6936ae9"
-              },
-              {
-                "properties": {
-                  "crds": {
-                    "$ref": "#/$defs/h54d0021234d2"
-                  }
-                },
-                "required": [
-                  "crds"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/h3cefc6936ae9"
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/h3bdf61021d31"
-          },
-          {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/h3cefc6936ae9"
-              },
-              {
-                "properties": {
-                  "crds": {
-                    "$ref": "#/$defs/h9086bc0e5922"
+                    "$ref": "#/$defs/constrains~1prometheuses+prometheuses=null"
                   }
                 },
                 "required": [
@@ -709,17 +591,135 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h3bdf61021d31"
+            "$ref": "#/$defs/constrains~1crds+crds=null"
           },
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/h3cefc6936ae9"
+                "properties": {
+                  "crds": {
+                    "$ref": "#/$defs/constrains~1prometheusagents+prometheusagents=null"
+                  }
+                },
+                "required": [
+                  "crds"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1crds"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1crds+crds=null"
+          },
+          {
+            "anyOf": [
+              {
+                "properties": {
+                  "crds": {
+                    "$ref": "#/$defs/constrains~1prometheusrules+prometheusrules=null"
+                  }
+                },
+                "required": [
+                  "crds"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1crds"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1crds+crds=null"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1crds"
               },
               {
                 "properties": {
                   "crds": {
-                    "$ref": "#/$defs/h4c022abc26ee"
+                    "$ref": "#/$defs/constrains~1scrapeconfigs+scrapeconfigs=null"
+                  }
+                },
+                "required": [
+                  "crds"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1crds"
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1crds+crds=null"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1crds"
+              },
+              {
+                "properties": {
+                  "crds": {
+                    "$ref": "#/$defs/constrains~1podmonitors+podmonitors=null"
+                  }
+                },
+                "required": [
+                  "crds"
+                ],
+                "type": "object"
+              }
+            ]
+          }
+        ]
+      },
+      "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1crds+crds=null"
+          },
+          {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1crds"
+              },
+              {
+                "properties": {
+                  "crds": {
+                    "$ref": "#/$defs/constrains~1alertmanagers+alertmanagers=null"
                   }
                 },
                 "required": [
@@ -740,43 +740,43 @@
       "allOf": [
         {
           "if": {
-            "$ref": "#/$defs/h4c022abc26ee"
+            "$ref": "#/$defs/constrains~1alertmanagers+alertmanagers=null"
           },
           "then": false
         },
         {
           "if": {
-            "$ref": "#/$defs/h9086bc0e5922"
+            "$ref": "#/$defs/constrains~1podmonitors+podmonitors=null"
           },
           "then": false
         },
         {
           "if": {
-            "$ref": "#/$defs/h05eed1c328ed"
+            "$ref": "#/$defs/constrains~1servicemonitors+servicemonitors=null"
           },
           "then": false
         },
         {
           "if": {
-            "$ref": "#/$defs/hf0b180ca131a"
+            "$ref": "#/$defs/constrains~1probes+probes=null"
           },
           "then": false
         },
         {
           "if": {
-            "$ref": "#/$defs/h54d0021234d2"
+            "$ref": "#/$defs/constrains~1scrapeconfigs+scrapeconfigs=null"
           },
           "then": false
         },
         {
           "if": {
-            "$ref": "#/$defs/he831afe94a55"
+            "$ref": "#/$defs/constrains~1alertmanagerconfigs+alertmanagerconfigs=null"
           },
           "then": false
         },
         {
           "if": {
-            "$ref": "#/$defs/h7995f812e054"
+            "$ref": "#/$defs/constrains~1thanosrulers+thanosrulers=null"
           },
           "then": false
         },
@@ -786,7 +786,7 @@
               {
                 "properties": {
                   "prometheusagents": {
-                    "$ref": "#/$defs/hd9dd13dbcbf3"
+                    "$ref": "#/$defs/constrains~1enabled:t"
                   }
                 },
                 "required": [
@@ -797,7 +797,7 @@
               {
                 "properties": {
                   "prometheuses": {
-                    "$ref": "#/$defs/hd9dd13dbcbf3"
+                    "$ref": "#/$defs/constrains~1enabled:t"
                   }
                 },
                 "required": [
@@ -808,7 +808,7 @@
               {
                 "properties": {
                   "thanosrulers": {
-                    "$ref": "#/$defs/hd9dd13dbcbf3"
+                    "$ref": "#/$defs/constrains~1enabled:t"
                   }
                 },
                 "required": [
@@ -819,7 +819,7 @@
               {
                 "properties": {
                   "servicemonitors": {
-                    "$ref": "#/$defs/hd9dd13dbcbf3"
+                    "$ref": "#/$defs/constrains~1enabled:t"
                   }
                 },
                 "required": [
@@ -830,7 +830,7 @@
               {
                 "properties": {
                   "podmonitors": {
-                    "$ref": "#/$defs/hd9dd13dbcbf3"
+                    "$ref": "#/$defs/constrains~1enabled:t"
                   }
                 },
                 "required": [
@@ -841,7 +841,7 @@
               {
                 "properties": {
                   "scrapeconfigs": {
-                    "$ref": "#/$defs/hd9dd13dbcbf3"
+                    "$ref": "#/$defs/constrains~1enabled:t"
                   }
                 },
                 "required": [
@@ -852,7 +852,7 @@
               {
                 "properties": {
                   "prometheusrules": {
-                    "$ref": "#/$defs/hd9dd13dbcbf3"
+                    "$ref": "#/$defs/constrains~1enabled:t"
                   }
                 },
                 "required": [
@@ -863,7 +863,7 @@
               {
                 "properties": {
                   "alertmanagerconfigs": {
-                    "$ref": "#/$defs/hd9dd13dbcbf3"
+                    "$ref": "#/$defs/constrains~1enabled:t"
                   }
                 },
                 "required": [
@@ -874,7 +874,7 @@
               {
                 "properties": {
                   "probes": {
-                    "$ref": "#/$defs/hd9dd13dbcbf3"
+                    "$ref": "#/$defs/constrains~1enabled:t"
                   }
                 },
                 "required": [
@@ -885,7 +885,7 @@
               {
                 "properties": {
                   "alertmanagers": {
-                    "$ref": "#/$defs/hd9dd13dbcbf3"
+                    "$ref": "#/$defs/constrains~1enabled:t"
                   }
                 },
                 "required": [
@@ -919,19 +919,19 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/h129356c5c699"
+            "$ref": "#/$defs/constrains~1prometheusrules+prometheusrules=null"
           },
           "then": false
         },
         {
           "if": {
-            "$ref": "#/$defs/h027ff635154a"
+            "$ref": "#/$defs/constrains~1prometheusagents+prometheusagents=null"
           },
           "then": false
         },
         {
           "if": {
-            "$ref": "#/$defs/hef005a101f48"
+            "$ref": "#/$defs/constrains~1prometheuses+prometheuses=null"
           },
           "then": false
         }
@@ -943,7 +943,7 @@
           "description": "alertmanagerconfigs configures the AlertManagerConfig CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/ha30c34ab0207"
+              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"
@@ -953,7 +953,7 @@
           "description": "alertmanagers configures the AlertManager CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/ha30c34ab0207"
+              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"
@@ -970,7 +970,7 @@
           "description": "podmonitors configures the PodMonitor CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/ha30c34ab0207"
+              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"
@@ -980,7 +980,7 @@
           "description": "probes configures the Probe CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/ha30c34ab0207"
+              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"
@@ -990,7 +990,7 @@
           "description": "prometheusagents configures the PrometheusAgent CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/ha30c34ab0207"
+              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"
@@ -1000,7 +1000,7 @@
           "description": "prometheuses configures the Prometheus CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/ha30c34ab0207"
+              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"
@@ -1010,7 +1010,7 @@
           "description": "prometheusrules configures the PrometheusRule CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/ha30c34ab0207"
+              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"
@@ -1020,7 +1020,7 @@
           "description": "scrapeconfigs configures the ScrapeConfig CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/ha30c34ab0207"
+              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"
@@ -1030,7 +1030,7 @@
           "description": "servicemonitors configures the ServiceMonitor CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/ha30c34ab0207"
+              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"
@@ -1040,7 +1040,7 @@
           "description": "thanosrulers configures the ThanosRuler CRD",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/ha30c34ab0207"
+              "$ref": "#/$defs/values~1crds.alertmanagerconfigs.enabled"
             }
           },
           "type": "object"

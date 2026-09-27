@@ -9,18 +9,18 @@ mod naming;
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_json_schema_walk::{
-    ReferenceSiblings, SchemaMetadataIndex, SchemaTraversalContext, try_map_schema_context,
-    visit_subschemas, visit_subschemas_mut,
+    ReferenceSiblings, SchemaMetadataIndex, SchemaTraversalContext, definition_reference,
+    local_reference_fragment, parse_definition_reference, try_map_schema_context, visit_subschemas,
+    visit_subschemas_mut,
 };
 use serde_json::{Map, Value};
 
 pub use naming::{
-    content_digest, content_names, name_private_definitions, rename_definitions,
-    shipping_definition_names,
+    DefinitionNames, DefinitionOrigin, ShortenedSchema, expand_short_definition_names,
+    name_definitions, rename_definitions, shorten_definition_names,
 };
 
 const DEFINITIONS_KEY: &str = "$defs";
-const DEFINITION_REF_PREFIX: &str = "#/$defs/";
 
 /// Deduplicate repeated JSON Schema subtrees into root-level `$defs`.
 ///
@@ -30,17 +30,22 @@ const DEFINITION_REF_PREFIX: &str = "#/$defs/";
 ///
 /// Every extraction decision is made on the document as given, including
 /// the caller's private definition handles, and on private planning ids.
-/// Only then are the handles renamed to their final `private_names` (see
-/// [`name_private_definitions`]) and each extracted definition named after
-/// its content (see [`content_names`]), so no final name influences which
+/// Only then are those handles and the extracted definitions named by
+/// `names` (see [`name_definitions`]), so no final name influences which
 /// subtrees are extracted.
 #[must_use]
 #[tracing::instrument(skip_all)]
-pub fn minimize_schema(schema: Value, private_names: &BTreeMap<String, String>) -> Value {
+pub fn minimize_schema(
+    schema: Value,
+    anonymous: &BTreeMap<String, Vec<DefinitionOrigin>>,
+    names: DefinitionNames,
+) -> Value {
     let (mut minimized, generated) = extract_repeated_subschemas(schema);
-    name_private_definitions(&mut minimized, private_names);
-    let names = naming::readable_definition_names(&minimized, &generated);
-    rename_definitions(&mut minimized, &names);
+    let mut anonymous = anonymous.clone();
+    for id in generated {
+        anonymous.entry(id).or_default();
+    }
+    name_definitions(&mut minimized, &anonymous, names);
     minimized
 }
 
@@ -110,7 +115,7 @@ struct ExactCandidate {
 }
 
 /// An extraction decision, keyed by a private planning id that is replaced by
-/// the definition's content name once extraction is final.
+/// the definition's readable name once extraction is final.
 #[derive(Debug)]
 struct PlannedDefinition {
     schema: Value,
@@ -360,7 +365,7 @@ fn inline_unprofitable_definitions(
                 .saturating_sub(references)
                 .saturating_add(references.saturating_mul(uses));
         }
-        removed.insert(format!("{DEFINITION_REF_PREFIX}{name}"), body);
+        removed.insert(name, body);
     }
     inline_generated_references(schema, &removed);
 }
@@ -370,7 +375,9 @@ fn inline_generated_references(schema: &mut Value, replacements: &BTreeMap<Strin
         return;
     }
     if let Some(reference) = schema.get("$ref").and_then(Value::as_str)
-        && let Some(replacement) = replacements.get(reference)
+        && let Some(reference) = parse_definition_reference(reference)
+        && reference.suffix.is_empty()
+        && let Some(replacement) = replacements.get(&reference.name)
     {
         // Replacement bodies already contain their resolved smaller subtrees.
         // Substitution is one step, so inserted bodies are not visited again.
@@ -390,10 +397,11 @@ fn count_generated_references(
     counts: &mut BTreeMap<String, usize>,
 ) {
     if let Some(reference) = schema.get("$ref").and_then(Value::as_str)
-        && let Some(name) = reference.strip_prefix(DEFINITION_REF_PREFIX)
-        && generated_names.contains(name)
+        && let Some(reference) = parse_definition_reference(reference)
+        && reference.suffix.is_empty()
+        && generated_names.contains(&reference.name)
     {
-        *counts.entry(name.to_string()).or_default() += 1;
+        *counts.entry(reference.name).or_default() += 1;
     }
     visit_subschemas(schema, ReferenceSiblings::Visit, &mut |subschema| {
         if !has_reference_scope(subschema) {
@@ -560,10 +568,7 @@ fn protected_reference_targets(schema: &Value) -> Option<BTreeSet<usize>> {
     collect(schema, false, &mut references, &mut schema_positions);
     let mut protected = BTreeSet::new();
     for reference in references {
-        let fragment = reference.strip_prefix('#')?;
-        let pointer = percent_encoding::percent_decode_str(fragment)
-            .decode_utf8()
-            .ok()?;
+        let pointer = local_reference_fragment(&reference)?;
         if !pointer.is_empty() && !pointer.starts_with('/') {
             continue;
         }
@@ -647,7 +652,7 @@ fn existing_definition_names(schema: &Value) -> BTreeSet<String> {
 fn reference_schema(name: &str) -> Value {
     Value::Object(Map::from_iter([(
         "$ref".to_string(),
-        Value::String(format!("#/{DEFINITIONS_KEY}/{name}")),
+        Value::String(definition_reference(name)),
     )]))
 }
 

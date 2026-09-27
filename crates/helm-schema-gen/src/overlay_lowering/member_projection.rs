@@ -499,10 +499,12 @@ fn dereferenced_payload_subschema(
     match schema {
         Value::Object(object) => {
             if let Some(reference) = object.get("$ref").and_then(Value::as_str) {
-                let name = reference
-                    .strip_prefix("#/$defs/")
-                    .or_else(|| reference.strip_prefix("#/definitions/"))?;
-                let definition = definitions?.get(name)?;
+                let pointer = helm_schema_json_schema_walk::local_reference_fragment(reference)?;
+                let token = pointer
+                    .strip_prefix("/$defs/")
+                    .or_else(|| pointer.strip_prefix("/definitions/"))?;
+                let name = helm_schema_json_schema_walk::unescape_json_pointer_segment(token);
+                let definition = definitions?.get(&name)?;
                 return dereferenced_payload_subschema(definition, definitions, depth - 1);
             }
             let mut out = serde_json::Map::new();

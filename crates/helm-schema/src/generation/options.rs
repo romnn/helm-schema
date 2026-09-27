@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
+use helm_schema_json_schema_minify::DefinitionOrigin;
 use serde_json::Value;
 use vfs::VfsPath;
 
@@ -44,9 +45,9 @@ pub struct ResolvedContract {
     pub schema: Value,
     /// Fact and carrier accounting from schema emission.
     pub emission_report: EmissionReport,
-    /// Final names of the private definition handles in `schema`, applied by
-    /// the output pipeline after minimization.
-    pub definition_names: BTreeMap<String, String>,
+    /// Content origins of the private definition handles in `schema`, named
+    /// by the output pipeline after minimization.
+    pub definition_origins: BTreeMap<String, Vec<DefinitionOrigin>>,
 }
 
 /// Final schema after optional generation transforms.
@@ -56,7 +57,7 @@ pub struct GeneratedSchema {
     pub schema: Value,
     /// Fact and carrier accounting from schema emission.
     pub emission_report: EmissionReport,
-    /// Final names of the private definition handles in `schema`, applied by
-    /// the output pipeline after minimization.
-    pub definition_names: BTreeMap<String, String>,
+    /// Content origins of the private definition handles in `schema`, named
+    /// by the output pipeline after minimization.
+    pub definition_origins: BTreeMap<String, Vec<DefinitionOrigin>>,
 }

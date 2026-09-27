@@ -5,10 +5,11 @@ weight: 1
 
 # CLI reference
 
-`helm-schema` is a single command: one positional argument (the chart) plus flags. There are no subcommands. The generated schema goes to standard output unless `--output` is given; diagnostics go to standard error.
+`helm-schema` generates a schema from one positional argument (the chart) plus flags. The generated schema goes to standard output unless `--output` is given; diagnostics go to standard error. The one subcommand, `shorten`, prepares an already generated schema for Helm.
 
 ```
 helm-schema [OPTIONS] <CHART_DIR>
+helm-schema shorten [--map <PATH>] [--compact] <INPUT> <OUTPUT>
 ```
 
 Run `helm-schema --help` for the authoritative, version-specific summary.
@@ -34,6 +35,13 @@ Run `helm-schema --help` for the authoritative, version-specific summary.
 | `--keep-refs` | Leave file/URL `$ref` strings as-is. By default external refs are resolved into root-level `$defs` so the output is self-contained. Conflicts with `--inline-refs`. |
 | `--inline-refs` | Fully inline resolved file/URL `$ref`s instead of writing `$defs`. |
 | `--no-minimize` | Keep repeated subtrees inline instead of interning them into root-level `$defs`. Interning is on by default. |
+| `--defs-names <source\|destination>` | Name the `$defs` entries helm-schema creates by the schema path their content comes from (`source`, the default) or by their first reference (`destination`). |
+| `--shorten-defs` | Rename every `$defs` entry to a short key, for a schema handed to Helm directly. Never applied automatically. |
+| `--defs-map <PATH>` | With `--shorten-defs`, write the map from each short key to its readable name. |
+
+## `shorten`
+
+`helm-schema shorten <INPUT> <OUTPUT>` renames the `$defs` entries of a generated schema to short keys, the form to hand Helm when the readable schema exceeds Helm's 5 MiB chart-file limit. `--map <PATH>` writes the map from each short key to its readable name; `--compact` writes compact JSON. Both commands warn when the written schema is still over the limit.
 
 See [Output]({{< relref "output.md" >}}) for what these produce.
 

@@ -1,5 +1,6 @@
 #![doc = "Shared JSON Schema child traversal utilities."]
 
+use fluent_uri::pct_enc::encoder::Fragment;
 use serde_json::{Map, Value};
 use std::collections::HashMap;
 use std::convert::Infallible;
@@ -275,9 +276,9 @@ fn json_string_len(value: &str) -> usize {
 
 fn object_has_unsafe_reference_scope_keyword(object: &Map<String, Value>) -> bool {
     if let Some(reference) = object.get("$ref")
-        && !reference
+        && reference
             .as_str()
-            .is_some_and(|reference| reference.starts_with("#/$defs/"))
+            .is_none_or(|reference| parse_definition_reference(reference).is_none())
     {
         return true;
     }
@@ -325,7 +326,83 @@ fn canonical_json_value(value: &Value) -> Value {
 /// Escape one JSON Pointer segment per RFC 6901 (`~` → `~0`, `/` → `~1`).
 #[must_use]
 pub fn escape_json_pointer_segment(segment: &str) -> String {
-    segment.replace('~', "~0").replace('/', "~1")
+    let mut escaped = String::with_capacity(segment.len());
+    referencing::write_escaped_str(&mut escaped, segment);
+    escaped
+}
+
+/// Unescape one JSON Pointer segment per RFC 6901 (`~1` → `/`, `~0` → `~`).
+#[must_use]
+pub fn unescape_json_pointer_segment(segment: &str) -> String {
+    referencing::unescape_segment(segment).into_owned()
+}
+
+/// A local reference into a root `$defs` entry.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct DefinitionReference {
+    /// The definition's name, unescaped.
+    pub name: String,
+    /// The JSON Pointer below the definition, empty for the definition itself.
+    pub suffix: String,
+}
+
+impl DefinitionReference {
+    /// The `$ref` value: `#/$defs/<name><suffix>`, the name escaped as a JSON
+    /// Pointer token and the fragment percent-encoded where RFC 3986 requires.
+    #[must_use]
+    pub fn to_reference(&self) -> String {
+        let mut pointer = String::from("/$defs/");
+        referencing::write_escaped_str(&mut pointer, &self.name);
+        pointer.push_str(&self.suffix);
+        let mut fragment = fluent_uri::pct_enc::EString::<Fragment>::new();
+        fragment.encode_str::<Fragment>(&pointer);
+        format!("#{}", fragment.as_str())
+    }
+}
+
+/// The `$ref` value naming root definition `name`.
+#[must_use]
+pub fn definition_reference(name: &str) -> String {
+    DefinitionReference {
+        name: name.to_string(),
+        suffix: String::new(),
+    }
+    .to_reference()
+}
+
+/// The root definition a local `#/$defs/…` reference addresses.
+///
+/// `None` for anything else: a reference with a scheme, authority, path or
+/// query, one that is not a valid URI reference, or a fragment that is not a
+/// pointer into the root `$defs`.
+#[must_use]
+pub fn parse_definition_reference(reference: &str) -> Option<DefinitionReference> {
+    let fragment = local_reference_fragment(reference)?;
+    let rest = fragment.strip_prefix("/$defs/")?;
+    let (token, suffix) = match rest.split_once('/') {
+        Some((token, suffix)) => (token, format!("/{suffix}")),
+        None => (rest, String::new()),
+    };
+    Some(DefinitionReference {
+        name: unescape_json_pointer_segment(token),
+        suffix,
+    })
+}
+
+/// The decoded fragment of a same-document reference (`#…`): a JSON Pointer
+/// or an anchor name; `None` when the reference points elsewhere or is not a
+/// valid URI reference.
+#[must_use]
+pub fn local_reference_fragment(reference: &str) -> Option<String> {
+    let parsed = fluent_uri::UriRef::parse(reference).ok()?;
+    if parsed.has_scheme()
+        || parsed.has_authority()
+        || !parsed.path().is_empty()
+        || parsed.has_query()
+    {
+        return None;
+    }
+    Some(parsed.fragment()?.decode().to_string().ok()?.into_owned())
 }
 
 /// Describes how a JSON value is interpreted while traversing a schema.

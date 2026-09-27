@@ -853,6 +853,7 @@ fn analysis_session_emits_final_schema_through_output_pipeline() -> eyre::Result
         output: OutputPipelineOptions {
             strip_descriptions: false,
             minimize: false,
+            definition_names: helm_schema::output::DefinitionNames::Source,
         },
     })?;
 

@@ -1,19 +1,25 @@
 {
   "$defs": {
-    "h05c57e2d321b": {
+    "constrains/base.validationCABundle:t": {
       "properties": {
-        "profile": {
-          "enum": [
-            "compatibility-version-1.28"
-          ]
+        "base": {
+          "properties": {
+            "validationCABundle": {
+              "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "validationCABundle"
+          ],
+          "type": "object"
         }
       },
       "required": [
-        "profile"
+        "base"
       ],
       "type": "object"
     },
-    "h09545f44950a": {
+    "constrains/defaultRevision=''": {
       "not": {
         "properties": {
           "defaultRevision": {
@@ -28,56 +34,14 @@
         "type": "object"
       }
     },
-    "h0e4014154904": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "h103db285e0a4": {
-      "properties": {
-        "profile": {
-          "enum": [
-            "demo"
-          ]
-        }
-      },
-      "required": [
-        "profile"
-      ],
-      "type": "object"
-    },
-    "h14ac846754c8": {
-      "properties": {
-        "platform": {
-          "enum": [
-            "openshift"
-          ]
-        }
-      },
-      "required": [
-        "platform"
-      ],
-      "type": "object"
-    },
-    "h1760b2f63aa3": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "h1af681b28911": {
+    "constrains/global!=null": {
       "properties": {
         "global": {
-          "properties": {
-            "resourceScope": {
-              "enum": [
-                "all"
-              ]
-            }
-          },
-          "required": [
-            "resourceScope"
-          ],
-          "type": "object"
+          "not": {
+            "enum": [
+              null
+            ]
+          }
         }
       },
       "required": [
@@ -85,56 +49,26 @@
       ],
       "type": "object"
     },
-    "h29c2e670fd64": {
-      "$ref": "#/$defs/helm-double-quoted-safe"
-    },
-    "h2ccf70fe1edf": {
-      "properties": {
-        "profile": {
-          "enum": [
-            "preview"
-          ]
-        }
-      },
-      "required": [
-        "profile"
-      ],
-      "type": "object"
-    },
-    "h3394d7d8572c": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "[ \\t]#"
+    "constrains/global.resourceScope": {
+      "not": {
+        "properties": {
+          "global": {
+            "properties": {
+              "resourceScope": {}
+            },
+            "required": [
+              "resourceScope"
+            ],
+            "type": "object"
           }
         },
-        {
-          "not": {
-            "pattern": ":[ \\t]|:$"
-          }
-        },
-        {
-          "not": {
-            "pattern": "[\\r\\n]"
-          }
-        }
-      ],
-      "type": "string"
+        "required": [
+          "global"
+        ],
+        "type": "object"
+      }
     },
-    "h377b8fe932b1": {
-      "properties": {
-        "platform": {
-          "enum": [
-            "microk8s"
-          ]
-        }
-      },
-      "required": [
-        "platform"
-      ],
-      "type": "object"
-    },
-    "h4b2945e214ba": {
+    "constrains/global.resourceScope+global.resourceScope=all+global.resourceScope=cluster": {
       "anyOf": [
         {
           "properties": {
@@ -158,82 +92,35 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/h1af681b28911"
+          "$ref": "#/$defs/constrains~1global.resourceScope=all"
         },
         {
-          "$ref": "#/$defs/h70eb1bcea3c1"
+          "$ref": "#/$defs/constrains~1global.resourceScope"
         }
       ]
     },
-    "h4c9a74a11701": {
+    "constrains/global.resourceScope=all": {
       "properties": {
-        "base": {
+        "global": {
           "properties": {
-            "validationCABundle": {
-              "$ref": "#/$defs/t"
+            "resourceScope": {
+              "enum": [
+                "all"
+              ]
             }
           },
           "required": [
-            "validationCABundle"
+            "resourceScope"
           ],
           "type": "object"
         }
       },
       "required": [
-        "base"
+        "global"
       ],
       "type": "object"
     },
-    "h5b7699abf0ec": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "h62e19e7c6a8f": {
-      "properties": {
-        "profile": {
-          "enum": [
-            "platform-minikube"
-          ]
-        }
-      },
-      "required": [
-        "profile"
-      ],
-      "type": "object"
-    },
-    "h6da8e719848f": {
-      "properties": {
-        "profile": {
-          "enum": [
-            "stable"
-          ]
-        }
-      },
-      "required": [
-        "profile"
-      ],
-      "type": "object"
-    },
-    "h70eb1bcea3c1": {
-      "not": {
-        "properties": {
-          "global": {
-            "properties": {
-              "resourceScope": {}
-            },
-            "required": [
-              "resourceScope"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "global"
-        ],
-        "type": "object"
-      }
-    },
-    "h71549f01a971": {
+    "constrains/global=null": {
       "properties": {
         "global": {
           "enum": [
@@ -246,56 +133,10 @@
       ],
       "type": "object"
     },
-    "h789b25da3d7f": {
-      "properties": {
-        "profile": {
-          "enum": [
-            "platform-gke"
-          ]
-        }
-      },
-      "required": [
-        "profile"
-      ],
-      "type": "object"
-    },
-    "h796e1aeb5df1": {
-      "properties": {
-        "profile": {
-          "enum": [
-            "compatibility-version-1.26"
-          ]
-        }
-      },
-      "required": [
-        "profile"
-      ],
-      "type": "object"
-    },
-    "h7a6313f8dd4a": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "h8df1f91d1b57": {
+    "constrains/platform:t": {
       "properties": {
         "platform": {
-          "enum": [
-            "minikube"
-          ]
+          "$ref": "#/$defs/t"
         }
       },
       "required": [
@@ -303,20 +144,7 @@
       ],
       "type": "object"
     },
-    "h8ea305fc9375": {
-      "properties": {
-        "platform": {
-          "enum": [
-            "k3s"
-          ]
-        }
-      },
-      "required": [
-        "platform"
-      ],
-      "type": "object"
-    },
-    "h93b99a1950d7": {
+    "constrains/platform=gke": {
       "properties": {
         "platform": {
           "enum": [
@@ -329,50 +157,83 @@
       ],
       "type": "object"
     },
-    "h9810b646fad3": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "ha57525005582": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "hab02c23921d2": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "maxItems": 0,
-            "type": "array"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "$ref": "#/$defs/h3394d7d8572c"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "null"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "maxProperties": 0,
-            "type": "object"
-          }
-        ]
+    "constrains/platform=k3d": {
+      "properties": {
+        "platform": {
+          "enum": [
+            "k3d"
+          ]
+        }
       },
-      "propertyNames": {
-        "$ref": "#/$defs/h3394d7d8572c"
-      },
+      "required": [
+        "platform"
+      ],
       "type": "object"
     },
-    "habe963090fd2": {
+    "constrains/platform=k3s": {
+      "properties": {
+        "platform": {
+          "enum": [
+            "k3s"
+          ]
+        }
+      },
+      "required": [
+        "platform"
+      ],
+      "type": "object"
+    },
+    "constrains/platform=microk8s": {
+      "properties": {
+        "platform": {
+          "enum": [
+            "microk8s"
+          ]
+        }
+      },
+      "required": [
+        "platform"
+      ],
+      "type": "object"
+    },
+    "constrains/platform=minikube": {
+      "properties": {
+        "platform": {
+          "enum": [
+            "minikube"
+          ]
+        }
+      },
+      "required": [
+        "platform"
+      ],
+      "type": "object"
+    },
+    "constrains/platform=openshift": {
+      "properties": {
+        "platform": {
+          "enum": [
+            "openshift"
+          ]
+        }
+      },
+      "required": [
+        "platform"
+      ],
+      "type": "object"
+    },
+    "constrains/profile:t": {
+      "properties": {
+        "profile": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "constrains/profile='compatibility-versio...'": {
       "properties": {
         "profile": {
           "enum": [
@@ -385,11 +246,11 @@
       ],
       "type": "object"
     },
-    "haea8dde40ecd": {
+    "constrains/profile='compatibility-versio...'@2": {
       "properties": {
         "profile": {
           "enum": [
-            "ambient"
+            "compatibility-version-1.26"
           ]
         }
       },
@@ -398,57 +259,7 @@
       ],
       "type": "object"
     },
-    "hb0831235e1f0": {
-      "properties": {
-        "profile": {
-          "enum": [
-            "platform-openshift"
-          ]
-        }
-      },
-      "required": [
-        "profile"
-      ],
-      "type": "object"
-    },
-    "hbb5d8377f731": {
-      "properties": {
-        "profile": {
-          "enum": [
-            "platform-k3s"
-          ]
-        }
-      },
-      "required": [
-        "profile"
-      ],
-      "type": "object"
-    },
-    "hbd3189354084": {
-      "properties": {
-        "platform": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "platform"
-      ],
-      "type": "object"
-    },
-    "hbf6e0fc4e627": {
-      "properties": {
-        "profile": {
-          "enum": [
-            "platform-microk8s"
-          ]
-        }
-      },
-      "required": [
-        "profile"
-      ],
-      "type": "object"
-    },
-    "hc380d005e261": {
+    "constrains/profile='compatibility-versio...'@3": {
       "properties": {
         "profile": {
           "enum": [
@@ -461,7 +272,85 @@
       ],
       "type": "object"
     },
-    "hc4a151ba4621": {
+    "constrains/profile='compatibility-versio...'@4": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "compatibility-version-1.28"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "constrains/profile='compatibility-versio...'@5": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "compatibility-version-1.29"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "constrains/profile='compatibility-versio...'@6": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "compatibility-version-1.30"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "constrains/profile=ambient": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "ambient"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "constrains/profile=demo": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "demo"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "constrains/profile=platform-gke": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "platform-gke"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "constrains/profile=platform-k3d": {
       "properties": {
         "profile": {
           "enum": [
@@ -474,7 +363,72 @@
       ],
       "type": "object"
     },
-    "hc9974dcf377d": {
+    "constrains/profile=platform-k3s": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "platform-k3s"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "constrains/profile=platform-microk8s": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "platform-microk8s"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "constrains/profile=platform-minikube": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "platform-minikube"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "constrains/profile=platform-openshift": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "platform-openshift"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "constrains/profile=preview": {
+      "properties": {
+        "profile": {
+          "enum": [
+            "preview"
+          ]
+        }
+      },
+      "required": [
+        "profile"
+      ],
+      "type": "object"
+    },
+    "constrains/profile=remote": {
       "properties": {
         "profile": {
           "enum": [
@@ -487,11 +441,11 @@
       ],
       "type": "object"
     },
-    "hdd386b8673db": {
+    "constrains/profile=stable": {
       "properties": {
         "profile": {
           "enum": [
-            "compatibility-version-1.29"
+            "stable"
           ]
         }
       },
@@ -516,7 +470,7 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/h29c2e670fd64"
+            "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
           },
           "propertyNames": {
             "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
@@ -525,63 +479,14 @@
         },
         {
           "items": {
-            "$ref": "#/$defs/h29c2e670fd64"
+            "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
           },
           "type": "array"
         }
       ]
     },
-    "hf216f95551bb": {
-      "properties": {
-        "profile": {
-          "enum": [
-            "compatibility-version-1.30"
-          ]
-        }
-      },
-      "required": [
-        "profile"
-      ],
-      "type": "object"
-    },
-    "hf65942256714": {
-      "properties": {
-        "global": {
-          "not": {
-            "enum": [
-              null
-            ]
-          }
-        }
-      },
-      "required": [
-        "global"
-      ],
-      "type": "object"
-    },
-    "hf7b54127ed12": {
-      "properties": {
-        "platform": {
-          "enum": [
-            "k3d"
-          ]
-        }
-      },
-      "required": [
-        "platform"
-      ],
-      "type": "object"
-    },
-    "hf91e3bd86ded": {
-      "properties": {
-        "profile": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "profile"
-      ],
-      "type": "object"
+    "helm-double-quoted-safe/:helm-double-quoted-safe": {
+      "$ref": "#/$defs/helm-double-quoted-safe"
     },
     "t": {
       "anyOf": [
@@ -607,6 +512,101 @@
           "const": true
         }
       ]
+    },
+    "values/not/keywords/pattern": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "values/not/keywords/pattern@2": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "values/not/keywords/pattern@3": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "values/not/keywords/pattern@4": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "values/object": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/$defs/values~1string"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/values~1string"
+      },
+      "type": "object"
+    },
+    "values/string": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "[ \\t]#"
+          }
+        },
+        {
+          "not": {
+            "pattern": ":[ \\t]|:$"
+          }
+        },
+        {
+          "not": {
+            "pattern": "[\\r\\n]"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "values/string;pattern-null-null-null": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "values/string@2": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -658,7 +658,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/h4b2945e214ba"
+            "$ref": "#/$defs/constrains~1global.resourceScope+global.resourceScope=all+global.resourceScope=cluster"
           }
         ]
       },
@@ -693,7 +693,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h4b2945e214ba"
+        "$ref": "#/$defs/constrains~1global.resourceScope+global.resourceScope=all+global.resourceScope=cluster"
       },
       "then": {
         "allOf": [
@@ -744,7 +744,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/h4b2945e214ba"
+            "$ref": "#/$defs/constrains~1global.resourceScope+global.resourceScope=all+global.resourceScope=cluster"
           }
         ]
       },
@@ -784,10 +784,10 @@
             ]
           },
           {
-            "$ref": "#/$defs/h4c9a74a11701"
+            "$ref": "#/$defs/constrains~1base.validationCABundle:t"
           },
           {
-            "$ref": "#/$defs/h4b2945e214ba"
+            "$ref": "#/$defs/constrains~1global.resourceScope+global.resourceScope=all+global.resourceScope=cluster"
           }
         ]
       },
@@ -798,7 +798,7 @@
             "additionalProperties": {},
             "properties": {
               "validationCABundle": {
-                "$ref": "#/$defs/h29c2e670fd64"
+                "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
               }
             }
           }
@@ -809,10 +809,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h09545f44950a"
+            "$ref": "#/$defs/constrains~1defaultRevision=''"
           },
           {
-            "$ref": "#/$defs/h4b2945e214ba"
+            "$ref": "#/$defs/constrains~1global.resourceScope+global.resourceScope=all+global.resourceScope=cluster"
           }
         ]
       },
@@ -825,7 +825,7 @@
               "validationURL": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/h7a6313f8dd4a"
+                    "$ref": "#/$defs/values~1string@2"
                   },
                   {
                     "not": {
@@ -837,7 +837,7 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/hab02c23921d2"
+                    "$ref": "#/$defs/values~1object"
                   },
                   {
                     "pattern": "^[ \\t]*(#.*)?$",
@@ -851,7 +851,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/h1760b2f63aa3"
+                        "$ref": "#/$defs/values~1not~1keywords~1pattern"
                       },
                       {
                         "not": {
@@ -864,10 +864,10 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/ha57525005582"
+                        "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
                       },
                       {
-                        "$ref": "#/$defs/h0e4014154904"
+                        "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
                       },
                       {
                         "not": {
@@ -885,14 +885,14 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/h9810b646fad3"
+                        "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
                       }
                     ],
                     "description": "`url` gives the location of the webhook, in standard URL form (`scheme://host:port/path`). Exactly one of `url` or `service` must be specified.\n\nThe `host` should not refer to a service running in the cluster; use the `service` field instead. The host might be resolved via external DNS in some apiservers (e.g., `kube-apiserver` cannot resolve in-cluster DNS as that would be a layering violation). `host` may also be an IP address.\n\nPlease note that using `localhost` or `127.0.0.1` as a `host` is risky unless you take great care to run this webhook on all hosts which run an apiserver which might need to make calls to this webhook. Such installs are likely to be non-portable, i.e., not easy to turn up in a new cluster.\n\nThe scheme must be \"https\"; the URL must begin with \"https://\".\n\nA path is optional, and if present may be any string permissible in a URL. You may use the path to pass an arbitrary string to the webhook, for example, a cluster identifier.\n\nAttempting to use a user or basic auth e.g. \"user:password@\" is not allowed. Fragments (\"#...\") and query parameters (\"?...\") are not allowed, either.",
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/h5b7699abf0ec"
+                    "$ref": "#/$defs/values~1string;pattern-null-null-null"
                   },
                   {
                     "description": "`url` gives the location of the webhook, in standard URL form (`scheme://host:port/path`). Exactly one of `url` or `service` must be specified.\n\nThe `host` should not refer to a service running in the cluster; use the `service` field instead. The host might be resolved via external DNS in some apiservers (e.g., `kube-apiserver` cannot resolve in-cluster DNS as that would be a layering violation). `host` may also be an IP address.\n\nPlease note that using `localhost` or `127.0.0.1` as a `host` is risky unless you take great care to run this webhook on all hosts which run an apiserver which might need to make calls to this webhook. Such installs are likely to be non-portable, i.e., not easy to turn up in a new cluster.\n\nThe scheme must be \"https\"; the URL must begin with \"https://\".\n\nA path is optional, and if present may be any string permissible in a URL. You may use the path to pass an arbitrary string to the webhook, for example, a cluster identifier.\n\nAttempting to use a user or basic auth e.g. \"user:password@\" is not allowed. Fragments (\"#...\") and query parameters (\"?...\") are not allowed, either.",
@@ -913,7 +913,7 @@
               {
                 "properties": {
                   "global": {
-                    "$ref": "#/$defs/hbd3189354084"
+                    "$ref": "#/$defs/constrains~1platform:t"
                   }
                 },
                 "required": [
@@ -922,7 +922,7 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/hbd3189354084"
+                "$ref": "#/$defs/constrains~1platform:t"
               }
             ]
           },
@@ -932,7 +932,7 @@
                 {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/h93b99a1950d7"
+                      "$ref": "#/$defs/constrains~1platform=gke"
                     }
                   },
                   "required": [
@@ -943,7 +943,7 @@
                 {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/h377b8fe932b1"
+                      "$ref": "#/$defs/constrains~1platform=microk8s"
                     }
                   },
                   "required": [
@@ -952,32 +952,21 @@
                   "type": "object"
                 },
                 {
-                  "$ref": "#/$defs/h377b8fe932b1"
+                  "$ref": "#/$defs/constrains~1platform=microk8s"
                 },
                 {
-                  "$ref": "#/$defs/h14ac846754c8"
+                  "$ref": "#/$defs/constrains~1platform=openshift"
                 },
                 {
-                  "$ref": "#/$defs/h8df1f91d1b57"
+                  "$ref": "#/$defs/constrains~1platform=minikube"
                 },
                 {
-                  "$ref": "#/$defs/h93b99a1950d7"
-                },
-                {
-                  "properties": {
-                    "global": {
-                      "$ref": "#/$defs/hf7b54127ed12"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/constrains~1platform=gke"
                 },
                 {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/h8ea305fc9375"
+                      "$ref": "#/$defs/constrains~1platform=k3d"
                     }
                   },
                   "required": [
@@ -988,7 +977,7 @@
                 {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/h8df1f91d1b57"
+                      "$ref": "#/$defs/constrains~1platform=k3s"
                     }
                   },
                   "required": [
@@ -999,7 +988,7 @@
                 {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/h14ac846754c8"
+                      "$ref": "#/$defs/constrains~1platform=minikube"
                     }
                   },
                   "required": [
@@ -1008,10 +997,21 @@
                   "type": "object"
                 },
                 {
-                  "$ref": "#/$defs/h8ea305fc9375"
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/constrains~1platform=openshift"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
                 },
                 {
-                  "$ref": "#/$defs/hf7b54127ed12"
+                  "$ref": "#/$defs/constrains~1platform=k3s"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1platform=k3d"
                 }
               ]
             }
@@ -1161,10 +1161,10 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/h09545f44950a"
+            "$ref": "#/$defs/constrains~1defaultRevision=''"
           },
           {
-            "$ref": "#/$defs/h4b2945e214ba"
+            "$ref": "#/$defs/constrains~1global.resourceScope+global.resourceScope=all+global.resourceScope=cluster"
           }
         ]
       },
@@ -1196,14 +1196,14 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/h4c9a74a11701"
+              "$ref": "#/$defs/constrains~1base.validationCABundle:t"
             }
           },
           {
-            "$ref": "#/$defs/h09545f44950a"
+            "$ref": "#/$defs/constrains~1defaultRevision=''"
           },
           {
-            "$ref": "#/$defs/h4b2945e214ba"
+            "$ref": "#/$defs/constrains~1global.resourceScope+global.resourceScope=all+global.resourceScope=cluster"
           }
         ]
       },
@@ -1220,7 +1220,7 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/h7a6313f8dd4a"
+                    "$ref": "#/$defs/values~1string@2"
                   },
                   {
                     "not": {
@@ -1232,7 +1232,7 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/hab02c23921d2"
+                    "$ref": "#/$defs/values~1object"
                   },
                   {
                     "allOf": [
@@ -1242,7 +1242,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/h1760b2f63aa3"
+                        "$ref": "#/$defs/values~1not~1keywords~1pattern"
                       },
                       {
                         "not": {
@@ -1255,10 +1255,10 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/ha57525005582"
+                        "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
                       },
                       {
-                        "$ref": "#/$defs/h0e4014154904"
+                        "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
                       },
                       {
                         "not": {
@@ -1276,7 +1276,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/h9810b646fad3"
+                        "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
                       }
                     ],
                     "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
@@ -1287,7 +1287,7 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/h5b7699abf0ec"
+                    "$ref": "#/$defs/values~1string;pattern-null-null-null"
                   }
                 ]
               }
@@ -1300,7 +1300,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h4b2945e214ba"
+            "$ref": "#/$defs/constrains~1global.resourceScope+global.resourceScope=all+global.resourceScope=cluster"
           },
           {
             "properties": {
@@ -1326,12 +1326,12 @@
             "not": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/habe963090fd2"
+                  "$ref": "#/$defs/constrains~1profile='compatibility-versio...'"
                 },
                 {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/hbf6e0fc4e627"
+                      "$ref": "#/$defs/constrains~1profile=platform-microk8s"
                     }
                   },
                   "required": [
@@ -1340,29 +1340,18 @@
                   "type": "object"
                 },
                 {
-                  "$ref": "#/$defs/hbb5d8377f731"
+                  "$ref": "#/$defs/constrains~1profile=platform-k3s"
                 },
                 {
-                  "$ref": "#/$defs/hbf6e0fc4e627"
+                  "$ref": "#/$defs/constrains~1profile=platform-microk8s"
                 },
                 {
-                  "$ref": "#/$defs/h789b25da3d7f"
-                },
-                {
-                  "properties": {
-                    "global": {
-                      "$ref": "#/$defs/hf216f95551bb"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
+                  "$ref": "#/$defs/constrains~1profile=platform-gke"
                 },
                 {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/hc380d005e261"
+                      "$ref": "#/$defs/constrains~1profile='compatibility-versio...'@6"
                     }
                   },
                   "required": [
@@ -1373,21 +1362,7 @@
                 {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/h6da8e719848f"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/$defs/hdd386b8673db"
-                },
-                {
-                  "properties": {
-                    "global": {
-                      "$ref": "#/$defs/hc9974dcf377d"
+                      "$ref": "#/$defs/constrains~1profile='compatibility-versio...'@3"
                     }
                   },
                   "required": [
@@ -1398,7 +1373,21 @@
                 {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/habe963090fd2"
+                      "$ref": "#/$defs/constrains~1profile=stable"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1profile='compatibility-versio...'@5"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/constrains~1profile=remote"
                     }
                   },
                   "required": [
@@ -1409,21 +1398,7 @@
                 {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/h2ccf70fe1edf"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/$defs/h05c57e2d321b"
-                },
-                {
-                  "properties": {
-                    "global": {
-                      "$ref": "#/$defs/h05c57e2d321b"
+                      "$ref": "#/$defs/constrains~1profile='compatibility-versio...'"
                     }
                   },
                   "required": [
@@ -1434,7 +1409,21 @@
                 {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/haea8dde40ecd"
+                      "$ref": "#/$defs/constrains~1profile=preview"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1profile='compatibility-versio...'@4"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/constrains~1profile='compatibility-versio...'@4"
                     }
                   },
                   "required": [
@@ -1445,27 +1434,7 @@
                 {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/hb0831235e1f0"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/$defs/hc380d005e261"
-                },
-                {
-                  "$ref": "#/$defs/hb0831235e1f0"
-                },
-                {
-                  "$ref": "#/$defs/hc9974dcf377d"
-                },
-                {
-                  "properties": {
-                    "global": {
-                      "$ref": "#/$defs/h789b25da3d7f"
+                      "$ref": "#/$defs/constrains~1profile=ambient"
                     }
                   },
                   "required": [
@@ -1476,7 +1445,27 @@
                 {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/hbb5d8377f731"
+                      "$ref": "#/$defs/constrains~1profile=platform-openshift"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1profile='compatibility-versio...'@3"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1profile=platform-openshift"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1profile=remote"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/constrains~1profile=platform-gke"
                     }
                   },
                   "required": [
@@ -1487,64 +1476,7 @@
                 {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/h796e1aeb5df1"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/$defs/h62e19e7c6a8f"
-                },
-                {
-                  "$ref": "#/$defs/h103db285e0a4"
-                },
-                {
-                  "properties": {
-                    "global": {
-                      "$ref": "#/$defs/hc4a151ba4621"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/$defs/hc4a151ba4621"
-                },
-                {
-                  "$ref": "#/$defs/hf216f95551bb"
-                },
-                {
-                  "$ref": "#/$defs/h6da8e719848f"
-                },
-                {
-                  "$ref": "#/$defs/h2ccf70fe1edf"
-                },
-                {
-                  "$ref": "#/$defs/h796e1aeb5df1"
-                },
-                {
-                  "properties": {
-                    "global": {
-                      "$ref": "#/$defs/h62e19e7c6a8f"
-                    }
-                  },
-                  "required": [
-                    "global"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/$defs/haea8dde40ecd"
-                },
-                {
-                  "properties": {
-                    "global": {
-                      "$ref": "#/$defs/h103db285e0a4"
+                      "$ref": "#/$defs/constrains~1profile=platform-k3s"
                     }
                   },
                   "required": [
@@ -1555,7 +1487,75 @@
                 {
                   "properties": {
                     "global": {
-                      "$ref": "#/$defs/hdd386b8673db"
+                      "$ref": "#/$defs/constrains~1profile='compatibility-versio...'@2"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1profile=platform-minikube"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1profile=demo"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/constrains~1profile=platform-k3d"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1profile=platform-k3d"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1profile='compatibility-versio...'@6"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1profile=stable"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1profile=preview"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1profile='compatibility-versio...'@2"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/constrains~1profile=platform-minikube"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1profile=ambient"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/constrains~1profile=demo"
+                    }
+                  },
+                  "required": [
+                    "global"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "properties": {
+                    "global": {
+                      "$ref": "#/$defs/constrains~1profile='compatibility-versio...'@5"
                     }
                   },
                   "required": [
@@ -1569,12 +1569,12 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/hf91e3bd86ded"
+                "$ref": "#/$defs/constrains~1profile:t"
               },
               {
                 "properties": {
                   "global": {
-                    "$ref": "#/$defs/hf91e3bd86ded"
+                    "$ref": "#/$defs/constrains~1profile:t"
                   }
                 },
                 "required": [
@@ -1590,7 +1590,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h71549f01a971"
+        "$ref": "#/$defs/constrains~1global=null"
       },
       "then": false
     },
@@ -1599,7 +1599,7 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/h71549f01a971"
+              "$ref": "#/$defs/constrains~1global=null"
             }
           },
           {
@@ -1626,10 +1626,10 @@
                 "type": "object"
               },
               {
-                "$ref": "#/$defs/h1af681b28911"
+                "$ref": "#/$defs/constrains~1global.resourceScope=all"
               },
               {
-                "$ref": "#/$defs/h70eb1bcea3c1"
+                "$ref": "#/$defs/constrains~1global.resourceScope"
               }
             ]
           }
@@ -1654,7 +1654,7 @@
             "not": {
               "properties": {
                 "_internal_defaults_do_not_set": {
-                  "$ref": "#/$defs/hf65942256714"
+                  "$ref": "#/$defs/constrains~1global!=null"
                 }
               },
               "required": [
@@ -1665,7 +1665,7 @@
           },
           {
             "not": {
-              "$ref": "#/$defs/hf65942256714"
+              "$ref": "#/$defs/constrains~1global!=null"
             }
           }
         ]
