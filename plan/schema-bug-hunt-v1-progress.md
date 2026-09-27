@@ -4697,4 +4697,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   green with a fake producer; full run-all). Then landing 2 restarts from dump in producer mode.
   Battery in-process work (landing 3) still running on `round7-f4`.
 
+- 03:05 (Sep 27) — **Runner v6 merged (93f6780): producer dump mode on the landed manifest;
+  landing 2 restarted from dump.** Producer mode follows harness v2 (`build{source_sha256,
+  target,profile}`, `producer_binary_sha256`, `testdata`, one entry per artifact); the Python
+  re-implementation of the producer's digests is deleted; before adoption the runner checks the
+  manifest shape, exact file set and bytes, that `$TARGET/debug/corpus_generation` is the binary
+  the manifest names (sha256) and that its own `--verify $DUMP` passes; `--verify` + the binary
+  check repeat before integration (`HELM_SCHEMA_CORPUS_ARTIFACTS`); receipt `/6` freezes
+  manifest sha, harness version, build, testdata and binary sha; legacy mode unchanged. Tests:
+  fake producer (harness-v2 manifest + fake binary with an embedded build id and a working
+  `--verify`); refusals for `--verify` failure, build-id mismatch, rebuilt binary before
+  integration, wrong harness version, malformed build fields, unsafe/foreign files, hash
+  mismatch, missing manifest; red vs e4234ba: `test_dump` 17 + Producer unittests 5; green: one
+  complete run-all exit 0 in 480 s (57/57). `landing-2.env`: `DUMP_MODE=producer`, fresh E
+  `round8-landing2-run2`; chain relaunched from dump.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
