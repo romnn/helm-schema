@@ -4958,4 +4958,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   4 s. **Whole chain 55 min.** adopted.tsv empty (the 160 renamed fixtures travel in 972d6510).
   Every landing the user queued has now landed; hand-off §6 is rewritten as the final state.
 
+- 10:15 (Sep 27) — **Defect in landing 2: fixture `$defs` keys are content hashes, not the agreed
+  readable paths.** The user's policy (2026-09-25): fixtures in git carry deterministic,
+  human-interpretable schema-path keys; only the Helm-shipped file is shortened (past the 5 MB limit
+  or on an explicit option). The naming design optimised churn reduction and chose content hashes
+  where no provider name exists; the track, its reviews and the orchestrator called that
+  "readable", and landing 2's merge message repeats the error. Fix track launched (`round8-defpaths`
+  off 7b85b2d8, evidence `round8-defpaths-evidence`): readable policy = first-reference schema
+  paths in a canonical traversal (redundant `properties.` elided, explicit markers for
+  `items`/`anyOf[i]`/…), no hash keys; short policy = the existing bijection, used only by the
+  writer ladder's last rung and an explicit CLI option; content-hash naming deleted; fixtures
+  regenerated with a naming-only proof via the bijection; sample keys in the handoff for human
+  review. Lands on the fast chain after review.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
