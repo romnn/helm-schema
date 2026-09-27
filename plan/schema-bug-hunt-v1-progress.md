@@ -5302,6 +5302,21 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `missing-dependency`/`kube-version-incompatible` and missing log = exit 2 in both engines, V4/V5/V6/V7
   done, table 59 cases; run-all 488 checks + 78 py green, red at 0395a25 and e6b574f.
 
+- 01:30 (Sep 28) — **Wrappers handed back in 55 min (`helm-wrappers` 36f6bb1b, `final.patch` sha 38d3a92b…,
+  +383 production LOC: over the +350 target, under the +450 ceiling); pre-landing review as follow-ups on
+  the two design runs.** `helm-schema lint`/`template` (helm.rs:184 `run`): no root schema → original
+  path; else whole-tree copy under `TMPDIR` with links materialized, cycles/special files/scratch-in-chart
+  refused, compact shortened schema in the copy only, two reader threads + one flushing relay; signals via
+  `signal-hook` (departure: `ctrlc` cannot name the signal nor restore the default action without
+  `unsafe`); exit after cleanup; byte translator in minify `naming.rs:156` (exact whole-token match; red
+  test for the `1` vs `1-extra` prefix defect); `expand-defs` deleted. Real-Helm facts: value errors name
+  instance paths, so `$defs` keys appear only for a schema that fails to compile (invalid-regex fixture:
+  raw `$defs/1` → wrapper `$defs/values~1message`, same status); Helm rejects the 10.9 MB
+  kube-prometheus-stack schema, the wrapper lints it in 82 s; copy+shorten 0.27–0.39 s. Gates: fmt/lint/
+  lint:fc/ast-grep 0, unit 1588, helm_wrapper 12/12, `task test:integration` 860 passed, no fixture bytes
+  moved. Open for the reviewers: Helm's messages show the scratch copy path (translate back?); wrapper
+  errors print in the CLI's raw Debug form. Six other follow-up re-reviews still running.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
