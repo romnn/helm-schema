@@ -165,6 +165,27 @@ Everything the user queued as "basically ready" is on main. Nothing was pushed.
   `SWEEP_ENGINE=helmsweep`, every roster row runs, `SWEEP_DIFF_CAP=3` by user decision, producer
   dump mode with a frozen producer copy, receipt /6). Template env: `runner/landing-3.env`.
   Worktrees `round8-runner-v6*` can be pruned (remove the dirs, then `git worktree prune`).
+- **FIRST PRIORITY next session — test scratch must live under the target dir, never in the
+  system temp folder.** Agreed earlier and recorded only as a hygiene note, never implemented: the
+  battery and its siblings create per-run scratch with `tempfile` in the default system temp dir
+  (`/var/folders/.../T` on the small internal disk). `TempDir` cleans up only on normal drop, so
+  every killed or timed-out battery run leaked its dirs: on 2026-09-27 that was 70 GB
+  (`helm-schema-adjudication-*` 45 GB / 1,109 dirs, `helm-schema-helm-root-*` 27 GB / 939 dirs,
+  plus ~9,000 small `helm-schema.cold-cache*`, `capability_oracle_*`, `yaml-decoder*`,
+  `per-root-k8s*` unit-test dirs), which filled the disk and broke a landing (Go linker ENOSPC).
+  Runner v5.1+ sets `TMPDIR`/`GOTMPDIR` under `$TARGET` only for the helmsweep build and the sweep
+  step. Fix: (1) one `test-util` helper that creates every test temp dir under
+  `<CARGO_TARGET_DIR or target>/tmp/<crate>/<test>-<pid>` and sweeps entries whose owning pid is
+  gone at start; switch every `tempfile::tempdir()` / `TempDir::new()` / `env::temp_dir()` in
+  tests to it (largest users: `crates/helm-schema/tests/helm_adjudication.rs` 49,
+  `helm_invocation.rs` 24, `schema_emission_profiles.rs` 10, `schema_emission_profile_live.rs` 9,
+  `helm-schema-cli/tests/config_surface.rs` 7, `common/helm_adjudication.rs`, `common/
+  helm_invocation.rs`, `helm-schema-test-support/tests/consume.rs`, `defs_names.rs`, test-util's
+  helm_values tests, k8s cache tests); (2) helmsweep and the Helm child processes get `TMPDIR`
+  and `HELM_*` homes under the same root; (3) the runner exports `TMPDIR` under `$TARGET` for
+  EVERY step; (4) a clippy `disallowed-methods` entry for `tempfile::tempdir`,
+  `tempfile::TempDir::new` and `std::env::temp_dir` in test code, pointing at the helper, so it
+  cannot regress; (5) a test that a killed child's scratch is swept on the next run.
 - **Roster baseline coupling (design item):** the known-false-acceptance roster is observed as
   flips against `ROSTER_BASELINE` (f7be7ba5, pinned in `known_false_acceptances.rs`). The first
   SEMANTIC landing must keep BASELINE=f7be7ba5 for the battery (the pin refuses anything else);
