@@ -5020,4 +5020,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   mirror writer and its exit-6 rung deleted), baseline shortened with the candidate's own
   `shorten` if needed, translated log copies beside the raw logs.
 
+- 12:45 (Sep 27) — **Readable `$defs` naming ready (`round8-defpaths` 37a4a0db, `final.patch` sha
+  953efe14…); waits only for runner v6.4.** Leaves named `<ancestor>/<type>[:<format>][=v];<first
+  description words>` / `not/…` / `anyOf/…` / `:name` / `keywords/…` (`;` not `~`, which becomes
+  `~0` in `$ref`); no `/fragment` names left; 11,868 of 89,598 names carry a collision `@N`
+  (8,015 same paths/description with different content, 3,836 cut by `+Nmore`, 17 by the value
+  cut). Churn replay **2,721,437** (hash 2,777,877, floor 2,610,991). Battery premise corrected:
+  Helm never receives the dump schema in the battery (`helm_adjudication.rs:318` drops
+  `values.schema.json`, `helm_invocation.rs:662` passes `--skip-schema-validation`; acceptance
+  is the Rust validator) — no harness shortening needed; openebs slice vs f7be7ba5 identical to
+  run6. Only the runner's sweep ships schema bytes to Helm → runner v6.4. Fixtures: one clean
+  dump, 160/160 naming-only; gates green (unit 1577, integration 232, lint residual only); +723
+  LOC. Landing 3 = this branch on runner v6.4, BASELINE f7be7ba5, cap 3.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
