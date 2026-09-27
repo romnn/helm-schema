@@ -5178,6 +5178,11 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   rework 2, runner v6.6) and the personal Claude account is at 79 % weekly; frontend rework has priority
   for the next free slot.
 
+- 22:42 (Sep 27) — **Runner v6.5 merged into the production runner (19c1b2d, `--no-ff`; lock free, no
+  chain running).** Suite green on the worktree (10 suites, 61 py tests, `round8-runner-evidence/
+  v65-run-all.txt` exit 0). Every landing step now runs with `TMPDIR`/`GOTMPDIR` under `$TARGET`.
+  Builders running: scratch, W1 rework 2, runner v6.6 + sweep classes. No Codex run pending.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
