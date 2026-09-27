@@ -60,7 +60,8 @@ jobs:
           install: false
           cache: true
           env: false
-      - run: mise install task helm aqua:nextest-rs/nextest/cargo-nextest
+      # go builds the helmsweep server the Helm adjudication renders in.
+      - run: mise install task helm go@1.26.5 aqua:nextest-rs/nextest/cargo-nextest
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
         with:

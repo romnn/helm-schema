@@ -19,6 +19,7 @@ type cacheKey struct {
 	Executable  string `json:"executable_sha256"`
 	Go          string `json:"go"`
 	Helm        string `json:"helm"`
+	HelmBuild   string `json:"helm_build"`
 	JSONSchema  string `json:"jsonschema"`
 	Patch       string `json:"patch_sha256"`
 	Environment string `json:"environment"`
@@ -36,8 +37,8 @@ type cacheResult struct {
 }
 
 const (
-	cacheFormat   = "helmsweep-cache/1"
-	cacheEnv      = "cleared: HOME=<empty>, PATH=/usr/bin:/bin"
+	cacheFormat   = "helmsweep-cache/2"
+	cacheEnv      = "re-executed before initialization: HOME=<empty>, PATH=/usr/bin:/bin"
 	keyFile       = "key.json"
 	resultFile    = "result.json"
 	logFile       = "log"

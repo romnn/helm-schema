@@ -10,7 +10,7 @@ import (
 
 func testKey() cacheKey {
 	return cacheKey{
-		Format: cacheFormat, Executable: "e", Go: "go1.26.5", Helm: "v4.2.3", JSONSchema: "v6.0.2", Patch: "p",
+		Format: cacheFormat, Executable: "e", Go: "go1.26.5", Helm: "v4.2.3", HelmBuild: "b", JSONSchema: "v6.0.2", Patch: "p",
 		Environment: cacheEnv, Mode: "lint", KubeVersion: "1.29.0", Chart: "c", Schema: "s", Override: "o",
 	}
 }
@@ -39,9 +39,9 @@ func TestCacheHitRewritesTheChartPath(t *testing.T) {
 func TestCacheKeyFieldsAreAllSignificant(t *testing.T) {
 	cache, _ := storedCache(t)
 	base := testKey()
-	for i := range 12 {
+	for i := range 13 {
 		key := base
-		fields := []*string{&key.Format, &key.Executable, &key.Go, &key.Helm, &key.JSONSchema, &key.Patch,
+		fields := []*string{&key.Format, &key.Executable, &key.Go, &key.Helm, &key.HelmBuild, &key.JSONSchema, &key.Patch,
 			&key.Environment, &key.Mode, &key.KubeVersion, &key.Chart, &key.Schema, &key.Override}
 		*fields[i] += "x"
 		if _, _, _, ok := cache.lookup(key, "/w"); ok {
