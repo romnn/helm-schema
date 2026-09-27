@@ -60,6 +60,7 @@ fn emission_profile_release_benchmark() -> eyre::Result<()> {
     let scalar_plain_rewrites = remove_scalar_spelling_alternatives(&mut scalar_plain_raw);
     let scalar_plain_schema = apply_schema_output_pipeline(
         scalar_plain_raw,
+        &BTreeMap::new(),
         PreparedEmitRequest::empty(emit_request),
         &chart_dir,
         FinalOutputPolicy::new(SchemaProfile::Full.resolved_policy(), false),
@@ -137,6 +138,7 @@ fn finalize_policy_outputs(
             .ok_or_eyre("benchmark policy lost its resolved policy")?;
         let final_schema = apply_schema_output_pipeline(
             policy.schema,
+            &BTreeMap::new(),
             PreparedEmitRequest::empty(emit_request),
             chart_dir,
             FinalOutputPolicy::new(resolved, false),

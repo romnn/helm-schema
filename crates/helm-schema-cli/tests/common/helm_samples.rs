@@ -61,7 +61,7 @@ impl GeneratedSchemaHelmChart {
         let temp_dir = tempfile::tempdir().wrap_err("create temp dir for helm validation")?;
         let chart_dir = temp_dir.path().join("chart");
         copy_chart_tree(
-            &crate::schema_roundtrip::physical_chart_dir(chart_relative_path),
+            &helm_schema_test_support::generate::chart_dir(chart_relative_path),
             &chart_dir,
         )
         .wrap_err("copy chart fixture into temp dir")?;

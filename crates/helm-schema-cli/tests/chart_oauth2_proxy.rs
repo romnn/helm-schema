@@ -8,11 +8,10 @@
 //! validation and the full-schema pin live in `chart_corpus.rs`.
 
 use color_eyre::eyre;
+use helm_schema_test_support::{ArtifactId, ChartId};
 
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
-#[path = "common/schema_roundtrip.rs"]
-mod schema_roundtrip;
 
 /// With redis-ha live, `sentinel.quorum` and `splitBrainDetection.*`
 /// render only into `ConfigMap` script text and the statefulset's
@@ -21,7 +20,7 @@ mod schema_roundtrip;
 /// keeps every spelling open and numerics stay accepted.
 #[test]
 fn oauth2_proxy_redis_script_reads_stay_partial_text() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("oauth2-proxy")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Oauth2Proxy))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
     for (label, override_) in [
@@ -56,7 +55,7 @@ fn oauth2_proxy_redis_script_reads_stay_partial_text() -> eyre::Result<()> {
 
 #[test]
 fn oauth2_proxy_helper_tpl_operands_bind_string_contracts() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("oauth2-proxy")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Oauth2Proxy))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
     // Compose over the chart defaults: helm validates the coalesced

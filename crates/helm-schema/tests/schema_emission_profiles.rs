@@ -30,14 +30,14 @@ use helm_adjudication::{KubernetesVerdict, OfflineKubernetesValidator, PinnedHel
 use helm_pool::{PoolLimits, PoolPeaks, run_ordered};
 use known_false_acceptances::{
     Baseline, Family, KNOWN_FALSE_ACCEPTANCES, KNOWN_UNDECIDED_ACCEPTANCES, KnownFalseAcceptances,
-    KnownUndecidedAcceptances, Probe, Rejection,
+    KnownUndecidedAcceptances, Probe, ROSTER_BASELINE, Rejection,
 };
 
 use harness::{
-    ContractVerdict, ControlCategory, GuardSamplingStrategy, ProbeCoverage, ProbeInstance,
-    ProfileSchemas, SemanticControl, Transport, generate_profile_outputs, generate_profile_schemas,
-    read_chart_schema_fixture, read_coalesced_defaults, read_json_fixture,
-    rejects_for_a_new_reason, round_robin_base_probes, sparse_override,
+    ContractVerdict, ControlCategory, GuardSamplingStrategy, HelmChartDir, ProbeCoverage,
+    ProbeInstance, ProbeValuesFile, ProfileSchemas, SemanticControl, Transport, UnreachableProbe,
+    generate_profile_outputs, generate_profile_schemas, read_chart_schema_fixture,
+    read_coalesced_defaults, rejects_for_a_new_reason, round_robin_base_probes, sparse_override,
     sparse_override_for_composed, structural_probe_battery, structural_probe_battery_with_coverage,
 };
 
@@ -70,6 +70,9 @@ struct HelmAdjudicationCoverage {
     charts_adjudicated: std::collections::BTreeSet<String>,
     /// Accepted cells Helm or Kubernetes reject.
     false_acceptances: Vec<ObservedFalseAcceptance>,
+    /// `chart: probe` of every composed probe no values file reaches. A
+    /// roster row naming one cannot be observed and is kept, not "fixed".
+    unreachable_cases: Vec<String>,
 }
 
 /// A false acceptance the battery observed, to be matched by the roster.
@@ -145,6 +148,49 @@ impl HelmAdjudicationCoverage {
     }
 }
 
+/// The rows of `roster` on an adjudicated chart that this run did not
+/// observe failing alike. A row whose probe is unreachable cannot be
+/// observed and is kept.
+fn false_acceptance_rows_not_observed(
+    coverage: &HelmAdjudicationCoverage,
+    roster: &[KnownFalseAcceptances],
+) -> Vec<String> {
+    let mut fixed = Vec::new();
+    for group in roster {
+        if !coverage.charts_adjudicated.contains(group.chart) {
+            continue;
+        }
+        for probe in group.probes {
+            let observed = coverage.false_acceptances.iter().any(|observed| {
+                observed.rejection == group.rejection
+                    && observed.baseline == group.baseline
+                    && known_false_acceptances::names(group.chart, probe, &observed.case)
+            });
+            let unreachable = coverage
+                .unreachable_cases
+                .iter()
+                .any(|case| known_false_acceptances::names(group.chart, probe, case));
+            if unreachable {
+                eprintln!(
+                    "UNOBSERVABLE roster row (its probe is unreachable): {}: {} <- {}",
+                    group.chart, probe.path, probe.value
+                );
+            } else if !observed {
+                fixed.push(format!(
+                    "{}: {} <- {} ({:?}, {:?}, {:?})",
+                    group.chart,
+                    probe.path,
+                    probe.value,
+                    group.rejection,
+                    group.baseline,
+                    group.family
+                ));
+            }
+        }
+    }
+    fixed
+}
+
 /// Every problem with the adjudicated outcomes: unaccounted flips, and
 /// accepted cells Kubernetes cannot decide or Helm or Kubernetes reject that
 /// the rosters do not list, or that they list but that no longer fail alike
@@ -199,30 +245,7 @@ fn validate_helm_adjudication_coverage(
             "false acceptances missing from KNOWN_FALSE_ACCEPTANCES: {unlisted:?}"
         ));
     }
-    let mut fixed = Vec::new();
-    for group in roster {
-        if !coverage.charts_adjudicated.contains(group.chart) {
-            continue;
-        }
-        for probe in group.probes {
-            let observed = coverage.false_acceptances.iter().any(|observed| {
-                observed.rejection == group.rejection
-                    && observed.baseline == group.baseline
-                    && known_false_acceptances::names(group.chart, probe, &observed.case)
-            });
-            if !observed {
-                fixed.push(format!(
-                    "{}: {} <- {} ({:?}, {:?}, {:?})",
-                    group.chart,
-                    probe.path,
-                    probe.value,
-                    group.rejection,
-                    group.baseline,
-                    group.family
-                ));
-            }
-        }
-    }
+    let mut fixed = false_acceptance_rows_not_observed(coverage, roster);
     for group in undecided_roster {
         if !coverage.charts_adjudicated.contains(group.chart) {
             continue;
@@ -390,6 +413,18 @@ fn validate_probe_coverage(chart: &ProbeCoverage) -> eyre::Result<()> {
         "undisclosed guard sampling strategy: {chart:?}"
     );
     eyre::ensure!(chart.total_emitted > 0, "empty probe battery: {chart:?}");
+    // Reachable coverage floor: at least half of a chart's composed probes
+    // (rounded down) must be documents Helm composes. The known
+    // unreachable case is the single "all declared keys deleted" probe of a
+    // chart whose parent `global` reaches its dependencies.
+    let reachable = chart
+        .composed_probes
+        .saturating_sub(chart.unreachable_probes.len());
+    eyre::ensure!(
+        chart.unreachable_probes.len() <= chart.composed_probes
+            && reachable >= chart.composed_probes / 2,
+        "too few composed probes are reachable through a values file: {chart:?}"
+    );
     Ok(())
 }
 
@@ -419,6 +454,30 @@ fn probe_coverage_validation_rejects_target_only_battery() {
     };
 
     assert!(validate_probe_coverage(&coverage).is_err());
+}
+
+/// Unreachable composed probes leave the battery, but at least half of a
+/// chart's composed probes must stay reachable.
+#[test]
+fn probe_coverage_validation_holds_the_reachable_floor() {
+    let coverage = |composed: usize, unreachable: usize| ProbeCoverage {
+        label: "synthetic reachability".to_string(),
+        base_candidates: 1,
+        base_emitted: 1,
+        total_emitted: 1 + composed,
+        composed_probes: composed,
+        unreachable_probes: (0..unreachable)
+            .map(|index| UnreachableProbe {
+                probe: format!("probe {index}"),
+                reason: "synthetic".to_string(),
+            })
+            .collect(),
+        ..ProbeCoverage::default()
+    };
+    assert!(validate_probe_coverage(&coverage(1, 1)).is_ok());
+    assert!(validate_probe_coverage(&coverage(17, 9)).is_ok());
+    assert!(validate_probe_coverage(&coverage(17, 10)).is_err());
+    assert!(validate_probe_coverage(&coverage(0, 1)).is_err());
 }
 
 #[test]
@@ -513,6 +572,7 @@ fn helm_adjudication_records_each_outcome_once() {
         "loosenings_matched_defaults_violations": 1,
         "loosenings_with_uncertain_kubernetes": [{ "case": "case", "uncertain": ["reason"] }],
         "charts_adjudicated": [],
+        "unreachable_cases": [],
         "false_acceptances": [
             {
                 "case": "case", "rejection": "HelmAborts",
@@ -589,6 +649,23 @@ fn informed_group(probes: &'static [Probe]) -> KnownFalseAcceptances {
         Baseline::RejectsUnlikeItsDefaults,
         probes,
     )
+}
+
+/// A roster row whose probe no values file reaches cannot be observed, so
+/// it is kept rather than reported as fixed.
+#[test]
+fn an_unreachable_roster_row_is_not_reported_fixed() -> eyre::Result<()> {
+    let mut coverage = HelmAdjudicationCoverage::default();
+    coverage.charts_adjudicated.insert("chart".to_string());
+    let roster = [uninformed_group(ROSTER_LISTED)];
+    assert!(validate_helm_adjudication_coverage(&coverage, &roster, &[]).is_err());
+    for probe in ROSTER_LISTED {
+        coverage.unreachable_cases.push(format!(
+            "chart: root guard 0 satisfied [targeted: {} <- {}]",
+            probe.path, probe.value
+        ));
+    }
+    validate_helm_adjudication_coverage(&coverage, &roster, &[])
 }
 
 /// The roster matches each false acceptance by chart, probe, rejection and
@@ -683,11 +760,59 @@ fn composed_probe_sparse_override_round_trips_null_deletion_and_replacement() ->
     });
     let patch = sparse_override_for_composed(&defaults, &composed)
         .ok_or_eyre("different documents must produce an override")?;
-    let mut round_trip = defaults;
+    sim_assert_eq!(
+        have: test_util::helm_values::coalesce_tables(&patch, &defaults),
+        want: composed
+    );
+    Ok(())
+}
 
-    harness::merge_override(&mut round_trip, patch);
+/// Screening composes a sparse override the way Helm's `CoalesceTables`
+/// does: a null deletes the default it meets, and a null with no default
+/// stays in the document the schema validates.
+#[test]
+fn a_null_override_without_a_default_stays_in_the_screened_document() -> eyre::Result<()> {
+    let profiles = ProfileSchemas::compile(
+        &json!({}),
+        &json!({"properties": {"absent": {"type": "string"}, "present": {"type": "integer"}}}),
+        json!({"present": 1}),
+    )?;
+    sim_assert_eq!(
+        have: profiles.verdicts(&ProbeInstance::SparseOverride(json!({"present": null}))),
+        want: (true, true)
+    );
+    sim_assert_eq!(
+        have: profiles.verdicts(&ProbeInstance::SparseOverride(json!({"absent": null}))),
+        want: (true, false)
+    );
+    Ok(())
+}
 
-    sim_assert_eq!(have: round_trip, want: composed);
+/// A composed probe reaches Helm through the override that separates it
+/// from the defaults; a document no override reaches is unreachable.
+#[test]
+fn a_composed_probe_helm_cannot_reach_is_unreachable() -> eyre::Result<()> {
+    let chart = test_util::workspace_testdata().join("helm-values/nulls");
+    let defaults = test_util::helm_values::coalesce_chart_values(&chart, json!({}))?;
+    let mut deleted = defaults.clone();
+    deleted
+        .as_object_mut()
+        .ok_or_eyre("defaults are a map")?
+        .remove("owned");
+    sim_assert_eq!(
+        have: ProbeInstance::Coalesced(deleted).helm_values_file(&chart, &defaults)?,
+        want: ProbeValuesFile::Reachable(json!({"owned": null}))
+    );
+    // Helm deletes a key a null override meets, so no values file holds it null.
+    let mut nulled = defaults.clone();
+    nulled
+        .as_object_mut()
+        .ok_or_eyre("defaults are a map")?
+        .insert("owned".to_string(), serde_json::Value::Null);
+    assert!(matches!(
+        ProbeInstance::Coalesced(nulled).helm_values_file(&chart, &defaults)?,
+        ProbeValuesFile::Unreachable(_)
+    ));
     Ok(())
 }
 
@@ -1118,7 +1243,7 @@ fn lean_profile_keeps_nil_safe_host_relaxation() -> eyre::Result<()> {
 fn temporal_wrapper_pairwise_matrix_is_monotone() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
     let chart = "schema-emission-temporal-wrapper";
-    let defaults = read_json_fixture(chart, "coalesced-defaults.json")?;
+    let defaults = read_coalesced_defaults(chart)?;
     let (full, lean) = generate_profile_schemas(chart)?;
     let profiles = ProfileSchemas::compile(&full, &lean, defaults)?;
 
@@ -1187,7 +1312,7 @@ fn temporal_wrapper_pairwise_matrix_is_monotone() -> eyre::Result<()> {
 #[test]
 fn structural_battery_preserves_helm_v4_dependency_roots() -> eyre::Result<()> {
     let chart = "schema-emission-temporal-wrapper";
-    let defaults = read_json_fixture(chart, "coalesced-defaults.json")?;
+    let defaults = read_coalesced_defaults(chart)?;
     let probes = structural_probe_battery(chart, &defaults, &[])?;
 
     let retained = probes
@@ -1654,6 +1779,26 @@ fn round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed() -> eyre:
     Ok(())
 }
 
+/// Why a live battery against `baseline` cannot check the rosters: their
+/// rows are flips against [`ROSTER_BASELINE`] and unobservable otherwise.
+fn roster_baseline_problem(baseline: &str) -> Option<String> {
+    (baseline != ROSTER_BASELINE).then(|| {
+        format!(
+            "the false-acceptance rosters are adjudicated against {ROSTER_BASELINE}; a live \
+             battery against {baseline} observes none of their rows. Run it with \
+             SCHEMA_ACCEPTANCE_BASELINE_REF={ROSTER_BASELINE}"
+        )
+    })
+}
+
+/// A same-code baseline screens no flips, so every roster row would look
+/// fixed; the battery refuses that baseline up front instead.
+#[test]
+fn a_live_battery_needs_the_roster_baseline() {
+    assert!(roster_baseline_problem(ROSTER_BASELINE).is_none());
+    assert!(roster_baseline_problem("c02c01f8975fe799a0670720df87db3fed94eb7f").is_some());
+}
+
 #[test]
 #[ignore = "maintenance: compares the Round 74 dump and records probe coverage"]
 fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::Result<()> {
@@ -1661,6 +1806,20 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
     if std::env::var("ADJUDICATE_WITH_HELM").is_ok() {
         // The shared runner checks the pinned Helm release once per process.
         helm_invocation::HelmRunner::shared()?;
+        let baseline_ref = std::env::var("SCHEMA_ACCEPTANCE_BASELINE_REF")
+            .wrap_err("SCHEMA_ACCEPTANCE_BASELINE_REF must name the comparison commit")?;
+        let resolved = std::process::Command::new("git")
+            .args([
+                "rev-parse",
+                "--verify",
+                &format!("{baseline_ref}^{{commit}}"),
+            ])
+            .output()
+            .wrap_err_with(|| format!("resolve {baseline_ref}"))?;
+        eyre::ensure!(resolved.status.success(), "cannot resolve {baseline_ref}");
+        if let Some(problem) = roster_baseline_problem(String::from_utf8(resolved.stdout)?.trim()) {
+            eyre::bail!(problem);
+        }
     }
     let AcceptanceComparison {
         charts_checked,
@@ -1757,11 +1916,7 @@ fn external_schema_pair_flips_are_helm_adjudicated() -> eyre::Result<()> {
         .wrap_err("read external candidate schema")?,
     )
     .wrap_err("parse external candidate schema")?;
-    let defaults: serde_json::Value = serde_yaml::from_str(
-        &std::fs::read_to_string(chart.join("values.yaml"))
-            .wrap_err("read external chart defaults")?,
-    )
-    .wrap_err("parse external chart defaults")?;
+    let defaults = test_util::helm_values::coalesce_chart_values(&chart, json!({}))?;
     let chart = chart
         .to_str()
         .ok_or_eyre("external chart path must be UTF-8")?;
@@ -1840,7 +1995,6 @@ fn corpus_acceptance_comparison() -> eyre::Result<AcceptanceComparison> {
                 baseline_ref: baseline_ref.clone(),
                 relative_path: format!("testdata/chart-corpus-schemas/{filename}"),
                 dump_filename: format!("helm-schema.cli.chart-corpus.{chart}.schema.json"),
-                defaults_fixture: false,
                 fixture_path: fixture_path.clone(),
             },
         });
@@ -1858,7 +2012,6 @@ fn corpus_acceptance_comparison() -> eyre::Result<AcceptanceComparison> {
                 baseline_ref: baseline_ref.clone(),
                 relative_path: format!("testdata/emission-profile-schemas/lean/{filename}"),
                 dump_filename: format!("helm-schema.emission-profile.lean.{chart}.schema.json"),
-                defaults_fixture: *chart == "schema-emission-temporal-wrapper",
                 fixture_path: lean_fixture_dir.join(&filename),
             },
         });
@@ -1917,8 +2070,6 @@ enum ChartInputs {
         relative_path: String,
         fixture_path: std::path::PathBuf,
         dump_filename: String,
-        /// Whether the defaults are the chart's recorded coalesced-defaults fixture.
-        defaults_fixture: bool,
     },
     Given {
         baseline: serde_json::Value,
@@ -1939,15 +2090,10 @@ impl ChartInputs {
                 relative_path,
                 fixture_path,
                 dump_filename,
-                defaults_fixture,
             } => {
                 let baseline = read_schema_at_ref(&baseline_ref, &relative_path)?;
                 let candidate = read_acceptance_candidate(&fixture_path, &dump_filename)?;
-                let defaults = if defaults_fixture {
-                    read_json_fixture(chart, "coalesced-defaults.json")?
-                } else {
-                    read_coalesced_defaults(chart)?
-                };
+                let defaults = read_coalesced_defaults(chart)?;
                 Ok((baseline, candidate, defaults))
             }
             Self::Given {
@@ -2022,6 +2168,8 @@ struct ScreenedChart {
     probes_checked: usize,
     /// Flips judged by the schemas alone, when Helm does not adjudicate.
     flips: Vec<String>,
+    /// Probes whose values file the chart could not compose at all.
+    failures: Vec<String>,
     /// Flips handed to Helm.
     screened_flips: usize,
     helm: Option<std::sync::Arc<ChartHelm>>,
@@ -2120,7 +2268,16 @@ fn fold_results(
                 }
                 comparison.probes_checked += screened.probes_checked;
                 comparison.flips.extend(screened.flips);
+                comparison
+                    .helm_adjudication_failures
+                    .extend(screened.failures);
                 comparison.helm_adjudication.screened_flips += screened.screened_flips;
+                for unreachable in &screened.coverage.unreachable_probes {
+                    comparison
+                        .helm_adjudication
+                        .unreachable_cases
+                        .push(format!("{}: {}", screened.label, unreachable.probe));
+                }
                 comparison.coverage.push(screened.coverage);
                 comparison.costs.push(screened.cost);
                 helm_charts.push(screened.helm);
@@ -2197,6 +2354,7 @@ fn screen_chart(
         &[&baseline, &current],
     )?;
     coverage.label = label.clone();
+    let chart_dir = HelmChartDir::stage(&chart_relative_path)?;
     let mut cost = ChartCost {
         label: label.clone(),
         context_ms: elapsed_ms(started),
@@ -2209,14 +2367,32 @@ fn screen_chart(
     let screening = std::time::Instant::now();
     let probes_checked = probes.len();
     let mut flips = Vec::new();
+    let mut failures = Vec::new();
     let mut screened = Vec::new();
     for (probe_name, probe) in probes {
+        if matches!(probe, ProbeInstance::Coalesced(_)) {
+            coverage.composed_probes += 1;
+        }
+        let overlay = match probe.helm_values_file(chart_dir.path(), &defaults) {
+            Ok(ProbeValuesFile::Reachable(overlay)) => overlay,
+            Ok(ProbeValuesFile::Unreachable(reason)) => {
+                coverage.unreachable_probes.push(UnreachableProbe {
+                    probe: probe_name,
+                    reason,
+                });
+                continue;
+            }
+            Err(error) => {
+                failures.push(format!("{label}: {probe_name}: {error}"));
+                continue;
+            }
+        };
         if !profiles.screens_a_flip(&probe) {
             continue;
         }
         if adjudicate_live {
             // Screening proposes an overlay; only Helm can establish its coalesced document.
-            screened.push((probe_name, probe.helm_values_file(&defaults)));
+            screened.push((probe_name, overlay));
         } else {
             let (before, after) = profiles.verdicts(&probe);
             flips.push(format!(
@@ -2239,6 +2415,7 @@ fn screen_chart(
         coverage,
         probes_checked,
         flips,
+        failures,
         screened_flips: live.as_ref().map_or(0, |live| live.flips.len()),
         helm: live.as_ref().map(|live| live.helm.clone()),
         cost,
@@ -2299,6 +2476,28 @@ enum HelmFlipVerdict {
     UninformativeBaselineFalseAcceptance(Rejection),
 }
 
+/// Recorded, not yet decisive: how each profile judges every document
+/// Helm's schema checks validate for `overlay`, lint's two included, or why
+/// the port composed none.
+fn acceptance_document_verdicts(
+    chart: &PinnedHelmChart,
+    overlay: &serde_json::Value,
+    profiles: &ProfileSchemas,
+) -> serde_json::Value {
+    let mut documents = serde_json::Map::new();
+    for (kind, document) in chart.acceptance_documents(overlay) {
+        let judged = match document {
+            Ok(document) => {
+                let (baseline, candidate) = profiles.verdicts(&ProbeInstance::Coalesced(document));
+                json!({"baseline_accepts": baseline, "candidate_accepts": candidate})
+            }
+            Err(error) => json!(error.to_string()),
+        };
+        documents.insert(format!("{kind:?}"), judged);
+    }
+    serde_json::Value::Object(documents)
+}
+
 fn adjudicate_round74_flip(
     chart: &PinnedHelmChart,
     overlay: &serde_json::Value,
@@ -2342,6 +2541,7 @@ fn adjudicate_flip(
         "candidate_errors": candidate_errors,
         "helm_coalesced": probe.values.is_some(),
         "helm_exit": probe.rendered.exit_code,
+        "acceptance_documents": acceptance_document_verdicts(chart, overlay, profiles),
     });
     let verdict = if before == after && !new_rejection {
         Ok(HelmFlipVerdict::Collapsed)
@@ -3017,11 +3217,7 @@ fn middle_lean_transition_has_only_preregistered_tightenings() -> eyre::Result<(
         )
         .wrap_err_with(|| format!("parse {}", baseline_path.display()))?;
         let current = generate_profile_schemas(chart)?.1;
-        let defaults = if *chart == "schema-emission-temporal-wrapper" {
-            read_json_fixture(chart, "coalesced-defaults.json")?
-        } else {
-            read_coalesced_defaults(chart)?
-        };
+        let defaults = read_coalesced_defaults(chart)?;
         let transition = ProfileSchemas::compile(&baseline, &current, defaults.clone())?;
         for (probe_name, probe) in
             structural_probe_battery(chart, &defaults, &[&baseline, &current])?
@@ -3066,12 +3262,18 @@ fn adjudicate_transition_tightening(
     probe: &ProbeInstance,
     defaults: &serde_json::Value,
 ) -> eyre::Result<()> {
-    let values = probe.helm_values_file(defaults);
+    let values = match probe.helm_values_file(HelmChartDir::stage(chart)?.path(), defaults)? {
+        ProbeValuesFile::Reachable(values) => values,
+        ProbeValuesFile::Unreachable(reason) => {
+            eprintln!("UNREACHABLE {chart}: {probe_name}: {reason}");
+            return Ok(());
+        }
+    };
+    let chart_path = test_util::workspace_testdata().join("charts").join(chart);
     let tempdir = tempfile::tempdir().wrap_err("create live adjudication directory")?;
     let values_path = tempdir.path().join("values.json");
     std::fs::write(&values_path, serde_json::to_vec(&values)?)
         .wrap_err("write live adjudication values")?;
-    let chart_path = test_util::workspace_testdata().join("charts").join(chart);
     let rendered = std::process::Command::new("helm")
         .args(["template", "step2-lean-transition"])
         .arg(chart_path)

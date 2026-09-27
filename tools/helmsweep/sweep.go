@@ -18,6 +18,7 @@ import (
 
 	"helm.sh/helm/v4/pkg/chart/common"
 	"helm.sh/helm/v4/pkg/chart/common/util"
+	"helm.sh/helm/v4/pkg/cli"
 )
 
 // The frozen roster, as landing.py sweep_plan writes it and read_roster checks it.
@@ -44,6 +45,10 @@ type chartRun struct {
 	rows    []rosterRow
 	digest  string            // content digest of the prepared copy, without the root schema
 	schemas map[string][]byte // cell -> root values.schema.json bytes; absent for plain and a schema-less base
+	// cacheable is false when identical invocations may reach different
+	// verdicts (chartCacheability), with the first reason.
+	cacheable   bool
+	uncacheable string
 
 	mu        sync.Mutex
 	remaining int
@@ -86,9 +91,21 @@ func cmdSweep(args []string, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "usage: helmsweep sweep --roster FILE --roster-sha256 HEX --work ABSDIR [--jobs N] --cache DIR --helm-env-clear")
 		return exitRefused
 	}
+	if err := requireCleanEnv(); err != nil {
+		fmt.Fprintln(stderr, "helmsweep: refused:", err)
+		return exitRefused
+	}
+	if err := unsupportedConfiguration(cli.New()); err != nil {
+		fmt.Fprintln(stderr, "helmsweep: refused:", err)
+		return exitRefused
+	}
 	id, err := buildIdentity()
 	if err != nil {
 		fmt.Fprintln(stderr, "helmsweep: refused:", err)
+		return exitRefused
+	}
+	if id.HelmBuild != helmReleaseBuild {
+		fmt.Fprintf(stderr, "helmsweep: refused: Helm build %q is not the pinned release %q\n", id.HelmBuild, helmReleaseBuild)
 		return exitRefused
 	}
 	s := &sweeper{
@@ -100,12 +117,6 @@ func cmdSweep(args []string, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "helmsweep: refused:", err)
 		return exitRefused
 	}
-	cleanup, err := clearHelmEnv()
-	if err != nil {
-		fmt.Fprintln(stderr, "helmsweep:", err)
-		return exitHarness
-	}
-	defer cleanup()
 	s.sink = installLogSink(stderr)
 	s.run(charts, *jobs)
 	if len(s.failures) > 0 {
@@ -201,6 +212,9 @@ func (s *sweeper) verifyChart(c *chartRun) error {
 		return errors.New("the plain copy carries a values.schema.json")
 	}
 	c.digest, c.schemas = digest, map[string][]byte{}
+	if c.cacheable, c.uncacheable, err = chartCacheability(filepath.Join(dir, "plain")); err != nil {
+		return err
+	}
 	for cell, want := range planned {
 		digest, schema, err := copyDigest(filepath.Join(dir, cell))
 		if err != nil {
@@ -379,7 +393,7 @@ func (s *sweeper) execute(t task) {
 		schemaSHA = fmt.Sprintf("%x", sha256.Sum256(schema))
 	}
 	key := cacheKey{
-		Format: cacheFormat, Executable: s.id.Executable, Go: s.id.Go, Helm: s.id.Helm, JSONSchema: s.id.JSONSchema,
+		Format: cacheFormat, Executable: s.id.Executable, Go: s.id.Go, Helm: s.id.Helm, HelmBuild: s.id.HelmBuild, JSONSchema: s.id.JSONSchema,
 		Patch: s.id.Patch, Environment: cacheEnv, Mode: mode, KubeVersion: row.KubeVersion, Chart: c.digest,
 		Schema: schemaSHA, Override: row.OverrideSHA,
 	}
@@ -387,7 +401,9 @@ func (s *sweeper) execute(t task) {
 	start := time.Now()
 	o := outcome{attributed: true}
 	var log []byte
-	o.rc, o.class, log, o.hit = s.cache.lookup(key, chartPath)
+	if c.cacheable {
+		o.rc, o.class, log, o.hit = s.cache.lookup(key, chartPath)
+	}
 	if !o.hit {
 		if schema != nil {
 			s.warm(schema)
@@ -398,8 +414,11 @@ func (s *sweeper) execute(t task) {
 			o.rc, log = s.sink.exclusive(runOne)
 		}
 		o.class = classify(mode, o.rc, log)
-		if err := s.cache.store(key, o.rc, o.class, chartPath, log); err != nil {
-			fmt.Fprintf(s.stderr, "helmsweep: %s/%s.%s: not cached: %v\n", c.name, cell, row.ID, err)
+		// An uncacheable chart's verdicts are never stored: identical inputs may reach another.
+		if c.cacheable {
+			if err := s.cache.store(key, o.rc, o.class, chartPath, log); err != nil {
+				fmt.Fprintf(s.stderr, "helmsweep: %s/%s.%s: not cached: %v\n", c.name, cell, row.ID, err)
+			}
 		}
 	}
 	o.elapsed = time.Since(start)
@@ -442,7 +461,8 @@ func (s *sweeper) warm(schema []byte) {
 // and cells.tsv, and drops its schemas from the memo.
 func (s *sweeper) finish(c *chartRun) {
 	var rows, detail bytes.Buffer
-	detail.WriteString("chart\toverride_id\tcell\trc\tclass\tcache\tattributed\tmillis\n")
+	detail.WriteString("chart\toverride_id\tcell\trc\tclass\tcache\tattributed\tmillis\tcacheable\n")
+	cacheable := map[bool]string{true: "yes", false: "no"}[c.cacheable]
 	hits := 0
 	for i, row := range c.rows {
 		rc := [3]int{}
@@ -454,7 +474,7 @@ func (s *sweeper) finish(c *chartRun) {
 				cache = "hit"
 				hits++
 			}
-			fmt.Fprintf(&detail, "%s\t%s\t%s\t%d\t%s\t%s\t%t\t%d\n", c.name, row.ID, cell, o.rc, o.class, cache, o.attributed, o.elapsed.Milliseconds())
+			fmt.Fprintf(&detail, "%s\t%s\t%s\t%d\t%s\t%s\t%t\t%d\t%s\n", c.name, row.ID, cell, o.rc, o.class, cache, o.attributed, o.elapsed.Milliseconds(), cacheable)
 		}
 		fmt.Fprintf(&rows, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%d\t%d\t%d\n", c.name, row.ID, row.Name, row.OverrideSHA, row.Transport,
 			row.KubeVersion, row.BaseSchema, rc[0], rc[1], rc[2])
@@ -472,8 +492,8 @@ func (s *sweeper) finish(c *chartRun) {
 		delete(s.warmed, sha256.Sum256(schema))
 		s.mu.Unlock()
 	}
-	fmt.Fprintf(s.stderr, "helmsweep: chart=%s rows=%d cells=%d cache-hits=%d wall=%s\n",
-		c.name, len(c.rows), len(c.rows)*len(cells), hits, time.Since(c.start).Round(time.Millisecond))
+	fmt.Fprintf(s.stderr, "helmsweep: chart=%s rows=%d cells=%d cache-hits=%d cacheable=%s %s wall=%s\n",
+		c.name, len(c.rows), len(c.rows)*len(cells), hits, cacheable, c.uncacheable, time.Since(c.start).Round(time.Millisecond))
 }
 
 func fileSHA256(path string) (string, error) {

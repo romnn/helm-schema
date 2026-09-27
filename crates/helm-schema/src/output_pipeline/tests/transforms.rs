@@ -29,6 +29,7 @@ fn minimization_does_not_preserve_children_of_dead_owned_definitions() -> eyre::
             minimize: true,
         },
         &owned,
+        &std::collections::BTreeMap::new(),
     )?;
     sim_assert_eq!(have: output, want: serde_json::json!({"type": "object"}));
     Ok(())
@@ -58,6 +59,7 @@ fn reference_mode_preserves_refs_when_requested() {
 
     let output = apply_schema_output_pipeline(
         schema,
+        &std::collections::BTreeMap::new(),
         request(ReferencePolicy::PreserveRefs),
         std::path::Path::new("/does/not/matter"),
         output_policy(),
@@ -92,6 +94,7 @@ fn self_contained_reference_mode_preserves_prepared_internal_refs() {
 
     let output = apply_schema_output_pipeline(
         schema,
+        &std::collections::BTreeMap::new(),
         request(ReferencePolicy::SelfContained),
         std::path::Path::new("/does/not/matter"),
         output_policy(),
@@ -133,6 +136,7 @@ fn fully_inlined_output_prunes_generator_definitions_orphaned_by_transport() -> 
 
     let output = apply_schema_output_pipeline(
         schema,
+        &std::collections::BTreeMap::new(),
         request(ReferencePolicy::FullyInlinedExport),
         std::path::Path::new("/does/not/matter"),
         output_policy(),
@@ -160,6 +164,7 @@ fn self_contained_reference_mode_rejects_unprepared_external_refs() {
 
     let err = apply_schema_output_pipeline(
         schema,
+        &std::collections::BTreeMap::new(),
         request(ReferencePolicy::SelfContained),
         std::path::Path::new("/does/not/matter"),
         output_policy(),
@@ -192,6 +197,7 @@ fn fully_inlined_export_reference_mode_inlines_prepared_internal_refs() {
 
     let output = apply_schema_output_pipeline(
         schema,
+        &std::collections::BTreeMap::new(),
         request(ReferencePolicy::FullyInlinedExport),
         std::path::Path::new("/does/not/matter"),
         output_policy(),
@@ -217,6 +223,7 @@ fn output_pipeline_marks_final_schema_as_generated() {
 
     let output = apply_schema_output_pipeline(
         schema,
+        &std::collections::BTreeMap::new(),
         request(ReferencePolicy::PreserveRefs),
         std::path::Path::new("/does/not/matter"),
         output_policy(),

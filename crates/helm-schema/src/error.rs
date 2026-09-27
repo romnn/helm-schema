@@ -89,6 +89,18 @@ pub enum CliError {
         kind: &'static str,
     },
 
+    /// The final schema exceeds Helm's chart-file size limit even as compact
+    /// JSON with short definition names.
+    #[error(
+        "values.schema.json would be {bytes} bytes even as compact JSON with short definition names; Helm refuses chart files over {limit} bytes"
+    )]
+    SchemaExceedsHelmFileLimit {
+        /// Bytes of the smallest serialization, including the trailing newline.
+        bytes: usize,
+        /// Helm's per-file limit.
+        limit: usize,
+    },
+
     /// Helm template source could not be parsed.
     #[error("template parse error: {0}")]
     TemplateParse(#[from] helm_schema_ast::ParseError),

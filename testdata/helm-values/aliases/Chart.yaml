@@ -1,0 +1,18 @@
+apiVersion: v2
+name: aliases
+version: 1.0.0
+dependencies:
+  - name: dep
+    version: 1.0.0
+    alias: first
+  - name: dep
+    version: 1.0.0
+    alias: second
+    condition: second.enabled
+  - name: tagged
+    version: 1.0.0
+    tags:
+      - optional
+  - name: versioned
+    version: ^2.0.0
+    condition: versioned.enabled

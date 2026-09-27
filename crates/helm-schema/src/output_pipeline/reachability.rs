@@ -21,6 +21,14 @@ impl OwnedDefinitions {
         }
     }
 
+    /// Whether the generator still owns root `$defs` entry `name` unchanged.
+    pub(crate) fn owns_root_definition(&self, name: &str) -> bool {
+        self.original.contains_key(&DefinitionId {
+            keyword: "$defs".to_string(),
+            name: name.to_string(),
+        })
+    }
+
     pub(crate) fn retain_unchanged(mut self, schema: &Value) -> Self {
         self.original.retain(|id, definition| {
             schema

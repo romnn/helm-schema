@@ -35,9 +35,26 @@ Some `$defs` entries appear across many charts:
 | Definition | Meaning |
 |---|---|
 | `helm-truthy` | Helm's notion of "truthy" — anything other than `false`, `0`, `""`, an empty list, or an empty map. Used to model `if`/`with` guards precisely rather than assuming a boolean. |
-| An int-or-string pattern (e.g. `schema1`) | Accepts Helm's quoted-integer form (`"3"`) alongside a numeric field, because a quoted number renders and validates the same as the bare number. |
+| An int-or-string pattern (e.g. `h0123456789ab`) | Accepts Helm's quoted-integer form (`"3"`) alongside a numeric field, because a quoted number renders and validates the same as the bare number. |
 
-The exact names (`schema1`, `schema2`, …) are assigned deterministically during minimization; their **contents** are what carry meaning.
+Interned definitions are named after their content: `h` plus the first twelve
+hex digits of a SHA-256 digest of the definition (longer only when two digests
+share those digits). Shared Kubernetes/CRD subtrees are named
+`providerSchema_…`, `providerShared_…`, or after their provider source
+(`providerSource_…`). Named building blocks such as `helm-truthy` keep their
+names and act as identity boundaries: changing one does not rename the
+definitions that reference it.
+
+A name stays the same as long as the definition's content, the names of the
+definitions it references, the order of its `allOf`/`anyOf` arms, and the set
+of names already in use stay the same. So an unrelated chart edit usually
+leaves the other definitions untouched, with two exceptions:
+
+- `allOf`/`anyOf` arms are ordered by internal handles of shared
+  Kubernetes/CRD subtrees, so a new, unrelated provider subtree can reorder
+  arms and rename the definitions that contain them.
+- Two definitions with equal digests get `-2`, `-3`, … suffixes in an
+  internal order that an unrelated edit can change.
 
 ## `$ref` handling
 
@@ -63,6 +80,21 @@ helm-schema ./mychart --no-minimize
 Minimization is lossless, so it cannot guarantee that every schema fits
 Helm's 5 MiB chart-file limit. Disabling it generally makes both the file and
 downstream validator compilation larger.
+
+## Size limit
+
+Helm refuses chart files larger than 5 MiB (5,242,880 bytes). When the
+requested output would exceed that, `helm-schema` falls back one step at a
+time, taking each step only when the previous one is still too large:
+
+1. pretty JSON with readable definition names (the default);
+2. compact JSON with readable definition names (where `--compact` starts);
+3. compact JSON with every root definition renamed to a short base-62 key,
+   the most referenced definition getting the shortest one. This is a
+   one-to-one rename of the same schema.
+
+If even the last step exceeds the limit, generation fails with an error
+instead of writing a file Helm cannot load.
 
 ## Emission profiles
 

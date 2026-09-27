@@ -12,13 +12,13 @@ use indoc::indoc;
 use std::collections::BTreeSet;
 
 use color_eyre::eyre::{self, OptionExt as _};
+use helm_schema_test_support::{ArtifactId, ChartId};
 use serde_json::{Value, json};
+use test_util::helm_values::{AcceptanceDocument, ValuesError, acceptance_values};
 use test_util::prelude::sim_assert_eq;
 
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
-#[path = "common/schema_roundtrip.rs"]
-mod schema_roundtrip;
 
 struct SemanticCase {
     label: &'static str,
@@ -75,7 +75,9 @@ struct ValidationFailure {
 }
 
 fn assert_chart_cases(chart: &str, cases: Vec<SemanticCase>) -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path(chart)?;
+    let chart_id = ChartId::from_relative_path(chart)
+        .ok_or_eyre(format!("{chart} is not a registered corpus chart"))?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(chart_id))?;
     let validator = jsonschema::validator_for(&schema)
         .map_err(|error| eyre::eyre!("compile {chart} schema: {error}"))?;
     let validation_errors = |instance: &Value| {
@@ -4488,19 +4490,35 @@ fn reloader_service_account_host_rejects_present_scalars() -> eyre::Result<()> {
 /// coalescing refills from the subchart's defaults.
 #[test]
 fn prometheus_dependency_values_roots_must_be_tables() -> eyre::Result<()> {
+    // A scalar or list dependency root aborts dependency processing, so no
+    // template document exists; lint's values rule still validates the raw
+    // document, and the root schema rejects it at the dependency root.
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Prometheus))?;
+    let validator = jsonschema::validator_for(&schema)
+        .map_err(|error| eyre::eyre!("compile prometheus schema: {error}"))?;
+    let chart = helm_schema_test_support::generate::chart_dir("prometheus");
+    for root in [json!(7), json!(["enabled"])] {
+        let overrides = json!({ "prometheus-pushgateway": root });
+        let Err(ValuesError::NotValidated(abort)) =
+            acceptance_values(&chart, overrides.clone(), AcceptanceDocument::Template)
+        else {
+            eyre::bail!("Helm aborts on the dependency root {root}");
+        };
+        sim_assert_eq!(
+            have: abort,
+            want: "Helm aborts: type mismatch on prometheus-pushgateway"
+        );
+        let lint_raw = acceptance_values(&chart, overrides, AcceptanceDocument::LintRaw)?.root;
+        assert!(
+            validator
+                .iter_errors(&lint_raw)
+                .any(|error| error.instance_path().to_string() == "/prometheus-pushgateway"),
+            "the root schema rejects the dependency root {root} lint's values rule checks"
+        );
+    }
     assert_chart_cases(
         "prometheus",
         vec![
-            SemanticCase::rejected(
-                "a scalar dependency root aborts dependency processing",
-                "/prometheus-pushgateway",
-                json!({ "prometheus-pushgateway": 7 }),
-            ),
-            SemanticCase::rejected(
-                "a list dependency root aborts the same way",
-                "/prometheus-pushgateway",
-                json!({ "prometheus-pushgateway": ["enabled"] }),
-            ),
             SemanticCase::accepted(
                 "an empty dependency root table renders",
                 json!({ "prometheus-pushgateway": {} }),

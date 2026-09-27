@@ -9,15 +9,14 @@
 //! regeneration from silently re-pinning the defect.
 
 use color_eyre::eyre;
+use helm_schema_test_support::{ArtifactId, ChartId};
 
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
-#[path = "common/schema_roundtrip.rs"]
-mod schema_roundtrip;
 
 #[test]
 fn reloader_pod_monitor_tls_config_accepts_the_map_helm_renders() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("reloader")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Reloader))?;
     let validator = jsonschema::validator_for(&schema)?;
 
     // `helm template` renders this overlay byte-identically to the spaced

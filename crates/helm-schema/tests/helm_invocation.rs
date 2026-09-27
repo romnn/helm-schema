@@ -21,17 +21,19 @@ mod helm_pool;
 
 use helm_cache_policy::render_cacheability;
 use helm_invocation::{
-    Cacheability, HelmRunner, InvocationRequest, Outcome, PreparedTree, TemplateRequest,
-    stage_totals, tree_sha256,
+    Cacheability, HelmRunner, InvocationRequest, Outcome, PreparedTree, RENDER_TIMEOUT,
+    TemplateRequest, find_helm, find_helmsweep, stage_totals, tree_sha256,
 };
 use helm_pool::{Ordinal, PoolLimits, run_ordered};
 
 fn base_request() -> InvocationRequest {
     InvocationRequest {
-        format: "helm-schema/helm-invocation/v1".to_string(),
+        format: "helm-schema/helm-invocation/v3".to_string(),
         platform: "macos-aarch64".to_string(),
-        helm_sha256: "helm".to_string(),
-        helm_version: "v4.2.3".to_string(),
+        engine: "helmsweep".to_string(),
+        program_sha256: "helmsweep".to_string(),
+        program_version: "build b\nhelm.sh/helm/v4 v4.2.3 => ./third_party/helm-v4.2.3\n"
+            .to_string(),
         working_directory: "/store".to_string(),
         environment: vec![("HOME".to_string(), "/store/home".to_string())],
         arguments: [
@@ -70,8 +72,13 @@ fn each_identity_field_changes_the_key() -> eyre::Result<()> {
     };
     edit(&|request| request.format = "helm-schema/helm-invocation/v2".to_string());
     edit(&|request| request.platform = "linux-x86_64".to_string());
-    edit(&|request| request.helm_sha256 = "other helm".to_string());
-    edit(&|request| request.helm_version = "v4.2.4".to_string());
+    // The engine, its program's bytes, and any line of its version (build id, patch).
+    edit(&|request| request.engine = "helm-cli".to_string());
+    edit(&|request| request.program_sha256 = "other helmsweep".to_string());
+    edit(&|request| {
+        request.program_version =
+            "build c\nhelm.sh/helm/v4 v4.2.3 => ./third_party/helm-v4.2.3\n".to_string();
+    });
     edit(&|request| request.working_directory = "/other".to_string());
     edit(&|request| {
         request
@@ -787,5 +794,244 @@ fn a_panicking_job_propagates_without_deadlock() -> eyre::Result<()> {
         .recv_timeout(std::time::Duration::from_secs(30))
         .map_err(|_| eyre::eyre!("the pool deadlocked after a job panicked"))?;
     sim_assert_eq!(have: propagated, want: true);
+    Ok(())
+}
+
+/// The resident helmsweep server prints exactly what the Helm CLI prints for
+/// every kind of render (a manifest, a template abort, a coalescence type
+/// mismatch, a log record, a values-file error, a bad Kubernetes version), and
+/// its invocations are keyed apart from the CLI's.
+#[test]
+fn the_resident_server_renders_exactly_as_the_cli() -> eyre::Result<()> {
+    let root = tempfile::tempdir()?;
+    let cli = HelmRunner::with_program(root.path(), false, find_helm()?)?;
+    let resident =
+        HelmRunner::with_helmsweep(root.path(), false, find_helmsweep()?, RENDER_TIMEOUT)?;
+    let chart = publish_chart(&cli, "value: default\nsub: {}\n")?;
+    let staged = cli.staging_dir()?;
+    write_chart(&staged, "value: default\n")?;
+    fs::write(
+        staged.join("Chart.yaml"),
+        "apiVersion: v2\nname: replayed\nversion: 1.0.0\ndeprecated: true\n",
+    )?;
+    let deprecated = cli.publish_tree(&staged)?;
+    let cases = [
+        (&chart, r#"{"value": "a"}"#, "1.29.0"),
+        (&chart, r#"{"value": "fail"}"#, "1.29.0"),
+        (&chart, r#"{"value": {"nested": true}}"#, "1.33.0"),
+        (&chart, r#"{"sub": "not a table"}"#, "1.29.0"),
+        (&chart, "value: [unclosed", "1.29.0"),
+        (&chart, r#"{"value": "a"}"#, "not-a-version"),
+        (&deprecated, r#"{"value": "a"}"#, "1.29.0"),
+    ];
+    for (chart, values, kubernetes_version) in cases {
+        let stage = "render";
+        let want = render(
+            &cli,
+            chart,
+            values,
+            kubernetes_version,
+            stage,
+            &Cacheability::Cacheable,
+        )?;
+        let have = render(
+            &resident,
+            chart,
+            values,
+            kubernetes_version,
+            stage,
+            &Cacheability::Cacheable,
+        )?;
+        sim_assert_eq!(
+            have: (have.success, String::from_utf8_lossy(&have.stdout), String::from_utf8_lossy(&have.stderr)),
+            want: (want.success, String::from_utf8_lossy(&want.stdout), String::from_utf8_lossy(&want.stderr)),
+        );
+        eyre::ensure!(have.key != want.key, "the engine is part of the key");
+    }
+    Ok(())
+}
+
+/// A helmsweep stand-in built from the pinned Helm whose server ends as
+/// `body` makes it.
+#[cfg(unix)]
+fn fake_helmsweep(directory: &Path, name: &str, body: &str) -> eyre::Result<std::path::PathBuf> {
+    use std::os::unix::fs::PermissionsExt as _;
+    let program = directory.join(name);
+    fs::write(
+        &program,
+        format!(
+            "#!/bin/sh\nif [ \"$1\" = version ]; then printf 'build x\\nhelm.sh/helm/v4 v4.2.3 => ./third_party/helm-v4.2.3\\nhelm-build v4.2.3 43e8b7feece8beb0fcba47059ec9b522fd929a64 clean go1.26.5\\n'; exit 0; fi\n{body}\n"
+        ),
+    )?;
+    fs::set_permissions(&program, fs::Permissions::from_mode(0o755))?;
+    Ok(program)
+}
+
+/// Every answer that is not a completed render of the waiting request (the
+/// server ending, a malformed line, another request's id, an abnormal end,
+/// no answer within the timeout, a status Helm never uses) is a harness
+/// failure, twice: the failed server is killed and reaped, never reused,
+/// and nothing is stored.
+#[cfg(unix)]
+#[test]
+fn resident_protocol_failures_are_harness_failures() -> eyre::Result<()> {
+    let programs = tempfile::tempdir()?;
+    let answer = |line: &str| format!("while read -r request; do printf '%s\\n' '{line}'; done");
+    for (name, body, expected) in [
+        ("exits", "exit 0".to_string(), "without answering"),
+        ("garbage", answer("not json"), "malformed answer"),
+        (
+            "other-id",
+            answer(r#"{"id":7,"exit_code":0,"peak_bytes":1,"held_bytes":1,"max_rss_bytes":1}"#),
+            "is not to request 0",
+        ),
+        (
+            "abnormal",
+            answer(
+                r#"{"id":0,"error":"abnormal: helm template would exit 2: panic: x","peak_bytes":1,"held_bytes":1,"max_rss_bytes":1}"#,
+            ),
+            "ended abnormally",
+        ),
+        (
+            "hangs",
+            "while read -r request; do exec sleep 600; done".to_string(),
+            "no answer within",
+        ),
+        (
+            "status",
+            answer(r#"{"id":0,"exit_code":2,"peak_bytes":1,"held_bytes":1,"max_rss_bytes":1}"#),
+            "exit code Some(2)",
+        ),
+    ] {
+        let root = tempfile::tempdir()?;
+        let program = fake_helmsweep(programs.path(), name, &body)?;
+        let runner = HelmRunner::with_helmsweep(
+            root.path(),
+            true,
+            program,
+            std::time::Duration::from_secs(3),
+        )?;
+        let chart = publish_chart(&runner, "value: default\n")?;
+        let request = TemplateRequest {
+            chart: &chart,
+            values: br#"{"value": "a"}"#,
+            kubernetes_version: "1.29.0",
+        };
+        let case = tempfile::tempdir()?;
+        let mut failures = Vec::new();
+        for _ in 0..2 {
+            let Err(error) =
+                runner.template(&request, case.path(), "render", &Cacheability::Cacheable)
+            else {
+                eyre::bail!("{name}: a protocol failure became a Helm verdict");
+            };
+            failures.push(format!("{error:?}"));
+        }
+        eyre::ensure!(
+            failures
+                .iter()
+                .all(|failure| failure.contains(expected) && failure.contains("helmsweep")),
+            "{name}: unexpected failures {failures:?}"
+        );
+        let mut stored = fs::read_dir(root.path())?
+            .map(|entry| Ok(entry?.file_name().to_string_lossy().into_owned()))
+            .collect::<eyre::Result<Vec<_>>>()?;
+        stored.sort();
+        sim_assert_eq!(have: stored, want: vec!["home", "inputs", "staging", "trees"]);
+    }
+    Ok(())
+}
+
+/// Templates see the pinned release's complete capabilities through the
+/// resident server exactly as through the CLI: Helm's version, Git commit,
+/// tree state and Go version, the Kubernetes version and API versions.
+#[test]
+fn templates_see_the_release_capabilities_in_both_engines() -> eyre::Result<()> {
+    let root = tempfile::tempdir()?;
+    let cli = HelmRunner::with_program(root.path(), false, find_helm()?)?;
+    let resident =
+        HelmRunner::with_helmsweep(root.path(), false, find_helmsweep()?, RENDER_TIMEOUT)?;
+    let staged = cli.staging_dir()?;
+    fs::create_dir_all(staged.join("templates"))?;
+    fs::write(
+        staged.join("Chart.yaml"),
+        "apiVersion: v2\nname: capabilities\nversion: 1.0.0\n",
+    )?;
+    fs::write(
+        staged.join("templates/capabilities.yaml"),
+        indoc! {r"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: capabilities
+        data:
+          capabilities: {{ .Capabilities | toJson | quote }}
+          helm: {{ .Capabilities.HelmVersion | toJson | quote }}
+    "},
+    )?;
+    let chart = cli.publish_tree(&staged)?;
+    for kubernetes_version in ["1.29.0", "1.33.0"] {
+        let want = render(
+            &cli,
+            &chart,
+            "{}",
+            kubernetes_version,
+            "render",
+            &Cacheability::Cacheable,
+        )?;
+        let have = render(
+            &resident,
+            &chart,
+            "{}",
+            kubernetes_version,
+            "render",
+            &Cacheability::Cacheable,
+        )?;
+        let want_text = String::from_utf8(want.stdout)?;
+        eyre::ensure!(
+            want.success
+                && want_text
+                    .contains(r#"\"git_commit\":\"43e8b7feece8beb0fcba47059ec9b522fd929a64\""#),
+            "the CLI reports its release build: {want_text}"
+        );
+        sim_assert_eq!(have: String::from_utf8(have.stdout)?, want: want_text);
+    }
+    Ok(())
+}
+
+/// A resident server holding more than the retirement bound after a render
+/// is terminated rather than kept idle; a small one is reused.
+#[cfg(unix)]
+#[test]
+fn large_idle_resident_servers_are_retired() -> eyre::Result<()> {
+    let programs = tempfile::tempdir()?;
+    for (held, servers) in [(1_u64, 1_usize), (1 << 30, 2)] {
+        let starts = programs.path().join(format!("starts-{held}"));
+        let body = format!(
+            r#"echo $$ >> '{starts}'
+while read -r request; do
+  id=$(printf '%s' "$request" | sed -E 's/.*"id":([0-9]+).*/\1/')
+  : > "$(printf '%s' "$request" | sed -E 's/.*"stdout_path":"([^"]*)".*/\1/')"
+  : > "$(printf '%s' "$request" | sed -E 's/.*"stderr_path":"([^"]*)".*/\1/')"
+  printf '{{"id":%s,"exit_code":0,"peak_bytes":1,"held_bytes":{held},"max_rss_bytes":1}}\n' "$id"
+done"#,
+            starts = starts.display()
+        );
+        let root = tempfile::tempdir()?;
+        let program = fake_helmsweep(programs.path(), &format!("held-{held}"), &body)?;
+        let runner = HelmRunner::with_helmsweep(root.path(), false, program, RENDER_TIMEOUT)?;
+        let chart = publish_chart(&runner, "value: default\n")?;
+        for _ in 0..2 {
+            render(
+                &runner,
+                &chart,
+                "{}",
+                "1.29.0",
+                "render",
+                &Cacheability::Cacheable,
+            )?;
+        }
+        sim_assert_eq!(have: fs::read_to_string(&starts)?.lines().count(), want: servers);
+    }
     Ok(())
 }

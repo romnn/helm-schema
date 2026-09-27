@@ -1,168 +1,16 @@
 {
   "$defs": {
-    "1": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/c"
-        },
-        {
-          "$ref": "#/$defs/d"
-        }
-      ]
-    },
-    "2": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "maxItems": 0,
-            "type": "array"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "$ref": "#/$defs/e"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "null"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "maxProperties": 0,
-            "type": "object"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/e"
-      },
-      "type": "object"
-    },
-    "3": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "4": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "5": {
-      "properties": {
-        "syncWorkspace": {
-          "properties": {
-            "enabled": {
-              "pattern": "^-$",
-              "type": "string"
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "syncWorkspace"
-      ],
-      "type": "object"
-    },
-    "6": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "7": {
+    "h0e4014154904": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "8": {
+    "h1760b2f63aa3": {
       "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
-    "9": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "a": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "b": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/c"
-        },
-        {
-          "$ref": "#/$defs/5"
-        },
-        {
-          "$ref": "#/$defs/d"
-        }
-      ]
-    },
-    "c": {
-      "allOf": [
-        {
-          "not": {
-            "$ref": "#/$defs/5"
-          }
-        },
-        {
-          "properties": {
-            "syncWorkspace": {
-              "$ref": "#/$defs/g"
-            }
-          },
-          "required": [
-            "syncWorkspace"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "d": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/5"
-        },
-        {
-          "properties": {
-            "global": {
-              "$ref": "#/$defs/g"
-            }
-          },
-          "required": [
-            "global"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "e": {
+    "h3394d7d8572c": {
       "allOf": [
         {
           "not": {
@@ -182,7 +30,186 @@
       ],
       "type": "string"
     },
-    "f": {
+    "h424d50bcce86": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "h46fdbf047746": {
+      "properties": {
+        "secretName": {
+          "enum": [
+            ""
+          ]
+        }
+      },
+      "required": [
+        "secretName"
+      ],
+      "type": "object"
+    },
+    "h589952769b45": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "h5b7699abf0ec": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "h742e68856fa9": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/h92fd3191e250"
+        },
+        {
+          "$ref": "#/$defs/h9d26cf521f9b"
+        },
+        {
+          "$ref": "#/$defs/ha316d8ae09d4"
+        }
+      ]
+    },
+    "h7a6313f8dd4a": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "h89b4ad868287": {
+      "properties": {
+        "CACerts": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "CACerts"
+      ],
+      "type": "object"
+    },
+    "h92fd3191e250": {
+      "allOf": [
+        {
+          "not": {
+            "$ref": "#/$defs/h9d26cf521f9b"
+          }
+        },
+        {
+          "properties": {
+            "syncWorkspace": {
+              "$ref": "#/$defs/hd9dd13dbcbf3"
+            }
+          },
+          "required": [
+            "syncWorkspace"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "h9810b646fad3": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "h9d26cf521f9b": {
+      "properties": {
+        "syncWorkspace": {
+          "properties": {
+            "enabled": {
+              "pattern": "^-$",
+              "type": "string"
+            }
+          },
+          "required": [
+            "enabled"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "syncWorkspace"
+      ],
+      "type": "object"
+    },
+    "ha23b9e708158": {
+      "properties": {
+        "secretName": {}
+      },
+      "required": [
+        "secretName"
+      ],
+      "type": "object"
+    },
+    "ha316d8ae09d4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/h9d26cf521f9b"
+        },
+        {
+          "properties": {
+            "global": {
+              "$ref": "#/$defs/hd9dd13dbcbf3"
+            }
+          },
+          "required": [
+            "global"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "ha57525005582": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "hab02c23921d2": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/$defs/h3394d7d8572c"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/h3394d7d8572c"
+      },
+      "type": "object"
+    },
+    "hbc53ff908fd9": {
       "properties": {
         "secretName": {
           "enum": [
@@ -195,7 +222,17 @@
       ],
       "type": "object"
     },
-    "g": {
+    "hcdb9c21e3257": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/h92fd3191e250"
+        },
+        {
+          "$ref": "#/$defs/ha316d8ae09d4"
+        }
+      ]
+    },
+    "hd9dd13dbcbf3": {
       "properties": {
         "enabled": {
           "$ref": "#/$defs/t"
@@ -203,17 +240,6 @@
       },
       "required": [
         "enabled"
-      ],
-      "type": "object"
-    },
-    "h": {
-      "properties": {
-        "CACerts": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "CACerts"
       ],
       "type": "object"
     },
@@ -248,36 +274,10 @@
         }
       ]
     },
-    "i": {
-      "properties": {
-        "secretName": {
-          "enum": [
-            ""
-          ]
-        }
-      },
-      "required": [
-        "secretName"
-      ],
-      "type": "object"
-    },
-    "j": {
-      "properties": {
-        "secretName": {}
-      },
-      "required": [
-        "secretName"
-      ],
-      "type": "object"
-    },
-    "k": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "providerSchema1": {
+    "providerSchema_1302191d2269": {
       "anyOf": [
         {
-          "$ref": "#/$defs/3"
+          "$ref": "#/$defs/h7a6313f8dd4a"
         },
         {
           "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
@@ -291,10 +291,10 @@
               }
             },
             {
-              "$ref": "#/$defs/6"
+              "$ref": "#/$defs/h1760b2f63aa3"
             },
             {
-              "$ref": "#/$defs/a"
+              "$ref": "#/$defs/h424d50bcce86"
             },
             {
               "not": {
@@ -302,13 +302,13 @@
               }
             },
             {
-              "$ref": "#/$defs/8"
+              "$ref": "#/$defs/ha57525005582"
             },
             {
-              "$ref": "#/$defs/7"
+              "$ref": "#/$defs/h0e4014154904"
             },
             {
-              "$ref": "#/$defs/9"
+              "$ref": "#/$defs/h589952769b45"
             },
             {
               "not": {
@@ -321,7 +321,7 @@
               }
             },
             {
-              "$ref": "#/$defs/4"
+              "$ref": "#/$defs/h9810b646fad3"
             }
           ],
           "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
@@ -332,14 +332,14 @@
           "type": "string"
         },
         {
-          "$ref": "#/$defs/2"
+          "$ref": "#/$defs/hab02c23921d2"
         },
         {
           "pattern": "^[ \\t]*(#.*)?$",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/k"
+          "$ref": "#/$defs/h5b7699abf0ec"
         }
       ]
     },
@@ -374,7 +374,7 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/1"
+        "$ref": "#/$defs/hcdb9c21e3257"
       },
       "then": {
         "allOf": [
@@ -390,7 +390,7 @@
                     "description": "Name and key of Kubernetes secret containing the Terraform CLI Configuration\nMust have Terraform Cloud Team API Token",
                     "properties": {
                       "secretName": {
-                        "$ref": "#/$defs/providerSchema1"
+                        "$ref": "#/$defs/providerSchema_1302191d2269"
                       }
                     }
                   }
@@ -432,7 +432,7 @@
                     "description": "Name of Kubernetes secret containing keys and values of sensitive variables",
                     "properties": {
                       "secretName": {
-                        "$ref": "#/$defs/providerSchema1"
+                        "$ref": "#/$defs/providerSchema_1302191d2269"
                       }
                     }
                   }
@@ -446,7 +446,7 @@
               "nameOverride": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/3"
+                    "$ref": "#/$defs/h7a6313f8dd4a"
                   },
                   {
                     "not": {
@@ -458,14 +458,14 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/2"
+                    "$ref": "#/$defs/hab02c23921d2"
                   },
                   {
                     "pattern": "^[ \\t]*(#.*)?$",
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/k"
+                    "$ref": "#/$defs/h5b7699abf0ec"
                   },
                   {
                     "type": "null"
@@ -478,10 +478,10 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/6"
+                        "$ref": "#/$defs/h1760b2f63aa3"
                       },
                       {
-                        "$ref": "#/$defs/a"
+                        "$ref": "#/$defs/h424d50bcce86"
                       },
                       {
                         "not": {
@@ -489,13 +489,13 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/8"
+                        "$ref": "#/$defs/ha57525005582"
                       },
                       {
-                        "$ref": "#/$defs/7"
+                        "$ref": "#/$defs/h0e4014154904"
                       },
                       {
-                        "$ref": "#/$defs/9"
+                        "$ref": "#/$defs/h589952769b45"
                       },
                       {
                         "not": {
@@ -508,7 +508,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/4"
+                        "$ref": "#/$defs/h9810b646fad3"
                       }
                     ],
                     "type": "string"
@@ -546,7 +546,7 @@
                       "secretKey": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/3"
+                            "$ref": "#/$defs/h7a6313f8dd4a"
                           },
                           {
                             "allOf": [
@@ -556,10 +556,10 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/6"
+                                "$ref": "#/$defs/h1760b2f63aa3"
                               },
                               {
-                                "$ref": "#/$defs/a"
+                                "$ref": "#/$defs/h424d50bcce86"
                               },
                               {
                                 "not": {
@@ -567,13 +567,13 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/8"
+                                "$ref": "#/$defs/ha57525005582"
                               },
                               {
-                                "$ref": "#/$defs/7"
+                                "$ref": "#/$defs/h0e4014154904"
                               },
                               {
-                                "$ref": "#/$defs/9"
+                                "$ref": "#/$defs/h589952769b45"
                               },
                               {
                                 "not": {
@@ -586,14 +586,14 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/4"
+                                "$ref": "#/$defs/h9810b646fad3"
                               }
                             ],
                             "description": "key is the key to project.",
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/2"
+                            "$ref": "#/$defs/hab02c23921d2"
                           }
                         ]
                       }
@@ -649,7 +649,7 @@
                   "syncWorkspace": {
                     "properties": {
                       "sensitiveVariables": {
-                        "$ref": "#/$defs/f"
+                        "$ref": "#/$defs/hbc53ff908fd9"
                       }
                     },
                     "required": [
@@ -668,7 +668,7 @@
                   "syncWorkspace": {
                     "properties": {
                       "sensitiveVariables": {
-                        "$ref": "#/$defs/i"
+                        "$ref": "#/$defs/h46fdbf047746"
                       }
                     },
                     "required": [
@@ -688,7 +688,7 @@
                     "syncWorkspace": {
                       "properties": {
                         "sensitiveVariables": {
-                          "$ref": "#/$defs/j"
+                          "$ref": "#/$defs/ha23b9e708158"
                         }
                       },
                       "required": [
@@ -706,7 +706,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/1"
+            "$ref": "#/$defs/hcdb9c21e3257"
           }
         ]
       },
@@ -735,7 +735,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/1"
+            "$ref": "#/$defs/hcdb9c21e3257"
           }
         ]
       },
@@ -848,7 +848,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/1"
+            "$ref": "#/$defs/hcdb9c21e3257"
           }
         ]
       },
@@ -902,7 +902,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/1"
+            "$ref": "#/$defs/hcdb9c21e3257"
           }
         ]
       },
@@ -910,7 +910,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/b"
+        "$ref": "#/$defs/h742e68856fa9"
       },
       "then": {
         "additionalProperties": {},
@@ -932,7 +932,7 @@
                   "syncWorkspace": {
                     "properties": {
                       "terraformRC": {
-                        "$ref": "#/$defs/i"
+                        "$ref": "#/$defs/h46fdbf047746"
                       }
                     },
                     "required": [
@@ -951,7 +951,7 @@
                   "syncWorkspace": {
                     "properties": {
                       "terraformRC": {
-                        "$ref": "#/$defs/f"
+                        "$ref": "#/$defs/hbc53ff908fd9"
                       }
                     },
                     "required": [
@@ -971,7 +971,7 @@
                     "syncWorkspace": {
                       "properties": {
                         "terraformRC": {
-                          "$ref": "#/$defs/j"
+                          "$ref": "#/$defs/ha23b9e708158"
                         }
                       },
                       "required": [
@@ -989,7 +989,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/1"
+            "$ref": "#/$defs/hcdb9c21e3257"
           }
         ]
       },
@@ -1010,7 +1010,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/1"
+            "$ref": "#/$defs/hcdb9c21e3257"
           }
         ]
       },
@@ -1041,7 +1041,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/1"
+            "$ref": "#/$defs/hcdb9c21e3257"
           }
         ]
       },
@@ -1059,7 +1059,7 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/h"
+        "$ref": "#/$defs/h89b4ad868287"
       },
       "then": {
         "additionalProperties": {},
@@ -1128,7 +1128,7 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/1"
+            "$ref": "#/$defs/hcdb9c21e3257"
           }
         ]
       },
@@ -1196,7 +1196,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/1"
+            "$ref": "#/$defs/hcdb9c21e3257"
           }
         ]
       },
@@ -1206,7 +1206,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/h"
+            "$ref": "#/$defs/h89b4ad868287"
           },
           {
             "anyOf": [
@@ -1285,7 +1285,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/b"
+            "$ref": "#/$defs/h742e68856fa9"
           }
         ]
       },

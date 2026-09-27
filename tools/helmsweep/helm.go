@@ -26,25 +26,6 @@ import (
 	releasev1 "helm.sh/helm/v4/pkg/release/v1"
 )
 
-// clearHelmEnv leaves the process exactly HOME (a fresh empty directory) and
-// PATH=/usr/bin:/bin, so no HELM_*, KUBECONFIG, proxy, XDG or home
-// configuration reaches Helm. The CLI adjudication runs the Helm binary under
-// the same environment (README.md). Call it once, before any worker starts.
-func clearHelmEnv() (func(), error) {
-	home, err := os.MkdirTemp("", "helmsweep-home-")
-	if err != nil {
-		return nil, err
-	}
-	os.Clearenv()
-	if err := os.Setenv("HOME", home); err != nil {
-		return nil, err
-	}
-	if err := os.Setenv("PATH", "/usr/bin:/bin"); err != nil {
-		return nil, err
-	}
-	return func() { _ = os.RemoveAll(home) }, nil
-}
-
 // logSink is the writer behind the process-wide slog default, which Helm's
 // library code and the std log package write to. It is installed once, with
 // the handler the Helm CLI installs (pkg/cmd/root.go SetupLogging,
@@ -171,14 +152,16 @@ func cliError(out *bytes.Buffer, err error) (int, []byte) {
 // writing stdout and stderr to one log as `> log 2>&1` does.
 func lintCell(chartPath, kubeVersion, valuesFile string) (int, []byte) {
 	var out bytes.Buffer
+	settings := cli.New()
+	if _, ok := initRootConfig(settings); !ok {
+		return 1, out.Bytes()
+	}
 	client := action.NewLint()
 	parsed, err := common.ParseKubeVersion(kubeVersion)
 	if err != nil {
 		return cliError(&out, fmt.Errorf("invalid kube version '%s': %s", kubeVersion, err))
 	}
 	client.KubeVersion = parsed
-
-	settings := cli.New()
 	client.Namespace = settings.Namespace()
 	valueOpts := &values.Options{ValueFiles: []string{valuesFile}}
 	vals, err := valueOpts.MergeValues(getter.All(settings))
@@ -211,27 +194,34 @@ func lintCell(chartPath, kubeVersion, valuesFile string) (int, []byte) {
 }
 
 // templateCell is `helm template t CHART --skip-schema-validation
-// --kube-version K -f VALUES` with stdout discarded: the configuration
-// cobra.OnInitialize builds (pkg/cmd/root.go NewRootCmd), newTemplateCmd's
-// RunE (pkg/cmd/template.go) with the install flags at their defaults
-// (pkg/cmd/install.go addInstallFlags), then runInstall. The log is stderr.
+// --kube-version K -f VALUES` with stdout discarded; the log is stderr.
 func templateCell(chartPath, kubeVersion, valuesFile string) (int, []byte) {
-	var out bytes.Buffer
+	rc, _, stderr := templateRun("t", chartPath, kubeVersion, []string{valuesFile}, true)
+	return rc, stderr
+}
+
+// templateRun is `helm template RELEASE CHART --kube-version K -f VALUES...`
+// (plus --skip-schema-validation when skipSchema) with every other flag at
+// its default: the configuration cobra.OnInitialize builds (pkg/cmd/root.go
+// NewRootCmd), newTemplateCmd's RunE (pkg/cmd/template.go) with the install
+// flags at their defaults (pkg/cmd/install.go addInstallFlags), then
+// runInstall. It returns the CLI's exit code, stdout and stderr.
+func templateRun(release, chartPath, kubeVersion string, valuesFiles []string, skipSchema bool) (int, []byte, []byte) {
+	var stderr bytes.Buffer
 	settings := cli.New()
-	cfg := action.NewConfiguration()
-	if err := cfg.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER")); err != nil {
-		// The CLI log.Fatal()s here: the message goes through slog, exit 1.
-		log.Print(err)
-		return 1, out.Bytes()
+	cfg, ok := initRootConfig(settings)
+	if !ok {
+		return 1, nil, stderr.Bytes()
 	}
 
 	client := action.NewInstall(cfg)
 	client.Timeout = 300 * time.Second
 	client.WaitStrategy = kube.HookOnlyStrategy
-	client.SkipSchemaValidation = true
+	client.SkipSchemaValidation = skipSchema
 	parsed, err := common.ParseKubeVersion(kubeVersion)
 	if err != nil {
-		return cliError(&out, fmt.Errorf("invalid kube version '%s': %w", kubeVersion, err))
+		rc, text := cliError(&stderr, fmt.Errorf("invalid kube version '%s': %w", kubeVersion, err))
+		return rc, nil, text
 	}
 	client.KubeVersion = parsed
 	client.DryRunStrategy = action.DryRunClient
@@ -240,54 +230,75 @@ func templateCell(chartPath, kubeVersion, valuesFile string) (int, []byte) {
 	client.APIVersions = common.VersionSet([]string{})
 	client.IncludeCRDs = false
 
-	rendered, err := runInstall([]string{"t", chartPath}, client, &values.Options{ValueFiles: []string{valuesFile}}, settings)
+	rel, err := runInstall([]string{release, chartPath}, client, &values.Options{ValueFiles: valuesFiles}, settings)
 	if err != nil {
-		if rendered {
+		if rel != nil {
 			err = fmt.Errorf("%w\n\nUse --debug flag to render out invalid YAML", err)
 		}
-		return cliError(&out, err)
+		rc, text := cliError(&stderr, err)
+		return rc, nil, text
 	}
-	return 0, out.Bytes()
+	var manifests bytes.Buffer
+	if rel != nil {
+		fmt.Fprintln(&manifests, strings.TrimSpace(rel.Manifest))
+		if !client.DisableHooks {
+			for _, m := range rel.Hooks {
+				fmt.Fprintf(&manifests, "---\n# Source: %s\n%s\n", m.Path, m.Manifest)
+			}
+		}
+	}
+	return 0, manifests.Bytes(), stderr.Bytes()
+}
+
+// initRootConfig is the cobra.OnInitialize of pkg/cmd/root.go NewRootCmd,
+// which runs before every command; not ok where the CLI log.Fatal()s (the
+// message goes through slog, exit 1).
+func initRootConfig(settings *cli.EnvSettings) (*action.Configuration, bool) {
+	cfg := action.NewConfiguration()
+	if err := cfg.Init(settings.RESTClientGetter(), settings.Namespace(), os.Getenv("HELM_DRIVER")); err != nil {
+		log.Print(err)
+		return nil, false
+	}
+	return cfg, true
 }
 
 // runInstall is pkg/cmd/install.go runInstall for a local chart directory,
-// without its signal handler. rendered reports whether Helm returned a
-// release (the CLI then points at --debug).
-func runInstall(args []string, client *action.Install, valueOpts *values.Options, settings *cli.EnvSettings) (rendered bool, err error) {
+// without its signal handler.
+func runInstall(args []string, client *action.Install, valueOpts *values.Options, settings *cli.EnvSettings) (*releasev1.Release, error) {
 	name, chartRef, err := client.NameAndChart(args)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	client.ReleaseName = name
 
 	cp, err := client.LocateChart(chartRef, settings)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	vals, err := valueOpts.MergeValues(getter.All(settings))
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	chartRequested, err := loader.Load(cp)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 
 	ac, err := chart.NewAccessor(chartRequested)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
 	if meta := ac.MetadataAsMap(); meta["Type"] != "" && meta["Type"] != "application" {
-		return false, fmt.Errorf("%s charts are not installable", meta["Type"])
+		return nil, fmt.Errorf("%s charts are not installable", meta["Type"])
 	}
 	if ac.Deprecated() {
 		slog.Warn("this chart is deprecated")
 	}
 	if req := ac.MetaDependencies(); len(req) > 0 {
 		if err := action.CheckDependencies(chartRequested, req); err != nil {
-			return false, fmt.Errorf("an error occurred while checking for chart dependencies. You may need to run 'helm dependency build' to fetch missing dependencies: %w", err)
+			return nil, fmt.Errorf("an error occurred while checking for chart dependencies. You may need to run 'helm dependency build' to fetch missing dependencies: %w", err)
 		}
 	}
 
@@ -296,13 +307,13 @@ func runInstall(args []string, client *action.Install, valueOpts *values.Options
 	// pkg/cmd/root.go releaserToV1Release
 	switch rel := ri.(type) {
 	case releasev1.Release:
-		return true, err
+		return &rel, err
 	case *releasev1.Release:
-		return rel != nil, err
+		return rel, err
 	case nil:
-		return false, err
+		return nil, err
 	default:
-		return false, fmt.Errorf("unsupported release type: %T", ri)
+		return nil, fmt.Errorf("unsupported release type: %T", ri)
 	}
 }
 

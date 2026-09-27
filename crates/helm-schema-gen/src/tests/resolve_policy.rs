@@ -7,31 +7,130 @@ use color_eyre::eyre::{self, OptionExt as _};
 use test_util::prelude::sim_assert_eq;
 
 #[test]
-fn conditional_schema_acceptance_memo_uses_complete_exact_keys() {
+fn conditional_schema_acceptance_memo_uses_complete_document_keys() {
     let mut memo = ConditionalSchemaAcceptanceMemo::default();
     let string_schema = serde_json::json!({ "type": "string" });
 
-    // Exact schema/instance repeats share an entry, while a different instance cannot.
+    // Every instance checked against one document shares its single compilation.
     sim_assert_eq!(have: memo.accepts(&string_schema, &serde_json::json!("ok")), want: true);
-    sim_assert_eq!(have: memo.entries.len(), want: 1);
+    sim_assert_eq!(have: memo.validators.len(), want: 1);
     sim_assert_eq!(have: memo.accepts(&string_schema, &serde_json::json!("ok")), want: true);
-    sim_assert_eq!(have: memo.entries.len(), want: 1);
     sim_assert_eq!(have: memo.accepts(&string_schema, &serde_json::json!(1)), want: false);
-    sim_assert_eq!(have: memo.entries.len(), want: 2);
+    sim_assert_eq!(have: memo.validators.len(), want: 1);
 
     // A Helm-truthy reference stores the complete injected definition document as its key.
     let truthy_schema = serde_json::json!({
         "$ref": format!("#/$defs/{HELM_TRUTHY_DEFINITION_NAME}")
     });
     sim_assert_eq!(have: memo.accepts(&truthy_schema, &serde_json::json!(true)), want: true);
-    let wrapped_key_exists = memo.entries.keys().any(|(document, instance)| {
-        instance == &serde_json::json!(true)
-            && document
-                .get("$defs")
-                .and_then(Value::as_object)
-                .is_some_and(|definitions| definitions.contains_key(HELM_TRUTHY_DEFINITION_NAME))
+    sim_assert_eq!(have: memo.validators.len(), want: 2);
+    let wrapped_key_exists = memo.validators.keys().any(|document| {
+        document
+            .get("$defs")
+            .and_then(Value::as_object)
+            .is_some_and(|definitions| definitions.contains_key(HELM_TRUTHY_DEFINITION_NAME))
     });
     sim_assert_eq!(have: wrapped_key_exists, want: true);
+}
+
+#[test]
+fn conditional_schema_acceptance_memo_reuses_one_entry_per_document() {
+    let mut memo = ConditionalSchemaAcceptanceMemo::default();
+    let schema = serde_json::json!({ "type": "integer", "minimum": 2 });
+    let instances = [
+        serde_json::json!(1),
+        serde_json::json!(2),
+        serde_json::json!(3),
+        serde_json::json!("3"),
+        serde_json::json!(null),
+    ];
+
+    let have: Vec<bool> = instances
+        .iter()
+        .map(|instance| memo.accepts(&schema, instance))
+        .collect();
+
+    sim_assert_eq!(have: have, want: vec![false, true, true, false, false]);
+    // Every instance reuses the one entry retained for the document.
+    sim_assert_eq!(have: memo.validators.len(), want: 1);
+}
+
+#[test]
+fn conditional_schema_acceptance_memo_bypasses_external_resources() -> eyre::Result<()> {
+    let directory = tempfile::tempdir()?;
+    let referenced = directory.path().join("member.json");
+    std::fs::write(&referenced, r#"{ "type": "string" }"#)?;
+    let external = serde_json::json!({ "$ref": format!("file://{}", referenced.display()) });
+    let mut memo = ConditionalSchemaAcceptanceMemo::default();
+
+    sim_assert_eq!(have: memo.accepts(&external, &serde_json::json!("ok")), want: true);
+    // The referenced file changes mid-generation: the equal document must be
+    // compiled again against the new contents rather than served from the memo.
+    std::fs::write(&referenced, r#"{ "type": "integer" }"#)?;
+    sim_assert_eq!(have: memo.accepts(&external, &serde_json::json!("ok")), want: false);
+    sim_assert_eq!(have: memo.accepts(&external, &serde_json::json!(1)), want: true);
+
+    // A named `$schema` resource is external too.
+    let named_dialect = serde_json::json!({
+        "$schema": "https://json-schema.org/draft/2020-12/schema",
+        "type": "string"
+    });
+    sim_assert_eq!(have: memo.accepts(&named_dialect, &serde_json::json!("ok")), want: true);
+    sim_assert_eq!(have: memo.accepts(&named_dialect, &serde_json::json!(1)), want: false);
+    sim_assert_eq!(have: memo.validators.len(), want: 0);
+    Ok(())
+}
+
+#[test]
+fn conditional_schema_acceptance_memo_matches_fresh_compilation() {
+    let truthy_reference = serde_json::json!({
+        "$ref": format!("#/$defs/{HELM_TRUTHY_DEFINITION_NAME}")
+    });
+    let truthy_document = serde_json::json!({
+        "$defs": {
+            HELM_TRUTHY_DEFINITION_NAME: crate::condition_encoding::helm_truthy_definition_schema()
+        },
+        "allOf": [truthy_reference]
+    });
+    let invalid_schema = serde_json::json!({ "type": 12 });
+    sim_assert_eq!(have: jsonschema::validator_for(&invalid_schema).is_err(), want: true);
+    // Each case pairs the schema handed to the memo with the document a fresh
+    // compilation must validate against.
+    let cases = [
+        (
+            serde_json::json!({ "type": "string" }),
+            serde_json::json!({ "type": "string" }),
+        ),
+        (
+            serde_json::json!({ "type": "object", "additionalProperties": false }),
+            serde_json::json!({ "type": "object", "additionalProperties": false }),
+        ),
+        (truthy_reference, truthy_document),
+        (invalid_schema.clone(), invalid_schema),
+    ];
+    let instances = [
+        serde_json::json!("ok"),
+        serde_json::json!(""),
+        serde_json::json!(0),
+        serde_json::json!(true),
+        serde_json::json!(null),
+        serde_json::json!({}),
+        serde_json::json!({ "key": 1 }),
+    ];
+
+    let mut memo = ConditionalSchemaAcceptanceMemo::default();
+    // The second pass is served entirely from memo hits.
+    for _pass in 0..2 {
+        for (schema, document) in &cases {
+            for instance in &instances {
+                let fresh = jsonschema::validator_for(document)
+                    .map(|validator| validator.is_valid(instance))
+                    .unwrap_or(false);
+                sim_assert_eq!(have: memo.accepts(schema, instance), want: fresh);
+            }
+        }
+    }
+    sim_assert_eq!(have: memo.validators.len(), want: cases.len());
 }
 
 #[test]

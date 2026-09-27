@@ -203,6 +203,8 @@ pub(crate) struct ProjectedTree {
     pub(crate) document: SchemaDocument,
     pub(crate) emission_report: EmissionReport,
     provider_definitions: BTreeMap<String, Value>,
+    /// Final names of the private provider-definition handles.
+    definition_names: BTreeMap<String, String>,
 }
 
 #[derive(Clone)]
@@ -210,11 +212,13 @@ pub(crate) struct MaterializedTree {
     pub(crate) schema: Value,
     pub(crate) emission_report: EmissionReport,
     provider_definitions: BTreeMap<String, Value>,
+    definition_names: BTreeMap<String, String>,
 }
 
 pub(crate) struct CompletedGeneratedSchema {
     pub(crate) schema: Value,
     pub(crate) emission_report: EmissionReport,
+    pub(crate) definition_names: BTreeMap<String, String>,
 }
 
 impl LoweredEmissionPlan {
@@ -357,10 +361,12 @@ impl LoweredEmissionPlan {
         // Candidate metadata is consumed only after selection. The shared
         // plan stays immutable, and each projection receives fresh payloads.
         let mut resolved_paths = self.resolved_paths.clone();
+        let mut definition_names = BTreeMap::new();
         let mut provider_definitions = extract_provider_definitions(
             &mut resolved_paths,
             &mut selected_conditionals,
             &self.values_descriptions,
+            &mut definition_names,
         );
         let (mut document, base_document_abstentions) = materialize_base_document(
             &self.contract_schema_signals,
@@ -412,6 +418,7 @@ impl LoweredEmissionPlan {
             document,
             emission_report,
             provider_definitions,
+            definition_names,
         }
     }
 
@@ -423,7 +430,11 @@ impl LoweredEmissionPlan {
         let materialized = Self::insert_shared_definitions(materialized);
         let materialized = self.apply_program_wrappers(materialized);
         let materialized = self.apply_values_descriptions(materialized);
-        finish_generated(materialized.schema, materialized.emission_report)
+        finish_generated(
+            materialized.schema,
+            materialized.emission_report,
+            materialized.definition_names,
+        )
     }
 
     pub(crate) fn merge_missing_defaults(&self, mut projected: ProjectedTree) -> ProjectedTree {
@@ -451,6 +462,7 @@ impl LoweredEmissionPlan {
             document,
             emission_report,
             provider_definitions,
+            definition_names,
         } = projected;
         let mut schema = document.into_value();
         if let Ok(declared_defaults) = serde_json::to_value(&self.documents.input_defaults)
@@ -466,6 +478,7 @@ impl LoweredEmissionPlan {
             schema,
             emission_report,
             provider_definitions,
+            definition_names,
         }
     }
 
@@ -476,7 +489,10 @@ impl LoweredEmissionPlan {
             let _span = tracing::info_span!("extract_repeated_provider_payloads").entered();
             materialized
                 .provider_definitions
-                .extend(extract_repeated_provider_payloads(&mut materialized.schema));
+                .extend(extract_repeated_provider_payloads(
+                    &mut materialized.schema,
+                    &mut materialized.definition_names,
+                ));
         }
         materialized
     }
@@ -779,12 +795,14 @@ fn tree_segment_spelling(segment: &helm_schema_core::Segment) -> String {
 pub(crate) fn finish_generated(
     schema: Value,
     mut emission_report: EmissionReport,
+    definition_names: BTreeMap<String, String>,
 ) -> CompletedGeneratedSchema {
     emission_report.carriers =
         count_emitted_carriers(&schema, emission_report.carriers.grouping_fan_in);
     CompletedGeneratedSchema {
         schema: draft07_root_document(schema),
         emission_report,
+        definition_names,
     }
 }
 

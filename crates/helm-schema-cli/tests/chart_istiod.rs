@@ -6,15 +6,14 @@
 //! Values validation and the full-schema pin live in `chart_corpus.rs`.
 
 use color_eyre::eyre;
+use helm_schema_test_support::{ArtifactId, ChartId};
 
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
-#[path = "common/schema_roundtrip.rs"]
-mod schema_roundtrip;
 
 #[test]
 fn istiod_pilot_overlay_carries_root_contracts() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("istiod")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Istiod))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
     for (label, override_, want) in [

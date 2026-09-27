@@ -6,27 +6,61 @@ use super::{
     is_scalar_like_schema, union_schema_list, value_references_helm_truthy,
 };
 
-/// Stores exact conditional schema/default acceptance results for one generation.
+/// Stores compiled acceptance validators for one generation.
+///
+/// Each entry is keyed by the complete schema document handed to the
+/// validator (including an injected Helm-truthy definition), so every instance
+/// checked against the same document reuses one retained entry. A document
+/// that fails to compile is stored as `None` and accepts nothing. Entries are
+/// retained for the whole generation, one per distinct self-contained document.
 #[derive(Default)]
 pub(crate) struct ConditionalSchemaAcceptanceMemo {
-    pub(crate) entries: HashMap<(Value, Value), bool>,
+    pub(crate) validators: HashMap<Value, Option<jsonschema::Validator>>,
 }
 
 impl ConditionalSchemaAcceptanceMemo {
     pub(crate) fn accepts(&mut self, schema: &Value, instance: &Value) -> bool {
-        let key = (schema_acceptance_document(schema), instance.clone());
-        if let Some(cached) = self.entries.get(&key) {
-            #[cfg(debug_assertions)]
-            {
-                let recomputed = schema_document_accepts_json_value(&key.0, &key.1);
-                debug_assert!(cached.eq(&recomputed));
-            }
-            return *cached;
+        let wrapped =
+            value_references_helm_truthy(schema).then(|| helm_truthy_acceptance_document(schema));
+        let document = wrapped.as_ref().unwrap_or(schema);
+        // An external resource is resolved at compile time, so two equal
+        // documents can compile differently; such a document is never retained.
+        if !is_self_contained_document(document) {
+            let validator = jsonschema::validator_for(document).ok();
+            return validator_accepts(validator.as_ref(), instance);
         }
-        let accepted = schema_document_accepts_json_value(&key.0, &key.1);
-        self.entries.insert(key, accepted);
+        if let Some(validator) = self.validators.get(document) {
+            return validator_accepts(validator.as_ref(), instance);
+        }
+        let validator = jsonschema::validator_for(document).ok();
+        let accepted = validator_accepts(validator.as_ref(), instance);
+        self.validators
+            .insert(wrapped.unwrap_or_else(|| schema.clone()), validator);
         accepted
     }
+}
+
+/// Reports whether compiling `document` can read nothing outside it: every
+/// reference is a fragment-only (`#`) pointer and no `$schema` resource is named.
+///
+/// Every object key is checked, so a property that happens to be named `$ref`
+/// or `$schema` conservatively counts as external.
+fn is_self_contained_document(document: &Value) -> bool {
+    match document {
+        Value::Object(object) => object.iter().all(|(key, member)| match key.as_str() {
+            "$ref" | "$dynamicRef" | "$recursiveRef" => member
+                .as_str()
+                .is_some_and(|reference| reference.starts_with('#')),
+            "$schema" => false,
+            _ => is_self_contained_document(member),
+        }),
+        Value::Array(items) => items.iter().all(is_self_contained_document),
+        _ => true,
+    }
+}
+
+fn validator_accepts(validator: Option<&jsonschema::Validator>, instance: &Value) -> bool {
+    validator.is_some_and(|validator| validator.is_valid(instance))
 }
 
 pub(crate) fn open_objects_rejecting_declared_members(schema: Value, declared: &Value) -> Value {
@@ -231,33 +265,21 @@ pub(super) fn should_merge_values_yaml_into_conditional_branch(
 }
 
 pub(super) fn schema_accepts_json_value(schema: &Value, instance: &Value) -> bool {
-    let document = value_references_helm_truthy(schema).then(|| {
-        serde_json::json!({
-            "$defs": {
-                HELM_TRUTHY_DEFINITION_NAME: helm_truthy_definition_schema()
-            },
-            "allOf": [schema]
-        })
-    });
-    schema_document_accepts_json_value(document.as_ref().unwrap_or(schema), instance)
+    let document =
+        value_references_helm_truthy(schema).then(|| helm_truthy_acceptance_document(schema));
+    jsonschema::validator_for(document.as_ref().unwrap_or(schema))
+        .map(|validator| validator.is_valid(instance))
+        .unwrap_or(false)
 }
 
-fn schema_acceptance_document(schema: &Value) -> Value {
-    if !value_references_helm_truthy(schema) {
-        return schema.clone();
-    }
+/// Wraps `schema` with the Helm-truthy definition its references resolve to.
+fn helm_truthy_acceptance_document(schema: &Value) -> Value {
     serde_json::json!({
         "$defs": {
             HELM_TRUTHY_DEFINITION_NAME: helm_truthy_definition_schema()
         },
         "allOf": [schema]
     })
-}
-
-fn schema_document_accepts_json_value(document: &Value, instance: &Value) -> bool {
-    jsonschema::validator_for(document)
-        .map(|validator| validator.is_valid(instance))
-        .unwrap_or(false)
 }
 
 pub(super) fn should_open_fragment_values_schema(

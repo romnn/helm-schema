@@ -4,6 +4,8 @@
 //! JSON Schema document, finds repeated schema subtrees, and rewrites repeated
 //! occurrences to internal `$defs` / `$ref` entries.
 
+mod naming;
+
 use std::collections::{BTreeMap, BTreeSet, HashMap, HashSet};
 
 use helm_schema_json_schema_walk::{
@@ -11,6 +13,11 @@ use helm_schema_json_schema_walk::{
     visit_subschemas, visit_subschemas_mut,
 };
 use serde_json::{Map, Value};
+
+pub use naming::{
+    content_digest, content_names, name_private_definitions, rename_definitions,
+    shipping_definition_names,
+};
 
 const DEFINITIONS_KEY: &str = "$defs";
 const DEFINITION_REF_PREFIX: &str = "#/$defs/";
@@ -20,16 +27,32 @@ const DEFINITION_REF_PREFIX: &str = "#/$defs/";
 /// Only schema-position objects are eligible. Data arrays and objects used as
 /// keyword payloads, such as `required`, `enum`, `type`, or Kubernetes
 /// extension metadata, are never replaced with `$ref`.
+///
+/// Every extraction decision is made on the document as given, including
+/// the caller's private definition handles, and on private planning ids.
+/// Only then are the handles renamed to their final `private_names` (see
+/// [`name_private_definitions`]) and each extracted definition named after
+/// its content (see [`content_names`]), so no final name influences which
+/// subtrees are extracted.
 #[must_use]
 #[tracing::instrument(skip_all)]
-pub fn minimize_schema(mut schema: Value) -> Value {
+pub fn minimize_schema(schema: Value, private_names: &BTreeMap<String, String>) -> Value {
+    let (mut minimized, generated) = extract_repeated_subschemas(schema);
+    name_private_definitions(&mut minimized, private_names);
+    let names = naming::readable_definition_names(&minimized, &generated);
+    rename_definitions(&mut minimized, &names);
+    minimized
+}
+
+/// Extracts repeated subtrees under planning ids, which are returned.
+fn extract_repeated_subschemas(mut schema: Value) -> (Value, BTreeSet<String>) {
     if !can_insert_generated_definitions(&schema) {
-        return schema;
+        return (schema, BTreeSet::new());
     }
 
     normalize_logical_schema(&mut schema);
     let Some(protected) = protected_reference_targets(&schema) else {
-        return schema;
+        return (schema, BTreeSet::new());
     };
     let metadata = SchemaMetadataIndex::new(&schema);
     let mut fingerprint_counts = HashMap::new();
@@ -53,19 +76,15 @@ pub fn minimize_schema(mut schema: Value) -> Value {
     let existing_names = existing_definition_names(&schema);
     let planned = plan_definitions(existing_names, candidates);
     if planned.is_empty() {
-        return schema;
+        return (schema, BTreeSet::new());
     }
 
     let mut definitions = BTreeMap::new();
     let mut minimized = rewrite_schema(&schema, &metadata, &protected, &planned, &mut definitions);
     inline_unprofitable_definitions(&mut minimized, &mut definitions, &planned);
-
-    if !definitions.is_empty() {
-        definitions = compact_definition_names(&mut minimized, definitions);
-        insert_definitions(&mut minimized, definitions);
-    }
-
-    minimized
+    let generated = definitions.keys().cloned().collect::<BTreeSet<_>>();
+    insert_definitions(&mut minimized, definitions);
+    (minimized, generated)
 }
 
 fn can_insert_generated_definitions(schema: &Value) -> bool {
@@ -90,10 +109,12 @@ struct ExactCandidate {
     occurrences: usize,
 }
 
+/// An extraction decision, keyed by a private planning id that is replaced by
+/// the definition's content name once extraction is final.
 #[derive(Debug)]
 struct PlannedDefinition {
     schema: Value,
-    name: String,
+    id: String,
 }
 
 #[derive(Debug, Default)]
@@ -106,16 +127,12 @@ impl PlannedDefinitions {
         self.by_fingerprint.is_empty()
     }
 
-    fn definition_name(
-        &self,
-        fingerprint: CandidateFingerprint,
-        schema: &Value,
-    ) -> Option<&String> {
+    fn definition_id(&self, fingerprint: CandidateFingerprint, schema: &Value) -> Option<&String> {
         self.by_fingerprint
             .get(&fingerprint)?
             .iter()
             .find(|definition| definition.schema == *schema)
-            .map(|definition| &definition.name)
+            .map(|definition| &definition.id)
     }
 }
 
@@ -204,11 +221,11 @@ fn plan_definitions(
     let mut planned = PlannedDefinitions::default();
     let mut next_id = 1usize;
     for (fingerprint, candidate) in repeated {
-        let (name, following_id) = next_definition_name(&existing_names, next_id);
-        if estimated_savings(candidate.canonical.len(), candidate.occurrences, &name) <= 0 {
+        let (id, following_id) = next_planning_id(&existing_names, next_id);
+        if estimated_savings(candidate.canonical.len(), candidate.occurrences, &id) <= 0 {
             continue;
         }
-        existing_names.insert(name.clone());
+        existing_names.insert(id.clone());
         next_id = following_id;
         planned
             .by_fingerprint
@@ -216,13 +233,13 @@ fn plan_definitions(
             .or_default()
             .push(PlannedDefinition {
                 schema: candidate.schema,
-                name,
+                id,
             });
     }
     planned
 }
 
-fn next_definition_name(existing_names: &BTreeSet<String>, next_id: usize) -> (String, usize) {
+fn next_planning_id(existing_names: &BTreeSet<String>, next_id: usize) -> (String, usize) {
     let mut id = next_id;
     loop {
         let candidate = base62(id);
@@ -282,7 +299,7 @@ fn rewrite_schema(
             if depth > 0
                 && !protected.contains(&value_address(node))
                 && let Some(fingerprint) = candidate_fingerprint(node, metadata)
-                && let Some(name) = planned.definition_name(fingerprint, node)
+                && let Some(name) = planned.definition_id(fingerprint, node)
             {
                 if !definitions.contains_key(name) {
                     // Traverse the immutable representative so nested bodies share
@@ -299,52 +316,6 @@ fn rewrite_schema(
         Ok(schema) => schema,
         Err(error) => match error {},
     }
-}
-
-fn compact_definition_names(
-    schema: &mut Value,
-    definitions: BTreeMap<String, Value>,
-) -> BTreeMap<String, Value> {
-    let generated_names = definitions.keys().cloned().collect::<BTreeSet<_>>();
-    let mut reference_counts = BTreeMap::new();
-    count_generated_references(schema, &generated_names, &mut reference_counts);
-    for definition in definitions.values() {
-        count_generated_references(definition, &generated_names, &mut reference_counts);
-    }
-
-    let mut ranked = definitions.into_iter().collect::<Vec<_>>();
-    ranked.sort_by(|(left_name, _), (right_name, _)| {
-        reference_counts
-            .get(right_name)
-            .copied()
-            .unwrap_or_default()
-            .cmp(&reference_counts.get(left_name).copied().unwrap_or_default())
-            .then_with(|| left_name.cmp(right_name))
-    });
-
-    let mut existing_names = existing_definition_names(schema);
-    let mut next_id = 1;
-    let mut renamed = Vec::with_capacity(ranked.len());
-    let mut references = BTreeMap::new();
-    for (old_name, definition) in ranked {
-        let (new_name, following_id) = next_definition_name(&existing_names, next_id);
-        existing_names.insert(new_name.clone());
-        next_id = following_id;
-        references.insert(
-            format!("{DEFINITION_REF_PREFIX}{old_name}"),
-            format!("{DEFINITION_REF_PREFIX}{new_name}"),
-        );
-        renamed.push((new_name, definition));
-    }
-
-    rewrite_generated_references(schema, &references);
-    renamed
-        .into_iter()
-        .map(|(name, mut definition)| {
-            rewrite_generated_references(&mut definition, &references);
-            (name, definition)
-        })
-        .collect()
 }
 
 fn inline_unprofitable_definitions(
@@ -366,7 +337,7 @@ fn inline_unprofitable_definitions(
         .flat_map(|(fingerprint, candidates)| {
             candidates
                 .iter()
-                .map(|candidate| (fingerprint.byte_len, candidate.name.clone()))
+                .map(|candidate| (fingerprint.byte_len, candidate.id.clone()))
         })
         .collect::<Vec<_>>();
     order.sort();
@@ -427,19 +398,6 @@ fn count_generated_references(
     visit_subschemas(schema, ReferenceSiblings::Visit, &mut |subschema| {
         if !has_reference_scope(subschema) {
             count_generated_references(subschema, generated_names, counts);
-        }
-    });
-}
-
-fn rewrite_generated_references(schema: &mut Value, references: &BTreeMap<String, String>) {
-    if let Some(Value::String(reference)) = schema.get_mut("$ref")
-        && let Some(replacement) = references.get(reference)
-    {
-        reference.clone_from(replacement);
-    }
-    visit_subschemas_mut(schema, ReferenceSiblings::Visit, &mut |subschema| {
-        if !has_reference_scope(subschema) {
-            rewrite_generated_references(subschema, references);
         }
     });
 }
@@ -559,6 +517,19 @@ fn has_reference_scope(schema: &Value) -> bool {
     })
 }
 
+/// Whether a subschema starts a resource that resolves its own `#` references.
+///
+/// A fragment-only identifier such as `"$id": "#entry"` names a location in
+/// the enclosing resource; it does not start a new one.
+fn is_nested_resource(schema: &Value) -> bool {
+    ["$id", "id"].into_iter().any(|keyword| {
+        schema
+            .get(keyword)
+            .and_then(Value::as_str)
+            .is_some_and(|identifier| !identifier.starts_with('#'))
+    })
+}
+
 /// Protect the address-bearing ancestors of reference targets from relocation.
 ///
 /// References outside the document require a resource resolver, so this local
@@ -579,8 +550,7 @@ fn protected_reference_targets(schema: &Value) -> Option<BTreeSet<usize>> {
             references.push(reference.to_string());
         }
         visit_subschemas(node, ReferenceSiblings::Visit, &mut |child| {
-            let nested_resource =
-                nested_resource || child.get("$id").is_some() || child.get("id").is_some();
+            let nested_resource = nested_resource || is_nested_resource(child);
             collect(child, nested_resource, references, schema_positions);
         });
     }

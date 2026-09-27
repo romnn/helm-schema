@@ -16,6 +16,9 @@ import (
 	"os"
 	"runtime/debug"
 	"strconv"
+
+	"helm.sh/helm/v4/pkg/chart/common"
+	"helm.sh/helm/v4/pkg/cli"
 )
 
 //go:embed helm-memo.patch
@@ -27,6 +30,9 @@ const (
 	helmReplacement  = "./third_party/helm-v4.2.3"
 	jsonschemaModule = "github.com/santhosh-tekuri/jsonschema/v6"
 	jsonschemaVer    = "v6.0.2"
+	// helmReleaseBuild is `helm version` of the pinned v4.2.3 release binary
+	// (version, Git commit, tree state, Go), linked in by build:helmsweep.
+	helmReleaseBuild = "v4.2.3 43e8b7feece8beb0fcba47059ec9b522fd929a64 clean go1.26.5"
 )
 
 // Exit codes besides a cell's own rc.
@@ -36,12 +42,15 @@ const (
 )
 
 func main() {
+	if code, done := reexecClean(os.Args[1:], os.Stderr); done {
+		os.Exit(code)
+	}
 	os.Exit(run(os.Args[1:], os.Stdout, os.Stderr))
 }
 
 func run(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(stderr, "usage: helmsweep version | lint | template | classify | sweep ...")
+		fmt.Fprintln(stderr, "usage: helmsweep version | lint | template | classify | sweep | serve ...")
 		return exitRefused
 	}
 	switch args[0] {
@@ -53,6 +62,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return cmdClassify(args[1:], stdout, stderr)
 	case "sweep":
 		return cmdSweep(args[1:], stderr)
+	case "serve":
+		return cmdServe(args[1:], os.Stdin, stdout, stderr)
 	}
 	fmt.Fprintf(stderr, "helmsweep: unknown command %q\n", args[0])
 	return exitRefused
@@ -64,6 +75,9 @@ type identity struct {
 	Executable string
 	Go         string
 	Helm       string
+	// HelmBuild is the build information templates read as
+	// .Capabilities.HelmVersion.
+	HelmBuild  string
 	JSONSchema string
 	Patch      string
 }
@@ -73,7 +87,12 @@ func buildIdentity() (identity, error) {
 	if !ok {
 		return identity{}, errors.New("no build information in this binary")
 	}
-	id := identity{Go: info.GoVersion, Patch: fmt.Sprintf("%x", sha256.Sum256(helmPatch))}
+	helm := common.DefaultCapabilities.HelmVersion
+	id := identity{
+		Go:        info.GoVersion,
+		HelmBuild: fmt.Sprintf("%s %s %s %s", helm.Version, helm.GitCommit, helm.GitTreeState, helm.GoVersion),
+		Patch:     fmt.Sprintf("%x", sha256.Sum256(helmPatch)),
+	}
 	for _, dep := range info.Deps {
 		switch dep.Path {
 		case helmModule:
@@ -107,8 +126,8 @@ func cmdVersion(stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "helmsweep:", err)
 		return exitHarness
 	}
-	fmt.Fprintf(stdout, "build %s\ngo %s\n%s %s\n%s %s\npatch %s\n",
-		id.Executable, id.Go, helmModule, id.Helm, jsonschemaModule, id.JSONSchema, id.Patch)
+	fmt.Fprintf(stdout, "build %s\ngo %s\n%s %s\nhelm-build %s\n%s %s\npatch %s\n",
+		id.Executable, id.Go, helmModule, id.Helm, id.HelmBuild, jsonschemaModule, id.JSONSchema, id.Patch)
 	return 0
 }
 
@@ -121,17 +140,19 @@ func cmdCell(mode string, args []string, stdout, stderr io.Writer) int {
 	kubeVersion := flags.String("kube-version", "", "Kubernetes version")
 	valuesFile := flags.String("values", "", "values file (-f)")
 	clearEnv := flags.Bool("helm-env-clear", false, "clear HELM_*, KUBECONFIG, proxies and HOME/XDG config first")
-	if err := flags.Parse(args); err != nil || flags.NArg() != 1 || *valuesFile == "" {
+	if err := flags.Parse(args); err != nil || flags.NArg() != 1 || *valuesFile == "" || *kubeVersion == "" {
 		fmt.Fprintf(stderr, "usage: helmsweep %s [--helm-env-clear] --kube-version K --values FILE CHART\n", mode)
 		return exitRefused
 	}
 	if *clearEnv {
-		cleanup, err := clearHelmEnv()
-		if err != nil {
-			fmt.Fprintln(stderr, "helmsweep:", err)
-			return exitHarness
+		if err := requireCleanEnv(); err != nil {
+			fmt.Fprintln(stderr, "helmsweep: refused:", err)
+			return exitRefused
 		}
-		defer cleanup()
+	}
+	if err := unsupportedConfiguration(cli.New()); err != nil {
+		fmt.Fprintln(stderr, "helmsweep: refused:", err)
+		return exitRefused
 	}
 	sink := installLogSink(stderr)
 	rc, log := sink.exclusive(func() (int, []byte) {

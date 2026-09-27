@@ -5,15 +5,14 @@
 //! Values validation and the full-schema pin live in `chart_corpus.rs`.
 
 use color_eyre::eyre;
+use helm_schema_test_support::{ArtifactId, ChartId};
 
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
-#[path = "common/schema_roundtrip.rs"]
-mod schema_roundtrip;
 
 #[test]
 fn kyverno_image_tag_validator_holds() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("kyverno")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Kyverno))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
     let numeric_tag = chart_instances::with_override(
@@ -52,7 +51,7 @@ fn kyverno_image_tag_validator_holds() -> eyre::Result<()> {
 /// spellings skip the with-body entirely (all helm-verified).
 #[test]
 fn kyverno_image_pull_secret_chains_bind_per_candidate_iterables() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("kyverno")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Kyverno))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
     for (label, overrides) in [
@@ -110,7 +109,7 @@ fn kyverno_image_pull_secret_chains_bind_per_candidate_iterables() -> eyre::Resu
 
 #[test]
 fn kyverno_templating_version_validator_survives_nested_helper_arguments() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("kyverno")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Kyverno))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
     let disabled = chart_instances::with_override(

@@ -174,19 +174,37 @@ impl<'a> ValuesSchemaInput<'a> {
 /// pipeline.
 #[tracing::instrument(skip_all)]
 pub fn generate_values_schema(input: ValuesSchemaInput<'_>) -> Value {
-    generate_values_schema_with_report(input).0
+    generate_values_schema_with_report(input).schema
+}
+
+/// One emitter run: the schema, its accounting, and its definition names.
+#[derive(Debug, Clone)]
+pub struct GeneratedValuesSchema {
+    /// The generated JSON Schema.
+    /// Shared provider definitions are keyed by private handles.
+    pub schema: Value,
+    /// Fact-level accounting before caller-owned overrides and
+    /// output-pipeline transforms.
+    pub emission_report: EmissionReport,
+    /// The final name of each private definition handle in `schema`.
+    ///
+    /// Apply them only after every size-driven extraction decision, as
+    /// `helm_schema_json_schema_minify::minimize_schema` does, so no readable
+    /// spelling influences those decisions.
+    pub definition_names: BTreeMap<String, String>,
 }
 
 /// Generates a JSON Schema and the fact-level accounting from the same emitter run.
-///
-/// The report describes generator emission before caller-owned overrides and
-/// output-pipeline transforms.
 #[tracing::instrument(skip_all)]
-pub fn generate_values_schema_with_report(input: ValuesSchemaInput<'_>) -> (Value, EmissionReport) {
+pub fn generate_values_schema_with_report(input: ValuesSchemaInput<'_>) -> GeneratedValuesSchema {
     let plan = LoweredEmissionPlan::build(&input);
     let projected = plan.project(input.emission_policy);
     let completed = plan.complete(projected);
-    (completed.schema, completed.emission_report)
+    GeneratedValuesSchema {
+        schema: completed.schema,
+        emission_report: completed.emission_report,
+        definition_names: completed.definition_names,
+    }
 }
 
 /// The domain Go's `range` iterates without aborting: collections and nil

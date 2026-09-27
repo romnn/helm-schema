@@ -5,6 +5,15 @@ vars:
   GORELEASER_VERSION: "2.17.0"
   # The Go toolchain the pinned Helm v4.2.3 release binary was built with.
   HELMSWEEP_GO: "1.26.5"
+  # The pinned Helm release's build information (`helm version` of the v4.2.3
+  # release binary), linked in as Helm's Makefile does: templates read it as
+  # .Capabilities.HelmVersion.
+  HELMSWEEP_HELM_COMMIT: "43e8b7feece8beb0fcba47059ec9b522fd929a64"
+  HELMSWEEP_LDFLAGS: >-
+    -X helm.sh/helm/v4/internal/version.version=v4.2.3
+    -X helm.sh/helm/v4/internal/version.metadata=
+    -X helm.sh/helm/v4/internal/version.gitCommit=43e8b7feece8beb0fcba47059ec9b522fd929a64
+    -X helm.sh/helm/v4/internal/version.gitTreeState=clean
 
 tasks:
   default:
@@ -197,13 +206,15 @@ tasks:
       # No VCS stamp: the binary's sha256 (the verdict cache's build id)
       # changes only when its sources or toolchain do.
       - >-
-        cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build" && mise exec go@{{.HELMSWEEP_GO}} -- go build -trimpath -buildvcs=false
+        cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build" && CGO_ENABLED=0
+        mise exec go@{{.HELMSWEEP_GO}} -- go build -trimpath -buildvcs=false -ldflags "{{.HELMSWEEP_LDFLAGS}}"
         -o "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep{{exeExt}}" .
       # The binary must report the pinned toolchain, modules and patch.
       - |
         version="$("${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep{{exeExt}}" version)"
         patch="$(shasum -a 256 helm-memo.patch | cut -d' ' -f1)"
         for line in "go go{{.HELMSWEEP_GO}}" "helm.sh/helm/v4 v4.2.3 => ./third_party/helm-v4.2.3" \
+          "helm-build v4.2.3 {{.HELMSWEEP_HELM_COMMIT}} clean go{{.HELMSWEEP_GO}}" \
           "github.com/santhosh-tekuri/jsonschema/v6 v6.0.2" "patch $patch"; do
           printf '%s\n' "$version" | grep -qxF "$line" || { echo "helmsweep version lacks: $line" >&2; exit 1; }
         done
@@ -221,7 +232,21 @@ tasks:
 
   test:integration:
     desc: "run integration tests in cargo workspace"
+    vars:
+      CORPUS_ARTIFACTS: '{{.CORPUS_ARTIFACTS | default (print .ROOT_DIR "/.cache/corpus-generation")}}'
+      # Concurrent chart generations inside the one producer process; each
+      # holds a whole-chart analysis in memory.
+      CORPUS_JOBS: '{{.CORPUS_JOBS | default "4"}}'
+    env:
+      HELM_SCHEMA_CORPUS_ARTIFACTS: "{{.CORPUS_ARTIFACTS}}"
     cmds:
+      # The Helm adjudication renders in resident helmsweep servers.
+      - task: build:helmsweep
+      # One producer run generates every registered corpus artifact and its
+      # manifest; the tests then consume those artifacts after checking the
+      # manifest against this checkout instead of regenerating each chart per
+      # test. A stale manifest fails the consuming tests.
+      - cargo run -p helm-schema-test-support --bin corpus_generation -- --out "{{.CORPUS_ARTIFACTS}}" --jobs {{.CORPUS_JOBS}}
       - cargo nextest run -P integration --workspace --all-targets --no-tests warn {{.CLI_ARGS}}
 
   test:network:
@@ -232,10 +257,17 @@ tasks:
       - cargo nextest run -P network --workspace --all-targets --no-tests warn {{.CLI_ARGS}}
 
   test:all:
-    desc: "run ALL tests in cargo workspace, including the live network tests"
+    desc: "run ALL tests once each: unit, integration, then the live network tests"
     aliases: [test:ci]
     cmds:
-      - cargo nextest run -P ci --workspace --all-targets --no-tests warn {{.CLI_ARGS}}
+      # Each suite runs exactly once and every exit code is reported, so a
+      # final gate needs only this task instead of re-running the suites.
+      - |
+        "{{.TASK_EXE}}" test:unit -- {{.CLI_ARGS}}; unit=$?
+        "{{.TASK_EXE}}" test:integration -- {{.CLI_ARGS}}; integration=$?
+        "{{.TASK_EXE}}" test:network -- {{.CLI_ARGS}}; network=$?
+        echo "test:all: unit exit $unit, integration exit $integration, network exit $network"
+        [ "$unit" -eq 0 ] && [ "$integration" -eq 0 ] && [ "$network" -eq 0 ]
 
   test:doc:
     desc: "run doctests in cargo workspace"
@@ -345,11 +377,13 @@ tasks:
     desc: "count lines of non-test code in the crates"
     cmds:
       # excludes all directories named tests, including crate integration tests
-      # and private src/tests modules, plus fixtures and the test-util crate; inline
-      # #[cfg(test)] modules in production src files remain counted until
-      # they are migrated out of those files
+      # and private src/tests modules, plus fixtures and the test-util and
+      # helm-schema-test-support crates; inline #[cfg(test)] modules in
+      # production src files remain counted until they are migrated out of
+      # those files
       - >-
         tokei {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}crates{{end}}
         --exclude tests
         --exclude fixtures
         --exclude test-util
+        --exclude helm-schema-test-support

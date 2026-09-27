@@ -7,15 +7,14 @@
 //! full-schema pin live in `chart_corpus.rs`.
 
 use color_eyre::eyre;
+use helm_schema_test_support::{ArtifactId, ChartId};
 
 #[path = "common/chart_instances.rs"]
 mod chart_instances;
-#[path = "common/schema_roundtrip.rs"]
-mod schema_roundtrip;
 
 #[test]
 fn cilium_spire_images_accept_strings_under_active_guards() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("cilium")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Cilium))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
 
     // `authentication.enabled` must be on: the chart's own validator
@@ -66,7 +65,7 @@ fn cilium_spire_images_accept_strings_under_active_guards() -> eyre::Result<()> 
 /// validators.
 #[test]
 fn cilium_int_cast_validators_bind_base0_string_preimages() -> eyre::Result<()> {
-    let schema = schema_roundtrip::generate_chart_schema_for_path("cilium")?;
+    let schema = helm_schema_test_support::consume(ArtifactId::Chart(ChartId::Cilium))?;
     let validator = jsonschema::validator_for(&schema).expect("schema validator");
     for (overlay, want, label) in [
         (

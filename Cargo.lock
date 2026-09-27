@@ -641,6 +641,7 @@ dependencies = [
  "helm-schema-json-schema-walk",
  "helm-schema-k8s",
  "helm-schema-syntax",
+ "helm-schema-test-support",
  "indoc",
  "jsonschema",
  "percent-encoding",
@@ -694,6 +695,7 @@ dependencies = [
  "helm-schema-json-schema-minify",
  "helm-schema-json-schema-walk",
  "helm-schema-k8s",
+ "helm-schema-test-support",
  "indoc",
  "jsonschema",
  "mimalloc",
@@ -731,8 +733,10 @@ dependencies = [
  "helm-schema-ast",
  "helm-schema-core",
  "helm-schema-ir",
+ "helm-schema-json-schema-minify",
  "helm-schema-json-schema-walk",
  "helm-schema-k8s",
+ "helm-schema-test-support",
  "indoc",
  "jsonschema",
  "regex",
@@ -741,6 +745,7 @@ dependencies = [
  "serde_yaml",
  "sha2",
  "similar-asserts",
+ "tempfile",
  "test-util",
  "thiserror",
  "tracing",
@@ -754,6 +759,7 @@ dependencies = [
  "helm-schema-ast",
  "helm-schema-core",
  "helm-schema-syntax",
+ "helm-schema-test-support",
  "indoc",
  "regex",
  "semver",
@@ -776,6 +782,7 @@ dependencies = [
  "jsonschema",
  "percent-encoding",
  "serde_json",
+ "sha2",
  "similar-asserts",
  "test-util",
  "tracing",
@@ -831,6 +838,29 @@ dependencies = [
  "test-util",
  "tree-sitter",
  "tree-sitter-language",
+]
+
+[[package]]
+name = "helm-schema-test-support"
+version = "0.0.7"
+dependencies = [
+ "color-eyre",
+ "helm-schema",
+ "helm-schema-ast",
+ "helm-schema-core",
+ "helm-schema-gen",
+ "helm-schema-ir",
+ "helm-schema-json-schema-minify",
+ "helm-schema-k8s",
+ "indoc",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sha2",
+ "tempfile",
+ "test-util",
+ "thiserror",
+ "vfs",
 ]
 
 [[package]]
@@ -1825,13 +1855,20 @@ name = "test-util"
 version = "0.0.7"
 dependencies = [
  "color-eyre",
+ "flate2",
  "googletest",
+ "indoc",
  "lexpr",
+ "serde",
  "serde_json",
  "serde_yaml",
  "similar-asserts",
+ "tar",
+ "tempfile",
+ "thiserror",
  "tracing",
  "vfs",
+ "yaml-rust",
 ]
 
 [[package]]

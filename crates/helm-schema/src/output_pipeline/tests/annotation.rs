@@ -25,6 +25,7 @@ fn emit(
 ) -> eyre::Result<Value> {
     Ok(apply_schema_output_pipeline(
         schema,
+        &std::collections::BTreeMap::new(),
         request(reference_policy),
         std::path::Path::new("/does/not/matter"),
         FinalOutputPolicy::for_profile(profile, false),
@@ -92,6 +93,7 @@ fn non_schema_roots_cannot_escape_annotation() {
     for root in [json!(null), json!(3), json!("schema"), json!([])] {
         let result = apply_schema_output_pipeline(
             root,
+            &std::collections::BTreeMap::new(),
             request(ReferencePolicy::PreserveRefs),
             std::path::Path::new("/does/not/matter"),
             FinalOutputPolicy::for_profile(SchemaProfile::Full, false),

@@ -20,6 +20,7 @@ use helm_schema_k8s::{
 use indoc::indoc;
 use serde::Deserialize as _;
 use serde_json::Value;
+use test_util::helm_values::{AcceptanceDocument, ValuesError, acceptance_values};
 
 use crate::helm_cache_policy::render_cacheability;
 use crate::helm_invocation::{
@@ -200,6 +201,23 @@ impl PinnedHelmChart {
             rendered,
             evidence_dir,
         })
+    }
+
+    /// The documents Helm's schema checks validate for `overlay`, composed
+    /// by the Rust port over the same private chart copy Helm renders.
+    /// `helm template` prints only the template document; lint's two are
+    /// never printed.
+    pub(crate) fn acceptance_documents(
+        &self,
+        overlay: &Value,
+    ) -> BTreeMap<AcceptanceDocument, Result<Value, ValuesError>> {
+        let mut documents = BTreeMap::new();
+        for kind in AcceptanceDocument::ALL {
+            let document = acceptance_values(&self.render_chart.path, overlay.clone(), kind)
+                .map(|values| values.root);
+            documents.insert(kind, document);
+        }
+        documents
     }
 
     fn new_case(&self) -> eyre::Result<PathBuf> {

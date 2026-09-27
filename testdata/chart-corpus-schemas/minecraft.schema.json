@@ -1,174 +1,280 @@
 {
   "$defs": {
-    "1": {
-      "not": {
-        "$ref": "#/$defs/t"
-      }
-    },
-    "10": {
-      "if": {
-        "$ref": "#/$defs/n"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "$ref": "#/$defs/y"
-          }
+    "h038c06dcef36": {
+      "additionalProperties": {},
+      "properties": {
+        "serviceType": {
+          "type": [
+            "null",
+            "string"
+          ]
         }
       }
     },
-    "11": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/p"
-        },
-        {
-          "properties": {
-            "service": {
-              "properties": {
-                "type": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "type"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/i"
-        },
-        {
-          "$ref": "#/$defs/1a"
-        },
-        {
-          "properties": {
-            "service": {
-              "properties": {
-                "type": {
-                  "enum": [
-                    "LoadBalancer"
-                  ]
-                }
-              },
-              "required": [
-                "type"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "service"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "12": {
-      "additionalProperties": {},
-      "properties": {
-        "annotations": {},
-        "enabled": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/1"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "hosts": {
-          "$ref": "#/$defs/1g"
-        },
-        "ingressClassName": {},
-        "tls": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/1c"
-              },
-              "type": "array"
-            },
-            {
-              "additionalProperties": {
-                "$ref": "#/$defs/1c"
-              },
-              "type": "object"
-            }
-          ]
-        }
-      },
-      "type": "object"
-    },
-    "13": {
-      "additionalProperties": {},
-      "properties": {
-        "annotations": {},
-        "enabled": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/1"
-            },
-            {
-              "type": "string"
-            }
-          ]
-        },
-        "hosts": {
-          "$ref": "#/$defs/1g"
-        },
-        "ingressClassName": {},
-        "tls": {
-          "anyOf": [
-            {
-              "items": {
-                "$ref": "#/$defs/1u"
-              },
-              "type": "array"
-            },
-            {
-              "additionalProperties": {
-                "$ref": "#/$defs/1u"
-              },
-              "type": "object"
-            }
-          ]
-        }
-      },
-      "type": "object"
-    },
-    "14": {
+    "h03efaaadfe78": {
       "if": {
-        "$ref": "#/$defs/i"
+        "$ref": "#/$defs/ha83879c13fcb"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
           "service": {
-            "$ref": "#/$defs/S"
+            "additionalProperties": {},
+            "properties": {
+              "nodePort": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/h451447bf8303"
+                  },
+                  {
+                    "$ref": "#/$defs/h7c55f40b6a27"
+                  },
+                  {
+                    "$ref": "#/$defs/h97f1f236072d"
+                  },
+                  {
+                    "$ref": "#/$defs/h0d6da7ea663d"
+                  },
+                  {
+                    "$ref": "#/$defs/h89bc4e1169b0"
+                  },
+                  {
+                    "$ref": "#/$defs/h66e5b6a8755a"
+                  },
+                  {
+                    "$ref": "#/$defs/h5b7699abf0ec"
+                  }
+                ]
+              }
+            }
           }
         }
       }
     },
-    "15": {
-      "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
-      "type": "null"
+    "h07f2e85d27d8": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/h97f1f236072d"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "enum": [
+            "LoadBalancer"
+          ]
+        }
+      ]
     },
-    "16": {
+    "h092b2588c68c": {
+      "additionalProperties": {},
+      "properties": {
+        "loadBalancerSourceRanges": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/h97f1f236072d"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "description": "If specified and supported by the platform, this will restrict traffic through the cloud-provider load-balancer will be restricted to the specified client IPs. This field will be ignored if the cloud-provider does not support the feature.\" More info: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/",
+              "items": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "type": "array"
+            }
+          ]
+        }
+      }
+    },
+    "h0b2fd17c2f21": {
+      "properties": {
+        "persistence": {}
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "h0cc17543d74f": {
+      "if": {
+        "$ref": "#/$defs/ha83879c13fcb"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "protocol": {
+            "anyOf": [
+              {
+                "description": "The IP protocol for this port. Supports \"TCP\", \"UDP\", and \"SCTP\". Default is TCP.",
+                "type": "null"
+              },
+              {
+                "$ref": "#/$defs/h7a6313f8dd4a"
+              },
+              {
+                "$ref": "#/$defs/h97f1f236072d"
+              },
+              {
+                "$ref": "#/$defs/h0d6da7ea663d"
+              },
+              {
+                "$ref": "#/$defs/hab02c23921d2"
+              },
+              {
+                "$ref": "#/$defs/h89bc4e1169b0"
+              },
+              {
+                "$ref": "#/$defs/h5b7699abf0ec"
+              },
+              {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/h4174f29f69e0"
+                  },
+                  {
+                    "$ref": "#/$defs/h1760b2f63aa3"
+                  },
+                  {
+                    "$ref": "#/$defs/h424d50bcce86"
+                  },
+                  {
+                    "$ref": "#/$defs/h10dc9a560bec"
+                  },
+                  {
+                    "$ref": "#/$defs/ha57525005582"
+                  },
+                  {
+                    "$ref": "#/$defs/h0e4014154904"
+                  },
+                  {
+                    "$ref": "#/$defs/h589952769b45"
+                  },
+                  {
+                    "$ref": "#/$defs/haeffa472167f"
+                  },
+                  {
+                    "$ref": "#/$defs/hc75fdaf6f4ac"
+                  },
+                  {
+                    "$ref": "#/$defs/h9810b646fad3"
+                  }
+                ],
+                "description": "The IP protocol for this port. Supports \"TCP\", \"UDP\", and \"SCTP\". Default is TCP.",
+                "type": "string"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "h0d6da7ea663d": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "h0e4014154904": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "h0e7ba8e9f45b": {
+      "additionalProperties": {},
+      "properties": {
+        "port": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/hfd1161ea4f9b"
+            },
+            {
+              "$ref": "#/$defs/h66e5b6a8755a"
+            }
+          ]
+        }
+      }
+    },
+    "h0fafcbef253a": {
+      "additionalProperties": {},
+      "properties": {
+        "annotations": {},
+        "enabled": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/h97f1f236072d"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "hosts": {
+          "$ref": "#/$defs/hc9483787bdbd"
+        },
+        "ingressClassName": {},
+        "tls": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/h9c5cbfdf880c"
+              },
+              "type": "array"
+            },
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/h9c5cbfdf880c"
+              },
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "h10dc9a560bec": {
+      "not": {
+        "pattern": "[ \\t]#"
+      }
+    },
+    "h14c5a0bcbe12": {
+      "properties": {
+        "mcbackup": {
+          "properties": {
+            "persistence": {
+              "properties": {
+                "backupDir": {
+                  "$ref": "#/$defs/hd9dd13dbcbf3"
+                }
+              },
+              "required": [
+                "backupDir"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "persistence"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mcbackup"
+      ],
+      "type": "object"
+    },
+    "h152affcc7119": {
       "additionalProperties": {},
       "properties": {
         "hosts": {
           "anyOf": [
             {
-              "$ref": "#/$defs/1"
+              "$ref": "#/$defs/h97f1f236072d"
             },
             {
               "type": "object"
@@ -194,18 +300,56 @@
         }
       }
     },
-    "17": {
-      "properties": {
-        "mcbackup": {
-          "$ref": "#/$defs/E"
-        }
-      },
-      "required": [
-        "mcbackup"
-      ],
-      "type": "object"
+    "h1760b2f63aa3": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
     },
-    "18": {
+    "h18c324be9e69": {
+      "if": {
+        "$ref": "#/$defs/ha840ddbf6d2a"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "$ref": "#/$defs/h477969e18534"
+          }
+        }
+      }
+    },
+    "h19fa94f12945": {
+      "if": {
+        "$ref": "#/$defs/ha840ddbf6d2a"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "properties": {
+              "hosts": {
+                "additionalProperties": {
+                  "$ref": "#/$defs/h72b9d0adbbb8"
+                },
+                "items": {
+                  "$ref": "#/$defs/h72b9d0adbbb8"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "h1d095acab9bf": {
+      "additionalProperties": {},
+      "properties": {
+        "externalTrafficPolicy": {
+          "$ref": "#/$defs/h51072295af4e"
+        }
+      }
+    },
+    "h21333180ccb8": {
       "properties": {
         "persistence": {
           "properties": {
@@ -226,28 +370,345 @@
       ],
       "type": "object"
     },
-    "19": {
+    "h21a7880f3262": {
+      "additionalProperties": {},
       "properties": {
-        "mcbackup": {
+        "annotations": {},
+        "enabled": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/h97f1f236072d"
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "hosts": {
+          "$ref": "#/$defs/hc9483787bdbd"
+        },
+        "ingressClassName": {},
+        "tls": {
+          "anyOf": [
+            {
+              "items": {
+                "$ref": "#/$defs/hf511a5dbf0cb"
+              },
+              "type": "array"
+            },
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/hf511a5dbf0cb"
+              },
+              "type": "object"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "h25adcfab8784": {
+      "if": {
+        "$ref": "#/$defs/h4358fa64ed4f"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "properties": {
+              "tls": {
+                "additionalProperties": {
+                  "$ref": "#/$defs/h958ed69927a1"
+                },
+                "items": {
+                  "$ref": "#/$defs/h958ed69927a1"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "h2713feed5e6d": {
+      "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
+      "type": "null"
+    },
+    "h2798964e3b88": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "minecraftServer": {}
+            },
+            "required": [
+              "minecraftServer"
+            ],
+            "type": "object"
+          }
+        },
+        {
           "properties": {
-            "backupMethod": {
+            "minecraftServer": {
               "enum": [
-                "restic"
+                null
               ]
             }
           },
           "required": [
-            "backupMethod"
+            "minecraftServer"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "h28b91abdeeed": {
+      "properties": {
+        "minecraftServer": {
+          "properties": {
+            "rcon": {
+              "$ref": "#/$defs/hd9dd13dbcbf3"
+            }
+          },
+          "required": [
+            "rcon"
           ],
           "type": "object"
         }
       },
       "required": [
-        "mcbackup"
+        "minecraftServer"
       ],
       "type": "object"
     },
-    "1A": {
+    "h2d218cf0b018": {
+      "properties": {
+        "backupDir": {}
+      },
+      "required": [
+        "backupDir"
+      ],
+      "type": "object"
+    },
+    "h2df2507d80cd": {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/h7b0a71133aa7"
+          },
+          {
+            "$ref": "#/$defs/ha83879c13fcb"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "$ref": "#/$defs/h1d095acab9bf"
+          }
+        }
+      }
+    },
+    "h3394d7d8572c": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/h10dc9a560bec"
+        },
+        {
+          "$ref": "#/$defs/haeffa472167f"
+        },
+        {
+          "$ref": "#/$defs/hc75fdaf6f4ac"
+        }
+      ],
+      "type": "string"
+    },
+    "h34ecb46685f5": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/h4174f29f69e0"
+        },
+        {
+          "$ref": "#/$defs/h1760b2f63aa3"
+        },
+        {
+          "$ref": "#/$defs/h424d50bcce86"
+        },
+        {
+          "$ref": "#/$defs/h10dc9a560bec"
+        },
+        {
+          "$ref": "#/$defs/ha57525005582"
+        },
+        {
+          "$ref": "#/$defs/h0e4014154904"
+        },
+        {
+          "$ref": "#/$defs/h589952769b45"
+        },
+        {
+          "$ref": "#/$defs/haeffa472167f"
+        },
+        {
+          "$ref": "#/$defs/hc75fdaf6f4ac"
+        },
+        {
+          "$ref": "#/$defs/h9810b646fad3"
+        }
+      ],
+      "type": "string"
+    },
+    "h3555f568b54a": {
+      "not": {
+        "properties": {
+          "workloadAsStatefulSet": {
+            "$ref": "#/$defs/t"
+          }
+        },
+        "required": [
+          "workloadAsStatefulSet"
+        ],
+        "type": "object"
+      }
+    },
+    "h3dea3121b16e": {
+      "additionalProperties": {},
+      "description": "Additional minecraft container environment variables\nValues can be either variable values or `valueFrom` yaml",
+      "type": "object"
+    },
+    "h3e4ef3c54392": {
+      "if": {
+        "$ref": "#/$defs/ha840ddbf6d2a"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "properties": {
+              "ingressClassName": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/h7a6313f8dd4a"
+                  },
+                  {
+                    "$ref": "#/$defs/h97f1f236072d"
+                  },
+                  {
+                    "$ref": "#/$defs/h0d6da7ea663d"
+                  },
+                  {
+                    "$ref": "#/$defs/hab02c23921d2"
+                  },
+                  {
+                    "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/$defs/h89bc4e1169b0"
+                  },
+                  {
+                    "$ref": "#/$defs/h5b7699abf0ec"
+                  },
+                  {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/h4174f29f69e0"
+                      },
+                      {
+                        "$ref": "#/$defs/h1760b2f63aa3"
+                      },
+                      {
+                        "$ref": "#/$defs/h424d50bcce86"
+                      },
+                      {
+                        "$ref": "#/$defs/h10dc9a560bec"
+                      },
+                      {
+                        "$ref": "#/$defs/ha57525005582"
+                      },
+                      {
+                        "$ref": "#/$defs/h0e4014154904"
+                      },
+                      {
+                        "$ref": "#/$defs/h589952769b45"
+                      },
+                      {
+                        "$ref": "#/$defs/haeffa472167f"
+                      },
+                      {
+                        "$ref": "#/$defs/hc75fdaf6f4ac"
+                      },
+                      {
+                        "$ref": "#/$defs/h9810b646fad3"
+                      }
+                    ],
+                    "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
+                    "type": "string"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    "h4174f29f69e0": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "h41aac57e7ad3": {
+      "if": {
+        "$ref": "#/$defs/h7a2d176d2653"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "$ref": "#/$defs/hcebdcab115f2"
+          }
+        }
+      }
+    },
+    "h424d50bcce86": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "h4358fa64ed4f": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/ha840ddbf6d2a"
+        },
+        {
+          "properties": {
+            "ingress": {
+              "properties": {
+                "tls": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "tls"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "ingress"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "h451447bf8303": {
+      "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
+      "format": "int32",
+      "type": "integer"
+    },
+    "h4629a08b250a": {
       "properties": {
         "serviceType": {
           "enum": [
@@ -260,23 +721,122 @@
       ],
       "type": "object"
     },
-    "1B": {
+    "h46ec4a24c08a": {
+      "additionalProperties": {},
       "properties": {
-        "existingClaim": {
-          "$ref": "#/$defs/t"
+        "ingress": {
+          "$ref": "#/$defs/h21a7880f3262"
+        },
+        "name": {},
+        "protocol": {},
+        "service": {
+          "$ref": "#/$defs/h57cee215f173"
+        }
+      }
+    },
+    "h477969e18534": {
+      "additionalProperties": {},
+      "properties": {
+        "annotations": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/h97f1f236072d"
+            },
+            {
+              "$ref": "#/$defs/h8ec24937a2ec"
+            }
+          ]
+        }
+      }
+    },
+    "h4d4776ec393a": {
+      "additionalProperties": {},
+      "properties": {
+        "ingress": {
+          "$ref": "#/$defs/h0fafcbef253a"
+        },
+        "name": {},
+        "protocol": {},
+        "service": {
+          "$ref": "#/$defs/hcc32c3a3aaae"
         }
       },
-      "required": [
-        "existingClaim"
-      ],
       "type": "object"
     },
-    "1C": {
-      "description": "The port that will be exposed by this service.",
-      "format": "int32",
-      "type": "integer"
+    "h508688e67e12": {
+      "additionalProperties": {},
+      "properties": {
+        "storageClass": {
+          "type": [
+            "null",
+            "string"
+          ]
+        }
+      }
     },
-    "1D": {
+    "h51072295af4e": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/h7a6313f8dd4a"
+        },
+        {
+          "$ref": "#/$defs/h97f1f236072d"
+        },
+        {
+          "$ref": "#/$defs/h0d6da7ea663d"
+        },
+        {
+          "$ref": "#/$defs/hab02c23921d2"
+        },
+        {
+          "description": "externalTrafficPolicy describes how nodes distribute service traffic they receive on one of the Service's \"externally-facing\" addresses (NodePorts, ExternalIPs, and LoadBalancer IPs). If set to \"Local\", the proxy will configure the service in a way that assumes that external load balancers will take care of balancing the service traffic between nodes, and so each node will deliver traffic only to the node-local endpoints of the service, without masquerading the client source IP. (Traffic mistakenly sent to a node with no endpoints will be dropped.) The default value, \"Cluster\", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features). Note that traffic sent to an External IP or LoadBalancer IP from within the cluster will always get \"Cluster\" semantics, but clients sending to a NodePort from within the cluster may need to take traffic policy into account when picking a node.",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/h89bc4e1169b0"
+        },
+        {
+          "$ref": "#/$defs/h5b7699abf0ec"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/h4174f29f69e0"
+            },
+            {
+              "$ref": "#/$defs/h1760b2f63aa3"
+            },
+            {
+              "$ref": "#/$defs/h424d50bcce86"
+            },
+            {
+              "$ref": "#/$defs/h10dc9a560bec"
+            },
+            {
+              "$ref": "#/$defs/ha57525005582"
+            },
+            {
+              "$ref": "#/$defs/h0e4014154904"
+            },
+            {
+              "$ref": "#/$defs/h589952769b45"
+            },
+            {
+              "$ref": "#/$defs/haeffa472167f"
+            },
+            {
+              "$ref": "#/$defs/hc75fdaf6f4ac"
+            },
+            {
+              "$ref": "#/$defs/h9810b646fad3"
+            }
+          ],
+          "description": "externalTrafficPolicy describes how nodes distribute service traffic they receive on one of the Service's \"externally-facing\" addresses (NodePorts, ExternalIPs, and LoadBalancer IPs). If set to \"Local\", the proxy will configure the service in a way that assumes that external load balancers will take care of balancing the service traffic between nodes, and so each node will deliver traffic only to the node-local endpoints of the service, without masquerading the client source IP. (Traffic mistakenly sent to a node with no endpoints will be dropped.) The default value, \"Cluster\", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features). Note that traffic sent to an External IP or LoadBalancer IP from within the cluster will always get \"Cluster\" semantics, but clients sending to a NodePort from within the cluster may need to take traffic policy into account when picking a node.",
+          "type": "string"
+        }
+      ]
+    },
+    "h57ae390d76eb": {
       "properties": {
         "autoCurseForge": {
           "enum": [
@@ -289,168 +849,447 @@
       ],
       "type": "object"
     },
-    "1E": {
+    "h57cee215f173": {
+      "additionalProperties": {},
       "properties": {
-        "serviceType": {
-          "$ref": "#/$defs/t"
+        "annotations": {},
+        "embedded": {},
+        "enabled": {},
+        "externalTrafficPolicy": {},
+        "loadBalancerIP": {},
+        "loadBalancerSourceRanges": {},
+        "nodePort": {},
+        "port": {},
+        "type": {
+          "$ref": "#/$defs/h07f2e85d27d8"
         }
       },
-      "required": [
-        "serviceType"
-      ],
       "type": "object"
     },
-    "1F": {
-      "description": "Set this to false if you don't care to persist state between restarts."
+    "h589952769b45": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
     },
-    "1G": {
+    "h5b7699abf0ec": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "h66e2d1ba950e": {
+      "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
+      "type": "null"
+    },
+    "h66e5b6a8755a": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
+    },
+    "h6e7f33a973e0": {
+      "anyOf": [
+        {
+          "not": {
+            "properties": {
+              "minecraftServer": {
+                "$ref": "#/$defs/hb88dec2f144d"
+              }
+            },
+            "required": [
+              "minecraftServer"
+            ],
+            "type": "object"
+          }
+        },
+        {
+          "properties": {
+            "minecraftServer": {
+              "$ref": "#/$defs/h57ae390d76eb"
+            }
+          },
+          "required": [
+            "minecraftServer"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "h71a44259face": {
       "if": {
-        "$ref": "#/$defs/V"
+        "allOf": [
+          {
+            "$ref": "#/$defs/h7b0a71133aa7"
+          },
+          {
+            "$ref": "#/$defs/ha83879c13fcb"
+          }
+        ]
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "ingress": {
+          "service": {
             "additionalProperties": {},
             "properties": {
-              "tls": {
-                "additionalProperties": {
-                  "$ref": "#/$defs/1I"
-                },
-                "items": {
-                  "$ref": "#/$defs/1I"
-                }
+              "annotations": {
+                "$ref": "#/$defs/h8ec24937a2ec"
               }
             }
           }
         }
       }
     },
-    "1H": {
-      "if": {
-        "$ref": "#/$defs/i"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "name": {
+    "h72b9d0adbbb8": {
+      "additionalProperties": {},
+      "properties": {
+        "name": {
+          "anyOf": [
+            {
+              "description": "host is the fully qualified domain name of a network host, as defined by RFC 3986. Note the following deviations from the \"host\" part of the URI as defined in RFC 3986: 1. IPs are not allowed. Currently an IngressRuleValue can only apply to\n   the IP in the Spec of the parent Ingress.\n2. The `:` delimiter is not respected because ports are not allowed.\n\t  Currently the port of an Ingress is implicitly :80 for http and\n\t  :443 for https.\nBoth these may change in the future. Incoming requests are matched against the host before the IngressRuleValue. If the host is unspecified, the Ingress routes all traffic based on the specified IngressRuleValue.\n\nhost can be \"precise\" which is a domain name without the terminating dot of a network host (e.g. \"foo.bar.com\") or \"wildcard\", which is a domain name prefixed with a single wildcard label (e.g. \"*.foo.com\"). The wildcard character '*' must appear by itself as the first DNS label and matches only a single label. You cannot have a wildcard label by itself (e.g. Host == \"*\"). Requests will be matched against the Host field in the following way: 1. If host is precise, the request matches this rule if the http host header is equal to Host. 2. If host is a wildcard, then the request matches this rule if the http host header is to equal to the suffix (removing the first label) of the wildcard rule.",
+              "type": "null"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/h4174f29f69e0"
+                },
+                {
+                  "$ref": "#/$defs/h1760b2f63aa3"
+                },
+                {
+                  "$ref": "#/$defs/h424d50bcce86"
+                },
+                {
+                  "$ref": "#/$defs/h10dc9a560bec"
+                },
+                {
+                  "$ref": "#/$defs/ha57525005582"
+                },
+                {
+                  "$ref": "#/$defs/h0e4014154904"
+                },
+                {
+                  "$ref": "#/$defs/h589952769b45"
+                },
+                {
+                  "$ref": "#/$defs/haeffa472167f"
+                },
+                {
+                  "$ref": "#/$defs/hc75fdaf6f4ac"
+                },
+                {
+                  "$ref": "#/$defs/h9810b646fad3"
+                }
+              ],
+              "description": "host is the fully qualified domain name of a network host, as defined by RFC 3986. Note the following deviations from the \"host\" part of the URI as defined in RFC 3986: 1. IPs are not allowed. Currently an IngressRuleValue can only apply to\n   the IP in the Spec of the parent Ingress.\n2. The `:` delimiter is not respected because ports are not allowed.\n\t  Currently the port of an Ingress is implicitly :80 for http and\n\t  :443 for https.\nBoth these may change in the future. Incoming requests are matched against the host before the IngressRuleValue. If the host is unspecified, the Ingress routes all traffic based on the specified IngressRuleValue.\n\nhost can be \"precise\" which is a domain name without the terminating dot of a network host (e.g. \"foo.bar.com\") or \"wildcard\", which is a domain name prefixed with a single wildcard label (e.g. \"*.foo.com\"). The wildcard character '*' must appear by itself as the first DNS label and matches only a single label. You cannot have a wildcard label by itself (e.g. Host == \"*\"). Requests will be matched against the Host field in the following way: 1. If host is precise, the request matches this rule if the http host header is equal to Host. 2. If host is a wildcard, then the request matches this rule if the http host header is to equal to the suffix (removing the first label) of the wildcard rule.",
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/h7a6313f8dd4a"
+            },
+            {
+              "$ref": "#/$defs/h0d6da7ea663d"
+            },
+            {
+              "$ref": "#/$defs/hab02c23921d2"
+            },
+            {
+              "$ref": "#/$defs/h89bc4e1169b0"
+            },
+            {
+              "$ref": "#/$defs/h5b7699abf0ec"
+            }
+          ]
+        }
+      }
+    },
+    "h7a012cdcc3e5": {
+      "anyOf": [
+        {
+          "propertyNames": {
             "allOf": [
               {
-                "oneOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/6"
-                      },
-                      {
-                        "$ref": "#/$defs/3"
-                      },
-                      {
-                        "$ref": "#/$defs/5"
-                      },
-                      {
-                        "$ref": "#/$defs/4"
-                      },
-                      {
-                        "$ref": "#/$defs/2"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "$ref": "#/$defs/Z"
-                      }
-                    ]
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/3"
-                      },
-                      {
-                        "type": "integer"
-                      },
-                      {
-                        "$ref": "#/$defs/4"
-                      },
-                      {
-                        "$ref": "#/$defs/m"
-                      },
-                      {
-                        "$ref": "#/$defs/2"
-                      },
-                      {
-                        "type": "null"
-                      }
-                    ]
-                  }
-                ]
+                "$ref": "#/$defs/h4174f29f69e0"
               },
               {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/6"
-                  },
-                  {
-                    "$ref": "#/$defs/3"
-                  },
-                  {
-                    "$ref": "#/$defs/5"
-                  },
-                  {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/b"
-                      },
-                      {
-                        "$ref": "#/$defs/d"
-                      },
-                      {
-                        "$ref": "#/$defs/a"
-                      },
-                      {
-                        "$ref": "#/$defs/9"
-                      },
-                      {
-                        "$ref": "#/$defs/f"
-                      },
-                      {
-                        "$ref": "#/$defs/e"
-                      },
-                      {
-                        "$ref": "#/$defs/g"
-                      },
-                      {
-                        "$ref": "#/$defs/7"
-                      },
-                      {
-                        "$ref": "#/$defs/8"
-                      },
-                      {
-                        "$ref": "#/$defs/c"
-                      }
-                    ],
-                    "description": "The name of this port within the service. This must be a DNS_LABEL. All ports within a ServiceSpec must have unique names. When considering the endpoints for a Service, this must match the 'name' field in the EndpointPort. Optional if only one ServicePort is defined on this service.",
-                    "type": "string"
-                  },
-                  {
-                    "$ref": "#/$defs/4"
-                  },
-                  {
-                    "$ref": "#/$defs/2"
-                  },
-                  {
-                    "description": "The name of this port within the service. This must be a DNS_LABEL. All ports within a ServiceSpec must have unique names. When considering the endpoints for a Service, this must match the 'name' field in the EndpointPort. Optional if only one ServicePort is defined on this service.",
-                    "type": "null"
-                  }
-                ]
+                "$ref": "#/$defs/h424d50bcce86"
+              },
+              {
+                "$ref": "#/$defs/h10dc9a560bec"
+              },
+              {
+                "$ref": "#/$defs/haeffa472167f"
+              },
+              {
+                "$ref": "#/$defs/hc75fdaf6f4ac"
               }
             ]
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "array"
+        }
+      ]
+    },
+    "h7a2d176d2653": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/h7b0a71133aa7"
+        },
+        {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/ha83879c13fcb"
+        },
+        {
+          "$ref": "#/$defs/hd809236e4ec2"
+        },
+        {
+          "properties": {
+            "service": {
+              "properties": {
+                "type": {
+                  "enum": [
+                    "LoadBalancer"
+                  ]
+                }
+              },
+              "required": [
+                "type"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "service"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "h7a6313f8dd4a": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "h7b0a71133aa7": {
+      "not": {
+        "properties": {
+          "service": {
+            "properties": {
+              "embedded": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "embedded"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "service"
+        ],
+        "type": "object"
+      }
+    },
+    "h7b775c54ac5a": {
+      "properties": {
+        "service": {
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/h97f1f236072d"
+            }
           }
         }
       }
     },
-    "1I": {
+    "h7c55f40b6a27": {
+      "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
+      "format": "int32",
+      "type": "null"
+    },
+    "h85106e388f56": {
+      "description": "loadBalancerSourceRanges: []\nSet the externalTrafficPolicy in the Service to either Cluster or Local\nexternalTrafficPolicy: Cluster"
+    },
+    "h893d68a26866": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/h4174f29f69e0"
+        },
+        {
+          "$ref": "#/$defs/h1760b2f63aa3"
+        },
+        {
+          "$ref": "#/$defs/h424d50bcce86"
+        },
+        {
+          "$ref": "#/$defs/h10dc9a560bec"
+        },
+        {
+          "$ref": "#/$defs/ha57525005582"
+        },
+        {
+          "$ref": "#/$defs/h0e4014154904"
+        },
+        {
+          "$ref": "#/$defs/h589952769b45"
+        },
+        {
+          "$ref": "#/$defs/haeffa472167f"
+        },
+        {
+          "$ref": "#/$defs/hc75fdaf6f4ac"
+        },
+        {
+          "$ref": "#/$defs/h9810b646fad3"
+        }
+      ],
+      "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
+      "type": "string"
+    },
+    "h89bc4e1169b0": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "h8ec24937a2ec": {
+      "allOf": [
+        {
+          "additionalProperties": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        {
+          "$ref": "#/$defs/hcecdfbfc3065"
+        }
+      ]
+    },
+    "h90f12dcfe62e": {
+      "not": {
+        "properties": {
+          "mcbackup": {
+            "properties": {
+              "rcloneConfigExistingSecret": {
+                "$ref": "#/$defs/t"
+              }
+            },
+            "required": [
+              "rcloneConfigExistingSecret"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "mcbackup"
+        ],
+        "type": "object"
+      }
+    },
+    "h911044220ed1": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/h4174f29f69e0"
+        },
+        {
+          "$ref": "#/$defs/h1760b2f63aa3"
+        },
+        {
+          "$ref": "#/$defs/h424d50bcce86"
+        },
+        {
+          "$ref": "#/$defs/h10dc9a560bec"
+        },
+        {
+          "$ref": "#/$defs/ha57525005582"
+        },
+        {
+          "$ref": "#/$defs/h0e4014154904"
+        },
+        {
+          "$ref": "#/$defs/h589952769b45"
+        },
+        {
+          "$ref": "#/$defs/haeffa472167f"
+        },
+        {
+          "$ref": "#/$defs/hc75fdaf6f4ac"
+        },
+        {
+          "$ref": "#/$defs/h9810b646fad3"
+        }
+      ],
+      "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
+      "type": "string"
+    },
+    "h92fe5a8e5262": {
+      "properties": {
+        "fullnameOverride": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "fullnameOverride"
+      ],
+      "type": "object"
+    },
+    "h949f1bccec0b": {
+      "description": "Set this to false if you don't care to persist state between restarts."
+    },
+    "h955ff0b0e2f3": {
+      "not": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/hc923abc1cf85"
+          },
+          {
+            "$ref": "#/$defs/t"
+          },
+          {
+            "$ref": "#/$defs/h92fe5a8e5262"
+          }
+        ]
+      }
+    },
+    "h958ed69927a1": {
       "additionalProperties": {},
       "properties": {
         "secretName": {
@@ -460,236 +1299,169 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/6"
+              "$ref": "#/$defs/h7a6313f8dd4a"
             },
             {
-              "$ref": "#/$defs/3"
+              "$ref": "#/$defs/h0d6da7ea663d"
             },
             {
-              "$ref": "#/$defs/5"
+              "$ref": "#/$defs/hab02c23921d2"
             },
             {
-              "$ref": "#/$defs/4"
+              "$ref": "#/$defs/h89bc4e1169b0"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/b"
+                  "$ref": "#/$defs/h4174f29f69e0"
                 },
                 {
-                  "$ref": "#/$defs/d"
+                  "$ref": "#/$defs/h1760b2f63aa3"
                 },
                 {
-                  "$ref": "#/$defs/a"
+                  "$ref": "#/$defs/h424d50bcce86"
                 },
                 {
-                  "$ref": "#/$defs/9"
+                  "$ref": "#/$defs/h10dc9a560bec"
                 },
                 {
-                  "$ref": "#/$defs/f"
+                  "$ref": "#/$defs/ha57525005582"
                 },
                 {
-                  "$ref": "#/$defs/e"
+                  "$ref": "#/$defs/h0e4014154904"
                 },
                 {
-                  "$ref": "#/$defs/g"
+                  "$ref": "#/$defs/h589952769b45"
                 },
                 {
-                  "$ref": "#/$defs/7"
+                  "$ref": "#/$defs/haeffa472167f"
                 },
                 {
-                  "$ref": "#/$defs/8"
+                  "$ref": "#/$defs/hc75fdaf6f4ac"
                 },
                 {
-                  "$ref": "#/$defs/c"
+                  "$ref": "#/$defs/h9810b646fad3"
                 }
               ],
               "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/2"
+              "$ref": "#/$defs/h5b7699abf0ec"
             }
           ]
         }
       }
     },
-    "1J": {
-      "if": {
-        "$ref": "#/$defs/i"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "protocol": {
-            "anyOf": [
-              {
-                "description": "The IP protocol for this port. Supports \"TCP\", \"UDP\", and \"SCTP\". Default is TCP.",
-                "type": "null"
-              },
-              {
-                "$ref": "#/$defs/6"
-              },
-              {
-                "$ref": "#/$defs/1"
-              },
-              {
-                "$ref": "#/$defs/3"
-              },
-              {
-                "$ref": "#/$defs/5"
-              },
-              {
-                "$ref": "#/$defs/4"
-              },
-              {
-                "$ref": "#/$defs/2"
-              },
-              {
-                "allOf": [
-                  {
-                    "$ref": "#/$defs/b"
-                  },
-                  {
-                    "$ref": "#/$defs/d"
-                  },
-                  {
-                    "$ref": "#/$defs/a"
-                  },
-                  {
-                    "$ref": "#/$defs/9"
-                  },
-                  {
-                    "$ref": "#/$defs/f"
-                  },
-                  {
-                    "$ref": "#/$defs/e"
-                  },
-                  {
-                    "$ref": "#/$defs/g"
-                  },
-                  {
-                    "$ref": "#/$defs/7"
-                  },
-                  {
-                    "$ref": "#/$defs/8"
-                  },
-                  {
-                    "$ref": "#/$defs/c"
-                  }
-                ],
-                "description": "The IP protocol for this port. Supports \"TCP\", \"UDP\", and \"SCTP\". Default is TCP.",
-                "type": "string"
-              }
-            ]
-          }
-        }
+    "h97f1f236072d": {
+      "not": {
+        "$ref": "#/$defs/t"
       }
     },
-    "1K": {
+    "h9810b646fad3": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "h993e98b7223d": {
+      "properties": {
+        "apiKey": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "apiKey"
+      ],
+      "type": "object"
+    },
+    "h9c5cbfdf880c": {
       "additionalProperties": {},
       "properties": {
-        "path": {
+        "hosts": {},
+        "secretName": {}
+      }
+    },
+    "h9e67c62a7fca": {
+      "properties": {
+        "mcbackup": {
+          "$ref": "#/$defs/hb5a91d8a9fe0"
+        }
+      },
+      "required": [
+        "mcbackup"
+      ],
+      "type": "object"
+    },
+    "h9f1c1ad071ae": {
+      "additionalProperties": {},
+      "properties": {
+        "loadBalancerClass": {
           "anyOf": [
             {
-              "$ref": "#/$defs/1"
+              "$ref": "#/$defs/h7a6313f8dd4a"
             },
             {
-              "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+              "$ref": "#/$defs/h97f1f236072d"
+            },
+            {
+              "$ref": "#/$defs/h0d6da7ea663d"
+            },
+            {
+              "$ref": "#/$defs/hab02c23921d2"
+            },
+            {
+              "$ref": "#/$defs/h89bc4e1169b0"
+            },
+            {
+              "description": "loadBalancerClass is the class of the load balancer implementation this Service belongs to. If specified, the value of this field must be a label-style identifier, with an optional prefix, e.g. \"internal-vip\" or \"example.com/internal-vip\". Unprefixed names are reserved for end-users. This field can only be set when the Service type is 'LoadBalancer'. If not set, the default load balancer implementation is used, today this is typically done through the cloud provider integration, but should apply for any default implementation. If set, it is assumed that a load balancer implementation is watching for Services with a matching class. Any default load balancer implementation (e.g. cloud providers) should ignore Services that set this field. This field can only be set when creating or updating a Service to type 'LoadBalancer'. Once set, it can not be changed. This field will be wiped when a service is updated to a non 'LoadBalancer' type.",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/5"
+              "$ref": "#/$defs/h5b7699abf0ec"
             },
             {
-              "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
-              "pattern": "^[ \\t]*(#.*)?$",
+              "allOf": [
+                {
+                  "$ref": "#/$defs/h4174f29f69e0"
+                },
+                {
+                  "$ref": "#/$defs/h1760b2f63aa3"
+                },
+                {
+                  "$ref": "#/$defs/h424d50bcce86"
+                },
+                {
+                  "$ref": "#/$defs/h10dc9a560bec"
+                },
+                {
+                  "$ref": "#/$defs/ha57525005582"
+                },
+                {
+                  "$ref": "#/$defs/h0e4014154904"
+                },
+                {
+                  "$ref": "#/$defs/h589952769b45"
+                },
+                {
+                  "$ref": "#/$defs/haeffa472167f"
+                },
+                {
+                  "$ref": "#/$defs/hc75fdaf6f4ac"
+                },
+                {
+                  "$ref": "#/$defs/h9810b646fad3"
+                }
+              ],
+              "description": "loadBalancerClass is the class of the load balancer implementation this Service belongs to. If specified, the value of this field must be a label-style identifier, with an optional prefix, e.g. \"internal-vip\" or \"example.com/internal-vip\". Unprefixed names are reserved for end-users. This field can only be set when the Service type is 'LoadBalancer'. If not set, the default load balancer implementation is used, today this is typically done through the cloud provider integration, but should apply for any default implementation. If set, it is assumed that a load balancer implementation is watching for Services with a matching class. Any default load balancer implementation (e.g. cloud providers) should ignore Services that set this field. This field can only be set when creating or updating a Service to type 'LoadBalancer'. Once set, it can not be changed. This field will be wiped when a service is updated to a non 'LoadBalancer' type.",
               "type": "string"
-            },
-            {
-              "$ref": "#/$defs/Z"
             }
           ]
         }
       }
     },
-    "1L": {
-      "if": {
-        "$ref": "#/$defs/i"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "additionalProperties": {},
-            "properties": {
-              "nodePort": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/w"
-                  },
-                  {
-                    "$ref": "#/$defs/x"
-                  },
-                  {
-                    "$ref": "#/$defs/1"
-                  },
-                  {
-                    "$ref": "#/$defs/3"
-                  },
-                  {
-                    "$ref": "#/$defs/4"
-                  },
-                  {
-                    "$ref": "#/$defs/m"
-                  },
-                  {
-                    "$ref": "#/$defs/2"
-                  }
-                ]
-              }
-            }
-          }
-        }
-      }
-    },
-    "1M": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/b"
-        },
-        {
-          "$ref": "#/$defs/d"
-        },
-        {
-          "$ref": "#/$defs/a"
-        },
-        {
-          "$ref": "#/$defs/9"
-        },
-        {
-          "$ref": "#/$defs/f"
-        },
-        {
-          "$ref": "#/$defs/e"
-        },
-        {
-          "$ref": "#/$defs/g"
-        },
-        {
-          "$ref": "#/$defs/7"
-        },
-        {
-          "$ref": "#/$defs/8"
-        },
-        {
-          "$ref": "#/$defs/c"
-        }
-      ],
-      "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
-      "type": "string"
-    },
-    "1N": {
+    "ha2f0bff7052b": {
       "allOf": [
         {
           "anyOf": [
@@ -715,19 +1487,109 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/1o"
+              "$ref": "#/$defs/h7b775c54ac5a"
             }
           ],
           "type": "object"
         },
         {
-          "$ref": "#/$defs/O"
+          "$ref": "#/$defs/h46ec4a24c08a"
         }
       ]
     },
-    "1O": {
+    "ha342f3ac423f": {
+      "properties": {
+        "mcbackup": {
+          "properties": {
+            "backupMethod": {
+              "enum": [
+                "rclone"
+              ]
+            }
+          },
+          "required": [
+            "backupMethod"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mcbackup"
+      ],
+      "type": "object"
+    },
+    "ha57525005582": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "ha83879c13fcb": {
+      "properties": {
+        "service": {
+          "$ref": "#/$defs/hd9dd13dbcbf3"
+        }
+      },
+      "required": [
+        "service"
+      ],
+      "type": "object"
+    },
+    "ha840ddbf6d2a": {
+      "properties": {
+        "ingress": {
+          "$ref": "#/$defs/hd9dd13dbcbf3"
+        }
+      },
+      "required": [
+        "ingress"
+      ],
+      "type": "object"
+    },
+    "haa329ac60354": {
+      "properties": {
+        "apiKey": {}
+      },
+      "required": [
+        "apiKey"
+      ],
+      "type": "object"
+    },
+    "hab02c23921d2": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/$defs/h3394d7d8572c"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/h3394d7d8572c"
+      },
+      "type": "object"
+    },
+    "hacc015838bd4": {
       "if": {
-        "$ref": "#/$defs/V"
+        "$ref": "#/$defs/h4358fa64ed4f"
       },
       "then": {
         "additionalProperties": {},
@@ -737,10 +1599,10 @@
             "properties": {
               "tls": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/16"
+                  "$ref": "#/$defs/h152affcc7119"
                 },
                 "items": {
-                  "$ref": "#/$defs/16"
+                  "$ref": "#/$defs/h152affcc7119"
                 }
               }
             }
@@ -748,122 +1610,42 @@
         }
       }
     },
-    "1P": {
-      "if": {
-        "$ref": "#/$defs/11"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "$ref": "#/$defs/z"
-          }
-        }
+    "haeffa472167f": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
       }
     },
-    "1Q": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/O"
-        },
-        {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/1o"
-            },
-            {
-              "properties": {
-                "name": {
-                  "not": {
-                    "type": "null"
-                  }
-                }
-              },
-              "required": [
-                "name"
-              ],
-              "type": "object"
-            }
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "1R": {
-      "additionalProperties": {},
+    "haf8e8047846e": {
       "properties": {
-        "name": {
-          "anyOf": [
-            {
-              "description": "host is the fully qualified domain name of a network host, as defined by RFC 3986. Note the following deviations from the \"host\" part of the URI as defined in RFC 3986: 1. IPs are not allowed. Currently an IngressRuleValue can only apply to\n   the IP in the Spec of the parent Ingress.\n2. The `:` delimiter is not respected because ports are not allowed.\n\t  Currently the port of an Ingress is implicitly :80 for http and\n\t  :443 for https.\nBoth these may change in the future. Incoming requests are matched against the host before the IngressRuleValue. If the host is unspecified, the Ingress routes all traffic based on the specified IngressRuleValue.\n\nhost can be \"precise\" which is a domain name without the terminating dot of a network host (e.g. \"foo.bar.com\") or \"wildcard\", which is a domain name prefixed with a single wildcard label (e.g. \"*.foo.com\"). The wildcard character '*' must appear by itself as the first DNS label and matches only a single label. You cannot have a wildcard label by itself (e.g. Host == \"*\"). Requests will be matched against the Host field in the following way: 1. If host is precise, the request matches this rule if the http host header is equal to Host. 2. If host is a wildcard, then the request matches this rule if the http host header is to equal to the suffix (removing the first label) of the wildcard rule.",
-              "type": "null"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/b"
-                },
-                {
-                  "$ref": "#/$defs/d"
-                },
-                {
-                  "$ref": "#/$defs/a"
-                },
-                {
-                  "$ref": "#/$defs/9"
-                },
-                {
-                  "$ref": "#/$defs/f"
-                },
-                {
-                  "$ref": "#/$defs/e"
-                },
-                {
-                  "$ref": "#/$defs/g"
-                },
-                {
-                  "$ref": "#/$defs/7"
-                },
-                {
-                  "$ref": "#/$defs/8"
-                },
-                {
-                  "$ref": "#/$defs/c"
-                }
-              ],
-              "description": "host is the fully qualified domain name of a network host, as defined by RFC 3986. Note the following deviations from the \"host\" part of the URI as defined in RFC 3986: 1. IPs are not allowed. Currently an IngressRuleValue can only apply to\n   the IP in the Spec of the parent Ingress.\n2. The `:` delimiter is not respected because ports are not allowed.\n\t  Currently the port of an Ingress is implicitly :80 for http and\n\t  :443 for https.\nBoth these may change in the future. Incoming requests are matched against the host before the IngressRuleValue. If the host is unspecified, the Ingress routes all traffic based on the specified IngressRuleValue.\n\nhost can be \"precise\" which is a domain name without the terminating dot of a network host (e.g. \"foo.bar.com\") or \"wildcard\", which is a domain name prefixed with a single wildcard label (e.g. \"*.foo.com\"). The wildcard character '*' must appear by itself as the first DNS label and matches only a single label. You cannot have a wildcard label by itself (e.g. Host == \"*\"). Requests will be matched against the Host field in the following way: 1. If host is precise, the request matches this rule if the http host header is equal to Host. 2. If host is a wildcard, then the request matches this rule if the http host header is to equal to the suffix (removing the first label) of the wildcard rule.",
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/6"
-            },
-            {
-              "$ref": "#/$defs/3"
-            },
-            {
-              "$ref": "#/$defs/5"
-            },
-            {
-              "$ref": "#/$defs/4"
-            },
-            {
-              "$ref": "#/$defs/2"
-            }
-          ]
-        }
-      }
+        "dataDir": {}
+      },
+      "required": [
+        "dataDir"
+      ],
+      "type": "object"
     },
-    "1S": {
+    "hb22654643b46": {
+      "properties": {
+        "mcbackup": {
+          "$ref": "#/$defs/hd9dd13dbcbf3"
+        }
+      },
+      "required": [
+        "mcbackup"
+      ],
+      "type": "object"
+    },
+    "hb3510a2f5823": {
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/p"
+            "$ref": "#/$defs/h7b0a71133aa7"
           },
           {
-            "$ref": "#/$defs/i"
+            "$ref": "#/$defs/ha83879c13fcb"
           },
           {
-            "$ref": "#/$defs/1a"
+            "$ref": "#/$defs/hd809236e4ec2"
           }
         ]
       },
@@ -874,327 +1656,201 @@
             "additionalProperties": {},
             "properties": {
               "type": {
-                "$ref": "#/$defs/K"
+                "$ref": "#/$defs/hee383a206653"
               }
             }
           }
         }
       }
     },
-    "1T": {
-      "if": {
-        "$ref": "#/$defs/n"
+    "hb4781f91ab9d": {
+      "properties": {
+        "existingSecret": {
+          "$ref": "#/$defs/t"
+        }
       },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "additionalProperties": {
-                  "$ref": "#/$defs/1K"
-                },
-                "items": {
-                  "$ref": "#/$defs/1K"
-                }
-              }
-            }
-          }
-        }
-      }
+      "required": [
+        "existingSecret"
+      ],
+      "type": "object"
     },
-    "1U": {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/p"
+    "hb5a91d8a9fe0": {
+      "properties": {
+        "persistence": {
+          "properties": {
+            "storageClass": {
+              "$ref": "#/$defs/t"
+            }
           },
-          {
-            "$ref": "#/$defs/i"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "$ref": "#/$defs/1V"
-          }
-        }
-      }
-    },
-    "1V": {
-      "additionalProperties": {},
-      "properties": {
-        "externalTrafficPolicy": {
-          "$ref": "#/$defs/1X"
-        }
-      }
-    },
-    "1W": {
-      "additionalProperties": {},
-      "properties": {
-        "loadBalancerClass": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/6"
-            },
-            {
-              "$ref": "#/$defs/1"
-            },
-            {
-              "$ref": "#/$defs/3"
-            },
-            {
-              "$ref": "#/$defs/5"
-            },
-            {
-              "$ref": "#/$defs/4"
-            },
-            {
-              "description": "loadBalancerClass is the class of the load balancer implementation this Service belongs to. If specified, the value of this field must be a label-style identifier, with an optional prefix, e.g. \"internal-vip\" or \"example.com/internal-vip\". Unprefixed names are reserved for end-users. This field can only be set when the Service type is 'LoadBalancer'. If not set, the default load balancer implementation is used, today this is typically done through the cloud provider integration, but should apply for any default implementation. If set, it is assumed that a load balancer implementation is watching for Services with a matching class. Any default load balancer implementation (e.g. cloud providers) should ignore Services that set this field. This field can only be set when creating or updating a Service to type 'LoadBalancer'. Once set, it can not be changed. This field will be wiped when a service is updated to a non 'LoadBalancer' type.",
-              "type": "null"
-            },
-            {
-              "$ref": "#/$defs/2"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/b"
-                },
-                {
-                  "$ref": "#/$defs/d"
-                },
-                {
-                  "$ref": "#/$defs/a"
-                },
-                {
-                  "$ref": "#/$defs/9"
-                },
-                {
-                  "$ref": "#/$defs/f"
-                },
-                {
-                  "$ref": "#/$defs/e"
-                },
-                {
-                  "$ref": "#/$defs/g"
-                },
-                {
-                  "$ref": "#/$defs/7"
-                },
-                {
-                  "$ref": "#/$defs/8"
-                },
-                {
-                  "$ref": "#/$defs/c"
-                }
-              ],
-              "description": "loadBalancerClass is the class of the load balancer implementation this Service belongs to. If specified, the value of this field must be a label-style identifier, with an optional prefix, e.g. \"internal-vip\" or \"example.com/internal-vip\". Unprefixed names are reserved for end-users. This field can only be set when the Service type is 'LoadBalancer'. If not set, the default load balancer implementation is used, today this is typically done through the cloud provider integration, but should apply for any default implementation. If set, it is assumed that a load balancer implementation is watching for Services with a matching class. Any default load balancer implementation (e.g. cloud providers) should ignore Services that set this field. This field can only be set when creating or updating a Service to type 'LoadBalancer'. Once set, it can not be changed. This field will be wiped when a service is updated to a non 'LoadBalancer' type.",
-              "type": "string"
-            }
-          ]
-        }
-      }
-    },
-    "1X": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/6"
-        },
-        {
-          "$ref": "#/$defs/1"
-        },
-        {
-          "$ref": "#/$defs/3"
-        },
-        {
-          "$ref": "#/$defs/5"
-        },
-        {
-          "description": "externalTrafficPolicy describes how nodes distribute service traffic they receive on one of the Service's \"externally-facing\" addresses (NodePorts, ExternalIPs, and LoadBalancer IPs). If set to \"Local\", the proxy will configure the service in a way that assumes that external load balancers will take care of balancing the service traffic between nodes, and so each node will deliver traffic only to the node-local endpoints of the service, without masquerading the client source IP. (Traffic mistakenly sent to a node with no endpoints will be dropped.) The default value, \"Cluster\", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features). Note that traffic sent to an External IP or LoadBalancer IP from within the cluster will always get \"Cluster\" semantics, but clients sending to a NodePort from within the cluster may need to take traffic policy into account when picking a node.",
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/4"
-        },
-        {
-          "$ref": "#/$defs/2"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/b"
-            },
-            {
-              "$ref": "#/$defs/d"
-            },
-            {
-              "$ref": "#/$defs/a"
-            },
-            {
-              "$ref": "#/$defs/9"
-            },
-            {
-              "$ref": "#/$defs/f"
-            },
-            {
-              "$ref": "#/$defs/e"
-            },
-            {
-              "$ref": "#/$defs/g"
-            },
-            {
-              "$ref": "#/$defs/7"
-            },
-            {
-              "$ref": "#/$defs/8"
-            },
-            {
-              "$ref": "#/$defs/c"
-            }
+          "required": [
+            "storageClass"
           ],
-          "description": "externalTrafficPolicy describes how nodes distribute service traffic they receive on one of the Service's \"externally-facing\" addresses (NodePorts, ExternalIPs, and LoadBalancer IPs). If set to \"Local\", the proxy will configure the service in a way that assumes that external load balancers will take care of balancing the service traffic between nodes, and so each node will deliver traffic only to the node-local endpoints of the service, without masquerading the client source IP. (Traffic mistakenly sent to a node with no endpoints will be dropped.) The default value, \"Cluster\", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features). Note that traffic sent to an External IP or LoadBalancer IP from within the cluster will always get \"Cluster\" semantics, but clients sending to a NodePort from within the cluster may need to take traffic policy into account when picking a node.",
-          "type": "string"
+          "type": "object"
         }
-      ]
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
     },
-    "1Y": {
+    "hb88dec2f144d": {
+      "properties": {
+        "autoCurseForge": {}
+      },
+      "required": [
+        "autoCurseForge"
+      ],
+      "type": "object"
+    },
+    "hbd3a01ed9ce4": {
+      "additionalProperties": {},
+      "type": "object"
+    },
+    "hbe66c1dd040f": {
       "if": {
-        "$ref": "#/$defs/11"
+        "$ref": "#/$defs/ha83879c13fcb"
       },
       "then": {
         "additionalProperties": {},
         "properties": {
-          "service": {
-            "$ref": "#/$defs/20"
-          }
-        }
-      }
-    },
-    "1Z": {
-      "if": {
-        "$ref": "#/$defs/n"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "properties": {
-              "ingressClassName": {
+          "name": {
+            "allOf": [
+              {
+                "oneOf": [
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/h7a6313f8dd4a"
+                      },
+                      {
+                        "$ref": "#/$defs/h0d6da7ea663d"
+                      },
+                      {
+                        "$ref": "#/$defs/hab02c23921d2"
+                      },
+                      {
+                        "$ref": "#/$defs/h89bc4e1169b0"
+                      },
+                      {
+                        "$ref": "#/$defs/h5b7699abf0ec"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/$defs/h34ecb46685f5"
+                      }
+                    ]
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/h0d6da7ea663d"
+                      },
+                      {
+                        "type": "integer"
+                      },
+                      {
+                        "$ref": "#/$defs/h89bc4e1169b0"
+                      },
+                      {
+                        "$ref": "#/$defs/h66e5b6a8755a"
+                      },
+                      {
+                        "$ref": "#/$defs/h5b7699abf0ec"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                ]
+              },
+              {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/6"
+                    "$ref": "#/$defs/h7a6313f8dd4a"
                   },
                   {
-                    "$ref": "#/$defs/1"
+                    "$ref": "#/$defs/h0d6da7ea663d"
                   },
                   {
-                    "$ref": "#/$defs/3"
-                  },
-                  {
-                    "$ref": "#/$defs/5"
-                  },
-                  {
-                    "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
-                    "type": "null"
-                  },
-                  {
-                    "$ref": "#/$defs/4"
-                  },
-                  {
-                    "$ref": "#/$defs/2"
+                    "$ref": "#/$defs/hab02c23921d2"
                   },
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/b"
+                        "$ref": "#/$defs/h4174f29f69e0"
                       },
                       {
-                        "$ref": "#/$defs/d"
+                        "$ref": "#/$defs/h1760b2f63aa3"
                       },
                       {
-                        "$ref": "#/$defs/a"
+                        "$ref": "#/$defs/h424d50bcce86"
                       },
                       {
-                        "$ref": "#/$defs/9"
+                        "$ref": "#/$defs/h10dc9a560bec"
                       },
                       {
-                        "$ref": "#/$defs/f"
+                        "$ref": "#/$defs/ha57525005582"
                       },
                       {
-                        "$ref": "#/$defs/e"
+                        "$ref": "#/$defs/h0e4014154904"
                       },
                       {
-                        "$ref": "#/$defs/g"
+                        "$ref": "#/$defs/h589952769b45"
                       },
                       {
-                        "$ref": "#/$defs/7"
+                        "$ref": "#/$defs/haeffa472167f"
                       },
                       {
-                        "$ref": "#/$defs/8"
+                        "$ref": "#/$defs/hc75fdaf6f4ac"
                       },
                       {
-                        "$ref": "#/$defs/c"
+                        "$ref": "#/$defs/h9810b646fad3"
                       }
                     ],
-                    "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
+                    "description": "The name of this port within the service. This must be a DNS_LABEL. All ports within a ServiceSpec must have unique names. When considering the endpoints for a Service, this must match the 'name' field in the EndpointPort. Optional if only one ServicePort is defined on this service.",
                     "type": "string"
+                  },
+                  {
+                    "$ref": "#/$defs/h89bc4e1169b0"
+                  },
+                  {
+                    "$ref": "#/$defs/h5b7699abf0ec"
+                  },
+                  {
+                    "description": "The name of this port within the service. This must be a DNS_LABEL. All ports within a ServiceSpec must have unique names. When considering the endpoints for a Service, this must match the 'name' field in the EndpointPort. Optional if only one ServicePort is defined on this service.",
+                    "type": "null"
                   }
                 ]
               }
-            }
+            ]
           }
         }
       }
     },
-    "1a": {
-      "not": {
-        "properties": {
-          "service": {
-            "properties": {
-              "type": {
-                "enum": [
-                  "ClusterIP"
-                ]
-              }
-            },
-            "required": [
-              "type"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "service"
-        ],
-        "type": "object"
-      }
-    },
-    "1b": {
-      "description": "loadBalancerSourceRanges: []\nSet the externalTrafficPolicy in the Service to either Cluster or Local\nexternalTrafficPolicy: Cluster"
-    },
-    "1c": {
-      "additionalProperties": {},
-      "properties": {
-        "hosts": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/j"
-            },
-            {
-              "items": {},
-              "type": "array"
+    "hc6d135b650fb": {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "$ref": "#/$defs/h0b2fd17c2f21"
             }
-          ]
-        },
-        "secretName": {}
+          },
+          {
+            "$ref": "#/$defs/hd43efe2215ca"
+          }
+        ]
+      },
+      "then": false
+    },
+    "hc75fdaf6f4ac": {
+      "not": {
+        "pattern": "[\\r\\n]"
       }
     },
-    "1d": {
+    "hc923abc1cf85": {
       "not": {
         "anyOf": [
           {
@@ -1224,37 +1880,7 @@
         ]
       }
     },
-    "1e": {
-      "additionalProperties": {},
-      "properties": {
-        "annotations": {},
-        "embedded": {},
-        "enabled": {},
-        "externalTrafficPolicy": {},
-        "loadBalancerIP": {},
-        "loadBalancerSourceRanges": {},
-        "nodePort": {},
-        "port": {},
-        "type": {}
-      },
-      "type": "object"
-    },
-    "1f": {
-      "if": {
-        "anyOf": [
-          {
-            "not": {
-              "$ref": "#/$defs/G"
-            }
-          },
-          {
-            "$ref": "#/$defs/I"
-          }
-        ]
-      },
-      "then": false
-    },
-    "1g": {
+    "hc9483787bdbd": {
       "anyOf": [
         {
           "items": {
@@ -1278,7 +1904,338 @@
         }
       ]
     },
-    "1h": {
+    "hca1767c2f35d": {
+      "properties": {
+        "mcbackup": {
+          "properties": {
+            "backupMethod": {
+              "enum": [
+                "restic"
+              ]
+            }
+          },
+          "required": [
+            "backupMethod"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "mcbackup"
+      ],
+      "type": "object"
+    },
+    "hcb38596d6efe": {
+      "additionalProperties": {},
+      "properties": {
+        "storageClass": {
+          "$ref": "#/$defs/helm-double-quoted-safe"
+        }
+      }
+    },
+    "hcc32c3a3aaae": {
+      "additionalProperties": {},
+      "properties": {
+        "annotations": {},
+        "embedded": {},
+        "enabled": {},
+        "externalTrafficPolicy": {},
+        "loadBalancerIP": {},
+        "loadBalancerSourceRanges": {},
+        "nodePort": {},
+        "port": {},
+        "type": {}
+      },
+      "type": "object"
+    },
+    "hce42f52f6cf1": {
+      "properties": {
+        "backupDir": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "backupDir"
+      ],
+      "type": "object"
+    },
+    "hcebdcab115f2": {
+      "additionalProperties": {},
+      "properties": {
+        "loadBalancerIP": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/h7a6313f8dd4a"
+            },
+            {
+              "$ref": "#/$defs/h97f1f236072d"
+            },
+            {
+              "$ref": "#/$defs/h0d6da7ea663d"
+            },
+            {
+              "$ref": "#/$defs/hab02c23921d2"
+            },
+            {
+              "$ref": "#/$defs/h89bc4e1169b0"
+            },
+            {
+              "$ref": "#/$defs/h5b7699abf0ec"
+            },
+            {
+              "$ref": "#/$defs/h911044220ed1"
+            },
+            {
+              "$ref": "#/$defs/h2713feed5e6d"
+            }
+          ]
+        }
+      }
+    },
+    "hcecdfbfc3065": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "hd29e02ebc2b4": {
+      "if": {
+        "$ref": "#/$defs/ha840ddbf6d2a"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress": {
+            "additionalProperties": {},
+            "properties": {
+              "hosts": {
+                "additionalProperties": {
+                  "$ref": "#/$defs/hf3df592c6f87"
+                },
+                "items": {
+                  "$ref": "#/$defs/hf3df592c6f87"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "hd36d37ce1f8c": {
+      "properties": {
+        "externalIPs": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "externalIPs"
+      ],
+      "type": "object"
+    },
+    "hd3ca2a69e1a9": {
+      "not": {
+        "properties": {
+          "serviceType": {
+            "enum": [
+              "ClusterIP"
+            ]
+          }
+        },
+        "required": [
+          "serviceType"
+        ],
+        "type": "object"
+      }
+    },
+    "hd40c04019458": {
+      "if": {
+        "$ref": "#/$defs/ha83879c13fcb"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "$ref": "#/$defs/h0e7ba8e9f45b"
+          }
+        }
+      }
+    },
+    "hd43efe2215ca": {
+      "properties": {
+        "persistence": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "persistence"
+      ],
+      "type": "object"
+    },
+    "hd47052b5b9c6": {
+      "properties": {
+        "existingClaim": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "existingClaim"
+      ],
+      "type": "object"
+    },
+    "hd563fab11c04": {
+      "not": {
+        "properties": {
+          "mcbackup": {
+            "properties": {
+              "persistence": {
+                "properties": {
+                  "backupDir": {
+                    "$ref": "#/$defs/hd47052b5b9c6"
+                  }
+                },
+                "required": [
+                  "backupDir"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "persistence"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "mcbackup"
+        ],
+        "type": "object"
+      }
+    },
+    "hd79252647b06": {
+      "not": {
+        "properties": {
+          "persistence": {
+            "properties": {
+              "dataDir": {
+                "$ref": "#/$defs/hd47052b5b9c6"
+              }
+            },
+            "required": [
+              "dataDir"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "persistence"
+        ],
+        "type": "object"
+      }
+    },
+    "hd7d3a4231db4": {
+      "anyOf": [
+        {
+          "properties": {
+            "mcbackup": {
+              "$ref": "#/$defs/hd43efe2215ca"
+            }
+          },
+          "required": [
+            "mcbackup"
+          ],
+          "type": "object"
+        },
+        {
+          "not": {
+            "properties": {
+              "mcbackup": {
+                "$ref": "#/$defs/h0b2fd17c2f21"
+              }
+            },
+            "required": [
+              "mcbackup"
+            ],
+            "type": "object"
+          }
+        }
+      ]
+    },
+    "hd809236e4ec2": {
+      "not": {
+        "properties": {
+          "service": {
+            "properties": {
+              "type": {
+                "enum": [
+                  "ClusterIP"
+                ]
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "service"
+        ],
+        "type": "object"
+      }
+    },
+    "hd9dd13dbcbf3": {
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "he08415cc9b75": {
+      "if": {
+        "$ref": "#/$defs/h7a2d176d2653"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "service": {
+            "$ref": "#/$defs/h092b2588c68c"
+          }
+        }
+      }
+    },
+    "he08affe209be": {
+      "properties": {
+        "dataDir": {
+          "enum": [
+            null
+          ]
+        }
+      },
+      "required": [
+        "dataDir"
+      ],
+      "type": "object"
+    },
+    "he1a37ca5c3bf": {
+      "properties": {
+        "serviceType": {
+          "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "serviceType"
+      ],
+      "type": "object"
+    },
+    "he35a4df8267e": {
       "anyOf": [
         {
           "not": {
@@ -1306,118 +2263,21 @@
         }
       ]
     },
-    "1i": {
+    "he3d09c1848de": {
       "additionalProperties": {},
-      "description": "Additional minecraft container environment variables\nValues can be either variable values or `valueFrom` yaml",
-      "type": "object"
-    },
-    "1j": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/9"
+      "properties": {
+        "ingress": {
+          "$ref": "#/$defs/h21a7880f3262"
         },
-        {
-          "$ref": "#/$defs/7"
-        },
-        {
-          "$ref": "#/$defs/8"
-        }
-      ],
-      "type": "string"
-    },
-    "1k": {
-      "properties": {
-        "fullnameOverride": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "fullnameOverride"
-      ],
-      "type": "object"
-    },
-    "1l": {
-      "properties": {
-        "backupDir": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "backupDir"
-      ],
-      "type": "object"
-    },
-    "1m": {
-      "additionalProperties": {},
-      "properties": {
-        "storageClass": {
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      }
-    },
-    "1n": {
-      "additionalProperties": {},
-      "properties": {
-        "serviceType": {
-          "type": [
-            "null",
-            "string"
-          ]
-        }
-      }
-    },
-    "1o": {
-      "properties": {
+        "name": {},
+        "protocol": {},
         "service": {
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/1"
-            }
-          }
-        }
-      }
-    },
-    "1p": {
-      "properties": {
-        "autoCurseForge": {}
-      },
-      "required": [
-        "autoCurseForge"
-      ],
-      "type": "object"
-    },
-    "1q": {
-      "properties": {
-        "dataDir": {
-          "enum": [
-            null
-          ]
+          "$ref": "#/$defs/h57cee215f173"
         }
       },
-      "required": [
-        "dataDir"
-      ],
       "type": "object"
     },
-    "1r": {
-      "properties": {
-        "apiKey": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "apiKey"
-      ],
-      "type": "object"
-    },
-    "1s": {
+    "he5f668c0d8ed": {
       "properties": {
         "rcon": {
           "enum": [
@@ -1430,351 +2290,7 @@
       ],
       "type": "object"
     },
-    "1t": {
-      "properties": {
-        "backupDir": {}
-      },
-      "required": [
-        "backupDir"
-      ],
-      "type": "object"
-    },
-    "1u": {
-      "additionalProperties": {},
-      "properties": {
-        "hosts": {},
-        "secretName": {}
-      }
-    },
-    "1v": {
-      "properties": {
-        "dataDir": {}
-      },
-      "required": [
-        "dataDir"
-      ],
-      "type": "object"
-    },
-    "1w": {
-      "properties": {
-        "apiKey": {}
-      },
-      "required": [
-        "apiKey"
-      ],
-      "type": "object"
-    },
-    "1x": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/1"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        },
-        {
-          "enum": [
-            "LoadBalancer"
-          ]
-        }
-      ]
-    },
-    "1y": {
-      "additionalProperties": {},
-      "properties": {
-        "storageClass": {
-          "$ref": "#/$defs/helm-double-quoted-safe"
-        }
-      }
-    },
-    "1z": {
-      "properties": {
-        "existingSecret": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "existingSecret"
-      ],
-      "type": "object"
-    },
-    "2": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "20": {
-      "additionalProperties": {},
-      "properties": {
-        "loadBalancerIP": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/6"
-            },
-            {
-              "$ref": "#/$defs/1"
-            },
-            {
-              "$ref": "#/$defs/3"
-            },
-            {
-              "$ref": "#/$defs/5"
-            },
-            {
-              "$ref": "#/$defs/4"
-            },
-            {
-              "$ref": "#/$defs/2"
-            },
-            {
-              "$ref": "#/$defs/M"
-            },
-            {
-              "$ref": "#/$defs/15"
-            }
-          ]
-        }
-      }
-    },
-    "3": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "4": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "5": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "maxItems": 0,
-            "type": "array"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "$ref": "#/$defs/1j"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "null"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "maxProperties": 0,
-            "type": "object"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/1j"
-      },
-      "type": "object"
-    },
-    "6": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
-    "7": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
-      }
-    },
-    "8": {
-      "not": {
-        "pattern": "[\\r\\n]"
-      }
-    },
-    "9": {
-      "not": {
-        "pattern": "[ \\t]#"
-      }
-    },
-    "A": {
-      "not": {
-        "properties": {
-          "persistence": {
-            "properties": {
-              "dataDir": {
-                "$ref": "#/$defs/1B"
-              }
-            },
-            "required": [
-              "dataDir"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "persistence"
-        ],
-        "type": "object"
-      }
-    },
-    "B": {
-      "properties": {
-        "mcbackup": {
-          "properties": {
-            "backupMethod": {
-              "enum": [
-                "rclone"
-              ]
-            }
-          },
-          "required": [
-            "backupMethod"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "mcbackup"
-      ],
-      "type": "object"
-    },
-    "C": {
-      "properties": {
-        "persistence": {
-          "properties": {
-            "dataDir": {
-              "$ref": "#/$defs/h"
-            }
-          },
-          "required": [
-            "dataDir"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "persistence"
-      ],
-      "type": "object"
-    },
-    "D": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "minecraftServer": {}
-            },
-            "required": [
-              "minecraftServer"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "minecraftServer": {
-              "enum": [
-                null
-              ]
-            }
-          },
-          "required": [
-            "minecraftServer"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "E": {
-      "properties": {
-        "persistence": {
-          "properties": {
-            "storageClass": {
-              "$ref": "#/$defs/t"
-            }
-          },
-          "required": [
-            "storageClass"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "persistence"
-      ],
-      "type": "object"
-    },
-    "F": {
-      "not": {
-        "properties": {
-          "serviceType": {
-            "enum": [
-              "ClusterIP"
-            ]
-          }
-        },
-        "required": [
-          "serviceType"
-        ],
-        "type": "object"
-      }
-    },
-    "G": {
-      "properties": {
-        "persistence": {}
-      },
-      "required": [
-        "persistence"
-      ],
-      "type": "object"
-    },
-    "H": {
-      "properties": {
-        "externalIPs": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "externalIPs"
-      ],
-      "type": "object"
-    },
-    "I": {
-      "properties": {
-        "persistence": {
-          "enum": [
-            null
-          ]
-        }
-      },
-      "required": [
-        "persistence"
-      ],
-      "type": "object"
-    },
-    "J": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "K": {
+    "hee383a206653": {
       "anyOf": [
         {
           "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
@@ -1783,429 +2299,58 @@
         {
           "allOf": [
             {
-              "$ref": "#/$defs/b"
+              "$ref": "#/$defs/h4174f29f69e0"
             },
             {
-              "$ref": "#/$defs/d"
+              "$ref": "#/$defs/h1760b2f63aa3"
             },
             {
-              "$ref": "#/$defs/a"
+              "$ref": "#/$defs/h424d50bcce86"
             },
             {
-              "$ref": "#/$defs/9"
+              "$ref": "#/$defs/h10dc9a560bec"
             },
             {
-              "$ref": "#/$defs/f"
+              "$ref": "#/$defs/ha57525005582"
             },
             {
-              "$ref": "#/$defs/e"
+              "$ref": "#/$defs/h0e4014154904"
             },
             {
-              "$ref": "#/$defs/g"
+              "$ref": "#/$defs/h589952769b45"
             },
             {
-              "$ref": "#/$defs/7"
+              "$ref": "#/$defs/haeffa472167f"
             },
             {
-              "$ref": "#/$defs/8"
+              "$ref": "#/$defs/hc75fdaf6f4ac"
             },
             {
-              "$ref": "#/$defs/c"
+              "$ref": "#/$defs/h9810b646fad3"
             }
           ],
           "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/6"
+          "$ref": "#/$defs/h7a6313f8dd4a"
         },
         {
-          "$ref": "#/$defs/1"
+          "$ref": "#/$defs/h97f1f236072d"
         },
         {
-          "$ref": "#/$defs/3"
+          "$ref": "#/$defs/h0d6da7ea663d"
         },
         {
-          "$ref": "#/$defs/5"
+          "$ref": "#/$defs/hab02c23921d2"
         },
         {
-          "$ref": "#/$defs/4"
+          "$ref": "#/$defs/h89bc4e1169b0"
         },
         {
-          "$ref": "#/$defs/2"
+          "$ref": "#/$defs/h5b7699abf0ec"
         }
       ]
-    },
-    "L": {
-      "if": {
-        "$ref": "#/$defs/n"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress": {
-            "additionalProperties": {},
-            "properties": {
-              "hosts": {
-                "additionalProperties": {
-                  "$ref": "#/$defs/1R"
-                },
-                "items": {
-                  "$ref": "#/$defs/1R"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "M": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/b"
-        },
-        {
-          "$ref": "#/$defs/d"
-        },
-        {
-          "$ref": "#/$defs/a"
-        },
-        {
-          "$ref": "#/$defs/9"
-        },
-        {
-          "$ref": "#/$defs/f"
-        },
-        {
-          "$ref": "#/$defs/e"
-        },
-        {
-          "$ref": "#/$defs/g"
-        },
-        {
-          "$ref": "#/$defs/7"
-        },
-        {
-          "$ref": "#/$defs/8"
-        },
-        {
-          "$ref": "#/$defs/c"
-        }
-      ],
-      "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
-      "type": "string"
-    },
-    "N": {
-      "additionalProperties": {},
-      "properties": {
-        "ingress": {
-          "$ref": "#/$defs/12"
-        },
-        "name": {},
-        "protocol": {},
-        "service": {
-          "$ref": "#/$defs/U"
-        }
-      },
-      "type": "object"
-    },
-    "O": {
-      "additionalProperties": {},
-      "properties": {
-        "ingress": {
-          "$ref": "#/$defs/12"
-        },
-        "name": {},
-        "protocol": {},
-        "service": {
-          "$ref": "#/$defs/U"
-        }
-      }
-    },
-    "P": {
-      "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
-      "type": "null"
-    },
-    "Q": {
-      "anyOf": [
-        {
-          "not": {
-            "properties": {
-              "minecraftServer": {
-                "$ref": "#/$defs/1p"
-              }
-            },
-            "required": [
-              "minecraftServer"
-            ],
-            "type": "object"
-          }
-        },
-        {
-          "properties": {
-            "minecraftServer": {
-              "$ref": "#/$defs/1D"
-            }
-          },
-          "required": [
-            "minecraftServer"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "R": {
-      "not": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/1d"
-          },
-          {
-            "$ref": "#/$defs/t"
-          },
-          {
-            "$ref": "#/$defs/1k"
-          }
-        ]
-      }
-    },
-    "S": {
-      "additionalProperties": {},
-      "properties": {
-        "port": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/1C"
-            },
-            {
-              "$ref": "#/$defs/m"
-            }
-          ]
-        }
-      }
-    },
-    "T": {
-      "anyOf": [
-        {
-          "properties": {
-            "mcbackup": {
-              "$ref": "#/$defs/I"
-            }
-          },
-          "required": [
-            "mcbackup"
-          ],
-          "type": "object"
-        },
-        {
-          "not": {
-            "properties": {
-              "mcbackup": {
-                "$ref": "#/$defs/G"
-              }
-            },
-            "required": [
-              "mcbackup"
-            ],
-            "type": "object"
-          }
-        }
-      ]
-    },
-    "U": {
-      "additionalProperties": {},
-      "properties": {
-        "annotations": {},
-        "embedded": {},
-        "enabled": {},
-        "externalTrafficPolicy": {},
-        "loadBalancerIP": {},
-        "loadBalancerSourceRanges": {},
-        "nodePort": {},
-        "port": {},
-        "type": {
-          "$ref": "#/$defs/1x"
-        }
-      },
-      "type": "object"
-    },
-    "V": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/n"
-        },
-        {
-          "properties": {
-            "ingress": {
-              "properties": {
-                "tls": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "tls"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "ingress"
-          ],
-          "type": "object"
-        }
-      ]
-    },
-    "W": {
-      "anyOf": [
-        {
-          "propertyNames": {
-            "allOf": [
-              {
-                "$ref": "#/$defs/b"
-              },
-              {
-                "$ref": "#/$defs/a"
-              },
-              {
-                "$ref": "#/$defs/9"
-              },
-              {
-                "$ref": "#/$defs/7"
-              },
-              {
-                "$ref": "#/$defs/8"
-              }
-            ]
-          },
-          "type": "object"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "array"
-        }
-      ]
-    },
-    "X": {
-      "additionalProperties": {},
-      "properties": {
-        "ingress": {
-          "$ref": "#/$defs/13"
-        },
-        "name": {},
-        "protocol": {},
-        "service": {
-          "$ref": "#/$defs/1e"
-        }
-      },
-      "type": "object"
-    },
-    "Y": {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/p"
-          },
-          {
-            "$ref": "#/$defs/i"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "additionalProperties": {},
-            "properties": {
-              "annotations": {
-                "$ref": "#/$defs/o"
-              }
-            }
-          }
-        }
-      }
-    },
-    "Z": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/b"
-        },
-        {
-          "$ref": "#/$defs/d"
-        },
-        {
-          "$ref": "#/$defs/a"
-        },
-        {
-          "$ref": "#/$defs/9"
-        },
-        {
-          "$ref": "#/$defs/f"
-        },
-        {
-          "$ref": "#/$defs/e"
-        },
-        {
-          "$ref": "#/$defs/g"
-        },
-        {
-          "$ref": "#/$defs/7"
-        },
-        {
-          "$ref": "#/$defs/8"
-        },
-        {
-          "$ref": "#/$defs/c"
-        }
-      ],
-      "type": "string"
-    },
-    "a": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "b": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "c": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "d": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "e": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "f": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "g": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "h": {
-      "properties": {
-        "enabled": {
-          "$ref": "#/$defs/t"
-        }
-      },
-      "required": [
-        "enabled"
-      ],
-      "type": "object"
     },
     "helm-double-quoted-safe": {
       "anyOf": [
@@ -2238,108 +2383,111 @@
         }
       ]
     },
-    "i": {
-      "properties": {
-        "service": {
-          "$ref": "#/$defs/h"
+    "hf0b590787846": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/t"
+        },
+        {
+          "type": "object"
         }
-      },
-      "required": [
-        "service"
-      ],
-      "type": "object"
+      ]
     },
-    "j": {
+    "hf3df592c6f87": {
       "additionalProperties": {},
-      "type": "object"
-    },
-    "k": {
       "properties": {
-        "minecraftServer": {
+        "path": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/h97f1f236072d"
+            },
+            {
+              "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/hab02c23921d2"
+            },
+            {
+              "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
+              "pattern": "^[ \\t]*(#.*)?$",
+              "type": "string"
+            },
+            {
+              "$ref": "#/$defs/h34ecb46685f5"
+            }
+          ]
+        }
+      }
+    },
+    "hf5072069e420": {
+      "properties": {
+        "persistence": {
           "properties": {
-            "rcon": {
-              "$ref": "#/$defs/h"
+            "dataDir": {
+              "$ref": "#/$defs/hd9dd13dbcbf3"
             }
           },
           "required": [
-            "rcon"
+            "dataDir"
           ],
           "type": "object"
         }
       },
       "required": [
-        "minecraftServer"
+        "persistence"
       ],
       "type": "object"
     },
-    "l": {
-      "not": {
-        "properties": {
-          "workloadAsStatefulSet": {
-            "$ref": "#/$defs/t"
-          }
-        },
-        "required": [
-          "workloadAsStatefulSet"
-        ],
-        "type": "object"
-      }
-    },
-    "m": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
-    },
-    "n": {
+    "hf511a5dbf0cb": {
+      "additionalProperties": {},
       "properties": {
-        "ingress": {
-          "$ref": "#/$defs/h"
-        }
-      },
-      "required": [
-        "ingress"
-      ],
-      "type": "object"
-    },
-    "o": {
-      "allOf": [
-        {
-          "additionalProperties": {
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-          "type": [
-            "object",
-            "null"
+        "hosts": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/hbd3a01ed9ce4"
+            },
+            {
+              "items": {},
+              "type": "array"
+            }
           ]
         },
+        "secretName": {}
+      }
+    },
+    "hfaf1c460b830": {
+      "allOf": [
         {
-          "$ref": "#/$defs/J"
+          "$ref": "#/$defs/h46ec4a24c08a"
+        },
+        {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/h7b775c54ac5a"
+            },
+            {
+              "properties": {
+                "name": {
+                  "not": {
+                    "type": "null"
+                  }
+                }
+              },
+              "required": [
+                "name"
+              ],
+              "type": "object"
+            }
+          ],
+          "type": "object"
         }
       ]
     },
-    "p": {
-      "not": {
-        "properties": {
-          "service": {
-            "properties": {
-              "embedded": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "embedded"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "service"
-        ],
-        "type": "object"
-      }
+    "hfd1161ea4f9b": {
+      "description": "The port that will be exposed by this service.",
+      "format": "int32",
+      "type": "integer"
     },
     "providerSource_k8s_eb89b22592a3": {
       "description": "accessModes contains the desired access modes the volume should have. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1",
@@ -2352,48 +2500,6 @@
       "type": [
         "array",
         "null"
-      ]
-    },
-    "q": {
-      "properties": {
-        "mcbackup": {
-          "$ref": "#/$defs/h"
-        }
-      },
-      "required": [
-        "mcbackup"
-      ],
-      "type": "object"
-    },
-    "r": {
-      "not": {
-        "properties": {
-          "mcbackup": {
-            "properties": {
-              "rcloneConfigExistingSecret": {
-                "$ref": "#/$defs/t"
-              }
-            },
-            "required": [
-              "rcloneConfigExistingSecret"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "mcbackup"
-        ],
-        "type": "object"
-      }
-    },
-    "s": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/t"
-        },
-        {
-          "type": "object"
-        }
       ]
     },
     "t": {
@@ -2420,112 +2526,6 @@
           "const": true
         }
       ]
-    },
-    "u": {
-      "not": {
-        "properties": {
-          "mcbackup": {
-            "properties": {
-              "persistence": {
-                "properties": {
-                  "backupDir": {
-                    "$ref": "#/$defs/1B"
-                  }
-                },
-                "required": [
-                  "backupDir"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "persistence"
-            ],
-            "type": "object"
-          }
-        },
-        "required": [
-          "mcbackup"
-        ],
-        "type": "object"
-      }
-    },
-    "v": {
-      "properties": {
-        "mcbackup": {
-          "properties": {
-            "persistence": {
-              "properties": {
-                "backupDir": {
-                  "$ref": "#/$defs/h"
-                }
-              },
-              "required": [
-                "backupDir"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "persistence"
-          ],
-          "type": "object"
-        }
-      },
-      "required": [
-        "mcbackup"
-      ],
-      "type": "object"
-    },
-    "w": {
-      "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
-      "format": "int32",
-      "type": "integer"
-    },
-    "x": {
-      "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
-      "format": "int32",
-      "type": "null"
-    },
-    "y": {
-      "additionalProperties": {},
-      "properties": {
-        "annotations": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/1"
-            },
-            {
-              "$ref": "#/$defs/o"
-            }
-          ]
-        }
-      }
-    },
-    "z": {
-      "additionalProperties": {},
-      "properties": {
-        "loadBalancerSourceRanges": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/1"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "description": "If specified and supported by the platform, this will restrict traffic through the cloud-provider load-balancer will be restricted to the specified client IPs. This field will be ignored if the cloud-provider does not support the feature.\" More info: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/",
-              "items": {
-                "type": [
-                  "string",
-                  "null"
-                ]
-              },
-              "type": "array"
-            }
-          ]
-        }
-      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -2533,7 +2533,7 @@
   "allOf": [
     {
       "if": {
-        "$ref": "#/$defs/D"
+        "$ref": "#/$defs/h2798964e3b88"
       },
       "then": false
     },
@@ -2541,10 +2541,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/Q"
+            "$ref": "#/$defs/h6e7f33a973e0"
           },
           {
-            "$ref": "#/$defs/D"
+            "$ref": "#/$defs/h2798964e3b88"
           }
         ]
       },
@@ -2554,13 +2554,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/C"
+            "$ref": "#/$defs/hf5072069e420"
           },
           {
-            "$ref": "#/$defs/A"
+            "$ref": "#/$defs/hd79252647b06"
           },
           {
-            "$ref": "#/$defs/l"
+            "$ref": "#/$defs/h3555f568b54a"
           }
         ]
       },
@@ -2570,7 +2570,7 @@
             "additionalProperties": {},
             "properties": {
               "persistence": {
-                "$ref": "#/$defs/y"
+                "$ref": "#/$defs/h477969e18534"
               }
             }
           },
@@ -2602,7 +2602,7 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/1"
+                        "$ref": "#/$defs/h97f1f236072d"
                       },
                       {
                         "allOf": [
@@ -2620,7 +2620,7 @@
                             ]
                           },
                           {
-                            "$ref": "#/$defs/J"
+                            "$ref": "#/$defs/hcecdfbfc3065"
                           }
                         ]
                       }
@@ -2643,7 +2643,7 @@
               "anyOf": [
                 {
                   "items": {
-                    "$ref": "#/$defs/N"
+                    "$ref": "#/$defs/he3d09c1848de"
                   },
                   "type": "array"
                 },
@@ -2653,7 +2653,7 @@
                 },
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/N"
+                    "$ref": "#/$defs/he3d09c1848de"
                   },
                   "type": "object"
                 },
@@ -2677,7 +2677,7 @@
                     "minecraftServer": {
                       "properties": {
                         "autoCurseForge": {
-                          "$ref": "#/$defs/1w"
+                          "$ref": "#/$defs/haa329ac60354"
                         }
                       },
                       "required": [
@@ -2697,7 +2697,7 @@
                   "minecraftServer": {
                     "properties": {
                       "autoCurseForge": {
-                        "$ref": "#/$defs/1r"
+                        "$ref": "#/$defs/h993e98b7223d"
                       }
                     },
                     "required": [
@@ -2714,7 +2714,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/Q"
+            "$ref": "#/$defs/h6e7f33a973e0"
           }
         ]
       },
@@ -2735,10 +2735,10 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/R"
+            "$ref": "#/$defs/h955ff0b0e2f3"
           },
           {
-            "$ref": "#/$defs/s"
+            "$ref": "#/$defs/hf0b590787846"
           }
         ]
       },
@@ -2758,10 +2758,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/1h"
+            "$ref": "#/$defs/he35a4df8267e"
           },
           {
-            "$ref": "#/$defs/T"
+            "$ref": "#/$defs/hd7d3a4231db4"
           }
         ]
       },
@@ -2771,7 +2771,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/T"
+            "$ref": "#/$defs/hd7d3a4231db4"
           },
           {
             "anyOf": [
@@ -2780,7 +2780,7 @@
                   "mcbackup": {
                     "properties": {
                       "persistence": {
-                        "$ref": "#/$defs/1l"
+                        "$ref": "#/$defs/hce42f52f6cf1"
                       }
                     },
                     "required": [
@@ -2800,7 +2800,7 @@
                     "mcbackup": {
                       "properties": {
                         "persistence": {
-                          "$ref": "#/$defs/1t"
+                          "$ref": "#/$defs/h2d218cf0b018"
                         }
                       },
                       "required": [
@@ -2848,7 +2848,7 @@
               {
                 "properties": {
                   "minecraftServer": {
-                    "$ref": "#/$defs/1s"
+                    "$ref": "#/$defs/he5f668c0d8ed"
                   }
                 },
                 "required": [
@@ -2859,7 +2859,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/D"
+            "$ref": "#/$defs/h2798964e3b88"
           }
         ]
       },
@@ -2883,13 +2883,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/q"
+            "$ref": "#/$defs/hb22654643b46"
           },
           {
-            "$ref": "#/$defs/r"
+            "$ref": "#/$defs/h90f12dcfe62e"
           },
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/h28b91abdeeed"
           }
         ]
       },
@@ -2916,16 +2916,16 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/17"
+            "$ref": "#/$defs/h9e67c62a7fca"
           },
           {
-            "$ref": "#/$defs/v"
+            "$ref": "#/$defs/h14c5a0bcbe12"
           },
           {
             "not": {
               "properties": {
                 "mcbackup": {
-                  "$ref": "#/$defs/18"
+                  "$ref": "#/$defs/h21333180ccb8"
                 }
               },
               "required": [
@@ -2935,10 +2935,10 @@
             }
           },
           {
-            "$ref": "#/$defs/u"
+            "$ref": "#/$defs/hd563fab11c04"
           },
           {
-            "$ref": "#/$defs/l"
+            "$ref": "#/$defs/h3555f568b54a"
           }
         ]
       },
@@ -2950,7 +2950,7 @@
             "description": "PLEASE NOTE! rcon must be enabled above!  It does NOT require a nodePort or loadBalancerIP",
             "properties": {
               "persistence": {
-                "$ref": "#/$defs/1y"
+                "$ref": "#/$defs/hcb38596d6efe"
               }
             }
           }
@@ -3003,7 +3003,7 @@
                     "autoCurseForge": {
                       "properties": {
                         "apiKey": {
-                          "$ref": "#/$defs/1z"
+                          "$ref": "#/$defs/hb4781f91ab9d"
                         }
                       },
                       "required": [
@@ -3059,15 +3059,15 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/q"
+            "$ref": "#/$defs/hb22654643b46"
           },
           {
             "not": {
-              "$ref": "#/$defs/B"
+              "$ref": "#/$defs/ha342f3ac423f"
             }
           },
           {
-            "$ref": "#/$defs/r"
+            "$ref": "#/$defs/h90f12dcfe62e"
           },
           {
             "anyOf": [
@@ -3114,10 +3114,10 @@
             ]
           },
           {
-            "$ref": "#/$defs/19"
+            "$ref": "#/$defs/hca1767c2f35d"
           },
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/h28b91abdeeed"
           },
           {
             "properties": {
@@ -3138,10 +3138,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/R"
+            "$ref": "#/$defs/h955ff0b0e2f3"
           },
           {
-            "$ref": "#/$defs/s"
+            "$ref": "#/$defs/hf0b590787846"
           }
         ]
       },
@@ -3153,13 +3153,13 @@
       "additionalProperties": {},
       "properties": {
         "minecraftServer": {
-          "$ref": "#/$defs/1n"
+          "$ref": "#/$defs/h038c06dcef36"
         }
       }
     },
     {
       "if": {
-        "$ref": "#/$defs/k"
+        "$ref": "#/$defs/h28b91abdeeed"
       },
       "then": {
         "allOf": [
@@ -3169,7 +3169,7 @@
               "rconServiceLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/1"
+                    "$ref": "#/$defs/h97f1f236072d"
                   },
                   {
                     "type": "object"
@@ -3181,7 +3181,7 @@
                     "type": "array"
                   },
                   {
-                    "$ref": "#/$defs/J"
+                    "$ref": "#/$defs/hcecdfbfc3065"
                   }
                 ]
               }
@@ -3227,7 +3227,7 @@
             "additionalProperties": {},
             "properties": {
               "rconServiceAnnotations": {
-                "$ref": "#/$defs/o"
+                "$ref": "#/$defs/h8ec24937a2ec"
               }
             }
           },
@@ -3238,7 +3238,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "rcon": {
-                    "$ref": "#/$defs/1n"
+                    "$ref": "#/$defs/h038c06dcef36"
                   }
                 }
               }
@@ -3251,16 +3251,16 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/17"
+            "$ref": "#/$defs/h9e67c62a7fca"
           },
           {
-            "$ref": "#/$defs/v"
+            "$ref": "#/$defs/h14c5a0bcbe12"
           },
           {
-            "$ref": "#/$defs/u"
+            "$ref": "#/$defs/hd563fab11c04"
           },
           {
-            "$ref": "#/$defs/l"
+            "$ref": "#/$defs/h3555f568b54a"
           }
         ]
       },
@@ -3272,7 +3272,7 @@
             "description": "PLEASE NOTE! rcon must be enabled above!  It does NOT require a nodePort or loadBalancerIP",
             "properties": {
               "persistence": {
-                "$ref": "#/$defs/1m"
+                "$ref": "#/$defs/h508688e67e12"
               }
             }
           }
@@ -3283,7 +3283,7 @@
       "if": {
         "properties": {
           "minecraftServer": {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/hd36d37ce1f8c"
           }
         },
         "required": [
@@ -3320,7 +3320,7 @@
                 "minecraftServer": {
                   "properties": {
                     "rcon": {
-                      "$ref": "#/$defs/1z"
+                      "$ref": "#/$defs/hb4781f91ab9d"
                     }
                   },
                   "required": [
@@ -3390,13 +3390,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/v"
+            "$ref": "#/$defs/h14c5a0bcbe12"
           },
           {
-            "$ref": "#/$defs/u"
+            "$ref": "#/$defs/hd563fab11c04"
           },
           {
-            "$ref": "#/$defs/l"
+            "$ref": "#/$defs/h3555f568b54a"
           }
         ]
       },
@@ -3410,7 +3410,7 @@
                 "description": "PLEASE NOTE! rcon must be enabled above!  It does NOT require a nodePort or loadBalancerIP",
                 "properties": {
                   "persistence": {
-                    "$ref": "#/$defs/y"
+                    "$ref": "#/$defs/h477969e18534"
                   }
                 }
               }
@@ -3448,7 +3448,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/h28b91abdeeed"
           },
           {
             "properties": {
@@ -3481,7 +3481,7 @@
             "additionalProperties": {},
             "properties": {
               "rconServiceLabels": {
-                "$ref": "#/$defs/W"
+                "$ref": "#/$defs/h7a012cdcc3e5"
               }
             }
           }
@@ -3501,13 +3501,13 @@
                 },
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/1Q"
+                    "$ref": "#/$defs/hfaf1c460b830"
                   },
                   "type": "object"
                 },
                 {
                   "items": {
-                    "$ref": "#/$defs/1Q"
+                    "$ref": "#/$defs/hfaf1c460b830"
                   },
                   "type": "array"
                 },
@@ -3538,7 +3538,7 @@
             "additionalProperties": {},
             "properties": {
               "serviceLabels": {
-                "$ref": "#/$defs/W"
+                "$ref": "#/$defs/h7a012cdcc3e5"
               }
             }
           },
@@ -3559,23 +3559,23 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/1h"
+        "$ref": "#/$defs/he35a4df8267e"
       },
       "then": false
     },
     {
-      "$ref": "#/$defs/1f"
+      "$ref": "#/$defs/hc6d135b650fb"
     },
     {
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/q"
+            "$ref": "#/$defs/hb22654643b46"
           },
           {
             "properties": {
               "mcbackup": {
-                "$ref": "#/$defs/s"
+                "$ref": "#/$defs/hf0b590787846"
               }
             },
             "required": [
@@ -3585,17 +3585,17 @@
           },
           {
             "not": {
-              "$ref": "#/$defs/B"
+              "$ref": "#/$defs/ha342f3ac423f"
             }
           },
           {
-            "$ref": "#/$defs/r"
+            "$ref": "#/$defs/h90f12dcfe62e"
           },
           {
-            "$ref": "#/$defs/19"
+            "$ref": "#/$defs/hca1767c2f35d"
           },
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/h28b91abdeeed"
           }
         ]
       },
@@ -3630,13 +3630,13 @@
                 },
                 {
                   "items": {
-                    "$ref": "#/$defs/1N"
+                    "$ref": "#/$defs/ha2f0bff7052b"
                   },
                   "type": "array"
                 },
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/1N"
+                    "$ref": "#/$defs/ha2f0bff7052b"
                   },
                   "type": "object"
                 },
@@ -3654,20 +3654,20 @@
         "allOf": [
           {
             "not": {
-              "$ref": "#/$defs/18"
+              "$ref": "#/$defs/h21333180ccb8"
             }
           },
           {
-            "$ref": "#/$defs/C"
+            "$ref": "#/$defs/hf5072069e420"
           },
           {
-            "$ref": "#/$defs/A"
+            "$ref": "#/$defs/hd79252647b06"
           },
           {
-            "$ref": "#/$defs/E"
+            "$ref": "#/$defs/hb5a91d8a9fe0"
           },
           {
-            "$ref": "#/$defs/l"
+            "$ref": "#/$defs/h3555f568b54a"
           }
         ]
       },
@@ -3675,7 +3675,7 @@
         "additionalProperties": {},
         "properties": {
           "persistence": {
-            "$ref": "#/$defs/1y"
+            "$ref": "#/$defs/hcb38596d6efe"
           }
         }
       }
@@ -3684,13 +3684,13 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/1d"
+            "$ref": "#/$defs/hc923abc1cf85"
           },
           {
-            "$ref": "#/$defs/1k"
+            "$ref": "#/$defs/h92fe5a8e5262"
           },
           {
-            "$ref": "#/$defs/s"
+            "$ref": "#/$defs/hf0b590787846"
           }
         ]
       },
@@ -3713,11 +3713,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/G"
+                  "$ref": "#/$defs/h0b2fd17c2f21"
                 }
               },
               {
-                "$ref": "#/$defs/I"
+                "$ref": "#/$defs/hd43efe2215ca"
               }
             ]
           },
@@ -3726,7 +3726,7 @@
               {
                 "properties": {
                   "persistence": {
-                    "$ref": "#/$defs/1q"
+                    "$ref": "#/$defs/he08affe209be"
                   }
                 },
                 "required": [
@@ -3738,7 +3738,7 @@
                 "not": {
                   "properties": {
                     "persistence": {
-                      "$ref": "#/$defs/1v"
+                      "$ref": "#/$defs/haf8e8047846e"
                     }
                   },
                   "required": [
@@ -3757,16 +3757,16 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/C"
+            "$ref": "#/$defs/hf5072069e420"
           },
           {
-            "$ref": "#/$defs/A"
+            "$ref": "#/$defs/hd79252647b06"
           },
           {
-            "$ref": "#/$defs/E"
+            "$ref": "#/$defs/hb5a91d8a9fe0"
           },
           {
-            "$ref": "#/$defs/l"
+            "$ref": "#/$defs/h3555f568b54a"
           }
         ]
       },
@@ -3774,7 +3774,7 @@
         "additionalProperties": {},
         "properties": {
           "persistence": {
-            "$ref": "#/$defs/1m"
+            "$ref": "#/$defs/h508688e67e12"
           }
         }
       }
@@ -3783,16 +3783,16 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/q"
+            "$ref": "#/$defs/hb22654643b46"
           },
           {
-            "$ref": "#/$defs/r"
+            "$ref": "#/$defs/h90f12dcfe62e"
           },
           {
-            "$ref": "#/$defs/B"
+            "$ref": "#/$defs/ha342f3ac423f"
           },
           {
-            "$ref": "#/$defs/k"
+            "$ref": "#/$defs/h28b91abdeeed"
           },
           {
             "properties": {
@@ -3838,10 +3838,10 @@
   "properties": {
     "affinity": {},
     "deploymentAnnotations": {
-      "$ref": "#/$defs/j"
+      "$ref": "#/$defs/hbd3a01ed9ce4"
     },
     "deploymentLabels": {
-      "$ref": "#/$defs/j"
+      "$ref": "#/$defs/hbd3a01ed9ce4"
     },
     "envFrom": {
       "description": "Additional environment variables to add to the minecraft container from\nConfigMaps and Secrets"
@@ -3849,7 +3849,7 @@
     "extraDeploy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/j"
+          "$ref": "#/$defs/hbd3a01ed9ce4"
         },
         {
           "items": {},
@@ -3865,7 +3865,7 @@
       "description": "Array of extra objects to deploy with the release\nextraDeploy:\n- |\napiVersion: v1\nkind: ConfigMap\nmetadata:\nname: {{ template \"minecraft.fullname\" . }}-extra-cm\ndata:\nkey: |-\n{\n\"key\": \"value\"\n}"
     },
     "extraEnv": {
-      "$ref": "#/$defs/1i"
+      "$ref": "#/$defs/h3dea3121b16e"
     },
     "extraPodSpec": {
       "description": "Extra fields to set on the pod\nFields set here will be added to the end of the Pod spec\nCan include any fields from https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#PodSpec\nthat are not already set by the chart.\nThe value of the field will be interpretted as a template.\nextraPodSpec:\npriorityClassName: 'my-priority-class'"
@@ -3892,7 +3892,7 @@
     "initContainers": {
       "anyOf": [
         {
-          "$ref": "#/$defs/j"
+          "$ref": "#/$defs/hbd3a01ed9ce4"
         },
         {
           "items": {},
@@ -3916,7 +3916,7 @@
       "additionalProperties": {},
       "allOf": [
         {
-          "$ref": "#/$defs/1f"
+          "$ref": "#/$defs/hc6d135b650fb"
         },
         {
           "additionalProperties": {},
@@ -3928,11 +3928,11 @@
                     "anyOf": [
                       {
                         "not": {
-                          "$ref": "#/$defs/1t"
+                          "$ref": "#/$defs/h2d218cf0b018"
                         }
                       },
                       {
-                        "$ref": "#/$defs/1l"
+                        "$ref": "#/$defs/hce42f52f6cf1"
                       }
                     ]
                   },
@@ -3970,7 +3970,7 @@
           "description": "is a comma-separated list of glob(3) patterns to exclude from backups. By default excludes all jar files (plugins, server files),\nlogs folder and cache (used by i.e. PaperMC server)."
         },
         "extraEnv": {
-          "$ref": "#/$defs/1i"
+          "$ref": "#/$defs/h3dea3121b16e"
         },
         "image": {
           "additionalProperties": {},
@@ -4005,7 +4005,7 @@
                 },
                 "accessModes": {},
                 "enabled": {
-                  "$ref": "#/$defs/1F"
+                  "$ref": "#/$defs/h949f1bccec0b"
                 },
                 "existingClaim": {}
               },
@@ -4077,26 +4077,26 @@
           "if": {
             "allOf": [
               {
-                "$ref": "#/$defs/1E"
+                "$ref": "#/$defs/he1a37ca5c3bf"
               },
               {
-                "$ref": "#/$defs/F"
+                "$ref": "#/$defs/hd3ca2a69e1a9"
               },
               {
-                "$ref": "#/$defs/1A"
+                "$ref": "#/$defs/h4629a08b250a"
               }
             ]
           },
           "then": {
             "allOf": [
               {
-                "$ref": "#/$defs/1W"
+                "$ref": "#/$defs/h9f1c1ad071ae"
               },
               {
-                "$ref": "#/$defs/20"
+                "$ref": "#/$defs/hcebdcab115f2"
               },
               {
-                "$ref": "#/$defs/z"
+                "$ref": "#/$defs/h092b2588c68c"
               }
             ]
           }
@@ -4105,7 +4105,7 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/1s"
+                "$ref": "#/$defs/he5f668c0d8ed"
               },
               {
                 "not": {
@@ -4129,10 +4129,10 @@
               "allOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/Y"
+                    "$ref": "#/$defs/h71a44259face"
                   },
                   "items": {
-                    "$ref": "#/$defs/Y"
+                    "$ref": "#/$defs/h71a44259face"
                   }
                 }
               ]
@@ -4146,10 +4146,10 @@
               "allOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/L"
+                    "$ref": "#/$defs/h19fa94f12945"
                   },
                   "items": {
-                    "$ref": "#/$defs/L"
+                    "$ref": "#/$defs/h19fa94f12945"
                   }
                 }
               ]
@@ -4163,10 +4163,10 @@
               "allOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/1Z"
+                    "$ref": "#/$defs/h3e4ef3c54392"
                   },
                   "items": {
-                    "$ref": "#/$defs/1Z"
+                    "$ref": "#/$defs/h3e4ef3c54392"
                   }
                 }
               ]
@@ -4176,7 +4176,7 @@
         {
           "if": {
             "not": {
-              "$ref": "#/$defs/H"
+              "$ref": "#/$defs/hd36d37ce1f8c"
             }
           },
           "then": {
@@ -4196,7 +4196,7 @@
                     "x-kubernetes-map-type": "atomic"
                   },
                   {
-                    "$ref": "#/$defs/1"
+                    "$ref": "#/$defs/h97f1f236072d"
                   },
                   {
                     "type": "null"
@@ -4214,10 +4214,10 @@
               "allOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/1G"
+                    "$ref": "#/$defs/h25adcfab8784"
                   },
                   "items": {
-                    "$ref": "#/$defs/1G"
+                    "$ref": "#/$defs/h25adcfab8784"
                   }
                 }
               ]
@@ -4226,7 +4226,7 @@
         },
         {
           "if": {
-            "$ref": "#/$defs/H"
+            "$ref": "#/$defs/hd36d37ce1f8c"
           },
           "then": {
             "additionalProperties": {},
@@ -4234,7 +4234,7 @@
               "extraServiceSpec": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/1"
+                    "$ref": "#/$defs/h97f1f236072d"
                   },
                   {
                     "description": "externalIPs is a list of IP addresses for which nodes in the cluster will also accept traffic for this service.  These IPs are not managed by Kubernetes.  The user is responsible for ensuring that traffic arrives at a node with this IP.  A common example is external load-balancers that are not part of the Kubernetes system.",
@@ -4264,23 +4264,23 @@
                   "if": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/h"
+                        "$ref": "#/$defs/hd9dd13dbcbf3"
                       },
                       {
-                        "$ref": "#/$defs/1E"
+                        "$ref": "#/$defs/he1a37ca5c3bf"
                       },
                       {
-                        "$ref": "#/$defs/F"
+                        "$ref": "#/$defs/hd3ca2a69e1a9"
                       },
                       {
-                        "$ref": "#/$defs/1A"
+                        "$ref": "#/$defs/h4629a08b250a"
                       }
                     ]
                   },
                   "then": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/1W"
+                        "$ref": "#/$defs/h9f1c1ad071ae"
                       },
                       {
                         "additionalProperties": {},
@@ -4288,28 +4288,28 @@
                           "loadBalancerIP": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/6"
+                                "$ref": "#/$defs/h7a6313f8dd4a"
                               },
                               {
-                                "$ref": "#/$defs/1"
+                                "$ref": "#/$defs/h97f1f236072d"
                               },
                               {
-                                "$ref": "#/$defs/3"
+                                "$ref": "#/$defs/h0d6da7ea663d"
                               },
                               {
-                                "$ref": "#/$defs/5"
+                                "$ref": "#/$defs/hab02c23921d2"
                               },
                               {
-                                "$ref": "#/$defs/4"
+                                "$ref": "#/$defs/h89bc4e1169b0"
                               },
                               {
-                                "$ref": "#/$defs/2"
+                                "$ref": "#/$defs/h5b7699abf0ec"
                               },
                               {
-                                "$ref": "#/$defs/M"
+                                "$ref": "#/$defs/h911044220ed1"
                               },
                               {
-                                "$ref": "#/$defs/15"
+                                "$ref": "#/$defs/h2713feed5e6d"
                               }
                             ],
                             "description": "loadBalancerSourceRanges: []\nSet the externalTrafficPolicy in the Service to either Cluster or Local\nexternalTrafficPolicy: Cluster"
@@ -4317,7 +4317,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/z"
+                        "$ref": "#/$defs/h092b2588c68c"
                       }
                     ]
                   }
@@ -4333,10 +4333,10 @@
               "allOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/14"
+                    "$ref": "#/$defs/hd40c04019458"
                   },
                   "items": {
-                    "$ref": "#/$defs/14"
+                    "$ref": "#/$defs/hd40c04019458"
                   }
                 }
               ]
@@ -4350,10 +4350,10 @@
               "allOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/10"
+                    "$ref": "#/$defs/h18c324be9e69"
                   },
                   "items": {
-                    "$ref": "#/$defs/10"
+                    "$ref": "#/$defs/h18c324be9e69"
                   }
                 }
               ]
@@ -4367,10 +4367,10 @@
               "allOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/1H"
+                    "$ref": "#/$defs/hbe66c1dd040f"
                   },
                   "items": {
-                    "$ref": "#/$defs/1H"
+                    "$ref": "#/$defs/hbe66c1dd040f"
                   }
                 }
               ]
@@ -4384,10 +4384,10 @@
               "allOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/1Y"
+                    "$ref": "#/$defs/h41aac57e7ad3"
                   },
                   "items": {
-                    "$ref": "#/$defs/1Y"
+                    "$ref": "#/$defs/h41aac57e7ad3"
                   }
                 }
               ]
@@ -4401,10 +4401,10 @@
               "allOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/1J"
+                    "$ref": "#/$defs/h0cc17543d74f"
                   },
                   "items": {
-                    "$ref": "#/$defs/1J"
+                    "$ref": "#/$defs/h0cc17543d74f"
                   }
                 }
               ]
@@ -4418,10 +4418,10 @@
               "allOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/1O"
+                    "$ref": "#/$defs/hacc015838bd4"
                   },
                   "items": {
-                    "$ref": "#/$defs/1O"
+                    "$ref": "#/$defs/hacc015838bd4"
                   }
                 }
               ]
@@ -4435,10 +4435,10 @@
               "allOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/1T"
+                    "$ref": "#/$defs/hd29e02ebc2b4"
                   },
                   "items": {
-                    "$ref": "#/$defs/1T"
+                    "$ref": "#/$defs/hd29e02ebc2b4"
                   }
                 }
               ]
@@ -4452,10 +4452,10 @@
               "allOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/1S"
+                    "$ref": "#/$defs/hb3510a2f5823"
                   },
                   "items": {
-                    "$ref": "#/$defs/1S"
+                    "$ref": "#/$defs/hb3510a2f5823"
                   }
                 }
               ]
@@ -4469,10 +4469,10 @@
               "allOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/1L"
+                    "$ref": "#/$defs/h03efaaadfe78"
                   },
                   "items": {
-                    "$ref": "#/$defs/1L"
+                    "$ref": "#/$defs/h03efaaadfe78"
                   }
                 }
               ]
@@ -4489,11 +4489,11 @@
                     "anyOf": [
                       {
                         "not": {
-                          "$ref": "#/$defs/1w"
+                          "$ref": "#/$defs/haa329ac60354"
                         }
                       },
                       {
-                        "$ref": "#/$defs/1r"
+                        "$ref": "#/$defs/h993e98b7223d"
                       }
                     ]
                   },
@@ -4511,7 +4511,7 @@
               "allOf": [
                 {
                   "if": {
-                    "$ref": "#/$defs/h"
+                    "$ref": "#/$defs/hd9dd13dbcbf3"
                   },
                   "then": {
                     "allOf": [
@@ -4521,35 +4521,35 @@
                           "clusterIP": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/6"
+                                "$ref": "#/$defs/h7a6313f8dd4a"
                               },
                               {
-                                "$ref": "#/$defs/1"
+                                "$ref": "#/$defs/h97f1f236072d"
                               },
                               {
-                                "$ref": "#/$defs/3"
+                                "$ref": "#/$defs/h0d6da7ea663d"
                               },
                               {
-                                "$ref": "#/$defs/5"
+                                "$ref": "#/$defs/hab02c23921d2"
                               },
                               {
-                                "$ref": "#/$defs/P"
+                                "$ref": "#/$defs/h66e2d1ba950e"
                               },
                               {
-                                "$ref": "#/$defs/4"
+                                "$ref": "#/$defs/h89bc4e1169b0"
                               },
                               {
-                                "$ref": "#/$defs/1M"
+                                "$ref": "#/$defs/h893d68a26866"
                               },
                               {
-                                "$ref": "#/$defs/2"
+                                "$ref": "#/$defs/h5b7699abf0ec"
                               }
                             ]
                           }
                         }
                       },
                       {
-                        "$ref": "#/$defs/S"
+                        "$ref": "#/$defs/h0e7ba8e9f45b"
                       },
                       {
                         "additionalProperties": {},
@@ -4557,25 +4557,25 @@
                           "nodePort": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/w"
+                                "$ref": "#/$defs/h451447bf8303"
                               },
                               {
-                                "$ref": "#/$defs/x"
+                                "$ref": "#/$defs/h7c55f40b6a27"
                               },
                               {
-                                "$ref": "#/$defs/1"
+                                "$ref": "#/$defs/h97f1f236072d"
                               },
                               {
-                                "$ref": "#/$defs/3"
+                                "$ref": "#/$defs/h0d6da7ea663d"
                               },
                               {
-                                "$ref": "#/$defs/4"
+                                "$ref": "#/$defs/h89bc4e1169b0"
                               },
                               {
-                                "$ref": "#/$defs/m"
+                                "$ref": "#/$defs/h66e5b6a8755a"
                               },
                               {
-                                "$ref": "#/$defs/2"
+                                "$ref": "#/$defs/h5b7699abf0ec"
                               }
                             ],
                             "description": "Set the external port if the rcon serviceType is NodePort"
@@ -4583,7 +4583,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/1V"
+                        "$ref": "#/$defs/h1d095acab9bf"
                       }
                     ]
                   }
@@ -4599,10 +4599,10 @@
               "allOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/1P"
+                    "$ref": "#/$defs/he08415cc9b75"
                   },
                   "items": {
-                    "$ref": "#/$defs/1P"
+                    "$ref": "#/$defs/he08415cc9b75"
                   }
                 }
               ]
@@ -4616,10 +4616,10 @@
               "allOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/1U"
+                    "$ref": "#/$defs/h2df2507d80cd"
                   },
                   "items": {
-                    "$ref": "#/$defs/1U"
+                    "$ref": "#/$defs/h2df2507d80cd"
                   }
                 }
               ]
@@ -4630,11 +4630,11 @@
           "if": {
             "anyOf": [
               {
-                "$ref": "#/$defs/1D"
+                "$ref": "#/$defs/h57ae390d76eb"
               },
               {
                 "not": {
-                  "$ref": "#/$defs/1p"
+                  "$ref": "#/$defs/hb88dec2f144d"
                 }
               }
             ]
@@ -4678,7 +4678,7 @@
                     }
                   },
                   "then": {
-                    "$ref": "#/$defs/K"
+                    "$ref": "#/$defs/hee383a206653"
                   }
                 }
               ]
@@ -4694,10 +4694,10 @@
                   "if": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/h"
+                        "$ref": "#/$defs/hd9dd13dbcbf3"
                       },
                       {
-                        "$ref": "#/$defs/F"
+                        "$ref": "#/$defs/hd3ca2a69e1a9"
                       }
                     ]
                   },
@@ -4705,7 +4705,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "serviceType": {
-                        "$ref": "#/$defs/K"
+                        "$ref": "#/$defs/hee383a206653"
                       }
                     }
                   }
@@ -4785,28 +4785,28 @@
         "clusterIP": {
           "anyOf": [
             {
-              "$ref": "#/$defs/6"
+              "$ref": "#/$defs/h7a6313f8dd4a"
             },
             {
-              "$ref": "#/$defs/1"
+              "$ref": "#/$defs/h97f1f236072d"
             },
             {
-              "$ref": "#/$defs/3"
+              "$ref": "#/$defs/h0d6da7ea663d"
             },
             {
-              "$ref": "#/$defs/5"
+              "$ref": "#/$defs/hab02c23921d2"
             },
             {
-              "$ref": "#/$defs/P"
+              "$ref": "#/$defs/h66e2d1ba950e"
             },
             {
-              "$ref": "#/$defs/4"
+              "$ref": "#/$defs/h89bc4e1169b0"
             },
             {
-              "$ref": "#/$defs/1M"
+              "$ref": "#/$defs/h893d68a26866"
             },
             {
-              "$ref": "#/$defs/2"
+              "$ref": "#/$defs/h5b7699abf0ec"
             },
             {
               "type": "null"
@@ -4832,22 +4832,22 @@
           "description": "This must be overridden, since we can't accept this for the user."
         },
         "externalIPs": {
-          "$ref": "#/$defs/1b"
+          "$ref": "#/$defs/h85106e388f56"
         },
         "externalTrafficPolicy": {
-          "$ref": "#/$defs/1X"
+          "$ref": "#/$defs/h51072295af4e"
         },
         "extraPorts": {
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/X"
+                "$ref": "#/$defs/h4d4776ec393a"
               },
               "type": "array"
             },
             {
               "additionalProperties": {
-                "$ref": "#/$defs/X"
+                "$ref": "#/$defs/h4d4776ec393a"
               },
               "type": "object"
             },
@@ -4862,12 +4862,12 @@
                 "additionalProperties": {},
                 "properties": {
                   "ingress": {
-                    "$ref": "#/$defs/13"
+                    "$ref": "#/$defs/h0fafcbef253a"
                   },
                   "name": {},
                   "protocol": {},
                   "service": {
-                    "$ref": "#/$defs/1e"
+                    "$ref": "#/$defs/hcc32c3a3aaae"
                   }
                 }
               },
@@ -4924,7 +4924,7 @@
         "ipFamilies": {
           "anyOf": [
             {
-              "$ref": "#/$defs/1"
+              "$ref": "#/$defs/h97f1f236072d"
             },
             {
               "description": "IPFamilies is a list of IP families (e.g. IPv4, IPv6) assigned to this service. This field is usually assigned automatically based on cluster configuration and the ipFamilyPolicy field. If this field is specified manually, the requested family is available in the cluster, and ipFamilyPolicy allows it, it will be used; otherwise creation of the service will fail. This field is conditionally mutable: it allows for adding or removing a secondary IP family, but it does not allow changing the primary IP family of the Service. Valid values are \"IPv4\" and \"IPv6\".  This field only applies to Services of types ClusterIP, NodePort, and LoadBalancer, and does apply to \"headless\" services. This field will be wiped when updating a Service to type ExternalName.\n\nThis field may hold a maximum of two entries (dual-stack families, in either order).  These families must correspond to the values of the clusterIPs field, if specified. Both clusterIPs and ipFamilies are governed by the ipFamilyPolicy field.",
@@ -4945,58 +4945,58 @@
         "ipFamilyPolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/6"
+              "$ref": "#/$defs/h7a6313f8dd4a"
             },
             {
-              "$ref": "#/$defs/1"
+              "$ref": "#/$defs/h97f1f236072d"
             },
             {
-              "$ref": "#/$defs/3"
+              "$ref": "#/$defs/h0d6da7ea663d"
             },
             {
-              "$ref": "#/$defs/5"
+              "$ref": "#/$defs/hab02c23921d2"
             },
             {
-              "$ref": "#/$defs/4"
+              "$ref": "#/$defs/h89bc4e1169b0"
             },
             {
               "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/2"
+              "$ref": "#/$defs/h5b7699abf0ec"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/b"
+                  "$ref": "#/$defs/h4174f29f69e0"
                 },
                 {
-                  "$ref": "#/$defs/d"
+                  "$ref": "#/$defs/h1760b2f63aa3"
                 },
                 {
-                  "$ref": "#/$defs/a"
+                  "$ref": "#/$defs/h424d50bcce86"
                 },
                 {
-                  "$ref": "#/$defs/9"
+                  "$ref": "#/$defs/h10dc9a560bec"
                 },
                 {
-                  "$ref": "#/$defs/f"
+                  "$ref": "#/$defs/ha57525005582"
                 },
                 {
-                  "$ref": "#/$defs/e"
+                  "$ref": "#/$defs/h0e4014154904"
                 },
                 {
-                  "$ref": "#/$defs/g"
+                  "$ref": "#/$defs/h589952769b45"
                 },
                 {
-                  "$ref": "#/$defs/7"
+                  "$ref": "#/$defs/haeffa472167f"
                 },
                 {
-                  "$ref": "#/$defs/8"
+                  "$ref": "#/$defs/hc75fdaf6f4ac"
                 },
                 {
-                  "$ref": "#/$defs/c"
+                  "$ref": "#/$defs/h9810b646fad3"
                 }
               ],
               "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
@@ -5060,25 +5060,25 @@
         "nodePort": {
           "anyOf": [
             {
-              "$ref": "#/$defs/w"
+              "$ref": "#/$defs/h451447bf8303"
             },
             {
-              "$ref": "#/$defs/x"
+              "$ref": "#/$defs/h7c55f40b6a27"
             },
             {
-              "$ref": "#/$defs/1"
+              "$ref": "#/$defs/h97f1f236072d"
             },
             {
-              "$ref": "#/$defs/3"
+              "$ref": "#/$defs/h0d6da7ea663d"
             },
             {
-              "$ref": "#/$defs/4"
+              "$ref": "#/$defs/h89bc4e1169b0"
             },
             {
-              "$ref": "#/$defs/m"
+              "$ref": "#/$defs/h66e5b6a8755a"
             },
             {
-              "$ref": "#/$defs/2"
+              "$ref": "#/$defs/h5b7699abf0ec"
             },
             {
               "type": "null"
@@ -5119,7 +5119,7 @@
                 "enabled": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/1"
+                      "$ref": "#/$defs/h97f1f236072d"
                     },
                     {
                       "type": "string"
@@ -5134,7 +5134,7 @@
                 "externalTrafficPolicy": {},
                 "loadBalancerClass": {},
                 "loadBalancerIP": {
-                  "$ref": "#/$defs/1b"
+                  "$ref": "#/$defs/h85106e388f56"
                 },
                 "loadBalancerSourceRanges": {},
                 "nodePort": {
@@ -5146,7 +5146,7 @@
                   "type": "string"
                 },
                 "serviceType": {
-                  "$ref": "#/$defs/1x"
+                  "$ref": "#/$defs/h07f2e85d27d8"
                 },
                 "withGeneratedPassword": {
                   "description": "By default, the container will generate a random password at startup\nto ensure internal RCON tooling, including a backup container,\ncan be used, but the password is secure."
@@ -5180,16 +5180,16 @@
         "servicePort": {
           "anyOf": [
             {
-              "$ref": "#/$defs/1C"
+              "$ref": "#/$defs/hfd1161ea4f9b"
             },
             {
-              "$ref": "#/$defs/1"
+              "$ref": "#/$defs/h97f1f236072d"
             },
             {
               "type": "integer"
             },
             {
-              "$ref": "#/$defs/m"
+              "$ref": "#/$defs/h66e5b6a8755a"
             }
           ],
           "description": "Set the external port of the service, usefull when using the LoadBalancer service type"
@@ -5249,11 +5249,11 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/1v"
+                  "$ref": "#/$defs/haf8e8047846e"
                 }
               },
               {
-                "$ref": "#/$defs/1q"
+                "$ref": "#/$defs/he08affe209be"
               }
             ]
           },
@@ -5270,7 +5270,7 @@
             "Size": {},
             "accessModes": {},
             "enabled": {
-              "$ref": "#/$defs/1F"
+              "$ref": "#/$defs/h949f1bccec0b"
             },
             "existingClaim": {}
           },
@@ -5282,10 +5282,10 @@
       "type": "object"
     },
     "podAnnotations": {
-      "$ref": "#/$defs/j"
+      "$ref": "#/$defs/hbd3a01ed9ce4"
     },
     "podLabels": {
-      "$ref": "#/$defs/j"
+      "$ref": "#/$defs/hbd3a01ed9ce4"
     },
     "podSecurityContext": {},
     "rconServiceAnnotations": {},
@@ -5300,7 +5300,7 @@
     "revisionHistoryLimit": {},
     "securityContext": {},
     "serviceAnnotations": {
-      "$ref": "#/$defs/o"
+      "$ref": "#/$defs/h8ec24937a2ec"
     },
     "serviceLabels": {
       "allOf": [
@@ -5327,7 +5327,7 @@
     "sidecarContainers": {
       "anyOf": [
         {
-          "$ref": "#/$defs/j"
+          "$ref": "#/$defs/hbd3a01ed9ce4"
         },
         {
           "items": {},

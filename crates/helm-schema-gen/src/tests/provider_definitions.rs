@@ -98,7 +98,8 @@ fn repeated_provider_subtrees_move_to_root_definitions() {
         resolved_path("second", provider_schema.clone()),
     ];
 
-    let definitions = extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new());
+    let definitions =
+        extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new(), &mut BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
     insert_definitions_into_root(&mut root, definitions);
 
@@ -113,6 +114,60 @@ fn repeated_provider_subtrees_move_to_root_definitions() {
     sim_assert_eq!(
         have: root.pointer("/$defs/providerSchema1"),
         want: Some(&provider_schema)
+    );
+}
+
+#[test]
+fn provider_definition_names_survive_unrelated_definitions() {
+    let provider_schema = json!({
+        "type": "object",
+        "properties": {
+            "name": { "type": "string" }
+        },
+        "additionalProperties": false
+    });
+    // Sorts before `provider_schema`, so it takes the first private handle.
+    let inserted_schema = json!({
+        "additionalItems": false,
+        "items": [{ "type": "string" }],
+        "type": "array"
+    });
+    let mut before_paths = vec![
+        resolved_path("first", provider_schema.clone()),
+        resolved_path("second", provider_schema.clone()),
+    ];
+    let mut after_paths = vec![
+        resolved_path("first", provider_schema.clone()),
+        resolved_path("second", provider_schema.clone()),
+        resolved_path("third", inserted_schema.clone()),
+        resolved_path("fourth", inserted_schema.clone()),
+    ];
+
+    let mut before = BTreeMap::new();
+    extract_provider_definitions(&mut before_paths, &mut [], &BTreeMap::new(), &mut before);
+    let mut after = BTreeMap::new();
+    extract_provider_definitions(&mut after_paths, &mut [], &BTreeMap::new(), &mut after);
+
+    // Handles are private ordinals; the final names follow content.
+    sim_assert_eq!(
+        have: before,
+        want: BTreeMap::from([(
+            "providerSchema1".to_string(),
+            "providerSchema_2d8986a10330".to_string()
+        )])
+    );
+    sim_assert_eq!(
+        have: after,
+        want: BTreeMap::from([
+            (
+                "providerSchema1".to_string(),
+                "providerSchema_2d45b6ba104e".to_string()
+            ),
+            (
+                "providerSchema2".to_string(),
+                "providerSchema_2d8986a10330".to_string()
+            ),
+        ])
     );
 }
 
@@ -150,7 +205,8 @@ fn repeated_provider_subtrees_with_one_source_use_source_stable_definition_name(
         resolved_sourced_path("second", provider_schema.clone(), source.pointer()),
     ];
 
-    let definitions = extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new());
+    let definitions =
+        extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new(), &mut BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
     insert_definitions_into_root(&mut root, definitions);
 
@@ -236,7 +292,8 @@ fn repeated_provider_subtrees_emit_relocated_source_leaf_schema() {
         },
     ];
 
-    let definitions = extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new());
+    let definitions =
+        extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new(), &mut BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
     insert_definitions_into_root(&mut root, definitions);
     let expected_definition = json!({
@@ -321,7 +378,8 @@ fn provider_subtrees_with_provider_local_source_refs_emit_bundled_source_schema(
         },
     ];
 
-    let definitions = extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new());
+    let definitions =
+        extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new(), &mut BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
     insert_definitions_into_root(&mut root, definitions);
 
@@ -395,7 +453,8 @@ fn provider_subtrees_require_every_use_to_have_same_definition_schema() {
         },
     ];
 
-    let definitions = extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new());
+    let definitions =
+        extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new(), &mut BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
     insert_definitions_into_root(&mut root, definitions);
 
@@ -448,7 +507,8 @@ fn structurally_equal_provider_schemas_share_even_with_different_sources() {
         },
     ];
 
-    let definitions = extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new());
+    let definitions =
+        extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new(), &mut BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
     insert_definitions_into_root(&mut root, definitions);
 
@@ -474,7 +534,8 @@ fn scalar_provider_schemas_stay_inline() {
         resolved_path("second", provider_schema.clone()),
     ];
 
-    let definitions = extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new());
+    let definitions =
+        extract_provider_definitions(&mut paths, &mut [], &BTreeMap::new(), &mut BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
     insert_definitions_into_root(&mut root, definitions);
 
@@ -499,7 +560,8 @@ fn described_provider_subtrees_stay_inline_even_when_other_paths_share_definitio
     let descriptions =
         BTreeMap::from([("first.name".to_string(), "chart-authored name".to_string())]);
 
-    let definitions = extract_provider_definitions(&mut paths, &mut [], &descriptions);
+    let definitions =
+        extract_provider_definitions(&mut paths, &mut [], &descriptions, &mut BTreeMap::new());
     let mut root = json!({ "type": "object", "properties": {} });
     insert_definitions_into_root(&mut root, definitions);
 
@@ -540,7 +602,8 @@ fn repeated_large_structural_payloads_keep_local_annotations() {
         }
     });
 
-    let definitions = extract_repeated_provider_payloads(&mut root);
+    let mut names = BTreeMap::new();
+    let definitions = extract_repeated_provider_payloads(&mut root, &mut names);
 
     sim_assert_eq!(
         have: definitions.get("providerShared1"),
@@ -560,6 +623,43 @@ fn repeated_large_structural_payloads_keep_local_annotations() {
             "allOf": [{"$ref": "#/$defs/providerShared1"}]
         }))
     );
+    sim_assert_eq!(
+        have: names,
+        want: BTreeMap::from([(
+            "providerShared1".to_string(),
+            "providerShared_305aebc3a411".to_string()
+        )])
+    );
+}
+
+#[test]
+fn shared_payload_names_hash_final_names_not_handles() {
+    let payload = |handle: &str| {
+        let mut properties = serde_json::Map::new();
+        for index in 0..400 {
+            properties.insert(
+                format!("field{index:04}"),
+                json!({ "$ref": format!("#/$defs/{handle}"), "description": "shared" }),
+            );
+        }
+        json!({ "type": "object", "properties": properties })
+    };
+    let shared_name = |handle: &str| {
+        let mut root = json!({
+            "properties": { "first": payload(handle), "second": payload(handle) }
+        });
+        let mut names = BTreeMap::from([(
+            handle.to_string(),
+            "providerSchema_0123456789ab".to_string(),
+        )]);
+        let definitions = extract_repeated_provider_payloads(&mut root, &mut names);
+        sim_assert_eq!(have: definitions.len(), want: 1);
+        names.remove(handle);
+        names
+    };
+
+    // The same payload behind a different handle keeps its final name.
+    sim_assert_eq!(have: shared_name("providerSchema7"), want: shared_name("providerSchema12"));
 }
 
 #[test]

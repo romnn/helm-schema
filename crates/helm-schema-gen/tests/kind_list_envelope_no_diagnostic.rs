@@ -9,8 +9,6 @@
 
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
-#[path = "common/schema_generation.rs"]
-mod schema_generation;
 
 use helm_schema_ast::DefineIndex;
 use helm_schema_ir::{ResourceRef, SymbolicIrContext, YamlPath};
@@ -66,7 +64,7 @@ fn kind_list_envelope_descends_into_inner_resource() {
         Chain::new(vec![Box::new(FakeIngressProvider)]).with_diagnostic_sink(diagnostics.clone());
 
     let schema =
-        schema_generation::generate_schema_with_values_yaml(ir, &chain, Some(KIND_LIST_VALUES));
+        helm_schema_test_support::generate::values_schema(ir, &chain, Some(KIND_LIST_VALUES));
     let host_schema = schema
         .pointer("/properties/host")
         .expect("generated host schema");

@@ -1,7 +1,13 @@
 //! Executes Helm under a controlled environment and replays exact prior executions.
 //!
+//! Helm runs either as the pinned CLI, one child per invocation, or inside
+//! resident `helmsweep serve` processes (`tools/helmsweep`), one per
+//! concurrent render, which answer each `helm template` with exactly the
+//! CLI's stdout, stderr and exit code from Helm's own code. `SCHEMA_HELM_ENGINE=cli` selects the CLI; the
+//! resident engine is the default.
+//!
 //! An execution is identified by everything that can change what Helm prints:
-//! the Helm binary's bytes and version, the platform, the complete child
+//! the engine, its program's bytes and version, the platform, the complete child
 //! environment and working directory, every argument, and the content of
 //! every chart tree and values file an argument names. Content lives at
 //! content-addressed paths under one root, so equal content is always named
@@ -15,11 +21,11 @@
 use std::collections::BTreeMap;
 use std::fmt::Write as _;
 use std::fs;
-use std::io::Write as _;
+use std::io::{BufRead as _, BufReader, Write as _};
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
-use std::sync::OnceLock;
-use std::time::Instant;
+use std::process::{Child, ChildStdin, Command, Stdio};
+use std::sync::{Mutex, OnceLock, PoisonError, mpsc};
+use std::time::{Duration, Instant};
 
 use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use serde::{Deserialize, Serialize};
@@ -31,7 +37,7 @@ const PINNED_HELM_VERSION: &str = "v4.2.3";
 
 /// Domain of invocation keys and the stored entry format. Changing what an
 /// entry holds or how a request is encoded must change this.
-const INVOCATION_FORMAT: &str = "helm-schema/helm-invocation/v2";
+const INVOCATION_FORMAT: &str = "helm-schema/helm-invocation/v3";
 
 /// The preparation policy a prepared tree identity covers. Changing what
 /// preparation removes, adds or repacks must change this.
@@ -39,6 +45,26 @@ const PREPARATION_POLICY: &str = "helm-schema/prepared-chart/v1";
 
 /// The release name every adjudication renders.
 const RELEASE_NAME: &str = "adjudication";
+
+/// The engine names a key binds.
+const CLI_ENGINE: &str = "helm-cli";
+const RESIDENT_ENGINE: &str = "helmsweep";
+
+/// The lines of `helmsweep version` naming the Helm it is built from and the
+/// release build information templates see (`helm version` of the pinned
+/// v4.2.3 release binary).
+const HELMSWEEP_HELM_LINES: [&str; 2] = [
+    "helm.sh/helm/v4 v4.2.3 => ./third_party/helm-v4.2.3",
+    "helm-build v4.2.3 43e8b7feece8beb0fcba47059ec9b522fd929a64 clean go1.26.5",
+];
+
+/// How long a resident server may take to answer one render before it is
+/// a harness failure.
+pub(crate) const RENDER_TIMEOUT: Duration = Duration::from_secs(600);
+
+/// A resident server holding more than this after a render is retired, not
+/// kept idle: idle servers stay small beside the pool's memory budget.
+const RETIRE_ABOVE_BYTES: u64 = 128 << 20;
 
 /// A chart tree at its content address.
 #[derive(Clone, Debug)]
@@ -93,8 +119,12 @@ pub(crate) struct InvocationRecord {
     pub(crate) elapsed_ms: u64,
     /// Time spent finding and verifying a stored entry.
     pub(crate) lookup_ms: u64,
-    /// Peak resident set size of the original child alone, from its own `wait4`.
+    /// Peak memory of the original execution alone: a CLI child's own
+    /// `wait4` peak, or the memory a resident server held while it rendered.
     pub(crate) max_rss_bytes: u64,
+    /// Lifetime peak of the resident server that rendered, 0 for the CLI
+    /// and replays: telemetry of the server, not of this render.
+    pub(crate) server_max_rss_bytes: u64,
     pub(crate) input_bytes: u64,
     pub(crate) stdout_bytes: u64,
     pub(crate) stderr_bytes: u64,
@@ -105,8 +135,13 @@ pub(crate) struct InvocationRecord {
 pub(crate) struct InvocationRequest {
     pub(crate) format: String,
     pub(crate) platform: String,
-    pub(crate) helm_sha256: String,
-    pub(crate) helm_version: String,
+    /// `helm-cli` or `helmsweep` (the resident server).
+    pub(crate) engine: String,
+    /// The engine program's bytes and its reported version: Helm's for the
+    /// CLI, the complete `helmsweep version` (build id, Go, Helm, jsonschema
+    /// and patch) for the resident server.
+    pub(crate) program_sha256: String,
+    pub(crate) program_version: String,
     pub(crate) working_directory: String,
     /// The child's complete environment, sorted by name.
     pub(crate) environment: Vec<(String, String)>,
@@ -200,15 +235,18 @@ impl FileStamp {
     }
 }
 
-/// The pinned Helm binary and the root its inputs and entries live under.
+/// The pinned Helm engine and the root its inputs and entries live under.
 pub(crate) struct HelmRunner {
     program: PathBuf,
-    helm_sha256: String,
+    program_sha256: String,
+    program_version: String,
     /// The program's stamp when its bytes were hashed.
     program_stamp: FileStamp,
     root: PathBuf,
     /// Whether entries are replayed and published.
     replay: bool,
+    /// The resident servers, or `None` for the CLI engine.
+    resident: Option<ResidentPool>,
 }
 
 static SHARED_RUNNER: OnceLock<Result<HelmRunner, String>> = OnceLock::new();
@@ -234,14 +272,22 @@ impl HelmRunner {
             .map_err(|error| eyre::eyre!("{error}"))
     }
 
-    /// A runner rooted at `root`, replaying stored entries when `replay`.
+    /// A runner rooted at `root`, replaying stored entries when `replay`,
+    /// on the engine `SCHEMA_HELM_ENGINE` names: `helmsweep` (the default)
+    /// or `cli`.
     ///
     /// # Errors
     ///
-    /// Returns an error when no Helm is on `PATH`, it is not the pinned
-    /// release, or `root` cannot be created.
+    /// Returns an error for an unknown engine, a missing or unpinned engine
+    /// program, or a `root` that cannot be created.
     pub(crate) fn new(root: &Path, replay: bool) -> eyre::Result<Self> {
-        Self::with_program(root, replay, find_helm()?)
+        match std::env::var("SCHEMA_HELM_ENGINE").as_deref() {
+            Ok("cli") => Self::with_program(root, replay, find_helm()?),
+            Ok("helmsweep") | Err(std::env::VarError::NotPresent) => {
+                Self::with_helmsweep(root, replay, find_helmsweep()?, RENDER_TIMEOUT)
+            }
+            other => eyre::bail!("SCHEMA_HELM_ENGINE must be cli or helmsweep, not {other:?}"),
+        }
     }
 
     /// A runner executing `program` as Helm.
@@ -251,30 +297,83 @@ impl HelmRunner {
     /// Returns an error when `program` is not the pinned Helm release or
     /// `root` cannot be created.
     pub(crate) fn with_program(root: &Path, replay: bool, program: PathBuf) -> eyre::Result<Self> {
+        let runner = Self::unstarted(root, replay, program)?;
+        let version = runner.program_output(&["version", "--template", "{{.Version}}"])?;
+        eyre::ensure!(
+            version == PINNED_HELM_VERSION,
+            "adjudication requires Helm {PINNED_HELM_VERSION}, not {version:?}"
+        );
+        Ok(Self {
+            program_version: version,
+            ..runner
+        })
+    }
+
+    /// A runner rendering in resident `helmsweep serve` processes started
+    /// from `program`, under the environment a CLI child gets, each render
+    /// answered within `timeout`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when `program` is not built from the pinned Helm or
+    /// the server cannot be started.
+    pub(crate) fn with_helmsweep(
+        root: &Path,
+        replay: bool,
+        program: PathBuf,
+        timeout: Duration,
+    ) -> eyre::Result<Self> {
+        let runner = Self::unstarted(root, replay, program)?;
+        let version = runner.program_output(&["version"])?;
+        eyre::ensure!(
+            HELMSWEEP_HELM_LINES
+                .iter()
+                .all(|wanted| version.lines().any(|line| line == *wanted)),
+            "helmsweep {} is not built from Helm {PINNED_HELM_VERSION}: {version:?}",
+            runner.program.display()
+        );
+        Ok(Self {
+            program_version: version,
+            resident: Some(ResidentPool {
+                idle: Mutex::new(Vec::new()),
+                timeout,
+            }),
+            ..runner
+        })
+    }
+
+    fn unstarted(root: &Path, replay: bool, program: PathBuf) -> eyre::Result<Self> {
         fs::create_dir_all(root.join("home"))?;
         let root = root.canonicalize()?;
         let program_stamp = FileStamp::of(&program)?;
-        let helm_sha256 = hex(&Sha256::digest(fs::read(&program)?));
-        let runner = Self {
+        let program_sha256 = hex(&Sha256::digest(fs::read(&program)?));
+        Ok(Self {
             program,
-            helm_sha256,
+            program_sha256,
+            program_version: String::new(),
             program_stamp,
             root,
             replay,
-        };
-        let version = Command::new(&runner.program)
+            resident: None,
+        })
+    }
+
+    /// The engine program's stdout for `arguments` under the child environment.
+    fn program_output(&self, arguments: &[&str]) -> eyre::Result<String> {
+        let output = Command::new(&self.program)
             .env_clear()
-            .envs(runner.environment()?)
-            .current_dir(&runner.root)
-            .args(["version", "--template", "{{.Version}}"])
+            .envs(self.environment()?)
+            .current_dir(&self.root)
+            .args(arguments)
             .output()
-            .wrap_err("read Helm version")?;
+            .wrap_err_with(|| format!("run {} {arguments:?}", self.program.display()))?;
         eyre::ensure!(
-            version.status.success() && version.stdout == PINNED_HELM_VERSION.as_bytes(),
-            "adjudication requires Helm {PINNED_HELM_VERSION}: {}",
-            String::from_utf8_lossy(&version.stderr)
+            output.status.success(),
+            "{} {arguments:?} failed: {}",
+            self.program.display(),
+            String::from_utf8_lossy(&output.stderr)
         );
-        Ok(runner)
+        Ok(String::from_utf8(output.stdout)?)
     }
 
     /// A fresh directory on the root's filesystem for building a tree.
@@ -324,23 +423,23 @@ impl HelmRunner {
         let values = utf8(&values_path)?;
         let home = self.root.join("home");
         let environment = self.environment()?;
-        let arguments = [
-            "template",
-            RELEASE_NAME,
-            chart,
-            "--kube-version",
-            request.kubernetes_version,
-            "--skip-schema-validation",
-            "-f",
-            values,
-        ]
-        .map(str::to_string)
-        .to_vec();
+        let call = TemplateCall {
+            chart: chart.to_string(),
+            kubernetes_version: request.kubernetes_version.to_string(),
+            values: values.to_string(),
+        };
+        let arguments = call.arguments();
+        let engine = if self.resident.is_some() {
+            RESIDENT_ENGINE
+        } else {
+            CLI_ENGINE
+        };
         let invocation = InvocationRequest {
             format: INVOCATION_FORMAT.to_string(),
             platform: format!("{}-{}", std::env::consts::OS, std::env::consts::ARCH),
-            helm_sha256: self.helm_sha256.clone(),
-            helm_version: PINNED_HELM_VERSION.to_string(),
+            engine: engine.to_string(),
+            program_sha256: self.program_sha256.clone(),
+            program_version: self.program_version.clone(),
             working_directory: utf8(&self.root)?.to_string(),
             client_only: InvocationRequest::is_client_only(&arguments, &environment),
             environment,
@@ -354,6 +453,7 @@ impl HelmRunner {
         };
         self.run(
             &invocation,
+            &call,
             u64::try_from(request.values.len())?,
             case,
             stage,
@@ -364,6 +464,7 @@ impl HelmRunner {
     fn run(
         &self,
         invocation: &InvocationRequest,
+        call: &TemplateCall,
         input_bytes: u64,
         case: &Path,
         stage: &str,
@@ -387,21 +488,28 @@ impl HelmRunner {
             None
         };
         let lookup_ms = elapsed_ms(lookup);
-        let (result, stdout, stderr, outcome) = if let Some((result, stdout, stderr)) = stored {
-            fs::write(case.join(format!("{stage}.yaml")), &stdout)?;
-            fs::write(case.join(format!("{stage}.stderr")), &stderr)?;
-            (result, stdout, stderr, Outcome::Replayed)
-        } else {
-            let (result, stdout, stderr) = self.execute(invocation, case, stage)?;
-            if replayable {
-                publish_entry(&entry, &request, &result, &stdout, &stderr)?;
-            }
-            let outcome = match cacheability {
-                Cacheability::Cacheable | Cacheability::ClientOnly => Outcome::Executed,
-                Cacheability::Bypass(reason) => Outcome::Bypassed(reason.clone()),
+        let (result, stdout, stderr, outcome, server_max_rss_bytes) =
+            if let Some((result, stdout, stderr)) = stored {
+                fs::write(case.join(format!("{stage}.yaml")), &stdout)?;
+                fs::write(case.join(format!("{stage}.stderr")), &stderr)?;
+                (result, stdout, stderr, Outcome::Replayed, 0)
+            } else {
+                let (result, stdout, stderr, server_max_rss_bytes) =
+                    if let Some(resident) = &self.resident {
+                        resident.execute(self, call, case, stage)?
+                    } else {
+                        let (result, stdout, stderr) = self.execute(invocation, case, stage)?;
+                        (result, stdout, stderr, 0)
+                    };
+                if replayable {
+                    publish_entry(&entry, &request, &result, &stdout, &stderr)?;
+                }
+                let outcome = match cacheability {
+                    Cacheability::Cacheable | Cacheability::ClientOnly => Outcome::Executed,
+                    Cacheability::Bypass(reason) => Outcome::Bypassed(reason.clone()),
+                };
+                (result, stdout, stderr, outcome, server_max_rss_bytes)
             };
-            (result, stdout, stderr, outcome)
-        };
         fs::write(
             case.join(format!("{stage}.status")),
             format!("exit status: {}", result.exit_code),
@@ -414,6 +522,7 @@ impl HelmRunner {
             elapsed_ms: result.elapsed_ms,
             lookup_ms,
             max_rss_bytes: result.max_rss_bytes,
+            server_max_rss_bytes,
             input_bytes,
             stdout_bytes: u64::try_from(stdout.len())?,
             stderr_bytes: u64::try_from(stderr.len())?,
@@ -490,7 +599,7 @@ impl HelmRunner {
             return Ok(());
         }
         eyre::ensure!(
-            hex(&Sha256::digest(fs::read(&self.program)?)) == self.helm_sha256,
+            hex(&Sha256::digest(fs::read(&self.program)?)) == self.program_sha256,
             "Helm executable {} changed during the run",
             self.program.display()
         );
@@ -532,6 +641,206 @@ impl HelmRunner {
     fn entry_dir(&self, key: &str) -> PathBuf {
         self.root.join(key.get(..2).unwrap_or("00")).join(key)
     }
+}
+
+/// One `helm template` as both engines run it.
+struct TemplateCall {
+    chart: String,
+    kubernetes_version: String,
+    values: String,
+}
+
+impl TemplateCall {
+    /// The CLI's arguments, which the key binds for either engine.
+    fn arguments(&self) -> Vec<String> {
+        [
+            "template",
+            RELEASE_NAME,
+            &self.chart,
+            "--kube-version",
+            &self.kubernetes_version,
+            "--skip-schema-validation",
+            "-f",
+            &self.values,
+        ]
+        .map(str::to_string)
+        .to_vec()
+    }
+}
+
+/// One line of `helmsweep serve`'s answers (tools/helmsweep/serve.go).
+#[derive(Debug, Deserialize)]
+struct ServeAnswer {
+    id: Option<u64>,
+    exit_code: Option<i32>,
+    peak_bytes: u64,
+    held_bytes: u64,
+    max_rss_bytes: u64,
+    error: Option<String>,
+}
+
+/// The resident `helmsweep serve` processes. Each serves one render at a
+/// time, so every log record of a render is that render's own; a caller
+/// takes an idle server or starts one, so there are no more servers than
+/// concurrent renders. A server that fails, answers late or holds more than
+/// `RETIRE_ABOVE_BYTES` after a render is terminated and reaped, never kept.
+struct ResidentPool {
+    idle: Mutex<Vec<Resident>>,
+    timeout: Duration,
+}
+
+/// One `helmsweep serve` process: a request line out, its answer line back
+/// through a reader thread. Dropping it kills and reaps the process.
+struct Resident {
+    child: Child,
+    stdin: ChildStdin,
+    answers: mpsc::Receiver<std::io::Result<String>>,
+    next_id: u64,
+}
+
+impl ResidentPool {
+    /// Renders `call` in an idle or new server, which writes stdout and
+    /// stderr where the CLI engine's child would; also returns the server's
+    /// lifetime peak. Anything but the answer to this request within the
+    /// timeout (the server ending, a malformed line, another id, an error, a
+    /// status Helm never uses) is a harness failure.
+    fn execute(
+        &self,
+        runner: &HelmRunner,
+        call: &TemplateCall,
+        case: &Path,
+        stage: &str,
+    ) -> eyre::Result<(StoredResult, Vec<u8>, Vec<u8>, u64)> {
+        let idle = lock(&self.idle).pop();
+        let mut resident = match idle {
+            Some(resident) => resident,
+            None => Resident::start(runner)?,
+        };
+        let stdout_path = case.join(format!("{stage}.yaml"));
+        let stderr_path = case.join(format!("{stage}.stderr"));
+        let started = Instant::now();
+        let answer = resident
+            .render(call, &stdout_path, &stderr_path, self.timeout)
+            .wrap_err_with(|| format!("helmsweep serve failed; evidence={}", case.display()))?;
+        let elapsed_ms = elapsed_ms(started);
+        if let Some(error) = answer.error {
+            eyre::bail!(
+                "Helm {stage} ended abnormally in helmsweep ({error}); evidence={}",
+                case.display()
+            );
+        }
+        let Some(exit_code @ (0 | 1)) = answer.exit_code else {
+            eyre::bail!(
+                "helmsweep answered exit code {:?}; evidence={}",
+                answer.exit_code,
+                case.display()
+            );
+        };
+        if answer.held_bytes <= RETIRE_ABOVE_BYTES {
+            lock(&self.idle).push(resident);
+        }
+        let stdout = fs::read(&stdout_path)?;
+        let stderr = fs::read(&stderr_path)?;
+        let result = StoredResult {
+            exit_code,
+            stdout_sha256: hex(&Sha256::digest(&stdout)),
+            stderr_sha256: hex(&Sha256::digest(&stderr)),
+            elapsed_ms,
+            max_rss_bytes: answer.peak_bytes,
+        };
+        Ok((result, stdout, stderr, answer.max_rss_bytes))
+    }
+}
+
+impl Resident {
+    fn start(runner: &HelmRunner) -> eyre::Result<Self> {
+        let mut child = Command::new(&runner.program)
+            .env_clear()
+            .envs(runner.environment()?)
+            .current_dir(&runner.root)
+            .arg("serve")
+            .stdin(Stdio::piped())
+            .stdout(Stdio::piped())
+            .spawn()
+            .wrap_err_with(|| format!("start {} serve", runner.program.display()))?;
+        let stdin = child
+            .stdin
+            .take()
+            .ok_or_eyre("helmsweep serve has no stdin")?;
+        let stdout = child
+            .stdout
+            .take()
+            .ok_or_eyre("helmsweep serve has no stdout")?;
+        let (sender, answers) = mpsc::channel();
+        std::thread::spawn(move || {
+            for line in BufReader::new(stdout).lines() {
+                if sender.send(line).is_err() {
+                    break;
+                }
+            }
+        });
+        Ok(Self {
+            child,
+            stdin,
+            answers,
+            next_id: 0,
+        })
+    }
+
+    fn render(
+        &mut self,
+        call: &TemplateCall,
+        stdout: &Path,
+        stderr: &Path,
+        timeout: Duration,
+    ) -> eyre::Result<ServeAnswer> {
+        let id = self.next_id;
+        self.next_id += 1;
+        let request = serde_json::json!({
+            "id": id,
+            "op": "template",
+            "release": RELEASE_NAME,
+            "chart": call.chart,
+            "kube_version": call.kubernetes_version,
+            "values": [call.values],
+            "skip_schema_validation": true,
+            "stdout_path": utf8(stdout)?,
+            "stderr_path": utf8(stderr)?,
+        });
+        let mut line = serde_json::to_vec(&request)?;
+        line.push(b'\n');
+        self.stdin.write_all(&line)?;
+        self.stdin.flush()?;
+        let answer = match self.answers.recv_timeout(timeout) {
+            Ok(answer) => answer?,
+            Err(mpsc::RecvTimeoutError::Timeout) => {
+                eyre::bail!("no answer within {timeout:?}")
+            }
+            Err(mpsc::RecvTimeoutError::Disconnected) => {
+                eyre::bail!("the server ended without answering")
+            }
+        };
+        let answer: ServeAnswer = serde_json::from_str(&answer)
+            .wrap_err_with(|| format!("malformed answer {answer:?}"))?;
+        eyre::ensure!(
+            answer.id == Some(id),
+            "answer {answer:?} is not to request {id}"
+        );
+        Ok(answer)
+    }
+}
+
+impl Drop for Resident {
+    fn drop(&mut self) {
+        // Bounded for a server in any state: an idle one would also end at
+        // EOF, a failed one may never.
+        let _ = self.child.kill();
+        let _ = self.child.wait();
+    }
+}
+
+fn lock<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
+    mutex.lock().unwrap_or_else(PoisonError::into_inner)
 }
 
 /// The verified outputs of the entry at `entry` for exactly `request`, or
@@ -639,10 +948,32 @@ fn publish_entry(
     Ok(())
 }
 
-fn find_helm() -> eyre::Result<PathBuf> {
+/// `HELM_SCHEMA_HELMSWEEP`, else `helmsweep` in the target directory this
+/// test binary was built into (`task build:helmsweep` puts it there).
+pub(crate) fn find_helmsweep() -> eyre::Result<PathBuf> {
+    if let Some(path) = std::env::var_os("HELM_SCHEMA_HELMSWEEP") {
+        return Ok(PathBuf::from(path).canonicalize()?);
+    }
+    let executable = std::env::current_exe()?;
+    // <target>/<profile>/deps/<test binary>
+    let target = executable
+        .ancestors()
+        .nth(3)
+        .ok_or_eyre("test binary is not inside a target directory")?;
+    let program = target.join(format!("helmsweep{}", std::env::consts::EXE_SUFFIX));
+    eyre::ensure!(
+        program.is_file(),
+        "no helmsweep at {}: run `task build:helmsweep`, set HELM_SCHEMA_HELMSWEEP, \
+         or SCHEMA_HELM_ENGINE=cli",
+        program.display()
+    );
+    Ok(program.canonicalize()?)
+}
+
+pub(crate) fn find_helm() -> eyre::Result<PathBuf> {
     let path = std::env::var_os("PATH").ok_or_eyre("PATH is not set")?;
     for directory in std::env::split_paths(&path) {
-        let candidate = directory.join("helm");
+        let candidate = directory.join(format!("helm{}", std::env::consts::EXE_SUFFIX));
         if candidate.is_file() {
             return Ok(candidate.canonicalize()?);
         }
