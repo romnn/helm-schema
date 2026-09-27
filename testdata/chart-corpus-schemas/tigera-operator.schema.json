@@ -1,5 +1,24 @@
 {
   "$defs": {
+    "constrains/:t": {
+      "not": {
+        "$ref": "#/$defs/t"
+      }
+    },
+    "constrains/=Enabled,Disabled": {
+      "enum": [
+        "Enabled",
+        "Disabled"
+      ],
+      "type": "string"
+    },
+    "constrains/=NodeInternalIP": {
+      "description": "Kubernetes configures Calico to detect node addresses based on the Kubernetes API.",
+      "enum": [
+        "NodeInternalIP"
+      ],
+      "type": "string"
+    },
     "constrains/@items.key+@items.operator+@items.values": {
       "description": "A list of node selector requirements by node's fields.",
       "items": {
@@ -7,11 +26,11 @@
       },
       "type": "array"
     },
-    "constrains/@items.key+@items.operator+@items.values/string;key-is-the-label": {
+    "constrains/@items.key+@items.operator+@items.values/fragment": {
       "description": "key is the label key that the selector applies to.",
       "type": "string"
     },
-    "constrains/@items.key+@items.operator+@items.values/string;operator-represents-a-key-s": {
+    "constrains/@items.key+@items.operator+@items.values/fragment@2": {
       "description": "operator represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists and DoesNotExist.",
       "type": "string"
     },
@@ -49,10 +68,10 @@
         "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
         "properties": {
           "key": {
-            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string;key-is-the-label"
+            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
           },
           "operator": {
-            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string;operator-represents-a-key-s"
+            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment@2"
           },
           "values": {
             "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
@@ -84,7 +103,7 @@
                 "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values@5"
               },
               "matchLabels": {
-                "$ref": "#/$defs/constrains~1@items.labelSelector.matchExpressions@items.key+10more~1object;matchlabels-is-a-map"
+                "$ref": "#/$defs/constrains~1@items.labelSelector.matchExpressions@items.key+10more~1fragment"
               }
             },
             "type": "object",
@@ -134,7 +153,7 @@
       },
       "type": "array"
     },
-    "constrains/@items.labelSelector.matchExpressions@items.key+10more/object;matchlabels-is-a-map": {
+    "constrains/@items.labelSelector.matchExpressions@items.key+10more/fragment": {
       "additionalProperties": {
         "type": "string"
       },
@@ -166,7 +185,7 @@
         "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
         "properties": {
           "name": {
-            "$ref": "#/$defs/constrains~1@items.name~1string;name-must-match-the"
+            "$ref": "#/$defs/constrains~1@items.name~1fragment"
           }
         },
         "required": [
@@ -180,7 +199,7 @@
       ],
       "x-kubernetes-list-type": "map"
     },
-    "constrains/@items.name/string;name-must-match-the": {
+    "constrains/@items.name/fragment": {
       "description": "Name must match the name of one entry in pod.spec.resourceClaims of the Pod where this field is used. It makes that resource available inside a container.",
       "type": "string"
     },
@@ -210,22 +229,22 @@
       "description": "Metadata is a subset of a Kubernetes object's metadata that is added to the DaemonSet.",
       "properties": {
         "annotations": {
-          "$ref": "#/$defs/constrains~1annotations+labels~1object;annotations-is-a-map"
+          "$ref": "#/$defs/constrains~1annotations+labels~1fragment"
         },
         "labels": {
-          "$ref": "#/$defs/constrains~1annotations+labels~1object;labels-is-a-map"
+          "$ref": "#/$defs/constrains~1annotations+labels~1fragment@2"
         }
       },
       "type": "object"
     },
-    "constrains/annotations+labels/object;annotations-is-a-map": {
+    "constrains/annotations+labels/fragment": {
       "additionalProperties": {
         "type": "string"
       },
       "description": "Annotations is a map of arbitrary non-identifying metadata. Each of these key/value pairs are added to the object's annotations provided the key does not already exist in the object's annotations.",
       "type": "object"
     },
-    "constrains/annotations+labels/object;labels-is-a-map": {
+    "constrains/annotations+labels/fragment@2": {
       "additionalProperties": {
         "type": "string"
       },
@@ -237,10 +256,10 @@
       "description": "Metadata is a subset of a Kubernetes object's metadata that is added to the Deployment.",
       "properties": {
         "annotations": {
-          "$ref": "#/$defs/constrains~1annotations+labels~1object;annotations-is-a-map"
+          "$ref": "#/$defs/constrains~1annotations+labels~1fragment"
         },
         "labels": {
-          "$ref": "#/$defs/constrains~1annotations+labels~1object;labels-is-a-map"
+          "$ref": "#/$defs/constrains~1annotations+labels~1fragment@2"
         }
       },
       "type": "object"
@@ -250,10 +269,10 @@
       "description": "Metadata is a subset of a Kubernetes object's metadata that is added to the pod's metadata.",
       "properties": {
         "annotations": {
-          "$ref": "#/$defs/constrains~1annotations+labels~1object;annotations-is-a-map"
+          "$ref": "#/$defs/constrains~1annotations+labels~1fragment"
         },
         "labels": {
-          "$ref": "#/$defs/constrains~1annotations+labels~1object;labels-is-a-map"
+          "$ref": "#/$defs/constrains~1annotations+labels~1fragment@2"
         }
       },
       "type": "object"
@@ -369,14 +388,14 @@
       "description": "The pod this Toleration is attached to tolerates any taint that matches the triple <key,value,effect> using the matching operator <operator>.",
       "properties": {
         "effect": {
-          "$ref": "#/$defs/constrains~1effect+key+operator+tolerationSeconds+value~1string;effect-indicates-the-taint"
+          "$ref": "#/$defs/constrains~1effect+key+operator+tolerationSeconds+value~1fragment"
         },
         "key": {
           "description": "Key is the taint key that the toleration applies to. Empty means match all taint keys. If the key is empty, operator must be Exists; this combination means to match all values and all keys.",
           "type": "string"
         },
         "operator": {
-          "$ref": "#/$defs/constrains~1effect+key+operator+tolerationSeconds+value~1string;operator-represents-a-key-s"
+          "$ref": "#/$defs/constrains~1effect+key+operator+tolerationSeconds+value~1fragment@2"
         },
         "tolerationSeconds": {
           "description": "TolerationSeconds represents the period of time the toleration (which must be of effect NoExecute, otherwise this field is ignored) tolerates the taint. By default, it is not set, which means tolerate the taint forever (do not evict). Zero and negative values will be treated as 0 (evict immediately) by the system.",
@@ -390,11 +409,11 @@
       },
       "type": "object"
     },
-    "constrains/effect+key+operator+tolerationSeconds+value/string;effect-indicates-the-taint": {
+    "constrains/effect+key+operator+tolerationSeconds+value/fragment": {
       "description": "Effect indicates the taint effect to match. Empty means match all taint effects. When specified, allowed values are NoSchedule, PreferNoSchedule and NoExecute.",
       "type": "string"
     },
-    "constrains/effect+key+operator+tolerationSeconds+value/string;operator-represents-a-key-s": {
+    "constrains/effect+key+operator+tolerationSeconds+value/fragment@2": {
       "description": "Operator represents a key's relationship to the value. Valid operators are Exists and Equal. Defaults to Equal. Exists is equivalent to wildcard for value, so that a pod can tolerate all taints of a particular category.",
       "type": "string"
     },
@@ -503,15 +522,15 @@
       "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
       "properties": {
         "key": {
-          "$ref": "#/$defs/constrains~1key+operator+values~1string;the-label-key-that"
+          "$ref": "#/$defs/constrains~1key+operator+values~1fragment@2"
         },
         "operator": {
-          "$ref": "#/$defs/constrains~1key+operator+values~1string;represents-a-key-s-relationship"
+          "$ref": "#/$defs/constrains~1key+operator+values~1fragment"
         },
         "values": {
           "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
           "items": {
-            "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+            "$ref": "#/$defs/constrains~1key+operator+values~1fragment@3"
           },
           "type": [
             "array",
@@ -528,29 +547,29 @@
         "null"
       ]
     },
-    "constrains/key+operator+values/string,null": {
+    "constrains/key+operator+values/fragment": {
+      "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
+      "type": "string"
+    },
+    "constrains/key+operator+values/fragment@2": {
+      "description": "The label key that the selector applies to.",
+      "type": "string"
+    },
+    "constrains/key+operator+values/fragment@3": {
       "type": [
         "string",
         "null"
       ]
-    },
-    "constrains/key+operator+values/string;represents-a-key-s-relationship": {
-      "description": "Represents a key's relationship to a set of values. Valid operators are In, NotIn, Exists, DoesNotExist. Gt, and Lt.",
-      "type": "string"
-    },
-    "constrains/key+operator+values/string;the-label-key-that": {
-      "description": "The label key that the selector applies to.",
-      "type": "string"
     },
     "constrains/key+operator+values@2": {
       "additionalProperties": false,
       "description": "A node selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
       "properties": {
         "key": {
-          "$ref": "#/$defs/constrains~1key+operator+values~1string;the-label-key-that"
+          "$ref": "#/$defs/constrains~1key+operator+values~1fragment@2"
         },
         "operator": {
-          "$ref": "#/$defs/constrains~1key+operator+values~1string;represents-a-key-s-relationship"
+          "$ref": "#/$defs/constrains~1key+operator+values~1fragment"
         },
         "values": {
           "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
@@ -599,10 +618,10 @@
           "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more@2"
         },
         "namespaces": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+7more~1array;namespaces-specifies-a-static"
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+7more~1fragment@2"
         },
         "topologyKey": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+7more~1string;this-pod-should-be"
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+7more~1fragment"
         }
       },
       "required": [
@@ -610,16 +629,16 @@
       ],
       "type": "object"
     },
-    "constrains/labelSelector.matchExpressions@items.key+7more/array;namespaces-specifies-a-static": {
+    "constrains/labelSelector.matchExpressions@items.key+7more/fragment": {
+      "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
+      "type": "string"
+    },
+    "constrains/labelSelector.matchExpressions@items.key+7more/fragment@2": {
       "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
       "items": {
         "type": "string"
       },
       "type": "array"
-    },
-    "constrains/labelSelector.matchExpressions@items.key+7more/string;this-pod-should-be": {
-      "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
-      "type": "string"
     },
     "constrains/labelSelector.matchExpressions@items.key+8more": {
       "additionalProperties": false,
@@ -629,19 +648,19 @@
           "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more@3"
         },
         "matchLabelKeys": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set"
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment"
         },
         "mismatchLabelKeys": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set"
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@2"
         },
         "namespaceSelector": {
           "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more@3"
         },
         "namespaces": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;namespaces-specifies-a-static"
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@3"
         },
         "topologyKey": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+7more~1string;this-pod-should-be"
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+7more~1fragment"
         }
       },
       "required": [
@@ -652,10 +671,10 @@
         "null"
       ]
     },
-    "constrains/labelSelector.matchExpressions@items.key+8more/array,null;matchlabelkeys-is-a-set": {
+    "constrains/labelSelector.matchExpressions@items.key+8more/fragment": {
       "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
-        "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+        "$ref": "#/$defs/constrains~1key+operator+values~1fragment@3"
       },
       "type": [
         "array",
@@ -663,10 +682,10 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "constrains/labelSelector.matchExpressions@items.key+8more/array,null;mismatchlabelkeys-is-a-set": {
+    "constrains/labelSelector.matchExpressions@items.key+8more/fragment@2": {
       "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
-        "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+        "$ref": "#/$defs/constrains~1key+operator+values~1fragment@3"
       },
       "type": [
         "array",
@@ -674,10 +693,10 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "constrains/labelSelector.matchExpressions@items.key+8more/array,null;namespaces-specifies-a-static": {
+    "constrains/labelSelector.matchExpressions@items.key+8more/fragment@3": {
       "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
       "items": {
-        "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+        "$ref": "#/$defs/constrains~1key+operator+values~1fragment@3"
       },
       "type": [
         "array",
@@ -692,7 +711,7 @@
           "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values@5"
         },
         "matchLabels": {
-          "$ref": "#/$defs/constrains~1@items.labelSelector.matchExpressions@items.key+10more~1object;matchlabels-is-a-map"
+          "$ref": "#/$defs/constrains~1@items.labelSelector.matchExpressions@items.key+10more~1fragment"
         }
       },
       "type": "object",
@@ -706,7 +725,7 @@
           "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values@5"
         },
         "matchLabels": {
-          "$ref": "#/$defs/constrains~1@items.labelSelector.matchExpressions@items.key+10more~1object;matchlabels-is-a-map"
+          "$ref": "#/$defs/constrains~1@items.labelSelector.matchExpressions@items.key+10more~1fragment"
         }
       },
       "type": "object",
@@ -723,15 +742,15 @@
             "description": "A label selector requirement is a selector that contains values, a key, and an operator that relates the key and values.",
             "properties": {
               "key": {
-                "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string;key-is-the-label"
+                "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
               },
               "operator": {
-                "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string;operator-represents-a-key-s"
+                "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment@2"
               },
               "values": {
                 "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
                 "items": {
-                  "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+                  "$ref": "#/$defs/constrains~1key+operator+values~1fragment@3"
                 },
                 "type": [
                   "array",
@@ -755,7 +774,7 @@
         },
         "matchLabels": {
           "additionalProperties": {
-            "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+            "$ref": "#/$defs/constrains~1key+operator+values~1fragment@3"
           },
           "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
           "type": [
@@ -893,10 +912,10 @@
               "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more@2"
             },
             "namespaces": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+7more~1array;namespaces-specifies-a-static"
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+7more~1fragment@2"
             },
             "topologyKey": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+7more~1string;this-pod-should-be"
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+7more~1fragment"
             }
           },
           "required": [
@@ -905,7 +924,7 @@
           "type": "object"
         },
         "weight": {
-          "$ref": "#/$defs/constrains~1podAffinityTerm.labelSelector.matchExpressions@items.key+8more~1integer:int32;weight-associated-with-matching"
+          "$ref": "#/$defs/constrains~1podAffinityTerm.labelSelector.matchExpressions@items.key+8more~1fragment"
         }
       },
       "required": [
@@ -914,7 +933,7 @@
       ],
       "type": "object"
     },
-    "constrains/podAffinityTerm.labelSelector.matchExpressions@items.key+8more/integer:int32;weight-associated-with-matching": {
+    "constrains/podAffinityTerm.labelSelector.matchExpressions@items.key+8more/fragment": {
       "description": "weight associated with matching the corresponding podAffinityTerm, in the range 1-100.",
       "format": "int32",
       "type": "integer"
@@ -931,19 +950,19 @@
               "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more@3"
             },
             "matchLabelKeys": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set"
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment"
             },
             "mismatchLabelKeys": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set"
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@2"
             },
             "namespaceSelector": {
               "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more@3"
             },
             "namespaces": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;namespaces-specifies-a-static"
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@3"
             },
             "topologyKey": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+7more~1string;this-pod-should-be"
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+7more~1fragment"
             }
           },
           "required": [
@@ -952,7 +971,7 @@
           "type": "object"
         },
         "weight": {
-          "$ref": "#/$defs/constrains~1podAffinityTerm.labelSelector.matchExpressions@items.key+8more~1integer:int32;weight-associated-with-matching"
+          "$ref": "#/$defs/constrains~1podAffinityTerm.labelSelector.matchExpressions@items.key+8more~1fragment"
         }
       },
       "required": [
@@ -983,7 +1002,7 @@
           "x-kubernetes-map-type": "atomic"
         },
         "weight": {
-          "$ref": "#/$defs/constrains~1preference.matchExpressions@items.key+preference.matchExpressions@items.operator+3more~1integer:int32;weight-associated-with-matching"
+          "$ref": "#/$defs/constrains~1preference.matchExpressions@items.key+preference.matchExpressions@items.operator+3more~1fragment"
         }
       },
       "required": [
@@ -992,7 +1011,7 @@
       ],
       "type": "object"
     },
-    "constrains/preference.matchExpressions@items.key+preference.matchExpressions@items.operator+3more/integer:int32;weight-associated-with-matching": {
+    "constrains/preference.matchExpressions@items.key+preference.matchExpressions@items.operator+3more/fragment": {
       "description": "Weight associated with matching the corresponding nodeSelectorTerm, in the range 1-100.",
       "format": "int32",
       "type": "integer"
@@ -1074,11 +1093,17 @@
         }
       ]
     },
-    "values/additionalLabels/allOf/object+object,null;map-of-string-keys": {
+    "values/additionalLabels/fragment": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "values/additionalLabels/fragment@2": {
       "allOf": [
         {
           "additionalProperties": {
-            "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+            "$ref": "#/$defs/constrains~1key+operator+values~1fragment@3"
           },
           "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
           "type": [
@@ -1087,22 +1112,25 @@
           ]
         },
         {
-          "$ref": "#/$defs/values~1object"
+          "$ref": "#/$defs/values~1fragment"
         }
       ]
     },
-    "values/additionalLabels/not/:t": {
-      "not": {
-        "$ref": "#/$defs/t"
-      }
-    },
-    "values/additionalLabels/object": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
+    "values/apiServer/fragment": {
+      "additionalProperties": {
+        "$ref": "#/$defs/values~1apiServer~1fragment@3"
+      },
+      "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
       "type": "object"
     },
-    "values/apiServer/anyOf/integer+string": {
+    "values/apiServer/fragment@2": {
+      "additionalProperties": {
+        "$ref": "#/$defs/values~1apiServer~1fragment@3"
+      },
+      "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "type": "object"
+    },
+    "values/apiServer/fragment@3": {
       "anyOf": [
         {
           "type": "integer"
@@ -1114,27 +1142,7 @@
       "pattern": "^(\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))(([KMGTPE]i)|[numkMGTPE]|([eE](\\+|-)?(([0-9]+(\\.[0-9]*)?)|(\\.[0-9]+))))?$",
       "x-kubernetes-int-or-string": true
     },
-    "values/apiServer/object;limits-describes-the-maximum": {
-      "additionalProperties": {
-        "$ref": "#/$defs/values~1apiServer~1anyOf~1integer+string"
-      },
-      "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-      "type": "object"
-    },
-    "values/apiServer/object;requests-describes-the-minimum": {
-      "additionalProperties": {
-        "$ref": "#/$defs/values~1apiServer~1anyOf~1integer+string"
-      },
-      "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-      "type": "object"
-    },
-    "values/array": {
-      "items": {
-        "type": "string"
-      },
-      "type": "array"
-    },
-    "values/defaultFelixConfiguration/anyOf/integer+string": {
+    "values/defaultFelixConfiguration/fragment": {
       "anyOf": [
         {
           "type": "integer"
@@ -1146,54 +1154,27 @@
       "pattern": "^.*",
       "x-kubernetes-int-or-string": true
     },
-    "values/defaultFelixConfiguration/string;pattern-0-9-0-9": {
+    "values/defaultFelixConfiguration/fragment@2": {
       "pattern": "^(([0-9]*(\\.[0-9]*)?(ms|s|h|m|us)+)+|Auto)$",
       "type": "string"
     },
-    "values/defaultFelixConfiguration/string;pattern-0-9-0-9@2": {
+    "values/defaultFelixConfiguration/fragment@3": {
       "pattern": "^([0-9]+(\\\\.[0-9]+)?(ms|s|m|h))*$",
       "type": "string"
     },
-    "values/defaultFelixConfiguration/string;pattern-aa-cc-cc-ee-p": {
+    "values/defaultFelixConfiguration/fragment@4": {
       "pattern": "^([aA][cC][cC][eE][pP][tT]|[rR][eE][tT][uU][rR][nN])?$",
       "type": "string"
     },
-    "values/defaultFelixConfiguration/string;pattern-dd-rr-oo-pp": {
+    "values/defaultFelixConfiguration/fragment@5": {
       "pattern": "^([dD][rR][oO][pP]|[rR][eE][jJ][eE][cC][tT])?$",
       "type": "string"
     },
-    "values/defaultFelixConfiguration/string;pattern-tt-rr-aa-cc-e": {
+    "values/defaultFelixConfiguration/fragment@6": {
       "pattern": "^([tT][rR][aA][cC][eE]|[dD][eE][bB][uU][gG]|[iI][nN][fF][oO]|[wW][aA][rR][nN][iI][nN][gG]|[eE][rR][rR][oO][rR]|[fF][aA][tT][aA][lL])?$",
       "type": "string"
     },
-    "values/defaultFelixConfiguration/string=Enabled,Disabled": {
-      "enum": [
-        "Enabled",
-        "Disabled"
-      ],
-      "type": "string"
-    },
-    "values/dnsPolicy/not/keywords/pattern": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "values/dnsPolicy/not/keywords/pattern@2": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "values/dnsPolicy/not/keywords/pattern@3": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "values/dnsPolicy/not/keywords/pattern@4": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "values/dnsPolicy/object": {
+    "values/dnsPolicy/fragment": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -1204,7 +1185,7 @@
             "type": "integer"
           },
           {
-            "$ref": "#/$defs/values~1dnsPolicy~1string"
+            "$ref": "#/$defs/values~1dnsPolicy~1fragment@2"
           },
           {
             "type": "number"
@@ -1222,11 +1203,15 @@
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/values~1dnsPolicy~1string"
+        "$ref": "#/$defs/values~1dnsPolicy~1fragment@2"
       },
       "type": "object"
     },
-    "values/dnsPolicy/string": {
+    "values/dnsPolicy/fragment@10": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/dnsPolicy/fragment@2": {
       "allOf": [
         {
           "not": {
@@ -1246,19 +1231,7 @@
       ],
       "type": "string"
     },
-    "values/dnsPolicy/string;pattern-a-za-z0-9-t": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/dnsPolicy/string;pattern-null-null-null": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "values/dnsPolicy/string;pattern-t": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/dnsPolicy/string@2": {
+    "values/dnsPolicy/fragment@3": {
       "allOf": [
         {
           "not": {
@@ -1276,56 +1249,83 @@
       ],
       "type": "string"
     },
-    "values/installation/array;cidrs-enables-ip-auto-detection": {
+    "values/dnsPolicy/fragment@4": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "values/dnsPolicy/fragment@5": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "values/dnsPolicy/fragment@6": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "values/dnsPolicy/fragment@7": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "values/dnsPolicy/fragment@8": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/dnsPolicy/fragment@9": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "values/fragment": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "values/fragment@2": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "values/fragment@3": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "values/fragment@4": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "values/installation/fragment": {
       "description": "CIDRS enables IP auto-detection based on which addresses on the nodes are within one of the provided CIDRs.",
       "items": {
         "type": "string"
       },
       "type": "array"
     },
-    "values/installation/boolean;firstfound-uses-default-interface": {
-      "description": "FirstFound uses default interface matching parameters to select an interface, performing best-effort filtering based on well-known interface names.",
-      "type": "boolean"
-    },
-    "values/installation/string;canreach-enables-ip-auto-detection": {
+    "values/installation/fragment@2": {
       "description": "CanReach enables IP auto-detection based on which source address on the node is used to reach the specified IP or domain.",
       "type": "string"
     },
-    "values/installation/string;interface-enables-ip-auto-detection": {
+    "values/installation/fragment@3": {
+      "description": "FirstFound uses default interface matching parameters to select an interface, performing best-effort filtering based on well-known interface names.",
+      "type": "boolean"
+    },
+    "values/installation/fragment@4": {
       "description": "Interface enables IP auto-detection based on interfaces that match the given regex.",
       "type": "string"
     },
-    "values/installation/string;skipinterface-enables-ip-auto-detection": {
+    "values/installation/fragment@5": {
       "description": "SkipInterface enables IP auto-detection based on interfaces that do not match the given regex.",
       "type": "string"
     },
-    "values/installation/string=NodeInternalIP;kubernetes-configures-calico-to": {
-      "description": "Kubernetes configures Calico to detect node addresses based on the Kubernetes API.",
-      "enum": [
-        "NodeInternalIP"
-      ],
-      "type": "string"
-    },
-    "values/not/keywords/pattern": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "values/not/keywords/pattern@2": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "values/object": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "values/resources/oneOf/number,null+string,null": {
+    "values/resources/fragment": {
       "oneOf": [
         {
-          "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+          "$ref": "#/$defs/constrains~1key+operator+values~1fragment@3"
         },
         {
           "type": [
@@ -1335,7 +1335,7 @@
         }
       ]
     },
-    "values/tigeraOperator.env/string,null;name-of-the-referent": {
+    "values/tigeraOperator.env/fragment": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
         "string",
@@ -1371,13 +1371,13 @@
               "imagePullSecrets": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1array"
+                    "$ref": "#/$defs/values~1fragment@2"
                   },
                   {
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/values~1object"
+                    "$ref": "#/$defs/values~1fragment"
                   }
                 ],
                 "description": "imagePullSecrets is a special helm field which, when specified, creates a secret\ncontaining the pull secret which is used to pull all images deployed by this helm chart and the resulting operator.\nthis field is a map where the key is the desired secret name and the value is the contents of the imagePullSecret.\nExample: --set-file imagePullSecrets.gcr=./pull-secret.json"
@@ -1393,10 +1393,10 @@
                     "propertyNames": {
                       "allOf": [
                         {
-                          "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+                          "$ref": "#/$defs/values~1fragment@4"
                         },
                         {
-                          "$ref": "#/$defs/values~1not~1keywords~1pattern"
+                          "$ref": "#/$defs/values~1fragment@3"
                         },
                         {
                           "not": {
@@ -1886,13 +1886,13 @@
     "additionalLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1additionalLabels~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1additionalLabels~1allOf~1object+object,null;map-of-string-keys"
+          "$ref": "#/$defs/values~1additionalLabels~1fragment@2"
         },
         {
-          "$ref": "#/$defs/values~1additionalLabels~1object"
+          "$ref": "#/$defs/values~1additionalLabels~1fragment"
         }
       ],
       "description": "Common labels for all resources created by this chart"
@@ -1900,7 +1900,7 @@
     "affinity": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1additionalLabels~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "additionalProperties": false,
@@ -1931,7 +1931,7 @@
                         "x-kubernetes-map-type": "atomic"
                       },
                       "weight": {
-                        "$ref": "#/$defs/constrains~1preference.matchExpressions@items.key+preference.matchExpressions@items.operator+3more~1integer:int32;weight-associated-with-matching"
+                        "$ref": "#/$defs/constrains~1preference.matchExpressions@items.key+preference.matchExpressions@items.operator+3more~1fragment"
                       }
                     },
                     "required": [
@@ -2053,7 +2053,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/values~1additionalLabels~1object"
+          "$ref": "#/$defs/values~1additionalLabels~1fragment"
         },
         {
           "type": "null"
@@ -2131,10 +2131,10 @@
                                           "$ref": "#/$defs/constrains~1@items.name"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;limits-describes-the-maximum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;requests-describes-the-minimum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment@2"
                                         }
                                       },
                                       "type": "object"
@@ -2168,10 +2168,10 @@
                                           "$ref": "#/$defs/constrains~1@items.name"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;limits-describes-the-maximum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;requests-describes-the-minimum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment@2"
                                         }
                                       },
                                       "type": "object"
@@ -2366,34 +2366,34 @@
                 "additionalProperties": false,
                 "properties": {
                   "creationGracePeriod": {
-                    "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9"
+                    "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@2"
                   },
                   "genericTimeout": {
-                    "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9"
+                    "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@2"
                   },
                   "icmpTimeout": {
-                    "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9"
+                    "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@2"
                   },
                   "tcpEstablished": {
-                    "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9"
+                    "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@2"
                   },
                   "tcpFinsSeen": {
-                    "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9"
+                    "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@2"
                   },
                   "tcpResetSeen": {
-                    "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9"
+                    "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@2"
                   },
                   "tcpSynSent": {
-                    "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9"
+                    "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@2"
                   },
                   "udpTimeout": {
-                    "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9"
+                    "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@2"
                   }
                 },
                 "type": "object"
               },
               "bpfDSROptoutCIDRs": {
-                "$ref": "#/$defs/values~1array"
+                "$ref": "#/$defs/values~1fragment@2"
               },
               "bpfDataIfacePattern": {
                 "type": "string"
@@ -2412,7 +2412,7 @@
                 "type": "string"
               },
               "bpfExcludeCIDRsFromNAT": {
-                "$ref": "#/$defs/values~1array"
+                "$ref": "#/$defs/values~1fragment@2"
               },
               "bpfExportBufferSizeMB": {
                 "type": "integer"
@@ -2425,13 +2425,13 @@
                 "type": "string"
               },
               "bpfForceTrackPacketsFromIfaces": {
-                "$ref": "#/$defs/values~1array"
+                "$ref": "#/$defs/values~1fragment@2"
               },
               "bpfHostConntrackBypass": {
                 "type": "boolean"
               },
               "bpfHostNetworkedNATWithoutCTLB": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string=Enabled,Disabled"
+                "$ref": "#/$defs/constrains~1=Enabled,Disabled"
               },
               "bpfJITHardening": {
                 "allOf": [
@@ -2451,13 +2451,13 @@
                 "type": "boolean"
               },
               "bpfKubeProxyMinSyncPeriod": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9@2"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@3"
               },
               "bpfL3IfacePattern": {
                 "type": "string"
               },
               "bpfLogFilters": {
-                "$ref": "#/$defs/values~1object"
+                "$ref": "#/$defs/values~1fragment"
               },
               "bpfLogLevel": {
                 "pattern": "^([oO][fF][fF]|[iI][nN][fF][oO]|[dD][eE][bB][uU][gG])?$",
@@ -2502,16 +2502,16 @@
                 "type": "integer"
               },
               "bpfPSNATPorts": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1anyOf~1integer+string"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment"
               },
               "bpfPolicyDebugEnabled": {
                 "type": "boolean"
               },
               "bpfProfiling": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string=Enabled,Disabled"
+                "$ref": "#/$defs/constrains~1=Enabled,Disabled"
               },
               "bpfRedirectToPeer": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string=Enabled,Disabled"
+                "$ref": "#/$defs/constrains~1=Enabled,Disabled"
               },
               "cgroupV2Path": {
                 "type": "string"
@@ -2539,13 +2539,13 @@
                 "type": "integer"
               },
               "debugSimulateCalcGraphHangAfter": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9@2"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@3"
               },
               "debugSimulateDataplaneApplyDelay": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9@2"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@3"
               },
               "debugSimulateDataplaneHangAfter": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9@2"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@3"
               },
               "defaultEndpointToHostAction": {
                 "pattern": "^([dD][rR][oO][pP]|[aA][cC][cC][eE][pP][tT]|[rR][eE][tT][uU][rR][nN])?$",
@@ -2565,7 +2565,7 @@
               },
               "enabled": {},
               "endpointReportingDelay": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9@2"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@3"
               },
               "endpointReportingEnabled": {
                 "type": "boolean"
@@ -2574,7 +2574,7 @@
                 "type": "string"
               },
               "externalNodesList": {
-                "$ref": "#/$defs/values~1array"
+                "$ref": "#/$defs/values~1fragment@2"
               },
               "failsafeInboundHostPorts": {
                 "$ref": "#/$defs/constrains~1@items.net+@items.port+@items.protocol"
@@ -2591,13 +2591,13 @@
                 "type": "string"
               },
               "floatingIPs": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string=Enabled,Disabled"
+                "$ref": "#/$defs/constrains~1=Enabled,Disabled"
               },
               "flowLogsCollectorDebugTrace": {
                 "type": "boolean"
               },
               "flowLogsFlushInterval": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9@2"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@3"
               },
               "flowLogsGoldmaneServer": {
                 "type": "string"
@@ -2663,10 +2663,10 @@
                 "type": "string"
               },
               "interfaceRefreshInterval": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9@2"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@3"
               },
               "ipForwarding": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string=Enabled,Disabled"
+                "$ref": "#/$defs/constrains~1=Enabled,Disabled"
               },
               "ipipEnabled": {
                 "type": "boolean"
@@ -2675,7 +2675,7 @@
                 "type": "integer"
               },
               "ipsetsRefreshInterval": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9@2"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@3"
               },
               "iptablesBackend": {
                 "enum": [
@@ -2687,16 +2687,16 @@
                 "type": "string"
               },
               "iptablesFilterAllowAction": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-aa-cc-cc-ee-p"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@4"
               },
               "iptablesFilterDenyAction": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-dd-rr-oo-pp"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@5"
               },
               "iptablesLockProbeInterval": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9@2"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@3"
               },
               "iptablesMangleAllowAction": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-aa-cc-cc-ee-p"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@4"
               },
               "iptablesMarkMask": {
                 "format": "int32",
@@ -2706,17 +2706,17 @@
                 "type": "string"
               },
               "iptablesPostWriteCheckInterval": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9@2"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@3"
               },
               "iptablesRefreshInterval": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9@2"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@3"
               },
               "ipv6Support": {
                 "type": "boolean"
               },
               "kubeNodePortRanges": {
                 "items": {
-                  "$ref": "#/$defs/values~1defaultFelixConfiguration~1anyOf~1integer+string"
+                  "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment"
                 },
                 "type": "array"
               },
@@ -2740,13 +2740,13 @@
                 "type": "string"
               },
               "logSeverityFile": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-tt-rr-aa-cc-e"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@6"
               },
               "logSeverityScreen": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-tt-rr-aa-cc-e"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@6"
               },
               "logSeveritySys": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-tt-rr-aa-cc-e"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@6"
               },
               "maxIpsetSize": {
                 "type": "integer"
@@ -2771,19 +2771,19 @@
                 "type": "string"
               },
               "natPortRange": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1anyOf~1integer+string"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment"
               },
               "netlinkTimeout": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9@2"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@3"
               },
               "nftablesFilterAllowAction": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-aa-cc-cc-ee-p"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@4"
               },
               "nftablesFilterDenyAction": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-dd-rr-oo-pp"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@5"
               },
               "nftablesMangleAllowAction": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-aa-cc-cc-ee-p"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@4"
               },
               "nftablesMarkMask": {
                 "format": "int32",
@@ -2808,7 +2808,7 @@
                 "type": "string"
               },
               "programClusterRoutes": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string=Enabled,Disabled"
+                "$ref": "#/$defs/constrains~1=Enabled,Disabled"
               },
               "prometheusGoMetricsEnabled": {
                 "type": "boolean"
@@ -2844,16 +2844,16 @@
                 "type": "boolean"
               },
               "reportingInterval": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9@2"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@3"
               },
               "reportingTTL": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9@2"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@3"
               },
               "requireMTUFile": {
                 "type": "boolean"
               },
               "routeRefreshInterval": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9@2"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@3"
               },
               "routeSource": {
                 "pattern": "^([wW][oO][rR][kKK][lL][oO][aA][dD][iI][pP][sSſ]|[cC][aA][lL][iI][cC][oO][iI][pP][aA][mM])?$",
@@ -2882,10 +2882,10 @@
                 "type": "boolean"
               },
               "usageReportingInitialDelay": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9@2"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@3"
               },
               "usageReportingInterval": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9@2"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@3"
               },
               "useInternalDataplaneDriver": {
                 "type": "boolean"
@@ -2906,7 +2906,7 @@
                 "type": "integer"
               },
               "windowsManageFirewallRules": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string=Enabled,Disabled"
+                "$ref": "#/$defs/constrains~1=Enabled,Disabled"
               },
               "wireguardEnabled": {
                 "type": "boolean"
@@ -2924,7 +2924,7 @@
                 "type": "string"
               },
               "wireguardKeepAlive": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9@2"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@3"
               },
               "wireguardListeningPort": {
                 "type": "integer"
@@ -2952,7 +2952,7 @@
                 "type": "boolean"
               },
               "xdpRefreshInterval": {
-                "$ref": "#/$defs/values~1defaultFelixConfiguration~1string;pattern-0-9-0-9@2"
+                "$ref": "#/$defs/values~1defaultFelixConfiguration~1fragment@3"
               }
             },
             "type": "object"
@@ -2967,10 +2967,10 @@
     "dnsConfig": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1additionalLabels~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1additionalLabels~1object"
+          "$ref": "#/$defs/values~1additionalLabels~1fragment"
         },
         {
           "type": "null"
@@ -2982,7 +2982,7 @@
             "nameservers": {
               "description": "A list of DNS name server IP addresses. This will be appended to the base nameservers generated from DNSPolicy. Duplicated nameservers will be removed.",
               "items": {
-                "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+                "$ref": "#/$defs/constrains~1key+operator+values~1fragment@3"
               },
               "type": [
                 "array",
@@ -3003,7 +3003,7 @@
                     ]
                   },
                   "value": {
-                    "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+                    "$ref": "#/$defs/constrains~1key+operator+values~1fragment@3"
                   }
                 },
                 "type": [
@@ -3019,7 +3019,7 @@
             "searches": {
               "description": "A list of DNS search domains for host-name lookup. This will be appended to the base search paths generated from DNSPolicy. Duplicated search paths will be removed.",
               "items": {
-                "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+                "$ref": "#/$defs/constrains~1key+operator+values~1fragment@3"
               },
               "type": [
                 "array",
@@ -3035,24 +3035,24 @@
     "dnsPolicy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1dnsPolicy~1string@2"
+          "$ref": "#/$defs/values~1dnsPolicy~1fragment@3"
         },
         {
-          "$ref": "#/$defs/values~1additionalLabels~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1dnsPolicy~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/values~1dnsPolicy~1fragment@8"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+              "$ref": "#/$defs/values~1fragment@4"
             },
             {
-              "$ref": "#/$defs/values~1dnsPolicy~1not~1keywords~1pattern"
+              "$ref": "#/$defs/values~1dnsPolicy~1fragment@4"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern"
+              "$ref": "#/$defs/values~1fragment@3"
             },
             {
               "not": {
@@ -3060,10 +3060,10 @@
               }
             },
             {
-              "$ref": "#/$defs/values~1dnsPolicy~1not~1keywords~1pattern@2"
+              "$ref": "#/$defs/values~1dnsPolicy~1fragment@5"
             },
             {
-              "$ref": "#/$defs/values~1dnsPolicy~1not~1keywords~1pattern@4"
+              "$ref": "#/$defs/values~1dnsPolicy~1fragment@7"
             },
             {
               "not": {
@@ -3081,24 +3081,24 @@
               }
             },
             {
-              "$ref": "#/$defs/values~1dnsPolicy~1not~1keywords~1pattern@3"
+              "$ref": "#/$defs/values~1dnsPolicy~1fragment@6"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/values~1dnsPolicy~1object"
+          "$ref": "#/$defs/values~1dnsPolicy~1fragment"
         },
         {
-          "$ref": "#/$defs/values~1dnsPolicy~1string;pattern-t"
+          "$ref": "#/$defs/values~1dnsPolicy~1fragment@10"
         },
         {
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
           "type": "null"
         },
         {
-          "$ref": "#/$defs/values~1dnsPolicy~1string;pattern-null-null-null"
+          "$ref": "#/$defs/values~1dnsPolicy~1fragment@9"
         }
       ],
       "description": "DNS policy for the tigera/operator pod. Set \"None\" with a dnsConfig listing cluster and node\nresolvers where cluster DNS is not reachable at install time, such as EKS with kube-proxy disabled."
@@ -3198,10 +3198,10 @@
                                           "$ref": "#/$defs/constrains~1@items.name"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;limits-describes-the-maximum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;requests-describes-the-minimum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment@2"
                                         }
                                       },
                                       "type": "object"
@@ -3362,22 +3362,22 @@
                     "description": "NodeAddressAutodetectionV4 specifies an approach to automatically detect node IPv4 addresses. If not specified, will use default auto-detection settings to acquire an IPv4 address for each node.",
                     "properties": {
                       "canReach": {
-                        "$ref": "#/$defs/values~1installation~1string;canreach-enables-ip-auto-detection"
+                        "$ref": "#/$defs/values~1installation~1fragment@2"
                       },
                       "cidrs": {
-                        "$ref": "#/$defs/values~1installation~1array;cidrs-enables-ip-auto-detection"
+                        "$ref": "#/$defs/values~1installation~1fragment"
                       },
                       "firstFound": {
-                        "$ref": "#/$defs/values~1installation~1boolean;firstfound-uses-default-interface"
+                        "$ref": "#/$defs/values~1installation~1fragment@3"
                       },
                       "interface": {
-                        "$ref": "#/$defs/values~1installation~1string;interface-enables-ip-auto-detection"
+                        "$ref": "#/$defs/values~1installation~1fragment@4"
                       },
                       "kubernetes": {
-                        "$ref": "#/$defs/values~1installation~1string=NodeInternalIP;kubernetes-configures-calico-to"
+                        "$ref": "#/$defs/constrains~1=NodeInternalIP"
                       },
                       "skipInterface": {
-                        "$ref": "#/$defs/values~1installation~1string;skipinterface-enables-ip-auto-detection"
+                        "$ref": "#/$defs/values~1installation~1fragment@5"
                       }
                     },
                     "type": "object"
@@ -3387,22 +3387,22 @@
                     "description": "NodeAddressAutodetectionV6 specifies an approach to automatically detect node IPv6 addresses. If not specified, IPv6 addresses will not be auto-detected.",
                     "properties": {
                       "canReach": {
-                        "$ref": "#/$defs/values~1installation~1string;canreach-enables-ip-auto-detection"
+                        "$ref": "#/$defs/values~1installation~1fragment@2"
                       },
                       "cidrs": {
-                        "$ref": "#/$defs/values~1installation~1array;cidrs-enables-ip-auto-detection"
+                        "$ref": "#/$defs/values~1installation~1fragment"
                       },
                       "firstFound": {
-                        "$ref": "#/$defs/values~1installation~1boolean;firstfound-uses-default-interface"
+                        "$ref": "#/$defs/values~1installation~1fragment@3"
                       },
                       "interface": {
-                        "$ref": "#/$defs/values~1installation~1string;interface-enables-ip-auto-detection"
+                        "$ref": "#/$defs/values~1installation~1fragment@4"
                       },
                       "kubernetes": {
-                        "$ref": "#/$defs/values~1installation~1string=NodeInternalIP;kubernetes-configures-calico-to"
+                        "$ref": "#/$defs/constrains~1=NodeInternalIP"
                       },
                       "skipInterface": {
-                        "$ref": "#/$defs/values~1installation~1string;skipinterface-enables-ip-auto-detection"
+                        "$ref": "#/$defs/values~1installation~1fragment@5"
                       }
                     },
                     "type": "object"
@@ -3501,10 +3501,10 @@
                                           "$ref": "#/$defs/constrains~1@items.name"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;limits-describes-the-maximum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;requests-describes-the-minimum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment@2"
                                         }
                                       },
                                       "type": "object"
@@ -3543,10 +3543,10 @@
                                           "$ref": "#/$defs/constrains~1@items.name"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;limits-describes-the-maximum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;requests-describes-the-minimum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment@2"
                                         }
                                       },
                                       "type": "object"
@@ -3643,10 +3643,10 @@
                                           "$ref": "#/$defs/constrains~1@items.name"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;limits-describes-the-maximum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;requests-describes-the-minimum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment@2"
                                         }
                                       },
                                       "type": "object"
@@ -3685,10 +3685,10 @@
                                           "$ref": "#/$defs/constrains~1@items.name"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;limits-describes-the-maximum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;requests-describes-the-minimum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment@2"
                                         }
                                       },
                                       "type": "object"
@@ -3785,10 +3785,10 @@
                                           "$ref": "#/$defs/constrains~1@items.name"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;limits-describes-the-maximum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;requests-describes-the-minimum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment@2"
                                         }
                                       },
                                       "type": "object"
@@ -3936,10 +3936,10 @@
                           "$ref": "#/$defs/constrains~1@items.name"
                         },
                         "limits": {
-                          "$ref": "#/$defs/values~1apiServer~1object;limits-describes-the-maximum"
+                          "$ref": "#/$defs/values~1apiServer~1fragment"
                         },
                         "requests": {
-                          "$ref": "#/$defs/values~1apiServer~1object;requests-describes-the-minimum"
+                          "$ref": "#/$defs/values~1apiServer~1fragment@2"
                         }
                       },
                       "type": "object"
@@ -4030,10 +4030,10 @@
                                           "$ref": "#/$defs/constrains~1@items.name"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;limits-describes-the-maximum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;requests-describes-the-minimum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment@2"
                                         }
                                       },
                                       "type": "object"
@@ -4367,10 +4367,10 @@
                                           "$ref": "#/$defs/constrains~1@items.name"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;limits-describes-the-maximum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;requests-describes-the-minimum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment@2"
                                         }
                                       },
                                       "type": "object"
@@ -4404,10 +4404,10 @@
                                           "$ref": "#/$defs/constrains~1@items.name"
                                         },
                                         "limits": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;limits-describes-the-maximum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment"
                                         },
                                         "requests": {
-                                          "$ref": "#/$defs/values~1apiServer~1object;requests-describes-the-minimum"
+                                          "$ref": "#/$defs/values~1apiServer~1fragment@2"
                                         }
                                       },
                                       "type": "object"
@@ -4529,7 +4529,7 @@
       "anyOf": [
         {
           "additionalProperties": {
-            "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+            "$ref": "#/$defs/constrains~1key+operator+values~1fragment@3"
           },
           "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
           "properties": {
@@ -4541,7 +4541,7 @@
           "x-kubernetes-map-type": "atomic"
         },
         {
-          "$ref": "#/$defs/values~1additionalLabels~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "type": "null"
@@ -4552,16 +4552,16 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1additionalLabels~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1additionalLabels~1object"
+          "$ref": "#/$defs/values~1additionalLabels~1fragment"
         },
         {
           "allOf": [
             {
               "additionalProperties": {
-                "$ref": "#/$defs/constrains~1key+operator+values~1string,null"
+                "$ref": "#/$defs/constrains~1key+operator+values~1fragment@3"
               },
               "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
               "type": [
@@ -4570,7 +4570,7 @@
               ]
             },
             {
-              "$ref": "#/$defs/values~1object"
+              "$ref": "#/$defs/values~1fragment"
             }
           ]
         }
@@ -4580,13 +4580,13 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1additionalLabels~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1additionalLabels~1allOf~1object+object,null;map-of-string-keys"
+          "$ref": "#/$defs/values~1additionalLabels~1fragment@2"
         },
         {
-          "$ref": "#/$defs/values~1additionalLabels~1object"
+          "$ref": "#/$defs/values~1additionalLabels~1fragment"
         }
       ],
       "description": "Custom labels for the tigera/operator pod."
@@ -4594,30 +4594,30 @@
     "priorityClassName": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1dnsPolicy~1string@2"
+          "$ref": "#/$defs/values~1dnsPolicy~1fragment@3"
         },
         {
-          "$ref": "#/$defs/values~1additionalLabels~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1dnsPolicy~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/values~1dnsPolicy~1fragment@8"
         },
         {
-          "$ref": "#/$defs/values~1dnsPolicy~1object"
+          "$ref": "#/$defs/values~1dnsPolicy~1fragment"
         },
         {
-          "$ref": "#/$defs/values~1dnsPolicy~1string;pattern-t"
+          "$ref": "#/$defs/values~1dnsPolicy~1fragment@10"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+              "$ref": "#/$defs/values~1fragment@4"
             },
             {
-              "$ref": "#/$defs/values~1dnsPolicy~1not~1keywords~1pattern"
+              "$ref": "#/$defs/values~1dnsPolicy~1fragment@4"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern"
+              "$ref": "#/$defs/values~1fragment@3"
             },
             {
               "not": {
@@ -4625,10 +4625,10 @@
               }
             },
             {
-              "$ref": "#/$defs/values~1dnsPolicy~1not~1keywords~1pattern@2"
+              "$ref": "#/$defs/values~1dnsPolicy~1fragment@5"
             },
             {
-              "$ref": "#/$defs/values~1dnsPolicy~1not~1keywords~1pattern@4"
+              "$ref": "#/$defs/values~1dnsPolicy~1fragment@7"
             },
             {
               "not": {
@@ -4646,14 +4646,14 @@
               }
             },
             {
-              "$ref": "#/$defs/values~1dnsPolicy~1not~1keywords~1pattern@3"
+              "$ref": "#/$defs/values~1dnsPolicy~1fragment@6"
             }
           ],
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/values~1dnsPolicy~1string;pattern-null-null-null"
+          "$ref": "#/$defs/values~1dnsPolicy~1fragment@9"
         },
         {
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -4665,10 +4665,10 @@
     "resources": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1additionalLabels~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1additionalLabels~1object"
+          "$ref": "#/$defs/values~1additionalLabels~1fragment"
         },
         {
           "additionalProperties": false,
@@ -4681,7 +4681,7 @@
                 "description": "ResourceClaim references one entry in PodSpec.ResourceClaims.",
                 "properties": {
                   "name": {
-                    "$ref": "#/$defs/constrains~1@items.name~1string;name-must-match-the"
+                    "$ref": "#/$defs/constrains~1@items.name~1fragment"
                   }
                 },
                 "required": [
@@ -4703,7 +4703,7 @@
             },
             "limits": {
               "additionalProperties": {
-                "$ref": "#/$defs/values~1resources~1oneOf~1number,null+string,null"
+                "$ref": "#/$defs/values~1resources~1fragment"
               },
               "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
               "type": [
@@ -4713,7 +4713,7 @@
             },
             "requests": {
               "additionalProperties": {
-                "$ref": "#/$defs/values~1resources~1oneOf~1number,null+string,null"
+                "$ref": "#/$defs/values~1resources~1fragment"
               },
               "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
               "type": [
@@ -4766,7 +4766,7 @@
                             "type": "string"
                           },
                           "name": {
-                            "$ref": "#/$defs/values~1tigeraOperator.env~1string,null;name-of-the-referent"
+                            "$ref": "#/$defs/values~1tigeraOperator.env~1fragment"
                           },
                           "optional": {
                             "description": "Specify whether the ConfigMap or its key must be defined",
@@ -4822,7 +4822,7 @@
                             ]
                           },
                           "divisor": {
-                            "$ref": "#/$defs/values~1resources~1oneOf~1number,null+string,null"
+                            "$ref": "#/$defs/values~1resources~1fragment"
                           },
                           "resource": {
                             "description": "Required: resource to select",
@@ -4847,7 +4847,7 @@
                             "type": "string"
                           },
                           "name": {
-                            "$ref": "#/$defs/values~1tigeraOperator.env~1string,null;name-of-the-referent"
+                            "$ref": "#/$defs/values~1tigeraOperator.env~1fragment"
                           },
                           "optional": {
                             "description": "Specify whether the Secret or its key must be defined",
@@ -4886,7 +4886,7 @@
               "x-kubernetes-patch-strategy": "merge"
             },
             {
-              "$ref": "#/$defs/values~1additionalLabels~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t"
             },
             {
               "type": "null"
@@ -4905,18 +4905,18 @@
         "version": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1dnsPolicy~1string@2"
+              "$ref": "#/$defs/values~1dnsPolicy~1fragment@3"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+                  "$ref": "#/$defs/values~1fragment@4"
                 },
                 {
-                  "$ref": "#/$defs/values~1dnsPolicy~1not~1keywords~1pattern"
+                  "$ref": "#/$defs/values~1dnsPolicy~1fragment@4"
                 },
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern"
+                  "$ref": "#/$defs/values~1fragment@3"
                 },
                 {
                   "not": {
@@ -4924,10 +4924,10 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/values~1dnsPolicy~1not~1keywords~1pattern@2"
+                  "$ref": "#/$defs/values~1dnsPolicy~1fragment@5"
                 },
                 {
-                  "$ref": "#/$defs/values~1dnsPolicy~1not~1keywords~1pattern@4"
+                  "$ref": "#/$defs/values~1dnsPolicy~1fragment@7"
                 },
                 {
                   "not": {
@@ -4945,23 +4945,23 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/values~1dnsPolicy~1not~1keywords~1pattern@3"
+                  "$ref": "#/$defs/values~1dnsPolicy~1fragment@6"
                 }
               ],
               "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/values~1dnsPolicy~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/values~1dnsPolicy~1fragment@8"
             },
             {
-              "$ref": "#/$defs/values~1dnsPolicy~1object"
+              "$ref": "#/$defs/values~1dnsPolicy~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1dnsPolicy~1string;pattern-t"
+              "$ref": "#/$defs/values~1dnsPolicy~1fragment@10"
             },
             {
-              "$ref": "#/$defs/values~1dnsPolicy~1string;pattern-null-null-null"
+              "$ref": "#/$defs/values~1dnsPolicy~1fragment@9"
             },
             {
               "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
@@ -4975,7 +4975,7 @@
     "tolerations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1additionalLabels~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "description": "If specified, the pod's tolerations.",
@@ -4988,7 +4988,7 @@
                   "effect": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1effect+key+operator+tolerationSeconds+value~1string;effect-indicates-the-taint"
+                        "$ref": "#/$defs/constrains~1effect+key+operator+tolerationSeconds+value~1fragment"
                       },
                       {
                         "type": "null"
@@ -5005,7 +5005,7 @@
                   "operator": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1effect+key+operator+tolerationSeconds+value~1string;operator-represents-a-key-s"
+                        "$ref": "#/$defs/constrains~1effect+key+operator+tolerationSeconds+value~1fragment@2"
                       },
                       {
                         "type": "null"

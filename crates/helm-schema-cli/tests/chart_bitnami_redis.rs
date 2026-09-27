@@ -73,7 +73,7 @@ fn pointer_through_refs<'schema>(
             .and_then(serde_json::Value::as_str)
             .and_then(|reference| reference.strip_prefix("#/$defs/"))
         {
-            node = root.get("$defs")?.get(name)?;
+            node = root.pointer(&format!("/$defs/{name}"))?;
         }
         node = node.get(segment)?;
     }

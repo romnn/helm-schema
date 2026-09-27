@@ -1,5 +1,242 @@
 {
   "$defs": {
+    "constrains/:t": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/t"
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/:t+=LoadBalancer": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1:t@3"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "enum": [
+            "LoadBalancer"
+          ]
+        }
+      ]
+    },
+    "constrains/:t+fullnameOverride+fullnameOverride:t+fullnameOverride=null": {
+      "not": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride=null"
+          },
+          {
+            "$ref": "#/$defs/t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1fullnameOverride:t"
+          }
+        ]
+      }
+    },
+    "constrains/:t/fragment": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/$defs/constrains~1:t~1fragment@2"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/constrains~1:t~1fragment@2"
+      },
+      "type": "object"
+    },
+    "constrains/:t/fragment@10": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "constrains/:t/fragment@11": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "constrains/:t/fragment@12": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "constrains/:t/fragment@13": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "constrains/:t/fragment@14": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "constrains/:t/fragment@15": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "constrains/:t/fragment@16": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "constrains/:t/fragment@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@6"
+        }
+      ],
+      "type": "string"
+    },
+    "constrains/:t/fragment@3": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "constrains/:t/fragment@4": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
+    },
+    "constrains/:t/fragment@5": {
+      "not": {
+        "pattern": "[ \\t]#"
+      }
+    },
+    "constrains/:t/fragment@6": {
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "constrains/:t/fragment@7": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "constrains/:t/fragment@8": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "constrains/:t/fragment@9": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "constrains/:t@2": {
+      "anyOf": [
+        {
+          "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
+          "type": "null"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@13"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@7"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@12"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@5"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@8"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@10"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@11"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@4"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@6"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@9"
+            }
+          ],
+          "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@14"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@16"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@15"
+        }
+      ]
+    },
+    "constrains/:t@3": {
+      "not": {
+        "$ref": "#/$defs/t"
+      }
+    },
     "constrains/@*.name+@*.path+@items.name+@items.path": {
       "anyOf": [
         {
@@ -51,33 +288,10 @@
         "nodePort": {},
         "port": {},
         "type": {
-          "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1anyOf~1=LoadBalancer+not~1:t+null+string"
+          "$ref": "#/$defs/constrains~1:t+=LoadBalancer"
         }
       },
       "type": "object"
-    },
-    "constrains/annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more/anyOf/=LoadBalancer+not/:t+null+string": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        },
-        {
-          "enum": [
-            "LoadBalancer"
-          ]
-        }
-      ]
-    },
-    "constrains/annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more/not/:t": {
-      "not": {
-        "$ref": "#/$defs/t"
-      }
     },
     "constrains/annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more": {
       "additionalProperties": {},
@@ -86,7 +300,7 @@
         "enabled": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@3"
             },
             {
               "type": "string"
@@ -123,7 +337,7 @@
         "enabled": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@3"
             },
             {
               "type": "string"
@@ -159,7 +373,7 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@3"
             },
             {
               "$ref": "#/$defs/values~1serviceAnnotations"
@@ -308,21 +522,6 @@
         }
       }
     },
-    "constrains/fullnameOverride+fullnameOverride:t+fullnameOverride=null": {
-      "not": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride=null"
-          },
-          {
-            "$ref": "#/$defs/t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1fullnameOverride:t"
-          }
-        ]
-      }
-    },
     "constrains/fullnameOverride+fullnameOverride=null": {
       "not": {
         "anyOf": [
@@ -394,7 +593,7 @@
         "hosts": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@3"
             },
             {
               "type": "object"
@@ -568,58 +767,58 @@
         "loadBalancerClass": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
+              "$ref": "#/$defs/constrains~1:t~1fragment@3"
             },
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@3"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@14"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1object"
+              "$ref": "#/$defs/constrains~1:t~1fragment"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@16"
             },
             {
               "description": "loadBalancerClass is the class of the load balancer implementation this Service belongs to. If specified, the value of this field must be a label-style identifier, with an optional prefix, e.g. \"internal-vip\" or \"example.com/internal-vip\". Unprefixed names are reserved for end-users. This field can only be set when the Service type is 'LoadBalancer'. If not set, the default load balancer implementation is used, today this is typically done through the cloud provider integration, but should apply for any default implementation. If set, it is assumed that a load balancer implementation is watching for Services with a matching class. Any default load balancer implementation (e.g. cloud providers) should ignore Services that set this field. This field can only be set when creating or updating a Service to type 'LoadBalancer'. Once set, it can not be changed. This field will be wiped when a service is updated to a non 'LoadBalancer' type.",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-null-null-null"
+              "$ref": "#/$defs/constrains~1:t~1fragment@15"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@10"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@13"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@4"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@9"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@12"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@2"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@5"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@5"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@7"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@10"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@8"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@11"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@4"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@3"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@6"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@6"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@9"
                 }
               ],
               "description": "loadBalancerClass is the class of the load balancer implementation this Service belongs to. If specified, the value of this field must be a label-style identifier, with an optional prefix, e.g. \"internal-vip\" or \"example.com/internal-vip\". Unprefixed names are reserved for end-users. This field can only be set when the Service type is 'LoadBalancer'. If not set, the default load balancer implementation is used, today this is typically done through the cloud provider integration, but should apply for any default implementation. If set, it is assumed that a load balancer implementation is watching for Services with a matching class. Any default load balancer implementation (e.g. cloud providers) should ignore Services that set this field. This field can only be set when creating or updating a Service to type 'LoadBalancer'. Once set, it can not be changed. This field will be wiped when a service is updated to a non 'LoadBalancer' type.",
@@ -629,205 +828,78 @@
         }
       }
     },
-    "constrains/loadBalancerClass:t/not/keywords/pattern": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
-      }
-    },
-    "constrains/loadBalancerClass:t/not/keywords/pattern@10": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "constrains/loadBalancerClass:t/not/keywords/pattern@2": {
-      "not": {
-        "pattern": "[ \\t]#"
-      }
-    },
-    "constrains/loadBalancerClass:t/not/keywords/pattern@3": {
-      "not": {
-        "pattern": "[\\r\\n]"
-      }
-    },
-    "constrains/loadBalancerClass:t/not/keywords/pattern@4": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "constrains/loadBalancerClass:t/not/keywords/pattern@5": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "constrains/loadBalancerClass:t/not/keywords/pattern@6": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "constrains/loadBalancerClass:t/not/keywords/pattern@7": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "constrains/loadBalancerClass:t/not/keywords/pattern@8": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "constrains/loadBalancerClass:t/not/keywords/pattern@9": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "constrains/loadBalancerClass:t/object": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "maxItems": 0,
-            "type": "array"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "null"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "maxProperties": 0,
-            "type": "object"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string"
-      },
-      "type": "object"
-    },
-    "constrains/loadBalancerClass:t/string": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@3"
-        }
-      ],
-      "type": "string"
-    },
-    "constrains/loadBalancerClass:t/string;pattern-a-za-z0-9-t": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "constrains/loadBalancerClass:t/string;pattern-null-null-null": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "constrains/loadBalancerClass:t/string;pattern-t": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "constrains/loadBalancerClass:t/string@2": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
-    },
     "constrains/loadBalancerIP:t": {
       "additionalProperties": {},
       "properties": {
         "loadBalancerIP": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
+              "$ref": "#/$defs/constrains~1:t~1fragment@3"
             },
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@3"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@14"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1object"
+              "$ref": "#/$defs/constrains~1:t~1fragment"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@16"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-null-null-null"
+              "$ref": "#/$defs/constrains~1:t~1fragment@15"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerIP:t~1string;only-applies-to-service"
+              "$ref": "#/$defs/constrains~1loadBalancerIP:t~1fragment"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerIP:t~1null;only-applies-to-service"
+              "$ref": "#/$defs/constrains~1loadBalancerIP:t~1fragment@2"
             }
           ]
         }
       }
     },
-    "constrains/loadBalancerIP:t/null;only-applies-to-service": {
-      "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
-      "type": "null"
-    },
-    "constrains/loadBalancerIP:t/string;only-applies-to-service": {
+    "constrains/loadBalancerIP:t/fragment": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@10"
+          "$ref": "#/$defs/constrains~1:t~1fragment@13"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@4"
+          "$ref": "#/$defs/constrains~1:t~1fragment@7"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@9"
+          "$ref": "#/$defs/constrains~1:t~1fragment@12"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@2"
+          "$ref": "#/$defs/constrains~1:t~1fragment@5"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@5"
+          "$ref": "#/$defs/constrains~1:t~1fragment@8"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@7"
+          "$ref": "#/$defs/constrains~1:t~1fragment@10"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@8"
+          "$ref": "#/$defs/constrains~1:t~1fragment@11"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern"
+          "$ref": "#/$defs/constrains~1:t~1fragment@4"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@3"
+          "$ref": "#/$defs/constrains~1:t~1fragment@6"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@6"
+          "$ref": "#/$defs/constrains~1:t~1fragment@9"
         }
       ],
       "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
       "type": "string"
+    },
+    "constrains/loadBalancerIP:t/fragment@2": {
+      "description": "Only applies to Service Type: LoadBalancer. This feature depends on whether the underlying cloud-provider supports specifying the loadBalancerIP when a load balancer is created. This field will be ignored if the cloud-provider does not support the feature. Deprecated: This field was under-specified and its meaning varies across implementations. Using it is non-portable and it may not support dual-stack. Users are encouraged to use implementation-specific annotations when available.",
+      "type": "null"
     },
     "constrains/loadBalancerSourceRanges:t": {
       "additionalProperties": {},
@@ -835,7 +907,7 @@
         "loadBalancerSourceRanges": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@3"
             },
             {
               "type": "null"
@@ -1138,53 +1210,53 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@10"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@13"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@4"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@9"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@12"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@2"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@5"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@5"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@7"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@10"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@8"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@11"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@4"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@3"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@6"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@6"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@9"
                 }
               ],
               "description": "host is the fully qualified domain name of a network host, as defined by RFC 3986. Note the following deviations from the \"host\" part of the URI as defined in RFC 3986: 1. IPs are not allowed. Currently an IngressRuleValue can only apply to\n   the IP in the Spec of the parent Ingress.\n2. The `:` delimiter is not respected because ports are not allowed.\n\t  Currently the port of an Ingress is implicitly :80 for http and\n\t  :443 for https.\nBoth these may change in the future. Incoming requests are matched against the host before the IngressRuleValue. If the host is unspecified, the Ingress routes all traffic based on the specified IngressRuleValue.\n\nhost can be \"precise\" which is a domain name without the terminating dot of a network host (e.g. \"foo.bar.com\") or \"wildcard\", which is a domain name prefixed with a single wildcard label (e.g. \"*.foo.com\"). The wildcard character '*' must appear by itself as the first DNS label and matches only a single label. You cannot have a wildcard label by itself (e.g. Host == \"*\"). Requests will be matched against the Host field in the following way: 1. If host is precise, the request matches this rule if the http host header is equal to Host. 2. If host is a wildcard, then the request matches this rule if the http host header is to equal to the suffix (removing the first label) of the wildcard rule.",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
+              "$ref": "#/$defs/constrains~1:t~1fragment@3"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@14"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1object"
+              "$ref": "#/$defs/constrains~1:t~1fragment"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@16"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-null-null-null"
+              "$ref": "#/$defs/constrains~1:t~1fragment@15"
             }
           ]
         }
@@ -1196,14 +1268,14 @@
         "path": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@3"
             },
             {
               "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1object"
+              "$ref": "#/$defs/constrains~1:t~1fragment"
             },
             {
               "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
@@ -1211,43 +1283,43 @@
               "type": "string"
             },
             {
-              "$ref": "#/$defs/constrains~1path:t~1string"
+              "$ref": "#/$defs/constrains~1path:t~1fragment"
             }
           ]
         }
       }
     },
-    "constrains/path:t/string": {
+    "constrains/path:t/fragment": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@10"
+          "$ref": "#/$defs/constrains~1:t~1fragment@13"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@4"
+          "$ref": "#/$defs/constrains~1:t~1fragment@7"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@9"
+          "$ref": "#/$defs/constrains~1:t~1fragment@12"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@2"
+          "$ref": "#/$defs/constrains~1:t~1fragment@5"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@5"
+          "$ref": "#/$defs/constrains~1:t~1fragment@8"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@7"
+          "$ref": "#/$defs/constrains~1:t~1fragment@10"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@8"
+          "$ref": "#/$defs/constrains~1:t~1fragment@11"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern"
+          "$ref": "#/$defs/constrains~1:t~1fragment@4"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@3"
+          "$ref": "#/$defs/constrains~1:t~1fragment@6"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@6"
+          "$ref": "#/$defs/constrains~1:t~1fragment@9"
         }
       ],
       "type": "string"
@@ -1360,21 +1432,21 @@
         "port": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1port~1integer:int32;the-port-that-will"
+              "$ref": "#/$defs/constrains~1port~1fragment"
             },
             {
-              "$ref": "#/$defs/constrains~1port~1string;pattern-0-1-9"
+              "$ref": "#/$defs/constrains~1port~1fragment@2"
             }
           ]
         }
       }
     },
-    "constrains/port/integer:int32;the-port-that-will": {
+    "constrains/port/fragment": {
       "description": "The port that will be exposed by this service.",
       "format": "int32",
       "type": "integer"
     },
-    "constrains/port/string;pattern-0-1-9": {
+    "constrains/port/fragment@2": {
       "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
     },
@@ -1401,55 +1473,55 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
+              "$ref": "#/$defs/constrains~1:t~1fragment@3"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@14"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1object"
+              "$ref": "#/$defs/constrains~1:t~1fragment"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@16"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@10"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@13"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@4"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@9"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@12"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@2"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@5"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@5"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@7"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@10"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@8"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@11"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@4"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@3"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@6"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@6"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@9"
                 }
               ],
               "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-null-null-null"
+              "$ref": "#/$defs/constrains~1:t~1fragment@15"
             }
           ]
         }
@@ -1545,7 +1617,7 @@
         "service": {
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@3"
             }
           }
         }
@@ -1725,35 +1797,40 @@
         }
       ]
     },
-    "values/anyOf/:t+object": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/t"
-        },
-        {
-          "type": "object"
-        }
-      ]
+    "values/deploymentAnnotations": {
+      "additionalProperties": {},
+      "type": "object"
     },
-    "values/anyOf/array+null+object": {
+    "values/extraEnv": {
+      "additionalProperties": {},
+      "description": "Additional minecraft container environment variables\nValues can be either variable values or `valueFrom` yaml",
+      "type": "object"
+    },
+    "values/fragment": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "values/fragment@2": {
       "anyOf": [
         {
           "propertyNames": {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@10"
+                "$ref": "#/$defs/constrains~1:t~1fragment@13"
               },
               {
-                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@9"
+                "$ref": "#/$defs/constrains~1:t~1fragment@12"
               },
               {
-                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@2"
+                "$ref": "#/$defs/constrains~1:t~1fragment@5"
               },
               {
-                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern"
+                "$ref": "#/$defs/constrains~1:t~1fragment@4"
               },
               {
-                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@3"
+                "$ref": "#/$defs/constrains~1:t~1fragment@6"
               }
             ]
           },
@@ -1767,15 +1844,6 @@
         }
       ]
     },
-    "values/deploymentAnnotations": {
-      "additionalProperties": {},
-      "type": "object"
-    },
-    "values/extraEnv": {
-      "additionalProperties": {},
-      "description": "Additional minecraft container environment variables\nValues can be either variable values or `valueFrom` yaml",
-      "type": "object"
-    },
     "values/mcbackup.persistence.backupDir.enabled": {
       "description": "Set this to false if you don't care to persist state between restarts."
     },
@@ -1785,58 +1853,58 @@
     "values/minecraftServer.externalTrafficPolicy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
+          "$ref": "#/$defs/constrains~1:t~1fragment@3"
         },
         {
-          "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t@3"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/constrains~1:t~1fragment@14"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1object"
+          "$ref": "#/$defs/constrains~1:t~1fragment"
         },
         {
           "description": "externalTrafficPolicy describes how nodes distribute service traffic they receive on one of the Service's \"externally-facing\" addresses (NodePorts, ExternalIPs, and LoadBalancer IPs). If set to \"Local\", the proxy will configure the service in a way that assumes that external load balancers will take care of balancing the service traffic between nodes, and so each node will deliver traffic only to the node-local endpoints of the service, without masquerading the client source IP. (Traffic mistakenly sent to a node with no endpoints will be dropped.) The default value, \"Cluster\", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features). Note that traffic sent to an External IP or LoadBalancer IP from within the cluster will always get \"Cluster\" semantics, but clients sending to a NodePort from within the cluster may need to take traffic policy into account when picking a node.",
           "type": "null"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-t"
+          "$ref": "#/$defs/constrains~1:t~1fragment@16"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-null-null-null"
+          "$ref": "#/$defs/constrains~1:t~1fragment@15"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@10"
+              "$ref": "#/$defs/constrains~1:t~1fragment@13"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@4"
+              "$ref": "#/$defs/constrains~1:t~1fragment@7"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@9"
+              "$ref": "#/$defs/constrains~1:t~1fragment@12"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@2"
+              "$ref": "#/$defs/constrains~1:t~1fragment@5"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@5"
+              "$ref": "#/$defs/constrains~1:t~1fragment@8"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@7"
+              "$ref": "#/$defs/constrains~1:t~1fragment@10"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@8"
+              "$ref": "#/$defs/constrains~1:t~1fragment@11"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern"
+              "$ref": "#/$defs/constrains~1:t~1fragment@4"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@3"
+              "$ref": "#/$defs/constrains~1:t~1fragment@6"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@6"
+              "$ref": "#/$defs/constrains~1:t~1fragment@9"
             }
           ],
           "description": "externalTrafficPolicy describes how nodes distribute service traffic they receive on one of the Service's \"externally-facing\" addresses (NodePorts, ExternalIPs, and LoadBalancer IPs). If set to \"Local\", the proxy will configure the service in a way that assumes that external load balancers will take care of balancing the service traffic between nodes, and so each node will deliver traffic only to the node-local endpoints of the service, without masquerading the client source IP. (Traffic mistakenly sent to a node with no endpoints will be dropped.) The default value, \"Cluster\", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features). Note that traffic sent to an External IP or LoadBalancer IP from within the cluster will always get \"Cluster\" semantics, but clients sending to a NodePort from within the cluster may need to take traffic policy into account when picking a node.",
@@ -1844,123 +1912,55 @@
         }
       ]
     },
-    "values/minecraftServer/anyOf/not/:t+null;type-determines-how-the+object+string+string;pattern-a-za-z0-9-t+3more": {
-      "anyOf": [
-        {
-          "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
-          "type": "null"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@10"
-            },
-            {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@4"
-            },
-            {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@9"
-            },
-            {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@2"
-            },
-            {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@5"
-            },
-            {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@7"
-            },
-            {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@8"
-            },
-            {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern"
-            },
-            {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@3"
-            },
-            {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@6"
-            }
-          ],
-          "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
-          "type": "string"
-        },
-        {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-null-null-null"
-        }
-      ]
-    },
-    "values/minecraftServer/integer:int32;the-port-on-each": {
-      "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
-      "format": "int32",
-      "type": "integer"
-    },
-    "values/minecraftServer/null:int32;the-port-on-each": {
-      "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
-      "format": "int32",
-      "type": "null"
-    },
-    "values/minecraftServer/null;clusterip-is-the-ip": {
-      "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
-      "type": "null"
-    },
-    "values/minecraftServer/string;clusterip-is-the-ip": {
+    "values/minecraftServer/fragment": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@10"
+          "$ref": "#/$defs/constrains~1:t~1fragment@13"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@4"
+          "$ref": "#/$defs/constrains~1:t~1fragment@7"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@9"
+          "$ref": "#/$defs/constrains~1:t~1fragment@12"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@2"
+          "$ref": "#/$defs/constrains~1:t~1fragment@5"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@5"
+          "$ref": "#/$defs/constrains~1:t~1fragment@8"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@7"
+          "$ref": "#/$defs/constrains~1:t~1fragment@10"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@8"
+          "$ref": "#/$defs/constrains~1:t~1fragment@11"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern"
+          "$ref": "#/$defs/constrains~1:t~1fragment@4"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@3"
+          "$ref": "#/$defs/constrains~1:t~1fragment@6"
         },
         {
-          "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@6"
+          "$ref": "#/$defs/constrains~1:t~1fragment@9"
         }
       ],
       "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
       "type": "string"
     },
-    "values/object": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
+    "values/minecraftServer/fragment@2": {
+      "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
+      "format": "int32",
+      "type": "integer"
+    },
+    "values/minecraftServer/fragment@3": {
+      "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
+      "format": "int32",
+      "type": "null"
+    },
+    "values/minecraftServer/fragment@4": {
+      "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
+      "type": "null"
     },
     "values/serviceAnnotations": {
       "allOf": [
@@ -1978,7 +1978,7 @@
           ]
         },
         {
-          "$ref": "#/$defs/values~1object"
+          "$ref": "#/$defs/values~1fragment"
         }
       ]
     },
@@ -2100,58 +2100,58 @@
               "ingressClassName": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@3"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                    "$ref": "#/$defs/constrains~1:t@3"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@14"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1object"
+                    "$ref": "#/$defs/constrains~1:t~1fragment"
                   },
                   {
                     "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-t"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@16"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-null-null-null"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@15"
                   },
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@10"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@13"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@4"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@7"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@9"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@12"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@2"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@5"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@5"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@8"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@7"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@10"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@8"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@11"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@4"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@3"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@6"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@6"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@9"
                       }
                     ],
                     "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
@@ -2226,7 +2226,7 @@
             "additionalProperties": {},
             "properties": {
               "type": {
-                "$ref": "#/$defs/values~1minecraftServer~1anyOf~1not~1:t+null;type-determines-how-the+object+string+string;pattern-a-za-z0-9-t+3more"
+                "$ref": "#/$defs/constrains~1:t@2"
               }
             }
           }
@@ -2292,44 +2292,44 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@3"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@14"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1object"
+                        "$ref": "#/$defs/constrains~1:t~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@16"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@15"
                       },
                       {
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1path:t~1string"
+                        "$ref": "#/$defs/constrains~1path:t~1fragment"
                       }
                     ]
                   },
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@14"
                       },
                       {
                         "type": "integer"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@16"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1port~1string;pattern-0-1-9"
+                        "$ref": "#/$defs/constrains~1port~1fragment@2"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@15"
                       },
                       {
                         "type": "null"
@@ -2341,55 +2341,55 @@
               {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@3"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@14"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1object"
+                    "$ref": "#/$defs/constrains~1:t~1fragment"
                   },
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@10"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@13"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@4"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@7"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@9"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@12"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@2"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@5"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@5"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@8"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@7"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@10"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@8"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@11"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@4"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@3"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@6"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@6"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@9"
                       }
                     ],
                     "description": "The name of this port within the service. This must be a DNS_LABEL. All ports within a ServiceSpec must have unique names. When considering the endpoints for a Service, this must match the 'name' field in the EndpointPort. Optional if only one ServicePort is defined on this service.",
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-t"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@16"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-null-null-null"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@15"
                   },
                   {
                     "description": "The name of this port within the service. This must be a DNS_LABEL. All ports within a ServiceSpec must have unique names. When considering the endpoints for a Service, this must match the 'name' field in the EndpointPort. Optional if only one ServicePort is defined on this service.",
@@ -2416,54 +2416,54 @@
                 "type": "null"
               },
               {
-                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
+                "$ref": "#/$defs/constrains~1:t~1fragment@3"
               },
               {
-                "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                "$ref": "#/$defs/constrains~1:t@3"
               },
               {
-                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
+                "$ref": "#/$defs/constrains~1:t~1fragment@14"
               },
               {
-                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1object"
+                "$ref": "#/$defs/constrains~1:t~1fragment"
               },
               {
-                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-t"
+                "$ref": "#/$defs/constrains~1:t~1fragment@16"
               },
               {
-                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-null-null-null"
+                "$ref": "#/$defs/constrains~1:t~1fragment@15"
               },
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@10"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@13"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@4"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@7"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@9"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@12"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@2"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@5"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@5"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@8"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@7"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@10"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@8"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@11"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@4"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@3"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@6"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@6"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@9"
                   }
                 ],
                 "description": "The IP protocol for this port. Supports \"TCP\", \"UDP\", and \"SCTP\". Default is TCP.",
@@ -2487,25 +2487,25 @@
               "nodePort": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1minecraftServer~1integer:int32;the-port-on-each"
+                    "$ref": "#/$defs/values~1minecraftServer~1fragment@2"
                   },
                   {
-                    "$ref": "#/$defs/values~1minecraftServer~1null:int32;the-port-on-each"
+                    "$ref": "#/$defs/values~1minecraftServer~1fragment@3"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                    "$ref": "#/$defs/constrains~1:t@3"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@14"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-t"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@16"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1port~1string;pattern-0-1-9"
+                    "$ref": "#/$defs/constrains~1port~1fragment@2"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-null-null-null"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@15"
                   }
                 ]
               }
@@ -2602,7 +2602,7 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t@3"
                       },
                       {
                         "allOf": [
@@ -2620,7 +2620,7 @@
                             ]
                           },
                           {
-                            "$ref": "#/$defs/values~1object"
+                            "$ref": "#/$defs/values~1fragment"
                           }
                         ]
                       }
@@ -2735,10 +2735,10 @@
             "type": "object"
           },
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+fullnameOverride=null"
+            "$ref": "#/$defs/constrains~1:t+fullnameOverride+fullnameOverride:t+fullnameOverride=null"
           },
           {
-            "$ref": "#/$defs/values~1anyOf~1:t+object"
+            "$ref": "#/$defs/constrains~1:t"
           }
         ]
       },
@@ -3138,10 +3138,10 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1fullnameOverride+fullnameOverride:t+fullnameOverride=null"
+            "$ref": "#/$defs/constrains~1:t+fullnameOverride+fullnameOverride:t+fullnameOverride=null"
           },
           {
-            "$ref": "#/$defs/values~1anyOf~1:t+object"
+            "$ref": "#/$defs/constrains~1:t"
           }
         ]
       },
@@ -3169,7 +3169,7 @@
               "rconServiceLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                    "$ref": "#/$defs/constrains~1:t@3"
                   },
                   {
                     "type": "object"
@@ -3181,7 +3181,7 @@
                     "type": "array"
                   },
                   {
-                    "$ref": "#/$defs/values~1object"
+                    "$ref": "#/$defs/values~1fragment"
                   }
                 ]
               }
@@ -3481,7 +3481,7 @@
             "additionalProperties": {},
             "properties": {
               "rconServiceLabels": {
-                "$ref": "#/$defs/values~1anyOf~1array+null+object"
+                "$ref": "#/$defs/values~1fragment@2"
               }
             }
           }
@@ -3538,7 +3538,7 @@
             "additionalProperties": {},
             "properties": {
               "serviceLabels": {
-                "$ref": "#/$defs/values~1anyOf~1array+null+object"
+                "$ref": "#/$defs/values~1fragment@2"
               }
             }
           },
@@ -3575,7 +3575,7 @@
           {
             "properties": {
               "mcbackup": {
-                "$ref": "#/$defs/values~1anyOf~1:t+object"
+                "$ref": "#/$defs/constrains~1:t"
               }
             },
             "required": [
@@ -3690,7 +3690,7 @@
             "$ref": "#/$defs/constrains~1fullnameOverride:t"
           },
           {
-            "$ref": "#/$defs/values~1anyOf~1:t+object"
+            "$ref": "#/$defs/constrains~1:t"
           }
         ]
       },
@@ -4196,7 +4196,7 @@
                     "x-kubernetes-map-type": "atomic"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                    "$ref": "#/$defs/constrains~1:t@3"
                   },
                   {
                     "type": "null"
@@ -4234,7 +4234,7 @@
               "extraServiceSpec": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                    "$ref": "#/$defs/constrains~1:t@3"
                   },
                   {
                     "description": "externalIPs is a list of IP addresses for which nodes in the cluster will also accept traffic for this service.  These IPs are not managed by Kubernetes.  The user is responsible for ensuring that traffic arrives at a node with this IP.  A common example is external load-balancers that are not part of the Kubernetes system.",
@@ -4288,28 +4288,28 @@
                           "loadBalancerIP": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@3"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                                "$ref": "#/$defs/constrains~1:t@3"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@14"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1object"
+                                "$ref": "#/$defs/constrains~1:t~1fragment"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-t"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@16"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-null-null-null"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@15"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1loadBalancerIP:t~1string;only-applies-to-service"
+                                "$ref": "#/$defs/constrains~1loadBalancerIP:t~1fragment"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1loadBalancerIP:t~1null;only-applies-to-service"
+                                "$ref": "#/$defs/constrains~1loadBalancerIP:t~1fragment@2"
                               }
                             ],
                             "description": "loadBalancerSourceRanges: []\nSet the externalTrafficPolicy in the Service to either Cluster or Local\nexternalTrafficPolicy: Cluster"
@@ -4521,28 +4521,28 @@
                           "clusterIP": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@3"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                                "$ref": "#/$defs/constrains~1:t@3"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@14"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1object"
+                                "$ref": "#/$defs/constrains~1:t~1fragment"
                               },
                               {
-                                "$ref": "#/$defs/values~1minecraftServer~1null;clusterip-is-the-ip"
+                                "$ref": "#/$defs/values~1minecraftServer~1fragment@4"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-t"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@16"
                               },
                               {
-                                "$ref": "#/$defs/values~1minecraftServer~1string;clusterip-is-the-ip"
+                                "$ref": "#/$defs/values~1minecraftServer~1fragment"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-null-null-null"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@15"
                               }
                             ]
                           }
@@ -4557,25 +4557,25 @@
                           "nodePort": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/values~1minecraftServer~1integer:int32;the-port-on-each"
+                                "$ref": "#/$defs/values~1minecraftServer~1fragment@2"
                               },
                               {
-                                "$ref": "#/$defs/values~1minecraftServer~1null:int32;the-port-on-each"
+                                "$ref": "#/$defs/values~1minecraftServer~1fragment@3"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                                "$ref": "#/$defs/constrains~1:t@3"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@14"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-t"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@16"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1port~1string;pattern-0-1-9"
+                                "$ref": "#/$defs/constrains~1port~1fragment@2"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-null-null-null"
+                                "$ref": "#/$defs/constrains~1:t~1fragment@15"
                               }
                             ],
                             "description": "Set the external port if the rcon serviceType is NodePort"
@@ -4678,7 +4678,7 @@
                     }
                   },
                   "then": {
-                    "$ref": "#/$defs/values~1minecraftServer~1anyOf~1not~1:t+null;type-determines-how-the+object+string+string;pattern-a-za-z0-9-t+3more"
+                    "$ref": "#/$defs/constrains~1:t@2"
                   }
                 }
               ]
@@ -4705,7 +4705,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "serviceType": {
-                        "$ref": "#/$defs/values~1minecraftServer~1anyOf~1not~1:t+null;type-determines-how-the+object+string+string;pattern-a-za-z0-9-t+3more"
+                        "$ref": "#/$defs/constrains~1:t@2"
                       }
                     }
                   }
@@ -4785,28 +4785,28 @@
         "clusterIP": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
+              "$ref": "#/$defs/constrains~1:t~1fragment@3"
             },
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@3"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@14"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1object"
+              "$ref": "#/$defs/constrains~1:t~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1minecraftServer~1null;clusterip-is-the-ip"
+              "$ref": "#/$defs/values~1minecraftServer~1fragment@4"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@16"
             },
             {
-              "$ref": "#/$defs/values~1minecraftServer~1string;clusterip-is-the-ip"
+              "$ref": "#/$defs/values~1minecraftServer~1fragment"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-null-null-null"
+              "$ref": "#/$defs/constrains~1:t~1fragment@15"
             },
             {
               "type": "null"
@@ -4924,7 +4924,7 @@
         "ipFamilies": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@3"
             },
             {
               "description": "IPFamilies is a list of IP families (e.g. IPv4, IPv6) assigned to this service. This field is usually assigned automatically based on cluster configuration and the ipFamilyPolicy field. If this field is specified manually, the requested family is available in the cluster, and ipFamilyPolicy allows it, it will be used; otherwise creation of the service will fail. This field is conditionally mutable: it allows for adding or removing a secondary IP family, but it does not allow changing the primary IP family of the Service. Valid values are \"IPv4\" and \"IPv6\".  This field only applies to Services of types ClusterIP, NodePort, and LoadBalancer, and does apply to \"headless\" services. This field will be wiped when updating a Service to type ExternalName.\n\nThis field may hold a maximum of two entries (dual-stack families, in either order).  These families must correspond to the values of the clusterIPs field, if specified. Both clusterIPs and ipFamilies are governed by the ipFamilyPolicy field.",
@@ -4945,58 +4945,58 @@
         "ipFamilyPolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
+              "$ref": "#/$defs/constrains~1:t~1fragment@3"
             },
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@3"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@14"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1object"
+              "$ref": "#/$defs/constrains~1:t~1fragment"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@16"
             },
             {
               "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-null-null-null"
+              "$ref": "#/$defs/constrains~1:t~1fragment@15"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@10"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@13"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@4"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@9"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@12"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@2"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@5"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@5"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@7"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@10"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@8"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@11"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@4"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@3"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@6"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1loadBalancerClass:t~1not~1keywords~1pattern@6"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@9"
                 }
               ],
               "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
@@ -5060,25 +5060,25 @@
         "nodePort": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1minecraftServer~1integer:int32;the-port-on-each"
+              "$ref": "#/$defs/values~1minecraftServer~1fragment@2"
             },
             {
-              "$ref": "#/$defs/values~1minecraftServer~1null:int32;the-port-on-each"
+              "$ref": "#/$defs/values~1minecraftServer~1fragment@3"
             },
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@3"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@14"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@16"
             },
             {
-              "$ref": "#/$defs/constrains~1port~1string;pattern-0-1-9"
+              "$ref": "#/$defs/constrains~1port~1fragment@2"
             },
             {
-              "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-null-null-null"
+              "$ref": "#/$defs/constrains~1:t~1fragment@15"
             },
             {
               "type": "null"
@@ -5119,7 +5119,7 @@
                 "enabled": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                      "$ref": "#/$defs/constrains~1:t@3"
                     },
                     {
                       "type": "string"
@@ -5146,7 +5146,7 @@
                   "type": "string"
                 },
                 "serviceType": {
-                  "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1anyOf~1=LoadBalancer+not~1:t+null+string"
+                  "$ref": "#/$defs/constrains~1:t+=LoadBalancer"
                 },
                 "withGeneratedPassword": {
                   "description": "By default, the container will generate a random password at startup\nto ensure internal RCON tooling, including a backup container,\ncan be used, but the password is secure."
@@ -5180,16 +5180,16 @@
         "servicePort": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1port~1integer:int32;the-port-that-will"
+              "$ref": "#/$defs/constrains~1port~1fragment"
             },
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@3"
             },
             {
               "type": "integer"
             },
             {
-              "$ref": "#/$defs/constrains~1port~1string;pattern-0-1-9"
+              "$ref": "#/$defs/constrains~1port~1fragment@2"
             }
           ],
           "description": "Set the external port of the service, usefull when using the LoadBalancer service type"

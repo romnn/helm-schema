@@ -747,7 +747,9 @@ fn resolve_local_ref<'schema>(root: &'schema Value, mut schema: &'schema Value) 
         .and_then(Value::as_str)
         .and_then(|reference| reference.strip_prefix("#/$defs/"))
     {
-        let Some(resolved) = root.get("$defs").and_then(|defs| defs.get(name)) else {
+        // Readable definition names contain `/`, escaped as `~1` in the
+        // reference, so resolve it as a JSON pointer.
+        let Some(resolved) = root.pointer(&format!("/$defs/{name}")) else {
             return schema;
         };
         schema = resolved;

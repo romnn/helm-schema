@@ -1,5 +1,10 @@
 {
   "$defs": {
+    "constrains/:t": {
+      "not": {
+        "$ref": "#/$defs/t"
+      }
+    },
     "constrains/@items.key+@items.mode+@items.path": {
       "description": "items if unspecified, each key-value pair in the Data field of the referenced ConfigMap will be projected into the volume as a file whose name is the key and content is the value. If specified, the listed keys will be projected into the specified paths, and unlisted keys will not be present. If a key is specified which is not present in the ConfigMap, the volume setup will error unless it is marked optional. Paths must be relative and may not contain the '..' path or start with '..'.",
       "items": {
@@ -20,7 +25,7 @@
         "null"
       ]
     },
-    "constrains/@items.key+@items.operator+@items.values/string,null": {
+    "constrains/@items.key+@items.operator+@items.values/fragment": {
       "type": [
         "string",
         "null"
@@ -53,7 +58,7 @@
           "values": {
             "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
             "items": {
-              "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+              "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
             },
             "type": [
               "array",
@@ -516,7 +521,7 @@
           ]
         },
         "divisor": {
-          "$ref": "#/$defs/constrains~1containerName+divisor+resource~1oneOf~1number,null+string,null"
+          "$ref": "#/$defs/constrains~1containerName+divisor+resource~1fragment"
         },
         "resource": {
           "description": "Required: resource to select",
@@ -532,10 +537,10 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "constrains/containerName+divisor+resource/oneOf/number,null+string,null": {
+    "constrains/containerName+divisor+resource/fragment": {
       "oneOf": [
         {
-          "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+          "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
         },
         {
           "type": [
@@ -757,7 +762,7 @@
         "values": {
           "description": "An array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. If the operator is Gt or Lt, the values array must have a single element, which will be interpreted as an integer. This array is replaced during a strategic merge patch.",
           "items": {
-            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
           },
           "type": [
             "array",
@@ -782,19 +787,19 @@
           "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more@2"
         },
         "matchLabelKeys": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set"
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment"
         },
         "mismatchLabelKeys": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set"
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@2"
         },
         "namespaceSelector": {
           "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more@2"
         },
         "namespaces": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;namespaces-specifies-a-static"
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@4"
         },
         "topologyKey": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1string;this-pod-should-be"
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@3"
         }
       },
       "required": [
@@ -805,10 +810,10 @@
         "null"
       ]
     },
-    "constrains/labelSelector.matchExpressions@items.key+8more/array,null;matchlabelkeys-is-a-set": {
+    "constrains/labelSelector.matchExpressions@items.key+8more/fragment": {
       "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
-        "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+        "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
       },
       "type": [
         "array",
@@ -816,10 +821,10 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "constrains/labelSelector.matchExpressions@items.key+8more/array,null;mismatchlabelkeys-is-a-set": {
+    "constrains/labelSelector.matchExpressions@items.key+8more/fragment@2": {
       "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
-        "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+        "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
       },
       "type": [
         "array",
@@ -827,19 +832,19 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "constrains/labelSelector.matchExpressions@items.key+8more/array,null;namespaces-specifies-a-static": {
+    "constrains/labelSelector.matchExpressions@items.key+8more/fragment@3": {
+      "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
+      "type": "string"
+    },
+    "constrains/labelSelector.matchExpressions@items.key+8more/fragment@4": {
       "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
       "items": {
-        "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+        "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
       },
       "type": [
         "array",
         "null"
       ]
-    },
-    "constrains/labelSelector.matchExpressions@items.key+8more/string;this-pod-should-be": {
-      "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
-      "type": "string"
     },
     "constrains/level+role+type+user": {
       "additionalProperties": false,
@@ -952,15 +957,15 @@
           "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values@3"
         },
         "matchLabels": {
-          "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more~1object,null;matchlabels-is-a-map"
+          "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more~1fragment"
         }
       },
       "type": "object",
       "x-kubernetes-map-type": "atomic"
     },
-    "constrains/matchExpressions@items.key+matchExpressions@items.operator+2more/object,null;matchlabels-is-a-map": {
+    "constrains/matchExpressions@items.key+matchExpressions@items.operator+2more/fragment": {
       "additionalProperties": {
-        "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+        "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
       },
       "description": "matchLabels is a map of {key,value} pairs. A single {key,value} in the matchLabels map is equivalent to an element of matchExpressions, whose key field is \"key\", the operator is \"In\", and the values array contains only \"value\". The requirements are ANDed.",
       "type": [
@@ -976,7 +981,7 @@
           "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values@3"
         },
         "matchLabels": {
-          "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more~1object,null;matchlabels-is-a-map"
+          "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more~1fragment"
         }
       },
       "type": [
@@ -1050,7 +1055,7 @@
       "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
       "properties": {
         "name": {
-          "$ref": "#/$defs/constrains~1name~1string,null;name-of-the-referent"
+          "$ref": "#/$defs/constrains~1name~1fragment"
         }
       },
       "type": [
@@ -1059,7 +1064,7 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "constrains/name/string,null;name-of-the-referent": {
+    "constrains/name/fragment": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": [
         "string",
@@ -1089,19 +1094,19 @@
               "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more@2"
             },
             "matchLabelKeys": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set"
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment"
             },
             "mismatchLabelKeys": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set"
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@2"
             },
             "namespaceSelector": {
               "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more@2"
             },
             "namespaces": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;namespaces-specifies-a-static"
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@4"
             },
             "topologyKey": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1string;this-pod-should-be"
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@3"
             }
           },
           "required": [
@@ -1248,228 +1253,13 @@
         }
       ]
     },
-    "values/affinity/object": {
+    "values/affinity/fragment": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
       "type": "object"
     },
-    "values/allOf/anyOf/null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more+2more": {
-      "allOf": [
-        {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/values~1string;name-must-be-unique"
-            },
-            {
-              "$ref": "#/$defs/values~1string@3"
-            },
-            {
-              "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-            },
-            {
-              "$ref": "#/$defs/values~1object"
-            },
-            {
-              "$ref": "#/$defs/values~1string;pattern-t"
-            },
-            {
-              "$ref": "#/$defs/values~1null;name-must-be-unique"
-            },
-            {
-              "$ref": "#/$defs/values~1string;pattern-null-null-null"
-            }
-          ]
-        },
-        {
-          "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "values/allOf/anyOf/null;namespace-defines-the-space+object+string+4more+string": {
-      "allOf": [
-        {
-          "anyOf": [
-            {
-              "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
-              "type": "null"
-            },
-            {
-              "$ref": "#/$defs/values~1string@3"
-            },
-            {
-              "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-            },
-            {
-              "$ref": "#/$defs/values~1object"
-            },
-            {
-              "$ref": "#/$defs/values~1string;pattern-t"
-            },
-            {
-              "$ref": "#/$defs/values~1string;pattern-null-null-null"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
-                },
-                {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
-                },
-                {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
-                },
-                {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
-                },
-                {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
-                },
-                {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
-                },
-                {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
-                },
-                {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern"
-                },
-                {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
-                },
-                {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
-                }
-              ],
-              "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
-              "type": "string"
-            }
-          ]
-        },
-        {
-          "type": "string"
-        }
-      ]
-    },
-    "values/anyOf/integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "type": "integer"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-0-1-9"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-null-null-null"
-        },
-        {
-          "type": "null"
-        }
-      ]
-    },
-    "values/anyOf/null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1string@3"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "$ref": "#/$defs/values~1object"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-null-null-null"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/values~1string"
-        }
-      ]
-    },
-    "values/boolean;insecureskipverify-defines-how-to": {
-      "description": "insecureSkipVerify defines how to disable target certificate validation.",
-      "type": "boolean"
-    },
-    "values/not/:t": {
-      "not": {
-        "$ref": "#/$defs/t"
-      }
-    },
-    "values/not/keywords/pattern": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
-      }
-    },
-    "values/not/keywords/pattern@10": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "values/not/keywords/pattern@2": {
-      "not": {
-        "pattern": "[ \\t]#"
-      }
-    },
-    "values/not/keywords/pattern@3": {
-      "not": {
-        "pattern": "[\\r\\n]"
-      }
-    },
-    "values/not/keywords/pattern@4": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "values/not/keywords/pattern@5": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "values/not/keywords/pattern@6": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "values/not/keywords/pattern@7": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "values/not/keywords/pattern@8": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "values/not/keywords/pattern@9": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "values/null;name-must-be-unique": {
-      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
-      "type": "null"
-    },
-    "values/null;variable-references-var-name-are": {
-      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-      "type": "null"
-    },
-    "values/object": {
+    "values/fragment": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -1480,7 +1270,7 @@
             "type": "integer"
           },
           {
-            "$ref": "#/$defs/values~1string@2"
+            "$ref": "#/$defs/values~1fragment@6"
           },
           {
             "type": "number"
@@ -1498,198 +1288,368 @@
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/values~1string@2"
+        "$ref": "#/$defs/values~1fragment@6"
       },
       "type": "object"
     },
-    "values/object@2": {
+    "values/fragment@10": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1fragment@9"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@25"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@29"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@28"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@5"
+        }
+      ]
+    },
+    "values/fragment@11": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1fragment@25"
+        },
+        {
+          "type": "integer"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@29"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@26"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@28"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "values/fragment@12": {
+      "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
+      "type": "null"
+    },
+    "values/fragment@13": {
+      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+      "type": "null"
+    },
+    "values/fragment@14": {
+      "description": "insecureSkipVerify defines how to disable target certificate validation.",
+      "type": "boolean"
+    },
+    "values/fragment@15": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
+    },
+    "values/fragment@16": {
+      "not": {
+        "pattern": "[ \\t]#"
+      }
+    },
+    "values/fragment@17": {
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "values/fragment@18": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "values/fragment@19": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "values/fragment@2": {
       "additionalProperties": {
         "type": "string"
       },
       "type": "object"
     },
-    "values/podAnnotations/allOf/object+object,null;annotations-is-an-unstructured": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/values~1podAnnotations~1object,null;annotations-is-an-unstructured"
-        },
-        {
-          "$ref": "#/$defs/values~1object@2"
-        }
-      ]
+    "values/fragment@20": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
     },
-    "values/podAnnotations/object,null;annotations-is-an-unstructured": {
-      "additionalProperties": {
-        "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
-      },
-      "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
-      "type": [
-        "object",
-        "null"
-      ]
+    "values/fragment@21": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
     },
-    "values/podDisruptionBudget/oneOf/anyOf/integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more": {
-      "oneOf": [
-        {
-          "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
-        },
-        {
-          "$ref": "#/$defs/values~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
-        }
-      ]
+    "values/fragment@22": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
     },
-    "values/podLabels/object,null;map-of-string-keys": {
-      "additionalProperties": {
-        "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
-      },
-      "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
-      "type": [
-        "object",
-        "null"
-      ]
+    "values/fragment@23": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
     },
-    "values/string": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
-        },
-        {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
-        },
-        {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
-        },
-        {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
-        },
-        {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
-        },
-        {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
-        },
-        {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
-        },
-        {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
-        },
-        {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
-        }
-      ],
+    "values/fragment@24": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "values/fragment@25": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
       "type": "string"
     },
-    "values/string;name-must-be-unique": {
+    "values/fragment@26": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
+    },
+    "values/fragment@27": {
+      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
+      "type": "string"
+    },
+    "values/fragment@28": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "values/fragment@29": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/fragment@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
+          "$ref": "#/$defs/values~1fragment@24"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
+          "$ref": "#/$defs/values~1fragment@18"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
+          "$ref": "#/$defs/values~1fragment@23"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+          "$ref": "#/$defs/values~1fragment@16"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
+          "$ref": "#/$defs/values~1fragment@19"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
+          "$ref": "#/$defs/values~1fragment@21"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
+          "$ref": "#/$defs/values~1fragment@22"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern"
+          "$ref": "#/$defs/values~1fragment@15"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+          "$ref": "#/$defs/values~1fragment@17"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
+          "$ref": "#/$defs/values~1fragment@20"
         }
       ],
       "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
       "type": "string"
     },
-    "values/string;pattern-0-1-9": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
-    },
-    "values/string;pattern-a-za-z0-9-t": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/string;pattern-null-null-null": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "values/string;pattern-t": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/string;pattern-true-true-true-fal": {
-      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
-      "type": "string"
-    },
-    "values/string;variable-references-var-name-are": {
+    "values/fragment@4": {
       "allOf": [
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
+          "$ref": "#/$defs/values~1fragment@24"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
+          "$ref": "#/$defs/values~1fragment@18"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
+          "$ref": "#/$defs/values~1fragment@23"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+          "$ref": "#/$defs/values~1fragment@16"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
+          "$ref": "#/$defs/values~1fragment@19"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
+          "$ref": "#/$defs/values~1fragment@21"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
+          "$ref": "#/$defs/values~1fragment@22"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern"
+          "$ref": "#/$defs/values~1fragment@15"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+          "$ref": "#/$defs/values~1fragment@17"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
+          "$ref": "#/$defs/values~1fragment@20"
         }
       ],
       "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
       "type": "string"
     },
-    "values/string@2": {
+    "values/fragment@5": {
       "allOf": [
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+          "$ref": "#/$defs/values~1fragment@24"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern"
+          "$ref": "#/$defs/values~1fragment@18"
         },
         {
-          "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+          "$ref": "#/$defs/values~1fragment@23"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@16"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@19"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@21"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@22"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@15"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@17"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@20"
         }
       ],
       "type": "string"
     },
-    "values/string@3": {
+    "values/fragment@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/values~1fragment@16"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@15"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@17"
+        }
+      ],
+      "type": "string"
+    },
+    "values/fragment@7": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/values~1fragment@3"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@9"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@25"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@29"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@12"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@28"
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@10"
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "values/fragment@8": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@9"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@25"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@29"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@28"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/values~1fragment@24"
+                },
+                {
+                  "$ref": "#/$defs/values~1fragment@18"
+                },
+                {
+                  "$ref": "#/$defs/values~1fragment@23"
+                },
+                {
+                  "$ref": "#/$defs/values~1fragment@16"
+                },
+                {
+                  "$ref": "#/$defs/values~1fragment@19"
+                },
+                {
+                  "$ref": "#/$defs/values~1fragment@21"
+                },
+                {
+                  "$ref": "#/$defs/values~1fragment@22"
+                },
+                {
+                  "$ref": "#/$defs/values~1fragment@15"
+                },
+                {
+                  "$ref": "#/$defs/values~1fragment@17"
+                },
+                {
+                  "$ref": "#/$defs/values~1fragment@20"
+                }
+              ],
+              "description": "Namespace defines the space within which each name must be unique. An empty namespace is equivalent to the \"default\" namespace, but \"default\" is the canonical representation. Not all objects are required to be scoped to a namespace - the value of this field for those objects will be empty.\n\nMust be a DNS_LABEL. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/namespaces",
+              "type": "string"
+            }
+          ]
+        },
+        {
+          "type": "string"
+        }
+      ]
+    },
+    "values/fragment@9": {
       "allOf": [
         {
           "not": {
@@ -1707,53 +1667,87 @@
       ],
       "type": "string"
     },
-    "values/tracing/anyOf/null;variable-references-var-name-are+object+string+string;pattern-a-za-z0-9-t+3more": {
-      "anyOf": [
+    "values/podAnnotations/fragment": {
+      "additionalProperties": {
+        "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
+      },
+      "description": "Annotations is an unstructured key value map stored with a resource that may be set by external tools to store and retrieve arbitrary metadata. They are not queryable and should be preserved when modifying objects. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "values/podAnnotations/fragment@2": {
+      "allOf": [
         {
-          "$ref": "#/$defs/values~1string@3"
+          "$ref": "#/$defs/values~1podAnnotations~1fragment"
         },
         {
-          "$ref": "#/$defs/values~1string;variable-references-var-name-are"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "$ref": "#/$defs/values~1object"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-null-null-null"
-        },
-        {
-          "$ref": "#/$defs/values~1null;variable-references-var-name-are"
+          "$ref": "#/$defs/values~1fragment@2"
         }
       ]
     },
-    "values/volumes/boolean,null;optional-specify-whether-the": {
-      "description": "optional specify whether the ConfigMap or its keys must be defined",
+    "values/podDisruptionBudget/fragment": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/values~1fragment@10"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@11"
+        }
+      ]
+    },
+    "values/podLabels/fragment": {
+      "additionalProperties": {
+        "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
+      },
+      "description": "Map of string keys and values that can be used to organize and categorize (scope and select) objects. May match selectors of replication controllers and services. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/labels",
       "type": [
-        "boolean",
+        "object",
         "null"
       ]
     },
-    "values/volumes/boolean,null;readonly-defaults-to-false": {
-      "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
+    "values/tracing/fragment": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1fragment@9"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@4"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@25"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@29"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@28"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@13"
+        }
+      ]
+    },
+    "values/volumes/fragment": {
+      "description": "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required.",
       "type": [
-        "boolean",
+        "string",
         "null"
       ]
     },
-    "values/volumes/boolean,null;readonly-defaults-to-false@2": {
-      "description": "readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
-      "type": [
-        "boolean",
-        "null"
-      ]
+    "values/volumes/fragment@2": {
+      "description": "Kind is the type of resource being referenced",
+      "type": "string"
     },
-    "values/volumes/string,null:date-time;time-is-a-wrapper": {
+    "values/volumes/fragment@3": {
+      "description": "Name is the name of resource being referenced",
+      "type": "string"
+    },
+    "values/volumes/fragment@4": {
       "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
       "format": "date-time",
       "type": [
@@ -1761,27 +1755,33 @@
         "null"
       ]
     },
-    "values/volumes/string,null;apigroup-is-the-group": {
-      "description": "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required.",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "values/volumes/string,null;fstype-is-the-filesystem": {
+    "values/volumes/fragment@5": {
       "description": "fsType is the filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified.",
       "type": [
         "string",
         "null"
       ]
     },
-    "values/volumes/string;kind-is-the-type": {
-      "description": "Kind is the type of resource being referenced",
-      "type": "string"
+    "values/volumes/fragment@6": {
+      "description": "optional specify whether the ConfigMap or its keys must be defined",
+      "type": [
+        "boolean",
+        "null"
+      ]
     },
-    "values/volumes/string;name-is-the-name": {
-      "description": "Name is the name of resource being referenced",
-      "type": "string"
+    "values/volumes/fragment@7": {
+      "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "values/volumes/fragment@8": {
+      "description": "readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
+      "type": [
+        "boolean",
+        "null"
+      ]
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -1800,49 +1800,49 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1string@3"
+                    "$ref": "#/$defs/values~1fragment@9"
                   },
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
+                        "$ref": "#/$defs/values~1fragment@24"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
+                        "$ref": "#/$defs/values~1fragment@18"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
+                        "$ref": "#/$defs/values~1fragment@23"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+                        "$ref": "#/$defs/values~1fragment@16"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
+                        "$ref": "#/$defs/values~1fragment@19"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
+                        "$ref": "#/$defs/values~1fragment@21"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
+                        "$ref": "#/$defs/values~1fragment@22"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern"
+                        "$ref": "#/$defs/values~1fragment@15"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+                        "$ref": "#/$defs/values~1fragment@17"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
+                        "$ref": "#/$defs/values~1fragment@20"
                       }
                     ],
                     "description": "Name of the object being referenced.",
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/values~1not~1:t"
+                    "$ref": "#/$defs/constrains~1:t"
                   },
                   {
-                    "$ref": "#/$defs/values~1object"
+                    "$ref": "#/$defs/values~1fragment"
                   }
                 ],
                 "description": "name of the service account to use. If not set and create is true, a name is generated using the fullname template."
@@ -2094,19 +2094,19 @@
                         "propertyNames": {
                           "allOf": [
                             {
-                              "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
+                              "$ref": "#/$defs/values~1fragment@24"
                             },
                             {
-                              "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
+                              "$ref": "#/$defs/values~1fragment@23"
                             },
                             {
-                              "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+                              "$ref": "#/$defs/values~1fragment@16"
                             },
                             {
-                              "$ref": "#/$defs/values~1not~1keywords~1pattern"
+                              "$ref": "#/$defs/values~1fragment@15"
                             },
                             {
-                              "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+                              "$ref": "#/$defs/values~1fragment@17"
                             }
                           ]
                         },
@@ -2271,10 +2271,10 @@
                           "insecureSkipVerify": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/values~1boolean;insecureskipverify-defines-how-to"
+                                "$ref": "#/$defs/values~1fragment@14"
                               },
                               {
-                                "$ref": "#/$defs/values~1string;pattern-true-true-true-fal"
+                                "$ref": "#/$defs/values~1fragment@27"
                               }
                             ]
                           }
@@ -2461,28 +2461,28 @@
               "certsSecret": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1string;name-must-be-unique"
+                    "$ref": "#/$defs/values~1fragment@3"
                   },
                   {
-                    "$ref": "#/$defs/values~1string@3"
+                    "$ref": "#/$defs/values~1fragment@9"
                   },
                   {
-                    "$ref": "#/$defs/values~1not~1:t"
+                    "$ref": "#/$defs/constrains~1:t"
                   },
                   {
-                    "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                    "$ref": "#/$defs/values~1fragment@25"
                   },
                   {
-                    "$ref": "#/$defs/values~1object"
+                    "$ref": "#/$defs/values~1fragment"
                   },
                   {
-                    "$ref": "#/$defs/values~1string;pattern-t"
+                    "$ref": "#/$defs/values~1fragment@29"
                   },
                   {
-                    "$ref": "#/$defs/values~1null;name-must-be-unique"
+                    "$ref": "#/$defs/values~1fragment@12"
                   },
                   {
-                    "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                    "$ref": "#/$defs/values~1fragment@28"
                   }
                 ],
                 "description": "secret specifies the Kubernetes secret to be mounted into the path designated by the certsDir value to be used for webhook certificates."
@@ -2665,12 +2665,12 @@
                   {
                     "description": "values is an array of string values. If the operator is In or NotIn, the values array must be non-empty. If the operator is Exists or DoesNotExist, the values array must be empty. This array is replaced during a strategic merge patch.",
                     "items": {
-                      "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+                      "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
                     },
                     "type": "array"
                   },
                   {
-                    "$ref": "#/$defs/values~1not~1:t"
+                    "$ref": "#/$defs/constrains~1:t"
                   },
                   {
                     "type": "object"
@@ -2700,10 +2700,10 @@
                 "description": "kubeAPIServerPort is the port used by the Kubernetes API server.\nOnly used when softMultiTenancy is enabled. Defaults to 443.",
                 "oneOf": [
                   {
-                    "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+                    "$ref": "#/$defs/values~1fragment@10"
                   },
                   {
-                    "$ref": "#/$defs/values~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
+                    "$ref": "#/$defs/values~1fragment@11"
                   }
                 ]
               }
@@ -2714,11 +2714,11 @@
             "properties": {
               "managedNamespaces": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/values~1allOf~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more+2more"
+                  "$ref": "#/$defs/values~1fragment@7"
                 },
                 "description": "managedNamespaces is the set of namespaces that the operator manages. Leave empty to manage all namespaces.\nMutually exclusive with managedNamespaceSelector.",
                 "items": {
-                  "$ref": "#/$defs/values~1allOf~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more+2more"
+                  "$ref": "#/$defs/values~1fragment@7"
                 }
               }
             }
@@ -2755,28 +2755,28 @@
               "certsSecret": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1string@3"
+                    "$ref": "#/$defs/values~1fragment@9"
                   },
                   {
-                    "$ref": "#/$defs/values~1string;variable-references-var-name-are"
+                    "$ref": "#/$defs/values~1fragment@4"
                   },
                   {
-                    "$ref": "#/$defs/values~1not~1:t"
+                    "$ref": "#/$defs/constrains~1:t"
                   },
                   {
-                    "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                    "$ref": "#/$defs/values~1fragment@25"
                   },
                   {
-                    "$ref": "#/$defs/values~1object"
+                    "$ref": "#/$defs/values~1fragment"
                   },
                   {
-                    "$ref": "#/$defs/values~1string;pattern-t"
+                    "$ref": "#/$defs/values~1fragment@29"
                   },
                   {
-                    "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                    "$ref": "#/$defs/values~1fragment@28"
                   },
                   {
-                    "$ref": "#/$defs/values~1null;variable-references-var-name-are"
+                    "$ref": "#/$defs/values~1fragment@13"
                   }
                 ],
                 "description": "secret specifies the Kubernetes secret to be mounted into the path designated by the certsDir value to be used for webhook certificates."
@@ -2915,28 +2915,28 @@
           "nameOverride": {
             "anyOf": [
               {
-                "$ref": "#/$defs/values~1string@3"
+                "$ref": "#/$defs/values~1fragment@9"
               },
               {
-                "$ref": "#/$defs/values~1not~1:t"
+                "$ref": "#/$defs/constrains~1:t"
               },
               {
-                "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                "$ref": "#/$defs/values~1fragment@25"
               },
               {
-                "$ref": "#/$defs/values~1object"
+                "$ref": "#/$defs/values~1fragment"
               },
               {
-                "$ref": "#/$defs/values~1string;pattern-t"
+                "$ref": "#/$defs/values~1fragment@29"
               },
               {
-                "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                "$ref": "#/$defs/values~1fragment@28"
               },
               {
                 "type": "null"
               },
               {
-                "$ref": "#/$defs/values~1string"
+                "$ref": "#/$defs/values~1fragment@5"
               }
             ],
             "description": "nameOverride is the short name for the deployment. Leave empty to let Helm generate a name using chart values."
@@ -3121,7 +3121,7 @@
                 "type": "null"
               },
               {
-                "$ref": "#/$defs/values~1object@2"
+                "$ref": "#/$defs/values~1fragment@2"
               }
             ],
             "description": "extraObjects allows injecting additional Kubernetes resources into the chart.\nThese resources will be created/deleted alongside the chart release.\nThe value can be a list or a map of strings, each string is a YAML manifest.\nHelm templating is supported within each manifest.\nExample (list):\nextraObjects:\n- |\napiVersion: v1\nkind: ConfigMap\nmetadata:\nname: {{ include \"eck-operator.fullname\" . }}-extra-config\nnamespace: {{ .Release.Namespace }}\ndata:\nkey: value\nExample (map):\nextraObjects:\nmyConfigMap: |\napiVersion: v1\nkind: ConfigMap\nmetadata:\nname: {{ include \"eck-operator.fullname\" . }}-extra-config\nnamespace: {{ .Release.Namespace }}\ndata:\nkey: value"
@@ -3205,7 +3205,7 @@
                 "type": "null"
               },
               {
-                "$ref": "#/$defs/values~1object@2"
+                "$ref": "#/$defs/values~1fragment@2"
               }
             ],
             "description": "extraObjects allows injecting additional Kubernetes resources into the chart.\nThese resources will be created/deleted alongside the chart release.\nThe value can be a list or a map of strings, each string is a YAML manifest.\nHelm templating is supported within each manifest.\nExample (list):\nextraObjects:\n- |\napiVersion: v1\nkind: ConfigMap\nmetadata:\nname: {{ include \"eck-operator.fullname\" . }}-extra-config\nnamespace: {{ .Release.Namespace }}\ndata:\nkey: value\nExample (map):\nextraObjects:\nmyConfigMap: |\napiVersion: v1\nkind: ConfigMap\nmetadata:\nname: {{ include \"eck-operator.fullname\" . }}-extra-config\nnamespace: {{ .Release.Namespace }}\ndata:\nkey: value"
@@ -3293,11 +3293,11 @@
             "properties": {
               "managedNamespaces": {
                 "additionalProperties": {
-                  "$ref": "#/$defs/values~1allOf~1anyOf~1null;namespace-defines-the-space+object+string+4more+string"
+                  "$ref": "#/$defs/values~1fragment@8"
                 },
                 "description": "managedNamespaces is the set of namespaces that the operator manages. Leave empty to manage all namespaces.\nMutually exclusive with managedNamespaceSelector.",
                 "items": {
-                  "$ref": "#/$defs/values~1allOf~1anyOf~1null;namespace-defines-the-space+object+string+4more+string"
+                  "$ref": "#/$defs/values~1fragment@8"
                 }
               }
             }
@@ -3589,16 +3589,16 @@
           "nameOverride": {
             "anyOf": [
               {
-                "$ref": "#/$defs/values~1string@3"
+                "$ref": "#/$defs/values~1fragment@9"
               },
               {
-                "$ref": "#/$defs/values~1not~1:t"
+                "$ref": "#/$defs/constrains~1:t"
               },
               {
-                "$ref": "#/$defs/values~1object"
+                "$ref": "#/$defs/values~1fragment"
               },
               {
-                "$ref": "#/$defs/values~1string"
+                "$ref": "#/$defs/values~1fragment@5"
               }
             ],
             "description": "nameOverride is the short name for the deployment. Leave empty to let Helm generate a name using chart values."
@@ -3808,13 +3808,13 @@
                   {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1string@3"
+                        "$ref": "#/$defs/values~1fragment@9"
                       },
                       {
-                        "$ref": "#/$defs/values~1object"
+                        "$ref": "#/$defs/values~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/values~1string"
+                        "$ref": "#/$defs/values~1fragment@5"
                       }
                     ]
                   },
@@ -3849,10 +3849,10 @@
                 "description": "port is the port that the validating webhook binds to.",
                 "oneOf": [
                   {
-                    "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+                    "$ref": "#/$defs/values~1fragment@10"
                   },
                   {
-                    "$ref": "#/$defs/values~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
+                    "$ref": "#/$defs/values~1fragment@11"
                   }
                 ]
               }
@@ -3900,10 +3900,10 @@
                   "insecureSkipVerify": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1boolean;insecureskipverify-defines-how-to"
+                        "$ref": "#/$defs/values~1fragment@14"
                       },
                       {
-                        "$ref": "#/$defs/values~1string;pattern-true-true-true-fal"
+                        "$ref": "#/$defs/values~1fragment@27"
                       }
                     ],
                     "description": "insecureSkipVerify specifies whether to skip verification of the TLS certificate for the secure metrics endpoint.\n* If this setting is set to false, then the following settings are required:\n- certificateSecret\n- caSecret"
@@ -4036,7 +4036,7 @@
     "affinity": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "additionalProperties": false,
@@ -4191,7 +4191,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/values~1affinity~1object"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         },
         {
           "type": "null"
@@ -4202,20 +4202,20 @@
     "automountServiceAccountToken": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1string;pattern-true-true-true-fal"
+          "$ref": "#/$defs/values~1fragment@27"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/values~1fragment@25"
         },
         {
           "description": "AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.",
           "type": "null"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-t"
+          "$ref": "#/$defs/values~1fragment@29"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-null-null-null"
+          "$ref": "#/$defs/values~1fragment@28"
         },
         {
           "description": "AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.",
@@ -4457,7 +4457,7 @@
                         "certificateSecret": {
                           "anyOf": [
                             {
-                              "$ref": "#/$defs/values~1string@3"
+                              "$ref": "#/$defs/values~1fragment@9"
                             },
                             {
                               "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
@@ -4466,53 +4466,53 @@
                             {
                               "allOf": [
                                 {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
+                                  "$ref": "#/$defs/values~1fragment@24"
                                 },
                                 {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
+                                  "$ref": "#/$defs/values~1fragment@18"
                                 },
                                 {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
+                                  "$ref": "#/$defs/values~1fragment@23"
                                 },
                                 {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+                                  "$ref": "#/$defs/values~1fragment@16"
                                 },
                                 {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
+                                  "$ref": "#/$defs/values~1fragment@19"
                                 },
                                 {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
+                                  "$ref": "#/$defs/values~1fragment@21"
                                 },
                                 {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
+                                  "$ref": "#/$defs/values~1fragment@22"
                                 },
                                 {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern"
+                                  "$ref": "#/$defs/values~1fragment@15"
                                 },
                                 {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+                                  "$ref": "#/$defs/values~1fragment@17"
                                 },
                                 {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
+                                  "$ref": "#/$defs/values~1fragment@20"
                                 }
                               ],
                               "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
                               "type": "string"
                             },
                             {
-                              "$ref": "#/$defs/values~1not~1:t"
+                              "$ref": "#/$defs/constrains~1:t"
                             },
                             {
-                              "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                              "$ref": "#/$defs/values~1fragment@25"
                             },
                             {
-                              "$ref": "#/$defs/values~1object"
+                              "$ref": "#/$defs/values~1fragment"
                             },
                             {
-                              "$ref": "#/$defs/values~1string;pattern-t"
+                              "$ref": "#/$defs/values~1fragment@29"
                             },
                             {
-                              "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                              "$ref": "#/$defs/values~1fragment@28"
                             }
                           ],
                           "description": "certificateSecret is the name of the tls secret containing the custom TLS certificate and key for the secure metrics endpoint.\n* This is an optional setting and is only required if you are using a custom TLS certificate. A self-signed certificate will be generated by default.\n* TLS secret key must be named tls.crt.\n* TLS key's secret key must be named tls.key.\n* It is assumed to be in the same namespace as the ServiceMonitor.\nexample: kubectl create secret tls eck-metrics-tls-certificate -n elastic-system \\\n--cert=/path/to/tls.crt --key=/path/to/tls.key"
@@ -4568,10 +4568,10 @@
     "dnsConfig": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1affinity~1object"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         },
         {
           "type": "null"
@@ -4583,7 +4583,7 @@
             "nameservers": {
               "description": "A list of DNS name server IP addresses. This will be appended to the base nameservers generated from DNSPolicy. Duplicated nameservers will be removed.",
               "items": {
-                "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+                "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
               },
               "type": [
                 "array",
@@ -4604,7 +4604,7 @@
                     ]
                   },
                   "value": {
-                    "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+                    "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
                   }
                 },
                 "type": [
@@ -4620,7 +4620,7 @@
             "searches": {
               "description": "A list of DNS search domains for host-name lookup. This will be appended to the base search paths generated from DNSPolicy. Duplicated search paths will be removed.",
               "items": {
-                "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+                "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
               },
               "type": [
                 "array",
@@ -4636,62 +4636,62 @@
     "dnsPolicy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1string@3"
+          "$ref": "#/$defs/values~1fragment@9"
         },
         {
-          "$ref": "#/$defs/values~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/values~1fragment@25"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
+              "$ref": "#/$defs/values~1fragment@24"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
+              "$ref": "#/$defs/values~1fragment@18"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
+              "$ref": "#/$defs/values~1fragment@23"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+              "$ref": "#/$defs/values~1fragment@16"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
+              "$ref": "#/$defs/values~1fragment@19"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
+              "$ref": "#/$defs/values~1fragment@21"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
+              "$ref": "#/$defs/values~1fragment@22"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern"
+              "$ref": "#/$defs/values~1fragment@15"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+              "$ref": "#/$defs/values~1fragment@17"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
+              "$ref": "#/$defs/values~1fragment@20"
             }
           ],
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/values~1object"
+          "$ref": "#/$defs/values~1fragment"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-t"
+          "$ref": "#/$defs/values~1fragment@29"
         },
         {
           "description": "Set DNS policy for the pod. Defaults to \"ClusterFirst\". Valid values are 'ClusterFirstWithHostNet', 'ClusterFirst', 'Default' or 'None'. DNS parameters given in DNSConfig will be merged with the policy selected with DNSPolicy. To have DNS options set along with hostNetwork, you have to specify DNS policy explicitly to 'ClusterFirstWithHostNet'.",
           "type": "null"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-null-null-null"
+          "$ref": "#/$defs/values~1fragment@28"
         }
       ],
       "description": "dnsPolicy defines the DNS policy for the operator pod.\nCheck https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-s-dns-policy for more details."
@@ -4740,7 +4740,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/constrains~1name~1string,null;name-of-the-referent"
+                        "$ref": "#/$defs/constrains~1name~1fragment"
                       },
                       "optional": {
                         "description": "Specify whether the ConfigMap or its key must be defined",
@@ -4774,7 +4774,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/constrains~1name~1string,null;name-of-the-referent"
+                        "$ref": "#/$defs/constrains~1name~1fragment"
                       },
                       "optional": {
                         "description": "Specify whether the Secret or its key must be defined",
@@ -4813,7 +4813,7 @@
           "x-kubernetes-patch-strategy": "merge"
         },
         {
-          "$ref": "#/$defs/values~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "type": "null"
@@ -4859,55 +4859,55 @@
         "pullPolicy": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1string@3"
+              "$ref": "#/$defs/values~1fragment@9"
             },
             {
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/values~1fragment@25"
             },
             {
-              "$ref": "#/$defs/values~1object"
+              "$ref": "#/$defs/values~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1string;pattern-t"
+              "$ref": "#/$defs/values~1fragment@29"
             },
             {
-              "$ref": "#/$defs/values~1string;pattern-null-null-null"
+              "$ref": "#/$defs/values~1fragment@28"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
+                  "$ref": "#/$defs/values~1fragment@24"
                 },
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
+                  "$ref": "#/$defs/values~1fragment@18"
                 },
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
+                  "$ref": "#/$defs/values~1fragment@23"
                 },
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+                  "$ref": "#/$defs/values~1fragment@16"
                 },
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
+                  "$ref": "#/$defs/values~1fragment@19"
                 },
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
+                  "$ref": "#/$defs/values~1fragment@21"
                 },
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
+                  "$ref": "#/$defs/values~1fragment@22"
                 },
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern"
+                  "$ref": "#/$defs/values~1fragment@15"
                 },
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+                  "$ref": "#/$defs/values~1fragment@17"
                 },
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
+                  "$ref": "#/$defs/values~1fragment@20"
                 }
               ],
               "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
@@ -4928,7 +4928,7 @@
     "imagePullSecrets": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "type": "null"
@@ -4968,18 +4968,18 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+            "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
           },
           "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
           "type": "object",
           "x-kubernetes-map-type": "atomic"
         },
         {
-          "$ref": "#/$defs/values~1affinity~1object"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         },
         {
           "type": "null"
@@ -4990,13 +4990,13 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1affinity~1object"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         },
         {
-          "$ref": "#/$defs/values~1podAnnotations~1allOf~1object+object,null;annotations-is-an-unstructured"
+          "$ref": "#/$defs/values~1podAnnotations~1fragment@2"
         }
       ],
       "description": "podAnnotations define the annotations that should be added to the operator pod."
@@ -5016,10 +5016,10 @@
                   "minAvailable": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1podDisruptionBudget~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
+                        "$ref": "#/$defs/values~1podDisruptionBudget~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t"
                       }
                     ],
                     "description": "maxUnavailable: 3"
@@ -5032,10 +5032,10 @@
                   "maxUnavailable": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1podDisruptionBudget~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
+                        "$ref": "#/$defs/values~1podDisruptionBudget~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t"
                       }
                     ]
                   }
@@ -5058,20 +5058,20 @@
     "podLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/values~1podLabels~1object,null;map-of-string-keys"
+              "$ref": "#/$defs/values~1podLabels~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1object@2"
+              "$ref": "#/$defs/values~1fragment@2"
             }
           ]
         },
         {
-          "$ref": "#/$defs/values~1affinity~1object"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         }
       ],
       "description": "podLabels define additional labels that should be added to the operator pod."
@@ -5117,7 +5117,7 @@
     "podSecurityContext": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "additionalProperties": false,
@@ -5229,58 +5229,58 @@
     "priorityClassName": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1string@3"
+          "$ref": "#/$defs/values~1fragment@9"
         },
         {
-          "$ref": "#/$defs/values~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/values~1fragment@25"
         },
         {
-          "$ref": "#/$defs/values~1object"
+          "$ref": "#/$defs/values~1fragment"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-t"
+          "$ref": "#/$defs/values~1fragment@29"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
+              "$ref": "#/$defs/values~1fragment@24"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
+              "$ref": "#/$defs/values~1fragment@18"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
+              "$ref": "#/$defs/values~1fragment@23"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+              "$ref": "#/$defs/values~1fragment@16"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
+              "$ref": "#/$defs/values~1fragment@19"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
+              "$ref": "#/$defs/values~1fragment@21"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
+              "$ref": "#/$defs/values~1fragment@22"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern"
+              "$ref": "#/$defs/values~1fragment@15"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+              "$ref": "#/$defs/values~1fragment@17"
             },
             {
-              "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
+              "$ref": "#/$defs/values~1fragment@20"
             }
           ],
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
           "type": "string"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-null-null-null"
+          "$ref": "#/$defs/values~1fragment@28"
         },
         {
           "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -5306,7 +5306,7 @@
           "type": "integer"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/values~1fragment@25"
         },
         {
           "description": "replicas is the desired number of replicas of the given Template. These are replicas in the sense that they are instantiations of the same Template, but individual replicas also have a consistent identity. If unspecified, defaults to 1.",
@@ -5314,13 +5314,13 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-t"
+          "$ref": "#/$defs/values~1fragment@29"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-0-1-9"
+          "$ref": "#/$defs/values~1fragment@26"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-null-null-null"
+          "$ref": "#/$defs/values~1fragment@28"
         }
       ],
       "description": "replicaCount is the number of operator pods to run."
@@ -5328,7 +5328,7 @@
     "resources": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "type": "null"
@@ -5369,7 +5369,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/constrains~1containerName+divisor+resource~1oneOf~1number,null+string,null"
+                    "$ref": "#/$defs/constrains~1containerName+divisor+resource~1fragment"
                   },
                   "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -5391,7 +5391,7 @@
               "anyOf": [
                 {
                   "additionalProperties": {
-                    "$ref": "#/$defs/constrains~1containerName+divisor+resource~1oneOf~1number,null+string,null"
+                    "$ref": "#/$defs/constrains~1containerName+divisor+resource~1fragment"
                   },
                   "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                   "properties": {
@@ -5441,7 +5441,7 @@
                     "add": {
                       "description": "Added capabilities",
                       "items": {
-                        "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+                        "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
                       },
                       "type": [
                         "array",
@@ -5542,7 +5542,7 @@
           "type": "object"
         },
         {
-          "$ref": "#/$defs/values~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "type": "null"
@@ -5573,24 +5573,24 @@
                   "automountServiceAccountToken": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1string;pattern-true-true-true-fal"
+                        "$ref": "#/$defs/values~1fragment@27"
                       },
                       {
                         "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/values~1fragment@25"
                       },
                       {
                         "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
                         "type": "boolean"
                       },
                       {
-                        "$ref": "#/$defs/values~1string;pattern-t"
+                        "$ref": "#/$defs/values~1fragment@29"
                       },
                       {
-                        "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/values~1fragment@28"
                       }
                     ],
                     "description": "Specifies whether a service account should automount API credentials."
@@ -5603,28 +5603,28 @@
                   "name": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1string;name-must-be-unique"
+                        "$ref": "#/$defs/values~1fragment@3"
                       },
                       {
-                        "$ref": "#/$defs/values~1string@3"
+                        "$ref": "#/$defs/values~1fragment@9"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t"
                       },
                       {
-                        "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/values~1fragment@25"
                       },
                       {
-                        "$ref": "#/$defs/values~1object"
+                        "$ref": "#/$defs/values~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/values~1string;pattern-t"
+                        "$ref": "#/$defs/values~1fragment@29"
                       },
                       {
-                        "$ref": "#/$defs/values~1null;name-must-be-unique"
+                        "$ref": "#/$defs/values~1fragment@12"
                       },
                       {
-                        "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/values~1fragment@28"
                       }
                     ],
                     "description": "name of the service account to use. If not set and create is true, a name is generated using the fullname template."
@@ -5637,10 +5637,10 @@
                   "annotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t"
                       },
                       {
-                        "$ref": "#/$defs/values~1podAnnotations~1allOf~1object+object,null;annotations-is-an-unstructured"
+                        "$ref": "#/$defs/values~1podAnnotations~1fragment@2"
                       }
                     ],
                     "description": "annotations to add to the service account"
@@ -5664,26 +5664,26 @@
         "name": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1string@3"
+              "$ref": "#/$defs/values~1fragment@9"
             },
             {
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/values~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t"
             },
             {
-              "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/values~1fragment@25"
             },
             {
-              "$ref": "#/$defs/values~1object"
+              "$ref": "#/$defs/values~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1string;pattern-t"
+              "$ref": "#/$defs/values~1fragment@29"
             },
             {
-              "$ref": "#/$defs/values~1string;pattern-null-null-null"
+              "$ref": "#/$defs/values~1fragment@28"
             },
             {
               "type": "string"
@@ -5691,34 +5691,34 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
+                  "$ref": "#/$defs/values~1fragment@24"
                 },
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
+                  "$ref": "#/$defs/values~1fragment@18"
                 },
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
+                  "$ref": "#/$defs/values~1fragment@23"
                 },
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+                  "$ref": "#/$defs/values~1fragment@16"
                 },
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
+                  "$ref": "#/$defs/values~1fragment@19"
                 },
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
+                  "$ref": "#/$defs/values~1fragment@21"
                 },
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
+                  "$ref": "#/$defs/values~1fragment@22"
                 },
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern"
+                  "$ref": "#/$defs/values~1fragment@15"
                 },
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+                  "$ref": "#/$defs/values~1fragment@17"
                 },
                 {
-                  "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
+                  "$ref": "#/$defs/values~1fragment@20"
                 }
               ],
               "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
@@ -5761,13 +5761,13 @@
     "statefulsetAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1affinity~1object"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         },
         {
-          "$ref": "#/$defs/values~1podAnnotations~1allOf~1object+object,null;annotations-is-an-unstructured"
+          "$ref": "#/$defs/values~1podAnnotations~1fragment@2"
         }
       ],
       "description": "statefulsetAnnotations define the annotations that should be added to the operator StatefulSet."
@@ -5775,20 +5775,20 @@
     "statefulsetLabels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/values~1podLabels~1object,null;map-of-string-keys"
+              "$ref": "#/$defs/values~1podLabels~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1object@2"
+              "$ref": "#/$defs/values~1fragment@2"
             }
           ]
         },
         {
-          "$ref": "#/$defs/values~1affinity~1object"
+          "$ref": "#/$defs/values~1affinity~1fragment"
         }
       ],
       "description": "statefulsetLabels define additional labels that should be added to the operator StatefulSet."
@@ -5861,7 +5861,7 @@
           "type": "array"
         },
         {
-          "$ref": "#/$defs/values~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "type": "null"
@@ -5886,11 +5886,11 @@
                 "properties": {
                   "config": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/values~1tracing~1anyOf~1null;variable-references-var-name-are+object+string+string;pattern-a-za-z0-9-t+3more"
+                      "$ref": "#/$defs/values~1tracing~1fragment"
                     },
                     "description": "config is a map of APM Server configuration variables that should be set in the environment.",
                     "items": {
-                      "$ref": "#/$defs/values~1tracing~1anyOf~1null;variable-references-var-name-are+object+string+string;pattern-a-za-z0-9-t+3more"
+                      "$ref": "#/$defs/values~1tracing~1fragment"
                     }
                   }
                 }
@@ -5968,7 +5968,7 @@
           "x-kubernetes-patch-strategy": "merge"
         },
         {
-          "$ref": "#/$defs/values~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "type": "null"
@@ -6057,7 +6057,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/values~1volumes~1boolean,null;readonly-defaults-to-false"
+                    "$ref": "#/$defs/values~1volumes~1fragment@7"
                   }
                 },
                 "required": [
@@ -6074,7 +6074,7 @@
                 "description": "AzureFile represents an Azure File Service mount on the host and bind mount to the pod.",
                 "properties": {
                   "readOnly": {
-                    "$ref": "#/$defs/values~1volumes~1boolean,null;readonly-defaults-to-false@2"
+                    "$ref": "#/$defs/values~1volumes~1fragment@8"
                   },
                   "secretName": {
                     "description": "secretName is the  name of secret that contains Azure Storage Account Name and Key",
@@ -6101,7 +6101,7 @@
                   "monitors": {
                     "description": "monitors is Required: Monitors is a collection of Ceph monitors More info: https://examples.k8s.io/volumes/cephfs/README.md#how-to-use-it",
                     "items": {
-                      "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+                      "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
                     },
                     "type": "array"
                   },
@@ -6195,10 +6195,10 @@
                     "$ref": "#/$defs/constrains~1@items.key+@items.mode+@items.path"
                   },
                   "name": {
-                    "$ref": "#/$defs/constrains~1name~1string,null;name-of-the-referent"
+                    "$ref": "#/$defs/constrains~1name~1fragment"
                   },
                   "optional": {
-                    "$ref": "#/$defs/values~1volumes~1boolean,null;optional-specify-whether-the"
+                    "$ref": "#/$defs/values~1volumes~1fragment@6"
                   }
                 },
                 "type": [
@@ -6233,7 +6233,7 @@
                   },
                   "volumeAttributes": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+                      "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
                     },
                     "description": "volumeAttributes stores driver-specific properties that are passed to the CSI driver. Consult your driver's documentation for supported values.",
                     "type": [
@@ -6290,7 +6290,7 @@
                     ]
                   },
                   "sizeLimit": {
-                    "$ref": "#/$defs/constrains~1containerName+divisor+resource~1oneOf~1number,null+string,null"
+                    "$ref": "#/$defs/constrains~1containerName+divisor+resource~1fragment"
                   }
                 },
                 "type": [
@@ -6311,10 +6311,10 @@
                         "description": "ObjectMeta is metadata that all persisted resources must have, which includes all objects users must create.",
                         "properties": {
                           "annotations": {
-                            "$ref": "#/$defs/values~1podAnnotations~1object,null;annotations-is-an-unstructured"
+                            "$ref": "#/$defs/values~1podAnnotations~1fragment"
                           },
                           "creationTimestamp": {
-                            "$ref": "#/$defs/values~1volumes~1string,null:date-time;time-is-a-wrapper"
+                            "$ref": "#/$defs/values~1volumes~1fragment@4"
                           },
                           "deletionGracePeriodSeconds": {
                             "description": "Number of seconds allowed for this object to gracefully terminate before it will be removed from the system. Only set when deletionTimestamp is also set. May only be shortened. Read-only.",
@@ -6325,12 +6325,12 @@
                             ]
                           },
                           "deletionTimestamp": {
-                            "$ref": "#/$defs/values~1volumes~1string,null:date-time;time-is-a-wrapper"
+                            "$ref": "#/$defs/values~1volumes~1fragment@4"
                           },
                           "finalizers": {
                             "description": "Must be empty before the object is deleted from the registry. Each entry is an identifier for the responsible component that will remove the entry from the list. If the deletionTimestamp of the object is non-nil, entries in this list can only be removed. Finalizers may be processed and removed in any order.  Order is NOT enforced because it introduces significant risk of stuck finalizers. finalizers is a shared field, any actor with permission can reorder it. If the finalizer list is processed in order, then this can lead to a situation in which the component responsible for the first finalizer in the list is waiting for a signal (field value, external system, or other) produced by a component responsible for a finalizer later in the list, resulting in a deadlock. Without enforced ordering finalizers are free to order amongst themselves and are not vulnerable to ordering changes in the list.",
                             "items": {
-                              "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+                              "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
                             },
                             "type": [
                               "array",
@@ -6354,7 +6354,7 @@
                             ]
                           },
                           "labels": {
-                            "$ref": "#/$defs/values~1podLabels~1object,null;map-of-string-keys"
+                            "$ref": "#/$defs/values~1podLabels~1fragment"
                           },
                           "managedFields": {
                             "description": "ManagedFields maps workflow-id and version to the set of fields that are managed by that workflow. This is mostly for internal housekeeping, and users typically shouldn't need to set or understand this field. A workflow can be the user's name, a controller's name, or the name of a specific apply path like \"ci-cd\". The set of fields is always in the version that the workflow used when modifying the object.",
@@ -6405,7 +6405,7 @@
                                   ]
                                 },
                                 "time": {
-                                  "$ref": "#/$defs/values~1volumes~1string,null:date-time;time-is-a-wrapper"
+                                  "$ref": "#/$defs/values~1volumes~1fragment@4"
                                 }
                               },
                               "type": [
@@ -6522,7 +6522,7 @@
                           "accessModes": {
                             "description": "accessModes contains the desired access modes the volume should have. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#access-modes-1",
                             "items": {
-                              "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+                              "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
                             },
                             "type": [
                               "array",
@@ -6534,13 +6534,13 @@
                             "description": "TypedLocalObjectReference contains enough information to let you locate the typed referenced object inside the same namespace.",
                             "properties": {
                               "apiGroup": {
-                                "$ref": "#/$defs/values~1volumes~1string,null;apigroup-is-the-group"
+                                "$ref": "#/$defs/values~1volumes~1fragment"
                               },
                               "kind": {
-                                "$ref": "#/$defs/values~1volumes~1string;kind-is-the-type"
+                                "$ref": "#/$defs/values~1volumes~1fragment@2"
                               },
                               "name": {
-                                "$ref": "#/$defs/values~1volumes~1string;name-is-the-name"
+                                "$ref": "#/$defs/values~1volumes~1fragment@3"
                               }
                             },
                             "required": [
@@ -6557,13 +6557,13 @@
                             "additionalProperties": false,
                             "properties": {
                               "apiGroup": {
-                                "$ref": "#/$defs/values~1volumes~1string,null;apigroup-is-the-group"
+                                "$ref": "#/$defs/values~1volumes~1fragment"
                               },
                               "kind": {
-                                "$ref": "#/$defs/values~1volumes~1string;kind-is-the-type"
+                                "$ref": "#/$defs/values~1volumes~1fragment@2"
                               },
                               "name": {
-                                "$ref": "#/$defs/values~1volumes~1string;name-is-the-name"
+                                "$ref": "#/$defs/values~1volumes~1fragment@3"
                               },
                               "namespace": {
                                 "description": "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled.",
@@ -6588,7 +6588,7 @@
                             "properties": {
                               "limits": {
                                 "additionalProperties": {
-                                  "$ref": "#/$defs/constrains~1containerName+divisor+resource~1oneOf~1number,null+string,null"
+                                  "$ref": "#/$defs/constrains~1containerName+divisor+resource~1fragment"
                                 },
                                 "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                                 "type": [
@@ -6598,7 +6598,7 @@
                               },
                               "requests": {
                                 "additionalProperties": {
-                                  "$ref": "#/$defs/constrains~1containerName+divisor+resource~1oneOf~1number,null+string,null"
+                                  "$ref": "#/$defs/constrains~1containerName+divisor+resource~1fragment"
                                 },
                                 "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
                                 "type": [
@@ -6666,7 +6666,7 @@
                 "description": "Represents a Fibre Channel volume. Fibre Channel volumes can only be mounted as read/write once. Fibre Channel volumes support ownership management and SELinux relabeling.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/values~1volumes~1string,null;fstype-is-the-filesystem"
+                    "$ref": "#/$defs/values~1volumes~1fragment@5"
                   },
                   "lun": {
                     "description": "lun is Optional: FC target lun number",
@@ -6686,7 +6686,7 @@
                   "targetWWNs": {
                     "description": "targetWWNs is Optional: FC target worldwide names (WWNs)",
                     "items": {
-                      "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+                      "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
                     },
                     "type": [
                       "array",
@@ -6696,7 +6696,7 @@
                   "wwids": {
                     "description": "wwids Optional: FC volume world wide identifiers (wwids) Either wwids or combination of targetWWNs and lun must be set, but not both simultaneously.",
                     "items": {
-                      "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+                      "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
                     },
                     "type": [
                       "array",
@@ -6726,7 +6726,7 @@
                   },
                   "options": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+                      "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
                     },
                     "description": "options is Optional: this field holds extra command options if any.",
                     "type": [
@@ -6951,7 +6951,7 @@
                   "portals": {
                     "description": "portals is the iSCSI Target Portal List. The portal is either an IP or ip_addr:port if the port is other than default (typically TCP ports 860 and 3260).",
                     "items": {
-                      "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+                      "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
                     },
                     "type": [
                       "array",
@@ -7045,7 +7045,7 @@
                 "description": "Represents a Photon Controller persistent disk resource.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/values~1volumes~1string,null;fstype-is-the-filesystem"
+                    "$ref": "#/$defs/values~1volumes~1fragment@5"
                   },
                   "pdID": {
                     "description": "pdID is the ID that identifies Photon Controller persistent disk",
@@ -7072,7 +7072,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/values~1volumes~1boolean,null;readonly-defaults-to-false@2"
+                    "$ref": "#/$defs/values~1volumes~1fragment@8"
                   },
                   "volumeID": {
                     "description": "volumeID uniquely identifies a Portworx volume",
@@ -7154,10 +7154,10 @@
                               "$ref": "#/$defs/constrains~1@items.key+@items.mode+@items.path"
                             },
                             "name": {
-                              "$ref": "#/$defs/constrains~1name~1string,null;name-of-the-referent"
+                              "$ref": "#/$defs/constrains~1name~1fragment"
                             },
                             "optional": {
-                              "$ref": "#/$defs/values~1volumes~1boolean,null;optional-specify-whether-the"
+                              "$ref": "#/$defs/values~1volumes~1fragment@6"
                             }
                           },
                           "type": [
@@ -7200,7 +7200,7 @@
                               ]
                             },
                             "name": {
-                              "$ref": "#/$defs/constrains~1name~1string,null;name-of-the-referent"
+                              "$ref": "#/$defs/constrains~1name~1fragment"
                             },
                             "optional": {
                               "description": "optional field specify whether the Secret or its key must be defined",
@@ -7339,7 +7339,7 @@
                   "monitors": {
                     "description": "monitors is a collection of Ceph monitors. More info: https://examples.k8s.io/volumes/rbd/README.md#how-to-use-it",
                     "items": {
-                      "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1string,null"
+                      "$ref": "#/$defs/constrains~1@items.key+@items.operator+@items.values~1fragment"
                     },
                     "type": "array"
                   },
@@ -7400,14 +7400,14 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/values~1volumes~1boolean,null;readonly-defaults-to-false"
+                    "$ref": "#/$defs/values~1volumes~1fragment@7"
                   },
                   "secretRef": {
                     "additionalProperties": false,
                     "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
                     "properties": {
                       "name": {
-                        "$ref": "#/$defs/constrains~1name~1string,null;name-of-the-referent"
+                        "$ref": "#/$defs/constrains~1name~1fragment"
                       }
                     },
                     "type": "object",
@@ -7503,10 +7503,10 @@
                 "description": "Represents a StorageOS persistent volume resource.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/values~1volumes~1string,null;fstype-is-the-filesystem"
+                    "$ref": "#/$defs/values~1volumes~1fragment@5"
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/values~1volumes~1boolean,null;readonly-defaults-to-false@2"
+                    "$ref": "#/$defs/values~1volumes~1fragment@8"
                   },
                   "secretRef": {
                     "$ref": "#/$defs/constrains~1name"
@@ -7583,7 +7583,7 @@
           "x-kubernetes-patch-strategy": "merge,retainKeys"
         },
         {
-          "$ref": "#/$defs/values~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "type": "null"
@@ -7610,55 +7610,55 @@
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/values~1string@3"
+                        "$ref": "#/$defs/values~1fragment@9"
                       },
                       {
-                        "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/values~1fragment@25"
                       },
                       {
-                        "$ref": "#/$defs/values~1object"
+                        "$ref": "#/$defs/values~1fragment"
                       },
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
+                            "$ref": "#/$defs/values~1fragment@24"
                           },
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
+                            "$ref": "#/$defs/values~1fragment@18"
                           },
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
+                            "$ref": "#/$defs/values~1fragment@23"
                           },
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+                            "$ref": "#/$defs/values~1fragment@16"
                           },
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
+                            "$ref": "#/$defs/values~1fragment@19"
                           },
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
+                            "$ref": "#/$defs/values~1fragment@21"
                           },
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
+                            "$ref": "#/$defs/values~1fragment@22"
                           },
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern"
+                            "$ref": "#/$defs/values~1fragment@15"
                           },
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+                            "$ref": "#/$defs/values~1fragment@17"
                           },
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
+                            "$ref": "#/$defs/values~1fragment@20"
                           }
                         ],
                         "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
                         "type": "string"
                       },
                       {
-                        "$ref": "#/$defs/values~1string;pattern-t"
+                        "$ref": "#/$defs/values~1fragment@29"
                       },
                       {
-                        "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/values~1fragment@28"
                       }
                     ],
                     "description": "failurePolicy of the webhook."
@@ -7671,42 +7671,42 @@
                   "certsDir": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1string@3"
+                        "$ref": "#/$defs/values~1fragment@9"
                       },
                       {
-                        "$ref": "#/$defs/values~1object"
+                        "$ref": "#/$defs/values~1fragment"
                       },
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
+                            "$ref": "#/$defs/values~1fragment@24"
                           },
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
+                            "$ref": "#/$defs/values~1fragment@18"
                           },
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
+                            "$ref": "#/$defs/values~1fragment@23"
                           },
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+                            "$ref": "#/$defs/values~1fragment@16"
                           },
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
+                            "$ref": "#/$defs/values~1fragment@19"
                           },
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
+                            "$ref": "#/$defs/values~1fragment@21"
                           },
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
+                            "$ref": "#/$defs/values~1fragment@22"
                           },
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern"
+                            "$ref": "#/$defs/values~1fragment@15"
                           },
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+                            "$ref": "#/$defs/values~1fragment@17"
                           },
                           {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
+                            "$ref": "#/$defs/values~1fragment@20"
                           }
                         ],
                         "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
@@ -7723,7 +7723,7 @@
                   "port": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/values~1podDisruptionBudget~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
+                        "$ref": "#/$defs/values~1podDisruptionBudget~1fragment"
                       },
                       {
                         "anyOf": [
@@ -7733,7 +7733,7 @@
                             "type": "integer"
                           },
                           {
-                            "$ref": "#/$defs/values~1string;pattern-0-1-9"
+                            "$ref": "#/$defs/values~1fragment@26"
                           }
                         ]
                       }
@@ -7748,7 +7748,7 @@
                   "objectSelector": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
@@ -7767,7 +7767,7 @@
                   "namespaceSelector": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1matchExpressions@items.key+matchExpressions@items.operator+2more"
@@ -7812,45 +7812,45 @@
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                    "$ref": "#/$defs/values~1fragment@25"
                   },
                   {
-                    "$ref": "#/$defs/values~1string;pattern-t"
+                    "$ref": "#/$defs/values~1fragment@29"
                   },
                   {
-                    "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                    "$ref": "#/$defs/values~1fragment@28"
                   },
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
+                        "$ref": "#/$defs/values~1fragment@24"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
+                        "$ref": "#/$defs/values~1fragment@18"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
+                        "$ref": "#/$defs/values~1fragment@23"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+                        "$ref": "#/$defs/values~1fragment@16"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
+                        "$ref": "#/$defs/values~1fragment@19"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
+                        "$ref": "#/$defs/values~1fragment@21"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
+                        "$ref": "#/$defs/values~1fragment@22"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern"
+                        "$ref": "#/$defs/values~1fragment@15"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+                        "$ref": "#/$defs/values~1fragment@17"
                       },
                       {
-                        "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
+                        "$ref": "#/$defs/values~1fragment@20"
                       }
                     ],
                     "description": "`caBundle` is a PEM encoded CA bundle which will be used to validate the webhook's server certificate. If unspecified, system trust roots on the apiserver are used.",

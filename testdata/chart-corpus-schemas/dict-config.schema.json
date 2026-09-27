@@ -54,27 +54,7 @@
         }
       ]
     },
-    "values/ingress/not/keywords/pattern": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "values/ingress/not/keywords/pattern@2": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "values/ingress/not/keywords/pattern@3": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "values/ingress/not/keywords/pattern@4": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "values/ingress/object": {
+    "values/ingress/fragment": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -85,7 +65,7 @@
             "type": "integer"
           },
           {
-            "$ref": "#/$defs/values~1ingress~1string"
+            "$ref": "#/$defs/values~1ingress~1fragment@2"
           },
           {
             "type": "number"
@@ -103,11 +83,15 @@
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/values~1ingress~1string"
+        "$ref": "#/$defs/values~1ingress~1fragment@2"
       },
       "type": "object"
     },
-    "values/ingress/string": {
+    "values/ingress/fragment@10": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/ingress/fragment@2": {
       "allOf": [
         {
           "not": {
@@ -127,19 +111,7 @@
       ],
       "type": "string"
     },
-    "values/ingress/string;pattern-a-za-z0-9-t": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/ingress/string;pattern-null-null-null": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "values/ingress/string;pattern-t": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/ingress/string@2": {
+    "values/ingress/fragment@3": {
       "allOf": [
         {
           "not": {
@@ -157,27 +129,55 @@
       ],
       "type": "string"
     },
-    "values/podDisruptionBudget/oneOf/anyOf/integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more": {
-      "$ref": "#/$defs/values~1podDisruptionBudget~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more@2"
+    "values/ingress/fragment@4": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
     },
-    "values/podDisruptionBudget/oneOf/anyOf/integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more@2": {
+    "values/ingress/fragment@5": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "values/ingress/fragment@6": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "values/ingress/fragment@7": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "values/ingress/fragment@8": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/ingress/fragment@9": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "values/podDisruptionBudget/fragment": {
+      "$ref": "#/$defs/values~1podDisruptionBudget~1fragment@2"
+    },
+    "values/podDisruptionBudget/fragment@2": {
       "oneOf": [
         {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1ingress~1string@2"
+              "$ref": "#/$defs/values~1ingress~1fragment@3"
             },
             {
-              "$ref": "#/$defs/values~1ingress~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/values~1ingress~1fragment@8"
             },
             {
-              "$ref": "#/$defs/values~1ingress~1object"
+              "$ref": "#/$defs/values~1ingress~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1ingress~1string;pattern-t"
+              "$ref": "#/$defs/values~1ingress~1fragment@10"
             },
             {
-              "$ref": "#/$defs/values~1ingress~1string;pattern-null-null-null"
+              "$ref": "#/$defs/values~1ingress~1fragment@9"
             },
             {
               "type": "null"
@@ -190,7 +190,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/values~1ingress~1not~1keywords~1pattern"
+                  "$ref": "#/$defs/values~1ingress~1fragment@4"
                 },
                 {
                   "not": {
@@ -203,10 +203,10 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/values~1ingress~1not~1keywords~1pattern@2"
+                  "$ref": "#/$defs/values~1ingress~1fragment@5"
                 },
                 {
-                  "$ref": "#/$defs/values~1ingress~1not~1keywords~1pattern@4"
+                  "$ref": "#/$defs/values~1ingress~1fragment@7"
                 },
                 {
                   "not": {
@@ -224,7 +224,7 @@
                   }
                 },
                 {
-                  "$ref": "#/$defs/values~1ingress~1not~1keywords~1pattern@3"
+                  "$ref": "#/$defs/values~1ingress~1fragment@6"
                 }
               ],
               "type": "string"
@@ -234,20 +234,20 @@
         {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1ingress~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/values~1ingress~1fragment@8"
             },
             {
               "type": "integer"
             },
             {
-              "$ref": "#/$defs/values~1ingress~1string;pattern-t"
+              "$ref": "#/$defs/values~1ingress~1fragment@10"
             },
             {
               "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/values~1ingress~1string;pattern-null-null-null"
+              "$ref": "#/$defs/values~1ingress~1fragment@9"
             },
             {
               "type": "null"
@@ -432,7 +432,7 @@
               "className": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1ingress~1string@2"
+                    "$ref": "#/$defs/values~1ingress~1fragment@3"
                   },
                   {
                     "not": {
@@ -440,20 +440,20 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/values~1ingress~1string;pattern-a-za-z0-9-t"
+                    "$ref": "#/$defs/values~1ingress~1fragment@8"
                   },
                   {
-                    "$ref": "#/$defs/values~1ingress~1object"
+                    "$ref": "#/$defs/values~1ingress~1fragment"
                   },
                   {
                     "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/values~1ingress~1string;pattern-t"
+                    "$ref": "#/$defs/values~1ingress~1fragment@10"
                   },
                   {
-                    "$ref": "#/$defs/values~1ingress~1string;pattern-null-null-null"
+                    "$ref": "#/$defs/values~1ingress~1fragment@9"
                   },
                   {
                     "allOf": [
@@ -463,7 +463,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/values~1ingress~1not~1keywords~1pattern"
+                        "$ref": "#/$defs/values~1ingress~1fragment@4"
                       },
                       {
                         "not": {
@@ -476,10 +476,10 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/values~1ingress~1not~1keywords~1pattern@2"
+                        "$ref": "#/$defs/values~1ingress~1fragment@5"
                       },
                       {
-                        "$ref": "#/$defs/values~1ingress~1not~1keywords~1pattern@4"
+                        "$ref": "#/$defs/values~1ingress~1fragment@7"
                       },
                       {
                         "not": {
@@ -497,7 +497,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/values~1ingress~1not~1keywords~1pattern@3"
+                        "$ref": "#/$defs/values~1ingress~1fragment@6"
                       }
                     ],
                     "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
@@ -529,7 +529,7 @@
                   "maxUnavailable": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1podDisruptionBudget~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more@2"
+                        "$ref": "#/$defs/values~1podDisruptionBudget~1fragment@2"
                       },
                       {
                         "not": {
@@ -544,7 +544,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "minAvailable": {
-                    "$ref": "#/$defs/values~1podDisruptionBudget~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
+                    "$ref": "#/$defs/values~1podDisruptionBudget~1fragment"
                   }
                 }
               }

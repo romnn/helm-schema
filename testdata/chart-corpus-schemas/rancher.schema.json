@@ -1,5 +1,13 @@
 {
   "$defs": {
+    "constrains/:helm-double-quoted-safe": {
+      "$ref": "#/$defs/helm-double-quoted-safe"
+    },
+    "constrains/:t": {
+      "not": {
+        "$ref": "#/$defs/t"
+      }
+    },
     "constrains/antiAffinity=required": {
       "properties": {
         "antiAffinity": {
@@ -91,7 +99,7 @@
         },
         "limits": {
           "additionalProperties": {
-            "$ref": "#/$defs/constrains~1claims@items.name+limits+requests~1oneOf~1number,null+string,null"
+            "$ref": "#/$defs/constrains~1claims@items.name+limits+requests~1fragment"
           },
           "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "type": [
@@ -101,7 +109,7 @@
         },
         "requests": {
           "additionalProperties": {
-            "$ref": "#/$defs/constrains~1claims@items.name+limits+requests~1oneOf~1number,null+string,null"
+            "$ref": "#/$defs/constrains~1claims@items.name+limits+requests~1fragment"
           },
           "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
           "type": [
@@ -112,7 +120,7 @@
       },
       "type": "object"
     },
-    "constrains/claims@items.name+limits+requests/oneOf/number,null+string,null": {
+    "constrains/claims@items.name+limits+requests/fragment": {
       "oneOf": [
         {
           "type": [
@@ -234,7 +242,7 @@
             {
               "properties": {
                 "tls": {
-                  "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+                  "$ref": "#/$defs/constrains~1:t"
                 }
               }
             },
@@ -263,11 +271,6 @@
           "type": "object"
         }
       ]
-    },
-    "constrains/hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more/not/:t": {
-      "not": {
-        "$ref": "#/$defs/t"
-      }
     },
     "constrains/hostname+name+port+protocol+tls.certificateRefs@items.kind+3more": {
       "additionalProperties": {},
@@ -547,39 +550,39 @@
         "kind": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
                 }
               ],
               "default": "Secret",
@@ -593,52 +596,52 @@
         }
       }
     },
-    "constrains/kind:t/not/keywords/pattern": {
+    "constrains/kind:t/fragment": {
       "not": {
         "pattern": ":[ \\t]|:$"
       }
     },
-    "constrains/kind:t/not/keywords/pattern@10": {
+    "constrains/kind:t/fragment@10": {
       "not": {
         "pattern": "^[-?:]([ \\t]|$)"
       }
     },
-    "constrains/kind:t/not/keywords/pattern@2": {
+    "constrains/kind:t/fragment@2": {
       "not": {
         "pattern": "[ \\t]#"
       }
     },
-    "constrains/kind:t/not/keywords/pattern@3": {
+    "constrains/kind:t/fragment@3": {
       "not": {
         "pattern": "[\\r\\n]"
       }
     },
-    "constrains/kind:t/not/keywords/pattern@4": {
+    "constrains/kind:t/fragment@4": {
       "not": {
         "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
-    "constrains/kind:t/not/keywords/pattern@5": {
+    "constrains/kind:t/fragment@5": {
       "not": {
         "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
       }
     },
-    "constrains/kind:t/not/keywords/pattern@6": {
+    "constrains/kind:t/fragment@6": {
       "not": {
         "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
       }
     },
-    "constrains/kind:t/not/keywords/pattern@7": {
+    "constrains/kind:t/fragment@7": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "constrains/kind:t/not/keywords/pattern@8": {
+    "constrains/kind:t/fragment@8": {
       "not": {
         "pattern": "^(|~|null|Null|NULL)$"
       }
     },
-    "constrains/kind:t/not/keywords/pattern@9": {
+    "constrains/kind:t/fragment@9": {
       "not": {
         "pattern": "^[!&*#{}\\[\\],|>@`%]"
       }
@@ -647,41 +650,41 @@
       "additionalProperties": {},
       "properties": {
         "name": {
-          "$ref": "#/$defs/constrains~1name~1string;name-is-the-name"
+          "$ref": "#/$defs/constrains~1name~1fragment"
         }
       }
     },
-    "constrains/name/string;name-is-the-name": {
+    "constrains/name/fragment": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
         },
         {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
         },
         {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
         },
         {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
         },
         {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
         },
         {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
         },
         {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
         },
         {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+          "$ref": "#/$defs/constrains~1kind:t~1fragment"
         },
         {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
         },
         {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
         }
       ],
       "description": "Name is the name of the referent.",
@@ -695,34 +698,34 @@
         "name": {
           "allOf": [
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
             }
           ],
           "description": "Name is the name of the Listener. This name MUST be unique within a\nGateway.\n\nSupport: Core",
@@ -746,39 +749,39 @@
         "namespace": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
                 }
               ],
               "description": "Namespace is the namespace of the referenced object. When unspecified, the local\nnamespace is inferred.\n\nNote that when a namespace different than the local namespace is specified,\na ReferenceGrant object is required in the referent namespace to allow that\nnamespace's owner to accept the reference. See the ReferenceGrant\ndocumentation for details.\n\nSupport: Core",
@@ -864,11 +867,11 @@
       "additionalProperties": {},
       "properties": {
         "port": {
-          "$ref": "#/$defs/constrains~1port~1anyOf~1integer:int32;port-is-the-network+string"
+          "$ref": "#/$defs/constrains~1port~1fragment"
         }
       }
     },
-    "constrains/port/anyOf/integer:int32;port-is-the-network+string": {
+    "constrains/port/fragment": {
       "anyOf": [
         {
           "description": "Port is the network port. Multiple listeners may use the\nsame port, subject to the Listener compatibility rules.\n\nSupport: Core",
@@ -927,34 +930,34 @@
         "protocol": {
           "allOf": [
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
             }
           ],
           "description": "Protocol specifies the network protocol this listener expects to receive.\n\nSupport: Core",
@@ -1177,7 +1180,7 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
+            "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
           },
           "propertyNames": {
             "pattern": "^([^\"\\\\]|\\\\[\"\\\\/0abtnvfre N_LP]|\\\\x[0-9A-Fa-f]{2}|\\\\u[0-9A-Fa-f]{4}|\\\\U[0-9A-Fa-f]{8})*$"
@@ -1186,14 +1189,11 @@
         },
         {
           "items": {
-            "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
+            "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
           },
           "type": "array"
         }
       ]
-    },
-    "helm-double-quoted-safe/:helm-double-quoted-safe": {
-      "$ref": "#/$defs/helm-double-quoted-safe"
     },
     "t": {
       "anyOf": [
@@ -1223,32 +1223,211 @@
     "values/aggregationRegistrationTimeout": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1string@3"
+          "$ref": "#/$defs/values~1fragment@6"
         },
         {
-          "$ref": "#/$defs/values~1string;variable-references-var-name-are"
+          "$ref": "#/$defs/values~1fragment@2"
         },
         {
-          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/values~1fragment@9"
         },
         {
-          "$ref": "#/$defs/values~1object"
+          "$ref": "#/$defs/values~1fragment"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-t"
+          "$ref": "#/$defs/values~1fragment@11"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-null-null-null"
+          "$ref": "#/$defs/values~1fragment@10"
         },
         {
-          "$ref": "#/$defs/values~1null;variable-references-var-name-are"
+          "$ref": "#/$defs/values~1fragment@8"
         }
       ]
     },
-    "values/allOf/object+object,null;annotations-is-an-unstructured": {
+    "values/auditLog/fragment": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
+        }
+      ],
+      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+      "type": "string"
+    },
+    "values/auditLog/fragment@2": {
+      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+      "type": "null"
+    },
+    "values/extraEnv/fragment": {
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "values/extraNodeSelectorTerms/fragment": {
+      "additionalProperties": false,
+      "maxProperties": 0,
+      "properties": {},
+      "type": "object"
+    },
+    "values/fragment": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/$defs/values~1fragment@4"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/values~1fragment@4"
+      },
+      "type": "object"
+    },
+    "values/fragment@10": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "values/fragment@11": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/fragment@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
+        }
+      ],
+      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+      "type": "string"
+    },
+    "values/fragment@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
+        }
+      ],
+      "type": "string"
+    },
+    "values/fragment@4": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment"
+        },
+        {
+          "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
+        }
+      ],
+      "type": "string"
+    },
+    "values/fragment@5": {
       "allOf": [
         {
           "additionalProperties": {
@@ -1271,400 +1450,7 @@
         }
       ]
     },
-    "values/anyOf/null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1string@3"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "$ref": "#/$defs/values~1object"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-null-null-null"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/values~1string"
-        }
-      ]
-    },
-    "values/auditLog/null;image-pull-policy-one": {
-      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-      "type": "null"
-    },
-    "values/auditLog/string;image-pull-policy-one": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
-        }
-      ],
-      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-      "type": "string"
-    },
-    "values/extraEnv/string,null;name-of-the-referent": {
-      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "values/extraNodeSelectorTerms/object": {
-      "additionalProperties": false,
-      "maxProperties": 0,
-      "properties": {},
-      "type": "object"
-    },
-    "values/image.repository": {
-      "description": "Optional: Image-specific registry override\nregistry: \"\""
-    },
-    "values/livenessProbe": {
-      "additionalProperties": {},
-      "properties": {
-        "failureThreshold": {
-          "$ref": "#/$defs/values~1livenessProbe.failureThreshold"
-        },
-        "initialDelaySeconds": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
-            },
-            {
-              "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-            },
-            {
-              "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-              "format": "int32",
-              "type": "null"
-            },
-            {
-              "$ref": "#/$defs/values~1string;pattern-t"
-            },
-            {
-              "$ref": "#/$defs/values~1livenessProbe.failureThreshold~1string;pattern-0-1-9"
-            },
-            {
-              "$ref": "#/$defs/values~1string;pattern-null-null-null"
-            },
-            {
-              "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-              "format": "int32",
-              "type": "integer"
-            }
-          ]
-        },
-        "periodSeconds": {
-          "$ref": "#/$defs/values~1livenessProbe.periodSeconds"
-        },
-        "timeoutSeconds": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/values~1livenessProbe.timeoutSeconds~1null:int32;number-of-seconds-after"
-            },
-            {
-              "$ref": "#/$defs/values~1livenessProbe.timeoutSeconds~1integer:int32;number-of-seconds-after"
-            },
-            {
-              "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-            },
-            {
-              "$ref": "#/$defs/values~1string;pattern-t"
-            },
-            {
-              "$ref": "#/$defs/values~1livenessProbe.failureThreshold~1string;pattern-0-1-9"
-            },
-            {
-              "$ref": "#/$defs/values~1string;pattern-null-null-null"
-            }
-          ]
-        }
-      },
-      "type": "object"
-    },
-    "values/livenessProbe.failureThreshold": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
-          "format": "int32",
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/values~1livenessProbe.failureThreshold~1string;pattern-0-1-9"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-null-null-null"
-        },
-        {
-          "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
-          "format": "int32",
-          "type": "integer"
-        }
-      ]
-    },
-    "values/livenessProbe.failureThreshold/string;pattern-0-1-9": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
-    },
-    "values/livenessProbe.periodSeconds": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/values~1livenessProbe.failureThreshold~1string;pattern-0-1-9"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-null-null-null"
-        },
-        {
-          "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-          "format": "int32",
-          "type": "integer"
-        },
-        {
-          "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
-          "format": "int32",
-          "type": "null"
-        }
-      ]
-    },
-    "values/livenessProbe.timeoutSeconds/integer:int32;number-of-seconds-after": {
-      "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-      "format": "int32",
-      "type": "integer"
-    },
-    "values/livenessProbe.timeoutSeconds/null:int32;number-of-seconds-after": {
-      "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
-      "format": "int32",
-      "type": "null"
-    },
-    "values/null;variable-references-var-name-are": {
-      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-      "type": "null"
-    },
-    "values/object": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "maxItems": 0,
-            "type": "array"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "$ref": "#/$defs/values~1string@2"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "null"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "maxProperties": 0,
-            "type": "object"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/values~1string@2"
-      },
-      "type": "object"
-    },
-    "values/preUpgrade.pullPolicy": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1auditLog~1null;image-pull-policy-one"
-        },
-        {
-          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
-        },
-        {
-          "$ref": "#/$defs/values~1object"
-        },
-        {
-          "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-          "pattern": "^[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "$ref": "#/$defs/values~1string"
-        }
-      ]
-    },
-    "values/rancherImagePullPolicy": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1string@3"
-        },
-        {
-          "$ref": "#/$defs/values~1auditLog~1null;image-pull-policy-one"
-        },
-        {
-          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "$ref": "#/$defs/values~1object"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/values~1string;pattern-null-null-null"
-        },
-        {
-          "$ref": "#/$defs/values~1auditLog~1string;image-pull-policy-one"
-        }
-      ]
-    },
-    "values/string": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
-        }
-      ],
-      "type": "string"
-    },
-    "values/string;pattern-a-za-z0-9-t": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/string;pattern-null-null-null": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "values/string;pattern-t": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "values/string;variable-references-var-name-are": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
-        }
-      ],
-      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
-      "type": "string"
-    },
-    "values/string@2": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
-        }
-      ],
-      "type": "string"
-    },
-    "values/string@3": {
+    "values/fragment@6": {
       "allOf": [
         {
           "not": {
@@ -1681,6 +1467,220 @@
         }
       ],
       "type": "string"
+    },
+    "values/fragment@7": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1fragment@6"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@9"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@11"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@10"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@3"
+        }
+      ]
+    },
+    "values/fragment@8": {
+      "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
+      "type": "null"
+    },
+    "values/fragment@9": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "values/image.repository": {
+      "description": "Optional: Image-specific registry override\nregistry: \"\""
+    },
+    "values/livenessProbe": {
+      "additionalProperties": {},
+      "properties": {
+        "failureThreshold": {
+          "$ref": "#/$defs/values~1livenessProbe.failureThreshold"
+        },
+        "initialDelaySeconds": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1:t"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@9"
+            },
+            {
+              "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+              "format": "int32",
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@11"
+            },
+            {
+              "$ref": "#/$defs/values~1livenessProbe.failureThreshold~1fragment"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@10"
+            },
+            {
+              "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+              "format": "int32",
+              "type": "integer"
+            }
+          ]
+        },
+        "periodSeconds": {
+          "$ref": "#/$defs/values~1livenessProbe.periodSeconds"
+        },
+        "timeoutSeconds": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/values~1livenessProbe.timeoutSeconds~1fragment@2"
+            },
+            {
+              "$ref": "#/$defs/values~1livenessProbe.timeoutSeconds~1fragment"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@9"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@11"
+            },
+            {
+              "$ref": "#/$defs/values~1livenessProbe.failureThreshold~1fragment"
+            },
+            {
+              "$ref": "#/$defs/values~1fragment@10"
+            }
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "values/livenessProbe.failureThreshold": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1fragment@9"
+        },
+        {
+          "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
+          "format": "int32",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@11"
+        },
+        {
+          "$ref": "#/$defs/values~1livenessProbe.failureThreshold~1fragment"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@10"
+        },
+        {
+          "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
+          "format": "int32",
+          "type": "integer"
+        }
+      ]
+    },
+    "values/livenessProbe.failureThreshold/fragment": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
+    },
+    "values/livenessProbe.periodSeconds": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1fragment@9"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@11"
+        },
+        {
+          "$ref": "#/$defs/values~1livenessProbe.failureThreshold~1fragment"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@10"
+        },
+        {
+          "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+          "format": "int32",
+          "type": "integer"
+        },
+        {
+          "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
+          "format": "int32",
+          "type": "null"
+        }
+      ]
+    },
+    "values/livenessProbe.timeoutSeconds/fragment": {
+      "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+      "format": "int32",
+      "type": "integer"
+    },
+    "values/livenessProbe.timeoutSeconds/fragment@2": {
+      "description": "Number of seconds after which the probe times out. Defaults to 1 second. Minimum value is 1. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
+      "format": "int32",
+      "type": "null"
+    },
+    "values/preUpgrade.pullPolicy": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1auditLog~1fragment@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment"
+        },
+        {
+          "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+          "pattern": "^[ \\t]*(#.*)?$",
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@3"
+        }
+      ]
+    },
+    "values/rancherImagePullPolicy": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1fragment@6"
+        },
+        {
+          "$ref": "#/$defs/values~1auditLog~1fragment@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@9"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@11"
+        },
+        {
+          "$ref": "#/$defs/values~1fragment@10"
+        },
+        {
+          "$ref": "#/$defs/values~1auditLog~1fragment"
+        }
+      ]
     },
     "when/tls.certificateRefs:t+tls:t/then/tls.certificateRefs@items.kind:t": {
       "if": {
@@ -1764,34 +1764,34 @@
               "mode": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
                   }
                 ],
                 "default": "Terminate",
@@ -1849,45 +1849,45 @@
                       "class": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1string@3"
+                            "$ref": "#/$defs/values~1fragment@6"
                           },
                           {
                             "const": ""
                           },
                           {
-                            "$ref": "#/$defs/values~1object"
+                            "$ref": "#/$defs/values~1fragment"
                           },
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
                               }
                             ],
                             "description": "This field configures the annotation `kubernetes.io/ingress.class` when\ncreating Ingress resources to solve ACME challenges that use this\nchallenge solver. Only one of `class`, `name` or `ingressClassName` may\nbe specified.",
@@ -2107,46 +2107,46 @@
                           "secretName": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/values~1string@3"
+                                "$ref": "#/$defs/values~1fragment@6"
                               },
                               {
                                 "allOf": [
                                   {
-                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+                                    "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+                                    "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+                                    "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+                                    "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+                                    "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+                                    "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+                                    "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+                                    "$ref": "#/$defs/constrains~1kind:t~1fragment"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+                                    "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+                                    "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
                                   }
                                 ],
                                 "description": "Name of the Secret resource that will be automatically created and\nmanaged by this Certificate resource. It will be populated with a\nprivate key and certificate, signed by the denoted issuer. The Secret\nresource lives in the same namespace as the Certificate resource.",
                                 "type": "string"
                               },
                               {
-                                "$ref": "#/$defs/values~1object"
+                                "$ref": "#/$defs/values~1fragment"
                               }
                             ]
                           }
@@ -2164,13 +2164,13 @@
               "hostname": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1string@3"
+                    "$ref": "#/$defs/values~1fragment@6"
                   },
                   {
-                    "$ref": "#/$defs/values~1object"
+                    "$ref": "#/$defs/values~1fragment"
                   },
                   {
-                    "$ref": "#/$defs/values~1string"
+                    "$ref": "#/$defs/values~1fragment@3"
                   }
                 ]
               }
@@ -2219,7 +2219,7 @@
         "additionalProperties": {},
         "properties": {
           "features": {
-            "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
+            "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
           }
         }
       }
@@ -2313,7 +2313,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "tag": {
-                        "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
+                        "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
                       }
                     }
                   }
@@ -2601,10 +2601,10 @@
           "topologyKey": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+                "$ref": "#/$defs/constrains~1:t"
               },
               {
-                "$ref": "#/$defs/values~1object"
+                "$ref": "#/$defs/values~1fragment"
               },
               {
                 "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
@@ -2676,58 +2676,58 @@
                   "ingressClassName": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1string@3"
+                        "$ref": "#/$defs/values~1fragment@6"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t"
                       },
                       {
-                        "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/values~1fragment@9"
                       },
                       {
-                        "$ref": "#/$defs/values~1object"
+                        "$ref": "#/$defs/values~1fragment"
                       },
                       {
                         "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/values~1string;pattern-t"
+                        "$ref": "#/$defs/values~1fragment@11"
                       },
                       {
-                        "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/values~1fragment@10"
                       },
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
                           }
                         ],
                         "description": "ingressClassName is the name of an IngressClass cluster resource. Ingress controller implementations use this field to know whether they should be serving this Ingress resource, by a transitive connection (controller -> IngressClass -> Ingress resource). Although the `kubernetes.io/ingress.class` annotation (simple constant name) was never formally defined, it was widely supported by Ingress controllers to create a direct binding between Ingress controller and Ingress resources. Newly created Ingress resources should prefer using the field. However, even though the annotation is officially deprecated, for backwards compatibility reasons, ingress controllers should still honor that annotation if present.",
@@ -2760,10 +2760,10 @@
                   "extraAnnotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t"
                       },
                       {
-                        "$ref": "#/$defs/values~1allOf~1object+object,null;annotations-is-an-unstructured"
+                        "$ref": "#/$defs/values~1fragment@5"
                       }
                     ]
                   }
@@ -2823,25 +2823,25 @@
           "noProxy": {
             "anyOf": [
               {
-                "$ref": "#/$defs/values~1string@3"
+                "$ref": "#/$defs/values~1fragment@6"
               },
               {
-                "$ref": "#/$defs/values~1string;variable-references-var-name-are"
+                "$ref": "#/$defs/values~1fragment@2"
               },
               {
-                "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                "$ref": "#/$defs/values~1fragment@9"
               },
               {
-                "$ref": "#/$defs/values~1object"
+                "$ref": "#/$defs/values~1fragment"
               },
               {
-                "$ref": "#/$defs/values~1string;pattern-t"
+                "$ref": "#/$defs/values~1fragment@11"
               },
               {
-                "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                "$ref": "#/$defs/values~1fragment@10"
               },
               {
-                "$ref": "#/$defs/values~1null;variable-references-var-name-are"
+                "$ref": "#/$defs/values~1fragment@8"
               }
             ],
             "description": "comma separated list of domains or ip addresses that will not use the proxy"
@@ -3161,7 +3161,7 @@
         "additionalProperties": {},
         "properties": {
           "noDefaultAdmin": {
-            "$ref": "#/$defs/helm-double-quoted-safe~1:helm-double-quoted-safe"
+            "$ref": "#/$defs/constrains~1:helm-double-quoted-safe"
           }
         }
       }
@@ -3438,7 +3438,7 @@
                         "description": "Must match the GatewayClass's configured entrypoints",
                         "properties": {
                           "https": {
-                            "$ref": "#/$defs/constrains~1port~1anyOf~1integer:int32;port-is-the-network+string"
+                            "$ref": "#/$defs/constrains~1port~1fragment"
                           }
                         }
                       }
@@ -3511,7 +3511,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "secretName": {
-                            "$ref": "#/$defs/constrains~1name~1string;name-is-the-name"
+                            "$ref": "#/$defs/constrains~1name~1fragment"
                           }
                         }
                       }
@@ -3699,42 +3699,42 @@
                   "email": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1string@3"
+                        "$ref": "#/$defs/values~1fragment@6"
                       },
                       {
-                        "$ref": "#/$defs/values~1object"
+                        "$ref": "#/$defs/values~1fragment"
                       },
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
                           }
                         ],
                         "description": "Email is the email address to be associated with the ACME account.\nThis field is optional, but it is strongly recommended to be set.\nIt will be used to contact you in case of issues with your account or\ncertificates, including expiry notification emails.\nThis field may be updated after the account is initially registered.",
@@ -4300,34 +4300,34 @@
                       "name": {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+                            "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
                           }
                         ],
                         "description": "Set to the Gateway class name (k3s/rke2: traefik)",
@@ -4415,7 +4415,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+                            "$ref": "#/$defs/constrains~1:t"
                           },
                           {
                             "additionalProperties": {
@@ -4471,7 +4471,7 @@
                         "description": "Must match the GatewayClass's configured entrypoints",
                         "properties": {
                           "http": {
-                            "$ref": "#/$defs/constrains~1port~1anyOf~1integer:int32;port-is-the-network+string"
+                            "$ref": "#/$defs/constrains~1port~1fragment"
                           }
                         }
                       }
@@ -4605,34 +4605,34 @@
               "hostname": {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+                    "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
                   }
                 ],
                 "description": "Hostname is the fully qualified domain name of a network host. This matches\nthe RFC 1123 definition of a hostname with 2 notable exceptions:\n\n 1. IPs are not allowed.\n 2. A hostname may be prefixed with a wildcard label (`*.`). The wildcard\n    label must appear by itself as the first label.\n\nHostname can be \"precise\" which is a domain name without the terminating\ndot of a network host (e.g. \"foo.example.com\") or \"wildcard\", which is a\ndomain name prefixed with a single wildcard label (e.g. `*.example.com`).\n\nNote that as per RFC1035 and RFC1123, a *label* must consist of lower case\nalphanumeric characters or '-', and must start and end with an alphanumeric\ncharacter. No other punctuation is allowed.",
@@ -4998,7 +4998,7 @@
             "additionalProperties": {},
             "properties": {
               "hostname": {
-                "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+                "$ref": "#/$defs/values~1fragment@7"
               }
             }
           },
@@ -5019,55 +5019,55 @@
                             "type": "null"
                           },
                           {
-                            "$ref": "#/$defs/values~1string@3"
+                            "$ref": "#/$defs/values~1fragment@6"
                           },
                           {
-                            "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                            "$ref": "#/$defs/values~1fragment@9"
                           },
                           {
-                            "$ref": "#/$defs/values~1object"
+                            "$ref": "#/$defs/values~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/values~1string;pattern-t"
+                            "$ref": "#/$defs/values~1fragment@11"
                           },
                           {
                             "allOf": [
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+                                "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
                               }
                             ],
                             "description": "secretName is the name of the secret used to terminate TLS traffic on port 443. Field is left optional to allow TLS routing based on SNI hostname alone. If the SNI host in a listener conflicts with the \"Host\" header field used by an IngressRule, the SNI host is used for termination and value of the \"Host\" header is used for routing.",
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                            "$ref": "#/$defs/values~1fragment@10"
                           }
                         ]
                       }
@@ -5165,7 +5165,7 @@
                   "resources": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
@@ -5188,25 +5188,25 @@
                       "pullPolicy": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1string@3"
+                            "$ref": "#/$defs/values~1fragment@6"
                           },
                           {
-                            "$ref": "#/$defs/values~1auditLog~1null;image-pull-policy-one"
+                            "$ref": "#/$defs/values~1auditLog~1fragment@2"
                           },
                           {
-                            "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                            "$ref": "#/$defs/values~1fragment@9"
                           },
                           {
-                            "$ref": "#/$defs/values~1object"
+                            "$ref": "#/$defs/values~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/values~1string;pattern-t"
+                            "$ref": "#/$defs/values~1fragment@11"
                           },
                           {
-                            "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                            "$ref": "#/$defs/values~1fragment@10"
                           },
                           {
-                            "$ref": "#/$defs/values~1auditLog~1string;image-pull-policy-one"
+                            "$ref": "#/$defs/values~1auditLog~1fragment"
                           }
                         ],
                         "description": "Optional: Image-specific pullPolicy Override\noptions: Always, Never, IfNotPresent"
@@ -5235,42 +5235,42 @@
               "hostPath": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1string@3"
+                    "$ref": "#/$defs/values~1fragment@6"
                   },
                   {
-                    "$ref": "#/$defs/values~1object"
+                    "$ref": "#/$defs/values~1fragment"
                   },
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
                       }
                     ],
                     "description": "path of the directory on the host. If the path is a symlink, it will follow the link to the real path. More info: https://kubernetes.io/docs/concepts/storage/volumes#hostpath",
@@ -5390,49 +5390,49 @@
               "volumeName": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1string@3"
+                    "$ref": "#/$defs/values~1fragment@6"
                   },
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
                       }
                     ],
                     "description": "claimName is the name of a PersistentVolumeClaim in the same namespace as the pod using this volume. More info: https://kubernetes.io/docs/concepts/storage/persistent-volumes#persistentvolumeclaims",
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+                    "$ref": "#/$defs/constrains~1:t"
                   },
                   {
-                    "$ref": "#/$defs/values~1object"
+                    "$ref": "#/$defs/values~1fragment"
                   }
                 ]
               }
@@ -5464,59 +5464,59 @@
               "volumeName": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1string@3"
+                    "$ref": "#/$defs/values~1fragment@6"
                   },
                   {
                     "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                    "$ref": "#/$defs/values~1fragment@9"
                   },
                   {
-                    "$ref": "#/$defs/values~1object"
+                    "$ref": "#/$defs/values~1fragment"
                   },
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+                        "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
                       }
                     ],
                     "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/values~1string;pattern-t"
+                    "$ref": "#/$defs/values~1fragment@11"
                   },
                   {
-                    "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                    "$ref": "#/$defs/values~1fragment@10"
                   }
                 ]
               }
@@ -5640,7 +5640,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/values~1extraEnv~1string,null;name-of-the-referent"
+                        "$ref": "#/$defs/values~1extraEnv~1fragment"
                       },
                       "optional": {
                         "description": "Specify whether the ConfigMap or its key must be defined",
@@ -5696,7 +5696,7 @@
                         ]
                       },
                       "divisor": {
-                        "$ref": "#/$defs/constrains~1claims@items.name+limits+requests~1oneOf~1number,null+string,null"
+                        "$ref": "#/$defs/constrains~1claims@items.name+limits+requests~1fragment"
                       },
                       "resource": {
                         "description": "Required: resource to select",
@@ -5721,7 +5721,7 @@
                         "type": "string"
                       },
                       "name": {
-                        "$ref": "#/$defs/values~1extraEnv~1string,null;name-of-the-referent"
+                        "$ref": "#/$defs/values~1extraEnv~1fragment"
                       },
                       "optional": {
                         "description": "Specify whether the Secret or its key must be defined",
@@ -5760,7 +5760,7 @@
           "x-kubernetes-patch-strategy": "merge"
         },
         {
-          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
           "type": "null"
@@ -5798,10 +5798,10 @@
           "x-kubernetes-map-type": "atomic"
         },
         {
-          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1extraNodeSelectorTerms~1object"
+          "$ref": "#/$defs/values~1extraNodeSelectorTerms~1fragment"
         },
         {
           "type": "null"
@@ -5881,10 +5881,10 @@
           "type": "array"
         },
         {
-          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1extraNodeSelectorTerms~1object"
+          "$ref": "#/$defs/values~1extraNodeSelectorTerms~1fragment"
         },
         {
           "type": "null"
@@ -6046,45 +6046,45 @@
     "nameOverride": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1string@3"
+          "$ref": "#/$defs/values~1fragment@6"
         },
         {
-          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1object"
+          "$ref": "#/$defs/values~1fragment"
         },
         {
           "allOf": [
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
             },
             {
-              "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+              "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
             }
           ],
           "description": "Name of the container specified as a DNS_LABEL. Each container in a pod must have a unique name (DNS_LABEL). Cannot be updated.",
@@ -6216,55 +6216,55 @@
         {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1string@3"
+              "$ref": "#/$defs/values~1fragment@6"
             },
             {
-              "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/values~1fragment@9"
             },
             {
-              "$ref": "#/$defs/values~1object"
+              "$ref": "#/$defs/values~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1string;pattern-t"
+              "$ref": "#/$defs/values~1fragment@11"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
                 }
               ],
               "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/values~1string;pattern-null-null-null"
+              "$ref": "#/$defs/values~1fragment@10"
             },
             {
               "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
@@ -6273,7 +6273,7 @@
           ]
         },
         {
-          "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+          "$ref": "#/$defs/values~1fragment@7"
         }
       ],
       "description": "Set priorityClassName to avoid eviction"
@@ -6317,10 +6317,10 @@
     "resources": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t"
         },
         {
-          "$ref": "#/$defs/values~1extraNodeSelectorTerms~1object"
+          "$ref": "#/$defs/values~1extraNodeSelectorTerms~1fragment"
         },
         {
           "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
@@ -6338,13 +6338,13 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t"
             },
             {
-              "$ref": "#/$defs/values~1extraNodeSelectorTerms~1object"
+              "$ref": "#/$defs/values~1extraNodeSelectorTerms~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1allOf~1object+object,null;annotations-is-an-unstructured"
+              "$ref": "#/$defs/values~1fragment@5"
             }
           ]
         },
@@ -6360,56 +6360,56 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@10"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@10"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@4"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@4"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@9"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@9"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@2"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@2"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@5"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@5"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@7"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@8"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@3"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@3"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1kind:t~1not~1keywords~1pattern@6"
+                  "$ref": "#/$defs/constrains~1kind:t~1fragment@6"
                 }
               ],
               "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/values~1string@3"
+              "$ref": "#/$defs/values~1fragment@6"
             },
             {
-              "$ref": "#/$defs/constrains~1hostname+name+port+protocol+tls+tls.certificateRefs@items.kind+4more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t"
             },
             {
-              "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/values~1fragment@9"
             },
             {
-              "$ref": "#/$defs/values~1object"
+              "$ref": "#/$defs/values~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1string;pattern-t"
+              "$ref": "#/$defs/values~1fragment@11"
             },
             {
-              "$ref": "#/$defs/values~1string;pattern-null-null-null"
+              "$ref": "#/$defs/values~1fragment@10"
             }
           ]
         }
@@ -6428,22 +6428,22 @@
         "timeoutSeconds": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1livenessProbe.timeoutSeconds~1null:int32;number-of-seconds-after"
+              "$ref": "#/$defs/values~1livenessProbe.timeoutSeconds~1fragment@2"
             },
             {
-              "$ref": "#/$defs/values~1livenessProbe.timeoutSeconds~1integer:int32;number-of-seconds-after"
+              "$ref": "#/$defs/values~1livenessProbe.timeoutSeconds~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/values~1fragment@9"
             },
             {
-              "$ref": "#/$defs/values~1string;pattern-t"
+              "$ref": "#/$defs/values~1fragment@11"
             },
             {
-              "$ref": "#/$defs/values~1livenessProbe.failureThreshold~1string;pattern-0-1-9"
+              "$ref": "#/$defs/values~1livenessProbe.failureThreshold~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1string;pattern-null-null-null"
+              "$ref": "#/$defs/values~1fragment@10"
             }
           ],
           "description": "should be ready within 2 minutes"

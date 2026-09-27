@@ -1,439 +1,42 @@
 {
   "$defs": {
-    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more": {
-      "items": {
-        "additionalProperties": false,
-        "description": "A single application container that you want to run within a pod.",
-        "properties": {
-          "args": {
-            "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
-            "items": {
-              "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          },
-          "command": {
-            "description": "Entrypoint array. Not executed within a shell. The container image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
-            "items": {
-              "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          },
-          "env": {
-            "description": "List of environment variables to set in the container. Cannot be updated.",
-            "items": {
-              "$ref": "#/$defs/constrains~1name+value+valueFrom.configMapKeyRef.key+valueFrom.configMapKeyRef.name+9more"
-            },
-            "type": [
-              "array",
-              "null"
-            ],
-            "x-kubernetes-patch-merge-key": "name",
-            "x-kubernetes-patch-strategy": "merge"
-          },
-          "envFrom": {
-            "description": "List of sources to populate environment variables in the container. The keys defined within a source must be a C_IDENTIFIER. All invalid keys will be reported as an event when the container is starting. When a key exists in multiple sources, the value associated with the last source will take precedence. Values defined by an Env with a duplicate key will take precedence. Cannot be updated.",
-            "items": {
-              "$ref": "#/$defs/constrains~1configMapRef.name+configMapRef.optional+prefix+secretRef.name+secretRef.optional"
-            },
-            "type": [
-              "array",
-              "null"
-            ]
-          },
-          "image": {
-            "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "imagePullPolicy": {
-            "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "lifecycle": {
-            "additionalProperties": false,
-            "description": "Lifecycle describes actions that the management system should take in response to container lifecycle events. For the PostStart and PreStop lifecycle handlers, management of the container blocks until the action is complete, unless the container process fails, in which case the handler is aborted.",
-            "properties": {
-              "postStart": {
-                "$ref": "#/$defs/constrains~1exec.command+httpGet.host+httpGet.httpHeaders@items.name+7more"
-              },
-              "preStop": {
-                "$ref": "#/$defs/constrains~1exec.command+httpGet.host+httpGet.httpHeaders@items.name+7more"
-              }
-            },
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "livenessProbe": {
-            "$ref": "#/$defs/constrains~1exec.command+failureThreshold+grpc.port+grpc.service+httpGet.host+12more"
-          },
-          "name": {
-            "description": "Name of the container specified as a DNS_LABEL. Each container in a pod must have a unique name (DNS_LABEL). Cannot be updated.",
-            "type": "string"
-          },
-          "ports": {
-            "description": "List of ports to expose from the container. Not specifying a port here DOES NOT prevent that port from being exposed. Any port which is listening on the default \"0.0.0.0\" address inside a container will be accessible from the network. Modifying this array with strategic merge patch may corrupt the data. For more information See https://github.com/kubernetes/kubernetes/issues/108255. Cannot be updated.",
-            "items": {
-              "additionalProperties": false,
-              "description": "ContainerPort represents a network port in a single container.",
-              "properties": {
-                "containerPort": {
-                  "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1integer:int32;number-of-port-to"
-                },
-                "hostIP": {
-                  "description": "What host IP to bind the external port to.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "hostPort": {
-                  "description": "Number of port to expose on the host. If specified, this must be a valid port number, 0 < x < 65536. If HostNetwork is specified, this must match ContainerPort. Most containers do not need this.",
-                  "format": "int32",
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
-                },
-                "name": {
-                  "description": "If specified, this must be an IANA_SVC_NAME and unique within the pod. Each named port in a pod must have a unique name. Name for the port that can be referred to by services.",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                },
-                "protocol": {
-                  "description": "Protocol for port. Must be UDP, TCP, or SCTP. Defaults to \"TCP\".",
-                  "type": [
-                    "string",
-                    "null"
-                  ]
-                }
-              },
-              "required": [
-                "containerPort"
-              ],
-              "type": [
-                "object",
-                "null"
-              ]
-            },
-            "type": [
-              "array",
-              "null"
-            ],
-            "x-kubernetes-list-map-keys": [
-              "containerPort",
-              "protocol"
-            ],
-            "x-kubernetes-list-type": "map",
-            "x-kubernetes-patch-merge-key": "containerPort",
-            "x-kubernetes-patch-strategy": "merge"
-          },
-          "readinessProbe": {
-            "$ref": "#/$defs/constrains~1exec.command+failureThreshold+grpc.port+grpc.service+httpGet.host+12more"
-          },
-          "resizePolicy": {
-            "description": "Resources resize policy for the container.",
-            "items": {
-              "additionalProperties": false,
-              "description": "ContainerResizePolicy represents resource resize policy for the container.",
-              "properties": {
-                "resourceName": {
-                  "description": "Name of the resource to which this resource resize policy applies. Supported values: cpu, memory.",
-                  "type": "string"
-                },
-                "restartPolicy": {
-                  "description": "Restart policy to apply when specified resource is resized. If not specified, it defaults to NotRequired.",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "resourceName",
-                "restartPolicy"
-              ],
-              "type": [
-                "object",
-                "null"
-              ]
-            },
-            "type": [
-              "array",
-              "null"
-            ],
-            "x-kubernetes-list-type": "atomic"
-          },
-          "resources": {
-            "additionalProperties": false,
-            "description": "ResourceRequirements describes the compute resource requirements.",
-            "properties": {
-              "claims": {
-                "$ref": "#/$defs/constrains~1@items.name"
-              },
-              "limits": {
-                "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1object,null;limits-describes-the-maximum"
-              },
-              "requests": {
-                "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1object,null;requests-describes-the-minimum"
-              }
-            },
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "restartPolicy": {
-            "description": "RestartPolicy defines the restart behavior of individual containers in a pod. This field may only be set for init containers, and the only allowed value is \"Always\". For non-init containers or when this field is not specified, the restart behavior is defined by the Pod's restart policy and the container type. Setting the RestartPolicy as \"Always\" for the init container will have the following effect: this init container will be continually restarted on exit until all regular containers have terminated. Once all regular containers have completed, all init containers with restartPolicy \"Always\" will be shut down. This lifecycle differs from normal init containers and is often referred to as a \"sidecar\" container. Although this init container still starts in the init container sequence, it does not wait for the container to complete before proceeding to the next init container. Instead, the next init container starts immediately after this init container is started, or after any startupProbe has successfully completed.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "securityContext": {
-            "additionalProperties": false,
-            "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
-            "properties": {
-              "allowPrivilegeEscalation": {
-                "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1boolean,null;allowprivilegeescalation-controls-whether-a"
-              },
-              "capabilities": {
-                "$ref": "#/$defs/constrains~1add+drop"
-              },
-              "privileged": {
-                "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1boolean,null;run-container-in-privileged"
-              },
-              "procMount": {
-                "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1string,null;procmount-denotes-the-type"
-              },
-              "readOnlyRootFilesystem": {
-                "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1boolean,null;whether-this-container-has"
-              },
-              "runAsGroup": {
-                "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1integer,null:int64;the-gid-to-run"
-              },
-              "runAsNonRoot": {
-                "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1boolean,null;indicates-that-the-container"
-              },
-              "runAsUser": {
-                "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1integer,null:int64;the-uid-to-run"
-              },
-              "seLinuxOptions": {
-                "$ref": "#/$defs/constrains~1level+role+type+user"
-              },
-              "seccompProfile": {
-                "$ref": "#/$defs/constrains~1localhostProfile+type"
-              },
-              "windowsOptions": {
-                "$ref": "#/$defs/constrains~1gmsaCredentialSpec+gmsaCredentialSpecName+hostProcess+runAsUserName"
-              }
-            },
-            "type": [
-              "object",
-              "null"
-            ]
-          },
-          "startupProbe": {
-            "$ref": "#/$defs/constrains~1exec.command+failureThreshold+grpc.port+grpc.service+httpGet.host+12more"
-          },
-          "stdin": {
-            "description": "Whether this container should allocate a buffer for stdin in the container runtime. If this is not set, reads from stdin in the container will always result in EOF. Default is false.",
-            "type": [
-              "boolean",
-              "null"
-            ]
-          },
-          "stdinOnce": {
-            "description": "Whether the container runtime should close the stdin channel after it has been opened by a single attach. When stdin is true the stdin stream will remain open across multiple attach sessions. If stdinOnce is set to true, stdin is opened on container start, is empty until the first client attaches to stdin, and then remains open and accepts data until the client disconnects, at which time stdin is closed and remains closed until the container is restarted. If this flag is false, a container processes that reads from stdin will never receive an EOF. Default is false",
-            "type": [
-              "boolean",
-              "null"
-            ]
-          },
-          "terminationMessagePath": {
-            "description": "Optional: Path at which the file to which the container's termination message will be written is mounted into the container's filesystem. Message written is intended to be brief final status, such as an assertion failure message. Will be truncated by the node if greater than 4096 bytes. The total message length across all containers will be limited to 12kb. Defaults to /dev/termination-log. Cannot be updated.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "terminationMessagePolicy": {
-            "description": "Indicate how the termination message should be populated. File will use the contents of terminationMessagePath to populate the container status message on both success and failure. FallbackToLogsOnError will use the last chunk of container log output if the termination message file is empty and the container exited with an error. The log output is limited to 2048 bytes or 80 lines, whichever is smaller. Defaults to File. Cannot be updated.",
-            "type": [
-              "string",
-              "null"
-            ]
-          },
-          "tty": {
-            "description": "Whether this container should allocate a TTY for itself, also requires 'stdin' to be true. Default is false.",
-            "type": [
-              "boolean",
-              "null"
-            ]
-          },
-          "volumeDevices": {
-            "description": "volumeDevices is the list of block devices to be used by the container.",
-            "items": {
-              "additionalProperties": false,
-              "description": "volumeDevice describes a mapping of a raw block device within a container.",
-              "properties": {
-                "devicePath": {
-                  "description": "devicePath is the path inside of the container that the device will be mapped to.",
-                  "type": "string"
-                },
-                "name": {
-                  "description": "name must match the name of a persistentVolumeClaim in the pod",
-                  "type": "string"
-                }
-              },
-              "required": [
-                "name",
-                "devicePath"
-              ],
-              "type": [
-                "object",
-                "null"
-              ]
-            },
-            "type": [
-              "array",
-              "null"
-            ],
-            "x-kubernetes-patch-merge-key": "devicePath",
-            "x-kubernetes-patch-strategy": "merge"
-          },
-          "volumeMounts": {
-            "description": "Pod volumes to mount into the container's filesystem. Cannot be updated.",
-            "items": {
-              "$ref": "#/$defs/constrains~1mountPath+mountPropagation+name+readOnly+subPath+subPathExpr"
-            },
-            "type": [
-              "array",
-              "null"
-            ],
-            "x-kubernetes-patch-merge-key": "mountPath",
-            "x-kubernetes-patch-strategy": "merge"
-          },
-          "workingDir": {
-            "description": "Container's working directory. If not specified, the container runtime's default will be used, which might be configured in the container image. Cannot be updated.",
-            "type": [
-              "string",
-              "null"
-            ]
-          }
-        },
-        "required": [
-          "name"
-        ],
-        "type": [
-          "object",
-          "null"
-        ]
-      },
-      "type": "array"
-    },
-    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more/boolean,null;allowprivilegeescalation-controls-whether-a": {
-      "description": "AllowPrivilegeEscalation controls whether a process can gain more privileges than its parent process. This bool directly controls if the no_new_privs flag will be set on the container process. AllowPrivilegeEscalation is true always when the container is: 1) run as Privileged 2) has CAP_SYS_ADMIN Note that this field cannot be set when spec.os.name is windows.",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more/boolean,null;indicates-that-the-container": {
-      "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more/boolean,null;run-container-in-privileged": {
-      "description": "Run container in privileged mode. Processes in privileged containers are essentially equivalent to root on the host. Defaults to false. Note that this field cannot be set when spec.os.name is windows.",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more/boolean,null;whether-this-container-has": {
-      "description": "Whether this container has a read-only root filesystem. Default is false. Note that this field cannot be set when spec.os.name is windows.",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more/integer,null:int64;the-gid-to-run": {
-      "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
-      "format": "int64",
-      "type": [
-        "integer",
-        "null"
-      ]
-    },
-    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more/integer,null:int64;the-uid-to-run": {
-      "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
-      "format": "int64",
-      "type": [
-        "integer",
-        "null"
-      ]
-    },
-    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more/integer:int32;number-of-port-to": {
-      "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
-      "format": "int32",
-      "type": "integer"
-    },
-    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more/object,null;limits-describes-the-maximum": {
-      "additionalProperties": {
-        "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1oneOf~1number,null+string,null"
-      },
-      "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more/object,null;requests-describes-the-minimum": {
-      "additionalProperties": {
-        "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1oneOf~1number,null+string,null"
-      },
-      "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
-      "type": [
-        "object",
-        "null"
-      ]
-    },
-    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more/oneOf/number,null+string,null": {
-      "oneOf": [
+    "constrains/:t": {
+      "anyOf": [
         {
-          "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
-        },
-        {
-          "type": [
-            "number",
-            "null"
+          "oneOf": [
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@5"
+            },
+            {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1:t~1fragment@16"
+                },
+                {
+                  "type": "integer"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1:t~1fragment@19"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1:t~1fragment@17"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1:t~1fragment@18"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            }
           ]
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t@2"
         }
       ]
     },
-    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more/string,null;procmount-denotes-the-type": {
-      "description": "procMount denotes the type of proc mount to use for the containers. The default is DefaultProcMount which uses the container runtime defaults for readonly paths and masked paths. This requires the ProcMountType feature flag to be enabled. Note that this field cannot be set when spec.os.name is windows.",
-      "type": [
-        "string",
-        "null"
-      ]
-    },
-    "constrains/@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more": {
+    "constrains/:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more": {
       "anyOf": [
         {
           "description": "List of volumes that can be mounted by containers belonging to the pod. More info: https://kubernetes.io/docs/concepts/storage/volumes",
@@ -514,7 +117,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1boolean,null;readonly-defaults-to-false"
+                    "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@12"
                   }
                 },
                 "required": [
@@ -531,7 +134,7 @@
                 "description": "AzureFile represents an Azure File Service mount on the host and bind mount to the pod.",
                 "properties": {
                   "readOnly": {
-                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1boolean,null;readonly-defaults-to-false@2"
+                    "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@13"
                   },
                   "secretName": {
                     "description": "secretName is the  name of secret that contains Azure Storage Account Name and Key",
@@ -652,10 +255,10 @@
                     "$ref": "#/$defs/constrains~1@items.key+@items.mode+@items.path"
                   },
                   "name": {
-                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string,null;name-of-the-referent"
+                    "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@8"
                   },
                   "optional": {
-                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1boolean,null;optional-specify-whether-the"
+                    "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@11"
                   }
                 },
                 "type": [
@@ -747,7 +350,7 @@
                     ]
                   },
                   "sizeLimit": {
-                    "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1oneOf~1number,null+string,null"
+                    "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@14"
                   }
                 },
                 "type": [
@@ -768,10 +371,10 @@
                         "description": "ObjectMeta is metadata that all persisted resources must have, which includes all objects users must create.",
                         "properties": {
                           "annotations": {
-                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1object,null;annotations-is-an-unstructured"
+                            "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment"
                           },
                           "creationTimestamp": {
-                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string,null:date-time;time-is-a-wrapper"
+                            "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@9"
                           },
                           "deletionGracePeriodSeconds": {
                             "description": "Number of seconds allowed for this object to gracefully terminate before it will be removed from the system. Only set when deletionTimestamp is also set. May only be shortened. Read-only.",
@@ -782,7 +385,7 @@
                             ]
                           },
                           "deletionTimestamp": {
-                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string,null:date-time;time-is-a-wrapper"
+                            "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@9"
                           },
                           "finalizers": {
                             "description": "Must be empty before the object is deleted from the registry. Each entry is an identifier for the responsible component that will remove the entry from the list. If the deletionTimestamp of the object is non-nil, entries in this list can only be removed. Finalizers may be processed and removed in any order.  Order is NOT enforced because it introduces significant risk of stuck finalizers. finalizers is a shared field, any actor with permission can reorder it. If the finalizer list is processed in order, then this can lead to a situation in which the component responsible for the first finalizer in the list is waiting for a signal (field value, external system, or other) produced by a component responsible for a finalizer later in the list, resulting in a deadlock. Without enforced ordering finalizers are free to order amongst themselves and are not vulnerable to ordering changes in the list.",
@@ -811,7 +414,7 @@
                             ]
                           },
                           "labels": {
-                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1object,null;map-of-string-keys"
+                            "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@3"
                           },
                           "managedFields": {
                             "description": "ManagedFields maps workflow-id and version to the set of fields that are managed by that workflow. This is mostly for internal housekeeping, and users typically shouldn't need to set or understand this field. A workflow can be the user's name, a controller's name, or the name of a specific apply path like \"ci-cd\". The set of fields is always in the version that the workflow used when modifying the object.",
@@ -862,7 +465,7 @@
                                   ]
                                 },
                                 "time": {
-                                  "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string,null:date-time;time-is-a-wrapper"
+                                  "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@9"
                                 }
                               },
                               "type": [
@@ -991,13 +594,13 @@
                             "description": "TypedLocalObjectReference contains enough information to let you locate the typed referenced object inside the same namespace.",
                             "properties": {
                               "apiGroup": {
-                                "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string,null;apigroup-is-the-group"
+                                "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@5"
                               },
                               "kind": {
-                                "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string;kind-is-the-type"
+                                "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@6"
                               },
                               "name": {
-                                "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string;name-is-the-name"
+                                "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@7"
                               }
                             },
                             "required": [
@@ -1014,13 +617,13 @@
                             "additionalProperties": false,
                             "properties": {
                               "apiGroup": {
-                                "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string,null;apigroup-is-the-group"
+                                "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@5"
                               },
                               "kind": {
-                                "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string;kind-is-the-type"
+                                "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@6"
                               },
                               "name": {
-                                "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string;name-is-the-name"
+                                "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@7"
                               },
                               "namespace": {
                                 "description": "Namespace is the namespace of resource being referenced Note that when a namespace is specified, a gateway.networking.k8s.io/ReferenceGrant object is required in the referent namespace to allow that namespace's owner to accept the reference. See the ReferenceGrant documentation for details. (Alpha) This field requires the CrossNamespaceVolumeDataSource feature gate to be enabled.",
@@ -1044,10 +647,10 @@
                             "description": "VolumeResourceRequirements describes the storage resource requirements for a volume.",
                             "properties": {
                               "limits": {
-                                "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1object,null;limits-describes-the-maximum"
+                                "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@2"
                               },
                               "requests": {
-                                "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1object,null;requests-describes-the-minimum"
+                                "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@4"
                               }
                             },
                             "type": [
@@ -1109,7 +712,7 @@
                 "description": "Represents a Fibre Channel volume. Fibre Channel volumes can only be mounted as read/write once. Fibre Channel volumes support ownership management and SELinux relabeling.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string,null;fstype-is-the-filesystem"
+                    "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@10"
                   },
                   "lun": {
                     "description": "lun is Optional: FC target lun number",
@@ -1488,7 +1091,7 @@
                 "description": "Represents a Photon Controller persistent disk resource.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string,null;fstype-is-the-filesystem"
+                    "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@10"
                   },
                   "pdID": {
                     "description": "pdID is the ID that identifies Photon Controller persistent disk",
@@ -1515,7 +1118,7 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1boolean,null;readonly-defaults-to-false@2"
+                    "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@13"
                   },
                   "volumeID": {
                     "description": "volumeID uniquely identifies a Portworx volume",
@@ -1597,10 +1200,10 @@
                               "$ref": "#/$defs/constrains~1@items.key+@items.mode+@items.path"
                             },
                             "name": {
-                              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string,null;name-of-the-referent"
+                              "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@8"
                             },
                             "optional": {
-                              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1boolean,null;optional-specify-whether-the"
+                              "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@11"
                             }
                           },
                           "type": [
@@ -1643,7 +1246,7 @@
                               ]
                             },
                             "name": {
-                              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string,null;name-of-the-referent"
+                              "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@8"
                             },
                             "optional": {
                               "description": "optional field specify whether the Secret or its key must be defined",
@@ -1843,14 +1446,14 @@
                     ]
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1boolean,null;readonly-defaults-to-false"
+                    "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@12"
                   },
                   "secretRef": {
                     "additionalProperties": false,
                     "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
                     "properties": {
                       "name": {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string,null;name-of-the-referent"
+                        "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@8"
                       }
                     },
                     "type": "object",
@@ -1946,10 +1549,10 @@
                 "description": "Represents a StorageOS persistent volume resource.",
                 "properties": {
                   "fsType": {
-                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string,null;fstype-is-the-filesystem"
+                    "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@10"
                   },
                   "readOnly": {
-                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1boolean,null;readonly-defaults-to-false@2"
+                    "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@13"
                   },
                   "secretRef": {
                     "$ref": "#/$defs/constrains~1name"
@@ -2026,40 +1629,14 @@
           "x-kubernetes-patch-strategy": "merge,retainKeys"
         },
         {
-          "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t@2"
         },
         {
           "type": "null"
         }
       ]
     },
-    "constrains/@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/boolean,null;optional-specify-whether-the": {
-      "description": "optional specify whether the ConfigMap or its keys must be defined",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "constrains/@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/boolean,null;readonly-defaults-to-false": {
-      "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "constrains/@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/boolean,null;readonly-defaults-to-false@2": {
-      "description": "readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
-      "type": [
-        "boolean",
-        "null"
-      ]
-    },
-    "constrains/@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/not/:t": {
-      "not": {
-        "$ref": "#/$defs/t"
-      }
-    },
-    "constrains/@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/object,null;annotations-is-an-unstructured": {
+    "constrains/:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/fragment": {
       "additionalProperties": {
         "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
       },
@@ -2069,7 +1646,58 @@
         "null"
       ]
     },
-    "constrains/@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/object,null;map-of-string-keys": {
+    "constrains/:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/fragment@10": {
+      "description": "fsType is the filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "constrains/:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/fragment@11": {
+      "description": "optional specify whether the ConfigMap or its keys must be defined",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "constrains/:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/fragment@12": {
+      "description": "readOnly Defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "constrains/:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/fragment@13": {
+      "description": "readOnly defaults to false (read/write). ReadOnly here will force the ReadOnly setting in VolumeMounts.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "constrains/:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/fragment@14": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
+        },
+        {
+          "type": [
+            "number",
+            "null"
+          ]
+        }
+      ]
+    },
+    "constrains/:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/fragment@2": {
+      "additionalProperties": {
+        "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@14"
+      },
+      "description": "Limits describes the maximum amount of compute resources allowed. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "constrains/:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/fragment@3": {
       "additionalProperties": {
         "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
       },
@@ -2079,7 +1707,39 @@
         "null"
       ]
     },
-    "constrains/@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/string,null:date-time;time-is-a-wrapper": {
+    "constrains/:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/fragment@4": {
+      "additionalProperties": {
+        "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@14"
+      },
+      "description": "Requests describes the minimum amount of compute resources required. If Requests is omitted for a container, it defaults to Limits if that is explicitly specified, otherwise to an implementation-defined value. Requests cannot exceed Limits. More info: https://kubernetes.io/docs/concepts/configuration/manage-resources-containers/",
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "constrains/:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/fragment@5": {
+      "description": "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "constrains/:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/fragment@6": {
+      "description": "Kind is the type of resource being referenced",
+      "type": "string"
+    },
+    "constrains/:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/fragment@7": {
+      "description": "Name is the name of resource being referenced",
+      "type": "string"
+    },
+    "constrains/:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/fragment@8": {
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "constrains/:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/fragment@9": {
       "description": "Time is a wrapper around time.Time which supports correct marshaling to YAML and JSON.  Wrappers are provided for many of the factory methods that the time package offers.",
       "format": "date-time",
       "type": [
@@ -2087,34 +1747,601 @@
         "null"
       ]
     },
-    "constrains/@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/string,null;apigroup-is-the-group": {
-      "description": "APIGroup is the group for the resource being referenced. If APIGroup is not specified, the specified Kind must be in the core API group. For any other third-party types, APIGroup is required.",
-      "type": [
-        "string",
-        "null"
-      ]
+    "constrains/:t/fragment": {
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "maxItems": 0,
+            "type": "array"
+          },
+          {
+            "type": "integer"
+          },
+          {
+            "$ref": "#/$defs/constrains~1:t~1fragment@3"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "null"
+          },
+          {
+            "type": "boolean"
+          },
+          {
+            "maxProperties": 0,
+            "type": "object"
+          }
+        ]
+      },
+      "propertyNames": {
+        "$ref": "#/$defs/constrains~1:t~1fragment@3"
+      },
+      "type": "object"
     },
-    "constrains/@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/string,null;fstype-is-the-filesystem": {
-      "description": "fsType is the filesystem type to mount. Must be a filesystem type supported by the host operating system. Ex. \"ext4\", \"xfs\", \"ntfs\". Implicitly inferred to be \"ext4\" if unspecified.",
-      "type": [
-        "string",
-        "null"
-      ]
+    "constrains/:t/fragment@10": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
     },
-    "constrains/@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/string,null;name-of-the-referent": {
-      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
-      "type": [
-        "string",
-        "null"
-      ]
+    "constrains/:t/fragment@11": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
     },
-    "constrains/@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/string;kind-is-the-type": {
-      "description": "Kind is the type of resource being referenced",
+    "constrains/:t/fragment@12": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "constrains/:t/fragment@13": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "constrains/:t/fragment@14": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "constrains/:t/fragment@15": {
+      "not": {
+        "pattern": "^[-?:]([ \\t]|$)"
+      }
+    },
+    "constrains/:t/fragment@16": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
       "type": "string"
     },
-    "constrains/@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more/string;name-is-the-name": {
-      "description": "Name is the name of resource being referenced",
+    "constrains/:t/fragment@17": {
+      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
       "type": "string"
+    },
+    "constrains/:t/fragment@18": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "constrains/:t/fragment@19": {
+      "pattern": "^[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "constrains/:t/fragment@2": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@15"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@14"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@12"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@13"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@11"
+        }
+      ],
+      "type": "string"
+    },
+    "constrains/:t/fragment@3": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@6"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@8"
+        }
+      ],
+      "type": "string"
+    },
+    "constrains/:t/fragment@4": {
+      "allOf": [
+        {
+          "not": {
+            "pattern": "^(null|Null|NULL)[ \\t]+#"
+          }
+        },
+        {
+          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
+        },
+        {
+          "not": {
+            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
+          }
+        }
+      ],
+      "type": "string"
+    },
+    "constrains/:t/fragment@5": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@16"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@19"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@18"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@2"
+        }
+      ]
+    },
+    "constrains/:t/fragment@6": {
+      "not": {
+        "pattern": ":[ \\t]|:$"
+      }
+    },
+    "constrains/:t/fragment@7": {
+      "not": {
+        "pattern": "[ \\t]#"
+      }
+    },
+    "constrains/:t/fragment@8": {
+      "not": {
+        "pattern": "[\\r\\n]"
+      }
+    },
+    "constrains/:t/fragment@9": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "constrains/:t@2": {
+      "not": {
+        "$ref": "#/$defs/t"
+      }
+    },
+    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more": {
+      "items": {
+        "additionalProperties": false,
+        "description": "A single application container that you want to run within a pod.",
+        "properties": {
+          "args": {
+            "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
+            "items": {
+              "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "command": {
+            "description": "Entrypoint array. Not executed within a shell. The container image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
+            "items": {
+              "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "env": {
+            "description": "List of environment variables to set in the container. Cannot be updated.",
+            "items": {
+              "$ref": "#/$defs/constrains~1name+value+valueFrom.configMapKeyRef.key+valueFrom.configMapKeyRef.name+9more"
+            },
+            "type": [
+              "array",
+              "null"
+            ],
+            "x-kubernetes-patch-merge-key": "name",
+            "x-kubernetes-patch-strategy": "merge"
+          },
+          "envFrom": {
+            "description": "List of sources to populate environment variables in the container. The keys defined within a source must be a C_IDENTIFIER. All invalid keys will be reported as an event when the container is starting. When a key exists in multiple sources, the value associated with the last source will take precedence. Values defined by an Env with a duplicate key will take precedence. Cannot be updated.",
+            "items": {
+              "$ref": "#/$defs/constrains~1configMapRef.name+configMapRef.optional+prefix+secretRef.name+secretRef.optional"
+            },
+            "type": [
+              "array",
+              "null"
+            ]
+          },
+          "image": {
+            "description": "Container image name. More info: https://kubernetes.io/docs/concepts/containers/images This field is optional to allow higher level config management to default or override container images in workload controllers like Deployments and StatefulSets.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "imagePullPolicy": {
+            "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "lifecycle": {
+            "additionalProperties": false,
+            "description": "Lifecycle describes actions that the management system should take in response to container lifecycle events. For the PostStart and PreStop lifecycle handlers, management of the container blocks until the action is complete, unless the container process fails, in which case the handler is aborted.",
+            "properties": {
+              "postStart": {
+                "$ref": "#/$defs/constrains~1exec.command+httpGet.host+httpGet.httpHeaders@items.name+7more"
+              },
+              "preStop": {
+                "$ref": "#/$defs/constrains~1exec.command+httpGet.host+httpGet.httpHeaders@items.name+7more"
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "livenessProbe": {
+            "$ref": "#/$defs/constrains~1exec.command+failureThreshold+grpc.port+grpc.service+httpGet.host+12more"
+          },
+          "name": {
+            "description": "Name of the container specified as a DNS_LABEL. Each container in a pod must have a unique name (DNS_LABEL). Cannot be updated.",
+            "type": "string"
+          },
+          "ports": {
+            "description": "List of ports to expose from the container. Not specifying a port here DOES NOT prevent that port from being exposed. Any port which is listening on the default \"0.0.0.0\" address inside a container will be accessible from the network. Modifying this array with strategic merge patch may corrupt the data. For more information See https://github.com/kubernetes/kubernetes/issues/108255. Cannot be updated.",
+            "items": {
+              "additionalProperties": false,
+              "description": "ContainerPort represents a network port in a single container.",
+              "properties": {
+                "containerPort": {
+                  "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1fragment@3"
+                },
+                "hostIP": {
+                  "description": "What host IP to bind the external port to.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "hostPort": {
+                  "description": "Number of port to expose on the host. If specified, this must be a valid port number, 0 < x < 65536. If HostNetwork is specified, this must match ContainerPort. Most containers do not need this.",
+                  "format": "int32",
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "name": {
+                  "description": "If specified, this must be an IANA_SVC_NAME and unique within the pod. Each named port in a pod must have a unique name. Name for the port that can be referred to by services.",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "protocol": {
+                  "description": "Protocol for port. Must be UDP, TCP, or SCTP. Defaults to \"TCP\".",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "required": [
+                "containerPort"
+              ],
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "type": [
+              "array",
+              "null"
+            ],
+            "x-kubernetes-list-map-keys": [
+              "containerPort",
+              "protocol"
+            ],
+            "x-kubernetes-list-type": "map",
+            "x-kubernetes-patch-merge-key": "containerPort",
+            "x-kubernetes-patch-strategy": "merge"
+          },
+          "readinessProbe": {
+            "$ref": "#/$defs/constrains~1exec.command+failureThreshold+grpc.port+grpc.service+httpGet.host+12more"
+          },
+          "resizePolicy": {
+            "description": "Resources resize policy for the container.",
+            "items": {
+              "additionalProperties": false,
+              "description": "ContainerResizePolicy represents resource resize policy for the container.",
+              "properties": {
+                "resourceName": {
+                  "description": "Name of the resource to which this resource resize policy applies. Supported values: cpu, memory.",
+                  "type": "string"
+                },
+                "restartPolicy": {
+                  "description": "Restart policy to apply when specified resource is resized. If not specified, it defaults to NotRequired.",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "resourceName",
+                "restartPolicy"
+              ],
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "type": [
+              "array",
+              "null"
+            ],
+            "x-kubernetes-list-type": "atomic"
+          },
+          "resources": {
+            "additionalProperties": false,
+            "description": "ResourceRequirements describes the compute resource requirements.",
+            "properties": {
+              "claims": {
+                "$ref": "#/$defs/constrains~1@items.name"
+              },
+              "limits": {
+                "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@2"
+              },
+              "requests": {
+                "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@4"
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "restartPolicy": {
+            "description": "RestartPolicy defines the restart behavior of individual containers in a pod. This field may only be set for init containers, and the only allowed value is \"Always\". For non-init containers or when this field is not specified, the restart behavior is defined by the Pod's restart policy and the container type. Setting the RestartPolicy as \"Always\" for the init container will have the following effect: this init container will be continually restarted on exit until all regular containers have terminated. Once all regular containers have completed, all init containers with restartPolicy \"Always\" will be shut down. This lifecycle differs from normal init containers and is often referred to as a \"sidecar\" container. Although this init container still starts in the init container sequence, it does not wait for the container to complete before proceeding to the next init container. Instead, the next init container starts immediately after this init container is started, or after any startupProbe has successfully completed.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "securityContext": {
+            "additionalProperties": false,
+            "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
+            "properties": {
+              "allowPrivilegeEscalation": {
+                "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1fragment"
+              },
+              "capabilities": {
+                "$ref": "#/$defs/constrains~1add+drop"
+              },
+              "privileged": {
+                "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1fragment@4"
+              },
+              "procMount": {
+                "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1fragment@8"
+              },
+              "readOnlyRootFilesystem": {
+                "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1fragment@7"
+              },
+              "runAsGroup": {
+                "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1fragment@5"
+              },
+              "runAsNonRoot": {
+                "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1fragment@2"
+              },
+              "runAsUser": {
+                "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1fragment@6"
+              },
+              "seLinuxOptions": {
+                "$ref": "#/$defs/constrains~1level+role+type+user"
+              },
+              "seccompProfile": {
+                "$ref": "#/$defs/constrains~1localhostProfile+type"
+              },
+              "windowsOptions": {
+                "$ref": "#/$defs/constrains~1gmsaCredentialSpec+gmsaCredentialSpecName+hostProcess+runAsUserName"
+              }
+            },
+            "type": [
+              "object",
+              "null"
+            ]
+          },
+          "startupProbe": {
+            "$ref": "#/$defs/constrains~1exec.command+failureThreshold+grpc.port+grpc.service+httpGet.host+12more"
+          },
+          "stdin": {
+            "description": "Whether this container should allocate a buffer for stdin in the container runtime. If this is not set, reads from stdin in the container will always result in EOF. Default is false.",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "stdinOnce": {
+            "description": "Whether the container runtime should close the stdin channel after it has been opened by a single attach. When stdin is true the stdin stream will remain open across multiple attach sessions. If stdinOnce is set to true, stdin is opened on container start, is empty until the first client attaches to stdin, and then remains open and accepts data until the client disconnects, at which time stdin is closed and remains closed until the container is restarted. If this flag is false, a container processes that reads from stdin will never receive an EOF. Default is false",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "terminationMessagePath": {
+            "description": "Optional: Path at which the file to which the container's termination message will be written is mounted into the container's filesystem. Message written is intended to be brief final status, such as an assertion failure message. Will be truncated by the node if greater than 4096 bytes. The total message length across all containers will be limited to 12kb. Defaults to /dev/termination-log. Cannot be updated.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "terminationMessagePolicy": {
+            "description": "Indicate how the termination message should be populated. File will use the contents of terminationMessagePath to populate the container status message on both success and failure. FallbackToLogsOnError will use the last chunk of container log output if the termination message file is empty and the container exited with an error. The log output is limited to 2048 bytes or 80 lines, whichever is smaller. Defaults to File. Cannot be updated.",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "tty": {
+            "description": "Whether this container should allocate a TTY for itself, also requires 'stdin' to be true. Default is false.",
+            "type": [
+              "boolean",
+              "null"
+            ]
+          },
+          "volumeDevices": {
+            "description": "volumeDevices is the list of block devices to be used by the container.",
+            "items": {
+              "additionalProperties": false,
+              "description": "volumeDevice describes a mapping of a raw block device within a container.",
+              "properties": {
+                "devicePath": {
+                  "description": "devicePath is the path inside of the container that the device will be mapped to.",
+                  "type": "string"
+                },
+                "name": {
+                  "description": "name must match the name of a persistentVolumeClaim in the pod",
+                  "type": "string"
+                }
+              },
+              "required": [
+                "name",
+                "devicePath"
+              ],
+              "type": [
+                "object",
+                "null"
+              ]
+            },
+            "type": [
+              "array",
+              "null"
+            ],
+            "x-kubernetes-patch-merge-key": "devicePath",
+            "x-kubernetes-patch-strategy": "merge"
+          },
+          "volumeMounts": {
+            "description": "Pod volumes to mount into the container's filesystem. Cannot be updated.",
+            "items": {
+              "$ref": "#/$defs/constrains~1mountPath+mountPropagation+name+readOnly+subPath+subPathExpr"
+            },
+            "type": [
+              "array",
+              "null"
+            ],
+            "x-kubernetes-patch-merge-key": "mountPath",
+            "x-kubernetes-patch-strategy": "merge"
+          },
+          "workingDir": {
+            "description": "Container's working directory. If not specified, the container runtime's default will be used, which might be configured in the container image. Cannot be updated.",
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "type": [
+          "object",
+          "null"
+        ]
+      },
+      "type": "array"
+    },
+    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more/fragment": {
+      "description": "AllowPrivilegeEscalation controls whether a process can gain more privileges than its parent process. This bool directly controls if the no_new_privs flag will be set on the container process. AllowPrivilegeEscalation is true always when the container is: 1) run as Privileged 2) has CAP_SYS_ADMIN Note that this field cannot be set when spec.os.name is windows.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more/fragment@2": {
+      "description": "Indicates that the container must run as a non-root user. If true, the Kubelet will validate the image at runtime to ensure that it does not run as UID 0 (root) and fail to start the container if it does. If unset or false, no such validation will be performed. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more/fragment@3": {
+      "description": "Number of port to expose on the pod's IP address. This must be a valid port number, 0 < x < 65536.",
+      "format": "int32",
+      "type": "integer"
+    },
+    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more/fragment@4": {
+      "description": "Run container in privileged mode. Processes in privileged containers are essentially equivalent to root on the host. Defaults to false. Note that this field cannot be set when spec.os.name is windows.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more/fragment@5": {
+      "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
+      "format": "int64",
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more/fragment@6": {
+      "description": "The UID to run the entrypoint of the container process. Defaults to user specified in image metadata if unspecified. May also be set in PodSecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence. Note that this field cannot be set when spec.os.name is windows.",
+      "format": "int64",
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more/fragment@7": {
+      "description": "Whether this container has a read-only root filesystem. Default is false. Note that this field cannot be set when spec.os.name is windows.",
+      "type": [
+        "boolean",
+        "null"
+      ]
+    },
+    "constrains/@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more/fragment@8": {
+      "description": "procMount denotes the type of proc mount to use for the containers. The default is DefaultProcMount which uses the container runtime defaults for readonly paths and masked paths. This requires the ProcMountType feature flag to be enabled. Note that this field cannot be set when spec.os.name is windows.",
+      "type": [
+        "string",
+        "null"
+      ]
     },
     "constrains/@items.configMapRef.name+@items.configMapRef.optional+@items.prefix+2more": {
       "description": "List of sources to populate environment variables in the container. The keys defined within a source must be a C_IDENTIFIER. All invalid keys will be reported as an event when the container is starting. When a key exists in multiple sources, the value associated with the last source will take precedence. Values defined by an Env with a duplicate key will take precedence. Cannot be updated.",
@@ -2299,28 +2526,28 @@
       "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
       "properties": {
         "allowPrivilegeEscalation": {
-          "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1boolean,null;allowprivilegeescalation-controls-whether-a"
+          "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1fragment"
         },
         "capabilities": {
           "$ref": "#/$defs/constrains~1add+drop"
         },
         "privileged": {
-          "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1boolean,null;run-container-in-privileged"
+          "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1fragment@4"
         },
         "procMount": {
-          "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1string,null;procmount-denotes-the-type"
+          "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1fragment@8"
         },
         "readOnlyRootFilesystem": {
-          "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1boolean,null;whether-this-container-has"
+          "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1fragment@7"
         },
         "runAsGroup": {
-          "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1integer,null:int64;the-gid-to-run"
+          "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1fragment@5"
         },
         "runAsNonRoot": {
-          "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1boolean,null;indicates-that-the-container"
+          "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1fragment@2"
         },
         "runAsUser": {
-          "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1integer,null:int64;the-uid-to-run"
+          "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1fragment@6"
         },
         "seLinuxOptions": {
           "$ref": "#/$defs/constrains~1level+role+type+user"
@@ -2340,7 +2567,7 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1annotations~1object"
+              "$ref": "#/$defs/constrains~1annotations~1fragment"
             },
             {
               "type": "null"
@@ -2353,48 +2580,23 @@
         }
       }
     },
-    "constrains/annotations/not/keywords/pattern": {
-      "not": {
-        "pattern": ":[ \\t]|:$"
-      }
-    },
-    "constrains/annotations/not/keywords/pattern@2": {
-      "not": {
-        "pattern": "[ \\t]#"
-      }
-    },
-    "constrains/annotations/not/keywords/pattern@3": {
-      "not": {
-        "pattern": "[\\r\\n]"
-      }
-    },
-    "constrains/annotations/not/keywords/pattern@4": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "constrains/annotations/not/keywords/pattern@5": {
-      "not": {
-        "pattern": "^[-?:]([ \\t]|$)"
-      }
-    },
-    "constrains/annotations/object": {
+    "constrains/annotations/fragment": {
       "propertyNames": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@5"
+            "$ref": "#/$defs/constrains~1:t~1fragment@15"
           },
           {
-            "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@4"
+            "$ref": "#/$defs/constrains~1:t~1fragment@14"
           },
           {
-            "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@2"
+            "$ref": "#/$defs/constrains~1:t~1fragment@7"
           },
           {
-            "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern"
+            "$ref": "#/$defs/constrains~1:t~1fragment@6"
           },
           {
-            "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@3"
+            "$ref": "#/$defs/constrains~1:t~1fragment@8"
           }
         ]
       },
@@ -2406,7 +2608,7 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@2"
             },
             {
               "type": "object"
@@ -2418,14 +2620,14 @@
               "type": "array"
             },
             {
-              "$ref": "#/$defs/constrains~1annotations:t~1object"
+              "$ref": "#/$defs/constrains~1annotations:t~1fragment"
             }
           ],
           "description": "Annotations applied to created service account"
         }
       }
     },
-    "constrains/annotations:t/object": {
+    "constrains/annotations:t/fragment": {
       "additionalProperties": {
         "type": "string"
       },
@@ -2507,34 +2709,22 @@
               "type": "null"
             },
             {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@16"
             },
             {
               "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
               "type": "boolean"
             },
             {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@19"
             },
             {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+              "$ref": "#/$defs/constrains~1:t~1fragment@18"
             }
           ],
           "description": "Automount API credentials for the Service Account"
         }
       }
-    },
-    "constrains/automountServiceAccountToken/string;pattern-a-za-z0-9-t": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "constrains/automountServiceAccountToken/string;pattern-null-null-null": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "constrains/automountServiceAccountToken/string;pattern-t": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
     },
     "constrains/claims@items.name+limits+requests": {
       "additionalProperties": false,
@@ -2544,10 +2734,10 @@
           "$ref": "#/$defs/constrains~1@items.name"
         },
         "limits": {
-          "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1object,null;limits-describes-the-maximum"
+          "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@2"
         },
         "requests": {
-          "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1object,null;requests-describes-the-minimum"
+          "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@4"
         }
       },
       "type": "object"
@@ -2581,7 +2771,7 @@
           "description": "ConfigMapEnvSource selects a ConfigMap to populate the environment variables with.\n\nThe contents of the target ConfigMap's Data field will represent the key-value pairs as environment variables.",
           "properties": {
             "name": {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string,null;name-of-the-referent"
+              "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@8"
             },
             "optional": {
               "description": "Specify whether the ConfigMap must be defined",
@@ -2608,7 +2798,7 @@
           "description": "SecretEnvSource selects a Secret to populate the environment variables with.\n\nThe contents of the target Secret's Data field will represent the key-value pairs as environment variables.",
           "properties": {
             "name": {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string,null;name-of-the-referent"
+              "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@8"
             },
             "optional": {
               "description": "Specify whether the Secret must be defined",
@@ -2680,7 +2870,7 @@
           ]
         },
         "divisor": {
-          "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1oneOf~1number,null+string,null"
+          "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@14"
         },
         "resource": {
           "description": "Required: resource to select",
@@ -3423,19 +3613,19 @@
           "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.topologySpreadConstraints@items.labelSelector"
         },
         "matchLabelKeys": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set"
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment"
         },
         "mismatchLabelKeys": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set"
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@2"
         },
         "namespaceSelector": {
           "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.topologySpreadConstraints@items.labelSelector"
         },
         "namespaces": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;namespaces-specifies-a-static"
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@4"
         },
         "topologyKey": {
-          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1string;this-pod-should-be"
+          "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@3"
         }
       },
       "required": [
@@ -3446,7 +3636,7 @@
         "null"
       ]
     },
-    "constrains/labelSelector.matchExpressions@items.key+8more/array,null;matchlabelkeys-is-a-set": {
+    "constrains/labelSelector.matchExpressions@items.key+8more/fragment": {
       "description": "MatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key in (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MatchLabelKeys and LabelSelector. Also, MatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
         "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
@@ -3457,7 +3647,7 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "constrains/labelSelector.matchExpressions@items.key+8more/array,null;mismatchlabelkeys-is-a-set": {
+    "constrains/labelSelector.matchExpressions@items.key+8more/fragment@2": {
       "description": "MismatchLabelKeys is a set of pod label keys to select which pods will be taken into consideration. The keys are used to lookup values from the incoming pod labels, those key-value labels are merged with `LabelSelector` as `key notin (value)` to select the group of existing pods which pods will be taken into consideration for the incoming pod's pod (anti) affinity. Keys that don't exist in the incoming pod labels will be ignored. The default value is empty. The same key is forbidden to exist in both MismatchLabelKeys and LabelSelector. Also, MismatchLabelKeys cannot be set when LabelSelector isn't set. This is an alpha field and requires enabling MatchLabelKeysInPodAffinity feature gate.",
       "items": {
         "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
@@ -3468,7 +3658,11 @@
       ],
       "x-kubernetes-list-type": "atomic"
     },
-    "constrains/labelSelector.matchExpressions@items.key+8more/array,null;namespaces-specifies-a-static": {
+    "constrains/labelSelector.matchExpressions@items.key+8more/fragment@3": {
+      "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
+      "type": "string"
+    },
+    "constrains/labelSelector.matchExpressions@items.key+8more/fragment@4": {
       "description": "namespaces specifies a static list of namespace names that the term applies to. The term is applied to the union of the namespaces listed in this field and the ones selected by namespaceSelector. null or empty namespaces list and null namespaceSelector means \"this pod's namespace\".",
       "items": {
         "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
@@ -3477,10 +3671,6 @@
         "array",
         "null"
       ]
-    },
-    "constrains/labelSelector.matchExpressions@items.key+8more/string;this-pod-should-be": {
-      "description": "This pod should be co-located (affinity) or not co-located (anti-affinity) with the pods matching the labelSelector in the specified namespaces, where co-located is defined as running on a node whose value of the label with key topologyKey matches that of any node on which any of the selected pods is running. Empty topologyKey is not allowed.",
-      "type": "string"
     },
     "constrains/level+role+type+user": {
       "additionalProperties": false,
@@ -3693,7 +3883,7 @@
       "description": "LocalObjectReference contains enough information to let you locate the referenced object inside the same namespace.",
       "properties": {
         "name": {
-          "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string,null;name-of-the-referent"
+          "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@8"
         }
       },
       "type": [
@@ -3730,7 +3920,7 @@
                   "type": "string"
                 },
                 "name": {
-                  "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string,null;name-of-the-referent"
+                  "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@8"
                 },
                 "optional": {
                   "description": "Specify whether the ConfigMap or its key must be defined",
@@ -3764,7 +3954,7 @@
                   "type": "string"
                 },
                 "name": {
-                  "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1string,null;name-of-the-referent"
+                  "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@8"
                 },
                 "optional": {
                   "description": "Specify whether the Secret or its key must be defined",
@@ -3806,155 +3996,65 @@
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@5"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@15"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@9"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@4"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@14"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@2"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@7"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@2"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@10"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@4"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@12"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@5"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@13"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@6"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@3"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@8"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@3"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@11"
                 }
               ],
               "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
               "type": "string"
             },
             {
-              "$ref": "#/$defs/constrains~1name:t~1string@2"
+              "$ref": "#/$defs/constrains~1:t~1fragment@4"
             },
             {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@2"
             },
             {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@16"
             },
             {
-              "$ref": "#/$defs/constrains~1name:t~1object"
+              "$ref": "#/$defs/constrains~1:t~1fragment"
             },
             {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@19"
             },
             {
               "description": "Name must be unique within a namespace. Is required when creating resources, although some resources may allow a client to request the generation of an appropriate name automatically. Name is primarily intended for creation idempotence and configuration definition. Cannot be updated. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names#names",
               "type": "null"
             },
             {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+              "$ref": "#/$defs/constrains~1:t~1fragment@18"
             }
           ],
           "description": "Service account name"
         }
       }
-    },
-    "constrains/name:t/not/keywords/pattern": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "constrains/name:t/not/keywords/pattern@2": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "constrains/name:t/not/keywords/pattern@3": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "constrains/name:t/not/keywords/pattern@4": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "constrains/name:t/not/keywords/pattern@5": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
-    },
-    "constrains/name:t/object": {
-      "additionalProperties": {
-        "anyOf": [
-          {
-            "maxItems": 0,
-            "type": "array"
-          },
-          {
-            "type": "integer"
-          },
-          {
-            "$ref": "#/$defs/constrains~1name:t~1string"
-          },
-          {
-            "type": "number"
-          },
-          {
-            "type": "null"
-          },
-          {
-            "type": "boolean"
-          },
-          {
-            "maxProperties": 0,
-            "type": "object"
-          }
-        ]
-      },
-      "propertyNames": {
-        "$ref": "#/$defs/constrains~1name:t~1string"
-      },
-      "type": "object"
-    },
-    "constrains/name:t/string": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@3"
-        }
-      ],
-      "type": "string"
-    },
-    "constrains/name:t/string@2": {
-      "allOf": [
-        {
-          "not": {
-            "pattern": "^(null|Null|NULL)[ \\t]+#"
-          }
-        },
-        {
-          "pattern": "^[A-Za-z_][A-Za-z0-9_.+/\\-]*[ \\t]+#"
-        },
-        {
-          "not": {
-            "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)[ \\t]+#"
-          }
-        }
-      ],
-      "type": "string"
     },
     "constrains/name:t@2": {
       "properties": {
@@ -4215,19 +4315,19 @@
               "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.topologySpreadConstraints@items.labelSelector"
             },
             "matchLabelKeys": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;matchlabelkeys-is-a-set"
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment"
             },
             "mismatchLabelKeys": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;mismatchlabelkeys-is-a-set"
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@2"
             },
             "namespaceSelector": {
               "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.topologySpreadConstraints@items.labelSelector"
             },
             "namespaces": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1array,null;namespaces-specifies-a-static"
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@4"
             },
             "topologyKey": {
-              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1string;this-pod-should-be"
+              "$ref": "#/$defs/constrains~1labelSelector.matchExpressions@items.key+8more~1fragment@3"
             }
           },
           "required": [
@@ -4697,132 +4797,7 @@
         }
       ]
     },
-    "values/allOf/object+object,null;map-of-string-keys": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1object,null;map-of-string-keys"
-        },
-        {
-          "$ref": "#/$defs/constrains~1annotations:t~1object"
-        }
-      ]
-    },
-    "values/anyOf/not/:t+1more": {
-      "anyOf": [
-        {
-          "oneOf": [
-            {
-              "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
-            },
-            {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                },
-                {
-                  "type": "integer"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                },
-                {
-                  "$ref": "#/$defs/values~1string;pattern-0-1-9"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                },
-                {
-                  "type": "null"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
-        }
-      ]
-    },
-    "values/anyOf/null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1name:t~1string@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name:t~1object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/values~1string"
-        }
-      ]
-    },
-    "values/anyOf/object+string+string;name-of-the-container": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1name:t~1string@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name:t~1object"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@5"
-            },
-            {
-              "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern"
-            },
-            {
-              "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@4"
-            },
-            {
-              "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@2"
-            },
-            {
-              "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@2"
-            },
-            {
-              "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@4"
-            },
-            {
-              "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@5"
-            },
-            {
-              "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern"
-            },
-            {
-              "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@3"
-            },
-            {
-              "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@3"
-            }
-          ],
-          "description": "Name of the container specified as a DNS_LABEL. Each container in a pod must have a unique name (DNS_LABEL). Cannot be updated.",
-          "type": "string"
-        }
-      ]
-    },
-    "values/array,null,object;annotations-to-be-added": {
-      "description": "Annotations to be added to events controller pdb",
-      "type": [
-        "array",
-        "null",
-        "object"
-      ]
-    },
-    "values/controller.affinity/object": {
+    "values/controller.affinity/fragment": {
       "additionalProperties": false,
       "maxProperties": 0,
       "properties": {},
@@ -4831,7 +4806,7 @@
     "values/controller.livenessProbe.failureThreshold": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/constrains~1:t~1fragment@16"
         },
         {
           "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
@@ -4839,13 +4814,13 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+          "$ref": "#/$defs/constrains~1:t~1fragment@19"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-0-1-9"
+          "$ref": "#/$defs/constrains~1:t~1fragment@17"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+          "$ref": "#/$defs/constrains~1:t~1fragment@18"
         },
         {
           "description": "Minimum consecutive failures for the probe to be considered failed after having succeeded. Defaults to 3. Minimum value is 1.",
@@ -4858,7 +4833,7 @@
     "values/controller.livenessProbe.initialDelaySeconds": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/constrains~1:t~1fragment@16"
         },
         {
           "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
@@ -4866,13 +4841,13 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+          "$ref": "#/$defs/constrains~1:t~1fragment@19"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-0-1-9"
+          "$ref": "#/$defs/constrains~1:t~1fragment@17"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+          "$ref": "#/$defs/constrains~1:t~1fragment@18"
         },
         {
           "description": "Number of seconds after the container has started before liveness probes are initiated. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle#container-probes",
@@ -4885,16 +4860,16 @@
     "values/controller.livenessProbe.periodSeconds": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/constrains~1:t~1fragment@16"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+          "$ref": "#/$defs/constrains~1:t~1fragment@19"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-0-1-9"
+          "$ref": "#/$defs/constrains~1:t~1fragment@17"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+          "$ref": "#/$defs/constrains~1:t~1fragment@18"
         },
         {
           "description": "How often (in seconds) to perform the probe. Default to 10 seconds. Minimum value is 1.",
@@ -4912,7 +4887,7 @@
     "values/controller.livenessProbe.successThreshold": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/constrains~1:t~1fragment@16"
         },
         {
           "description": "Minimum consecutive successes for the probe to be considered successful after having failed. Defaults to 1. Must be 1 for liveness and startup. Minimum value is 1.",
@@ -4925,13 +4900,13 @@
           "type": "integer"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+          "$ref": "#/$defs/constrains~1:t~1fragment@19"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-0-1-9"
+          "$ref": "#/$defs/constrains~1:t~1fragment@17"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+          "$ref": "#/$defs/constrains~1:t~1fragment@18"
         }
       ],
       "description": "Minimum consecutive successes for the [probe] to be considered successful after having failed"
@@ -4949,16 +4924,16 @@
           "type": "integer"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/constrains~1:t~1fragment@16"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+          "$ref": "#/$defs/constrains~1:t~1fragment@19"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-0-1-9"
+          "$ref": "#/$defs/constrains~1:t~1fragment@17"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+          "$ref": "#/$defs/constrains~1:t~1fragment@18"
         }
       ],
       "description": "Number of seconds after which the [probe] times out"
@@ -4966,10 +4941,10 @@
     "values/controller.revisionHistoryLimit": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/constrains~1:t~1fragment@16"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+          "$ref": "#/$defs/constrains~1:t~1fragment@19"
         },
         {
           "description": "The number of old ReplicaSets to retain to allow rollback. This is a pointer to distinguish between explicit zero and not specified. Defaults to 10.",
@@ -4977,10 +4952,10 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/values~1string;pattern-0-1-9"
+          "$ref": "#/$defs/constrains~1:t~1fragment@17"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+          "$ref": "#/$defs/constrains~1:t~1fragment@18"
         },
         {
           "description": "The number of old ReplicaSets to retain to allow rollback. This is a pointer to distinguish between explicit zero and not specified. Defaults to 10.",
@@ -5046,7 +5021,7 @@
           "type": "array"
         },
         {
-          "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+          "$ref": "#/$defs/constrains~1:t@2"
         },
         {
           "type": "null"
@@ -5054,29 +5029,33 @@
       ],
       "description": "[Tolerations] for use with node taints"
     },
-    "values/integer:int32;number-of-desired-pods": {
+    "values/fragment": {
+      "additionalProperties": {
+        "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
+      },
+      "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
+      "type": "object",
+      "x-kubernetes-map-type": "atomic"
+    },
+    "values/fragment@10": {
+      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+      "type": "null"
+    },
+    "values/fragment@11": {
       "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
       "format": "int32",
       "type": "integer"
     },
-    "values/null:int32;number-of-desired-pods": {
+    "values/fragment@12": {
       "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
       "format": "int32",
       "type": "null"
     },
-    "values/null;if-specified-indicates-the": {
-      "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
-      "type": "null"
-    },
-    "values/null;image-pull-policy-one": {
-      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-      "type": "null"
-    },
-    "values/null;serviceaccountname-is-the-name": {
+    "values/fragment@13": {
       "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
       "type": "null"
     },
-    "values/object;map-of-string-keys": {
+    "values/fragment@2": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -5091,160 +5070,181 @@
       "properties": {},
       "type": "object"
     },
-    "values/object;nodeselector-is-a-selector": {
-      "additionalProperties": {
-        "$ref": "#/$defs/k8s~1deployment-apps-v1~1spec.template.spec.topologySpreadConstraints@items.labelSelector.matchExpressions@items.values@items"
-      },
-      "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
-      "type": "object",
-      "x-kubernetes-map-type": "atomic"
-    },
-    "values/string": {
+    "values/fragment@3": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@5"
+          "$ref": "#/$defs/constrains~1:t~1fragment@15"
         },
         {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern"
+          "$ref": "#/$defs/constrains~1:t~1fragment@9"
         },
         {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@4"
+          "$ref": "#/$defs/constrains~1:t~1fragment@14"
         },
         {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@2"
+          "$ref": "#/$defs/constrains~1:t~1fragment@7"
         },
         {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@2"
+          "$ref": "#/$defs/constrains~1:t~1fragment@10"
         },
         {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@4"
+          "$ref": "#/$defs/constrains~1:t~1fragment@12"
         },
         {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@5"
+          "$ref": "#/$defs/constrains~1:t~1fragment@13"
         },
         {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern"
+          "$ref": "#/$defs/constrains~1:t~1fragment@6"
         },
         {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@3"
+          "$ref": "#/$defs/constrains~1:t~1fragment@8"
         },
         {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@3"
-        }
-      ],
-      "type": "string"
-    },
-    "values/string;if-specified-indicates-the": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@3"
+          "$ref": "#/$defs/constrains~1:t~1fragment@11"
         }
       ],
       "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
       "type": "string"
     },
-    "values/string;image-pull-policy-one": {
+    "values/fragment@4": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@5"
+          "$ref": "#/$defs/constrains~1:t~1fragment@15"
         },
         {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern"
+          "$ref": "#/$defs/constrains~1:t~1fragment@9"
         },
         {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@4"
+          "$ref": "#/$defs/constrains~1:t~1fragment@14"
         },
         {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@2"
+          "$ref": "#/$defs/constrains~1:t~1fragment@7"
         },
         {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@2"
+          "$ref": "#/$defs/constrains~1:t~1fragment@10"
         },
         {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@4"
+          "$ref": "#/$defs/constrains~1:t~1fragment@12"
         },
         {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@5"
+          "$ref": "#/$defs/constrains~1:t~1fragment@13"
         },
         {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern"
+          "$ref": "#/$defs/constrains~1:t~1fragment@6"
         },
         {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@3"
+          "$ref": "#/$defs/constrains~1:t~1fragment@8"
         },
         {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@3"
+          "$ref": "#/$defs/constrains~1:t~1fragment@11"
         }
       ],
       "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
       "type": "string"
     },
-    "values/string;pattern-0-1-9": {
-      "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
-      "type": "string"
-    },
-    "values/string;serviceaccountname-is-the-name": {
+    "values/fragment@5": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@5"
+          "$ref": "#/$defs/constrains~1:t~1fragment@15"
         },
         {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern"
+          "$ref": "#/$defs/constrains~1:t~1fragment@9"
         },
         {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@4"
+          "$ref": "#/$defs/constrains~1:t~1fragment@14"
         },
         {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@2"
+          "$ref": "#/$defs/constrains~1:t~1fragment@7"
         },
         {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@2"
+          "$ref": "#/$defs/constrains~1:t~1fragment@10"
         },
         {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@4"
+          "$ref": "#/$defs/constrains~1:t~1fragment@12"
         },
         {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@5"
+          "$ref": "#/$defs/constrains~1:t~1fragment@13"
         },
         {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern"
+          "$ref": "#/$defs/constrains~1:t~1fragment@6"
         },
         {
-          "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@3"
+          "$ref": "#/$defs/constrains~1:t~1fragment@8"
         },
         {
-          "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@3"
+          "$ref": "#/$defs/constrains~1:t~1fragment@11"
         }
       ],
       "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
       "type": "string"
+    },
+    "values/fragment@6": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1annotations:t~1fragment"
+        }
+      ]
+    },
+    "values/fragment@7": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1:t~1fragment"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@15"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@14"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@7"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@10"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@12"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@13"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@6"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@8"
+            },
+            {
+              "$ref": "#/$defs/constrains~1:t~1fragment@11"
+            }
+          ],
+          "description": "Name of the container specified as a DNS_LABEL. Each container in a pod must have a unique name (DNS_LABEL). Cannot be updated.",
+          "type": "string"
+        }
+      ]
+    },
+    "values/fragment@8": {
+      "description": "Annotations to be added to events controller pdb",
+      "type": [
+        "array",
+        "null",
+        "object"
+      ]
+    },
+    "values/fragment@9": {
+      "description": "If specified, indicates the pod's priority. \"system-node-critical\" and \"system-cluster-critical\" are two special keywords which indicate the highest priorities with the former being the highest priority. Any other name must be defined by creating a PriorityClass object with that name. If not specified, the pod priority will be default or zero if there is no default.",
+      "type": "null"
     },
     "values/webhook.livenessProbe.failureThreshold": {
       "description": "Minimum consecutive failures for the [probe] to be considered failed after having succeeded"
@@ -5368,7 +5368,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/constrains~1annotations~1object"
+                                "$ref": "#/$defs/constrains~1annotations~1fragment"
                               },
                               {
                                 "type": "null"
@@ -5713,7 +5713,7 @@
               "podLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1object;map-of-string-keys"
+                    "$ref": "#/$defs/values~1fragment@2"
                   },
                   {
                     "type": "null"
@@ -5848,7 +5848,7 @@
               "podLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1object;map-of-string-keys"
+                    "$ref": "#/$defs/values~1fragment@2"
                   },
                   {
                     "type": "null"
@@ -5935,28 +5935,28 @@
                   "name": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1name:t~1string@2"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@4"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t@2"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@16"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1name:t~1object"
+                        "$ref": "#/$defs/constrains~1:t~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@19"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@18"
                       },
                       {
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/values~1string"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@2"
                       }
                     ],
                     "description": "Argo Events admission webhook name string"
@@ -6270,7 +6270,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/constrains~1annotations~1object"
+                            "$ref": "#/$defs/constrains~1annotations~1fragment"
                           },
                           {
                             "type": "null"
@@ -6343,25 +6343,25 @@
                   "imagePullPolicy": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1name:t~1string@2"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@4"
                       },
                       {
-                        "$ref": "#/$defs/values~1null;image-pull-policy-one"
+                        "$ref": "#/$defs/values~1fragment@10"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@16"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1name:t~1object"
+                        "$ref": "#/$defs/constrains~1:t~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@19"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@18"
                       },
                       {
-                        "$ref": "#/$defs/values~1string;image-pull-policy-one"
+                        "$ref": "#/$defs/values~1fragment@4"
                       }
                     ],
                     "description": "If defined, a imagePullPolicy applied to all Argo Events deployments"
@@ -6396,10 +6396,10 @@
                   "port": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1integer:int32;number-of-port-to"
+                        "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1fragment@3"
                       },
                       {
-                        "$ref": "#/$defs/values~1string;pattern-0-1-9"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@17"
                       }
                     ],
                     "description": "Port to listen on"
@@ -6481,22 +6481,22 @@
                   "replicas": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1integer:int32;number-of-desired-pods"
+                        "$ref": "#/$defs/values~1fragment@11"
                       },
                       {
-                        "$ref": "#/$defs/values~1null:int32;number-of-desired-pods"
+                        "$ref": "#/$defs/values~1fragment@12"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@16"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@19"
                       },
                       {
-                        "$ref": "#/$defs/values~1string;pattern-0-1-9"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@17"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@18"
                       }
                     ],
                     "description": "The number of webhook pods to run."
@@ -6578,7 +6578,7 @@
                   "volumes": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more"
+                        "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more"
                       }
                     ],
                     "description": "Additional volumes to the event controller pod"
@@ -6620,28 +6620,28 @@
                       "imagePullPolicy": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/constrains~1name:t~1string@2"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@4"
                           },
                           {
-                            "$ref": "#/$defs/values~1null;image-pull-policy-one"
+                            "$ref": "#/$defs/values~1fragment@10"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                            "$ref": "#/$defs/constrains~1:t@2"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@16"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1name:t~1object"
+                            "$ref": "#/$defs/constrains~1:t~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@19"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                            "$ref": "#/$defs/constrains~1:t~1fragment@18"
                           },
                           {
-                            "$ref": "#/$defs/values~1string;image-pull-policy-one"
+                            "$ref": "#/$defs/values~1fragment@4"
                           }
                         ],
                         "description": "Image pull policy for the event controller"
@@ -6662,10 +6662,10 @@
                   "name": {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@5"
                       },
                       {
-                        "$ref": "#/$defs/values~1anyOf~1object+string+string;name-of-the-container"
+                        "$ref": "#/$defs/values~1fragment@7"
                       }
                     ],
                     "description": "Argo Events admission webhook name string"
@@ -6723,7 +6723,7 @@
                         "$ref": "#/$defs/constrains~1@items.configMapRef.name+@items.configMapRef.optional+@items.prefix+2more"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t@2"
                       },
                       {
                         "type": "null"
@@ -6748,7 +6748,7 @@
                         "$ref": "#/$defs/constrains~1@items.name+@items.value+@items.valueFrom.configMapKeyRef.key+10more"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t@2"
                       },
                       {
                         "type": "null"
@@ -6770,7 +6770,7 @@
                   "resources": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t@2"
                       },
                       {
                         "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
@@ -6795,15 +6795,15 @@
                   "deploymentAnnotations": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t@2"
                       },
                       {
                         "allOf": [
                           {
-                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1object,null;annotations-is-an-unstructured"
+                            "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1annotations:t~1object"
+                            "$ref": "#/$defs/constrains~1annotations:t~1fragment"
                           }
                         ]
                       }
@@ -6896,7 +6896,7 @@
                         "$ref": "#/$defs/constrains~1@items.mountPath+@items.mountPropagation+@items.name+@items.readOnly+2more"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t@2"
                       },
                       {
                         "type": "null"
@@ -6918,7 +6918,7 @@
                   "affinity": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t@2"
                       },
                       {
                         "type": "null"
@@ -6962,10 +6962,10 @@
                   "nodeSelector": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t@2"
                       },
                       {
-                        "$ref": "#/$defs/values~1object;nodeselector-is-a-selector"
+                        "$ref": "#/$defs/values~1fragment"
                       },
                       {
                         "type": "null"
@@ -7001,28 +7001,28 @@
                   "priorityClassName": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1name:t~1string@2"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@4"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t@2"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@16"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1name:t~1object"
+                        "$ref": "#/$defs/constrains~1:t~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@19"
                       },
                       {
-                        "$ref": "#/$defs/values~1string;if-specified-indicates-the"
+                        "$ref": "#/$defs/values~1fragment@3"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@18"
                       },
                       {
-                        "$ref": "#/$defs/values~1null;if-specified-indicates-the"
+                        "$ref": "#/$defs/values~1fragment@9"
                       }
                     ],
                     "description": "Priority class for the event controller pods"
@@ -7099,78 +7099,78 @@
                               {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/constrains~1name:t~1string@2"
+                                    "$ref": "#/$defs/constrains~1:t~1fragment@4"
                                   },
                                   {
                                     "allOf": [
                                       {
-                                        "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@5"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@15"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@9"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@4"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@14"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@2"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@7"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@2"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@10"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@4"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@12"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@5"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@13"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@6"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@3"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@8"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@3"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@11"
                                       }
                                     ],
                                     "description": "Name of the object being referenced.",
                                     "type": "string"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1name:t~1object"
+                                    "$ref": "#/$defs/constrains~1:t~1fragment"
                                   }
                                 ]
                               },
                               {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/constrains~1name:t~1string@2"
+                                    "$ref": "#/$defs/constrains~1:t~1fragment@4"
                                   },
                                   {
-                                    "$ref": "#/$defs/values~1null;serviceaccountname-is-the-name"
+                                    "$ref": "#/$defs/values~1fragment@13"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                                    "$ref": "#/$defs/constrains~1:t~1fragment@16"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1name:t~1object"
+                                    "$ref": "#/$defs/constrains~1:t~1fragment"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                                    "$ref": "#/$defs/constrains~1:t~1fragment@19"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                                    "$ref": "#/$defs/constrains~1:t~1fragment@18"
                                   },
                                   {
-                                    "$ref": "#/$defs/values~1string;serviceaccountname-is-the-name"
+                                    "$ref": "#/$defs/values~1fragment@5"
                                   }
                                 ]
                               }
                             ]
                           },
                           {
-                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                            "$ref": "#/$defs/constrains~1:t@2"
                           }
                         ],
                         "description": "Service account name"
@@ -7205,7 +7205,7 @@
                   "containerSecurityContext": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                        "$ref": "#/$defs/constrains~1:t@2"
                       },
                       {
                         "$ref": "#/$defs/constrains~1allowPrivilegeEscalation+capabilities.add+capabilities.drop+privileged+procMount+14more"
@@ -7464,7 +7464,7 @@
                     "description": "Pod disruption budget",
                     "properties": {
                       "minAvailable": {
-                        "$ref": "#/$defs/values~1anyOf~1not~1:t+1more"
+                        "$ref": "#/$defs/constrains~1:t"
                       }
                     }
                   }
@@ -7486,10 +7486,10 @@
                       "labels": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                            "$ref": "#/$defs/constrains~1:t@2"
                           },
                           {
-                            "$ref": "#/$defs/values~1allOf~1object+object,null;map-of-string-keys"
+                            "$ref": "#/$defs/values~1fragment@6"
                           }
                         ],
                         "description": "Labels to be added to admission webhook pdb"
@@ -7510,25 +7510,25 @@
                   "name": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1name:t~1string@2"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@4"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@16"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1name:t~1object"
+                        "$ref": "#/$defs/constrains~1:t~1fragment"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@19"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@18"
                       },
                       {
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/values~1string"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@2"
                       }
                     ],
                     "description": "Argo Events admission webhook name string"
@@ -7551,7 +7551,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                            "$ref": "#/$defs/constrains~1:t@2"
                           },
                           {
                             "type": "object"
@@ -7563,7 +7563,7 @@
                             "type": "array"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1annotations:t~1object"
+                            "$ref": "#/$defs/constrains~1annotations:t~1fragment"
                           }
                         ],
                         "description": "Annotations to be added to admission webhook pdb"
@@ -7650,10 +7650,10 @@
               "additionalLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                    "$ref": "#/$defs/constrains~1:t@2"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1annotations:t~1object"
+                    "$ref": "#/$defs/constrains~1annotations:t~1fragment"
                   }
                 ],
                 "description": "Additional labels to add to all resources\napp: argo-events"
@@ -7816,10 +7816,10 @@
               "additionalLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                    "$ref": "#/$defs/constrains~1:t@2"
                   },
                   {
-                    "$ref": "#/$defs/values~1allOf~1object+object,null;map-of-string-keys"
+                    "$ref": "#/$defs/values~1fragment@6"
                   }
                 ],
                 "description": "Additional labels to add to all resources\napp: argo-events"
@@ -8152,7 +8152,7 @@
               "podLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1object;map-of-string-keys"
+                    "$ref": "#/$defs/values~1fragment@2"
                   },
                   {
                     "type": "null"
@@ -8290,7 +8290,7 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/constrains~1name:t~1string@2"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@4"
                   },
                   {
                     "pattern": "^&[A-Za-z0-9_-]+$",
@@ -8299,25 +8299,25 @@
                   {
                     "allOf": [
                       {
-                        "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@5"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@15"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@4"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@14"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@2"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@7"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@6"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@3"
+                        "$ref": "#/$defs/constrains~1:t~1fragment@8"
                       }
                     ],
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1name:t~1object"
+                    "$ref": "#/$defs/constrains~1:t~1fragment"
                   }
                 ],
                 "description": "Argo Events controller name string"
@@ -8652,7 +8652,7 @@
                       "annotations": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/constrains~1annotations~1object"
+                            "$ref": "#/$defs/constrains~1annotations~1fragment"
                           },
                           {
                             "type": "null"
@@ -8681,7 +8681,7 @@
                     "description": "Pod disruption budget",
                     "properties": {
                       "annotations": {
-                        "$ref": "#/$defs/values~1array,null,object;annotations-to-be-added"
+                        "$ref": "#/$defs/values~1fragment@8"
                       }
                     }
                   }
@@ -8739,7 +8739,7 @@
                 "description": "Pod disruption budget",
                 "properties": {
                   "maxUnavailable": {
-                    "$ref": "#/$defs/values~1anyOf~1not~1:t+1more"
+                    "$ref": "#/$defs/constrains~1:t"
                   }
                 }
               }
@@ -9024,28 +9024,28 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/constrains~1name:t~1string@2"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@4"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                    "$ref": "#/$defs/constrains~1:t@2"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@16"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1name:t~1object"
+                    "$ref": "#/$defs/constrains~1:t~1fragment"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@19"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@18"
                   },
                   {
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/values~1string"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@2"
                   }
                 ],
                 "description": "Argo Events controller name string"
@@ -9075,7 +9075,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "maxUnavailable": {
-                        "$ref": "#/$defs/values~1anyOf~1not~1:t+1more"
+                        "$ref": "#/$defs/constrains~1:t"
                       }
                     }
                   }
@@ -9156,10 +9156,10 @@
                               "labels": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                                    "$ref": "#/$defs/constrains~1:t@2"
                                   },
                                   {
-                                    "$ref": "#/$defs/values~1allOf~1object+object,null;map-of-string-keys"
+                                    "$ref": "#/$defs/values~1fragment@6"
                                   }
                                 ],
                                 "description": "Metrics service labels"
@@ -9182,7 +9182,7 @@
                                     "type": "integer"
                                   },
                                   {
-                                    "$ref": "#/$defs/values~1string;pattern-0-1-9"
+                                    "$ref": "#/$defs/constrains~1:t~1fragment@17"
                                   }
                                 ],
                                 "description": "Metrics service port"
@@ -9200,7 +9200,7 @@
                               "annotations": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                                    "$ref": "#/$defs/constrains~1:t@2"
                                   },
                                   {
                                     "type": "object"
@@ -9212,7 +9212,7 @@
                                     "type": "array"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1annotations:t~1object"
+                                    "$ref": "#/$defs/constrains~1annotations:t~1fragment"
                                   }
                                 ],
                                 "description": "Metrics service annotations"
@@ -9279,7 +9279,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "annotations": {
-                        "$ref": "#/$defs/values~1array,null,object;annotations-to-be-added"
+                        "$ref": "#/$defs/values~1fragment@8"
                       }
                     }
                   }
@@ -9304,7 +9304,7 @@
                         "additionalProperties": {},
                         "properties": {
                           "minAvailable": {
-                            "$ref": "#/$defs/values~1anyOf~1not~1:t+1more"
+                            "$ref": "#/$defs/constrains~1:t"
                           }
                         }
                       },
@@ -9314,10 +9314,10 @@
                           "labels": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                                "$ref": "#/$defs/constrains~1:t@2"
                               },
                               {
-                                "$ref": "#/$defs/values~1allOf~1object+object,null;map-of-string-keys"
+                                "$ref": "#/$defs/values~1fragment@6"
                               }
                             ],
                             "description": "Labels to be added to events controller pdb"
@@ -9330,7 +9330,7 @@
                           "annotations": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                                "$ref": "#/$defs/constrains~1:t@2"
                               },
                               {
                                 "type": "object"
@@ -9342,7 +9342,7 @@
                                 "type": "array"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1annotations:t~1object"
+                                "$ref": "#/$defs/constrains~1annotations:t~1fragment"
                               }
                             ],
                             "description": "Annotations to be added to events controller pdb"
@@ -9513,10 +9513,10 @@
                               "additionalLabels": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                                    "$ref": "#/$defs/constrains~1:t@2"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1annotations:t~1object"
+                                    "$ref": "#/$defs/constrains~1annotations:t~1fragment"
                                   }
                                 ],
                                 "description": "Prometheus ServiceMonitor labels"
@@ -9534,10 +9534,10 @@
                               "selector": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                                    "$ref": "#/$defs/constrains~1:t@2"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1annotations:t~1object"
+                                    "$ref": "#/$defs/constrains~1annotations:t~1fragment"
                                   }
                                 ],
                                 "description": "Prometheus ServiceMonitor selector\nprometheus: kube-prometheus"
@@ -9555,39 +9555,39 @@
                               "interval": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                                    "$ref": "#/$defs/constrains~1:t@2"
                                   },
                                   {
                                     "allOf": [
                                       {
-                                        "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@5"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@15"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@9"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@4"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@14"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@2"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@7"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@2"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@10"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@4"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@12"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@5"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@13"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@6"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1annotations~1not~1keywords~1pattern@3"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@8"
                                       },
                                       {
-                                        "$ref": "#/$defs/constrains~1name:t~1not~1keywords~1pattern@3"
+                                        "$ref": "#/$defs/constrains~1:t~1fragment@11"
                                       }
                                     ],
                                     "description": "interval at which Prometheus scrapes the metrics from the target.\n\nIf empty, Prometheus uses the global scrape interval.",
@@ -9610,7 +9610,7 @@
                               "metricRelabelings": {
                                 "anyOf": [
                                   {
-                                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                                    "$ref": "#/$defs/constrains~1:t@2"
                                   },
                                   {
                                     "description": "metricRelabelings defines the relabeling rules to apply to the\nsamples before ingestion.",
@@ -9642,7 +9642,7 @@
                                     "type": "array"
                                   },
                                   {
-                                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                                    "$ref": "#/$defs/constrains~1:t@2"
                                   }
                                 ],
                                 "description": "Prometheus [RelabelConfigs] to apply to samples before scraping"
@@ -9702,25 +9702,25 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/constrains~1name:t~1string@2"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@4"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@16"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1name:t~1object"
+                    "$ref": "#/$defs/constrains~1:t~1fragment"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@19"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@18"
                   },
                   {
                     "type": "null"
                   },
                   {
-                    "$ref": "#/$defs/values~1string"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@2"
                   }
                 ],
                 "description": "Argo Events controller name string"
@@ -9745,13 +9745,13 @@
               "name": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/constrains~1name:t~1string@2"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@4"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1name:t~1object"
+                    "$ref": "#/$defs/constrains~1:t~1fragment"
                   },
                   {
-                    "$ref": "#/$defs/values~1string"
+                    "$ref": "#/$defs/constrains~1:t~1fragment@2"
                   }
                 ],
                 "description": "Argo Events controller name string"
@@ -9839,10 +9839,10 @@
         "affinity": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@2"
             },
             {
-              "$ref": "#/$defs/values~1controller.affinity~1object"
+              "$ref": "#/$defs/values~1controller.affinity~1fragment"
             },
             {
               "type": "null"
@@ -9856,10 +9856,10 @@
         "containerSecurityContext": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@2"
             },
             {
-              "$ref": "#/$defs/values~1controller.affinity~1object"
+              "$ref": "#/$defs/values~1controller.affinity~1fragment"
             },
             {
               "$ref": "#/$defs/constrains~1allowPrivilegeEscalation+capabilities.add+capabilities.drop+privileged+procMount+14more"
@@ -9873,18 +9873,18 @@
         "deploymentAnnotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@2"
             },
             {
-              "$ref": "#/$defs/values~1controller.affinity~1object"
+              "$ref": "#/$defs/values~1controller.affinity~1fragment"
             },
             {
               "allOf": [
                 {
-                  "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1object,null;annotations-is-an-unstructured"
+                  "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1fragment"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1annotations:t~1object"
+                  "$ref": "#/$defs/constrains~1annotations:t~1fragment"
                 }
               ]
             }
@@ -9897,7 +9897,7 @@
               "$ref": "#/$defs/constrains~1@items.name+@items.value+@items.valueFrom.configMapKeyRef.key+10more"
             },
             {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@2"
             },
             {
               "type": "null"
@@ -9911,7 +9911,7 @@
               "$ref": "#/$defs/constrains~1@items.configMapRef.name+@items.configMapRef.optional+@items.prefix+2more"
             },
             {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@2"
             },
             {
               "type": "null"
@@ -9922,7 +9922,7 @@
         "extraContainers": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@2"
             },
             {
               "allOf": [
@@ -9943,28 +9943,28 @@
             "imagePullPolicy": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/constrains~1name:t~1string@2"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@4"
                 },
                 {
-                  "$ref": "#/$defs/values~1null;image-pull-policy-one"
+                  "$ref": "#/$defs/values~1fragment@10"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                  "$ref": "#/$defs/constrains~1:t@2"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@16"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1name:t~1object"
+                  "$ref": "#/$defs/constrains~1:t~1fragment"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@19"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@18"
                 },
                 {
-                  "$ref": "#/$defs/values~1string;image-pull-policy-one"
+                  "$ref": "#/$defs/values~1fragment@4"
                 }
               ],
               "description": "Image pull policy for the events controller"
@@ -9991,7 +9991,7 @@
               "x-kubernetes-patch-strategy": "merge"
             },
             {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@2"
             },
             {
               "type": "null"
@@ -10073,10 +10073,10 @@
         "name": {
           "allOf": [
             {
-              "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+              "$ref": "#/$defs/constrains~1:t~1fragment@5"
             },
             {
-              "$ref": "#/$defs/values~1anyOf~1object+string+string;name-of-the-container"
+              "$ref": "#/$defs/values~1fragment@7"
             }
           ],
           "description": "Argo Events controller name string"
@@ -10084,13 +10084,13 @@
         "nodeSelector": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@2"
             },
             {
-              "$ref": "#/$defs/values~1object;nodeselector-is-a-selector"
+              "$ref": "#/$defs/values~1fragment"
             },
             {
-              "$ref": "#/$defs/values~1controller.affinity~1object"
+              "$ref": "#/$defs/values~1controller.affinity~1fragment"
             },
             {
               "type": "null"
@@ -10133,28 +10133,28 @@
         "priorityClassName": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1name:t~1string@2"
+              "$ref": "#/$defs/constrains~1:t~1fragment@4"
             },
             {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@2"
             },
             {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@16"
             },
             {
-              "$ref": "#/$defs/constrains~1name:t~1object"
+              "$ref": "#/$defs/constrains~1:t~1fragment"
             },
             {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@19"
             },
             {
-              "$ref": "#/$defs/values~1string;if-specified-indicates-the"
+              "$ref": "#/$defs/values~1fragment@3"
             },
             {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+              "$ref": "#/$defs/constrains~1:t~1fragment@18"
             },
             {
-              "$ref": "#/$defs/values~1null;if-specified-indicates-the"
+              "$ref": "#/$defs/values~1fragment@9"
             }
           ],
           "description": "Priority class for the events controller pods"
@@ -10168,28 +10168,28 @@
             "managedNamespace": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/constrains~1name:t~1string@2"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@4"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                  "$ref": "#/$defs/constrains~1:t@2"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@16"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1name:t~1object"
+                  "$ref": "#/$defs/constrains~1:t~1fragment"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@19"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@18"
                 },
                 {
                   "type": "null"
                 },
                 {
-                  "$ref": "#/$defs/values~1string"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@2"
                 }
               ],
               "description": "Additional namespace to be monitored by the controller"
@@ -10228,22 +10228,22 @@
         "replicas": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1integer:int32;number-of-desired-pods"
+              "$ref": "#/$defs/values~1fragment@11"
             },
             {
-              "$ref": "#/$defs/values~1null:int32;number-of-desired-pods"
+              "$ref": "#/$defs/values~1fragment@12"
             },
             {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@16"
             },
             {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+              "$ref": "#/$defs/constrains~1:t~1fragment@19"
             },
             {
-              "$ref": "#/$defs/values~1string;pattern-0-1-9"
+              "$ref": "#/$defs/constrains~1:t~1fragment@17"
             },
             {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+              "$ref": "#/$defs/constrains~1:t~1fragment@18"
             }
           ],
           "description": "The number of events controller pods to run. Leader election is disabled when set to `1`."
@@ -10251,10 +10251,10 @@
         "resources": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@2"
             },
             {
-              "$ref": "#/$defs/values~1controller.affinity~1object"
+              "$ref": "#/$defs/values~1controller.affinity~1fragment"
             },
             {
               "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
@@ -10283,31 +10283,31 @@
             "name": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/constrains~1name:t~1string@2"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@4"
                 },
                 {
-                  "$ref": "#/$defs/values~1null;serviceaccountname-is-the-name"
+                  "$ref": "#/$defs/values~1fragment@13"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                  "$ref": "#/$defs/constrains~1:t@2"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@16"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1name:t~1object"
+                  "$ref": "#/$defs/constrains~1:t~1fragment"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@19"
                 },
                 {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                  "$ref": "#/$defs/constrains~1:t~1fragment@18"
                 },
                 {
                   "type": "string"
                 },
                 {
-                  "$ref": "#/$defs/values~1string;serviceaccountname-is-the-name"
+                  "$ref": "#/$defs/values~1fragment@5"
                 }
               ],
               "description": "Service account name"
@@ -10327,7 +10327,7 @@
               "$ref": "#/$defs/constrains~1@items.mountPath+@items.mountPropagation+@items.name+@items.readOnly+2more"
             },
             {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@2"
             },
             {
               "type": "null"
@@ -10338,7 +10338,7 @@
         "volumes": {
           "allOf": [
             {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more"
+              "$ref": "#/$defs/constrains~1:t+@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more"
             }
           ],
           "description": "Additional volumes to the events controller pod"
@@ -10370,10 +10370,10 @@
               "annotations": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+                    "$ref": "#/$defs/constrains~1:t@2"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1annotations:t~1object"
+                    "$ref": "#/$defs/constrains~1annotations:t~1fragment"
                   }
                 ],
                 "description": "Annotations to be added to all CRDs"
@@ -10440,13 +10440,13 @@
         "additionalLabels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@2"
             },
             {
-              "$ref": "#/$defs/values~1allOf~1object+object,null;map-of-string-keys"
+              "$ref": "#/$defs/values~1fragment@6"
             },
             {
-              "$ref": "#/$defs/values~1controller.affinity~1object"
+              "$ref": "#/$defs/values~1controller.affinity~1fragment"
             }
           ],
           "description": "Additional labels to add to all resources\napp: argo-events"
@@ -10487,7 +10487,7 @@
               "x-kubernetes-patch-strategy": "merge"
             },
             {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@2"
             },
             {
               "type": "null"
@@ -10513,7 +10513,7 @@
         "imagePullSecrets": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@2"
             },
             {
               "type": "null"
@@ -10541,7 +10541,7 @@
         "securityContext": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more~1not~1:t"
+              "$ref": "#/$defs/constrains~1:t@2"
             },
             {
               "additionalProperties": false,
@@ -10641,7 +10641,7 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/values~1controller.affinity~1object"
+              "$ref": "#/$defs/values~1controller.affinity~1fragment"
             },
             {
               "type": "null"
