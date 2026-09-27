@@ -1,4 +1,12 @@
 min-age = "14d"
 
 [global]
-exclude-folders = ["/grammars", "/testdata"]
+exclude-folders = ["/docs", "/grammars", "/testdata"]
+
+# helmsweep embeds Helm v4.2.3, and its go.mod is exactly that release's requirement set.
+# Helm derives default capabilities from the client-go it is built with, and stage.sh and the
+# build-identity check pin the Helm and jsonschema modules, so any upgrade here makes helmsweep
+# diverge from the real Helm CLI.
+# Moving Helm means regenerating helm-memo.patch, the module digest, and the identity pins together.
+[tool.go]
+exclude-folders = ["/tools/helmsweep"]
