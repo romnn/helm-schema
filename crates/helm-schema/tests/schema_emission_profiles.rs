@@ -572,6 +572,7 @@ fn helm_adjudication_records_each_outcome_once() {
         "loosenings_matched_defaults_violations": 1,
         "loosenings_with_uncertain_kubernetes": [{ "case": "case", "uncertain": ["reason"] }],
         "charts_adjudicated": [],
+        "unreachable_cases": [],
         "false_acceptances": [
             {
                 "case": "case", "rejection": "HelmAborts",
