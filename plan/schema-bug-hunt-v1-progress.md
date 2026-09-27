@@ -4749,4 +4749,11 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   against real Helm on ≥3 rows per chart — then per-chart battery slices, `fix.patch` on
   d734629c, `roster-readjudication.md`. Producer dump mode worked (first real run: 7 min).
 
+- 03:35 (Sep 27) — **Runner v6.1 merged (8627186):** the battery and integration steps build
+  helmsweep (`task build:helmsweep`, temp dirs under `$TARGET`) when the candidate has
+  `tools/helmsweep`, verify the binary names its own sha256, and note path/sha/version as
+  `helmsweep=` (or `helmsweep=absent`); a failed build fails the step; the candidate's tests
+  choose the engine. Red vs 011b6b3: 6 checks; green run-all exit 0 in 384 s (57/57). Landing 2
+  restarts from dump on this runner once the roster fix lands (7 min; script hashes are bound).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
