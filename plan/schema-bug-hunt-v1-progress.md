@@ -4916,4 +4916,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   chart (no general fallback). The producer `--verify` with the frozen binary passed before
   integration (v6.3 fix confirmed). After the fix: re-run from unit (test-only change, dump valid).
 
+- 07:05 (Sep 27) — **cert-manager corpus test fixed by the orchestrator; chain resumed from unit.**
+  The coalescer agent showed no activity after its resume, so I made the change: `chart_corpus.rs`
+  gains `HELM_UNLOADABLE_CHARTS = [("cert-manager", "Chart.yaml file is missing")]` — for exactly
+  those charts the coalescer must return `ValuesError::NotValidated` containing the registered
+  reason and no values document is asserted (Helm validates none); a chart that becomes loadable
+  fails the test ("remove it from HELM_UNLOADABLE_CHARTS"), any other refusal still fails; the
+  three-way defaults validation moved into `assert_values_document`. chart_corpus 157/157 with
+  the run5 dump; fmt clean. Landing branch: 4843f0aa (outcome record) → the cert-manager commit.
+  Chain resumed at `unit` (test-only change keeps the dump valid; falls back to dump on exit 4).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
