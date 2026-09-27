@@ -5265,6 +5265,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   bound; V6 top-level diagnostic forms with negative and Windows cases in the shared table; V7 README).
   Four builders now (W1 rework 2, frontend rework, scratch rework, runner rework); personal quota 82 %.
 
+- 00:30 (Sep 28) — **Wrappers builder launched (fifth builder); quota pace allows it.** Personal account
+  83 % weekly at 00:27 (+1 % in 30 min with four builders), reset 10:00 — headroom for a fifth. Clone
+  `round8-wrappers` (branch `helm-wrappers` off 7536bb23; code base 4efa0f9d), target `round7-f13/target`,
+  brief `round8/brief-lint-template-wrappers.md` (amended with the slot and the rule that its tests use
+  `tempdir_in(env!("CARGO_TARGET_TMPDIR"))` so they survive the scratch track's lint bans). Progress of
+  the others (commits only, no hand-back yet): scratch `d94c3380` (ownership/evidence/temp routes rework),
+  W1 `38bc2f0d` (long expected schemas moved to fixtures), frontend `ab4dd0da` (helper kind-arm
+  conditions kept only where they bind), classify `eb973656` (top-level error form + negatives), runner
+  `861c765` (V1 exact lane identities). Internal disk 72 GB free, system temp 67 MB, load ~9.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
