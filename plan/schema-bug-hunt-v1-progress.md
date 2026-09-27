@@ -4926,4 +4926,11 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   the run5 dump; fmt clean. Landing branch: 4843f0aa (outcome record) → the cert-manager commit.
   Chain resumed at `unit` (test-only change keeps the dump valid; falls back to dump on exit 4).
 
+- 07:35 (Sep 27) — **Chain stopped at lint (dead code from my cert-manager fix); fixed and
+  resumed.** Calling the coalescer directly left `with_override` and `values_yaml_as_json_for_path`
+  unused in the `chart_corpus` binary (`task lint` denies warnings; no `#[allow]` per AGENTS.md).
+  The check now goes through the shared `values_yaml_as_json_for_path` helper and matches the
+  typed `ValuesError::NotValidated` via `downcast_ref` on the wrapped report. clippy for the CLI
+  crate clean, chart_corpus 157/157, fmt clean. Chain resumed at unit (07:30).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
