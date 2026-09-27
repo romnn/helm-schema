@@ -4852,4 +4852,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `rows.tsv` canonical, record and require `helm-build`. Landing 3 = helmsweep v2 + battery-go on
   main after landing 2, on runner v6.2+v6.3.
 
+- 04:30 (Sep 27) — **Landing-2 run3: dump, unit, lint, BATTERY GREEN (20 min, 03:50–04:10, with
+  the roster baseline f7be7ba5); integration refused (rc 4) — a runner v6 defect.** The producer
+  `--verify` before integration aborted: `$TARGET/debug/corpus_generation` (0355c482…) "is not the
+  producer that wrote manifest.json" (84f70d8a… at dump) — the unit/lint/battery steps rebuilt
+  the workspace in the shared target dir with a different feature unification. Fix ordered for
+  runner v6.3: freeze the producer binary at dump into `$E/producer/`, bind its sha, run every
+  later `--verify` with the frozen copy, refuse a changed copy (red-then-green). Interim: rebuild
+  the producer with the dump's command and, if the bytes match the manifest, re-run integration →
+  sweep → finalize on the current receipt.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
