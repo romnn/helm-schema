@@ -5041,4 +5041,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   / `helm-schema template` wrappers that shorten, run Helm, and translate its output; they replace
   `expand-defs` and the runner's readable-log copy. Session goal now: merge landing 3 and close.
 
+- 16:00 (Sep 27) — **Landing 3 run1: dump, unit, lint, battery (14 min) green; integration 843/844.**
+  `chart_signoz_signoz` (and latently `chart_bitnami_redis`) resolved `#/$defs/<name>` by raw
+  string lookup, which breaks now that readable names contain `/` (`~1` in the ref). Orchestrator
+  patched both with `Value::pointer` (bbef70d5); the runner then refused unit ("generation inputs
+  changed since the dump"), so the chain restarts from dump. User requirement: use battle-tested
+  JSON-schema/pointer crates, no hand-rolled pointer escaping — the naming module hand-rolls RFC
+  6901 token escaping and `$ref` prefix parsing. Builder re-briefed: shared build/parse helpers
+  over `referencing`/`url`/`percent-encoding`/`serde_json::pointer` (or the `jsonptr` crate if
+  needed), test helpers switched, a `/`,`~`,`%` round-trip test through `jsonschema`.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
