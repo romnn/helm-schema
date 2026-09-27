@@ -4809,4 +4809,10 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   item. `landing-2.env`: `BASELINE=f7be7ba5`, E `round8-landing2-run3`; chain relaunched from
   dump on runner v6.1.
 
+- 04:00 (Sep 27) — Note: the landing-branch commit 972d6510 ("pin the roster baseline…") also
+  contains the 160 fixtures (154 chart-corpus + 3 lean + 3 final-output, stable `$defs` names)
+  that run2's producer dump had adopted into the clone before the battery stopped; they are the
+  candidate's own output (same code), so run3's adoption should find them already matching. The
+  merge message for landing 2 will say so.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
