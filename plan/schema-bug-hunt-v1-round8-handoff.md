@@ -171,6 +171,13 @@ Everything the user queued as "basically ready" is on main. Nothing was pushed.
   Codex re-review), frontend phase 1 (green, 0 fixtures moved, unreviewed; conflicts with F9/W4),
   F75 (over budget, one regression), F1 and F2 checkpoints, k8s D1–D3 (not started), B6 stack
   (blocked on the agent-container fix, brief `brief-agent-container-defect-astra.md`).
+- **Queued user feature (not this session): `helm-schema lint` and `helm-schema template`
+  wrappers.** Each takes a chart whose `values.schema.json` is readable, shortens it into a temporary
+  copy (`helm-schema shorten`), runs the real `helm lint` / `helm template` on that copy with the
+  user's remaining arguments, prints Helm's output with short `$defs` keys translated back to
+  readable names through the mapping, and exits with Helm's exit code. Once they exist, delete the
+  `expand-defs` subcommand and the landing runner's readable-log copy step (the runner keeps
+  classifying Helm's raw logs). User request, 2026-09-27.
 - **Hygiene follow-ups found while landing:** (1) the battery harness leaks multi-GB temp dirs
   under the system temp folder when killed (69 GB found; the runner now sets GOTMPDIR/TMPDIR
   under `$TARGET`, the harness itself should create its temp roots under the target dir and

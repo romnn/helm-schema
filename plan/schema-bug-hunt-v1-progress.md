@@ -5033,4 +5033,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   dump, 160/160 naming-only; gates green (unit 1577, integration 232, lint residual only); +723
   LOC. Landing 3 = this branch on runner v6.4, BASELINE f7be7ba5, cap 3.
 
+- 15:10 (Sep 27) — **Landing 3 (readable `$defs` naming) chain started 15:05** (R `round8-defpaths`
+  a06dc075 = meaning/source names + explicit `shorten` + `expand-defs` CLI; runner v6.4 7d849b1
+  merged: producer `--helm-ready` companions, sweep ships the candidate's `.helm.schema.json`,
+  Python mirror writer and exit 6 deleted, receipt /7; env `landing-3.env`, E
+  `round8-landing3-run1`). User idea recorded for a later session (hand-off §6): `helm-schema lint`
+  / `helm-schema template` wrappers that shorten, run Helm, and translate its output; they replace
+  `expand-defs` and the runner's readable-log copy. Session goal now: merge landing 3 and close.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
