@@ -5228,6 +5228,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   agree on the two unresolved rows), so landing 4 = scratch + classify on runner v6.6. Claude personal
   account now 82 % weekly (resets Sep 28 10:00 local); builders running: W1 rework 2, frontend rework.
 
+- 23:55 (Sep 27) — **User decisions: one account, pace to the reset.** Only the personal Claude account
+  is used (82 % weekly, reset Sep 28 10:00 local); Claude work runs as native subagents, agentmux is for
+  Codex only (as done so far). Pace builders so the weekly quota is spent by the reset without waste; the
+  user works on the same account and will say when to speed up or slow down. Plan: two builders now (W1
+  rework 2, frontend rework), the wrappers builder when one of them hands back.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
