@@ -186,7 +186,8 @@ fn shared_container_advances_through_wide_control_chain() -> eyre::Result<()> {
         writeln!(source, "  child{index}: fixed")?;
     }
     for _ in 0..64 {
-        source.push_str("{{- else }}\n{{- end }}\n");
+        source.push_str("{{- else }}\n");
+        source.push_str("{{- end }}\n");
     }
 
     let mut guards = (0..64)

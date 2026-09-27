@@ -32,8 +32,11 @@ fn base_request() -> InvocationRequest {
         platform: "macos-aarch64".to_string(),
         engine: "helmsweep".to_string(),
         program_sha256: "helmsweep".to_string(),
-        program_version: "build b\nhelm.sh/helm/v4 v4.2.3 => ./third_party/helm-v4.2.3\n"
-            .to_string(),
+        program_version: indoc! {"
+            build b
+            helm.sh/helm/v4 v4.2.3 => ./third_party/helm-v4.2.3
+        "}
+        .to_string(),
         working_directory: "/store".to_string(),
         environment: vec![("HOME".to_string(), "/store/home".to_string())],
         arguments: [
@@ -76,8 +79,11 @@ fn each_identity_field_changes_the_key() -> eyre::Result<()> {
     edit(&|request| request.engine = "helm-cli".to_string());
     edit(&|request| request.program_sha256 = "other helmsweep".to_string());
     edit(&|request| {
-        request.program_version =
-            "build c\nhelm.sh/helm/v4 v4.2.3 => ./third_party/helm-v4.2.3\n".to_string();
+        request.program_version = indoc! {"
+            build c
+            helm.sh/helm/v4 v4.2.3 => ./third_party/helm-v4.2.3
+        "}
+        .to_string();
     });
     edit(&|request| request.working_directory = "/other".to_string());
     edit(&|request| {
@@ -130,7 +136,11 @@ fn write_chart(root: &Path, values: &str) -> eyre::Result<()> {
     fs::create_dir_all(root.join("templates"))?;
     fs::write(
         root.join("Chart.yaml"),
-        "apiVersion: v2\nname: replayed\nversion: 1.0.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: replayed
+            version: 1.0.0
+        "},
     )?;
     fs::write(root.join("values.yaml"), values)?;
     fs::write(
@@ -477,7 +487,12 @@ fn nondeterministic_template_calls_bypass_render_replay() -> eyre::Result<()> {
             "_helpers.tpl",
             "{{- define \"name\" -}}{{ .Chart.Name | trunc 63 }}{{- end -}}",
         ),
-        ("static.yaml", "kind: {{ \"{{ now }}\" }}\n{{/* now */}}"),
+        (
+            "static.yaml",
+            indoc! {r#"
+                kind: {{ "{{ now }}" }}
+                {{/* now */}}"#},
+        ),
     ];
     sim_assert_eq!(
         have: cacheability_of(&deterministic, &[("config.yaml", "a: {{ include \"name\" . }}")])?,
@@ -807,12 +822,23 @@ fn the_resident_server_renders_exactly_as_the_cli() -> eyre::Result<()> {
     let cli = HelmRunner::with_program(root.path(), false, find_helm()?)?;
     let resident =
         HelmRunner::with_helmsweep(root.path(), false, find_helmsweep()?, RENDER_TIMEOUT)?;
-    let chart = publish_chart(&cli, "value: default\nsub: {}\n")?;
+    let chart = publish_chart(
+        &cli,
+        indoc! {"
+            value: default
+            sub: {}
+        "},
+    )?;
     let staged = cli.staging_dir()?;
     write_chart(&staged, "value: default\n")?;
     fs::write(
         staged.join("Chart.yaml"),
-        "apiVersion: v2\nname: replayed\nversion: 1.0.0\ndeprecated: true\n",
+        indoc! {"
+            apiVersion: v2
+            name: replayed
+            version: 1.0.0
+            deprecated: true
+        "},
     )?;
     let deprecated = cli.publish_tree(&staged)?;
     let cases = [
@@ -955,7 +981,11 @@ fn templates_see_the_release_capabilities_in_both_engines() -> eyre::Result<()> 
     fs::create_dir_all(staged.join("templates"))?;
     fs::write(
         staged.join("Chart.yaml"),
-        "apiVersion: v2\nname: capabilities\nversion: 1.0.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: capabilities
+            version: 1.0.0
+        "},
     )?;
     fs::write(
         staged.join("templates/capabilities.yaml"),
@@ -1007,14 +1037,15 @@ fn large_idle_resident_servers_are_retired() -> eyre::Result<()> {
     let programs = tempfile::tempdir()?;
     for (held, servers) in [(1_u64, 1_usize), (1 << 30, 2)] {
         let starts = programs.path().join(format!("starts-{held}"));
-        let body = format!(
-            r#"echo $$ >> '{starts}'
-while read -r request; do
-  id=$(printf '%s' "$request" | sed -E 's/.*"id":([0-9]+).*/\1/')
-  : > "$(printf '%s' "$request" | sed -E 's/.*"stdout_path":"([^"]*)".*/\1/')"
-  : > "$(printf '%s' "$request" | sed -E 's/.*"stderr_path":"([^"]*)".*/\1/')"
-  printf '{{"id":%s,"exit_code":0,"peak_bytes":1,"held_bytes":{held},"max_rss_bytes":1}}\n' "$id"
-done"#,
+        let body = indoc::formatdoc!(
+            r#"
+            echo $$ >> '{starts}'
+            while read -r request; do
+              id=$(printf '%s' "$request" | sed -E 's/.*"id":([0-9]+).*/\1/')
+              : > "$(printf '%s' "$request" | sed -E 's/.*"stdout_path":"([^"]*)".*/\1/')"
+              : > "$(printf '%s' "$request" | sed -E 's/.*"stderr_path":"([^"]*)".*/\1/')"
+              printf '{{"id":%s,"exit_code":0,"peak_bytes":1,"held_bytes":{held},"max_rss_bytes":1}}\n' "$id"
+            done"#,
             starts = starts.display()
         );
         let root = tempfile::tempdir()?;

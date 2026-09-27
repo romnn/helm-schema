@@ -1013,13 +1013,9 @@ fn argument_separators_accept_any_whitespace() {
     // `f (a b)` and only tolerating newline-separated arguments when
     // the continuation line happened to start with a space.
     let want = parse_action_expressions("{{ eq .Values.mode \"debug\" }}");
-    for variant in [
-        "{{ eq .Values.mode\t\"debug\" }}",
-        "{{ eq .Values.mode\n\"debug\" }}",
-        "{{ eq .Values.mode\r\n\"debug\" }}",
-        "{{ eq .Values.mode \t \"debug\" }}",
-    ] {
-        let have = parse_action_expressions(variant);
+    for separator in ["\t", "\n", "\r\n", " \t "] {
+        let have =
+            parse_action_expressions(&format!("{{{{ eq .Values.mode{separator}\"debug\" }}}}"));
         sim_assert_eq!(have: &have, want: &want);
     }
 }
