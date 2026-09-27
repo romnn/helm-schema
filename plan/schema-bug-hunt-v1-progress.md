@@ -5119,6 +5119,42 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   whole campaign; all 156 corpus fixtures exist at that commit; the "absolute home" redesign queued
   post-campaign) — no semantic landing starts before the user answers.
 
+- 22:45 (Sep 27) — **Seven of eight Codex runs back in ~12 min; all three reviews say REWORK / fix
+  before the next landing.** (a) W1 rework (`review-w1-rework-{sol,astra}.md`): the four original P1s are
+  repaired (both replayed every cell), but W1 still introduces false rejections — dict mutation through
+  aliases, `with`/`range` dot rebinding and helper escapes (`$a := $d`, `(dict "d" $d)`, `$d | include`) is
+  invisible to `collect_mutable_locals` (both P1); `rest`/`slice` keep the original `List` shape so
+  `first (rest …)` reconstructs exact input identity (astra P1); binding-time truth survives `unset` and is
+  copied through piped `len` (astra P1); nonempty literal `dict`/`list`/`merge` operands lost BASE's fail
+  coverage (astra P2); tests not one per cell, control group without full-schema equality (astra P2). No
+  same-function overlap with main; rebase required. (b) Frontend phase 1
+  (`review-frontend-phase1-{sol,astra}.md`): P1 gates incomplete on the final tree (lint failed on the old
+  residual; lint:fc/integration not run) → rebase and re-gate; P2 commit 1.3 silently narrows kind arms
+  rendered by a called helper (`condition: None` in `resource_identity.rs:635/177`) although
+  `include "kind" .` preserves a root-scope condition — preserve the same-context case or make it a separate
+  semantic commit with tests; P3s: the equivalence differential compares parsed facts, not bytes, and has no
+  assertion; the inline `{{else}}` false rejection is pre-existing (`parse.rs:229`); `a12.log` records exit 0
+  for a failing render; the `probe3-1.4.log` pointer is wrong. (c) Runner v5.1–v6.4 + landing-2 assembly
+  (`review-runner-v5-v64-landing2-{sol,astra}.md`): conflict resolutions, cache safety, restart rules and
+  classifier agreement all fine; P1s to fix BEFORE the next landing: the lint-residual allowance is still
+  accepted (all three receipts record partial lint coverage) → delete the mechanism; `ACCEPTED_SWEEP_
+  UNRESOLVED` accepts a whole row by catch-all class and excludes it from the new-lint-failure check → give
+  "unable to detect chart" and "library charts are not installable" their own classes in Python AND Go,
+  accept only the control cell, keep the lint transition check; finalize seals no gate evidence (battery
+  coverage, gate logs, sweep results, parity hashes) → hash at step end, recheck at finalize; the integration
+  step never asserts the corpus lanes ran; the producer manifest's testdata root is not checked against
+  canonical `$R` (shared warm target dirs can serve a producer compiled for another checkout);
+  `HELM_SCHEMA_HELMSWEEP` is not cleared, so the battery could run a driver other than the recorded one; P2:
+  bind or clear `RUSTFLAGS`-class ambient settings. (d) `design-lint-template-wrappers-sol.md` (astra still
+  running): copy the whole chart, always shorten, stream both pipes with exact-token byte translation,
+  library module + thin CLI, delete `expand-defs` and the runner's readable copies; ≤ +330 net LOC.
+  Decisions (orchestrator): W1 rework 2 launched (brief `brief-w1-rework2.md`, branch `track/w1-main` off
+  249e35e9, target `round7-f9/target`; policy: sharing = mutable → abstain, size/order-changing sequence
+  ops yield unknown shape, mutation invalidates truth in the evaluator, constructor emptiness in the
+  evaluator, one full-schema test per cell); runner v6.6 (the review P1s) + the Go classifier classes are
+  the next runner track; frontend rework waits for a free builder slot (Claude personal account at 79 %).
+  Runner v6.5 suite green on the worktree (10 suites + 61 py, `round8-runner-evidence/v65-run-all.txt`).
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
