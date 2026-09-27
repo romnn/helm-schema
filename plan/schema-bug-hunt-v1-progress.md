@@ -4893,4 +4893,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   becomes landing 3. helmsweep agent briefed; landing 2 restarts from dump after the Go-only
   patch is applied (7 min dump + ~25 min to the sweep).
 
+- 05:30 (Sep 27) — **Landing 2 now carries helmsweep v2 AND the battery resident client (landing
+  3 folded in); chain restarted (run5).** `final-v2-go.patch` (sha b8182977…, 17 files: tools/
+  helmsweep, Taskfile release ldflags + `helm-build` check, CI go@1.26.5) and `final-v2-rust.patch`
+  (sha bca54faf…: `helm_invocation.rs` client, its tests, `test:integration` builds helmsweep
+  first) both apply cleanly on 972d6510; the Rust patch touches no coalescer file; on landing-2's
+  tree the invocation + adjudication binaries pass 55/55 with both engines; the built binary is
+  byte-identical to the v2 parity binary (21752593…) and prints `helm-build v4.2.3 43e8b7fe…
+  clean go1.26.5`; sweep parity on kyverno/goldilocks/eck-operator (114 cells) 0 disagreements.
+  Since the Rust client was parity-proven on c02c01f8 and the chain's battery validates the
+  combined tree (with `SCHEMA_HELM_ENGINE=cli` as the bisecting switch), one chain replaces two.
+  Chain relaunched from dump (E `round8-landing2-run5`).
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
