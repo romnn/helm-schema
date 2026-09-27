@@ -1660,472 +1660,6 @@
           {
             "additionalProperties": {},
             "properties": {
-              "configTimeouts": {
-                "additionalProperties": false,
-                "description": "timeouts related to some operator actions",
-                "properties": {
-                  "patroni_api_check_interval": {
-                    "anyOf": [
-                      {
-                        "default": "1s",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      }
-                    ],
-                    "description": "interval between consecutive attempts of operator calling the Patroni API"
-                  },
-                  "patroni_api_check_timeout": {
-                    "anyOf": [
-                      {
-                        "default": "5s",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      }
-                    ],
-                    "description": "timeout when waiting for successful response from Patroni API"
-                  },
-                  "pod_deletion_wait_timeout": {
-                    "anyOf": [
-                      {
-                        "default": "10m",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      }
-                    ],
-                    "description": "timeout when waiting for the Postgres pods to be deleted"
-                  },
-                  "pod_label_wait_timeout": {
-                    "anyOf": [
-                      {
-                        "default": "10m",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      }
-                    ],
-                    "description": "timeout when waiting for pod role and cluster labels"
-                  },
-                  "ready_wait_interval": {
-                    "anyOf": [
-                      {
-                        "default": "4s",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      }
-                    ],
-                    "description": "interval between consecutive attempts waiting for postgresql CRD to be created"
-                  },
-                  "ready_wait_timeout": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      },
-                      {
-                        "default": "30s",
-                        "type": "string"
-                      }
-                    ],
-                    "description": "timeout for the complete postgres CRD creation"
-                  },
-                  "resource_check_interval": {
-                    "anyOf": [
-                      {
-                        "default": "3s",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      }
-                    ],
-                    "description": "interval to wait between consecutive attempts to check for some K8s resources"
-                  },
-                  "resource_check_timeout": {
-                    "anyOf": [
-                      {
-                        "default": "10m",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      }
-                    ],
-                    "description": "timeout when waiting for the presence of a certain K8s resource (e.g. Sts, PDB)"
-                  }
-                },
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "configLogicalBackup": {
-                "additionalProperties": false,
-                "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\"",
-                "properties": {
-                  "logical_backup_azure_storage_account_key": {
-                    "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1anyOf~1string+string;pattern-"
-                  },
-                  "logical_backup_azure_storage_account_name": {
-                    "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1anyOf~1string+string;pattern-"
-                  },
-                  "logical_backup_azure_storage_container": {
-                    "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1anyOf~1string+string;pattern-"
-                  },
-                  "logical_backup_cpu_limit": {
-                    "$ref": "#/$defs/values~1anyOf~1string;pattern-+string;pattern-d-m-d-d-1-3@2"
-                  },
-                  "logical_backup_cpu_request": {
-                    "$ref": "#/$defs/values~1anyOf~1string;pattern-+string;pattern-d-m-d-d-1-3@2"
-                  },
-                  "logical_backup_cronjob_environment_secret": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "secret to be used as reference for env variables in cronjob"
-                  },
-                  "logical_backup_docker_image": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/values~1string@4"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      }
-                    ],
-                    "description": "image for pods of the logical backup job (example runs pg_dumpall)\npath of google cloud service account json file\nlogical_backup_google_application_credentials: \"\""
-                  },
-                  "logical_backup_google_application_credentials": {
-                    "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1anyOf~1string+string;pattern-"
-                  },
-                  "logical_backup_job_prefix": {
-                    "anyOf": [
-                      {
-                        "default": "logical-backup-",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      }
-                    ],
-                    "description": "prefix for the backup job name"
-                  },
-                  "logical_backup_memory_limit": {
-                    "$ref": "#/$defs/values~1anyOf~1string;pattern-+string;pattern-d-e-d-d@2"
-                  },
-                  "logical_backup_memory_request": {
-                    "$ref": "#/$defs/values~1anyOf~1string;pattern-+string;pattern-d-e-d-d@2"
-                  },
-                  "logical_backup_provider": {
-                    "anyOf": [
-                      {
-                        "default": "s3",
-                        "enum": [
-                          "az",
-                          "gcs",
-                          "s3"
-                        ],
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      }
-                    ],
-                    "description": "storage provider - either \"s3\", \"gcs\" or \"az\""
-                  },
-                  "logical_backup_s3_access_key_id": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "S3 Access Key ID"
-                  },
-                  "logical_backup_s3_bucket": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "S3 bucket to store backup results"
-                  },
-                  "logical_backup_s3_bucket_prefix": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "S3 bucket prefix to use"
-                  },
-                  "logical_backup_s3_endpoint": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "S3 endpoint url when not using AWS"
-                  },
-                  "logical_backup_s3_region": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "S3 region of bucket"
-                  },
-                  "logical_backup_s3_retention_time": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "S3 retention time for stored backups for example \"2 week\" or \"7 days\""
-                  },
-                  "logical_backup_s3_secret_access_key": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "S3 Secret Access Key"
-                  },
-                  "logical_backup_s3_sse": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      },
-                      {
-                        "type": "string"
-                      }
-                    ],
-                    "description": "S3 server side encryption"
-                  },
-                  "logical_backup_schedule": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1string;pattern-d-d-s"
-                      }
-                    ],
-                    "description": "backup schedule in the cron format"
-                  }
-                },
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "configConnectionPooler": {
-                "additionalProperties": false,
-                "description": "configure connection pooler deployment created by the operator",
-                "properties": {
-                  "connection_pooler_default_cpu_limit": {
-                    "$ref": "#/$defs/values~1anyOf~1string;pattern-+string;pattern-d-m-d-d-1-3@2"
-                  },
-                  "connection_pooler_default_cpu_request": {
-                    "anyOf": [
-                      {
-                        "pattern": "^(\\d+m|\\d+(\\.\\d{1,3})?)$",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      }
-                    ],
-                    "description": "default resources"
-                  },
-                  "connection_pooler_default_memory_limit": {
-                    "$ref": "#/$defs/values~1anyOf~1string;pattern-+string;pattern-d-e-d-d@2"
-                  },
-                  "connection_pooler_default_memory_request": {
-                    "$ref": "#/$defs/values~1anyOf~1string;pattern-+string;pattern-d-e-d-d@2"
-                  },
-                  "connection_pooler_image": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/values~1string@5"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      }
-                    ],
-                    "description": "docker image"
-                  },
-                  "connection_pooler_max_db_connections": {
-                    "default": 60,
-                    "description": "max db connections the pooler should hold",
-                    "type": "integer"
-                  },
-                  "connection_pooler_mode": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/values~1string=session,transaction"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      }
-                    ],
-                    "description": "default pooling mode"
-                  },
-                  "connection_pooler_number_of_instances": {
-                    "default": 2,
-                    "description": "number of pooler instances",
-                    "minimum": 1,
-                    "type": "integer"
-                  },
-                  "connection_pooler_schema": {
-                    "anyOf": [
-                      {
-                        "default": "pooler",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      }
-                    ],
-                    "description": "db schema to install lookup function into"
-                  },
-                  "connection_pooler_user": {
-                    "anyOf": [
-                      {
-                        "default": "pooler",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
-                      }
-                    ],
-                    "description": "db user for pooler to use"
-                  }
-                },
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "podServiceAccount": {
-                "additionalProperties": {},
-                "properties": {
-                  "name": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/values~1string@3"
-                      },
-                      {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
-                          }
-                        ],
-                        "default": "postgres-pod",
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1not~1:t"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1object@3"
-                      }
-                    ],
-                    "description": "The name of the ServiceAccount to be used by postgres cluster pods\nIf not set a name is generated using the fullname template and \"-pod\" suffix"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "configDebug": {
-                "additionalProperties": false,
-                "description": "options to aid debugging of the operator itself",
-                "properties": {
-                  "debug_logging": {
-                    "default": true,
-                    "description": "toggles verbose debug logs from the operator",
-                    "type": "boolean"
-                  },
-                  "enable_database_access": {
-                    "default": true,
-                    "description": "toggles operator functionality that require access to the postgres database",
-                    "type": "boolean"
-                  }
-                },
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
               "configGeneral": {
                 "additionalProperties": false,
                 "description": "general configuration parameters",
@@ -2778,11 +2312,11 @@
                     "items": {
                       "anyOf": [
                         {
-                          "pattern": "^\\ *((Mon|Tue|Wed|Thu|Fri|Sat|Sun):(2[0-3]|[01]?\\d):([0-5]?\\d)|(2[0-3]|[01]?\\d):([0-5]?\\d))-((2[0-3]|[01]?\\d):([0-5]?\\d)|(2[0-3]|[01]?\\d):([0-5]?\\d))\\ *$",
-                          "type": "string"
+                          "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                          "pattern": "^ *((Mon|Tue|Wed|Thu|Fri|Sat|Sun):(2[0-3]|[01]?\\d):([0-5]?\\d)|(2[0-3]|[01]?\\d):([0-5]?\\d))-((2[0-3]|[01]?\\d):([0-5]?\\d)|(2[0-3]|[01]?\\d):([0-5]?\\d)) *$",
+                          "type": "string"
                         }
                       ]
                     },
@@ -3196,6 +2730,472 @@
                     "description": "number of routines the operator spawns to process requests concurrently",
                     "minimum": 1,
                     "type": "integer"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "configTimeouts": {
+                "additionalProperties": false,
+                "description": "timeouts related to some operator actions",
+                "properties": {
+                  "patroni_api_check_interval": {
+                    "anyOf": [
+                      {
+                        "default": "1s",
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      }
+                    ],
+                    "description": "interval between consecutive attempts of operator calling the Patroni API"
+                  },
+                  "patroni_api_check_timeout": {
+                    "anyOf": [
+                      {
+                        "default": "5s",
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      }
+                    ],
+                    "description": "timeout when waiting for successful response from Patroni API"
+                  },
+                  "pod_deletion_wait_timeout": {
+                    "anyOf": [
+                      {
+                        "default": "10m",
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      }
+                    ],
+                    "description": "timeout when waiting for the Postgres pods to be deleted"
+                  },
+                  "pod_label_wait_timeout": {
+                    "anyOf": [
+                      {
+                        "default": "10m",
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      }
+                    ],
+                    "description": "timeout when waiting for pod role and cluster labels"
+                  },
+                  "ready_wait_interval": {
+                    "anyOf": [
+                      {
+                        "default": "4s",
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      }
+                    ],
+                    "description": "interval between consecutive attempts waiting for postgresql CRD to be created"
+                  },
+                  "ready_wait_timeout": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      },
+                      {
+                        "default": "30s",
+                        "type": "string"
+                      }
+                    ],
+                    "description": "timeout for the complete postgres CRD creation"
+                  },
+                  "resource_check_interval": {
+                    "anyOf": [
+                      {
+                        "default": "3s",
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      }
+                    ],
+                    "description": "interval to wait between consecutive attempts to check for some K8s resources"
+                  },
+                  "resource_check_timeout": {
+                    "anyOf": [
+                      {
+                        "default": "10m",
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      }
+                    ],
+                    "description": "timeout when waiting for the presence of a certain K8s resource (e.g. Sts, PDB)"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "configLogicalBackup": {
+                "additionalProperties": false,
+                "description": "configure K8s cron job managed by the operator\nAzure Storage Account specs to store backup results\nlogical_backup_azure_storage_account_name: \"\"\nlogical_backup_azure_storage_container: \"\"\nlogical_backup_azure_storage_account_key: \"\"",
+                "properties": {
+                  "logical_backup_azure_storage_account_key": {
+                    "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1anyOf~1string+string;pattern-"
+                  },
+                  "logical_backup_azure_storage_account_name": {
+                    "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1anyOf~1string+string;pattern-"
+                  },
+                  "logical_backup_azure_storage_container": {
+                    "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1anyOf~1string+string;pattern-"
+                  },
+                  "logical_backup_cpu_limit": {
+                    "$ref": "#/$defs/values~1anyOf~1string;pattern-+string;pattern-d-m-d-d-1-3@2"
+                  },
+                  "logical_backup_cpu_request": {
+                    "$ref": "#/$defs/values~1anyOf~1string;pattern-+string;pattern-d-m-d-d-1-3@2"
+                  },
+                  "logical_backup_cronjob_environment_secret": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "secret to be used as reference for env variables in cronjob"
+                  },
+                  "logical_backup_docker_image": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/values~1string@4"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      }
+                    ],
+                    "description": "image for pods of the logical backup job (example runs pg_dumpall)\npath of google cloud service account json file\nlogical_backup_google_application_credentials: \"\""
+                  },
+                  "logical_backup_google_application_credentials": {
+                    "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1anyOf~1string+string;pattern-"
+                  },
+                  "logical_backup_job_prefix": {
+                    "anyOf": [
+                      {
+                        "default": "logical-backup-",
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      }
+                    ],
+                    "description": "prefix for the backup job name"
+                  },
+                  "logical_backup_memory_limit": {
+                    "$ref": "#/$defs/values~1anyOf~1string;pattern-+string;pattern-d-e-d-d@2"
+                  },
+                  "logical_backup_memory_request": {
+                    "$ref": "#/$defs/values~1anyOf~1string;pattern-+string;pattern-d-e-d-d@2"
+                  },
+                  "logical_backup_provider": {
+                    "anyOf": [
+                      {
+                        "default": "s3",
+                        "enum": [
+                          "az",
+                          "gcs",
+                          "s3"
+                        ],
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      }
+                    ],
+                    "description": "storage provider - either \"s3\", \"gcs\" or \"az\""
+                  },
+                  "logical_backup_s3_access_key_id": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "S3 Access Key ID"
+                  },
+                  "logical_backup_s3_bucket": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "S3 bucket to store backup results"
+                  },
+                  "logical_backup_s3_bucket_prefix": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "S3 bucket prefix to use"
+                  },
+                  "logical_backup_s3_endpoint": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "S3 endpoint url when not using AWS"
+                  },
+                  "logical_backup_s3_region": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "S3 region of bucket"
+                  },
+                  "logical_backup_s3_retention_time": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "S3 retention time for stored backups for example \"2 week\" or \"7 days\""
+                  },
+                  "logical_backup_s3_secret_access_key": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "S3 Secret Access Key"
+                  },
+                  "logical_backup_s3_sse": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "S3 server side encryption"
+                  },
+                  "logical_backup_schedule": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      },
+                      {
+                        "$ref": "#/$defs/values~1string;pattern-d-d-s"
+                      }
+                    ],
+                    "description": "backup schedule in the cron format"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "configConnectionPooler": {
+                "additionalProperties": false,
+                "description": "configure connection pooler deployment created by the operator",
+                "properties": {
+                  "connection_pooler_default_cpu_limit": {
+                    "$ref": "#/$defs/values~1anyOf~1string;pattern-+string;pattern-d-m-d-d-1-3@2"
+                  },
+                  "connection_pooler_default_cpu_request": {
+                    "anyOf": [
+                      {
+                        "pattern": "^(\\d+m|\\d+(\\.\\d{1,3})?)$",
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      }
+                    ],
+                    "description": "default resources"
+                  },
+                  "connection_pooler_default_memory_limit": {
+                    "$ref": "#/$defs/values~1anyOf~1string;pattern-+string;pattern-d-e-d-d@2"
+                  },
+                  "connection_pooler_default_memory_request": {
+                    "$ref": "#/$defs/values~1anyOf~1string;pattern-+string;pattern-d-e-d-d@2"
+                  },
+                  "connection_pooler_image": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/values~1string@5"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      }
+                    ],
+                    "description": "docker image"
+                  },
+                  "connection_pooler_max_db_connections": {
+                    "default": 60,
+                    "description": "max db connections the pooler should hold",
+                    "type": "integer"
+                  },
+                  "connection_pooler_mode": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/values~1string=session,transaction"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      }
+                    ],
+                    "description": "default pooling mode"
+                  },
+                  "connection_pooler_number_of_instances": {
+                    "default": 2,
+                    "description": "number of pooler instances",
+                    "minimum": 1,
+                    "type": "integer"
+                  },
+                  "connection_pooler_schema": {
+                    "anyOf": [
+                      {
+                        "default": "pooler",
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      }
+                    ],
+                    "description": "db schema to install lookup function into"
+                  },
+                  "connection_pooler_user": {
+                    "anyOf": [
+                      {
+                        "default": "pooler",
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.defaultrolevalue+@items.defaultuservalue+@items.details+5more~1string;pattern-"
+                      }
+                    ],
+                    "description": "db user for pooler to use"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "podServiceAccount": {
+                "additionalProperties": {},
+                "properties": {
+                  "name": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/values~1string@3"
+                      },
+                      {
+                        "allOf": [
+                          {
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
+                          }
+                        ],
+                        "default": "postgres-pod",
+                        "type": "string"
+                      },
+                      {
+                        "$ref": "#/$defs/values~1not~1:t"
+                      },
+                      {
+                        "$ref": "#/$defs/values~1object@3"
+                      }
+                    ],
+                    "description": "The name of the ServiceAccount to be used by postgres cluster pods\nIf not set a name is generated using the fullname template and \"-pod\" suffix"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "configDebug": {
+                "additionalProperties": false,
+                "description": "options to aid debugging of the operator itself",
+                "properties": {
+                  "debug_logging": {
+                    "default": true,
+                    "description": "toggles verbose debug logs from the operator",
+                    "type": "boolean"
+                  },
+                  "enable_database_access": {
+                    "default": true,
+                    "description": "toggles operator functionality that require access to the postgres database",
+                    "type": "boolean"
                   }
                 },
                 "type": "object"

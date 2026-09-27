@@ -38,7 +38,9 @@ pub use output_path::{
     DYNAMIC_MAPPING_VALUE_SEGMENT, append_relative_path, dynamic_mapping_value_path,
     sequence_item_path, values_path_has_descendant, values_path_is_descendant,
 };
-pub use pattern_dialect::{escape_regex_literal, normalize_schema_pattern_dialects};
+pub use pattern_dialect::{
+    escape_regex_literal, normalize_schema_pattern_dialects, unicode_mode_escaped_pattern,
+};
 pub use predicate::{ApproximationRole, Conjunction, Predicate, PredicateKind};
 pub use predicate_bdd::PredicateMemo;
 pub use provenance::{ContractProvenance, SourceSpan};

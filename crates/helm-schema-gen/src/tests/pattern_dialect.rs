@@ -58,3 +58,13 @@ fn later_multiline_anchors_abstain() {
         want: None
     );
 }
+
+/// A chart's `regexMatch` pattern gets the same `u`-flag escape rewrite as a
+/// provider pattern, after the RE2 literal braces gain their ECMA escapes.
+#[test]
+fn chart_patterns_drop_unicode_mode_rejected_escapes() {
+    sim_assert_eq!(
+        have: ecma_compatible_pattern(r"^\ {x}\-\d+$"),
+        want: Some(r"^ \{x\}-\d+$".to_string()),
+    );
+}

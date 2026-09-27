@@ -2022,6 +2022,12 @@ fn corpus_acceptance_comparison() -> eyre::Result<AcceptanceComparison> {
     Ok(comparison)
 }
 
+/// Reads a schema fixture as an earlier commit recorded it.
+///
+/// An earlier commit may carry Go/RE2 pattern spellings that today's strict
+/// `u`-mode regex check rejects outright.
+/// The schema passes through the same exact respelling that provider
+/// ingestion now applies, so it accepts the same values and still compiles.
 fn read_schema_at_ref(reference: &str, relative_path: &str) -> eyre::Result<serde_json::Value> {
     let output = std::process::Command::new("git")
         .args(["show", &format!("{reference}:{relative_path}")])
@@ -2032,8 +2038,10 @@ fn read_schema_at_ref(reference: &str, relative_path: &str) -> eyre::Result<serd
         "git show failed for {reference}:{relative_path}: {}",
         String::from_utf8_lossy(&output.stderr)
     );
-    serde_json::from_slice(&output.stdout)
-        .wrap_err_with(|| format!("parse {reference}:{relative_path}"))
+    let mut schema = serde_json::from_slice(&output.stdout)
+        .wrap_err_with(|| format!("parse {reference}:{relative_path}"))?;
+    helm_schema_core::normalize_schema_pattern_dialects(&mut schema);
+    Ok(schema)
 }
 
 fn read_acceptance_candidate(
@@ -3212,11 +3220,13 @@ fn middle_lean_transition_has_only_preregistered_tightenings() -> eyre::Result<(
 
     for chart in LEAN_FIXTURE_CHARTS {
         let baseline_path = baseline_dir.join(format!("{chart}.schema.json"));
-        let baseline: serde_json::Value = serde_json::from_str(
+        let mut baseline: serde_json::Value = serde_json::from_str(
             &std::fs::read_to_string(&baseline_path)
                 .wrap_err_with(|| format!("read {}", baseline_path.display()))?,
         )
         .wrap_err_with(|| format!("parse {}", baseline_path.display()))?;
+        // Earlier lean fixtures may carry patterns the strict regex check rejects.
+        helm_schema_core::normalize_schema_pattern_dialects(&mut baseline);
         let current = generate_profile_schemas(chart)?.1;
         let defaults = read_coalesced_defaults(chart)?;
         let transition = ProfileSchemas::compile(&baseline, &current, defaults.clone())?;

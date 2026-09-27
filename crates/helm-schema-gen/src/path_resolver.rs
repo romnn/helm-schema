@@ -394,9 +394,11 @@ fn required_object_path_schema(path: &[String], leaf: Value) -> Value {
 /// quantifier are literal in RE2 but invalid in strict ECMA parsers, so
 /// they get escaped. A leading global multiline flag is exact when the only
 /// affected anchor is the pattern's initial `^`; it lowers to an explicit
-/// start-of-input-or-line prefix. Constructs with no bounded ECMA spelling
-/// (other inline flags, later multiline anchors, `\A`/`\z` anchors, POSIX
-/// classes) abstain.
+/// start-of-input-or-line prefix. Escaped characters that the `u` flag
+/// rejects lose their backslash through
+/// [`helm_schema_core::unicode_mode_escaped_pattern`]. Constructs with no
+/// bounded ECMA spelling (other inline flags, later multiline anchors,
+/// `\A`/`\z` anchors, POSIX classes) abstain.
 pub(crate) fn ecma_compatible_pattern(pattern: &str) -> Option<String> {
     let (pattern, multiline_start_anchor, multiline) =
         if let Some(pattern) = pattern.strip_prefix("(?m)") {
@@ -491,7 +493,7 @@ pub(crate) fn ecma_compatible_pattern(pattern: &str) -> Option<String> {
         }
         index += 1;
     }
-    Some(out)
+    Some(helm_schema_core::unicode_mode_escaped_pattern(&out).unwrap_or(out))
 }
 
 /// A value whose text must keep an unquoted YAML token intact. Only strings
