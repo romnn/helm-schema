@@ -5097,6 +5097,28 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   for every step, clippy `disallowed-methods`, a sweep test). Playbook: both Codex reviewers
   (sol + astra) on every review.
 
+- 22:15 (Sep 27) — **Session 2 of round 8 resumed (orchestrator: Fable 5.1); reconciled main, launched
+  the first-priority scratch track and six Codex reviews.** Main 4efa0f9d = 0c21000f + the dependency
+  upgrade (nom 8, jsonschema/referencing 0.56, tree-sitter 0.27), the ECMA-262 pattern respelling
+  (430ba851), the `control.rs:604` residual fix (756e4f59; no lint residual is accepted any more), agent
+  skills (72af2492), host-sized test concurrency (b2a17ea1) and AGENTS.md corrections (887a82c8). Tree
+  clean, heavy lock free, no chain or agent running, `collect-codex.py` had nothing pending, internal
+  disk 76 GB free (system temp folder 64 MB), T7 157 GB free. Runner v6.4 at a7ae237. Started:
+  (1) builder `scratch` (Opus, clone `round8-scratch` off 4efa0f9d, target `round7-d3f23/target`,
+  brief `round8/brief-scratch-under-target.md`: test-util scratch helper under `<target>/tmp` with a
+  stale-pid sweep, every test-side temp dir switched, Helm/helmsweep homes and TMPDIR under the same
+  root, clippy `disallowed-methods` + a path-scoped ast-grep rule, a killed-child sweep test, one live
+  goldilocks battery slice as proof); (2) runner v6.5 in worktree `round8-runner-v65`: `GOTMPDIR`/
+  `TMPDIR` under `$TARGET` exported for EVERY step (was: helmsweep build and sweep only), suite run
+  pending; (3) Codex xhigh read-only, both reviewers each: W1 rework re-review
+  (`review-w1-rework-{sol,astra}.md`, runs 92580cac/416b8635), frontend phase 1 pre-landing review
+  (`review-frontend-phase1-{sol,astra}.md`, 7660883f/5d5c270b), and the review debt of runner
+  v5.1–v6.4 + the landing-2 conflict resolutions (`review-runner-v5-v64-landing2-{sol,astra}.md`,
+  965702ff/c74fc6d3). Quota: Codex personal 5 % used; Claude personal 79 % weekly (warning), work 24 %.
+  Roster-baseline coupling: decision drafted for the user (keep `ROSTER_BASELINE=f7be7ba5` for the
+  whole campaign; all 156 corpus fixtures exist at that commit; the "absolute home" redesign queued
+  post-campaign) — no semantic landing starts before the user answers.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
