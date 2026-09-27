@@ -39,9 +39,11 @@ slow-timeout = { period = "120s", terminate-after = 15, grace-period = "10s" }
 default-filter = "kind(test) and not binary(/^network_/)"
 fail-fast = { max-fail = "all" }
 retries = 0
-# Whole-chart analyses are CPU-heavy and single-threaded. Bounding aggregate
-# concurrency avoids starving every chart when the host is already loaded.
-test-threads = 8
+# Whole-chart analyses are CPU-heavy and single-threaded. Leaving three cores
+# free avoids starving every chart when the host is already loaded. Memory is
+# not the limit: only three lean-profile tests peak near 2.7 GiB and the rest
+# stay under 250 MiB.
+test-threads = -3
 # These shell out to `helm lint`, and macOS may additionally scan each fresh
 # test binary before execution. Keep reporting at two minutes, but leave the
 # same three-hour ceiling as the enclosing CI job for a process still making
@@ -61,7 +63,7 @@ slow-timeout = { period = "60s", terminate-after = 2, grace-period = "10s" }
 default-filter = "all()"
 fail-fast = false
 retries = 0
-test-threads = 8
+test-threads = -3
 slow-timeout = { period = "120s", terminate-after = 90, grace-period = "10s" }
 
 # Network binaries keep their retry/backoff/serialization semantics inside

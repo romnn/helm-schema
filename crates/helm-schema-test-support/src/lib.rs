@@ -10,6 +10,7 @@
 
 pub mod consume;
 pub mod generate;
+pub mod machine;
 pub mod manifest;
 pub mod registry;
 pub mod source_digest;

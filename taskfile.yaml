@@ -235,8 +235,9 @@ tasks:
     vars:
       CORPUS_ARTIFACTS: '{{.CORPUS_ARTIFACTS | default (print .ROOT_DIR "/.cache/corpus-generation")}}'
       # Concurrent chart generations inside the one producer process; each
-      # holds a whole-chart analysis in memory.
-      CORPUS_JOBS: '{{.CORPUS_JOBS | default "4"}}'
+      # holds a whole-chart analysis in memory. Empty lets the producer size
+      # it to the host's memory and cores.
+      CORPUS_JOBS: '{{.CORPUS_JOBS | default ""}}'
     env:
       HELM_SCHEMA_CORPUS_ARTIFACTS: "{{.CORPUS_ARTIFACTS}}"
     cmds:
@@ -246,7 +247,7 @@ tasks:
       # manifest; the tests then consume those artifacts after checking the
       # manifest against this checkout instead of regenerating each chart per
       # test. A stale manifest fails the consuming tests.
-      - cargo run -p helm-schema-test-support --bin corpus_generation -- --out "{{.CORPUS_ARTIFACTS}}" --jobs {{.CORPUS_JOBS}}
+      - cargo run -p helm-schema-test-support --bin corpus_generation -- --out "{{.CORPUS_ARTIFACTS}}"{{if .CORPUS_JOBS}} --jobs {{.CORPUS_JOBS}}{{end}}
       - cargo nextest run -P integration --workspace --all-targets --no-tests warn {{.CLI_ARGS}}
 
   test:network:

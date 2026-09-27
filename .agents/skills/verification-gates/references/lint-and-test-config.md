@@ -95,8 +95,8 @@ assets. Inline escapes: `spellcheck:ignore-line`, `spellcheck:ignore-next-line`,
 
 - `default`: `not kind(test)`, retries 0, fail-fast off (`max-fail = "all"`), slow at 120 s, killed
   at 30 min.
-- `integration`: `kind(test) and not binary(/^network_/)`, retries 0, 8 threads (whole-chart
-  analyses are CPU-heavy), slow at 120 s, killed at 3 h (some tests shell out to `helm`).
+- `integration`: `kind(test) and not binary(/^network_/)`, retries 0, `test-threads = -3`, i.e. cores
+  minus 3 (whole-chart analyses are CPU-heavy; memory is not the limit), slow at 120 s, killed at 3 h (some tests shell out to `helm`).
 - `network`: `binary(/^network_/)` (currently `helm-schema-k8s/tests/network_fetch_on_demand.rs`),
   3 retries with exponential backoff, test-group `upstream-schemas` (one at a time), killed at
   2 min.

@@ -12,6 +12,11 @@ use std::sync::{Condvar, Mutex, PoisonError};
 
 use color_eyre::eyre::{self, WrapErr as _};
 
+/// Overrides the host-sized Helm worker count.
+const WORKERS_VAR: &str = "SCHEMA_HELM_WORKERS";
+/// Overrides the host-sized Helm memory budget, in MiB.
+const MEMORY_MIB_VAR: &str = "SCHEMA_HELM_MEMORY_MIB";
+
 /// A job's place in the result order: its chart, then its probe.
 pub(crate) type Ordinal = (usize, usize);
 
@@ -25,26 +30,29 @@ pub(crate) struct PoolLimits {
 }
 
 impl PoolLimits {
-    /// `SCHEMA_HELM_WORKERS` workers, 6 by default, at most two fewer than
-    /// the available cores and at least one, sharing `SCHEMA_HELM_MEMORY_MIB`
-    /// mebibytes of child memory, 6144 by default.
+    /// `SCHEMA_HELM_WORKERS` workers, at most two fewer than the available
+    /// cores and at least one, sharing `SCHEMA_HELM_MEMORY_MIB` mebibytes of
+    /// child memory.
+    /// Both default to the host's size (see
+    /// [`helm_schema_test_support::machine::Machine`]).
     ///
     /// # Errors
     ///
     /// Returns an error when either variable is not a number.
     pub(crate) fn from_env() -> eyre::Result<Self> {
-        let workers: usize = match std::env::var("SCHEMA_HELM_WORKERS") {
-            Ok(workers) => workers.parse().wrap_err("SCHEMA_HELM_WORKERS")?,
-            Err(_) => 6,
+        let machine = helm_schema_test_support::machine::Machine::detect();
+        let workers: usize = match std::env::var(WORKERS_VAR) {
+            Ok(workers) => workers.parse().wrap_err(WORKERS_VAR)?,
+            Err(_) => machine.helm_workers(),
         };
-        let memory_mib: u64 = match std::env::var("SCHEMA_HELM_MEMORY_MIB") {
-            Ok(memory) => memory.parse().wrap_err("SCHEMA_HELM_MEMORY_MIB")?,
-            Err(_) => 6144,
+        let memory_bytes: u64 = match std::env::var(MEMORY_MIB_VAR) {
+            Ok(memory) => memory.parse::<u64>().wrap_err(MEMORY_MIB_VAR)? * 1024 * 1024,
+            Err(_) => machine.helm_memory_bytes(),
         };
         let cores = std::thread::available_parallelism().map_or(1, usize::from);
         Ok(Self {
             workers: workers.min(cores.saturating_sub(2)).max(1),
-            memory_bytes: memory_mib * 1024 * 1024,
+            memory_bytes,
         })
     }
 }

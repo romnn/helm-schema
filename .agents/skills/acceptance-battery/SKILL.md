@@ -88,7 +88,8 @@ live run it covers.
 ## Prerequisites
 
 - **Candidate dump.** Run one clean producer run of the final build:
-  `cargo run -p helm-schema-test-support --bin corpus_generation -- --out <dump> --jobs <n>`.
+  `cargo run -p helm-schema-test-support --bin corpus_generation -- --out <dump>`
+  (`--jobs <n>` overrides the host-sized default).
   It writes `helm-schema.cli.chart-corpus.<chart>.schema.json` and
   `helm-schema.emission-profile.lean.<chart>.schema.json` flat into `<dump>`,
   which is exactly what the battery reads. See `corpus-fixtures`. Never mix
@@ -156,9 +157,12 @@ and 4 when no test matched: a wrong profile or filter.
 
 ### Tuning workers and memory
 
-`SCHEMA_HELM_WORKERS` defaults to 6 and is clamped to cores minus 2.
-`SCHEMA_HELM_MEMORY_MIB` defaults to 6144 and is the budget for concurrently
-admitted Helm renders. Each chart's first probe reserves the whole budget, and
+Both default to the host's size
+(`crates/helm-schema-test-support/src/machine.rs`): `SCHEMA_HELM_MEMORY_MIB`
+to a third of total memory and `SCHEMA_HELM_WORKERS` to one worker per GiB of
+that budget, at most cores minus 2 (an 11-core, 18 GiB laptop gets 6 workers
+and 6144 MiB). An explicit worker count is still clamped to cores minus 2. The
+memory budget covers concurrently admitted Helm renders. Each chart's first probe reserves the whole budget, and
 later probes reserve 1.3x that chart's measured peak. Size the workers to the
 free cores on a shared machine. Size the memory to what Helm children may use
 without swapping. Raise workers only if the invocation report shows the

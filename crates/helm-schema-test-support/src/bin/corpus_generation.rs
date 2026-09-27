@@ -19,7 +19,7 @@ use std::path::PathBuf;
 
 use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use helm_schema_test_support::manifest::{self, BuildProvenance, MANIFEST_FILE};
-use helm_schema_test_support::{generate, registry};
+use helm_schema_test_support::{generate, machine, registry};
 
 const USAGE: &str = "usage: corpus_generation (--out <dir> [--jobs <n>] [--helm-ready] \
      [--only <key>]... | --verify <dir>)";
@@ -30,7 +30,7 @@ fn main() -> eyre::Result<()> {
     let mut verify = None;
     let mut only = Vec::new();
     let mut helm_ready = false;
-    let mut jobs = std::thread::available_parallelism().map_or(1, std::num::NonZero::get);
+    let mut jobs = machine::Machine::detect().corpus_jobs();
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
         let mut value = || args.next().ok_or_eyre(USAGE);

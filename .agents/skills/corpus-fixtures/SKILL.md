@@ -45,7 +45,7 @@ The full family table (file names, fixture paths, checking tests, hand-maintaine
 # What `task test:integration` runs first (then the integration profile with
 # HELM_SCHEMA_CORPUS_ARTIFACTS set to the same directory):
 cargo run -p helm-schema-test-support --bin corpus_generation -- \
-  --out "$PWD/.cache/corpus-generation" --jobs 4
+  --out "$PWD/.cache/corpus-generation"
 
 # Recheck a finished directory completely (provenance, registry membership, recipe inputs,
 # artifact bytes, no foreign files). Run it right before adopting anything.
@@ -59,8 +59,10 @@ cargo run -p helm-schema-test-support --bin corpus_generation -- \
 ```
 
 - Task variables: `task test:integration CORPUS_ARTIFACTS=/abs/dir CORPUS_JOBS=8 -- <nextest args>`.
-  Defaults are `<repo>/.cache/corpus-generation` (gitignored) and 4 jobs; each job holds a
-  whole-chart analysis in memory. Nextest arguments after `--` filter only the tests; the
+  Defaults are `<repo>/.cache/corpus-generation` (gitignored) and a host-sized job count: one
+  job per 4.5 GiB of memory, at most cores − 2 (`Machine::corpus_jobs`; an 11-core, 18 GiB
+  laptop gets 4). Each job holds a whole-chart analysis in memory, and the largest charts set
+  a peak of about 5 GiB on their own. Nextest arguments after `--` filter only the tests; the
   producer still generates the whole registry.
 - `--only` keys: `chart/<dir>`, `template/<dump_stem>`, `lean/<chart>`, `final-policy/<name>`,
   `ir/<template path>` (see `ArtifactId::key`).

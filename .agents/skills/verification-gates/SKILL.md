@@ -60,7 +60,7 @@ cargo-fc), `task audit`, `task test:helmsweep`.
 | Profile | Default filter | Retries | Use |
 |---|---|---|---|
 | `default` | `not kind(test)` | 0 | unit tests |
-| `integration` | `kind(test) and not binary(/^network_/)` | 0, 8 threads | every `tests/` binary |
+| `integration` | `kind(test) and not binary(/^network_/)` | 0, cores − 3 threads | every `tests/` binary |
 | `network` | `binary(/^network_/)` | 3, exponential backoff, serialized | live upstream fetch |
 | `ci` | `all()` | 0; network binaries get the network override | everything in one run (`cargo tci`) |
 
