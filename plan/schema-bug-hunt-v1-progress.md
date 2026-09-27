@@ -4981,4 +4981,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   earlier use of a provider type does not rename it; any class without provenance reported and
   named by destination path, never by hash.
 
+- 10:40 (Sep 27) — **User: fixtures always readable, no size fallback; shorten only before Helm.**
+  Fixtures and the canonical artifact are always source-path named and pretty at any size (≤ ~100
+  MB is acceptable in git); the writer-ladder rungs that change naming/format by size are deleted.
+  Shortening is a separate explicit single-pass transform (library + CLI, deterministic mapping)
+  applied right before Helm; a back-translation function maps short keys in Helm/validator error
+  text to readable source paths. End-user CLI: readable by default, a warning past Helm's limit
+  naming the shorten option, never a silent rewrite. The producer emits the shortened form + map
+  as internal artifacts; the runner/battery switch to them is a follow-up. Builder re-briefed.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
