@@ -4787,4 +4787,26 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   landing (landing 1 had 318 differing rows of 1,548 paired logs; heavy-chart cells cost
   5–20 min each) vs. the review's soundness argument.
 
+- 03:55 (Sep 27) — **Landing-2 battery failure was MY env error (wrong baseline), not the
+  coalescer; roster now pins its baseline; chain restarted.** The known-false-acceptance roster
+  is a set of cells that baseline f7be7ba5 rejects and the candidate accepts — observable only as
+  flips against f7be7ba5. I set `BASELINE=c02c01f8` (same production code as the candidate) →
+  zero flips → all 231 false-acceptance rows + 6 undecided rows looked "fixed" (the 237). Proof:
+  the dify slice fails against c02c01f8 and passes against f7be7ba5; run2's coverage shows 0
+  flips. Re-adjudication against f7be7ba5 with live Helm and the exact documents: all seven
+  slices green (dify 770 flips/2 FA, graylog 524/9, oncall 925/5, weblate 666/4, redmine
+  2,107/134, okteto 2,580/55, spinnaker 329/21), every row keeps its classification except
+  spinnaker `minio.ingress.enabled <- true`, whose guard-witness probe is now UNREACHABLE (real
+  `helm template` adds the minio nulls so the probe document is never produced; the port's
+  document is byte-identical to Helm's) — kept, reported UNOBSERVABLE, not "fixed". Fix
+  (`round8-landing2-evidence/fix.patch`, commit a8a4db70 → applied on the landing branch, 3
+  test files, red-first): `ROSTER_BASELINE` in `known_false_acceptances.rs` makes a live battery
+  against any other baseline fail immediately with the right command; unreachable roster rows
+  recorded in `unreachable_cases` / `ProbeCoverage.unreachable_probes {probe, reason}` and never
+  reported fixed. Design debt for the hand-off: the roster is coupled to the baseline that
+  predates its rows; when a semantic landing advances the baseline past them, the rows stop being
+  observable as flips and need an absolute home (the K8s-rejects evidence is absolute) — design
+  item. `landing-2.env`: `BASELINE=f7be7ba5`, E `round8-landing2-run3`; chain relaunched from
+  dump on runner v6.1.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
