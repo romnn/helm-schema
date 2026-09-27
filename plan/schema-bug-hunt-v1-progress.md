@@ -4990,4 +4990,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   naming the shorten option, never a silent rewrite. The producer emits the shortened form + map
   as internal artifacts; the runner/battery switch to them is a follow-up. Builder re-briefed.
 
+- 11:20 (Sep 27) — **Source-path naming built (`round8-defpaths` 1ec44c73) but not landable: guard
+  fragments are named by position.** Done and green: source policy (`k8s/<type>/<pointer>`,
+  smallest `values/…` path), destination policy, `--defs-names`, content-hash naming and size
+  fallbacks deleted, explicit `helm-schema shorten` + `--shorten-defs --defs-map`, back-
+  translation of Helm errors, producer `--helm-ready` companions (off until the runner accepts
+  them); 160 fixtures regenerated, naming-only proof 160/160 (89,598 definitions, 0 failures);
+  five largest readable 12.9/11.0/10.7/6.7/5.8 MB → shortened 4.1/4.0/3.7/2.2/1.9 MB; gates green
+  (unit 1572, integration 232, lint residual only); +351 LOC. Churn replay (59 fixtures, changed
+  lines): ordinal 3,994,857; landed hash 2,777,877; source 3,991,553; destination 3,912,553;
+  non-naming floor 2,610,991. Cause: 88% (openebs) / 95% (datadog) of definitions are root
+  `allOf` guard fragments whose only "source" is their position (`values/@allOf(1253)@if@anyOf(3)`),
+  so one conditional shifts every later name. Re-briefed: name guard fragments structurally by
+  meaning, `when/<condition paths>/then/<constrained paths>`, read from the fragment's own schema,
+  local `#n` only among same-named fragments, no allOf index; re-measure churn; re-dump.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
