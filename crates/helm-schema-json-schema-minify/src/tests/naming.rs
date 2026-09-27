@@ -147,7 +147,7 @@ fn source_names_are_recorded_origins_or_the_smallest_referencing_path() {
     // an `anyOf` index and from inside the k8s type, whose path is stable;
     // `8` is reached only through anonymous definitions and takes the
     // smaller of their paths; `9` sits below an index in the named helper
-    // and constrains no path, so it is named after that ancestor.
+    // and constrains no path, so it is named by its type below that ancestor.
     sim_assert_eq!(
         have: schema,
         want: renamed_document(&[
@@ -159,7 +159,7 @@ fn source_names_are_recorded_origins_or_the_smallest_referencing_path() {
             ("providerShared1", "values/web.'app.kubernetes.io/name'"),
             ("7", "k8s/io.k8s.api.core.v1.SecurityContext.capabilities"),
             ("8", "k8s/io.k8s.api.core.v1.SecurityContext.capabilities.add"),
-            ("9", "helm-double-quoted-safe/fragment"),
+            ("9", "helm-double-quoted-safe/integer"),
         ])
     );
 }
@@ -797,4 +797,48 @@ fn long_values_and_names_are_cut() -> eyre::Result<()> {
         want: vec![format!("constrains/config='{}...'", "y".repeat(20))]
     );
     Ok(())
+}
+
+#[test]
+fn leaves_are_named_by_what_they_are() {
+    let leaves = [
+        json!({ "type": "string", "format": "uri", "description": "Image repository to pull from." }),
+        json!({ "type": "integer", "description": "Replica count, e.g. 3" }),
+        json!({ "type": "string", "pattern": "^[a-z0-9]([-a-z0-9]*[a-z0-9])?$" }),
+        json!({ "not": { "type": "null" } }),
+        json!({ "anyOf": [{ "type": "string" }, { "$ref": "#/$defs/t" }] }),
+        json!({ "type": ["integer", "string"], "enum": [1, "one"] }),
+        json!({ "minimum": 1, "maximum": 9 }),
+    ];
+    let mut definitions = Map::new();
+    let mut arms = Vec::new();
+    for (index, leaf) in leaves.iter().enumerate() {
+        definitions.insert(format!("{}", index + 1), leaf.clone());
+        arms.push(json!({ "$ref": format!("#/$defs/{}", index + 1) }));
+    }
+    definitions.insert("t".to_string(), json!({ "not": { "const": false } }));
+    let mut schema = json!({ "$defs": definitions, "properties": { "web": { "anyOf": arms } } });
+    let anonymous = (1..=leaves.len())
+        .map(|index| (index.to_string(), Vec::new()))
+        .collect::<BTreeMap<_, _>>();
+
+    name_definitions(&mut schema, &anonymous, DefinitionNames::Source);
+
+    sim_assert_eq!(
+        have: definitions_of(&schema),
+        want: vec![
+            "t",
+            "values/web/anyOf/:t+string",
+            "values/web/integer,string=1,one",
+            "values/web/integer;replica-count-e-g-3",
+            "values/web/keywords/maximum+minimum",
+            "values/web/not/null",
+            "values/web/string:uri;image-repository-to-pull",
+            "values/web/string;pattern-a-z0-9-a-z0-9",
+        ]
+    );
+}
+
+fn definitions_of(schema: &Value) -> Vec<String> {
+    definitions(schema).into_keys().collect()
 }

@@ -268,10 +268,11 @@ fn source_names(
                 if let Some(meaning) = meaning_name(body, definitions, anonymous) {
                     (meaning.clone(), meaning)
                 } else {
-                    // Without constrained paths, the fragment is named after
-                    // the nearest stable path above it.
+                    // Without constrained paths, the leaf is named by what it
+                    // is, below the nearest stable path above it.
                     let ancestor = ancestor.unwrap_or_else(|| ROOT_DOCUMENT.to_string());
-                    (format!("{ancestor}/fragment"), ancestor)
+                    let leaf = leaf_name(body, definitions, anonymous, 0);
+                    (cut_name(&format!("{ancestor}/{leaf}")), ancestor)
                 };
             names.insert(handle.to_string(), meaning.clone());
             meanings.entry(meaning).or_default().push(handle);
@@ -456,6 +457,112 @@ fn meaning_name(
     (!paths.is_empty()).then(|| cut_name(&format!("constrains/{}", render_path_list(&paths))))
 }
 
+/// Words of a description kept in a leaf name.
+const LEAF_DESCRIPTION_WORDS: usize = 4;
+
+/// Characters of a pattern kept in a leaf name.
+const LEAF_PATTERN_CHARS: usize = 20;
+
+/// References a leaf name follows into anonymous definitions.
+const LEAF_REFERENCE_DEPTH: usize = 4;
+
+/// What a leaf schema is, read from its own keywords: its `type` (and
+/// `:format`, `=value`) with `;<first description words>` or
+/// `;pattern-<pattern start>` (`~` would need escaping in every `$ref`); `not/<inner>` or `anyOf/<member>+<member>`
+/// for a combinator; `:name` for a reference to a named definition; the
+/// sorted keyword list for anything else.
+fn leaf_name(
+    schema: &Value,
+    definitions: &Map<String, Value>,
+    anonymous: &BTreeMap<String, &[DefinitionOrigin]>,
+    depth: usize,
+) -> String {
+    let Value::Object(object) = schema else {
+        return schema.to_string();
+    };
+    if let Some(reference) = object.get("$ref").and_then(Value::as_str)
+        && let Some((name, suffix)) = root_definition_reference(reference)
+        && suffix.is_empty()
+        && let Some(body) = definitions.get(&name)
+    {
+        if anonymous.contains_key(&name) && depth < LEAF_REFERENCE_DEPTH {
+            return leaf_name(body, definitions, anonymous, depth + 1);
+        }
+        return format!(":{}", encode_document(&name));
+    }
+    if let Some(kind) = object.get("type") {
+        let mut name = match kind {
+            Value::Array(kinds) => kinds
+                .iter()
+                .filter_map(Value::as_str)
+                .collect::<Vec<_>>()
+                .join(","),
+            _ => kind.as_str().unwrap_or_default().to_string(),
+        };
+        if let Some(format) = object.get("format").and_then(Value::as_str) {
+            name = format!("{name}:{}", encode_key(format));
+        }
+        if let Some(value) = object.get("const") {
+            name = format!("{name}={}", render_value(value));
+        } else if let Some(Value::Array(values)) = object.get("enum") {
+            name = format!("{name}={}", render_values(values));
+        }
+        if let Some(description) = object.get("description").and_then(Value::as_str) {
+            let words = slug(description.split_whitespace().take(LEAF_DESCRIPTION_WORDS));
+            if !words.is_empty() {
+                name = format!("{name};{words}");
+            }
+        } else if let Some(pattern) = object.get("pattern").and_then(Value::as_str) {
+            let start = pattern.chars().take(LEAF_PATTERN_CHARS).collect::<String>();
+            name = format!("{name};pattern-{}", slug(std::iter::once(start.as_str())));
+        }
+        return name;
+    }
+    if let Some(inner) = object.get("not") {
+        return format!("not/{}", leaf_name(inner, definitions, anonymous, depth));
+    }
+    for keyword in ["anyOf", "allOf", "oneOf"] {
+        if let Some(Value::Array(members)) = object.get(keyword) {
+            let members = members
+                .iter()
+                .map(|member| leaf_name(member, definitions, anonymous, depth))
+                .collect::<BTreeSet<_>>();
+            return format!("{keyword}/{}", render_path_list(&members));
+        }
+    }
+    if let Some(value) = object.get("const") {
+        return format!("={}", render_value(value));
+    }
+    if let Some(Value::Array(values)) = object.get("enum") {
+        return format!("={}", render_values(values));
+    }
+    let mut keywords = object.keys().map(|key| encode_key(key)).collect::<Vec<_>>();
+    keywords.sort();
+    if keywords.is_empty() {
+        "any".to_string()
+    } else {
+        format!("keywords/{}", keywords.join("+"))
+    }
+}
+
+/// Lowercase ASCII letters and digits of `words`, each run joined by `-`.
+fn slug<'w>(words: impl Iterator<Item = &'w str>) -> String {
+    let mut slug = String::new();
+    for word in words {
+        for character in word.chars() {
+            if character.is_ascii_alphanumeric() {
+                slug.push(character.to_ascii_lowercase());
+            } else if !slug.is_empty() && !slug.ends_with('-') {
+                slug.push('-');
+            }
+        }
+        if !slug.is_empty() && !slug.ends_with('-') {
+            slug.push('-');
+        }
+    }
+    slug.trim_end_matches('-').to_string()
+}
+
 /// `name`, cut to [`MEANING_NAME_CHARS`] characters.
 fn cut_name(name: &str) -> String {
     if name.chars().count() <= MEANING_NAME_CHARS {
@@ -508,22 +615,22 @@ impl<'a> MeaningWalker<'a> {
             && let Some((target, body)) = self.definitions.get_key_value(&name)
         {
             if !self.anonymous.contains_key(target) {
-                paths.insert(format!("{path}:{}", encode_document(target)));
+                insert_stated(paths, path, &format!(":{}", encode_document(target)));
             } else if self.visited.insert(target.as_str()) {
                 self.walk(body, path, paths);
             }
         }
         if let Some(value) = object.get("const") {
-            paths.insert(format!("{path}={}", render_value(value)));
+            insert_stated(paths, path, &format!("={}", render_value(value)));
         }
         if let Some(Value::Array(values)) = object.get("enum") {
-            paths.insert(format!("{path}={}", render_values(values)));
+            insert_stated(paths, path, &format!("={}", render_values(values)));
         }
         if let Some(negated) = object.get("not") {
             if let Some(value) = negated.get("const") {
-                paths.insert(format!("{path}!={}", render_value(value)));
+                insert_stated(paths, path, &format!("!={}", render_value(value)));
             } else if let Some(Value::Array(values)) = negated.get("enum") {
-                paths.insert(format!("{path}!={}", render_values(values)));
+                insert_stated(paths, path, &format!("!={}", render_values(values)));
             } else {
                 self.walk(negated, path, paths);
             }
@@ -584,6 +691,14 @@ impl<'a> MeaningWalker<'a> {
                 self.walk(pattern, &format!("{path}@*"), paths);
             }
         }
+    }
+}
+
+/// Records `path` with a stated operator; the fragment root is no values
+/// path, so what it states there is left to [`leaf_name`].
+fn insert_stated(paths: &mut BTreeSet<String>, path: &str, operator: &str) {
+    if !path.is_empty() {
+        paths.insert(format!("{path}{operator}"));
     }
 }
 

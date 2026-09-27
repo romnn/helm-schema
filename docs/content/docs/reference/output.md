@@ -54,8 +54,12 @@ comes from:
   paths its `if` tests and its `then`/`else` constrain;
 - `constrains/image.pullPolicy+image.tag`: any other such fragment, named by
   the values paths it constrains;
-- `values/agents/fragment`: such a fragment that constrains no path, named
-  after the nearest stable path above it.
+- `values/agents/string:uri;image-repository-to-pull`: such a fragment that
+  constrains no values path (a leaf), named by what it is below the nearest
+  stable path above it: its `type` with `:format`, `=value` and the first
+  words of its description (or `;pattern-…`), `not/<inner>`,
+  `anyOf/<member>+<member>`, `:name` for a named definition, or
+  `keywords/<its keywords>`.
 
 A path in a `when/` or `constrains/` name carries the operator its schema
 states: `=v` for `const`/`enum`, `!=v` for a negated one, `:name` for a
