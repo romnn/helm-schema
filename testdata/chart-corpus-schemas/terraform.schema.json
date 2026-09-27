@@ -194,7 +194,106 @@
         }
       ]
     },
-    "values/fragment": {
+    "values/anyOf/null;secretname-is-the-name+object+string+string;pattern-a-za-z0-9-t+3more": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1string@2"
+        },
+        {
+          "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+          "type": "null"
+        },
+        {
+          "allOf": [
+            {
+              "not": {
+                "pattern": "^[-?:]([ \\t]|$)"
+              }
+            },
+            {
+              "$ref": "#/$defs/values~1not~1keywords~1pattern"
+            },
+            {
+              "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
+            },
+            {
+              "not": {
+                "pattern": "[ \\t]#"
+              }
+            },
+            {
+              "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
+            },
+            {
+              "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
+            },
+            {
+              "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
+            },
+            {
+              "not": {
+                "pattern": ":[ \\t]|:$"
+              }
+            },
+            {
+              "not": {
+                "pattern": "[\\r\\n]"
+              }
+            },
+            {
+              "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+            }
+          ],
+          "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+          "type": "string"
+        },
+        {
+          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/values~1object"
+        },
+        {
+          "pattern": "^[ \\t]*(#.*)?$",
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/values~1string;pattern-null-null-null"
+        }
+      ]
+    },
+    "values/not/keywords/pattern": {
+      "not": {
+        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
+      }
+    },
+    "values/not/keywords/pattern@2": {
+      "not": {
+        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
+      }
+    },
+    "values/not/keywords/pattern@3": {
+      "not": {
+        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
+      }
+    },
+    "values/not/keywords/pattern@4": {
+      "not": {
+        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
+      }
+    },
+    "values/not/keywords/pattern@5": {
+      "not": {
+        "pattern": "^(|~|null|Null|NULL)$"
+      }
+    },
+    "values/not/keywords/pattern@6": {
+      "not": {
+        "pattern": "^[!&*#{}\\[\\],|>@`%]"
+      }
+    },
+    "values/object": {
       "additionalProperties": {
         "anyOf": [
           {
@@ -205,7 +304,7 @@
             "type": "integer"
           },
           {
-            "$ref": "#/$defs/values~1fragment@2"
+            "$ref": "#/$defs/values~1string"
           },
           {
             "type": "number"
@@ -223,20 +322,11 @@
         ]
       },
       "propertyNames": {
-        "$ref": "#/$defs/values~1fragment@2"
+        "$ref": "#/$defs/values~1string"
       },
       "type": "object"
     },
-    "values/fragment@10": {
-      "not": {
-        "pattern": "^[!&*#{}\\[\\],|>@`%]"
-      }
-    },
-    "values/fragment@11": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "values/fragment@2": {
+    "values/string": {
       "allOf": [
         {
           "not": {
@@ -256,7 +346,11 @@
       ],
       "type": "string"
     },
-    "values/fragment@3": {
+    "values/string;pattern-null-null-null": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "values/string@2": {
       "allOf": [
         {
           "not": {
@@ -273,100 +367,6 @@
         }
       ],
       "type": "string"
-    },
-    "values/fragment@4": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1fragment@3"
-        },
-        {
-          "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
-          "type": "null"
-        },
-        {
-          "allOf": [
-            {
-              "not": {
-                "pattern": "^[-?:]([ \\t]|$)"
-              }
-            },
-            {
-              "$ref": "#/$defs/values~1fragment@5"
-            },
-            {
-              "$ref": "#/$defs/values~1fragment@10"
-            },
-            {
-              "not": {
-                "pattern": "[ \\t]#"
-              }
-            },
-            {
-              "$ref": "#/$defs/values~1fragment@6"
-            },
-            {
-              "$ref": "#/$defs/values~1fragment@8"
-            },
-            {
-              "$ref": "#/$defs/values~1fragment@9"
-            },
-            {
-              "not": {
-                "pattern": ":[ \\t]|:$"
-              }
-            },
-            {
-              "not": {
-                "pattern": "[\\r\\n]"
-              }
-            },
-            {
-              "$ref": "#/$defs/values~1fragment@7"
-            }
-          ],
-          "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
-          "type": "string"
-        },
-        {
-          "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "$ref": "#/$defs/values~1fragment"
-        },
-        {
-          "pattern": "^[ \\t]*(#.*)?$",
-          "type": "string"
-        },
-        {
-          "$ref": "#/$defs/values~1fragment@11"
-        }
-      ]
-    },
-    "values/fragment@5": {
-      "not": {
-        "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
-      }
-    },
-    "values/fragment@6": {
-      "not": {
-        "pattern": "^([+-]?\\.(inf|Inf|INF)|\\.(nan|NaN|NAN))$"
-      }
-    },
-    "values/fragment@7": {
-      "not": {
-        "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
-      }
-    },
-    "values/fragment@8": {
-      "not": {
-        "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
-      }
-    },
-    "values/fragment@9": {
-      "not": {
-        "pattern": "^(|~|null|Null|NULL)$"
-      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -390,7 +390,7 @@
                     "description": "Name and key of Kubernetes secret containing the Terraform CLI Configuration\nMust have Terraform Cloud Team API Token",
                     "properties": {
                       "secretName": {
-                        "$ref": "#/$defs/values~1fragment@4"
+                        "$ref": "#/$defs/values~1anyOf~1null;secretname-is-the-name+object+string+string;pattern-a-za-z0-9-t+3more"
                       }
                     }
                   }
@@ -432,7 +432,7 @@
                     "description": "Name of Kubernetes secret containing keys and values of sensitive variables",
                     "properties": {
                       "secretName": {
-                        "$ref": "#/$defs/values~1fragment@4"
+                        "$ref": "#/$defs/values~1anyOf~1null;secretname-is-the-name+object+string+string;pattern-a-za-z0-9-t+3more"
                       }
                     }
                   }
@@ -446,7 +446,7 @@
               "nameOverride": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1fragment@3"
+                    "$ref": "#/$defs/values~1string@2"
                   },
                   {
                     "not": {
@@ -458,14 +458,14 @@
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/values~1fragment"
+                    "$ref": "#/$defs/values~1object"
                   },
                   {
                     "pattern": "^[ \\t]*(#.*)?$",
                     "type": "string"
                   },
                   {
-                    "$ref": "#/$defs/values~1fragment@11"
+                    "$ref": "#/$defs/values~1string;pattern-null-null-null"
                   },
                   {
                     "type": "null"
@@ -478,10 +478,10 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/values~1fragment@5"
+                        "$ref": "#/$defs/values~1not~1keywords~1pattern"
                       },
                       {
-                        "$ref": "#/$defs/values~1fragment@10"
+                        "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
                       },
                       {
                         "not": {
@@ -489,13 +489,13 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/values~1fragment@6"
+                        "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
                       },
                       {
-                        "$ref": "#/$defs/values~1fragment@8"
+                        "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
                       },
                       {
-                        "$ref": "#/$defs/values~1fragment@9"
+                        "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
                       },
                       {
                         "not": {
@@ -508,7 +508,7 @@
                         }
                       },
                       {
-                        "$ref": "#/$defs/values~1fragment@7"
+                        "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
                       }
                     ],
                     "type": "string"
@@ -546,7 +546,7 @@
                       "secretKey": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1fragment@3"
+                            "$ref": "#/$defs/values~1string@2"
                           },
                           {
                             "allOf": [
@@ -556,10 +556,10 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/values~1fragment@5"
+                                "$ref": "#/$defs/values~1not~1keywords~1pattern"
                               },
                               {
-                                "$ref": "#/$defs/values~1fragment@10"
+                                "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
                               },
                               {
                                 "not": {
@@ -567,13 +567,13 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/values~1fragment@6"
+                                "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
                               },
                               {
-                                "$ref": "#/$defs/values~1fragment@8"
+                                "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
                               },
                               {
-                                "$ref": "#/$defs/values~1fragment@9"
+                                "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
                               },
                               {
                                 "not": {
@@ -586,14 +586,14 @@
                                 }
                               },
                               {
-                                "$ref": "#/$defs/values~1fragment@7"
+                                "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
                               }
                             ],
                             "description": "key is the key to project.",
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/values~1fragment"
+                            "$ref": "#/$defs/values~1object"
                           }
                         ]
                       }

@@ -1,168 +1,19 @@
 {
   "$defs": {
-    "constrains/:t": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1:t@2"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "array"
-        },
-        {
-          "$ref": "#/$defs/constrains~1:t~1fragment"
-        }
-      ]
-    },
-    "constrains/:t+additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more": {
-      "allOf": [
-        {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/constrains~1:t@2"
-            },
-            {
-              "properties": {
-                "template": {
-                  "properties": {
-                    "metadata": {
-                      "$ref": "#/$defs/constrains~1:t@2"
-                    }
-                  }
-                }
-              }
-            },
-            {
-              "properties": {
-                "template": {
-                  "$ref": "#/$defs/constrains~1:t@2"
-                }
-              }
-            },
-            {
-              "properties": {
-                "template": {
-                  "properties": {
-                    "metadata": {
-                      "properties": {
-                        "name": {
-                          "not": {
-                            "type": "null"
-                          }
-                        }
-                      },
-                      "required": [
-                        "name"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "metadata"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "template"
-              ],
-              "type": "object"
-            }
-          ]
-        },
-        {
-          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+18more"
-        }
-      ]
-    },
-    "constrains/:t+template.metadata:t+template:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/t"
-        },
-        {
-          "properties": {
-            "template": {
-              "properties": {
-                "metadata": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "metadata"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "template"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1template:t"
-        }
-      ]
-    },
-    "constrains/:t+template.spec:t+template:t": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/t"
-        },
-        {
-          "properties": {
-            "template": {
-              "properties": {
-                "spec": {
-                  "$ref": "#/$defs/t"
-                }
-              },
-              "required": [
-                "spec"
-              ],
-              "type": "object"
-            }
-          },
-          "required": [
-            "template"
-          ],
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1template:t"
-        }
-      ]
-    },
-    "constrains/:t/fragment": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "type": "object"
-    },
-    "constrains/:t@2": {
-      "not": {
-        "$ref": "#/$defs/t"
-      }
-    },
     "constrains/@items.additionalAnnotations:t+@items:t": {
       "additionalProperties": {
-        "$ref": "#/$defs/when~1:t~1then~1additionalAnnotations:t"
+        "$ref": "#/$defs/when~1any~1then~1additionalAnnotations:t"
       },
       "items": {
-        "$ref": "#/$defs/when~1:t~1then~1additionalAnnotations:t"
+        "$ref": "#/$defs/when~1any~1then~1additionalAnnotations:t"
       }
     },
     "constrains/@items.additionalLabels:t+@items:t": {
       "additionalProperties": {
-        "$ref": "#/$defs/when~1:t~1then~1additionalLabels:t"
+        "$ref": "#/$defs/when~1any~1then~1additionalLabels:t"
       },
       "items": {
-        "$ref": "#/$defs/when~1:t~1then~1additionalLabels:t"
+        "$ref": "#/$defs/when~1any~1then~1additionalLabels:t"
       }
     },
     "constrains/@items.array+@items.map+@items.name+@items.string": {
@@ -213,10 +64,10 @@
             "$ref": "#/$defs/constrains~1elements+elementsYaml+template.metadata.annotations+template.metadata.finalizers+108more"
           },
           "matrix": {
-            "$ref": "#/$defs/constrains~1@items.clusterDecisionResource.configMapRef+240more~1fragment"
+            "$ref": "#/$defs/constrains~1@items.clusterDecisionResource.configMapRef+240more~1keywords~1x-kubernetes-preserve-unknown-fields"
           },
           "merge": {
-            "$ref": "#/$defs/constrains~1@items.clusterDecisionResource.configMapRef+240more~1fragment"
+            "$ref": "#/$defs/constrains~1@items.clusterDecisionResource.configMapRef+240more~1keywords~1x-kubernetes-preserve-unknown-fields"
           },
           "plugin": {
             "$ref": "#/$defs/constrains~1configMapRef.name+input.parameters+requeueAfterSeconds+111more"
@@ -235,7 +86,7 @@
       },
       "type": "array"
     },
-    "constrains/@items.clusterDecisionResource.configMapRef+240more/fragment": {
+    "constrains/@items.clusterDecisionResource.configMapRef+240more/keywords/x-kubernetes-preserve-unknown-fields": {
       "x-kubernetes-preserve-unknown-fields": true
     },
     "constrains/@items.code+@items.name+@items.value": {
@@ -319,7 +170,7 @@
             "type": "boolean"
           },
           "name": {
-            "$ref": "#/$defs/constrains~1@items.forceString+@items.name+@items.value~1fragment"
+            "$ref": "#/$defs/constrains~1@items.forceString+@items.name+@items.value~1string;name-is-the-name"
           },
           "value": {
             "description": "Value is the value for the Helm parameter",
@@ -330,7 +181,7 @@
       },
       "type": "array"
     },
-    "constrains/@items.forceString+@items.name+@items.value/fragment": {
+    "constrains/@items.forceString+@items.name+@items.value/string;name-is-the-name": {
       "description": "Name is the name of the Helm parameter",
       "type": "string"
     },
@@ -342,16 +193,16 @@
             "type": "string"
           },
           "jqPathExpressions": {
-            "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+            "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
           },
           "jsonPointers": {
-            "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+            "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
           },
           "kind": {
             "type": "string"
           },
           "managedFieldsManagers": {
-            "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+            "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
           },
           "name": {
             "type": "string"
@@ -367,7 +218,7 @@
       },
       "type": "array"
     },
-    "constrains/@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more/fragment": {
+    "constrains/@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more/array": {
       "items": {
         "type": "string"
       },
@@ -380,7 +231,7 @@
         "description": "HelmFileParameter is a file parameter that's passed to helm template during manifest generation",
         "properties": {
           "name": {
-            "$ref": "#/$defs/constrains~1@items.forceString+@items.name+@items.value~1fragment"
+            "$ref": "#/$defs/constrains~1@items.forceString+@items.name+@items.value~1string;name-is-the-name"
           },
           "path": {
             "description": "Path is the path to the file containing the values for the Helm parameter",
@@ -422,10 +273,10 @@
     },
     "constrains/@items.namespace:t+@items:t": {
       "additionalProperties": {
-        "$ref": "#/$defs/when~1:t~1then~1namespace:t"
+        "$ref": "#/$defs/when~1any~1then~1namespace:t"
       },
       "items": {
-        "$ref": "#/$defs/when~1:t~1then~1namespace:t"
+        "$ref": "#/$defs/when~1any~1then~1namespace:t"
       }
     },
     "constrains/@items.options+@items.patch+@items.path+@items.target.annotationSelector+6more": {
@@ -479,7 +330,7 @@
       "additionalProperties": {},
       "properties": {
         "additionalAnnotations": {
-          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+18more~1fragment"
+          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+18more~1anyOf~1array+object"
         },
         "additionalLabels": {},
         "finalizers": {},
@@ -497,7 +348,7 @@
               "additionalProperties": {},
               "properties": {
                 "annotations": {
-                  "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+18more~1fragment"
+                  "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+18more~1anyOf~1array+object"
                 },
                 "labels": {},
                 "name": {},
@@ -512,7 +363,7 @@
         "templatePatch": {}
       }
     },
-    "constrains/additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+18more/fragment": {
+    "constrains/additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+18more/anyOf/array+object": {
       "anyOf": [
         {
           "additionalProperties": {},
@@ -562,11 +413,77 @@
         {
           "anyOf": [
             {
+              "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
+            },
+            {
+              "properties": {
+                "template": {
+                  "properties": {
+                    "metadata": {
+                      "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "properties": {
+                "template": {
+                  "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
+                }
+              }
+            },
+            {
+              "properties": {
+                "template": {
+                  "properties": {
+                    "metadata": {
+                      "properties": {
+                        "name": {
+                          "not": {
+                            "type": "null"
+                          }
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "metadata"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "template"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+18more"
+        }
+      ]
+    },
+    "constrains/additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more/not/:t": {
+      "not": {
+        "$ref": "#/$defs/t"
+      }
+    },
+    "constrains/additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more@2": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
               "properties": {
                 "template": {
                   "properties": {
                     "spec": {
-                      "$ref": "#/$defs/constrains~1:t@2"
+                      "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
                     }
                   }
                 }
@@ -602,12 +519,12 @@
               "type": "object"
             },
             {
-              "$ref": "#/$defs/constrains~1:t@2"
+              "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
             },
             {
               "properties": {
                 "template": {
-                  "$ref": "#/$defs/constrains~1:t@2"
+                  "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
                 }
               }
             }
@@ -632,49 +549,49 @@
       "description": "Kustomize holds kustomize specific options",
       "properties": {
         "apiVersions": {
-          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@4"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1array;apiversions-specifies-the-kubernetes"
         },
         "commonAnnotations": {
-          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object;commonannotations-is-a-list"
         },
         "commonAnnotationsEnvsubst": {
-          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@5"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1boolean;commonannotationsenvsubst-specifies-whether-to"
         },
         "commonLabels": {
-          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@2"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object;commonlabels-is-a-list"
         },
         "components": {
-          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@6"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1array;components-specifies-a-list"
         },
         "forceCommonAnnotations": {
-          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@7"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1boolean;forcecommonannotations-specifies-whether-to"
         },
         "forceCommonLabels": {
-          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@8"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1boolean;forcecommonlabels-specifies-whether-to"
         },
         "ignoreMissingComponents": {
-          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@9"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1boolean;ignoremissingcomponents-prevents-kustomize-from"
         },
         "images": {
-          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@10"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1array;images-is-a-list"
         },
         "kubeVersion": {
-          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@11"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1string;kubeversion-specifies-the-kubernetes"
         },
         "labelIncludeTemplates": {
-          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@12"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1boolean;labelincludetemplates-specifies-whether-to"
         },
         "labelWithoutSelector": {
-          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@13"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1boolean;labelwithoutselector-specifies-whether-to"
         },
         "namePrefix": {
-          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@14"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1string;nameprefix-overrides-the-nameprefix"
         },
         "nameSuffix": {
-          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@15"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1string;namesuffix-overrides-the-namesuffix"
         },
         "namespace": {
-          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@16"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1string;namespace-sets-the-namespace"
         },
         "patches": {
           "$ref": "#/$defs/constrains~1@items.options+@items.patch+@items.path+@items.target.annotationSelector+6more"
@@ -683,62 +600,12 @@
           "$ref": "#/$defs/constrains~1@items.count+@items.name"
         },
         "version": {
-          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@17"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1string;version-controls-which-version"
         }
       },
       "type": "object"
     },
-    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/fragment": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "CommonAnnotations is a list of additional annotations to add to rendered manifests",
-      "type": "object"
-    },
-    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/fragment@10": {
-      "description": "Images is a list of Kustomize image override specifications",
-      "items": {
-        "description": "KustomizeImage represents a Kustomize image definition in the format [old_image_name=]<image_name>:<image_tag>",
-        "type": "string"
-      },
-      "type": "array"
-    },
-    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/fragment@11": {
-      "description": "KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD\nuses the Kubernetes version of the target cluster.",
-      "type": "string"
-    },
-    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/fragment@12": {
-      "description": "LabelIncludeTemplates specifies whether to apply common labels to resource templates or not",
-      "type": "boolean"
-    },
-    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/fragment@13": {
-      "description": "LabelWithoutSelector specifies whether to apply common labels to resource selectors or not",
-      "type": "boolean"
-    },
-    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/fragment@14": {
-      "description": "NamePrefix overrides the namePrefix in the kustomization.yaml for Kustomize apps",
-      "type": "string"
-    },
-    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/fragment@15": {
-      "description": "NameSuffix overrides the nameSuffix in the kustomization.yaml for Kustomize apps",
-      "type": "string"
-    },
-    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/fragment@16": {
-      "description": "Namespace sets the namespace that Kustomize adds to all resources",
-      "type": "string"
-    },
-    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/fragment@17": {
-      "description": "Version controls which version of Kustomize to use for rendering manifests",
-      "type": "string"
-    },
-    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/fragment@2": {
-      "additionalProperties": {
-        "type": "string"
-      },
-      "description": "CommonLabels is a list of additional labels to add to rendered manifests",
-      "type": "object"
-    },
-    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/fragment@3": {
+    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/anyOf/integer+string": {
       "anyOf": [
         {
           "type": "integer"
@@ -749,53 +616,109 @@
       ],
       "x-kubernetes-int-or-string": true
     },
-    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/fragment@4": {
+    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/array;apiversions-specifies-the-kubernetes": {
       "description": "APIVersions specifies the Kubernetes resource API versions to pass to Helm when templating manifests. By default,\nArgo CD uses the API versions of the target cluster. The format is [group/]version/kind.",
       "items": {
         "type": "string"
       },
       "type": "array"
     },
-    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/fragment@5": {
-      "description": "CommonAnnotationsEnvsubst specifies whether to apply env variables substitution for annotation values",
-      "type": "boolean"
-    },
-    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/fragment@6": {
+    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/array;components-specifies-a-list": {
       "description": "Components specifies a list of kustomize components to add to the kustomization before building",
       "items": {
         "type": "string"
       },
       "type": "array"
     },
-    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/fragment@7": {
+    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/array;images-is-a-list": {
+      "description": "Images is a list of Kustomize image override specifications",
+      "items": {
+        "description": "KustomizeImage represents a Kustomize image definition in the format [old_image_name=]<image_name>:<image_tag>",
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/boolean;commonannotationsenvsubst-specifies-whether-to": {
+      "description": "CommonAnnotationsEnvsubst specifies whether to apply env variables substitution for annotation values",
+      "type": "boolean"
+    },
+    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/boolean;forcecommonannotations-specifies-whether-to": {
       "description": "ForceCommonAnnotations specifies whether to force applying common annotations to resources for Kustomize apps",
       "type": "boolean"
     },
-    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/fragment@8": {
+    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/boolean;forcecommonlabels-specifies-whether-to": {
       "description": "ForceCommonLabels specifies whether to force applying common labels to resources for Kustomize apps",
       "type": "boolean"
     },
-    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/fragment@9": {
+    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/boolean;ignoremissingcomponents-prevents-kustomize-from": {
       "description": "IgnoreMissingComponents prevents kustomize from failing when components do not exist locally by not appending them to kustomization file",
       "type": "boolean"
+    },
+    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/boolean;labelincludetemplates-specifies-whether-to": {
+      "description": "LabelIncludeTemplates specifies whether to apply common labels to resource templates or not",
+      "type": "boolean"
+    },
+    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/boolean;labelwithoutselector-specifies-whether-to": {
+      "description": "LabelWithoutSelector specifies whether to apply common labels to resource selectors or not",
+      "type": "boolean"
+    },
+    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/object": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "type": "object"
+    },
+    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/object;commonannotations-is-a-list": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "CommonAnnotations is a list of additional annotations to add to rendered manifests",
+      "type": "object"
+    },
+    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/object;commonlabels-is-a-list": {
+      "additionalProperties": {
+        "type": "string"
+      },
+      "description": "CommonLabels is a list of additional labels to add to rendered manifests",
+      "type": "object"
+    },
+    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/string;kubeversion-specifies-the-kubernetes": {
+      "description": "KubeVersion specifies the Kubernetes API version to pass to Helm when templating manifests. By default, Argo CD\nuses the Kubernetes version of the target cluster.",
+      "type": "string"
+    },
+    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/string;nameprefix-overrides-the-nameprefix": {
+      "description": "NamePrefix overrides the namePrefix in the kustomization.yaml for Kustomize apps",
+      "type": "string"
+    },
+    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/string;namespace-sets-the-namespace": {
+      "description": "Namespace sets the namespace that Kustomize adds to all resources",
+      "type": "string"
+    },
+    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/string;namesuffix-overrides-the-namesuffix": {
+      "description": "NameSuffix overrides the nameSuffix in the kustomization.yaml for Kustomize apps",
+      "type": "string"
+    },
+    "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more/string;version-controls-which-version": {
+      "description": "Version controls which version of Kustomize to use for rendering manifests",
+      "type": "string"
     },
     "constrains/apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more@2": {
       "additionalProperties": false,
       "properties": {
         "apiVersions": {
-          "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+          "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
         },
         "commonAnnotations": {
-          "$ref": "#/$defs/constrains~1:t~1fragment"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object"
         },
         "commonAnnotationsEnvsubst": {
           "type": "boolean"
         },
         "commonLabels": {
-          "$ref": "#/$defs/constrains~1:t~1fragment"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object"
         },
         "components": {
-          "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+          "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
         },
         "forceCommonAnnotations": {
           "type": "boolean"
@@ -807,7 +730,7 @@
           "type": "boolean"
         },
         "images": {
-          "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+          "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
         },
         "kubeVersion": {
           "type": "string"
@@ -838,7 +761,7 @@
             "additionalProperties": false,
             "properties": {
               "count": {
-                "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@3"
+                "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1anyOf~1integer+string"
               },
               "name": {
                 "type": "string"
@@ -863,106 +786,106 @@
       "description": "Helm holds helm specific options",
       "properties": {
         "apiVersions": {
-          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@4"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1array;apiversions-specifies-the-kubernetes"
         },
         "fileParameters": {
           "$ref": "#/$defs/constrains~1@items.name+@items.path"
         },
         "ignoreMissingValueFiles": {
-          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment"
+          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1boolean;ignoremissingvaluefiles-prevents-helm-template"
         },
         "kubeVersion": {
-          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@11"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1string;kubeversion-specifies-the-kubernetes"
         },
         "namespace": {
-          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@2"
+          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1string;namespace-is-an-optional"
         },
         "parameters": {
           "$ref": "#/$defs/constrains~1@items.forceString+@items.name+@items.value"
         },
         "passCredentials": {
-          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@3"
+          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1boolean;passcredentials-pass-credentials-to"
         },
         "releaseName": {
-          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@4"
+          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1string;releasename-is-the-helm"
         },
         "skipCrds": {
-          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@5"
+          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1boolean;skipcrds-skips-custom-resource"
         },
         "skipSchemaValidation": {
-          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@6"
+          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1boolean;skipschemavalidation-skips-json-schema"
         },
         "skipTests": {
-          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@7"
+          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1boolean;skiptests-skips-test-manifest"
         },
         "valueFiles": {
-          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@9"
+          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1array;valuesfiles-is-a-list"
         },
         "values": {
-          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@8"
+          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1string;values-specifies-helm-values"
         },
         "valuesObject": {
-          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@10"
+          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1object;valuesobject-specifies-helm-values"
         },
         "version": {
-          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@11"
+          "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1string;version-is-the-helm"
         }
       },
       "type": "object"
     },
-    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/fragment": {
-      "description": "IgnoreMissingValueFiles prevents helm template from failing when valueFiles do not exist locally by not appending them to helm template --values",
-      "type": "boolean"
-    },
-    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/fragment@10": {
-      "description": "ValuesObject specifies Helm values to be passed to helm template, defined as a map. This takes precedence over Values.",
-      "type": "object",
-      "x-kubernetes-preserve-unknown-fields": true
-    },
-    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/fragment@11": {
-      "description": "Version is the Helm version to use for templating (\"3\")",
-      "type": "string"
-    },
-    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/fragment@2": {
-      "description": "Namespace is an optional namespace to template with. If left empty, defaults to the app's destination namespace.",
-      "type": "string"
-    },
-    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/fragment@3": {
-      "description": "PassCredentials pass credentials to all domains (Helm's --pass-credentials)",
-      "type": "boolean"
-    },
-    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/fragment@4": {
-      "description": "ReleaseName is the Helm release name to use. If omitted it will use the application name",
-      "type": "string"
-    },
-    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/fragment@5": {
-      "description": "SkipCrds skips custom resource definition installation step (Helm's --skip-crds)",
-      "type": "boolean"
-    },
-    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/fragment@6": {
-      "description": "SkipSchemaValidation skips JSON schema validation (Helm's --skip-schema-validation)",
-      "type": "boolean"
-    },
-    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/fragment@7": {
-      "description": "SkipTests skips test manifest installation step (Helm's --skip-tests).",
-      "type": "boolean"
-    },
-    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/fragment@8": {
-      "description": "Values specifies Helm values to be passed to helm template, typically defined as a block. ValuesObject takes precedence over Values, so use one or the other.",
-      "type": "string"
-    },
-    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/fragment@9": {
+    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/array;valuesfiles-is-a-list": {
       "description": "ValuesFiles is a list of Helm value files to use when generating a template",
       "items": {
         "type": "string"
       },
       "type": "array"
     },
+    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/boolean;ignoremissingvaluefiles-prevents-helm-template": {
+      "description": "IgnoreMissingValueFiles prevents helm template from failing when valueFiles do not exist locally by not appending them to helm template --values",
+      "type": "boolean"
+    },
+    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/boolean;passcredentials-pass-credentials-to": {
+      "description": "PassCredentials pass credentials to all domains (Helm's --pass-credentials)",
+      "type": "boolean"
+    },
+    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/boolean;skipcrds-skips-custom-resource": {
+      "description": "SkipCrds skips custom resource definition installation step (Helm's --skip-crds)",
+      "type": "boolean"
+    },
+    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/boolean;skipschemavalidation-skips-json-schema": {
+      "description": "SkipSchemaValidation skips JSON schema validation (Helm's --skip-schema-validation)",
+      "type": "boolean"
+    },
+    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/boolean;skiptests-skips-test-manifest": {
+      "description": "SkipTests skips test manifest installation step (Helm's --skip-tests).",
+      "type": "boolean"
+    },
+    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/object;valuesobject-specifies-helm-values": {
+      "description": "ValuesObject specifies Helm values to be passed to helm template, defined as a map. This takes precedence over Values.",
+      "type": "object",
+      "x-kubernetes-preserve-unknown-fields": true
+    },
+    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/string;namespace-is-an-optional": {
+      "description": "Namespace is an optional namespace to template with. If left empty, defaults to the app's destination namespace.",
+      "type": "string"
+    },
+    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/string;releasename-is-the-helm": {
+      "description": "ReleaseName is the Helm release name to use. If omitted it will use the application name",
+      "type": "string"
+    },
+    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/string;values-specifies-helm-values": {
+      "description": "Values specifies Helm values to be passed to helm template, typically defined as a block. ValuesObject takes precedence over Values, so use one or the other.",
+      "type": "string"
+    },
+    "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more/string;version-is-the-helm": {
+      "description": "Version is the Helm version to use for templating (\"3\")",
+      "type": "string"
+    },
     "constrains/apiVersions+fileParameters@items.name+fileParameters@items.path+15more@2": {
       "additionalProperties": false,
       "properties": {
         "apiVersions": {
-          "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+          "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
         },
         "fileParameters": {
           "items": {
@@ -1022,7 +945,7 @@
           "type": "boolean"
         },
         "valueFiles": {
-          "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+          "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
         },
         "values": {
           "type": "string"
@@ -1062,10 +985,10 @@
           "additionalProperties": false,
           "properties": {
             "annotations": {
-              "$ref": "#/$defs/constrains~1:t~1fragment"
+              "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object"
             },
             "labels": {
-              "$ref": "#/$defs/constrains~1:t~1fragment"
+              "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object"
             }
           },
           "type": "object"
@@ -1080,7 +1003,7 @@
                   "type": "string"
                 },
                 "factor": {
-                  "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1fragment"
+                  "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1integer:int64"
                 },
                 "maxDuration": {
                   "type": "string"
@@ -1089,7 +1012,7 @@
               "type": "object"
             },
             "limit": {
-              "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1fragment"
+              "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1integer:int64"
             },
             "refresh": {
               "type": "boolean"
@@ -1098,12 +1021,12 @@
           "type": "object"
         },
         "syncOptions": {
-          "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+          "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
         }
       },
       "type": "object"
     },
-    "constrains/automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more/fragment": {
+    "constrains/automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more/integer:int64": {
       "format": "int64",
       "type": "integer"
     },
@@ -1237,10 +1160,10 @@
                 "type": "string"
               },
               "pathsDoNotExist": {
-                "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+                "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
               },
               "pathsExist": {
-                "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+                "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
               },
               "repositoryMatch": {
                 "type": "string"
@@ -1345,13 +1268,13 @@
           "type": "object"
         },
         "requeueAfterSeconds": {
-          "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1fragment"
+          "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1integer:int64"
         },
         "template": {
           "$ref": "#/$defs/constrains~1metadata.annotations+metadata.finalizers+metadata.labels+metadata.name+106more"
         },
         "values": {
-          "$ref": "#/$defs/constrains~1:t~1fragment"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object"
         }
       },
       "type": "object"
@@ -1366,7 +1289,7 @@
               "type": "string"
             },
             "labels": {
-              "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+              "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
             },
             "organization": {
               "type": "string"
@@ -1476,7 +1399,7 @@
               "type": "boolean"
             },
             "labels": {
-              "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+              "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
             },
             "owner": {
               "type": "string"
@@ -1505,7 +1428,7 @@
               "type": "string"
             },
             "labels": {
-              "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+              "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
             },
             "owner": {
               "type": "string"
@@ -1536,7 +1459,7 @@
               "type": "boolean"
             },
             "labels": {
-              "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+              "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
             },
             "project": {
               "type": "string"
@@ -1554,13 +1477,13 @@
           "type": "object"
         },
         "requeueAfterSeconds": {
-          "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1fragment"
+          "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1integer:int64"
         },
         "template": {
           "$ref": "#/$defs/constrains~1metadata.annotations+metadata.finalizers+metadata.labels+metadata.name+106more"
         },
         "values": {
-          "$ref": "#/$defs/constrains~1:t~1fragment"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object"
         }
       },
       "type": "object"
@@ -1656,13 +1579,13 @@
           "type": "string"
         },
         "requeueAfterSeconds": {
-          "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1fragment"
+          "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1integer:int64"
         },
         "template": {
           "$ref": "#/$defs/constrains~1metadata.annotations+metadata.finalizers+metadata.labels+metadata.name+106more"
         },
         "values": {
-          "$ref": "#/$defs/constrains~1:t~1fragment"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object"
         }
       },
       "required": [
@@ -1690,7 +1613,7 @@
           "properties": {
             "parameters": {
               "additionalProperties": {
-                "$ref": "#/$defs/constrains~1@items.clusterDecisionResource.configMapRef+240more~1fragment"
+                "$ref": "#/$defs/constrains~1@items.clusterDecisionResource.configMapRef+240more~1keywords~1x-kubernetes-preserve-unknown-fields"
               },
               "type": "object"
             }
@@ -1698,13 +1621,13 @@
           "type": "object"
         },
         "requeueAfterSeconds": {
-          "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1fragment"
+          "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1integer:int64"
         },
         "template": {
           "$ref": "#/$defs/constrains~1metadata.annotations+metadata.finalizers+metadata.labels+metadata.name+106more"
         },
         "values": {
-          "$ref": "#/$defs/constrains~1:t~1fragment"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object"
         }
       },
       "required": [
@@ -1741,7 +1664,7 @@
           "type": "string"
         },
         "requeueAfterSeconds": {
-          "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1fragment"
+          "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1integer:int64"
         },
         "revision": {
           "type": "string"
@@ -1750,7 +1673,7 @@
           "$ref": "#/$defs/constrains~1metadata.annotations+metadata.finalizers+metadata.labels+metadata.name+106more"
         },
         "values": {
-          "$ref": "#/$defs/constrains~1:t~1fragment"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object"
         }
       },
       "required": [
@@ -1839,7 +1762,7 @@
       "properties": {
         "elements": {
           "items": {
-            "$ref": "#/$defs/constrains~1@items.clusterDecisionResource.configMapRef+240more~1fragment"
+            "$ref": "#/$defs/constrains~1@items.clusterDecisionResource.configMapRef+240more~1keywords~1x-kubernetes-preserve-unknown-fields"
           },
           "type": "array"
         },
@@ -1882,10 +1805,10 @@
             "additionalProperties": false,
             "properties": {
               "array": {
-                "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+                "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
               },
               "map": {
-                "$ref": "#/$defs/constrains~1:t~1fragment"
+                "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object"
               },
               "name": {
                 "type": "string"
@@ -1906,31 +1829,31 @@
       "description": "Directory holds path/directory specific options",
       "properties": {
         "exclude": {
-          "$ref": "#/$defs/constrains~1exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more~1fragment"
+          "$ref": "#/$defs/constrains~1exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more~1string;exclude-contains-a-glob"
         },
         "include": {
-          "$ref": "#/$defs/constrains~1exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more~1fragment@2"
+          "$ref": "#/$defs/constrains~1exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more~1string;include-contains-a-glob"
         },
         "jsonnet": {
           "$ref": "#/$defs/constrains~1extVars@items.code+extVars@items.name+extVars@items.value+libs+tlas"
         },
         "recurse": {
-          "$ref": "#/$defs/constrains~1exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more~1fragment@3"
+          "$ref": "#/$defs/constrains~1exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more~1boolean;recurse-specifies-whether-to"
         }
       },
       "type": "object"
     },
-    "constrains/exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more/fragment": {
+    "constrains/exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more/boolean;recurse-specifies-whether-to": {
+      "description": "Recurse specifies whether to scan a directory recursively for manifests",
+      "type": "boolean"
+    },
+    "constrains/exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more/string;exclude-contains-a-glob": {
       "description": "Exclude contains a glob pattern to match paths against that should be explicitly excluded from being used during manifest generation",
       "type": "string"
     },
-    "constrains/exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more/fragment@2": {
+    "constrains/exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more/string;include-contains-a-glob": {
       "description": "Include contains a glob pattern to match paths against that should be explicitly included during manifest generation",
       "type": "string"
-    },
-    "constrains/exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more/fragment@3": {
-      "description": "Recurse specifies whether to scan a directory recursively for manifests",
-      "type": "boolean"
     },
     "constrains/exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more@2": {
       "additionalProperties": false,
@@ -1948,7 +1871,7 @@
               "$ref": "#/$defs/constrains~1@items.code+@items.name+@items.value"
             },
             "libs": {
-              "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+              "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
             },
             "tlas": {
               "$ref": "#/$defs/constrains~1@items.code+@items.name+@items.value"
@@ -2003,7 +1926,7 @@
           "$ref": "#/$defs/constrains~1metadata.annotations+metadata.finalizers+metadata.labels+metadata.name+106more"
         },
         "values": {
-          "$ref": "#/$defs/constrains~1:t~1fragment"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object"
         }
       },
       "type": "object"
@@ -2101,7 +2024,7 @@
           "x-kubernetes-list-type": "atomic"
         },
         "matchLabels": {
-          "$ref": "#/$defs/constrains~1:t~1fragment"
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object"
         }
       },
       "type": "object",
@@ -2114,13 +2037,13 @@
           "additionalProperties": false,
           "properties": {
             "annotations": {
-              "$ref": "#/$defs/constrains~1:t~1fragment"
+              "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object"
             },
             "finalizers": {
-              "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+              "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
             },
             "labels": {
-              "$ref": "#/$defs/constrains~1:t~1fragment"
+              "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object"
             },
             "name": {
               "type": "string"
@@ -2147,7 +2070,7 @@
               "type": "string"
             },
             "revisionHistoryLimit": {
-              "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1fragment"
+              "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1integer:int64"
             },
             "source": {
               "$ref": "#/$defs/constrains~1chart+directory.exclude+directory.include+directory.jsonnet.extVars@items.code+64more"
@@ -2270,6 +2193,64 @@
       ],
       "type": "object"
     },
+    "constrains/template.metadata:t+template:t": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/t"
+        },
+        {
+          "properties": {
+            "template": {
+              "properties": {
+                "metadata": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "metadata"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "template"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1template:t"
+        }
+      ]
+    },
+    "constrains/template.spec:t+template:t": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/t"
+        },
+        {
+          "properties": {
+            "template": {
+              "properties": {
+                "spec": {
+                  "$ref": "#/$defs/t"
+                }
+              },
+              "required": [
+                "spec"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "template"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1template:t"
+        }
+      ]
+    },
     "constrains/template:t": {
       "properties": {
         "template": {
@@ -2318,324 +2299,7 @@
         }
       ]
     },
-    "when/:t+goTemplate+goTemplate=null/then/goTemplate": {
-      "if": {
-        "allOf": [
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "properties": {
-                    "goTemplate": {
-                      "enum": [
-                        null
-                      ]
-                    }
-                  },
-                  "required": [
-                    "goTemplate"
-                  ],
-                  "type": "object"
-                },
-                {
-                  "not": {
-                    "properties": {
-                      "goTemplate": {}
-                    },
-                    "required": [
-                      "goTemplate"
-                    ],
-                    "type": "object"
-                  }
-                }
-              ]
-            }
-          },
-          {
-            "$ref": "#/$defs/t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "goTemplate": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/when~1:t+goTemplate+goTemplate=null~1then~1goTemplate~1fragment"
-              },
-              {
-                "type": "boolean"
-              }
-            ]
-          }
-        }
-      }
-    },
-    "when/:t+goTemplate+goTemplate=null/then/goTemplate/fragment": {
-      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
-      "type": "string"
-    },
-    "when/:t+template.metadata:t+template:t/then/template.metadata.annotations:t": {
-      "if": {
-        "$ref": "#/$defs/constrains~1:t+template.metadata:t+template:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "template": {
-            "additionalProperties": {},
-            "properties": {
-              "metadata": {
-                "additionalProperties": {},
-                "properties": {
-                  "annotations": {
-                    "$ref": "#/$defs/constrains~1:t"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "when/:t+template.metadata:t+template:t/then/template.metadata.labels:t": {
-      "if": {
-        "$ref": "#/$defs/constrains~1:t+template.metadata:t+template:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "template": {
-            "additionalProperties": {},
-            "properties": {
-              "metadata": {
-                "additionalProperties": {},
-                "properties": {
-                  "labels": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1:t@2"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1:t~1fragment"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "when/:t+template.spec:t+template:t/then/template.spec.destination.name+template.spec.destination.namespace+1more": {
-      "if": {
-        "$ref": "#/$defs/constrains~1:t+template.spec:t+template:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "template": {
-            "additionalProperties": {},
-            "properties": {
-              "spec": {
-                "additionalProperties": {},
-                "properties": {
-                  "destination": {
-                    "$ref": "#/$defs/constrains~1name+namespace+server"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "when/:t+template.spec:t+template:t/then/template.spec.ignoreDifferences:t+template.spec.ignoreDifferences@items.group+6more": {
-      "if": {
-        "$ref": "#/$defs/constrains~1:t+template.spec:t+template:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "template": {
-            "additionalProperties": {},
-            "properties": {
-              "spec": {
-                "additionalProperties": {},
-                "properties": {
-                  "ignoreDifferences": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1:t@2"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "when/:t+template.spec:t+template:t/then/template.spec.info:t+template.spec.info@items.name+1more": {
-      "if": {
-        "$ref": "#/$defs/constrains~1:t+template.spec:t+template:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "template": {
-            "additionalProperties": {},
-            "properties": {
-              "spec": {
-                "additionalProperties": {},
-                "properties": {
-                  "info": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1@items.name+@items.value@2"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1:t@2"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "when/:t+template.spec:t+template:t/then/template.spec.source.chart+template.spec.source.directory.exclude+67more": {
-      "if": {
-        "$ref": "#/$defs/constrains~1:t+template.spec:t+template:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "template": {
-            "additionalProperties": {},
-            "properties": {
-              "spec": {
-                "additionalProperties": {},
-                "properties": {
-                  "source": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1:t@2"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1chart+directory.exclude+directory.include+directory.jsonnet.extVars@items.code+64more"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "when/:t+template.spec:t+template:t/then/template.spec.sourceHydrator.drySource.directory.exclude+68more": {
-      "if": {
-        "$ref": "#/$defs/constrains~1:t+template.spec:t+template:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "template": {
-            "additionalProperties": {},
-            "properties": {
-              "spec": {
-                "additionalProperties": {},
-                "properties": {
-                  "sourceHydrator": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1:t@2"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1drySource.directory.exclude+drySource.directory.include+66more"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "when/:t+template.spec:t+template:t/then/template.spec.sources:t+template.spec.sources@items.chart+67more": {
-      "if": {
-        "$ref": "#/$defs/constrains~1:t+template.spec:t+template:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "template": {
-            "additionalProperties": {},
-            "properties": {
-              "spec": {
-                "additionalProperties": {},
-                "properties": {
-                  "sources": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1:t@2"
-                      },
-                      {
-                        "items": {
-                          "$ref": "#/$defs/constrains~1chart+directory.exclude+directory.include+directory.jsonnet.extVars@items.code+64more"
-                        },
-                        "type": "array"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "when/:t+template.spec:t+template:t/then/template.spec.syncPolicy.automated.allowEmpty+12more": {
-      "if": {
-        "$ref": "#/$defs/constrains~1:t+template.spec:t+template:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "template": {
-            "additionalProperties": {},
-            "properties": {
-              "spec": {
-                "additionalProperties": {},
-                "properties": {
-                  "syncPolicy": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1:t@2"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "when/:t/then/additionalAnnotations:t": {
+    "when/any/then/additionalAnnotations:t": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -2643,12 +2307,31 @@
         "additionalProperties": {},
         "properties": {
           "additionalAnnotations": {
-            "$ref": "#/$defs/constrains~1:t"
+            "$ref": "#/$defs/when~1any~1then~1additionalAnnotations:t~1anyOf~1array+not~1:t+null+object"
           }
         }
       }
     },
-    "when/:t/then/additionalLabels:t": {
+    "when/any/then/additionalAnnotations:t/anyOf/array+not/:t+null+object": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
+        },
+        {
+          "type": "object"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object"
+        }
+      ]
+    },
+    "when/any/then/additionalLabels:t": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -2658,17 +2341,17 @@
           "additionalLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
-                "$ref": "#/$defs/constrains~1:t~1fragment"
+                "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object"
               }
             ]
           }
         }
       }
     },
-    "when/:t/then/clusterResourceBlacklist:t+clusterResourceBlacklist@items.group+2more": {
+    "when/any/then/clusterResourceBlacklist:t+clusterResourceBlacklist@items.group+2more": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -2678,7 +2361,7 @@
           "clusterResourceBlacklist": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "description": "ClusterResourceBlacklist contains list of blacklisted cluster level resources",
@@ -2692,7 +2375,7 @@
         }
       }
     },
-    "when/:t/then/clusterResourceWhitelist:t+clusterResourceWhitelist@items.group+2more": {
+    "when/any/then/clusterResourceWhitelist:t+clusterResourceWhitelist@items.group+2more": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -2702,7 +2385,7 @@
           "clusterResourceWhitelist": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "description": "ClusterResourceWhitelist contains list of whitelisted cluster level resources",
@@ -2716,7 +2399,7 @@
         }
       }
     },
-    "when/:t/then/description:t": {
+    "when/any/then/description:t": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -2726,7 +2409,7 @@
           "description": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "allOf": [
@@ -2736,7 +2419,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/when~1:t~1then~1description:t~1fragment"
+                    "$ref": "#/$defs/when~1any~1then~1description:t~1not~1keywords~1pattern"
                   },
                   {
                     "not": {
@@ -2754,7 +2437,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/when~1:t~1then~1description:t~1fragment@3"
+                    "$ref": "#/$defs/when~1any~1then~1description:t~1not~1keywords~1pattern@3"
                   },
                   {
                     "not": {
@@ -2772,7 +2455,7 @@
                     }
                   },
                   {
-                    "$ref": "#/$defs/when~1:t~1then~1description:t~1fragment@2"
+                    "$ref": "#/$defs/when~1any~1then~1description:t~1not~1keywords~1pattern@2"
                   }
                 ],
                 "description": "Description contains optional project description",
@@ -2784,22 +2467,22 @@
         }
       }
     },
-    "when/:t/then/description:t/fragment": {
+    "when/any/then/description:t/not/keywords/pattern": {
       "not": {
         "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$"
       }
     },
-    "when/:t/then/description:t/fragment@2": {
+    "when/any/then/description:t/not/keywords/pattern@2": {
       "not": {
         "pattern": "^([0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$"
       }
     },
-    "when/:t/then/description:t/fragment@3": {
+    "when/any/then/description:t/not/keywords/pattern@3": {
       "not": {
         "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$"
       }
     },
-    "when/:t/then/destination.name+destination.namespace+destination.server": {
+    "when/any/then/destination.name+destination.namespace+destination.server": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -2811,13 +2494,13 @@
             "description": "Destination is a reference to the target Kubernetes server and namespace",
             "properties": {
               "name": {
-                "$ref": "#/$defs/when~1:t~1then~1destination.name+destination.namespace+destination.server~1fragment"
+                "$ref": "#/$defs/when~1any~1then~1destination.name+destination.namespace+destination.server~1string;name-is-an-alternate"
               },
               "namespace": {
-                "$ref": "#/$defs/when~1:t~1then~1destination.name+destination.namespace+destination.server~1fragment@2"
+                "$ref": "#/$defs/when~1any~1then~1destination.name+destination.namespace+destination.server~1string;namespace-specifies-the-target"
               },
               "server": {
-                "$ref": "#/$defs/when~1:t~1then~1destination.name+destination.namespace+destination.server~1fragment@3"
+                "$ref": "#/$defs/when~1any~1then~1destination.name+destination.namespace+destination.server~1string;server-specifies-the-url"
               }
             },
             "type": "object"
@@ -2825,19 +2508,19 @@
         }
       }
     },
-    "when/:t/then/destination.name+destination.namespace+destination.server/fragment": {
+    "when/any/then/destination.name+destination.namespace+destination.server/string;name-is-an-alternate": {
       "description": "Name is an alternate way of specifying the target cluster by its symbolic name. This must be set if Server is not set.",
       "type": "string"
     },
-    "when/:t/then/destination.name+destination.namespace+destination.server/fragment@2": {
+    "when/any/then/destination.name+destination.namespace+destination.server/string;namespace-specifies-the-target": {
       "description": "Namespace specifies the target namespace for the application's resources.\nThe namespace will only be set for namespace-scoped resources that have not set a value for .metadata.namespace",
       "type": "string"
     },
-    "when/:t/then/destination.name+destination.namespace+destination.server/fragment@3": {
+    "when/any/then/destination.name+destination.namespace+destination.server/string;server-specifies-the-url": {
       "description": "Server specifies the URL of the target cluster's Kubernetes control plane API. This must be set if Name is not set.",
       "type": "string"
     },
-    "when/:t/then/destinations:t+destinations@items.name+destinations@items.namespace+1more": {
+    "when/any/then/destinations:t+destinations@items.name+destinations@items.namespace+1more": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -2853,13 +2536,13 @@
                   "description": "ApplicationDestination holds information about the application's destination",
                   "properties": {
                     "name": {
-                      "$ref": "#/$defs/when~1:t~1then~1destination.name+destination.namespace+destination.server~1fragment"
+                      "$ref": "#/$defs/when~1any~1then~1destination.name+destination.namespace+destination.server~1string;name-is-an-alternate"
                     },
                     "namespace": {
-                      "$ref": "#/$defs/when~1:t~1then~1destination.name+destination.namespace+destination.server~1fragment@2"
+                      "$ref": "#/$defs/when~1any~1then~1destination.name+destination.namespace+destination.server~1string;namespace-specifies-the-target"
                     },
                     "server": {
-                      "$ref": "#/$defs/when~1:t~1then~1destination.name+destination.namespace+destination.server~1fragment@3"
+                      "$ref": "#/$defs/when~1any~1then~1destination.name+destination.namespace+destination.server~1string;server-specifies-the-url"
                     }
                   },
                   "type": "object"
@@ -2867,14 +2550,14 @@
                 "type": "array"
               },
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               }
             ]
           }
         }
       }
     },
-    "when/:t/then/generators:t+generators@items.clusterDecisionResource.configMapRef+252more": {
+    "when/any/then/generators:t+generators@items.clusterDecisionResource.configMapRef+252more": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -2921,7 +2604,7 @@
                           "$ref": "#/$defs/constrains~1@items.clusterDecisionResource.configMapRef+240more"
                         },
                         "mergeKeys": {
-                          "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+                          "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
                         },
                         "template": {
                           "$ref": "#/$defs/constrains~1metadata.annotations+metadata.finalizers+metadata.labels+metadata.name+106more"
@@ -2951,14 +2634,14 @@
                 "type": "array"
               },
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               }
             ]
           }
         }
       }
     },
-    "when/:t/then/goTemplateOptions:t": {
+    "when/any/then/goTemplateOptions:t": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -2968,17 +2651,17 @@
           "goTemplateOptions": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
-                "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+                "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
               }
             ]
           }
         }
       }
     },
-    "when/:t/then/ignoreApplicationDifferences:t+3more": {
+    "when/any/then/ignoreApplicationDifferences:t+3more": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -2988,17 +2671,17 @@
           "ignoreApplicationDifferences": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "items": {
                   "additionalProperties": false,
                   "properties": {
                     "jqPathExpressions": {
-                      "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+                      "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
                     },
                     "jsonPointers": {
-                      "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+                      "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
                     },
                     "name": {
                       "type": "string"
@@ -3013,7 +2696,7 @@
         }
       }
     },
-    "when/:t/then/ignoreDifferences:t+ignoreDifferences@items.group+6more": {
+    "when/any/then/ignoreDifferences:t+ignoreDifferences@items.group+6more": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -3032,10 +2715,10 @@
                       "type": "string"
                     },
                     "jqPathExpressions": {
-                      "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+                      "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
                     },
                     "jsonPointers": {
-                      "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+                      "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
                     },
                     "kind": {
                       "type": "string"
@@ -3062,14 +2745,14 @@
                 "type": "array"
               },
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               }
             ]
           }
         }
       }
     },
-    "when/:t/then/info:t+info@items.name+info@items.value": {
+    "when/any/then/info:t+info@items.name+info@items.value": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -3086,14 +2769,14 @@
                 "type": "array"
               },
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               }
             ]
           }
         }
       }
     },
-    "when/:t/then/namespace:t": {
+    "when/any/then/namespace:t": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -3103,7 +2786,7 @@
           "namespace": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "allOf": [
@@ -3138,7 +2821,7 @@
                               "type": "integer"
                             },
                             {
-                              "$ref": "#/$defs/when~1:t~1then~1namespace:t~1fragment"
+                              "$ref": "#/$defs/when~1any~1then~1namespace:t~1string"
                             },
                             {
                               "type": "number"
@@ -3156,7 +2839,7 @@
                           ]
                         },
                         "propertyNames": {
-                          "$ref": "#/$defs/when~1:t~1then~1namespace:t~1fragment"
+                          "$ref": "#/$defs/when~1any~1then~1namespace:t~1string"
                         },
                         "type": "object"
                       },
@@ -3168,7 +2851,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/when~1:t~1then~1description:t~1fragment"
+                            "$ref": "#/$defs/when~1any~1then~1description:t~1not~1keywords~1pattern"
                           },
                           {
                             "not": {
@@ -3186,7 +2869,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/when~1:t~1then~1description:t~1fragment@3"
+                            "$ref": "#/$defs/when~1any~1then~1description:t~1not~1keywords~1pattern@3"
                           },
                           {
                             "not": {
@@ -3204,7 +2887,7 @@
                             }
                           },
                           {
-                            "$ref": "#/$defs/when~1:t~1then~1description:t~1fragment@2"
+                            "$ref": "#/$defs/when~1any~1then~1description:t~1not~1keywords~1pattern@2"
                           }
                         ],
                         "type": "string"
@@ -3221,7 +2904,7 @@
         }
       }
     },
-    "when/:t/then/namespace:t/fragment": {
+    "when/any/then/namespace:t/string": {
       "allOf": [
         {
           "not": {
@@ -3241,7 +2924,7 @@
       ],
       "type": "string"
     },
-    "when/:t/then/namespace:t@2": {
+    "when/any/then/namespace:t@2": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -3251,7 +2934,7 @@
           "namespace": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "type": "string"
@@ -3261,7 +2944,7 @@
         }
       }
     },
-    "when/:t/then/namespaceResourceBlacklist:t+namespaceResourceBlacklist@items.group+1more": {
+    "when/any/then/namespaceResourceBlacklist:t+namespaceResourceBlacklist@items.group+1more": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -3271,7 +2954,7 @@
           "namespaceResourceBlacklist": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "description": "NamespaceResourceBlacklist contains list of blacklisted namespace level resources",
@@ -3285,7 +2968,7 @@
         }
       }
     },
-    "when/:t/then/namespaceResourceWhitelist:t+namespaceResourceWhitelist@items.group+1more": {
+    "when/any/then/namespaceResourceWhitelist:t+namespaceResourceWhitelist@items.group+1more": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -3295,7 +2978,7 @@
           "namespaceResourceWhitelist": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "description": "NamespaceResourceWhitelist contains list of whitelisted namespace level resources",
@@ -3309,7 +2992,7 @@
         }
       }
     },
-    "when/:t/then/orphanedResources.ignore@items.group+orphanedResources.ignore@items.kind+3more": {
+    "when/any/then/orphanedResources.ignore@items.group+orphanedResources.ignore@items.kind+3more": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -3319,7 +3002,7 @@
           "orphanedResources": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "additionalProperties": false,
@@ -3357,7 +3040,7 @@
         }
       }
     },
-    "when/:t/then/permitOnlyProjectScopedClusters:t": {
+    "when/any/then/permitOnlyProjectScopedClusters:t": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -3367,10 +3050,10 @@
           "permitOnlyProjectScopedClusters": {
             "anyOf": [
               {
-                "$ref": "#/$defs/when~1:t+goTemplate+goTemplate=null~1then~1goTemplate~1fragment"
+                "$ref": "#/$defs/when~1any~1then~1permitOnlyProjectScopedClusters:t~1string;pattern-true-true-true-fal"
               },
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "description": "PermitOnlyProjectScopedClusters determines whether destinations can only reference clusters which are project-scoped",
@@ -3381,7 +3064,11 @@
         }
       }
     },
-    "when/:t/then/revisionHistoryLimit:t": {
+    "when/any/then/permitOnlyProjectScopedClusters:t/string;pattern-true-true-true-fal": {
+      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
+      "type": "string"
+    },
+    "when/any/then/revisionHistoryLimit:t": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -3391,7 +3078,7 @@
           "revisionHistoryLimit": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "description": "RevisionHistoryLimit limits the number of items kept in the application's revision history, which is used for informational purposes as well as for rollbacks to previous versions.\nThis should only be changed in exceptional circumstances.\nSetting to zero will store no history. This will reduce storage used.\nIncreasing will increase the space used to store the history, so we do not recommend increasing it.\nDefault is 10.",
@@ -3407,7 +3094,7 @@
         }
       }
     },
-    "when/:t/then/roles:t+roles@items.description+roles@items.groups+5more": {
+    "when/any/then/roles:t+roles@items.description+roles@items.groups+5more": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -3417,7 +3104,7 @@
           "roles": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "description": "Roles are user defined RBAC roles associated with this project",
@@ -3443,10 +3130,10 @@
                         "description": "JWTToken holds the issuedAt and expiresAt values of a token",
                         "properties": {
                           "exp": {
-                            "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1fragment"
+                            "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1integer:int64"
                           },
                           "iat": {
-                            "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1fragment"
+                            "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more~1integer:int64"
                           },
                           "id": {
                             "type": "string"
@@ -3483,7 +3170,7 @@
         }
       }
     },
-    "when/:t/then/signatureKeys:t+signatureKeys@items.keyID": {
+    "when/any/then/signatureKeys:t+signatureKeys@items.keyID": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -3493,7 +3180,7 @@
           "signatureKeys": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "description": "SignatureKeys contains a list of PGP key IDs that commits in Git must be signed with in order to be allowed for sync\n\nDeprecated: Use SourceIntegrity instead. SignatureKeys will be removed with the next major version.",
@@ -3518,7 +3205,7 @@
         }
       }
     },
-    "when/:t/then/source.chart+source.directory.exclude+source.directory.include+66more": {
+    "when/any/then/source.chart+source.directory.exclude+source.directory.include+66more": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -3528,14 +3215,14 @@
           "source": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "additionalProperties": false,
                 "description": "Source is a reference to the location of the application's manifests or chart",
                 "properties": {
                   "chart": {
-                    "$ref": "#/$defs/when~1:t~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1fragment"
+                    "$ref": "#/$defs/when~1any~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1string;chart-is-a-helm"
                   },
                   "directory": {
                     "$ref": "#/$defs/constrains~1exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more"
@@ -3547,25 +3234,25 @@
                     "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more"
                   },
                   "name": {
-                    "$ref": "#/$defs/when~1:t~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1fragment@2"
+                    "$ref": "#/$defs/when~1any~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1string;name-is-used-to"
                   },
                   "path": {
-                    "$ref": "#/$defs/when~1:t~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1fragment@3"
+                    "$ref": "#/$defs/when~1any~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1string;path-is-a-directory"
                   },
                   "plugin": {
                     "$ref": "#/$defs/constrains~1env@items.name+env@items.value+name+parameters@items.array+parameters@items.map+2more"
                   },
                   "ref": {
-                    "$ref": "#/$defs/when~1:t~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1fragment@4"
+                    "$ref": "#/$defs/when~1any~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1string;ref-is-reference-to"
                   },
                   "repoURL": {
-                    "$ref": "#/$defs/when~1:t~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1fragment@5"
+                    "$ref": "#/$defs/when~1any~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1string;repourl-is-the-url"
                   },
                   "tagPrefix": {
-                    "$ref": "#/$defs/when~1:t~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1fragment@6"
+                    "$ref": "#/$defs/when~1any~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1string;tagprefix-filters-git-tags"
                   },
                   "targetRevision": {
-                    "$ref": "#/$defs/when~1:t~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1fragment@7"
+                    "$ref": "#/$defs/when~1any~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1string;targetrevision-defines-the-revision"
                   }
                 },
                 "required": [
@@ -3578,35 +3265,35 @@
         }
       }
     },
-    "when/:t/then/source.chart+source.directory.exclude+source.directory.include+66more/fragment": {
+    "when/any/then/source.chart+source.directory.exclude+source.directory.include+66more/string;chart-is-a-helm": {
       "description": "Chart is a Helm chart name, and must be specified for applications sourced from a Helm repo.",
       "type": "string"
     },
-    "when/:t/then/source.chart+source.directory.exclude+source.directory.include+66more/fragment@2": {
+    "when/any/then/source.chart+source.directory.exclude+source.directory.include+66more/string;name-is-used-to": {
       "description": "Name is used to refer to a source and is displayed in the UI. It is used in multi-source Applications.",
       "type": "string"
     },
-    "when/:t/then/source.chart+source.directory.exclude+source.directory.include+66more/fragment@3": {
+    "when/any/then/source.chart+source.directory.exclude+source.directory.include+66more/string;path-is-a-directory": {
       "description": "Path is a directory path within the Git repository, and is only valid for applications sourced from Git.",
       "type": "string"
     },
-    "when/:t/then/source.chart+source.directory.exclude+source.directory.include+66more/fragment@4": {
+    "when/any/then/source.chart+source.directory.exclude+source.directory.include+66more/string;ref-is-reference-to": {
       "description": "Ref is reference to another source within sources field. This field will not be used if used with a `source` tag.",
       "type": "string"
     },
-    "when/:t/then/source.chart+source.directory.exclude+source.directory.include+66more/fragment@5": {
+    "when/any/then/source.chart+source.directory.exclude+source.directory.include+66more/string;repourl-is-the-url": {
       "description": "RepoURL is the URL to the repository (Git or Helm) that contains the application manifests",
       "type": "string"
     },
-    "when/:t/then/source.chart+source.directory.exclude+source.directory.include+66more/fragment@6": {
+    "when/any/then/source.chart+source.directory.exclude+source.directory.include+66more/string;tagprefix-filters-git-tags": {
       "description": "TagPrefix filters git tags to only those with this prefix before evaluating targetRevision as a semver constraint.\nThe prefix is stripped from tag names before comparison and re-added to the resolved version.\nFor example, with tagPrefix \"component-b/\" and targetRevision \"1.0.*\", tags like \"component-b/1.0.0\" and\n\"component-b/1.0.1\" are candidates, and the constraint resolves to \"component-b/1.0.1\".",
       "type": "string"
     },
-    "when/:t/then/source.chart+source.directory.exclude+source.directory.include+66more/fragment@7": {
+    "when/any/then/source.chart+source.directory.exclude+source.directory.include+66more/string;targetrevision-defines-the-revision": {
       "description": "TargetRevision defines the revision of the source to sync the application to.\nIn case of Git, this can be commit, tag, or branch. If omitted, will equal to HEAD.\nIn case of Helm, this is a semver tag for the Chart's version.",
       "type": "string"
     },
-    "when/:t/then/sourceHydrator.drySource.directory.exclude+68more": {
+    "when/any/then/sourceHydrator.drySource.directory.exclude+68more": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -3616,7 +3303,7 @@
           "sourceHydrator": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "additionalProperties": false,
@@ -3631,16 +3318,16 @@
                         "description": "Directory specifies path/directory specific options",
                         "properties": {
                           "exclude": {
-                            "$ref": "#/$defs/constrains~1exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more~1fragment"
+                            "$ref": "#/$defs/constrains~1exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more~1string;exclude-contains-a-glob"
                           },
                           "include": {
-                            "$ref": "#/$defs/constrains~1exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more~1fragment@2"
+                            "$ref": "#/$defs/constrains~1exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more~1string;include-contains-a-glob"
                           },
                           "jsonnet": {
                             "$ref": "#/$defs/constrains~1extVars@items.code+extVars@items.name+extVars@items.value+libs+tlas"
                           },
                           "recurse": {
-                            "$ref": "#/$defs/constrains~1exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more~1fragment@3"
+                            "$ref": "#/$defs/constrains~1exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more~1boolean;recurse-specifies-whether-to"
                           }
                         },
                         "type": "object"
@@ -3650,49 +3337,49 @@
                         "description": "Helm specifies helm specific options",
                         "properties": {
                           "apiVersions": {
-                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@4"
+                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1array;apiversions-specifies-the-kubernetes"
                           },
                           "fileParameters": {
                             "$ref": "#/$defs/constrains~1@items.name+@items.path"
                           },
                           "ignoreMissingValueFiles": {
-                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment"
+                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1boolean;ignoremissingvaluefiles-prevents-helm-template"
                           },
                           "kubeVersion": {
-                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@11"
+                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1string;kubeversion-specifies-the-kubernetes"
                           },
                           "namespace": {
-                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@2"
+                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1string;namespace-is-an-optional"
                           },
                           "parameters": {
                             "$ref": "#/$defs/constrains~1@items.forceString+@items.name+@items.value"
                           },
                           "passCredentials": {
-                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@3"
+                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1boolean;passcredentials-pass-credentials-to"
                           },
                           "releaseName": {
-                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@4"
+                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1string;releasename-is-the-helm"
                           },
                           "skipCrds": {
-                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@5"
+                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1boolean;skipcrds-skips-custom-resource"
                           },
                           "skipSchemaValidation": {
-                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@6"
+                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1boolean;skipschemavalidation-skips-json-schema"
                           },
                           "skipTests": {
-                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@7"
+                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1boolean;skiptests-skips-test-manifest"
                           },
                           "valueFiles": {
-                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@9"
+                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1array;valuesfiles-is-a-list"
                           },
                           "values": {
-                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@8"
+                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1string;values-specifies-helm-values"
                           },
                           "valuesObject": {
-                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@10"
+                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1object;valuesobject-specifies-helm-values"
                           },
                           "version": {
-                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1fragment@11"
+                            "$ref": "#/$defs/constrains~1apiVersions+fileParameters@items.name+fileParameters@items.path+15more~1string;version-is-the-helm"
                           }
                         },
                         "type": "object"
@@ -3702,49 +3389,49 @@
                         "description": "Kustomize specifies kustomize specific options",
                         "properties": {
                           "apiVersions": {
-                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@4"
+                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1array;apiversions-specifies-the-kubernetes"
                           },
                           "commonAnnotations": {
-                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment"
+                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object;commonannotations-is-a-list"
                           },
                           "commonAnnotationsEnvsubst": {
-                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@5"
+                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1boolean;commonannotationsenvsubst-specifies-whether-to"
                           },
                           "commonLabels": {
-                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@2"
+                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object;commonlabels-is-a-list"
                           },
                           "components": {
-                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@6"
+                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1array;components-specifies-a-list"
                           },
                           "forceCommonAnnotations": {
-                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@7"
+                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1boolean;forcecommonannotations-specifies-whether-to"
                           },
                           "forceCommonLabels": {
-                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@8"
+                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1boolean;forcecommonlabels-specifies-whether-to"
                           },
                           "ignoreMissingComponents": {
-                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@9"
+                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1boolean;ignoremissingcomponents-prevents-kustomize-from"
                           },
                           "images": {
-                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@10"
+                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1array;images-is-a-list"
                           },
                           "kubeVersion": {
-                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@11"
+                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1string;kubeversion-specifies-the-kubernetes"
                           },
                           "labelIncludeTemplates": {
-                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@12"
+                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1boolean;labelincludetemplates-specifies-whether-to"
                           },
                           "labelWithoutSelector": {
-                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@13"
+                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1boolean;labelwithoutselector-specifies-whether-to"
                           },
                           "namePrefix": {
-                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@14"
+                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1string;nameprefix-overrides-the-nameprefix"
                           },
                           "nameSuffix": {
-                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@15"
+                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1string;namesuffix-overrides-the-namesuffix"
                           },
                           "namespace": {
-                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@16"
+                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1string;namespace-sets-the-namespace"
                           },
                           "patches": {
                             "$ref": "#/$defs/constrains~1@items.options+@items.patch+@items.path+@items.target.annotationSelector+6more"
@@ -3753,7 +3440,7 @@
                             "$ref": "#/$defs/constrains~1@items.count+@items.name"
                           },
                           "version": {
-                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@17"
+                            "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1string;version-controls-which-version"
                           }
                         },
                         "type": "object"
@@ -3845,7 +3532,7 @@
         }
       }
     },
-    "when/:t/then/sourceNamespaces:t": {
+    "when/any/then/sourceNamespaces:t": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -3855,7 +3542,7 @@
           "sourceNamespaces": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "description": "SourceNamespaces defines the namespaces application resources are allowed to be created in",
@@ -3869,7 +3556,7 @@
         }
       }
     },
-    "when/:t/then/sourceRepos:t": {
+    "when/any/then/sourceRepos:t": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -3879,7 +3566,7 @@
           "sourceRepos": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "description": "SourceRepos contains list of repository URLs which can be used for deployment",
@@ -3893,7 +3580,7 @@
         }
       }
     },
-    "when/:t/then/sources:t+sources@items.chart+sources@items.directory.exclude+66more": {
+    "when/any/then/sources:t+sources@items.chart+sources@items.directory.exclude+66more": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -3903,7 +3590,7 @@
           "sources": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "description": "Sources is a reference to the location of the application's manifests or chart",
@@ -3912,7 +3599,7 @@
                   "description": "ApplicationSource contains all required information about the source of an application",
                   "properties": {
                     "chart": {
-                      "$ref": "#/$defs/when~1:t~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1fragment"
+                      "$ref": "#/$defs/when~1any~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1string;chart-is-a-helm"
                     },
                     "directory": {
                       "$ref": "#/$defs/constrains~1exclude+include+jsonnet.extVars@items.code+jsonnet.extVars@items.name+4more"
@@ -3924,25 +3611,25 @@
                       "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more"
                     },
                     "name": {
-                      "$ref": "#/$defs/when~1:t~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1fragment@2"
+                      "$ref": "#/$defs/when~1any~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1string;name-is-used-to"
                     },
                     "path": {
-                      "$ref": "#/$defs/when~1:t~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1fragment@3"
+                      "$ref": "#/$defs/when~1any~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1string;path-is-a-directory"
                     },
                     "plugin": {
                       "$ref": "#/$defs/constrains~1env@items.name+env@items.value+name+parameters@items.array+parameters@items.map+2more"
                     },
                     "ref": {
-                      "$ref": "#/$defs/when~1:t~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1fragment@4"
+                      "$ref": "#/$defs/when~1any~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1string;ref-is-reference-to"
                     },
                     "repoURL": {
-                      "$ref": "#/$defs/when~1:t~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1fragment@5"
+                      "$ref": "#/$defs/when~1any~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1string;repourl-is-the-url"
                     },
                     "tagPrefix": {
-                      "$ref": "#/$defs/when~1:t~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1fragment@6"
+                      "$ref": "#/$defs/when~1any~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1string;tagprefix-filters-git-tags"
                     },
                     "targetRevision": {
-                      "$ref": "#/$defs/when~1:t~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1fragment@7"
+                      "$ref": "#/$defs/when~1any~1then~1source.chart+source.directory.exclude+source.directory.include+66more~1string;targetrevision-defines-the-revision"
                     }
                   },
                   "required": [
@@ -3957,7 +3644,7 @@
         }
       }
     },
-    "when/:t/then/strategy.deletionOrder+6more": {
+    "when/any/then/strategy.deletionOrder+6more": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -3967,7 +3654,7 @@
           "strategy": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "additionalProperties": false,
@@ -3993,7 +3680,7 @@
                                     "type": "string"
                                   },
                                   "values": {
-                                    "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1fragment"
+                                    "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more~1array"
                                   }
                                 },
                                 "type": "object"
@@ -4001,7 +3688,7 @@
                               "type": "array"
                             },
                             "maxUpdate": {
-                              "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1fragment@3"
+                              "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1anyOf~1integer+string"
                             }
                           },
                           "type": "object"
@@ -4022,7 +3709,7 @@
         }
       }
     },
-    "when/:t/then/syncPolicy.applicationsSync=create-only,create-update,create-delete,+1more+2more": {
+    "when/any/then/syncPolicy.applicationsSync=create-only,create-update,create-delete,+1more+2more": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -4032,7 +3719,7 @@
           "syncPolicy": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "additionalProperties": false,
@@ -4057,7 +3744,7 @@
         }
       }
     },
-    "when/:t/then/syncPolicy.automated.allowEmpty+syncPolicy.automated.enabled+11more": {
+    "when/any/then/syncPolicy.automated.allowEmpty+syncPolicy.automated.enabled+11more": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -4067,7 +3754,7 @@
           "syncPolicy": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "additionalProperties": false,
@@ -4101,10 +3788,10 @@
                     "description": "ManagedNamespaceMetadata controls metadata in the given namespace (if CreateNamespace=true)",
                     "properties": {
                       "annotations": {
-                        "$ref": "#/$defs/constrains~1:t~1fragment"
+                        "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object"
                       },
                       "labels": {
-                        "$ref": "#/$defs/constrains~1:t~1fragment"
+                        "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object"
                       }
                     },
                     "type": "object"
@@ -4160,7 +3847,7 @@
         }
       }
     },
-    "when/:t/then/syncWindows:t+syncWindows@items.andOperator+syncWindows@items.applications+9more": {
+    "when/any/then/syncWindows:t+syncWindows@items.andOperator+syncWindows@items.applications+9more": {
       "if": {
         "$ref": "#/$defs/t"
       },
@@ -4170,7 +3857,7 @@
           "syncWindows": {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1:t@2"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
               },
               {
                 "description": "SyncWindows controls when syncs can be run for apps in this project",
@@ -4240,6 +3927,319 @@
           }
         }
       }
+    },
+    "when/goTemplate+goTemplate=null/then/goTemplate": {
+      "if": {
+        "allOf": [
+          {
+            "not": {
+              "anyOf": [
+                {
+                  "properties": {
+                    "goTemplate": {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  },
+                  "required": [
+                    "goTemplate"
+                  ],
+                  "type": "object"
+                },
+                {
+                  "not": {
+                    "properties": {
+                      "goTemplate": {}
+                    },
+                    "required": [
+                      "goTemplate"
+                    ],
+                    "type": "object"
+                  }
+                }
+              ]
+            }
+          },
+          {
+            "$ref": "#/$defs/t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "goTemplate": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/when~1any~1then~1permitOnlyProjectScopedClusters:t~1string;pattern-true-true-true-fal"
+              },
+              {
+                "type": "boolean"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "when/template.metadata:t+template:t/then/template.metadata.annotations:t": {
+      "if": {
+        "$ref": "#/$defs/constrains~1template.metadata:t+template:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "template": {
+            "additionalProperties": {},
+            "properties": {
+              "metadata": {
+                "additionalProperties": {},
+                "properties": {
+                  "annotations": {
+                    "$ref": "#/$defs/when~1any~1then~1additionalAnnotations:t~1anyOf~1array+not~1:t+null+object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "when/template.metadata:t+template:t/then/template.metadata.labels:t": {
+      "if": {
+        "$ref": "#/$defs/constrains~1template.metadata:t+template:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "template": {
+            "additionalProperties": {},
+            "properties": {
+              "metadata": {
+                "additionalProperties": {},
+                "properties": {
+                  "labels": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1apiVersions+commonAnnotations+commonAnnotationsEnvsubst+commonLabels+components+23more~1object"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "when/template.spec:t+template:t/then/template.spec.destination.name+template.spec.destination.namespace+1more": {
+      "if": {
+        "$ref": "#/$defs/constrains~1template.spec:t+template:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "template": {
+            "additionalProperties": {},
+            "properties": {
+              "spec": {
+                "additionalProperties": {},
+                "properties": {
+                  "destination": {
+                    "$ref": "#/$defs/constrains~1name+namespace+server"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "when/template.spec:t+template:t/then/template.spec.ignoreDifferences:t+template.spec.ignoreDifferences@items.group+6more": {
+      "if": {
+        "$ref": "#/$defs/constrains~1template.spec:t+template:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "template": {
+            "additionalProperties": {},
+            "properties": {
+              "spec": {
+                "additionalProperties": {},
+                "properties": {
+                  "ignoreDifferences": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.group+@items.jqPathExpressions+@items.jsonPointers+@items.kind+3more"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "when/template.spec:t+template:t/then/template.spec.info:t+template.spec.info@items.name+1more": {
+      "if": {
+        "$ref": "#/$defs/constrains~1template.spec:t+template:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "template": {
+            "additionalProperties": {},
+            "properties": {
+              "spec": {
+                "additionalProperties": {},
+                "properties": {
+                  "info": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1@items.name+@items.value@2"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "when/template.spec:t+template:t/then/template.spec.source.chart+template.spec.source.directory.exclude+67more": {
+      "if": {
+        "$ref": "#/$defs/constrains~1template.spec:t+template:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "template": {
+            "additionalProperties": {},
+            "properties": {
+              "spec": {
+                "additionalProperties": {},
+                "properties": {
+                  "source": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1chart+directory.exclude+directory.include+directory.jsonnet.extVars@items.code+64more"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "when/template.spec:t+template:t/then/template.spec.sourceHydrator.drySource.directory.exclude+68more": {
+      "if": {
+        "$ref": "#/$defs/constrains~1template.spec:t+template:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "template": {
+            "additionalProperties": {},
+            "properties": {
+              "spec": {
+                "additionalProperties": {},
+                "properties": {
+                  "sourceHydrator": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1drySource.directory.exclude+drySource.directory.include+66more"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "when/template.spec:t+template:t/then/template.spec.sources:t+template.spec.sources@items.chart+67more": {
+      "if": {
+        "$ref": "#/$defs/constrains~1template.spec:t+template:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "template": {
+            "additionalProperties": {},
+            "properties": {
+              "spec": {
+                "additionalProperties": {},
+                "properties": {
+                  "sources": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
+                      },
+                      {
+                        "items": {
+                          "$ref": "#/$defs/constrains~1chart+directory.exclude+directory.include+directory.jsonnet.extVars@items.code+64more"
+                        },
+                        "type": "array"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "when/template.spec:t+template:t/then/template.spec.syncPolicy.automated.allowEmpty+12more": {
+      "if": {
+        "$ref": "#/$defs/constrains~1template.spec:t+template:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "template": {
+            "additionalProperties": {},
+            "properties": {
+              "spec": {
+                "additionalProperties": {},
+                "properties": {
+                  "syncPolicy": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more~1not~1:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1automated.allowEmpty+automated.enabled+automated.prune+automated.selfHeal+8more"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -4265,7 +4265,7 @@
           "anyOf": [
             {
               "items": {
-                "$ref": "#/$defs/constrains~1:t+additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more"
               },
               "type": "array"
             },
@@ -4274,7 +4274,7 @@
             },
             {
               "additionalProperties": {
-                "$ref": "#/$defs/constrains~1:t+additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more"
               },
               "type": "object"
             },
@@ -4338,13 +4338,13 @@
             },
             {
               "additionalProperties": {
-                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more@2"
               },
               "type": "object"
             },
             {
               "items": {
-                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more"
+                "$ref": "#/$defs/constrains~1additionalAnnotations+additionalLabels+finalizers+generators+goTemplate+20more@2"
               },
               "type": "array"
             },
@@ -4391,10 +4391,10 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1revisionHistoryLimit:t"
+            "$ref": "#/$defs/when~1any~1then~1revisionHistoryLimit:t"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1revisionHistoryLimit:t"
+            "$ref": "#/$defs/when~1any~1then~1revisionHistoryLimit:t"
           }
         },
         {
@@ -4405,58 +4405,58 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1ignoreDifferences:t+ignoreDifferences@items.group+6more"
+            "$ref": "#/$defs/when~1any~1then~1ignoreDifferences:t+ignoreDifferences@items.group+6more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1ignoreDifferences:t+ignoreDifferences@items.group+6more"
+            "$ref": "#/$defs/when~1any~1then~1ignoreDifferences:t+ignoreDifferences@items.group+6more"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1source.chart+source.directory.exclude+source.directory.include+66more"
+            "$ref": "#/$defs/when~1any~1then~1source.chart+source.directory.exclude+source.directory.include+66more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1source.chart+source.directory.exclude+source.directory.include+66more"
+            "$ref": "#/$defs/when~1any~1then~1source.chart+source.directory.exclude+source.directory.include+66more"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1syncPolicy.automated.allowEmpty+syncPolicy.automated.enabled+11more"
+            "$ref": "#/$defs/when~1any~1then~1syncPolicy.automated.allowEmpty+syncPolicy.automated.enabled+11more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1syncPolicy.automated.allowEmpty+syncPolicy.automated.enabled+11more"
+            "$ref": "#/$defs/when~1any~1then~1syncPolicy.automated.allowEmpty+syncPolicy.automated.enabled+11more"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1sourceHydrator.drySource.directory.exclude+68more"
+            "$ref": "#/$defs/when~1any~1then~1sourceHydrator.drySource.directory.exclude+68more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1sourceHydrator.drySource.directory.exclude+68more"
+            "$ref": "#/$defs/when~1any~1then~1sourceHydrator.drySource.directory.exclude+68more"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1sources:t+sources@items.chart+sources@items.directory.exclude+66more"
+            "$ref": "#/$defs/when~1any~1then~1sources:t+sources@items.chart+sources@items.directory.exclude+66more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1sources:t+sources@items.chart+sources@items.directory.exclude+66more"
+            "$ref": "#/$defs/when~1any~1then~1sources:t+sources@items.chart+sources@items.directory.exclude+66more"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1info:t+info@items.name+info@items.value"
+            "$ref": "#/$defs/when~1any~1then~1info:t+info@items.name+info@items.value"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1info:t+info@items.name+info@items.value"
+            "$ref": "#/$defs/when~1any~1then~1info:t+info@items.name+info@items.value"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1destination.name+destination.namespace+destination.server"
+            "$ref": "#/$defs/when~1any~1then~1destination.name+destination.namespace+destination.server"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1destination.name+destination.namespace+destination.server"
+            "$ref": "#/$defs/when~1any~1then~1destination.name+destination.namespace+destination.server"
           }
         }
       ],
@@ -4486,10 +4486,10 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1syncPolicy.applicationsSync=create-only,create-update,create-delete,+1more+2more"
+            "$ref": "#/$defs/when~1any~1then~1syncPolicy.applicationsSync=create-only,create-update,create-delete,+1more+2more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1syncPolicy.applicationsSync=create-only,create-update,create-delete,+1more+2more"
+            "$ref": "#/$defs/when~1any~1then~1syncPolicy.applicationsSync=create-only,create-update,create-delete,+1more+2more"
           }
         },
         {
@@ -4497,10 +4497,10 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t+template.spec:t+template:t~1then~1template.spec.info:t+template.spec.info@items.name+1more"
+            "$ref": "#/$defs/when~1template.spec:t+template:t~1then~1template.spec.info:t+template.spec.info@items.name+1more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t+template.spec:t+template:t~1then~1template.spec.info:t+template.spec.info@items.name+1more"
+            "$ref": "#/$defs/when~1template.spec:t+template:t~1then~1template.spec.info:t+template.spec.info@items.name+1more"
           }
         },
         {
@@ -4508,114 +4508,114 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1ignoreApplicationDifferences:t+3more"
+            "$ref": "#/$defs/when~1any~1then~1ignoreApplicationDifferences:t+3more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1ignoreApplicationDifferences:t+3more"
+            "$ref": "#/$defs/when~1any~1then~1ignoreApplicationDifferences:t+3more"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t+template.spec:t+template:t~1then~1template.spec.sourceHydrator.drySource.directory.exclude+68more"
+            "$ref": "#/$defs/when~1template.spec:t+template:t~1then~1template.spec.sourceHydrator.drySource.directory.exclude+68more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t+template.spec:t+template:t~1then~1template.spec.sourceHydrator.drySource.directory.exclude+68more"
+            "$ref": "#/$defs/when~1template.spec:t+template:t~1then~1template.spec.sourceHydrator.drySource.directory.exclude+68more"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1strategy.deletionOrder+6more"
+            "$ref": "#/$defs/when~1any~1then~1strategy.deletionOrder+6more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1strategy.deletionOrder+6more"
+            "$ref": "#/$defs/when~1any~1then~1strategy.deletionOrder+6more"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t+template.metadata:t+template:t~1then~1template.metadata.labels:t"
+            "$ref": "#/$defs/when~1template.metadata:t+template:t~1then~1template.metadata.labels:t"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t+template.metadata:t+template:t~1then~1template.metadata.labels:t"
+            "$ref": "#/$defs/when~1template.metadata:t+template:t~1then~1template.metadata.labels:t"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t+goTemplate+goTemplate=null~1then~1goTemplate"
+            "$ref": "#/$defs/when~1goTemplate+goTemplate=null~1then~1goTemplate"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t+goTemplate+goTemplate=null~1then~1goTemplate"
+            "$ref": "#/$defs/when~1goTemplate+goTemplate=null~1then~1goTemplate"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t+template.spec:t+template:t~1then~1template.spec.destination.name+template.spec.destination.namespace+1more"
+            "$ref": "#/$defs/when~1template.spec:t+template:t~1then~1template.spec.destination.name+template.spec.destination.namespace+1more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t+template.spec:t+template:t~1then~1template.spec.destination.name+template.spec.destination.namespace+1more"
+            "$ref": "#/$defs/when~1template.spec:t+template:t~1then~1template.spec.destination.name+template.spec.destination.namespace+1more"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1goTemplateOptions:t"
+            "$ref": "#/$defs/when~1any~1then~1goTemplateOptions:t"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1goTemplateOptions:t"
+            "$ref": "#/$defs/when~1any~1then~1goTemplateOptions:t"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t+template.spec:t+template:t~1then~1template.spec.ignoreDifferences:t+template.spec.ignoreDifferences@items.group+6more"
+            "$ref": "#/$defs/when~1template.spec:t+template:t~1then~1template.spec.ignoreDifferences:t+template.spec.ignoreDifferences@items.group+6more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t+template.spec:t+template:t~1then~1template.spec.ignoreDifferences:t+template.spec.ignoreDifferences@items.group+6more"
+            "$ref": "#/$defs/when~1template.spec:t+template:t~1then~1template.spec.ignoreDifferences:t+template.spec.ignoreDifferences@items.group+6more"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t+template.spec:t+template:t~1then~1template.spec.syncPolicy.automated.allowEmpty+12more"
+            "$ref": "#/$defs/when~1template.spec:t+template:t~1then~1template.spec.syncPolicy.automated.allowEmpty+12more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t+template.spec:t+template:t~1then~1template.spec.syncPolicy.automated.allowEmpty+12more"
+            "$ref": "#/$defs/when~1template.spec:t+template:t~1then~1template.spec.syncPolicy.automated.allowEmpty+12more"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t+template.spec:t+template:t~1then~1template.spec.sources:t+template.spec.sources@items.chart+67more"
+            "$ref": "#/$defs/when~1template.spec:t+template:t~1then~1template.spec.sources:t+template.spec.sources@items.chart+67more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t+template.spec:t+template:t~1then~1template.spec.sources:t+template.spec.sources@items.chart+67more"
+            "$ref": "#/$defs/when~1template.spec:t+template:t~1then~1template.spec.sources:t+template.spec.sources@items.chart+67more"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t+template.metadata:t+template:t~1then~1template.metadata.annotations:t"
+            "$ref": "#/$defs/when~1template.metadata:t+template:t~1then~1template.metadata.annotations:t"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t+template.metadata:t+template:t~1then~1template.metadata.annotations:t"
+            "$ref": "#/$defs/when~1template.metadata:t+template:t~1then~1template.metadata.annotations:t"
           }
         },
         {
           "additionalProperties": {
             "allOf": [
               {
-                "$ref": "#/$defs/when~1:t~1then~1generators:t+generators@items.clusterDecisionResource.configMapRef+252more"
+                "$ref": "#/$defs/when~1any~1then~1generators:t+generators@items.clusterDecisionResource.configMapRef+252more"
               }
             ]
           },
           "items": {
             "allOf": [
               {
-                "$ref": "#/$defs/when~1:t~1then~1generators:t+generators@items.clusterDecisionResource.configMapRef+252more"
+                "$ref": "#/$defs/when~1any~1then~1generators:t+generators@items.clusterDecisionResource.configMapRef+252more"
               }
             ]
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t+template.spec:t+template:t~1then~1template.spec.source.chart+template.spec.source.directory.exclude+67more"
+            "$ref": "#/$defs/when~1template.spec:t+template:t~1then~1template.spec.source.chart+template.spec.source.directory.exclude+67more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t+template.spec:t+template:t~1then~1template.spec.source.chart+template.spec.source.directory.exclude+67more"
+            "$ref": "#/$defs/when~1template.spec:t+template:t~1then~1template.spec.source.chart+template.spec.source.directory.exclude+67more"
           }
         }
       ],
@@ -4645,10 +4645,10 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1namespace:t@2"
+            "$ref": "#/$defs/when~1any~1then~1namespace:t@2"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1namespace:t@2"
+            "$ref": "#/$defs/when~1any~1then~1namespace:t@2"
           }
         },
         {
@@ -4714,34 +4714,34 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1description:t"
+            "$ref": "#/$defs/when~1any~1then~1description:t"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1description:t"
+            "$ref": "#/$defs/when~1any~1then~1description:t"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1signatureKeys:t+signatureKeys@items.keyID"
+            "$ref": "#/$defs/when~1any~1then~1signatureKeys:t+signatureKeys@items.keyID"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1signatureKeys:t+signatureKeys@items.keyID"
+            "$ref": "#/$defs/when~1any~1then~1signatureKeys:t+signatureKeys@items.keyID"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1syncWindows:t+syncWindows@items.andOperator+syncWindows@items.applications+9more"
+            "$ref": "#/$defs/when~1any~1then~1syncWindows:t+syncWindows@items.andOperator+syncWindows@items.applications+9more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1syncWindows:t+syncWindows@items.andOperator+syncWindows@items.applications+9more"
+            "$ref": "#/$defs/when~1any~1then~1syncWindows:t+syncWindows@items.andOperator+syncWindows@items.applications+9more"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1roles:t+roles@items.description+roles@items.groups+5more"
+            "$ref": "#/$defs/when~1any~1then~1roles:t+roles@items.description+roles@items.groups+5more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1roles:t+roles@items.description+roles@items.groups+5more"
+            "$ref": "#/$defs/when~1any~1then~1roles:t+roles@items.description+roles@items.groups+5more"
           }
         },
         {
@@ -4749,10 +4749,10 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1sourceRepos:t"
+            "$ref": "#/$defs/when~1any~1then~1sourceRepos:t"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1sourceRepos:t"
+            "$ref": "#/$defs/when~1any~1then~1sourceRepos:t"
           }
         },
         {
@@ -4760,66 +4760,66 @@
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1clusterResourceBlacklist:t+clusterResourceBlacklist@items.group+2more"
+            "$ref": "#/$defs/when~1any~1then~1clusterResourceBlacklist:t+clusterResourceBlacklist@items.group+2more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1clusterResourceBlacklist:t+clusterResourceBlacklist@items.group+2more"
+            "$ref": "#/$defs/when~1any~1then~1clusterResourceBlacklist:t+clusterResourceBlacklist@items.group+2more"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1namespaceResourceBlacklist:t+namespaceResourceBlacklist@items.group+1more"
+            "$ref": "#/$defs/when~1any~1then~1namespaceResourceBlacklist:t+namespaceResourceBlacklist@items.group+1more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1namespaceResourceBlacklist:t+namespaceResourceBlacklist@items.group+1more"
+            "$ref": "#/$defs/when~1any~1then~1namespaceResourceBlacklist:t+namespaceResourceBlacklist@items.group+1more"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1namespaceResourceWhitelist:t+namespaceResourceWhitelist@items.group+1more"
+            "$ref": "#/$defs/when~1any~1then~1namespaceResourceWhitelist:t+namespaceResourceWhitelist@items.group+1more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1namespaceResourceWhitelist:t+namespaceResourceWhitelist@items.group+1more"
+            "$ref": "#/$defs/when~1any~1then~1namespaceResourceWhitelist:t+namespaceResourceWhitelist@items.group+1more"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1sourceNamespaces:t"
+            "$ref": "#/$defs/when~1any~1then~1sourceNamespaces:t"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1sourceNamespaces:t"
+            "$ref": "#/$defs/when~1any~1then~1sourceNamespaces:t"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1orphanedResources.ignore@items.group+orphanedResources.ignore@items.kind+3more"
+            "$ref": "#/$defs/when~1any~1then~1orphanedResources.ignore@items.group+orphanedResources.ignore@items.kind+3more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1orphanedResources.ignore@items.group+orphanedResources.ignore@items.kind+3more"
+            "$ref": "#/$defs/when~1any~1then~1orphanedResources.ignore@items.group+orphanedResources.ignore@items.kind+3more"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1permitOnlyProjectScopedClusters:t"
+            "$ref": "#/$defs/when~1any~1then~1permitOnlyProjectScopedClusters:t"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1permitOnlyProjectScopedClusters:t"
+            "$ref": "#/$defs/when~1any~1then~1permitOnlyProjectScopedClusters:t"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1destinations:t+destinations@items.name+destinations@items.namespace+1more"
+            "$ref": "#/$defs/when~1any~1then~1destinations:t+destinations@items.name+destinations@items.namespace+1more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1destinations:t+destinations@items.name+destinations@items.namespace+1more"
+            "$ref": "#/$defs/when~1any~1then~1destinations:t+destinations@items.name+destinations@items.namespace+1more"
           }
         },
         {
           "additionalProperties": {
-            "$ref": "#/$defs/when~1:t~1then~1clusterResourceWhitelist:t+clusterResourceWhitelist@items.group+2more"
+            "$ref": "#/$defs/when~1any~1then~1clusterResourceWhitelist:t+clusterResourceWhitelist@items.group+2more"
           },
           "items": {
-            "$ref": "#/$defs/when~1:t~1then~1clusterResourceWhitelist:t+clusterResourceWhitelist@items.group+2more"
+            "$ref": "#/$defs/when~1any~1then~1clusterResourceWhitelist:t+clusterResourceWhitelist@items.group+2more"
           }
         }
       ],
