@@ -251,27 +251,28 @@ fn assert_chart_schema_fixture(chart_id: ChartId) -> eyre::Result<()> {
     };
     let schema = helm_schema_test_support::consume(spec.id)?;
 
-    let composed = test_util::helm_values::coalesce_chart_values(
-        &helm_schema_test_support::generate::chart_dir(chart),
-        Value::Object(serde_json::Map::new()),
-    );
     let unloadable = HELM_UNLOADABLE_CHARTS
         .iter()
         .find(|(unloadable, _)| *unloadable == chart)
         .map(|(_, reason)| *reason);
-    let values_json = match (unloadable, composed) {
-        (Some(reason), Err(test_util::helm_values::ValuesError::NotValidated(actual))) => {
-            assert!(
-                actual.contains(reason),
-                "{chart}: Helm refuses the chart for another reason than registered: {actual}"
-            );
-            None
-        }
-        (Some(_), Ok(_)) => {
+    let values_json = match values_validation::values_yaml_as_json_for_path(chart) {
+        Ok(_) if unloadable.is_some() => {
             eyre::bail!("{chart}: Helm loads this chart now; remove it from HELM_UNLOADABLE_CHARTS")
         }
-        (_, Err(error)) => return Err(error).wrap_err("coalesce chart defaults"),
-        (None, Ok(values_json)) => Some(values_json),
+        Ok(values_json) => Some(values_json),
+        Err(error) => match (
+            unloadable,
+            error.downcast_ref::<test_util::helm_values::ValuesError>(),
+        ) {
+            (Some(reason), Some(test_util::helm_values::ValuesError::NotValidated(actual))) => {
+                assert!(
+                    actual.contains(reason),
+                    "{chart}: Helm refuses the chart for another reason than registered: {actual}"
+                );
+                None
+            }
+            _ => return Err(error),
+        },
     };
     if let Some(values_json) = &values_json {
         assert_values_document(chart, values_json, &schema);
