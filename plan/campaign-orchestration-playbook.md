@@ -118,6 +118,8 @@ hand-off, then the ledger's last entries.
   them with `SendMessage` and a "checkpoint now" instruction; their context is intact.
 - **Shell heredocs.** Use quoted heredocs (`<<'EOF'`) for ledger text; an unquoted
   one expanded backticks and `$defs` and mangled an entry.
+- **`git add -A` in a runner-managed clone** swept 157 stale fixtures a dump had left behind
+  into a commit. Stage only the files you edited.
 - **Registry files.** `codex-runs.tsv` must stay exactly three tab-separated
   columns or the collector crashes.
 - **Scope drift.** When the user narrows the goal ("land what is ready, no new

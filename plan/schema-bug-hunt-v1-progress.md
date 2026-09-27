@@ -5051,4 +5051,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   over `referencing`/`url`/`percent-encoding`/`serde_json::pointer` (or the `jsonptr` crate if
   needed), test helpers switched, a `/`,`~`,`%` round-trip test through `jsonschema`.
 
+- 16:40 (Sep 27) — **Pointer handling on maintained crates; landing 3 restarted (run2).**
+  `defs-paths` 8678808d: one helper pair in `helm-schema-json-schema-walk` (`definition_reference`,
+  `parse_definition_reference`/`local_reference_fragment`) on `referencing`'s
+  `write_escaped_str`/`unescape_segment` and `fluent-uri` 0.4.1 (the version `referencing` uses,
+  added to the workspace); every `$ref` build/parse in naming, shorten, expand-defs, minifier,
+  reachability, flatten, source_bundle and gen switched; all hand-rolled `~0`/`~1` and
+  `percent_decode` deleted (`percent-encoding` dropped from two crates); test helpers use the
+  parser + `Value::pointer`; round-trip test for `values/a~b%c d`. Behaviour change: shortening
+  now rewrites a percent-encoded `#/%24defs/…` ref instead of abstaining. Gates: unit 1578,
+  integration 172/172, lint residual only. **Orchestrator error caught by the builder:** my
+  `git add -A` in bbef70d5 swept 157 stale fixtures (pre-leaf-naming names) that the run1 dump
+  had left in the clone; restored to a06dc075 (`git diff a06dc075 HEAD -- testdata` empty).
+  Lesson (added to the playbook): in a runner-managed clone stage only the files you edited.
+  Chain restarted from dump, E `round8-landing3-run2`.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
