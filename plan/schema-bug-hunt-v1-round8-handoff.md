@@ -1,5 +1,7 @@
 # schema-bug-hunt-v1 — round 8 hand-off (2026-09-26)
 
+> **Start here:** `plan/campaign-orchestration-playbook.md` explains how the campaign is run (roles, landing loop, standing decisions, mistakes to avoid, resume checklist). The builder protocol is `plan/schema-bug-hunt-protocol-v2.md`.
+
 Written at the end of the round-8 orchestration session. It is the resume point for the next
 session. Everything below is referenced by absolute path on this machine; nothing was pushed.
 
