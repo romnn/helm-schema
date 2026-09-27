@@ -54,9 +54,16 @@ pub(crate) struct ProbeCoverage {
     pub(crate) total_dropped: usize,
     /// Probes given as a composed document (`ProbeInstance::Coalesced`).
     pub(crate) composed_probes: usize,
-    /// Composed probes no values file reaches, with the reason; they are
-    /// excluded from screening and adjudication.
-    pub(crate) unreachable_probes: Vec<String>,
+    /// Composed probes no values file reaches; they are excluded from
+    /// screening and adjudication.
+    pub(crate) unreachable_probes: Vec<UnreachableProbe>,
+}
+
+/// A composed probe no values file reaches.
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
+pub(crate) struct UnreachableProbe {
+    pub(crate) probe: String,
+    pub(crate) reason: String,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]

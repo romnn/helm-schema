@@ -134,6 +134,12 @@ impl KnownUndecidedAcceptances {
     }
 }
 
+/// The baseline commit every roster row was adjudicated against. A row is
+/// a cell that baseline rejected and the candidate accepts, so the battery
+/// observes it only as a flip against this baseline; against any other
+/// baseline the rows cannot be observed at all.
+pub(crate) const ROSTER_BASELINE: &str = "f7be7ba52ba6401f527cf47ce62767343a0b1485";
+
 pub(crate) const KNOWN_FALSE_ACCEPTANCES: &[KnownFalseAcceptances] = &[
     KnownFalseAcceptances {
         chart: "dify",

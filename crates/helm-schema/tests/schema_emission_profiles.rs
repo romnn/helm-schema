@@ -30,12 +30,12 @@ use helm_adjudication::{KubernetesVerdict, OfflineKubernetesValidator, PinnedHel
 use helm_pool::{PoolLimits, PoolPeaks, run_ordered};
 use known_false_acceptances::{
     Baseline, Family, KNOWN_FALSE_ACCEPTANCES, KNOWN_UNDECIDED_ACCEPTANCES, KnownFalseAcceptances,
-    KnownUndecidedAcceptances, Probe, Rejection,
+    KnownUndecidedAcceptances, Probe, ROSTER_BASELINE, Rejection,
 };
 
 use harness::{
     ContractVerdict, ControlCategory, GuardSamplingStrategy, HelmChartDir, ProbeCoverage,
-    ProbeInstance, ProbeValuesFile, ProfileSchemas, SemanticControl, Transport,
+    ProbeInstance, ProbeValuesFile, ProfileSchemas, SemanticControl, Transport, UnreachableProbe,
     generate_profile_outputs, generate_profile_schemas, read_chart_schema_fixture,
     read_coalesced_defaults, rejects_for_a_new_reason, round_robin_base_probes, sparse_override,
     sparse_override_for_composed, structural_probe_battery, structural_probe_battery_with_coverage,
@@ -70,6 +70,9 @@ struct HelmAdjudicationCoverage {
     charts_adjudicated: std::collections::BTreeSet<String>,
     /// Accepted cells Helm or Kubernetes reject.
     false_acceptances: Vec<ObservedFalseAcceptance>,
+    /// `chart: probe` of every composed probe no values file reaches. A
+    /// roster row naming one cannot be observed and is kept, not "fixed".
+    unreachable_cases: Vec<String>,
 }
 
 /// A false acceptance the battery observed, to be matched by the roster.
@@ -145,6 +148,49 @@ impl HelmAdjudicationCoverage {
     }
 }
 
+/// The rows of `roster` on an adjudicated chart that this run did not
+/// observe failing alike. A row whose probe is unreachable cannot be
+/// observed and is kept.
+fn false_acceptance_rows_not_observed(
+    coverage: &HelmAdjudicationCoverage,
+    roster: &[KnownFalseAcceptances],
+) -> Vec<String> {
+    let mut fixed = Vec::new();
+    for group in roster {
+        if !coverage.charts_adjudicated.contains(group.chart) {
+            continue;
+        }
+        for probe in group.probes {
+            let observed = coverage.false_acceptances.iter().any(|observed| {
+                observed.rejection == group.rejection
+                    && observed.baseline == group.baseline
+                    && known_false_acceptances::names(group.chart, probe, &observed.case)
+            });
+            let unreachable = coverage
+                .unreachable_cases
+                .iter()
+                .any(|case| known_false_acceptances::names(group.chart, probe, case));
+            if unreachable {
+                eprintln!(
+                    "UNOBSERVABLE roster row (its probe is unreachable): {}: {} <- {}",
+                    group.chart, probe.path, probe.value
+                );
+            } else if !observed {
+                fixed.push(format!(
+                    "{}: {} <- {} ({:?}, {:?}, {:?})",
+                    group.chart,
+                    probe.path,
+                    probe.value,
+                    group.rejection,
+                    group.baseline,
+                    group.family
+                ));
+            }
+        }
+    }
+    fixed
+}
+
 /// Every problem with the adjudicated outcomes: unaccounted flips, and
 /// accepted cells Kubernetes cannot decide or Helm or Kubernetes reject that
 /// the rosters do not list, or that they list but that no longer fail alike
@@ -199,30 +245,7 @@ fn validate_helm_adjudication_coverage(
             "false acceptances missing from KNOWN_FALSE_ACCEPTANCES: {unlisted:?}"
         ));
     }
-    let mut fixed = Vec::new();
-    for group in roster {
-        if !coverage.charts_adjudicated.contains(group.chart) {
-            continue;
-        }
-        for probe in group.probes {
-            let observed = coverage.false_acceptances.iter().any(|observed| {
-                observed.rejection == group.rejection
-                    && observed.baseline == group.baseline
-                    && known_false_acceptances::names(group.chart, probe, &observed.case)
-            });
-            if !observed {
-                fixed.push(format!(
-                    "{}: {} <- {} ({:?}, {:?}, {:?})",
-                    group.chart,
-                    probe.path,
-                    probe.value,
-                    group.rejection,
-                    group.baseline,
-                    group.family
-                ));
-            }
-        }
-    }
+    let mut fixed = false_acceptance_rows_not_observed(coverage, roster);
     for group in undecided_roster {
         if !coverage.charts_adjudicated.contains(group.chart) {
             continue;
@@ -444,7 +467,10 @@ fn probe_coverage_validation_holds_the_reachable_floor() {
         total_emitted: 1 + composed,
         composed_probes: composed,
         unreachable_probes: (0..unreachable)
-            .map(|index| format!("probe {index}"))
+            .map(|index| UnreachableProbe {
+                probe: format!("probe {index}"),
+                reason: "synthetic".to_string(),
+            })
             .collect(),
         ..ProbeCoverage::default()
     };
@@ -622,6 +648,23 @@ fn informed_group(probes: &'static [Probe]) -> KnownFalseAcceptances {
         Baseline::RejectsUnlikeItsDefaults,
         probes,
     )
+}
+
+/// A roster row whose probe no values file reaches cannot be observed, so
+/// it is kept rather than reported as fixed.
+#[test]
+fn an_unreachable_roster_row_is_not_reported_fixed() -> eyre::Result<()> {
+    let mut coverage = HelmAdjudicationCoverage::default();
+    coverage.charts_adjudicated.insert("chart".to_string());
+    let roster = [uninformed_group(ROSTER_LISTED)];
+    assert!(validate_helm_adjudication_coverage(&coverage, &roster, &[]).is_err());
+    for probe in ROSTER_LISTED {
+        coverage.unreachable_cases.push(format!(
+            "chart: root guard 0 satisfied [targeted: {} <- {}]",
+            probe.path, probe.value
+        ));
+    }
+    validate_helm_adjudication_coverage(&coverage, &roster, &[])
 }
 
 /// The roster matches each false acceptance by chart, probe, rejection and
@@ -1735,6 +1778,26 @@ fn round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed() -> eyre:
     Ok(())
 }
 
+/// Why a live battery against `baseline` cannot check the rosters: their
+/// rows are flips against [`ROSTER_BASELINE`] and unobservable otherwise.
+fn roster_baseline_problem(baseline: &str) -> Option<String> {
+    (baseline != ROSTER_BASELINE).then(|| {
+        format!(
+            "the false-acceptance rosters are adjudicated against {ROSTER_BASELINE}; a live \
+             battery against {baseline} observes none of their rows. Run it with \
+             SCHEMA_ACCEPTANCE_BASELINE_REF={ROSTER_BASELINE}"
+        )
+    })
+}
+
+/// A same-code baseline screens no flips, so every roster row would look
+/// fixed; the battery refuses that baseline up front instead.
+#[test]
+fn a_live_battery_needs_the_roster_baseline() {
+    assert!(roster_baseline_problem(ROSTER_BASELINE).is_none());
+    assert!(roster_baseline_problem("c02c01f8975fe799a0670720df87db3fed94eb7f").is_some());
+}
+
 #[test]
 #[ignore = "maintenance: compares the Round 74 dump and records probe coverage"]
 fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::Result<()> {
@@ -1742,6 +1805,20 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
     if std::env::var("ADJUDICATE_WITH_HELM").is_ok() {
         // The shared runner checks the pinned Helm release once per process.
         helm_invocation::HelmRunner::shared()?;
+        let baseline_ref = std::env::var("SCHEMA_ACCEPTANCE_BASELINE_REF")
+            .wrap_err("SCHEMA_ACCEPTANCE_BASELINE_REF must name the comparison commit")?;
+        let resolved = std::process::Command::new("git")
+            .args([
+                "rev-parse",
+                "--verify",
+                &format!("{baseline_ref}^{{commit}}"),
+            ])
+            .output()
+            .wrap_err_with(|| format!("resolve {baseline_ref}"))?;
+        eyre::ensure!(resolved.status.success(), "cannot resolve {baseline_ref}");
+        if let Some(problem) = roster_baseline_problem(String::from_utf8(resolved.stdout)?.trim()) {
+            eyre::bail!(problem);
+        }
     }
     let AcceptanceComparison {
         charts_checked,
@@ -2194,6 +2271,12 @@ fn fold_results(
                     .helm_adjudication_failures
                     .extend(screened.failures);
                 comparison.helm_adjudication.screened_flips += screened.screened_flips;
+                for unreachable in &screened.coverage.unreachable_probes {
+                    comparison
+                        .helm_adjudication
+                        .unreachable_cases
+                        .push(format!("{}: {}", screened.label, unreachable.probe));
+                }
                 comparison.coverage.push(screened.coverage);
                 comparison.costs.push(screened.cost);
                 helm_charts.push(screened.helm);
@@ -2292,9 +2375,10 @@ fn screen_chart(
         let overlay = match probe.helm_values_file(chart_dir.path(), &defaults) {
             Ok(ProbeValuesFile::Reachable(overlay)) => overlay,
             Ok(ProbeValuesFile::Unreachable(reason)) => {
-                coverage
-                    .unreachable_probes
-                    .push(format!("{probe_name}: {reason}"));
+                coverage.unreachable_probes.push(UnreachableProbe {
+                    probe: probe_name,
+                    reason,
+                });
                 continue;
             }
             Err(error) => {
