@@ -240,6 +240,8 @@ tasks:
     env:
       HELM_SCHEMA_CORPUS_ARTIFACTS: "{{.CORPUS_ARTIFACTS}}"
     cmds:
+      # The Helm adjudication renders in resident helmsweep servers.
+      - task: build:helmsweep
       # One producer run generates every registered corpus artifact and its
       # manifest; the tests then consume those artifacts after checking the
       # manifest against this checkout instead of regenerating each chart per
