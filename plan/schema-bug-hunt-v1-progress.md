@@ -4933,4 +4933,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   typed `ValuesError::NotValidated` via `downcast_ref` on the wrapped report. clippy for the CLI
   crate clean, chart_corpus 157/157, fmt clean. Chain resumed at unit (07:30).
 
+- 08:30 (Sep 27) — **Landing-2 run5: unit, lint, battery (14 min), integration (4 min) green;
+  sweep exit 5 — two rows without a Helm verdict, both Helm's own refusals, surfaced because no
+  row is skipped any more.** Fast pass 14m02s over all 156 charts (1,290 compiles, 7,252 memo
+  hits, 0 failures); differential 181 rows / 543 cells (every chart's row 0 + differing + unresolved),
+  **parity 543/543 agree, 0 new lint failures**. Unresolved: `cert-manager` row 0 — lint base/cand
+  `unresolved:loader` (accepted) but the control render is classified `unresolved:unknown-template-
+  failure` ("unable to detect chart at …/Chart.yaml"), and `common` row 0 — lint passes (rc 0
+  both) but the control render says "library charts are not installable" (a bitnami library
+  chart). Neither is a schema rejection; landing 1's v5 sweep never saw them because both were
+  identical-schema rows and skipped. Resolution: `ACCEPTED_SWEEP_UNRESOLVED` lists the three
+  `chart=class` pairs explicitly (recorded in the receipt); chain restarted from dump (E run6,
+  env change → new binding). Follow-up for the hand-off: the classifiers (Python and Go must
+  agree) should give these their own classes — `unresolved:loader` for "unable to detect chart"
+  and `unresolved:library-chart` for library charts — instead of the catch-all.
+
 Next: resume d3f23 first (its handoff's resume commands; gate = coalesced battery clean, zero new `helm lint` failures, then `task lint`/`lint:fc`/integration), land it with its fixtures from `dump-final`, then re-derive b6 and f4 onto that HEAD (their batteries must use the coalesced defaults and the new baseline), then f69; read every other track's `handoff.md` before restarting it. Standing rules added this round: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
