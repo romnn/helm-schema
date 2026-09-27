@@ -144,25 +144,47 @@ gates only, drop the stray mongodbcommunity hunk), regexp (`round8-regexp-eviden
   from different binaries; the Claude work account weekly limit (reset Oct 2, 01:00) kills agents
   mid-turn — resume them with SendMessage, their context survives.
 
-## 6. Status at hand-off time (2026-09-27, ~01:30 local)
-- **Landing 1 is ON MAIN** (merge c02c01f8): F23 candidate-4f + okteto/graylog roster + Helm pool v2 +
-  helmsweep (`tools/helmsweep`, Helm v4.2.3 patched at build time). Receipt
-  `/Volumes/T7/dev/round8-d3f23-landing3/receipt.json` (sha b1cdbb74…). Ledger 01:25 has the
-  step timings. The landing clone `/Volumes/T7/dev/round8-d3f23-f` (branch `landing-f23`) and
-  the env `runner/landing-f23.env` are the template for the next landing.
-- **Runner is v5** (`/Volumes/T7/dev/round8/runner`, branch `runner-v3-fail-closed` merged with
-  `runner-v5`; `SWEEP_ENGINE=helmsweep` default, CLI differential k=100 / cap 3 / all unresolved,
-  exit 7 on parity disagreement; verdict cache keyed incl. the cleared environment; receipt /5).
-  Evidence `round8-runner-evidence/` (handoff.md, v4-green/red, v5-green/red).
-- **Next landing (landing 2)**: coalescer + producer + naming + perf1 rebased on the new main in a
-  fresh clone, `DUMP_MODE=legacy` until the runner learns the producer's new manifest; expect
-  the whole chain in ~1.5 h now. Then the semantic candidates (§3), each on the fast chain.
-- **Hygiene follow-ups found during the landing** (ledger 00:45): the battery harness leaks
-  multi-GB temp dirs under the system temp folder when killed (69 GB found) — create them under
-  the target dir and sweep stale ones at start; the runner should export `GOTMPDIR`/`TMPDIR`
-  under `$TARGET`; the emitted airflow/oncall schemas do not compile in Helm (`\u` in patterns,
-  ledger 17:45 of Sep 26) — emitter fix + test; helmsweep's `documents` op can later serve the
-  battery's ~8,000 renders in-process and let the Rust coalescer port be deleted.
-- Old evidence dirs `round8-d3f23-landing` (v3 run, sweep broken by an in-place runner edit) and
-  `round8-d3f23-landing2` (v4 run, stopped) are history only; `round8-d3f23-e` is unused.
-- Codex runs all collected (`round8/codex-runs.tsv`); no agent running at hand-off.
+## 6. Status at hand-off time (2026-09-27, 09:30 local) — FINAL
+
+Everything the user queued as "basically ready" is on main. Nothing was pushed.
+
+- **main = 74139f94**: landing 1 (c02c01f8: F23 + okteto/graylog roster + Helm pool v2 + helmsweep)
+  and landing 2 (74139f94: corpus producer, perf1, stable  names, Helm value coalescer +
+  roster baseline pin, helmsweep v2, battery resident client, two test fixes). Receipts:
+  , . Ledger entries 01:25 and 09:30 (Sep 27) hold the step timings.
+- **The landing chain now takes ~55 min end to end** (dump 3.5, unit 0.4, lint 1.7, battery 14,
+  integration 4, sweep 32 incl. the CLI differential, finalize). Runner = v6.3
+  (, branch , HEAD 931672d + env commits;
+  , every roster row runs,  by user decision, producer
+  dump mode with a frozen producer copy, receipt /6). Template env: .
+  Worktrees  can be pruned ( after removing the dirs).
+- **Roster baseline coupling (design item):** the known-false-acceptance roster is observed as
+  flips against  (f7be7ba5, pinned in ). The first
+  SEMANTIC landing that changes production behaviour must keep BASELINE=f7be7ba5 for the battery
+  (the pin refuses anything else); when the baseline is advanced, rows that predate it stop being
+  observable as flips and need an absolute home (their K8s-rejects evidence is absolute). Decide
+  before the first semantic landing.
+- **Next landings (semantic; each needs review/rework first, §3):** W1 rework (green, needs a
+  Codex re-review), frontend phase 1 (green, 0 fixtures moved, unreviewed; conflicts with F9/W4),
+  F75 (over budget, one regression), F1 and F2 checkpoints, k8s D1–D3 (not started), B6 stack
+  (blocked on the agent-container fix, brief ).
+- **Hygiene follow-ups found while landing:** (1) the battery harness leaks multi-GB temp dirs
+  under the system temp folder when killed (69 GB found; fixed for the runner via GOTMPDIR/TMPDIR
+  under , not yet in the harness — create them under the target dir and sweep stale ones
+  at start); (2) the emitted airflow and oncall schemas do not compile in Helm ( escapes in
+  URL , ledger 17:45 Sep 26) — emitter fix + test; (3) the sweep classifiers (Python
+   AND Go  must agree) should give "unable to detect chart" a loader
+  class and "library charts are not installable" a  class instead of the catch-all
+  (today accepted per chart in ); (4) helmsweep's  build step is
+  unverified on native Windows; (5) the Go sweep cache rarely hits on this corpus (bitnami
+   calls , grafana helpers ) — fine at this speed, but the cacheability list
+  could distinguish  (order-only) if the sweep ever needs it; (6) 
+  compile time in Helm dominates every lint (openebs 4–10 min): emitting  instead of
+   measured 3.5× faster on okteto — a separate output-policy candidate.
+- **Review debt:** helmsweep v1 + runner v5/v6 landed on parity evidence before the cross-vendor
+  review; the review () was then applied in helmsweep v2 and
+  runner v6.2/v6.3. Landing 2's assembly and the runner versions v5.1–v6.3 had no separate Codex
+  review; queue one review of the runner () and of the landing-2
+  conflict resolutions () when the next session starts.
+- Old evidence dirs ,  are history only.
+- Codex runs all collected (); no agent running at hand-off.
