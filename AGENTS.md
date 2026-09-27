@@ -273,8 +273,10 @@ gate's.
 - The corpus battery
   (`round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced`
   in `crates/helm-schema/tests/schema_emission_profiles.rs`) reads its
-  CANDIDATE from the on-disk fixture unless
-  `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP` names a dump directory. **Any round
+  CANDIDATE from `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP`. Live adjudication
+  (`ADJUDICATE_WITH_HELM=1`) refuses to run without it; schema-only mode
+  falls back to the on-disk fixture. The `acceptance-battery` skill has
+  the full procedure. **Any round
   that changes a fixture byte MUST run the battery with
   `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP` pointing at the one clean dump of
   the final build, after that dump exists.** Run without it on
@@ -321,8 +323,8 @@ gate's.
 - The import is **per-module**: a `use` in a parent module does not reach child `mod tests { … }` blocks, so each test module (and each integration-test file under `tests/`) needs its own `use test_util::prelude::sim_assert_eq;`.
 - This is enforced by clippy and the macro definition: `clippy.toml` disallows
   `std::assert_eq!`, while `sim_assert_eq!` accepts only the exact `have:` and
-  `want:` labels. It currently surfaces as a warning (it still "shouts" so
-  violations are caught), so do not reintroduce bare `assert_eq!` in tests.
+  `want:` labels. The workspace denies `clippy::all`, so a bare
+  `assert_eq!` fails `task lint`; do not reintroduce it in tests.
 
 ## Result types
 
