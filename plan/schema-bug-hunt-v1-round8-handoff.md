@@ -150,10 +150,10 @@ gates only, drop the stray mongodbcommunity hunk), regexp (`round8-regexp-eviden
 
 Everything the user queued as "basically ready" is on main. Nothing was pushed.
 
-- **main = 12f88398**: landing 1 (c02c01f8: F23 + okteto/graylog roster + Helm pool v2 +
+- **main = 0c21000f**: landing 1 (c02c01f8: F23 + okteto/graylog roster + Helm pool v2 +
   helmsweep), landing 2 (74139f94: corpus producer, perf1, Helm value coalescer + roster baseline
   pin, helmsweep v2, battery resident client, test fixes — its `$defs` naming used content-hash
-  keys, which the user rejected) and landing 3 (12f88398: readable source/meaning-named `$defs` in all
+  keys, which the user rejected) and landing 3 (0c21000f: readable source/meaning-named `$defs` in all
   fixtures, explicit `helm-schema shorten` / `expand-defs`, producer `--helm-ready` companions,
   runner v6.4, `$ref` handling via `referencing` + `fluent-uri`). Receipts:
   `/Volumes/T7/dev/round8-d3f23-landing3/receipt.json`, `/Volumes/T7/dev/round8-landing2-run6/

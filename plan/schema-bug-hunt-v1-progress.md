@@ -5066,7 +5066,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Lesson (added to the playbook): in a runner-managed clone stage only the files you edited.
   Chain restarted from dump, E `round8-landing3-run2`.
 
-- 17:20 (Sep 27) — **LANDING 3 ON MAIN (12f88398): readable `$defs` names.** Run2 on runner v6.4
+- 17:20 (Sep 27) — **LANDING 3 ON MAIN (0c21000f): readable `$defs` names.** Run2 on runner v6.4
   (receipt sha d857d055…, finalized 17:06): dump 16:08–~16:13, unit, lint (→16:17), battery 13.6
   min, integration 4.2 min, sweep 31.4 min (fast pass 13m36s over 156 charts, 1,270 compiles,
   7,193 memo hits, 0 failures; CLI differential 543/543 agree; 0 new lint failures; 2 accepted
