@@ -5452,6 +5452,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   chain, P2s go to a follow-up landing. Sol's wrappers re-review: REWORK on one P2 (the poll stops at EOF
   while Helm stays alive → wait blocks, a later signal is ignored) — builder resumed; astra pending.
 
+- 05:05 (Sep 28) — **Wrappers: sol's EOF-gap P2 fixed (d2a4c14f: a second 20 ms poll with `try_wait` until
+  Helm exits; regression `a_signal_ends_the_wrapper_after_helm_closes_its_streams`, red exit 100 / green
+  17/17; `task test:integration` 865; +405 net LOC); astra's re-review has no P1, confirms d2a4c14f, and
+  leaves two items** (`review-wrappers-rework1-astra.md`): P2 the cleanup warning at helm.rs:207 uses a
+  panicking `eprintln!` (a broken stderr pipe bypasses the saved status; a blocked relay holding stderr's
+  lock delays cancellation) → best-effort raw-stderr reporting, cancellation never waits for stderr, two
+  regressions; P3 soften the docs' unconditional-cleanup promise for Windows console interruptions and
+  document the surviving-relay limitation for library callers. Builder resumed for this last round. Astra
+  also confirms: no generation or shortening algorithm changed, runner deletion present, byte-identical
+  template output across its fresh Helm cells, blocked-stdout termination in 10–41 ms.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
