@@ -6206,7 +6206,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `document_spans` → resource_identity.rs:60; 2.1 E lands independently, 2.2/2.3 only after W1/W4/k8s). Sol's
   pending. Orchestrator.
 
-- 00:05 (Sep 29) — **Tooling proposals written (runner builder, designs only):** `round8-runner-evidence/proposals/
+- 23:48 (Sep 28) — **Tooling proposals written (runner builder, designs only):** `round8-runner-evidence/proposals/
   cell-matrix.md` (bin `cell_matrix` in test-support: cells.tsv → deterministic verdict TSV across labelled CLI
   binaries via the battery's prober over Helm-coalesced values, Helm 4.2.3 render via the replay store, kubeconform
   strict; refusals for wrong Helm/bundle/kubeconform; `--check` byte-reproduction; `expect` column as a red/green
@@ -6216,7 +6216,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   follow-up). Both sent to fresh Codex design cross-checks (sol/astra, read-only; ids in codex-runs.tsv on save).
   Orchestrator.
 
-- 00:10 (Sep 29) — **User: land the process fixes ASAP.** Done now: corpus-fixtures skill gains "Before hand-back:
+- 23:50 (Sep 28) — **User: land the process fixes ASAP.** Done now: corpus-fixtures skill gains "Before hand-back:
   adjudicate your own fixture moves" (schema-only battery vs the base commit, then live vs ROSTER_BASELINE; no
   ad-hoc probes; docs commit on main). In flight: design cross-checks of cell-matrix + target-guard (sol
   20260928T214904-e48030f1, astra 20260928T214910-426afeb4); `helm-schema explain` provenance design (astra
