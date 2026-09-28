@@ -5970,6 +5970,22 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (single-quoted `\`/`$`/backticks literal, `NAME=a\ b` refused, quoted empty strings, nine line breaks) behaves as
   zsh; no regression. Runner builder asked for rework 3 (this one item) ahead of v6.8. Orchestrator.
 
+- 20:40 (Sep 28) — **W4/F75 rework 4 handed back (w4-main HEAD bfac78d5 = 78d535df R8+R10, 4252b831 structural
+  pattern projection, bfac78d5 lint-clean, on f493bb14; `final-v5.patch` 44 files sha f2da72a4…, +451 LOC vs main).**
+  Anchor and payload modelled separately (`scalar_preimage.rs:367`: `&` + `[A-Za-z0-9_-]+` ended by blanks or a
+  `:`/`?` indicator, the indicator case one typed spelling at :549); the typed preimage applies to the payload
+  only — "&a:b ok"/"&a?b" ACCEPT (render), "&a: b" REJECT. `payload_pattern` (:430) projects provider patterns
+  with the regex_syntax AST: top-level alternatives that start with `^` (through enclosing groups) continue after
+  the blanks, unanchored alternatives match anywhere in the payload and never in the anchor name, a non-head `^`
+  or inline flags → no anchored copy (labelled retained false rejection); kube-starrocks "&foo '@@'" now rejects.
+  R10: the runtime string contract applied after base + guard evidence are combined (`resolve_policy.rs:747/764/776`).
+  Tests: tpl_plain_slot.rs (R8 cells + 4 pattern tests with unanchored controls), string_contract_slots.rs +1;
+  red on f493bb14 exit 100 (19 failures), green 1611/1611. Gates fmt/lint/lint:fc/ast-grep 0, nextest 1611/1611,
+  chart_corpus 4/157 (153, same set). Schema size over 156 charts: main 189.8 MB, v4 +3.9 %, v5 +4.4 % (median
+  +3.5 %, max dict-config +26.9 %; `rebase/r6-size-delta.tsv`). One anchored copy per spelling stays (grammar-level
+  optional prefix = follow-up, estimate in `handoff-r6.md`). Reviews: follow_up runs 68054652 / aeb245af. Builder
+  meanwhile: Helm sample of moved charts + w4-rebase refreshed onto 9716e080 in its worktree. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
