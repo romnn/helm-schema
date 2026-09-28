@@ -5704,6 +5704,59 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   path_resolver.rs:503 lane). Reviews: follow_up on runs 68054652 (sol) / aeb245af (astra). Builder meanwhile:
   `w4-rebase` onto d42a1f33 and Helm adjudication of the 18 new mismatches. Orchestrator.
 
+- 16:08 (Sep 28) — **Landing 4 CHAIN GREEN** (`round8-landing4-run1/chain.log`: battery 14:19–14:49, integration
+  OK 15:08, sweep OK, finalize; receipt `/Volumes/T7/dev/round8-landing4-run1/receipt.json` sha256
+  76f4a5aaf72d93cdf4ca6d6933d73eddfd0b4e3813539abfd07c010db94e2af4; 203 artifacts verified, 0 adopted).
+- 16:14 (Sep 28) — **Landing 4 merged into main: 4b5db9c3** (`git merge --no-ff` of landing-4 @ 6fc92b6b onto
+  12405004; merge-base e63e883c). One textual conflict in `crates/helm-schema-cli/tests/defs_names.rs`: main
+  (landing 5) had replaced the expand-defs test by `helm_logs_are_translated_by_lint_and_template_not_expand_defs`
+  while landing 4 only swapped that old test's `tempfile::tempdir()` for `ScratchDir`; resolved by keeping main's
+  rewritten test (it uses no temp dir), every other test in the file uses `ScratchDir`. Not pushed. Post-merge
+  `task lint` + `cargo nextest run --workspace` running (`round8-main-postmerge/{lint,unit}-l4.log`,
+  `summary-l4.log`). Orchestrator.
+- 16:20 (Sep 28) — **Runner v6.7: REWORK from both** (`review-runner-v67-{sol,astra}.md`). Sol P1: marker
+  parsing takes the first `R=` line only — duplicate owners, missing/garbage `receipt=`, trailing junk pass and
+  get overwritten at landing.py:721; P2: the env scan sources peer `landing-*.env` as zsh before the lock (code
+  execution, errors suppressed, inherited R/TARGET); P3: relative LANDING_ENV resolved after `cd $R`. Astra P1:
+  `CARGO_BUILD_BUILD_DIR`/`build.build-dir` lets two TARGETs share one build dir past the marker check — force
+  cargo's build dir to the owned TARGET and bind it; P2 same marker and env-scan gaps; P3 `test_target.sh:26`
+  "no cargo ran" assertion is vacuous (fake-cargo records no cwd). Confirmed fine: ownership check under the
+  lock before every cargo path incl. producer --verify/helmsweep/finalize, exit 8 collides with nothing, landing
+  4's /8 receipt is refused under /9 (irrelevant: landing 4 landed on v6.6). Brief `brief-runner-v67-rework1.md`
+  (R1–R5); runner builder switched from v6.8 to the rework. Orchestrator.
+- 16:22 (Sep 28) — **W4/F75 rework 2: REWORK from both** (`review-w4-rework2-{sol,astra}.md`); R1–R4 confirmed
+  repaired (six cells, guarded cells, coredns control, regex fixture, W4 51 + F75 45 verdicts unchanged,
+  merge.rs identical to main; chartmuseum/node-exporter/nginx new mismatches correct, chartmuseum even fixes a
+  main false rejection). Astra P1: `string_contract_alternatives` leaves a string-only domain,
+  `member_projection.rs:592` containment then lets `overlay_lowering.rs:436` pick `ConditionalBaseEffect::Own`
+  and `base_schema.rs:132` drops the base with its independent provider preimage — prometheus-redis-exporter
+  `service.type` "a: b"/"true"/"123" and metabase `database.type` "true"/"false"/"123" become false acceptances
+  (main rejects; Helm aborts / k8s rejects); fix: keep the qualified `IndependentBaseContract` for the owned
+  target (path_resolver.rs:198 distinction). Sol P1: the preimage admits a bare anchor but not "&x ok" (renders
+  string) or "&x null" (renders null) — false rejection; project the suffix through the typed scalar preimage
+  ("&x true" stays rejected). Sol P2: resolve_policy.rs:774 returns None for a typed union without a string arm
+  and :748 then keeps null/numeric arms despite the string contract. Brief `brief-w4-rework3.md` (R5–R7); W4
+  builder switched from the rebase side task to rework 3. Orchestrator.
+- 16:25 (Sep 28) — **k8s D1–D3 rework 1: REWORK from both; DESIGN DECISION A = (b), conditional provider
+  contracts for values-driven KubeVersion guards** (`review-k8s-rework1-{sol,astra}.md`). Both endorse the
+  orchestrator's reading: Selected under Helm's effective emptiness of the override path, abstain only in the
+  nonempty-unproved region; a blanket 25-chart loosening is not landable — and astra shows it also TIGHTENS:
+  jenkins `controller.podDisruptionBudget.maxUnavailable: 1` renders at 1.29/1.20, baseline accepts, candidate
+  adds `type: string` and rejects (dropped provider evidence let default-derived typing narrow;
+  `chain.rs:144`, fix via `resource_identity.rs:709` → `ConditionalPathOverlay`). Sol P1 / astra P2: compound
+  `Has` guards (`and (Has …) .Values.enabled`, `and (Has …) (semverCompare …)`) are reduced to the bare Has by
+  `capability_branch.rs:25/:78` and select the wrong branch. Astra P1: the matcher's `||` path uses Cargo
+  `VersionReq` semantics (`1.23.0 || 1.24.0` vs 1.29.0 → true, Helm false; `^6.36.0-0 || ^7.36.0-0` vs
+  7.37.0-rc.1 → false, Helm true). Astra P2: normalization drops the prerelease (v1.23.0-rc.1 → 1.23.0).
+  Sol P2: K4 selects with a missing `else`. P3 both: comparator-list tests need a recorded red. Adjudications:
+  datadog Helm cells agree with the alias simplification (drift accepted only after coalesced values are tested
+  against the candidate schema); APIService probe entry right with cold/warm/absence tests; third-party `Has`
+  stays Undecided; HPA v2 `targetCPUUtilizationPercentage=50` renders — check schema acceptance;
+  `--kube-version` does not rebuild Helm's APIVersions set, so D1 render rows need paired schema acceptance.
+  Cache-as-oracle trace (G) clean. Process finding: the clone had been switched to `k8s-rebase` mid-review —
+  side branches now go in separate worktrees (rule sent to the k8s and W4 builders). Brief
+  `brief-k8s-rework2.md` (R1–R6); k8s builder on rework 2. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing

@@ -146,51 +146,53 @@ gates only, drop the stray mongodbcommunity hunk), regexp (`round8-regexp-eviden
   from different binaries; the Claude work account weekly limit (reset Oct 2, 01:00) kills agents
   mid-turn — resume them with SendMessage, their context survives.
 
-## 6. Status (rewritten 2026-09-28 13:45 local, session 3 — resume here)
+## 6. Status (rewritten 2026-09-28 16:30 local, session 3 — resume here)
 
 Read the ledger entries from "22:15 (Sep 27) — Session 2" onward for the detail; this section is the map.
 
-- **main = d42a1f33** (landing 5 merged 13:39; plan-only commits since). Nothing pushed. Strict verified
-  closures 3/83. Post-merge `task lint` + unit on main: running, exits in
-  `/Volumes/T7/dev/round8-main-postmerge/summary-l5.log` (record in the ledger).
-- **Landing 4 (test infra: scratch a3166561 + classify 61a04445) is ON THE CHAIN again**: clone
-  `/Volumes/T7/dev/round8-landing4` branch `landing-4` (5dd91afd, 6fc92b6b), env `runner/landing-4.env`,
-  evidence `/Volumes/T7/dev/round8-landing4-run1/` (`chain.log`, `receipt.json`). First run: dump/unit/lint
-  green, battery FAILED with ENOSPC at 05:50 (T7 full; 75 GB freed). Relaunched from `battery` 13:36 local
-  (steps battery → integration → sweep → finalize; lock owner pid 34327). On "chain green":
-  `git -C /Volumes/T7/dev/helm-schema fetch /Volumes/T7/dev/round8-landing4 landing-4 && git merge --no-ff
-  FETCH_HEAD -m "landing 4: … (receipt … sha256 <from chain.log>)"` (expect a textual conflict in
-  `crates/helm-schema-cli/tests/defs_names.rs` against landing 5; resolve, then `task lint` + unit on main),
-  then ledger + this section. On a failed step: read that step's log only, fix the smallest thing, restart
-  from the earliest stale step. Lock busy = exit 75: wait, never touch `round8/heavy.lock`.
+- **main = 4b5db9c3** (landing 5 merged 13:39 as d42a1f33, landing 4 merged 16:14 as 4b5db9c3; plan-only commits
+  since). Nothing pushed. Strict verified closures 3/83. Post-merge `task lint` + unit on 4b5db9c3: running,
+  exits in `/Volumes/T7/dev/round8-main-postmerge/summary-l4.log` (record in the ledger).
+- **Landing 4 LANDED** as 4b5db9c3 (receipt `/Volumes/T7/dev/round8-landing4-run1/receipt.json` sha256
+  76f4a5aa…, v6.6, 0 fixtures adopted) after a `cargo clean -p` of all workspace crates: landing-4.env and
+  landing-5.env shared `TARGET=/Volumes/T7/dev/round7-integrate/target` and cargo had aliased landing 5's
+  artifacts (ledger 14:13). Rule from now on: every landing gets its own `TARGET=/Volumes/T7/dev/round8-landing<N>-target`;
+  runner v6.7 (rework 1 in progress) enforces it. Lock busy = exit 75: wait, never touch `round8/heavy.lock`.
 - **Landing 5 (wrappers) LANDED** as d42a1f33 (receipt `/Volumes/T7/dev/round8-landing5-run1/receipt.json`
   sha256 7b379a7e…; 0 fixtures adopted).
-- **Runner = v6.6** (`/Volumes/T7/dev/round8/runner` 743f80c = 3d763e7 + `landing-5.env`; env template
-  `landing-4.env`: per-cell `ACCEPTED_SWEEP_UNRESOLVED`, `IGNORED_LANE_TESTS`, no lint waiver, receipt /8).
-  Worktrees `round8-runner-v65` can be pruned. Disk: T7 had 96 GB free at 13:36; the ~120 GB overnight
-  growth is unexplained — check `du -sh /Volumes/T7/dev/round8-*-run* /Volumes/T7/dev/*/target` before
-  the next dump.
+- **Runner = v6.6 checked out** (`/Volumes/T7/dev/round8/runner` 743f80c). **v6.7** (exclusive TARGET per
+  clone, receipt /9; branch runner-v6.7, worktree `round8-runner-v67`, 6d178200) got REWORK from both
+  (`brief-runner-v67-rework1.md`: build-dir escape, strict marker parsing, no sourcing of peer env files,
+  absolute LANDING_ENV, real "no cargo ran" assertion); merge it into the runner repo between chains once
+  LAND, then mark landing-4.env/landing-5.env `LANDING_FINISHED`. v6.8 (readable `helm-schema lint`
+  diagnostics for failing sweep rows, `brief-runner-v68.md`) is parked behind the rework. Disk: 163 GB free
+  at 16:11 after removing the dormant build caches round7-f13/target and round7-d3f23/target (finished tracks).
 - **Candidates and their state** (evidence dirs hold `handoff.md` + `final*.patch`; reviews in
   `/Volumes/T7/dev/round8/review-<track>-<round>-{sol,astra}.md`; briefs `brief-<track>-rework<n>.md`):
-  - W1 (`round8-w1` `track/w1-main`, rework 4 in progress off a0f34143, `brief-w1-rework4.md`: positional
-    identity as a facet of list values, escaping containers share contents, freshness mark, `required` fails
-    iff provably nil/empty); 33 corpus charts drift (battery adjudicates); first SEMANTIC landing → needs the
-    roster-baseline confirmation (recommendation: keep f7be7ba5).
+  - W1 (`round8-w1` `track/w1-main`, rework 5 in progress off 2012d658, `brief-w1-rework5.md`: both reviewers
+    REWORK on rework 4 — jaeger annotation false rejection, unavailable operands vanish, `Elements`
+    nonemptiness/multiplicity, helper freshness both directions, root-context/pathless-dict mutation,
+    positional wildcard identity); side branch `track/w1-unset` parked; 35 corpus charts drift (battery
+    adjudicates); first SEMANTIC landing → needs the roster-baseline confirmation (recommendation: keep f7be7ba5).
   - Frontend (`round8-frontend` `frontend-main`, rework 3 in progress off 1c537982, `brief-frontend-rework3.md`
     F8–F11); 0 fixtures moved so far.
-  - W4/F75 (`round8-w4` `w4-main`, rework 2 in progress off 91dccf1e, `brief-w4-rework2.md`: both reviewers
-    REWORK — self-path pattern guards as partitions + preimage disjunction preserved through evidence
-    merging + red/green cells + invalid Helm fixture); 58 corpus mismatches to adjudicate on the chain.
-  - k8s D1–D3 (`round8-k8s` `k8s-main`, rework 1 in progress off e9baab71, `brief-k8s-rework1.md`: decide
-    KubeVersion guards against the configured version) → fresh Codex review on hand-back.
+  - W4/F75 (`round8-w4` `w4-main`, rework 3 in progress off b1a6ad1d, `brief-w4-rework3.md`: conditional
+    ownership must keep the independent provider preimage, anchored scalars, empty string intersection);
+    R1–R4 of rework 2 confirmed repaired; 76 corpus mismatches to adjudicate on the chain; BASE still c816e318 —
+    a rebase onto main is needed before landing (side branch `w4-rebase`, in a separate worktree).
+  - k8s D1–D3 (`round8-k8s` `k8s-main`, rework 2 in progress off c42bfa6a, `brief-k8s-rework2.md`: DECISION (b)
+    conditional provider contracts for values-driven KubeVersion guards, whole-condition `Has` decoding,
+    Masterminds `||` semantics, prerelease-preserving version, K4 missing-else, comparator red evidence);
+    BASE c816e318 — rebase needed (`k8s-rebase` in a separate worktree). D2/D3 endorsed by both.
 - **Builder agents** (native subagents of this session; all four resumed after the 10:00 quota reset;
   resume with SendMessage): W1 `ae88c76cb6bda5467`, frontend `a69f98e6d3af1e500`, W4 `a8dd06d301e7c2760`,
   k8s `a1ff77c400aeaa4df`; done: wrappers `ac59ade2d4da19ac0`, scratch `a159f489c3a3fd5c0`, runner
   `a67c3c0781e99d708`. If the session itself is gone, start fresh builders from each track's `handoff.md` +
   brief.
-- **Codex runs** (follow_up keeps context): W1 92580cac/416b8635, frontend 7660883f/5d5c270b, scratch
-  be7d3a37/908ce142, runner 73d3081f/6b442c0c, wrappers 7a44129c/b7481bb6, W4/F75
-  20260928T034515-68054652/-aeb245af. Answers are read from `turns/<latest>/last-message.md` (the transcript
+- **Codex runs** (follow_up keeps context; runs expire after ~24 h — the first k8s astra run did): W1
+  92580cac/416b8635, frontend 7660883f/5d5c270b, scratch be7d3a37/908ce142, runner 73d3081f/6b442c0c,
+  wrappers 7a44129c/b7481bb6, W4/F75 20260928T034515-68054652/-aeb245af, k8s 20260928T133519-3677d240 (sol) /
+  20260928T133601-e1cee4f7 (astra). Answers are read from `turns/<latest>/last-message.md` (the transcript
   file grows only after a `result` call); `collect-codex.py` saves and registers them (`codex-runs.tsv`).
 - **User decisions**: personal Claude account only, Claude via native subagents, agentmux for Codex only;
   keep ~3 implementors running while Codex reviews; spend the weekly quota by its reset and resume after
