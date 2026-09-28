@@ -6334,6 +6334,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (R18–R22). (4) astra's `explain` design v2 (`design-explain-provenance-v2-astra.md`, 26 KB) → sol cross-check
   (follow_up e48030f1). Load 10–20 (four heavy builders); T7 154 GB. Orchestrator.
 
+- 01:25 (Sep 29) — **Runner v6.8 merged and green; `explain` design converged.** (1) `tests/run-all.sh` on the merged
+  runner (ae25207): 12/12 exit 0, `run-all exit 0` (`round8-runner-evidence/run-all-after-v68-merge.log`). Every
+  landing from landing 7 on runs under v6.8 (readable `helm-schema lint` diagnostics for failing/unresolved/disagreeing
+  sweep rows, sealed `$E/attempt-evidence/<attempt>/`, attempt-bound phase.json, exit 9 for a non-completed lint).
+  (2) sol's cross-check of astra's `explain` design v2 (`crosscheck-explain-provenance-v2-sol.md`, run e48030f1
+  turn 4): REVISE-DESIGN with only two C1 corrections — keep and EXTEND the existing public explain result
+  (session.rs:41; public_surface.rs:881) instead of deleting the shallow projection before C4/C5 replace it, and
+  defer the CLI subcommand to C8 (cli/mod.rs:29 rejects global generation args under subcommands; the session API +
+  the `explain_values` example are the first landing). Startable C1 scope confirmed: `PathGenerationDecision`
+  captured at resolve_policy.rs:323 / path_resolver.rs:130,:185 / overlay_lowering.rs:424 / emission_plan.rs:735,
+  keyed by path and context, carried with the artifact, single-flight session init, zero fixture adoption pinned
+  against cb42c017. DECISION (orchestrator): adopt both corrections without a v3 round → `brief-explain-c1.md`;
+  queued as the next heavy builder slot after W1/W4/k8s hand back (five builders busy; load 30–60).
+  (3) Builders: W1 rework 6 and k8s rework 4 in their gates (unit passed, integration running), F1 compiling gen/ir
+  for its red run, W4 rework 6 written but unbuilt behind the rebased battery (helmsweep serving), runner v6.9 in
+  its test tally. T7 146 GB free. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
