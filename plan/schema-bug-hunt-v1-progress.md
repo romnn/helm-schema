@@ -6206,6 +6206,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `document_spans` → resource_identity.rs:60; 2.1 E lands independently, 2.2/2.3 only after W1/W4/k8s). Sol's
   pending. Orchestrator.
 
+- 00:05 (Sep 29) — **Tooling proposals written (runner builder, designs only):** `round8-runner-evidence/proposals/
+  cell-matrix.md` (bin `cell_matrix` in test-support: cells.tsv → deterministic verdict TSV across labelled CLI
+  binaries via the battery's prober over Helm-coalesced values, Helm 4.2.3 render via the replay store, kubeconform
+  strict; refusals for wrong Helm/bundle/kubeconform; `--check` byte-reproduction; `expect` column as a red/green
+  gate; open: move `helm_invocation` out of tests/common, kubeconform vs direct bundle validation, first-error-path
+  stability) and `target-guard.md` (`scripts/target-guard.sh` as task `target:guard`, `.owner` marker with v6.7's
+  strict format and exit 8, forced cargo build dir, coexistence with the runner's `.landing-owner`, runner v6.9
+  follow-up). Both sent to fresh Codex design cross-checks (sol/astra, read-only; ids in codex-runs.tsv on save).
+  Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
