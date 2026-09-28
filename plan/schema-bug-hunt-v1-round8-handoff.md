@@ -146,22 +146,22 @@ gates only, drop the stray mongodbcommunity hunk), regexp (`round8-regexp-eviden
   from different binaries; the Claude work account weekly limit (reset Oct 2, 01:00) kills agents
   mid-turn — resume them with SendMessage, their context survives.
 
-## 6. Status (rewritten 2026-09-28 19:45 local, session 3 — resume here)
+## 6. Status (rewritten 2026-09-28 23:45 local, session 3 — resume here)
 
 Read the ledger entries from "22:15 (Sep 27) — Session 2" onward for the detail; this section is the map.
 
-- **main code = 9716e080** (landing 5 d42a1f33, landing 4 4b5db9c3, then `fix(test): helm_wrapper uses ScratchDir`
-  because the combined tree did not compile — lint + unit green after it; plan-only commits since). Nothing pushed.
-  Strict verified closures 3/83.
-- **Landing 6 (frontend phase 1, fixture-preserving semantic) is ON THE CHAIN** since 19:42: clone
-  `/Volumes/T7/dev/round8-landing6` branch `landing-6` @ fcae9bf1 (= main 648a303a + `final-v5.patch`), env
-  `runner/landing-6.env`, own `TARGET=/Volumes/T7/dev/round8-landing6-target`, evidence
-  `/Volumes/T7/dev/round8-landing6-run1/` (`chain.log`, `receipt.json`). On "chain green": `git -C
-  /Volumes/T7/dev/helm-schema fetch /Volumes/T7/dev/round8-landing6 landing-6 && git merge --no-ff FETCH_HEAD -m
-  "Land frontend phase 1: … (receipt … sha256 <from chain.log>)"`, then lint + unit on main, ledger, this section.
-  F10 (trailing-else complement, one fixture, `frontend-main-f10` 987bb4f6) lands separately afterwards.
-  Hazard: a fresh clone needs `mise trust <clone>/mise.toml` before the runner can build in it (first launch
-  of landing 6 was refused at dump for that reason; relaunched 20:06).
+- **main code = cb42c017** (landing 6 = frontend phase 1 merged 22:52; before it landing 5 d42a1f33, landing 4
+  4b5db9c3, `fix(test)` 9716e080; lint + unit green on cb42c017; plan-only commits since). Nothing pushed. Strict
+  verified closures 3/83 (landing 6 closes none of the 83; W1 → 6, W4/F75 → 9 are the next movers).
+- **Landing 6 LANDED** as cb42c017 (receipt `/Volumes/T7/dev/round8-landing6-run1/receipt.json` sha256 68285d51…,
+  v6.6, own target, 0 fixtures). Hazards learned today: `mise trust` every fresh clone; one cargo target per clone
+  AND per worktree (cargo aliases artifacts between checkouts with the same relative layout).
+- **Concurrency (user 22:50/22:55: optimise landings per token):** keep ~3 compile-heavy builders; heavy set now =
+  W1 rework 6, W4 rework 5, k8s rework 3. PAUSED with checkpoints: F1 (`round8-f1` 0b443ab0 rebased onto 9716e080,
+  `rebase/state.md` has the exact next command) and frontend phase 2 (plan `round8-frontend-evidence/phase2/plan.md`
+  under Codex cross-check; worktree `round8-frontend-phase2` exists, no code). Resume them when a heavy slot frees.
+- **F10** (`frontend-main-f10` 987bb4f6, one fixture) and **partial-kind** (98cf9a8b, superseded by phase 2/3.2 if the
+  plan lands) are parked side branches.
 - **Landing 4 LANDED** as 4b5db9c3 (receipt `/Volumes/T7/dev/round8-landing4-run1/receipt.json` sha256
   76f4a5aa…, v6.6, 0 fixtures adopted) after a `cargo clean -p` of all workspace crates: landing-4.env and
   landing-5.env shared `TARGET=/Volumes/T7/dev/round7-integrate/target` and cargo had aliased landing 5's
@@ -169,12 +169,11 @@ Read the ledger entries from "22:15 (Sep 27) — Session 2" onward for the detai
   runner v6.7 (rework 1 in progress) enforces it. Lock busy = exit 75: wait, never touch `round8/heavy.lock`.
 - **Landing 5 (wrappers) LANDED** as d42a1f33 (receipt `/Volumes/T7/dev/round8-landing5-run1/receipt.json`
   sha256 7b379a7e…; 0 fixtures adopted).
-- **Runner = v6.6 checked out** (`/Volumes/T7/dev/round8/runner` 63d1d8c = 743f80c + landing-6.env). **v6.7**
-  (exclusive TARGET per clone, forced cargo build dir, strict marker, env files read not executed, receipt /9;
-  branch runner-v6.7, worktree `round8-runner-v67`, rework 2 = d6653766; sol LAND, astra re-checking A1/A2)
-  merges between chains (i.e. after landing 6 finishes), then landing-4.env/landing-5.env get
-  `LANDING_FINISHED`. **v6.8** (readable `helm-schema lint` diagnostics for failing/unresolved/disagreeing sweep
-  rows; branch runner-v6.8) is in rework 1 (`brief-runner-v67-rework2-v68-rework1.md` B1–B7). Disk: 163 GB free
+- **Runner = v6.7 checked out** (`/Volumes/T7/dev/round8/runner` 9e3f47b: merge 2309bc3 of runner-v6.7 423a6148, LAND
+  from both after 3 rework rounds; landing-4/5/6 env files `LANDING_FINISHED`). Every new landing: own
+  `TARGET=/Volumes/T7/dev/round8-landing<N>-target`, owner marker, receipt /9, env grammar (`NAME=VALUE`, quoted
+  values, ASCII only). **v6.8** (readable `helm-schema lint` diagnostics; branch runner-v6.8 rework 2 = 2e968a72)
+  under review; merge between chains on LAND. Disk: 163 GB free
   at 16:11 after removing the dormant build caches round7-f13/target and round7-d3f23/target (finished tracks).
 - **Candidates and their state** (evidence dirs hold `handoff.md` + `final*.patch`; reviews in
   `/Volumes/T7/dev/round8/review-<track>-<round>-{sol,astra}.md`; briefs `brief-<track>-rework<n>.md`):

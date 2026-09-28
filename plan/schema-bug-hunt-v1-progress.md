@@ -6153,6 +6153,25 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   handed back (7 red→green tests, gates green except the integration run left unconfirmed; `partial-kind/final.patch`
   sha 60000289…) — parked; superseded by phase-2/3.2 if the plan lands. Orchestrator.
 
+- 23:40 (Sep 28) — **Post-merge gates on cb42c017 green: `task lint` exit 0, nextest exit 0** (`round8-main-postmerge/
+  {lint,unit}-l6.log`, 20:44–20:53 UTC). **Runner v6.7 is the checked-out runner** (`round8/runner` 2309bc3 merge +
+  9e3f47b env marks; tests/run-all.sh exit 0, 592-check zsh suites + 79 Python; `round8-runner-evidence/
+  run-all-after-v67-merge.log`). Load back to ~10–13 with the heavy set at three. **Runner v6.8 rework 2 handed
+  back (runner-v6.8 HEAD 2e968a72; `v68-rework2.patch` 9 files +386/−18 sha d5e45773…):** C1 terminal lint
+  summary required (header-only → 9); C2 failed-attempt readable evidence hard-linked into
+  `$E/attempt-evidence/<attempt>/` and re-hashed at finalize; C3 phase.json bound to attempt id + row count +
+  rows.tsv hash; C4 documented refusal codes; green run-all 592 + 80; red 10 + 1 FAIL vs 22bae919. Reviews
+  dispatched (follow_up 73d3081f / 6b442c0c; read-only, free). **F1 paused at checkpoint 0b443ab0** (rebase onto
+  9716e080 DONE: pre-rebase history on `f1-global-policy-pre-rebase`; conflicts in `round8-f1-evidence/rebase/
+  conflicts.md` — option fixtures became producer artifacts (`ArtifactId::Authoring`), the undecided roster moved
+  to `tests/common/known_undecided_acceptances.rs`, tempfile → ScratchDir; nextest 1626/1628 with the two failures in
+  the gate binary: the 5 known "unexpected fix" rows plus 5 new F74 size rows and the 5242889-vs-5242880 writer
+  check — fixture drift vs the gate's frozen base, the gate must apply main's `$defs` shortening; Helm 4.2.3 shows
+  `--set global=5`/`null` abort for a dependency aliased `global`, so `global_consumed` keeps the dependency
+  registration (new test pins it, expected schema still a placeholder); state note `rebase/state.md`).
+  **Frontend paused** (partial-kind integration run stopped at 327/848 with 0 failures, recorded as not a
+  completed gate). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
