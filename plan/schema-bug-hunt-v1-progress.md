@@ -6172,6 +6172,29 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   **Frontend paused** (partial-kind integration run stopped at 327/848 with 0 failures, recorded as not a
   completed gate). Orchestrator.
 
+- 23:45 (Sep 28) — **k8s rework 3 handed back (k8s-main HEAD e2e4d0b9 = c4079ca9 K1+K3, e2e4d0b9 K2; `final-v4.patch` 59
+  files sha 7ab15789…, +952 LOC).** K1 (b): `capability_is_undecided` answers from the lookup plan alone, Unavailable arm
+  and second walk removed, SchemaUnavailable kept; cold-cache test asserts the diagnostic + `containerPort` integer +
+  unchanged fixture (red exit 100 / green 0). K2: 48-cell vector/tika/ollama matrix (main = v4 in all cells; 46 match
+  kubeconform, 2 are tika's `paths: []` → null accepted on both sides), two chart_reaudit pins; rows 29/33 are
+  intended contract rejections (`metrics` invalid on the pinned v1). K3 partial (second call recomputes the plan only;
+  ResourceRef IR-carrier move is not small → follow-up). Gates fmt/lint/lint:fc/ast-grep 0, nextest 1601/1601,
+  integration 784/97/24 (fixture moves + consumers). Target purge: the builder's scratch worktree had built main in
+  round7-f4/target; all 14 crates purged (65.8 GiB); rebase worktree own target; k8s-rebase e174aa86 on 9716e080 clean
+  (tempfile → ScratchDir adaptation), unit 1610/1610, integration same 97.
+- 23:47 (Sep 28) — **k8s rework 2: astra REWORK with two P1s not covered by rework 3** (`review-k8s-rework2-astra.md`):
+  (1) the new apiVersion overlays record only the provider use (contract_rows.rs:1004) and lose source fallback
+  facts/nullability → Open WebUI FALSE REJECTION: `ollama/tika.nameOverride: false` with both ingresses enabled renders
+  at 1.29/1.20, checked-in schema accepts, v3 rejects (also `namespaceOverride`; disabling the parent ingress accepts
+  again — the child constraints got an unrelated root `ingress.enabled` condition); (2) Masterminds partial-bound
+  semantics still wrong (`<=1.25-0` vs 1.25.1 Helm TRUE / code false; `>1.25-0` FALSE / true; `1.25.x-rc.1` vs
+  1.25.0-beta.1 FALSE / true — fluent_bit's 1.25 boundary); P2 (b) confirmed; P2 R5 exhaustiveness unsound for nested
+  branches (`if A { if B { emit } } else { emit }` selects); P3 delete the parallel resolution paths. Vector: no
+  acceptance change in 8 checks (PSP still rendered at 1.29 when enabled); datadog fine; APIService entry fine. To
+  save a review round, rework 3 is NOT reviewed separately: brief `brief-k8s-rework4.md` (K4–K7) sent; rework 4 goes
+  to both reviewers as one candidate. Concurrency: k8s back on heavy work and F1 resumed → four heavy builders while
+  load is ~7; pause one if load climbs past ~20. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
