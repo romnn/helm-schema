@@ -5424,6 +5424,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   line. Runner suite last green on 5eaf229 (cf20933 changed README only). `landing-4.env` template is in
   the runner; landing 4 = scratch (rework 3 pending) + classify on runner v6.6. Six builders running.
 
+- 04:40 (Sep 28) — **Wrappers rework 1 handed back (ab31693a, `final.patch` sha 81c2219a…, +396 net LOC);
+  re-review as follow-ups on the two design runs.** W1 `template` stdout byte-for-byte (stderr
+  translated; `lint` both streams); W2 root-reference-only translator with `/`, quote, whitespace or
+  control byte as the token end, no rescans; W3 signal registration in the CLI (`main.rs:15`), the library
+  installs no handlers, `copy_tree` checks the flag per entry, the relay runs on its own thread while the
+  caller polls every 20 ms (a polling watcher); W4 kill-then-always-wait, explicit scratch removal, a
+  failed cleanup is a stderr warning; W5 root schema not copied, shortened one written fresh; W6 the
+  Windows-only signal code deleted (the previous "0 diagnostics" lint:fc claim was wrong: 7 WARN, now 0).
+  Four new tests incl. the blocked-output SIGTERM cell (dies by signal 15 within seconds, no scratch). Gates
+  fmt/lint/lint:fc/ast-grep 0, unit 1588, helm_wrapper 16/16, `task test:integration` 864, no fixtures moved.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
