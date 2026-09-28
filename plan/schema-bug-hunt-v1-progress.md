@@ -5506,6 +5506,21 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   returns a P1, the wrappers are landing 5 on the chain right after landing 4 (unit step green at 05:35).
   Frontend round-3 follow-ups running on both reviewers.
 
+- 05:50 (Sep 28) — **Wrappers LAND (astra final confirmation on f8323df9; sol's last P2 fixed) → landing 5
+  queued behind landing 4; frontend REWORK 3.** Landing 4 chain: dump 16 min, unit 14 min, lint 11 min
+  (all slower on the loaded machine), battery running since 05:33. Landing 5: clone `round8-landing5`
+  branch `landing-5` (dca51bd4 = wrappers final.patch sha 6e3fcec9… on main 463737ab), env
+  `landing-5.env` (runner 670e0ce, amended after a sed slip left it empty), evidence
+  `round8-landing5-run1`; a lock-aware waiter (`nohup` loop retrying `dump` on exit 75 every 3 min,
+  then unit→finalize) started 05:50 so the chain runs as soon as landing 4 releases the lock, even if the
+  orchestrator session is cut off by the quota; the two landings merge in order afterwards (a textual
+  conflict in `cli/tests/defs_names.rs` is possible; `task lint` + unit on the merged main). Frontend
+  round 3 (`review-frontend-rework2-{sol,astra}.md`): F5/F6 confirmed as tested; P1 a direct values-
+  selected `kind:` under a rebound dot is promoted without the ancestry check (`resource_identity.rs:460/
+  100`); P1 nested-chain provenance ignores a competing parent `else`; P2/P3 a trailing `else` is a
+  complement, not an equality (stacks `workloadType=Other` renders StatefulSet); gates/bytes belong to the
+  chain. Brief `brief-frontend-rework3.md` (F8–F11), builder resumed.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
