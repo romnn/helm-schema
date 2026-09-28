@@ -5535,6 +5535,49 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   The reviewers are asked whether a new false acceptance vs main is landable as a rostered residual or
   must be fixed, and for the structural fix of both halves.
 
+- 05:50 (Sep 28) — **Landing 4 FAILED at `battery` with ENOSPC (T7 100 % full); landing 5 was queued behind it.**
+  `round8-landing4-run1/receipt.json`: dump/unit/lint green, battery FAIL 05:33–05:50 local ("No space left on
+  device", `battery/battery.log`). Orchestrator freed 75 GB by deleting the dormant build caches
+  `round7-{f69,b6,f4b,f78b,f31}/target` (109 GB free afterwards; what consumed ~120 GB overnight is not yet
+  identified — suspects: landing dumps/evidence dirs, the 8 GB `helm-invocations` cache). The landing-4 dump
+  stays valid (no generation input changed); rerun from `battery` on the same evidence dir once the lock frees.
+- 05:54 (Sep 28) — **Weekly quota exhausted; the W1 (rework 4), k8s (rework 1) and frontend (rework 3) builders
+  were terminated mid-turn with 429.** Their checkpoint commits survived in their clones. The wrappers landing 5
+  kept waiting on the heavy lock through the lock-aware waiter while the session was cut off.
+- 11:35 (Sep 28) — **Quota reset; session 3 resumed. Landing 5 (wrappers) went CHAIN GREEN unattended**
+  (`round8-landing5-run1/chain.log`: dump 203 artifacts verified, 0 of 202 adopted, unit, lint, battery,
+  integration, sweep, finalize all OK; receipt sha256
+  7b379a7e417628ae97715897222c8b0c54d404b82065781f93a0f5cefbb89631). Landing 4 relaunched from `battery` at
+  13:36 local on the same evidence dir (`chain.log` "== relaunch" line; lock owner pid 34327, token 9f36060e…).
+  The three killed builders were resumed with "continue where you left off; re-run anything that hit ENOSPC".
+  T7: 96 GB free. Orchestrator.
+- 13:38 (Sep 28) — **W4/F75 pre-landing (91dccf1e): REWORK from both reviewers**
+  (`review-w4-f75-prelanding-{sol,astra}.md`, runs 20260928T034515-68054652 / -aeb245af). Agreement: W4 and
+  F75's partial typed dispatch are sound in their proven domains (both re-ran trino, openebs, tpl length,
+  regex-else, datadog, kibana, redis-ha on Helm 4.2.3 / kube 1.29.0; no committed cell moved toward a false
+  rejection); the step-3 residual (helper-rendered `tpl` in a plain slot accepting "a: b"/"true"/"123") is a
+  fixable regression and is NOT landable as a residual. Sol P1: retain exact self-path
+  `MatchesPattern`/`NotMatchesPattern` guards as branch partitions (`conditional_overlays.rs:382`;
+  `lowerable_guard_path:834` drops the target's own path, `final_signals.rs:201` then loses the provider use),
+  and the overlay plain-scalar projection (`path_resolver.rs:503`) needs the base lane's comment/anchor/null
+  arms. Astra: the same lowering gap (P2) and the more precise root cause of the probe's false rejections
+  ("a #b", "a #", "null # hi" all render and validate): the shared preimage already carries those arms
+  (`scalar_preimage.rs:352`) but scalar evidence merging drops them (`resolve_policy.rs:741` → `merge.rs:275`
+  `collapse_compatible_variants` → `:432`); fix by preserving the preimage disjunction and intersecting the
+  typed requirements with it — no duplicated overlay regex arms, no widening to unrestricted strings; both
+  halves land together. Both: the 14 green checks are not one red cell per contract cell (11 red on main +
+  3 pins); `fail_validators.rs:19` fixture `"^[\w.-]+$"` is invalid Helm (must be `"^[\\w.-]+$"`); the
+  template-bearing `"{{ .Release.Name }}: b"` may stay a tracked residual with a pinned known-abstention
+  test, never a blanket template-program rejection. Corpus: 58 mismatches; three samples adjudicated correct
+  by both (kibana widening, alertmanager/trino tightening, redis-ha/datadog); the rest is the landing chain's
+  job. Brief `brief-w4-rework2.md` (R1–R4); builder a8dd06d301e7c2760 resumed on it. Orchestrator.
+- 13:39 (Sep 28) — **Landing 5 merged into main: d42a1f33** (`git merge --no-ff` of landing-5 @ dca51bd4 onto
+  8253dfa6; merge-base 463737ab; 28 files +1382/−149; 0 fixtures adopted; message names the receipt path and
+  sha256). Not pushed. Post-merge `task lint` + `cargo nextest run --workspace` running on main (target
+  `helm-schema/target`; logs `/Volumes/T7/dev/round8-main-postmerge/{lint,unit}-l5.log`, exits in
+  `summary-l5.log`); result to be recorded. Landing 4 merges on top when its chain is green (possible textual
+  conflict in `crates/helm-schema-cli/tests/defs_names.rs`; lint + unit rerun on the merged main).
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing

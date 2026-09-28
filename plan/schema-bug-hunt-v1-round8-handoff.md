@@ -146,49 +146,59 @@ gates only, drop the stray mongodbcommunity hunk), regexp (`round8-regexp-eviden
   from different binaries; the Claude work account weekly limit (reset Oct 2, 01:00) kills agents
   mid-turn — resume them with SendMessage, their context survives.
 
-## 6. Status (rewritten 2026-09-28 05:25 local, session 2, quota cut-off imminent — resume here)
+## 6. Status (rewritten 2026-09-28 13:45 local, session 3 — resume here)
 
 Read the ledger entries from "22:15 (Sep 27) — Session 2" onward for the detail; this section is the map.
 
-- **main = ec0e6d5c** (plan-only commits on 4efa0f9d). Nothing pushed. Strict verified closures 3/83.
-- **Landing 4 (test infra) is ON THE CHAIN**: clone `/Volumes/T7/dev/round8-landing4` branch `landing-4`
-  (5dd91afd scratch a3166561 + 6fc92b6b classify 61a04445), env `runner/landing-4.env`, evidence
-  `/Volumes/T7/dev/round8-landing4-run1/` (`chain.log`, `receipt.json`); started 04:52, dump green
-  (16 min; 0 of 202 artifacts adopted = no fixture bytes moved), unit running at 05:19. On "chain green":
+- **main = d42a1f33** (landing 5 merged 13:39; plan-only commits since). Nothing pushed. Strict verified
+  closures 3/83. Post-merge `task lint` + unit on main: running, exits in
+  `/Volumes/T7/dev/round8-main-postmerge/summary-l5.log` (record in the ledger).
+- **Landing 4 (test infra: scratch a3166561 + classify 61a04445) is ON THE CHAIN again**: clone
+  `/Volumes/T7/dev/round8-landing4` branch `landing-4` (5dd91afd, 6fc92b6b), env `runner/landing-4.env`,
+  evidence `/Volumes/T7/dev/round8-landing4-run1/` (`chain.log`, `receipt.json`). First run: dump/unit/lint
+  green, battery FAILED with ENOSPC at 05:50 (T7 full; 75 GB freed). Relaunched from `battery` 13:36 local
+  (steps battery → integration → sweep → finalize; lock owner pid 34327). On "chain green":
   `git -C /Volumes/T7/dev/helm-schema fetch /Volumes/T7/dev/round8-landing4 landing-4 && git merge --no-ff
-  FETCH_HEAD -m "landing 4: … (receipt … sha256 <from chain.log>)"`, then ledger + this section. On a
-  failed step: read that step's log only, fix the smallest thing, restart from the earliest stale step.
-- **Runner = v6.6** (`/Volumes/T7/dev/round8/runner` 3d763e7; reviewed 3 rounds; env template
-  `landing-4.env` format: per-cell `ACCEPTED_SWEEP_UNRESOLVED`, `IGNORED_LANE_TESTS`, no lint waiver,
-  receipt /8). Runner v6.5/v6.6 worktrees `round8-runner-v65` can be pruned.
+  FETCH_HEAD -m "landing 4: … (receipt … sha256 <from chain.log>)"` (expect a textual conflict in
+  `crates/helm-schema-cli/tests/defs_names.rs` against landing 5; resolve, then `task lint` + unit on main),
+  then ledger + this section. On a failed step: read that step's log only, fix the smallest thing, restart
+  from the earliest stale step. Lock busy = exit 75: wait, never touch `round8/heavy.lock`.
+- **Landing 5 (wrappers) LANDED** as d42a1f33 (receipt `/Volumes/T7/dev/round8-landing5-run1/receipt.json`
+  sha256 7b379a7e…; 0 fixtures adopted).
+- **Runner = v6.6** (`/Volumes/T7/dev/round8/runner` 743f80c = 3d763e7 + `landing-5.env`; env template
+  `landing-4.env`: per-cell `ACCEPTED_SWEEP_UNRESOLVED`, `IGNORED_LANE_TESTS`, no lint waiver, receipt /8).
+  Worktrees `round8-runner-v65` can be pruned. Disk: T7 had 96 GB free at 13:36; the ~120 GB overnight
+  growth is unexplained — check `du -sh /Volumes/T7/dev/round8-*-run* /Volumes/T7/dev/*/target` before
+  the next dump.
 - **Candidates and their state** (evidence dirs hold `handoff.md` + `final*.patch`; reviews in
   `/Volumes/T7/dev/round8/review-<track>-<round>-{sol,astra}.md`; briefs `brief-<track>-rework<n>.md`):
-  - Wrappers (`round8-wrappers` branch `helm-wrappers`, HEAD d2a4c14f+, +405 LOC, no schema change): one
-    last item in progress (non-panicking cleanup warning + docs note, astra P2/P3); then LAND → **landing 5**
-    on the chain right after landing 4 (no roster decision needed).
-  - W1 (`round8-w1` `track/w1-main`, rework 4 in progress off a0f34143: identity/sharing/freshness as
-    value properties, `brief-w1-rework4.md`); 33 corpus charts drift (battery adjudicates); first SEMANTIC
-    landing → needs the roster-baseline confirmation (default keep f7be7ba5).
-  - Frontend (`round8-frontend` `frontend-main`, rework 2 in progress off ab4dd0da: `final_signals`
-    provenance + document-level `with`/`range` call sites, `brief-frontend-rework2.md`); 0 fixtures moved.
-  - W4/F75 rebase (`round8-w4` `w4-main`, in progress, `brief-w4-f75-rebase.md`) → fresh Codex review.
-  - k8s D1–D3 (`round8-k8s` `k8s-main`, rework 1 in progress off e9baab71: decide KubeVersion guards
-    against the configured version, `brief-k8s-rework1.md`) → fresh Codex review.
-- **Builder agents** (native subagents of the session; resume with SendMessage "checkpoint now" after the
-  quota reset): wrappers `ac59ade2d4da19ac0`, W1 `ae88c76cb6bda5467`, frontend `a69f98e6d3af1e500`, W4
-  `a8dd06d301e7c2760`, k8s `a1ff77c400aeaa4df`, scratch `a159f489c3a3fd5c0` (done), runner
-  `a67c3c0781e99d708` (done). If the session itself is gone, start fresh builders from each track's
-  `handoff.md` + brief.
+  - W1 (`round8-w1` `track/w1-main`, rework 4 in progress off a0f34143, `brief-w1-rework4.md`: positional
+    identity as a facet of list values, escaping containers share contents, freshness mark, `required` fails
+    iff provably nil/empty); 33 corpus charts drift (battery adjudicates); first SEMANTIC landing → needs the
+    roster-baseline confirmation (recommendation: keep f7be7ba5).
+  - Frontend (`round8-frontend` `frontend-main`, rework 3 in progress off 1c537982, `brief-frontend-rework3.md`
+    F8–F11); 0 fixtures moved so far.
+  - W4/F75 (`round8-w4` `w4-main`, rework 2 in progress off 91dccf1e, `brief-w4-rework2.md`: both reviewers
+    REWORK — self-path pattern guards as partitions + preimage disjunction preserved through evidence
+    merging + red/green cells + invalid Helm fixture); 58 corpus mismatches to adjudicate on the chain.
+  - k8s D1–D3 (`round8-k8s` `k8s-main`, rework 1 in progress off e9baab71, `brief-k8s-rework1.md`: decide
+    KubeVersion guards against the configured version) → fresh Codex review on hand-back.
+- **Builder agents** (native subagents of this session; all four resumed after the 10:00 quota reset;
+  resume with SendMessage): W1 `ae88c76cb6bda5467`, frontend `a69f98e6d3af1e500`, W4 `a8dd06d301e7c2760`,
+  k8s `a1ff77c400aeaa4df`; done: wrappers `ac59ade2d4da19ac0`, scratch `a159f489c3a3fd5c0`, runner
+  `a67c3c0781e99d708`. If the session itself is gone, start fresh builders from each track's `handoff.md` +
+  brief.
 - **Codex runs** (follow_up keeps context): W1 92580cac/416b8635, frontend 7660883f/5d5c270b, scratch
-  be7d3a37/908ce142, runner 73d3081f/6b442c0c, wrappers 7a44129c/b7481bb6. Answers are read from
-  `turns/<latest>/last-message.md` (the transcript file grows only after a `result` call); register in
-  `codex-runs.tsv` after writing the file.
-- **User decisions this session**: personal Claude account only, Claude via native subagents, agentmux for
-  Codex only; keep ~3 implementors running while Codex reviews; spend the weekly quota by its reset
-  (10:00 local) and resume after; roster baseline: recommendation to keep f7be7ba5 for the campaign, NOT
-  yet confirmed by the user.
-- **Follow-ups queued**: sol's scratch P2 (nested `request` paths in copied records); wrappers P3s
-  (scratch path in Helm messages, raw error formatting, Windows runtime test); the airflow/oncall `\u`
-  URL pattern emitter defect; `if $d`/`empty $d` after `unset` (pre-existing); `required (dict)`/`(list)`
-  false rejection on main (hole_effects.rs:150); k8s items outside the spec (forward-incompatible layout,
-  cache-write failure, inference trusting a partial inventory, CRD online probe repeats without the memo).
+  be7d3a37/908ce142, runner 73d3081f/6b442c0c, wrappers 7a44129c/b7481bb6, W4/F75
+  20260928T034515-68054652/-aeb245af. Answers are read from `turns/<latest>/last-message.md` (the transcript
+  file grows only after a `result` call); `collect-codex.py` saves and registers them (`codex-runs.tsv`).
+- **User decisions**: personal Claude account only, Claude via native subagents, agentmux for Codex only;
+  keep ~3 implementors running while Codex reviews; spend the weekly quota by its reset and resume after
+  (reset happened 10:00 local Sep 28); roster baseline: recommendation to keep f7be7ba5 for the campaign,
+  NOT yet confirmed by the user — no semantic landing before that.
+- **Follow-ups queued**: sol's scratch P2 (nested `request` paths in copied records); wrappers P3s (scratch
+  path in Helm messages, raw error formatting, Windows runtime test); the airflow/oncall `\u` URL pattern
+  emitter defect; `if $d`/`empty $d` after `unset` (pre-existing); `required (dict)`/`(list)` false
+  rejection on main (hole_effects.rs:150); k8s items outside the spec (forward-incompatible layout,
+  cache-write failure, inference trusting a partial inventory, CRD online probe repeats without the memo);
+  the runner's readable-log step should call `helm-schema lint` now that expand-defs is gone.
