@@ -6261,6 +6261,22 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `helm-schema explain` design (`design-explain-provenance-astra.md`, 22 KB) sent to sol for cross-check (follow_up
   e48030f1). Runner builder: v6.8 rework 3 first, then both v2 designs. Orchestrator.
 
+- 00:25 (Sep 29) — **W4/F75 rework 5 handed back (w4-main HEAD a91b6666 = 5e0b4bcc R11–R14, 7bb3c283 + 743f7719 R16,
+  a91b6666 R17 on bfac78d5; `final-v6.patch` sha a886a864…, +684 LOC vs main).** R11 flags checked on the whole regex
+  AST (flagged patterns abstain); R12 `&name:`/`&name?` gets its own comment spelling and the provider pattern (early
+  return removed); R13 ≥1 blank before a bare-anchor comment; R14 provider patterns start after the maximal blank run
+  with the first payload character pinned. **Two fixes outside the brief, forced by the new coredns cells:** R16 a
+  literal `default` fallback's type no longer re-types a slot that has a provider schema (the fallback's bare string
+  type merged into the preimage and `collapse_compatible_variants` folded the arms — narrow on main/bfac78d5, plain
+  `{type:string}` with the new arm set so coredns `serviceType: "a: b"` was accepted while Helm aborts; the merge.rs
+  folding itself is left untouched and flagged); R17 number/bool token spellings accept a trailing comment (coredns
+  `420 # x` fixed, "abc" rejected). Matrix `rebase/matrix-helper-hole-v5.txt` 142 rows: v6 = Helm on 122, the 20
+  misses labelled (direct-tpl debt ×16, R4, two kept false rejections from R11's flag abstention, kube-starrocks
+  defaults). Red 24/54 on bfac78d5 + step reds (exit 100 each); green 1617/1617; gates fmt/lint/lint:fc/ast-grep 0,
+  chart_corpus 4/157 (153, same set). Pre-battery had stopped in the dump's compile (nothing ran). Reviews: follow_up
+  runs 68054652 / aeb245af (R16/R17 verdict requested). Builder next: rebase a91b6666 onto cb42c017 in its own-target
+  worktree and run the live battery there per the new corpus-fixtures rule. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
