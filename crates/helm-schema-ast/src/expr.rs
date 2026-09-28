@@ -6,6 +6,9 @@
 //! literal can no longer
 //! masquerade as helper calls or `default …` patterns by accident.
 
+use std::rc::Rc;
+
+use helm_schema_syntax::{ActionId, Span, TemplateAction};
 use tree_sitter::Node;
 
 /// A Go-template literal value.
@@ -234,6 +237,120 @@ pub fn parse_action_expressions(body_text: &str) -> Vec<TemplateExpr> {
     let mut out = Vec::new();
     collect_from_node(tree.root_node(), body_text, &mut out);
     out
+}
+
+/// The typed expressions of one node of an already-parsed Go-template
+/// tree, converted exactly as [`parse_action_expressions`] converts the
+/// same node after parsing its text on its own.
+#[must_use]
+pub fn node_expressions(node: Node<'_>, src: &str) -> Vec<TemplateExpr> {
+    let mut out = Vec::new();
+    collect_from_node(node, src, &mut out);
+    out
+}
+
+/// One template action with the typed expressions inside its delimiters,
+/// lowered from the retained Go-template tree. A control bracket carries
+/// the condition or range clause it holds.
+#[derive(Debug)]
+pub struct ParsedAction {
+    /// The action as the syntax layer delimits it.
+    pub action: TemplateAction,
+    /// The action's expressions in source order.
+    pub expressions: Rc<[TemplateExpr]>,
+}
+
+/// Every action of one parsed template, lowered once from its retained
+/// Go-template tree and indexed by [`ActionId`], so evaluating an action
+/// any number of times never parses its text again.
+#[derive(Debug, Default)]
+pub struct ParsedActions {
+    actions: Vec<ParsedAction>,
+}
+
+impl ParsedActions {
+    /// Lowers `actions`, the byte-ordered action list of the template whose
+    /// tree `root` is.
+    #[must_use]
+    pub fn lower(root: Node<'_>, src: &str, actions: &[TemplateAction]) -> Self {
+        let actions = actions
+            .iter()
+            .map(|action| {
+                let mut expressions = Vec::new();
+                collect_span_expressions(root, src, action.span, &mut expressions);
+                ParsedAction {
+                    action: *action,
+                    expressions: Rc::from(expressions),
+                }
+            })
+            .collect();
+        Self { actions }
+    }
+
+    /// The action with this identity.
+    #[must_use]
+    pub fn get(&self, id: ActionId) -> Option<&ParsedAction> {
+        self.actions.get(id.0)
+    }
+
+    /// The actions that start inside `span`, in source order.
+    #[must_use]
+    pub fn starting_in(&self, span: Span) -> &[ParsedAction] {
+        let first = self
+            .actions
+            .partition_point(|parsed| parsed.action.span.start < span.start);
+        let end = self
+            .actions
+            .partition_point(|parsed| parsed.action.span.start < span.end);
+        self.actions.get(first..end).unwrap_or_default()
+    }
+
+    /// The action whose span ends exactly at `byte`.
+    #[must_use]
+    pub fn ending_at(&self, byte: usize) -> Option<&ParsedAction> {
+        let before = self
+            .actions
+            .partition_point(|parsed| parsed.action.span.start < byte);
+        self.actions
+            .get(before.checked_sub(1)?)
+            .filter(|parsed| parsed.action.span.end == byte)
+    }
+
+    /// The action whose span starts where `span` starts.
+    #[must_use]
+    pub fn at(&self, span: Span) -> Option<&ParsedAction> {
+        let index = self
+            .actions
+            .binary_search_by_key(&span.start, |parsed| parsed.action.span.start)
+            .ok()?;
+        self.get(ActionId(index))
+    }
+}
+
+/// The typed expressions of every node inside `span` of an already-parsed
+/// Go-template tree, in source order, without parsing the span's text again.
+#[must_use]
+pub fn span_expressions(root: Node<'_>, src: &str, span: Span) -> Vec<TemplateExpr> {
+    let mut out = Vec::new();
+    collect_span_expressions(root, src, span, &mut out);
+    out
+}
+
+/// Collect the expression nodes inside `span`. A node only partly inside it
+/// (the control action whose header bracket `span` is) contributes the
+/// children that lie inside.
+fn collect_span_expressions(node: Node<'_>, src: &str, span: Span, out: &mut Vec<TemplateExpr>) {
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        if child.end_byte() <= span.start || child.start_byte() >= span.end {
+            continue;
+        }
+        if span.start <= child.start_byte() && child.end_byte() <= span.end {
+            collect_from_node(child, src, out);
+        } else {
+            collect_span_expressions(child, src, span, out);
+        }
+    }
 }
 
 /// Recursively flatten every action / expression in `node` into `out`.

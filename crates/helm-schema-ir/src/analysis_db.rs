@@ -940,8 +940,7 @@ impl IrAnalysisDb {
         let [range] = ranges.as_slice() else {
             return None;
         };
-        let range_source = body.source.get(range.byte_range())?;
-        let range_expressions = helm_schema_ast::parse_action_expressions(range_source);
+        let range_expressions = helm_schema_ast::node_expressions(*range, body.source);
         matches!(
             range_expressions.as_slice(),
             [range_subject, range_assignment]
@@ -1323,8 +1322,11 @@ impl CachedDefineBody {
     }
 
     fn expressions(&self) -> &[TemplateExpr] {
-        self.expressions
-            .get_or_init(|| helm_schema_ast::parse_action_expressions(&self.source))
+        self.expressions.get_or_init(|| {
+            self.tree()
+                .map(|tree| helm_schema_ast::node_expressions(tree.root_node(), &self.source))
+                .unwrap_or_default()
+        })
     }
 }
 
@@ -1764,8 +1766,8 @@ fn is_self_merge_recursion(value: &TemplateExpr, helper_name: &str) -> bool {
 
 fn subtree_contains_fail(source: &str, node: tree_sitter::Node<'_>) -> bool {
     match crate::node_eval::node_action(source, node) {
-        crate::node_eval::NodeAction::Output(Some(exprs))
-        | crate::node_eval::NodeAction::Assignment(Some(exprs)) => {
+        crate::node_eval::NodeAction::Output(exprs)
+        | crate::node_eval::NodeAction::Assignment(exprs) => {
             let mut found = false;
             for expr in &exprs {
                 expr.walk(|inner| {

@@ -6,10 +6,10 @@
 //! `AbstractValue` lattice (with bound-helper resolution) and lower into
 //! fragment nodes; partial scalars combine per-segment arms with a bounded
 //! cartesian product; inline `{{ if }}…{{ end }}` regions inside scalars
-//! re-parse structurally and become guarded scalar arms.
+//! evaluate their parsed nodes and become guarded scalar arms.
 
-use helm_schema_ast::{TemplateExpr, parse_action_expressions};
-use helm_schema_syntax::{Span, parse_go_template};
+use helm_schema_ast::{TemplateExpr, span_expressions};
+use helm_schema_syntax::Span;
 
 use crate::abstract_value::AbstractValue;
 use crate::bound_value_analysis::parse_literal_list_range_expr;
@@ -35,10 +35,10 @@ use super::lower::{
 
 impl Interpreter<'_> {
     /// Evaluate an inline `{{ if }}`, `{{ with }}`, or `{{ range }}`
-    /// region inside a scalar by re-parsing the region text with the
-    /// Go-template grammar and turning its branches into guarded scalar
-    /// arms. The whole region evaluates under the region's site facts (its
-    /// holes share the region's line).
+    /// region inside a scalar from its node in the source's Go-template
+    /// tree, turning its branches into guarded scalar arms. The whole region
+    /// evaluates under the region's site facts (its holes share the
+    /// region's line).
     pub(super) fn eval_inline_region(
         &mut self,
         span: Span,
@@ -57,30 +57,23 @@ impl Interpreter<'_> {
         &mut self,
         span: Span,
     ) -> Vec<(PathCondition, Vec<StringPart>)> {
-        let text = self.text(span);
-        let Some(tree) = parse_go_template(text) else {
-            return self.inline_region_taint(text);
-        };
-        let root = tree.root_node();
-        let mut cursor = root.walk();
-        let Some(action) = root
-            .named_children(&mut cursor)
-            .find(|child| matches!(child.kind(), "if_action" | "with_action" | "range_action"))
+        let Some(action) = self
+            .region_node(span)
+            .filter(|node| matches!(node.kind(), "if_action" | "with_action" | "range_action"))
         else {
-            return self.inline_region_taint(text);
+            return self.inline_region_taint(span);
         };
-        self.eval_inline_control_action(action, text)
+        self.eval_inline_control_action(action)
     }
 
     pub(super) fn eval_inline_control_action(
         &mut self,
         action: tree_sitter::Node<'_>,
-        text: &str,
     ) -> Vec<(PathCondition, Vec<StringPart>)> {
         match action.kind() {
-            "range_action" => self.eval_inline_range(action, text),
-            "with_action" => self.eval_inline_with(action, text),
-            _ => self.eval_inline_if(action, text),
+            "range_action" => self.eval_inline_range(action),
+            "with_action" => self.eval_inline_with(action),
+            _ => self.eval_inline_if(action),
         }
     }
 
@@ -91,15 +84,14 @@ impl Interpreter<'_> {
     fn eval_inline_if(
         &mut self,
         action: tree_sitter::Node<'_>,
-        text: &str,
     ) -> Vec<(PathCondition, Vec<StringPart>)> {
         let predicate_memo = std::rc::Rc::clone(self.db.predicate_memo());
 
         let mut arm_specs = vec![(
-            control_header(text, action),
+            control_header(self.source, action),
             children_with_field(action, "consequence"),
         )];
-        arm_specs.extend(else_if_pairs(action, text));
+        arm_specs.extend(else_if_pairs(action, self.source));
         arm_specs.push((None, children_with_field(action, "alternative")));
 
         let entry_scope = self.mark_scope();
@@ -153,10 +145,10 @@ impl Interpreter<'_> {
             let body_arms = if arm_condition == Predicate::False {
                 Vec::new()
             } else if self.scalar_output_projection {
-                self.scalar_body_arms(&children, text)
+                self.scalar_body_arms(&children)
                     .unwrap_or_else(unknown_scalar_arms)
             } else {
-                self.inline_body_arms(&children, text)
+                self.inline_body_arms(&children)
             };
             for (sub_condition, parts) in body_arms {
                 arms.push((
@@ -195,13 +187,12 @@ impl Interpreter<'_> {
     pub(super) fn eval_inline_with(
         &mut self,
         action: tree_sitter::Node<'_>,
-        text: &str,
     ) -> Vec<(PathCondition, Vec<StringPart>)> {
         let entry_scope = self.mark_scope();
         let entry_locals = self.locals.clone();
         self.locals.enter_local_scope();
         let (own, reachability) = self.activate_with(
-            control_header(text, action).as_ref(),
+            control_header(self.source, action).as_ref(),
             action.start_byte(),
             0,
         );
@@ -211,10 +202,10 @@ impl Interpreter<'_> {
         let body_arms = if body_condition == Predicate::False {
             Vec::new()
         } else if self.scalar_output_projection {
-            self.scalar_body_arms(&consequence, text)
+            self.scalar_body_arms(&consequence)
                 .unwrap_or_else(unknown_scalar_arms)
         } else {
-            self.inline_body_arms(&consequence, text)
+            self.inline_body_arms(&consequence)
         };
         self.locals.exit_local_scope();
         let consequence_locals = self.locals.clone();
@@ -242,10 +233,10 @@ impl Interpreter<'_> {
         let alternative_arms = if alternative_condition == Predicate::False {
             Vec::new()
         } else if self.scalar_output_projection {
-            self.scalar_body_arms(&alternative, text)
+            self.scalar_body_arms(&alternative)
                 .unwrap_or_else(unknown_scalar_arms)
         } else {
-            self.inline_body_arms(&alternative, text)
+            self.inline_body_arms(&alternative)
         };
         self.locals.exit_local_scope();
         let alternative_locals = self.locals.clone();
@@ -286,10 +277,9 @@ impl Interpreter<'_> {
     pub(super) fn eval_inline_range(
         &mut self,
         node: tree_sitter::Node<'_>,
-        text: &str,
     ) -> Vec<(PathCondition, Vec<StringPart>)> {
-        let Some(header) = helm_schema_ast::range_header_from_source(node, text) else {
-            return self.inline_region_taint(text);
+        let Some(header) = helm_schema_ast::range_header_from_source(node, self.source) else {
+            return self.inline_region_taint(Span::new(node.start_byte(), node.end_byte()));
         };
         let entry_scope = self.mark_scope();
         let entry_locals = self.locals.clone();
@@ -335,7 +325,7 @@ impl Interpreter<'_> {
             .clone()
             .map(|value| value.to_context_value());
         let value_variable = if destructured {
-            helm_schema_ast::range_destructured_value_variable(node, text)
+            helm_schema_ast::range_destructured_value_variable(node, self.source)
         } else {
             helm_schema_ast::range_variable_name_expr(header.expr())
         };
@@ -343,7 +333,8 @@ impl Interpreter<'_> {
             self.locals.range_member_values.insert(variable, binding);
         }
         if destructured
-            && let Some(variable) = helm_schema_ast::range_destructured_key_variable(node, text)
+            && let Some(variable) =
+                helm_schema_ast::range_destructured_key_variable(node, self.source)
             && let Some(path) = direct_path
         {
             self.locals
@@ -355,10 +346,10 @@ impl Interpreter<'_> {
         let mut arms = Vec::new();
         let body = children_with_field(node, "body");
         let body_arms = if self.scalar_output_projection {
-            self.scalar_body_arms(&body, text)
+            self.scalar_body_arms(&body)
                 .unwrap_or_else(unknown_scalar_arms)
         } else {
-            self.inline_body_arms(&body, text)
+            self.inline_body_arms(&body)
         };
         for (sub_condition, parts) in body_arms {
             arms.push((
@@ -378,10 +369,10 @@ impl Interpreter<'_> {
         // legacy consumer cannot preserve its complement's branch scope.
         let alternative = children_with_field(node, "alternative");
         let alternative_arms = if self.scalar_output_projection {
-            self.scalar_body_arms(&alternative, text)
+            self.scalar_body_arms(&alternative)
                 .unwrap_or_else(unknown_scalar_arms)
         } else {
-            self.inline_body_arms(&alternative, text)
+            self.inline_body_arms(&alternative)
         };
         for (sub_condition, parts) in alternative_arms {
             arms.push((sub_condition, parts));
@@ -541,12 +532,11 @@ impl Interpreter<'_> {
     pub(super) fn inline_body_arms(
         &mut self,
         children: &[tree_sitter::Node<'_>],
-        text: &str,
     ) -> Vec<(PathCondition, Vec<StringPart>)> {
         let mut base: Vec<StringPart> = Vec::new();
         let mut conditional = Vec::new();
         for child in children {
-            for (condition, parts) in self.inline_child_arms(*child, text) {
+            for (condition, parts) in self.inline_child_arms(*child) {
                 if condition == Predicate::True {
                     base.extend(parts);
                 } else {
@@ -569,14 +559,13 @@ impl Interpreter<'_> {
     pub(super) fn scalar_body_arms(
         &mut self,
         children: &[tree_sitter::Node<'_>],
-        text: &str,
     ) -> Option<Vec<(PathCondition, Vec<StringPart>)>> {
         let mut states = vec![(Predicate::True, Vec::new())];
         for child in children {
-            let action = node_action(text, *child);
-            let alternatives = self.inline_child_arms(*child, text);
+            let action = node_action(self.source, *child);
+            let alternatives = self.inline_child_arms(*child);
             if alternatives.is_empty() {
-                if matches!(action, NodeAction::Output(Some(_))) {
+                if matches!(action, NodeAction::Output(_)) {
                     return None;
                 }
                 continue;
@@ -701,11 +690,10 @@ impl Interpreter<'_> {
     pub(super) fn inline_child_arms(
         &mut self,
         node: tree_sitter::Node<'_>,
-        text: &str,
     ) -> Vec<(PathCondition, Vec<StringPart>)> {
-        match node_action(text, node) {
+        match node_action(self.source, node) {
             NodeAction::Text => {
-                let content = trimmed_template_text(node, text);
+                let content = trimmed_template_text(node, self.source, &self.body_facts.actions);
                 if content.is_empty() {
                     Vec::new()
                 } else {
@@ -715,7 +703,7 @@ impl Interpreter<'_> {
                     )]
                 }
             }
-            NodeAction::Output(Some(exprs)) => {
+            NodeAction::Output(exprs) => {
                 // A `fail` output terminates rendering: no valid values
                 // document may satisfy the guards active here, and the
                 // action renders nothing.
@@ -766,24 +754,22 @@ impl Interpreter<'_> {
                         None => Vec::new(),
                     })
             }
-            NodeAction::Assignment(Some(exprs)) => {
+            NodeAction::Assignment(exprs) => {
                 self.eval_assignment_exprs(&exprs);
                 Vec::new()
             }
-            NodeAction::Range(_) => self.eval_inline_range(node, text),
-            NodeAction::If(_) => self.eval_inline_control_action(node, text),
-            NodeAction::With(_) => self.eval_inline_with(node, text),
-            NodeAction::Output(None) | NodeAction::Assignment(None) | NodeAction::Suppressed => {
-                Vec::new()
-            }
+            NodeAction::Range(_) => self.eval_inline_range(node),
+            NodeAction::If(_) => self.eval_inline_control_action(node),
+            NodeAction::With(_) => self.eval_inline_with(node),
+            NodeAction::Suppressed => Vec::new(),
             NodeAction::Descend => {
                 let mut cursor = node.walk();
                 let children: Vec<_> = node.children(&mut cursor).collect();
                 if self.scalar_output_projection {
-                    self.scalar_body_arms(&children, text)
+                    self.scalar_body_arms(&children)
                         .unwrap_or_else(unknown_scalar_arms)
                 } else {
-                    self.inline_body_arms(&children, text)
+                    self.inline_body_arms(&children)
                 }
             }
         }
@@ -791,9 +777,15 @@ impl Interpreter<'_> {
 
     pub(super) fn inline_region_taint(
         &mut self,
-        text: &str,
+        span: Span,
     ) -> Vec<(PathCondition, Vec<StringPart>)> {
-        let taint = self.resolved_paths_of_action_text(text);
+        let mut taint = std::collections::BTreeSet::new();
+        for expr in span_expressions(self.tree.root_node(), self.source, span) {
+            taint.extend(
+                self.value_path_context()
+                    .resolved_values_paths_from_expr(&expr),
+            );
+        }
         if taint.is_empty() {
             return Vec::new();
         }
@@ -806,20 +798,6 @@ impl Interpreter<'_> {
                     .collect(),
             ))],
         )]
-    }
-
-    pub(super) fn resolved_paths_of_action_text(
-        &mut self,
-        text: &str,
-    ) -> std::collections::BTreeSet<String> {
-        let mut paths = std::collections::BTreeSet::new();
-        for expr in parse_action_expressions(text) {
-            paths.extend(
-                self.value_path_context()
-                    .resolved_values_paths_from_expr(&expr),
-            );
-        }
-        paths
     }
 }
 
@@ -887,23 +865,26 @@ fn merge_scalar_part_arms(
     merged
 }
 
-fn trimmed_template_text(node: tree_sitter::Node<'_>, source: &str) -> String {
-    let mut content = node.utf8_text(source.as_bytes()).unwrap_or("").to_string();
-    if source
-        .get(..node.start_byte())
-        .is_some_and(|prefix| prefix.ends_with("-}}"))
+/// A template text node as it renders: an adjacent `-}}` before it or
+/// `{{-` after it trims the whitespace on that side. The delimiter kinds
+/// come from the parsed actions, so the literal in `{{-3}}` trims nothing.
+fn trimmed_template_text(
+    node: tree_sitter::Node<'_>,
+    source: &str,
+    actions: &helm_schema_ast::ParsedActions,
+) -> String {
+    let mut content = node.utf8_text(source.as_bytes()).unwrap_or("");
+    if actions
+        .ending_at(node.start_byte())
+        .is_some_and(|parsed| parsed.action.trim_right)
     {
-        content = content
-            .trim_start_matches([' ', '\t', '\r', '\n'])
-            .to_string();
+        content = content.trim_start_matches([' ', '\t', '\r', '\n']);
     }
-    if source
-        .get(node.end_byte()..)
-        .is_some_and(|suffix| suffix.starts_with("{{-"))
+    if actions
+        .at(Span::new(node.end_byte(), node.end_byte()))
+        .is_some_and(|parsed| parsed.action.trim_left)
     {
-        content = content
-            .trim_end_matches([' ', '\t', '\r', '\n'])
-            .to_string();
+        content = content.trim_end_matches([' ', '\t', '\r', '\n']);
     }
-    content
+    content.to_string()
 }

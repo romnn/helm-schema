@@ -5,10 +5,16 @@ use super::{
     ValuesPath, collect_paths_with_descendants, record_member_access_implications,
 };
 
+/// Split an overlay whose provider uses name a values-selected kind into one
+/// partition per candidate kind. Only a use whose resource proves its kind
+/// selector (`kind: {{ .Values.workload.kind }}`) partitions, and only by a
+/// guard comparing THAT path to a candidate: any other value compared with
+/// a kind name says nothing about the rendered kind, so those uses keep
+/// their candidate union.
 fn kind_partitioned_overlays(overlay: ConditionalPathOverlay) -> Vec<ConditionalPathOverlay> {
     let mut kinds = BTreeSet::new();
     for use_ in &overlay.evidence.provider_schema_uses {
-        if provider_use_depends_on_kind_selector(use_) {
+        if provider_use_depends_on_kind_selector(use_) && use_.resource.kind_selector.is_some() {
             kinds.insert(use_.resource.kind.clone());
             kinds.extend(use_.resource.kind_candidates.iter().cloned());
         }
@@ -19,22 +25,31 @@ fn kind_partitioned_overlays(overlay: ConditionalPathOverlay) -> Vec<Conditional
     let Some(selector) = kind_selector_path(&overlay.guards, &kinds) else {
         return vec![overlay];
     };
+    let selected_by = |use_: &ProviderSchemaUse| {
+        provider_use_depends_on_kind_selector(use_)
+            && use_.resource.kind_selector.as_ref() == Some(&selector)
+    };
+    if !overlay
+        .evidence
+        .provider_schema_uses
+        .iter()
+        .any(selected_by)
+    {
+        return vec![overlay];
+    }
 
     let mut out = Vec::new();
     let mut ordinary = overlay.clone();
     ordinary
         .evidence
         .provider_schema_uses
-        .retain(|use_| !provider_use_depends_on_kind_selector(use_));
+        .retain(|use_| !selected_by(use_));
     if !ordinary.evidence.provider_schema_uses.is_empty() {
         out.push(ordinary);
     }
     for kind in kinds {
         let mut partition = overlay.clone();
-        partition
-            .evidence
-            .provider_schema_uses
-            .retain(provider_use_depends_on_kind_selector);
+        partition.evidence.provider_schema_uses.retain(selected_by);
         partition.insert_guard(ConditionalGuard::Eq {
             path: selector.clone(),
             value: super::GuardValue::string(kind.clone()),

@@ -3,19 +3,17 @@
 //! actions with parsed headers/expressions, and the if-chain's
 //! else-if (header, body) pairs.
 
-use helm_schema_ast::{TemplateExpr, TemplateHeader, range_header_from_source};
-
-use helm_schema_ast::parse_expr_text;
+use helm_schema_ast::{TemplateExpr, TemplateHeader, node_expressions, range_header_from_source};
 
 #[derive(Clone, Debug)]
 pub(crate) enum NodeAction {
     Text,
     Suppressed,
-    Assignment(Option<Vec<TemplateExpr>>),
+    Assignment(Vec<TemplateExpr>),
     If(Option<TemplateHeader>),
     With(Option<TemplateHeader>),
     Range(Option<TemplateHeader>),
-    Output(Option<Vec<TemplateExpr>>),
+    Output(Vec<TemplateExpr>),
     Descend,
 }
 
@@ -24,7 +22,7 @@ pub(crate) fn node_action(source: &str, node: tree_sitter::Node<'_>) -> NodeActi
         "text" | "yaml_no_injection_text" => NodeAction::Text,
         "define_action" | "block_action" => NodeAction::Suppressed,
         "variable_definition" | "assignment" => {
-            NodeAction::Assignment(parse_node_exprs(source, node))
+            NodeAction::Assignment(node_expressions(node, source))
         }
         "if_action" => NodeAction::If(control_header(source, node)),
         "with_action" => NodeAction::With(control_header(source, node)),
@@ -47,21 +45,16 @@ pub(crate) fn node_action(source: &str, node: tree_sitter::Node<'_>) -> NodeActi
         | "float_literal"
         | "interpreted_string_literal"
         | "raw_string_literal"
-        | "nil" => NodeAction::Output(parse_node_exprs(source, node)),
+        | "nil" => NodeAction::Output(node_expressions(node, source)),
         _ => NodeAction::Descend,
     }
 }
 
-fn parse_node_exprs(source: &str, node: tree_sitter::Node<'_>) -> Option<Vec<TemplateExpr>> {
-    node.utf8_text(source.as_bytes()).ok().map(parse_expr_text)
-}
-
+/// The typed header of a control node's condition; `None` when the
+/// grammar recovered the action without one.
 pub(crate) fn control_header(source: &str, node: tree_sitter::Node<'_>) -> Option<TemplateHeader> {
-    let condition = node.child_by_field_name("condition").unwrap_or(node);
-    condition
-        .utf8_text(source.as_bytes())
-        .ok()
-        .map(|text| TemplateHeader::parse_control(text.trim().to_string()))
+    node.child_by_field_name("condition")
+        .map(|condition| TemplateHeader::from_node(condition, source))
 }
 
 pub(crate) fn control_headers(
@@ -75,7 +68,7 @@ pub(crate) fn control_headers(
     }
     loop {
         if walker.field_name() == Some("condition") {
-            headers.push(control_header(source, walker.node()));
+            headers.push(Some(TemplateHeader::from_node(walker.node(), source)));
         }
         if !walker.goto_next_sibling() {
             break;
@@ -100,7 +93,7 @@ pub(crate) fn else_if_pairs<'node>(
         match walker.field_name() {
             Some("condition") => {
                 if seen_main_condition {
-                    pairs.push((control_header(source, child), Vec::new()));
+                    pairs.push((Some(TemplateHeader::from_node(child, source)), Vec::new()));
                 } else {
                     seen_main_condition = true;
                 }

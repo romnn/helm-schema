@@ -24,6 +24,7 @@ mod block_scalar_projection;
 mod bound_helpers;
 mod canonical_emission;
 mod chart_local_crd_contracts;
+mod compact_controls;
 mod completed_token_contracts;
 mod condition_encoding;
 mod default_hint_extraction;
@@ -62,6 +63,7 @@ mod serialized_descendant_contracts;
 mod shape_alternatives;
 mod string_transform_contracts;
 mod transform_position_matrix;
+mod trim_delimiters;
 mod validator_reachability;
 
 /// Provider chains resolve against the COMMITTED bundle with downloads off:

@@ -42,6 +42,7 @@ fn resource(api_version: &str, candidates: &[&str], branches: Vec<HelperBranch>)
             .collect(),
         api_version_branches: branches,
         kind_branches: Vec::new(),
+        kind_selector: None,
     }
 }
 

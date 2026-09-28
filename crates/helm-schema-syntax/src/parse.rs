@@ -14,7 +14,7 @@
 
 use std::collections::HashMap;
 
-use crate::actions::{ActionToken, TokenKind};
+use crate::actions::{ActionKind, TemplateAction};
 use crate::cst::{
     BlockScalar, CommentLine, ControlBranch, ControlKind, ControlRegion, MappingEntry, Node,
     OpaqueKind, OpaqueNode, OutputAction, ScalarLine, ScalarPart, ScalarParts, SequenceItem, Span,
@@ -38,7 +38,7 @@ pub(crate) struct Frame {
     pub(crate) marked_at: Option<usize>,
 }
 
-pub(crate) fn parse_document(source: &str, tokens: Vec<ActionToken>) -> TemplatedDocument<'_> {
+pub(crate) fn parse_document(source: &str, tokens: Vec<TemplateAction>) -> TemplatedDocument<'_> {
     let lines = LineIndex::new(source);
     let parser = Parser {
         source,
@@ -126,7 +126,7 @@ struct RegionBuilder {
 
 struct Parser<'src> {
     source: &'src str,
-    tokens: Vec<ActionToken>,
+    tokens: Vec<TemplateAction>,
     frames: Vec<Frame>,
     head: Option<usize>,
     owners: Vec<OwnerFrame>,
@@ -154,6 +154,7 @@ impl<'src> Parser<'src> {
             source: self.source,
             roots,
             document_spans: document_spans(self.source),
+            actions: self.tokens,
         }
     }
 
@@ -341,7 +342,7 @@ impl<'src> Parser<'src> {
         let Some(first) = self.tokens.get(self.next_token).copied() else {
             return false;
         };
-        let TokenKind::Output { render_indent, .. } = first.kind else {
+        let ActionKind::Output { render_indent, .. } = first.kind else {
             return false;
         };
         if first.span.end > le {
@@ -370,7 +371,7 @@ impl<'src> Parser<'src> {
         };
         if key_tokens.is_empty()
             || key_tokens.iter().any(|token| {
-                token.span.end > colon_start || !matches!(token.kind, TokenKind::Output { .. })
+                token.span.end > colon_start || !matches!(token.kind, ActionKind::Output { .. })
             })
             || self
                 .tokens
@@ -422,20 +423,20 @@ impl<'src> Parser<'src> {
         }));
     }
 
-    fn handle_token_structural(&mut self, token: ActionToken) {
+    fn handle_token_structural(&mut self, token: TemplateAction) {
         match token.kind {
-            TokenKind::Output { expr_span, .. } => self.attach(Node::Output(OutputAction {
+            ActionKind::Output { expr_span, .. } => self.attach(Node::Output(OutputAction {
                 span: token.span,
                 expr_span,
             })),
-            TokenKind::Assign => self.attach_opaque(token.span, OpaqueKind::Assignment),
-            TokenKind::TemplateComment => {
+            ActionKind::Assign => self.attach_opaque(token.span, OpaqueKind::Assignment),
+            ActionKind::TemplateComment => {
                 self.attach_opaque(token.span, OpaqueKind::TemplateComment);
             }
-            TokenKind::Break => self.attach_opaque(token.span, OpaqueKind::Break),
-            TokenKind::Continue => self.attach_opaque(token.span, OpaqueKind::Continue),
-            TokenKind::Error => self.attach_opaque(token.span, OpaqueKind::ParseError),
-            TokenKind::RegionOpen {
+            ActionKind::Break => self.attach_opaque(token.span, OpaqueKind::Break),
+            ActionKind::Continue => self.attach_opaque(token.span, OpaqueKind::Continue),
+            ActionKind::Error => self.attach_opaque(token.span, OpaqueKind::ParseError),
+            ActionKind::RegionOpen {
                 region,
                 kind,
                 region_end,
@@ -455,8 +456,8 @@ impl<'src> Parser<'src> {
                     }),
                 });
             }
-            TokenKind::RegionBranch { region } => self.rotate_branch(region, token.span, true),
-            TokenKind::RegionEnd { region } => self.end_region(region, true),
+            ActionKind::RegionBranch { region } => self.rotate_branch(region, token.span, true),
+            ActionKind::RegionEnd { region } => self.end_region(region, true),
         }
     }
 
@@ -531,7 +532,7 @@ impl<'src> Parser<'src> {
             self.next_token += 1;
             self.suppressed_until = self.suppressed_until.max(token.span.end);
             match token.kind {
-                TokenKind::RegionOpen {
+                ActionKind::RegionOpen {
                     region, region_end, ..
                 } => {
                     self.region_modes.insert(region, RegionMode::Consumed);
@@ -542,8 +543,10 @@ impl<'src> Parser<'src> {
                         }));
                     }
                 }
-                TokenKind::RegionBranch { region } => self.rotate_branch(region, token.span, false),
-                TokenKind::RegionEnd { region } => self.end_region(region, false),
+                ActionKind::RegionBranch { region } => {
+                    self.rotate_branch(region, token.span, false);
+                }
+                ActionKind::RegionEnd { region } => self.end_region(region, false),
                 _ => {}
             }
         }

@@ -6,9 +6,9 @@
 //! `AbstractValue` lattice (with bound-helper resolution) and lower into
 //! fragment nodes; partial scalars combine per-segment arms with a bounded
 //! cartesian product; inline `{{ if }}…{{ end }}` regions inside scalars
-//! re-parse structurally and become guarded scalar arms.
+//! evaluate their parsed nodes and become guarded scalar arms.
 
-use helm_schema_ast::{TemplateExpr, parse_expr_text};
+use helm_schema_ast::TemplateExpr;
 use helm_schema_core::ValuesPath;
 use helm_schema_syntax::Span;
 
@@ -238,7 +238,7 @@ impl Interpreter<'_> {
     /// current pipeline walks assignment bodies in a no-render scope, so all
     /// of its claims are pathless.
     pub(super) fn eval_assignment_span(&mut self, span: Span) {
-        let exprs = parse_expr_text(self.text(span));
+        let exprs = self.hole_exprs(span);
         if exprs.is_empty() {
             return;
         }

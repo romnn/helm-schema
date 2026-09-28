@@ -7,8 +7,11 @@ use color_eyre::eyre::{self, OptionExt as _};
 use test_util::prelude::sim_assert_eq;
 
 fn collect_spans(src: &str, analysis_db: &IrAnalysisDb) -> Vec<helm_schema_ast::ResourceSpan> {
-    let document = helm_schema_syntax::TemplatedDocument::parse(src);
-    crate::resource_identity::collect_resource_spans(&document, analysis_db)
+    let Some(tree) = helm_schema_ast::parse_go_template(src) else {
+        return Vec::new();
+    };
+    let document = helm_schema_syntax::TemplatedDocument::parse_with_root(src, tree.root_node());
+    crate::resource_identity::collect_resource_spans(&document, tree.root_node(), analysis_db)
 }
 
 fn detect(src: &str, defines: &DefineIndex) -> Option<crate::ResourceRef> {
@@ -54,8 +57,8 @@ fn preserves_inline_conditional_kind_candidates() {
 }
 
 /// An inline conditional between literal kinds ALSO records its per-arm
-/// guard texts (raw, unresolved — locals only bind in template scope) so
-/// the evaluator can predicate-qualify the arms at use-tagging time.
+/// parsed guards (unresolved — locals only bind in template scope) so the
+/// evaluator can predicate-qualify the arms at use-tagging time.
 #[test]
 fn records_inline_conditional_kind_branch_sources() {
     let defines = DefineIndex::new();
@@ -76,7 +79,7 @@ fn records_inline_conditional_kind_branch_sources() {
         have: sources,
         want: &vec![
             helm_schema_ast::KindBranchSource {
-                condition: Some("$stateful".to_string()),
+                condition: Some(helm_schema_ast::TemplateExpr::Variable("stateful".to_string())),
                 kind: "StatefulSet".to_string(),
             },
             helm_schema_ast::KindBranchSource {
@@ -112,7 +115,7 @@ fn preserves_inline_kind_branch_sources_through_outer_control() -> eyre::Result<
         have: sources,
         want: &vec![
             helm_schema_ast::KindBranchSource {
-                condition: Some("$stateful".to_string()),
+                condition: Some(helm_schema_ast::TemplateExpr::Variable("stateful".to_string())),
                 kind: "StatefulSet".to_string(),
             },
             helm_schema_ast::KindBranchSource {
@@ -500,4 +503,87 @@ fn values_driven_ternary_api_version_abstains() {
         resource.api_version.is_empty() || resource.api_version_branches.is_empty(),
         "a values-selected ternary must not fabricate capability branches: {resource:?}"
     );
+}
+
+/// An `if` chain writing each kind under `eq .Values.kind "<kind>"` proves
+/// `kind` as the kind selector at document scope; the same chain inside
+/// `with .Values.workload` reads `workload.Values.kind`, so it proves no
+/// selector the rows' guards could name.
+#[test]
+fn if_chain_kind_selector_is_not_proven_under_a_rebound_dot() -> eyre::Result<()> {
+    let chain = indoc! {r#"
+        {{- if eq .Values.kind "StatefulSet" }}
+        kind: StatefulSet
+        {{- else }}
+        kind: DaemonSet
+        {{- end }}
+    "#};
+    let root = format!("apiVersion: apps/v1\n{chain}metadata:\n  name: test\n");
+    let rebound = format!(
+        "apiVersion: apps/v1\n{{{{- with .Values.workload }}}}\n{chain}{{{{- end }}}}\nmetadata:\n  name: test\n"
+    );
+    let root = detect(&root, &DefineIndex::new()).ok_or_eyre("root resource")?;
+    let rebound = detect(&rebound, &DefineIndex::new()).ok_or_eyre("rebound resource")?;
+
+    sim_assert_eq!(
+        have: root.kind_selector,
+        want: Some(helm_schema_core::ValuesPath::parse("kind"))
+    );
+    sim_assert_eq!(have: rebound.kind_selector, want: None);
+    Ok(())
+}
+
+/// A nested chain proves its selector for the parent only as the parent's
+/// sole kind-writing arm: a parent `else` writing another kind renders
+/// independently of the nested chain's path.
+#[test]
+fn nested_chain_selector_needs_the_sole_parent_kind_arm() -> eyre::Result<()> {
+    let nested = indoc! {r#"
+        {{- if eq .Values.mode "Deployment" }}
+        kind: Deployment
+        {{- else }}
+        kind: StatefulSet
+        {{- end }}
+    "#};
+    let sole = format!(
+        "apiVersion: apps/v1\n{{{{- if .Values.flag }}}}\n{nested}{{{{- end }}}}\nmetadata:\n  name: test\n"
+    );
+    let competing = format!(
+        "apiVersion: apps/v1\n{{{{- if .Values.flag }}}}\n{nested}{{{{- else }}}}\nkind: DaemonSet\n{{{{- end }}}}\nmetadata:\n  name: test\n"
+    );
+    let sole = detect(&sole, &DefineIndex::new()).ok_or_eyre("sole resource")?;
+    let competing = detect(&competing, &DefineIndex::new()).ok_or_eyre("competing resource")?;
+
+    sim_assert_eq!(
+        have: sole.kind_selector,
+        want: Some(helm_schema_core::ValuesPath::parse("mode"))
+    );
+    sim_assert_eq!(have: competing.kind_selector, want: None);
+    Ok(())
+}
+
+/// A parent arm writing `kind: {{ .Values.otherKind }}` is a kind write even
+/// though no literal resolves: the nested `mode` chain is not the sole
+/// kind-writing arm, and the resolved literals do not cover every render,
+/// so identity proves no kind at all.
+#[test]
+fn unresolved_competing_kind_arm_leaves_the_kind_unknown() -> eyre::Result<()> {
+    let nested = indoc! {r#"
+        {{- if eq .Values.mode "Deployment" }}
+        kind: Deployment
+        {{- else }}
+        kind: StatefulSet
+        {{- end }}
+    "#};
+    let resolved = format!(
+        "apiVersion: apps/v1\n{{{{- if .Values.flag }}}}\n{nested}{{{{- end }}}}\nmetadata:\n  name: test\n"
+    );
+    let competing = format!(
+        "apiVersion: apps/v1\n{{{{- if .Values.flag }}}}\n{nested}{{{{- else }}}}\nkind: {{{{ .Values.otherKind }}}}\n{{{{- end }}}}\nmetadata:\n  name: test\n"
+    );
+    let resolved = detect(&resolved, &DefineIndex::new()).ok_or_eyre("resolved resource")?;
+
+    sim_assert_eq!(have: resolved.kind, want: "Deployment");
+    sim_assert_eq!(have: detect(&competing, &DefineIndex::new()), want: None);
+    Ok(())
 }

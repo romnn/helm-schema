@@ -76,7 +76,7 @@ fn collect_dispatch(
                 if dispatch.is_some() {
                     return false;
                 }
-                let Some(arms) = boolean_output_arms(source, child, exprs.as_deref()) else {
+                let Some(arms) = boolean_output_arms(source, child, &exprs) else {
                     return false;
                 };
                 *dispatch = Some(arms);
@@ -90,23 +90,22 @@ fn collect_dispatch(
 }
 
 /// The synthetic two-arm dispatch for a single boolean-valued output body.
-/// The header re-parses the expression's own source text, so the arm's
-/// condition is exactly the rendered test.
+/// The header is the expression's own parsed node, so the arm's condition
+/// is exactly the rendered test.
 fn boolean_output_arms(
     source: &str,
     node: tree_sitter::Node<'_>,
-    exprs: Option<&[TemplateExpr]>,
+    exprs: &[TemplateExpr],
 ) -> Option<Vec<LiteralDispatchArm>> {
-    let [expr] = exprs? else {
+    let [expr] = exprs else {
         return None;
     };
     if !boolean_valued(expr) {
         return None;
     }
-    let raw = node.utf8_text(source.as_bytes()).ok()?;
     Some(vec![
         LiteralDispatchArm {
-            header: Some(TemplateHeader::parse_control(raw.trim())),
+            header: Some(TemplateHeader::from_node(node, source)),
             literal: "true".to_string(),
             raw_empty: false,
         },
@@ -167,7 +166,7 @@ fn dispatch_arms(
                 // renders static text just like a text node (redis'
                 // `createConfigmap` gate spells its `true` this way).
                 NodeAction::Output(exprs) => {
-                    let [expr] = exprs.as_deref()? else {
+                    let [expr] = exprs.as_slice() else {
                         return None;
                     };
                     literal.push_str(&literal_output_text(expr)?);

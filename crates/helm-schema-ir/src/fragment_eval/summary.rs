@@ -137,7 +137,7 @@ impl DeferredScalarProjection {
             .named_children(&mut scalar_cursor)
             .collect::<Vec<_>>();
         let projected = interpreter
-            .scalar_body_arms(&scalar_children, body.source)
+            .scalar_body_arms(&scalar_children)
             .and_then(|arms| scalar_dispatch_from_alternatives(arms, db.predicate_memo().as_ref()));
         merge_scalar_dispatch_candidates(
             self.structural.clone(),
@@ -250,6 +250,7 @@ fn bound_helper_interpreter<'a>(
         body.source,
         Some(body.source_path),
         db,
+        body.tree,
         &document,
         body_facts,
     );

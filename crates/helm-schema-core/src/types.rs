@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-use crate::{HelperBranch, Predicate};
+use crate::{HelperBranch, Predicate, ValuesPath};
 
 /// YAML path in the rendered manifest, e.g. `["metadata", "name"]`.
 #[derive(Debug, Clone, Default, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize, Deserialize)]
@@ -72,6 +72,13 @@ pub struct ResourceRef {
     /// exact selected arm from a selector-independent concrete resource.
     #[serde(skip)]
     pub kind_branches: Vec<KindBranch>,
+    /// The values path whose value is the rendered kind
+    /// (`kind: {{ .Values.workload.kind }}`), when the kind and its
+    /// candidates are the literals the template compares that path with.
+    /// Non-serialized provenance: only a guard comparing this path to a
+    /// candidate selects that kind.
+    #[serde(skip)]
+    pub kind_selector: Option<ValuesPath>,
 }
 
 impl ResourceRef {
@@ -86,6 +93,7 @@ impl ResourceRef {
             api_version_candidates: Vec::new(),
             api_version_branches: Vec::new(),
             kind_branches: Vec::new(),
+            kind_selector: None,
         }
     }
 }
