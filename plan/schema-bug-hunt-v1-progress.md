@@ -5435,6 +5435,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Four new tests incl. the blocked-output SIGTERM cell (dies by signal 15 within seconds, no scratch). Gates
   fmt/lint/lint:fc/ast-grep 0, unit 1588, helm_wrapper 16/16, `task test:integration` 864, no fixtures moved.
 
+- 04:55 (Sep 28) — **Scratch rework 3 handed back (a3166561, `final.patch` sha 071bd658…, 86 files, LOC 0);
+  landing 4 assembled and its chain started on runner v6.6; fourth-round scratch reviews run in parallel.**
+  Rework 3: `HelmRunner::run` writes `<stage>.invocation.json` (chart, values, kube version, request) before
+  anything executes and `preserve_bundle` copies every recorded stage's chart and values into the bundle
+  with relative paths — one mechanism for probe, bare-runner and decoder cases (S14, red control); the four
+  temp vars on every Go/mise command line in both helmsweep tasks (S15; red: inherited vars at an
+  unwritable dir break the old task); `preserve` marks before copying (S16, partial-copy test); injectable
+  `HelmRunner` for the decoder with a full-bundle test (S17). Gates fmt/lint/lint:fc (51 PASS, 0 WARN)/
+  ast-grep 0, unit 1595, integration 852, test:helmsweep 0, goldilocks slice 0 flips. Landing 4: clone
+  `round8-landing4` off main e63e883c, branch `landing-4`: 5dd91afd (scratch) + 6fc92b6b (classify
+  61a04445, sha 571e172e…), 92 files, tree clean. `landing-4.env` filled (R, E `round8-landing4-run1`,
+  DUMP; per-cell acceptances; cap 3; `IGNORED_LANE_TESTS=''`; runner commit 3d763e7); chain
+  dump→unit→lint→battery→integration→sweep→finalize launched 04:55 (`round8-landing4-run1/chain.log`).
+  Decision: the fourth scratch review (follow-ups on be7d3a37/908ce142) runs concurrently; a P1 stops the
+  chain, P2s go to a follow-up landing. Sol's wrappers re-review: REWORK on one P2 (the poll stops at EOF
+  while Helm stays alive → wait blocks, a later signal is ignored) — builder resumed; astra pending.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
