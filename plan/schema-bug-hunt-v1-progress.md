@@ -6044,6 +6044,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   F66) → 6/83 earliest midday Sep 29 if rework 6 lands and the roster baseline is confirmed; W4/F75 (F34/F65/F75) →
   9/83 Sep 29 evening at the earliest; F1 now in progress. Orchestrator.
 
+- 22:28 (Sep 28) — **W4 side tasks done (w4-main untouched at bfac78d5).** R6 Helm sample
+  (`rebase/matrix-r6-sample-4.2.3.txt`, scripts `rebase/r6/`): 12 of the 77 moved charts (keda, velero,
+  kube-state-metrics, promtail, vector, uptime-kuma, pgadmin4, pihole, jaeger, headlamp, kubeview, minecraft), 93
+  probes + defaults on leaves whose v5 schema carries the anchored projection — no non-anchored probe changed
+  verdict across main / f493bb14 / v5; 23 anchored probes REJECT → ACCEPT, all render (kubeconform matches each
+  chart's default status); no cell where v5 disagrees with Helm + kubeconform. w4-rebase refreshed: reset to
+  bfac78d5, `git rebase 9716e080` clean (10 commits), HEAD 4d0fce8d; gates on the worktree's OWN target
+  `round8-w4-rebase-target`: fmt 0, task lint 0, nextest 1620/1620, chart_corpus 4/157 (same 153 set); lint:fc,
+  ast-grep, integration profile not run. Target correction applied: a first gate run from the worktree in the
+  shared `round7-f78/target` was stopped (logs kept as non-evidence), all 14 crates purged there, gates rerun on
+  the own target; earlier w4-main evidence came from one workspace path and is unaffected. Next side item in
+  worktree `round8-w4-grammar` (own target): the grammar-level optional anchor prefix as a byte-identical
+  REFACTOR off 4d0fce8d (both reviewers' preferred shape). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
