@@ -6058,6 +6058,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   worktree `round8-w4-grammar` (own target): the grammar-level optional anchor prefix as a byte-identical
   REFACTOR off 4d0fce8d (both reviewers' preferred shape). Orchestrator.
 
+- 22:35 (Sep 28) — **Anchor-grammar refactor stopped before coding (correctly): byte identity with 4d0fce8d and a
+  smaller schema contradict** (`round8-w4-evidence/grammar/handoff.md`). The per-spelling anchored copies ARE the
+  emitted bytes (e.g. 9 `then` arms in the helper-tpl slot fixture; ~174 anchored patterns in gen fixtures, ~2,900
+  patterns / 5,700 anyOf arms across 156 corpus charts); composing the prefix once is a representation change
+  (one arm per lexical spelling, a new proved rule that `&` not followed by name+blank is not an anchor, payload-only
+  projection kept for provider arms) — all 153 moved fixtures would move again. Options: A representation change
+  (−30…−40 LOC, ~+2 % size vs main instead of +4.4 %), B source-only refactor with identical bytes (LOC-neutral),
+  C keep v5. DECISION (orchestrator): C for this landing (both reviewers: duplication not a blocker); A queued as its
+  own post-landing candidate. W4 builder next: pre-run the live round-74 battery on the rebased tree 4d0fce8d
+  (own dump + helmsweep in its worktree target, per the acceptance-battery skill) so unmatched flips among the 153
+  moves are known before the landing chain. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
