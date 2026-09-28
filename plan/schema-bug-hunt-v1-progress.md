@@ -5845,6 +5845,41 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `[A-Za-z0-9_-]`, anchors on enum/length slots, direct-tpl lane, coredns "abc"). Builder meanwhile measures
   the per-chart size delta and runs Helm cells on ≥10 moved charts in a worktree. Orchestrator.
 
+- 19:10 (Sep 28) — **W1 rework 5 handed back (track/w1-main HEAD fdb4f8c3 = 0852971a, ad447dc9, 4c4ee669, fdb4f8c3 on
+  2012d658; `final-v6.patch` 69 files sha 90d3ff8d…, +506 LOC vs main; rework 5 alone +78).** R2 unavailable
+  operands/items contribute Unknown (`collections.rs:827`); R3 `Elements` no longer nonempty/truthy, exact-iteration
+  arms deleted; R4+R5 `Effects.mutated_paths` → one `MutationFacts` (`eval_effect.rs:17`: reached input paths,
+  reached constructed dicts/lists, the whole values root when the root context goes to `tpl` or a dynamic include;
+  feeds helper evaluation and the helper cache key; the helper-local `set` shortcut records its mutations). R1
+  WITHOUT a sink change: jaeger accepts again because `merge (dict) …` mutates a constructed dict so the later
+  `len (keys …)` truth abstains (cost: every merge result is stale) — builder asks whether that is acceptable; put
+  to both reviewers as the R1 decision. R7 not reproduced by the builder (all 5 cells accept on 2012d658 in
+  harness and CLI; tests kept) — sol asked to re-check. Extra main bug fixed from the drift probe: schema-registry
+  rejected `kafka.sasl={}` which renders (`symbolic_local_state/mod.rs:313`: a flag reassigned under an
+  unrepresentable condition no longer claims truthiness everywhere). Tests: 20 full-schema tests from
+  `fail_validators.rs:5864`, red 15/20 on 2012d658 prod, green 20/20. Matrix 112 rows (base249 | new4 | new5):
+  every R2–R5 row Helm renders is new5 ACCEPT; remaining WRONG rows = main's own false acceptances (d1-alias-set,
+  p3-computed-key, r3-concat-len "one"), open-unset-* (parked), r3-range-concat "one" (Helm abort now accepted;
+  main rejected it only together with the empty case that renders). Gates: fmt/lint/lint:fc/ast-grep 0, nextest
+  1669/1669, chart_corpus 106/157 — 51 mismatches (34 carried, 11 byte-changed with 0 probe flips; jaeger back
+  to main's fixture; 17 new with 0 tightenings and 1 loosening in the probe — argo-workflows
+  `workflow.serviceAccount={}` renders, main false rejection gone; loki/oncall defaults rejected on both sides).
+  Reviews: follow_up runs 92580cac / 416b8635. Builder resumes the `track/w1-unset` side task in a worktree.
+- 19:12 (Sep 28) — **Frontend rework 4 handed back (frontend-main HEAD e584c2d3 on 826b11b4; `final-v5.patch` 35
+  files +1880/−681 sha fbdbfee1…, +212 LOC; F10 side branch = e584c2d3 + 987bb4f6, `f10-complement.patch` sha
+  6d293d2e…).** F12: `HeaderParts.kind_unresolved` records any `kind:` whose scalar resolves to no literal
+  (`resource_identity.rs:473`); such an arm is kind-writing and proves no selector (:339); a window mixing it with
+  resolved kinds proves no kind (:102); tests ir `unresolved_competing_kind_arm_leaves_the_kind_unknown`, gen
+  `dynamic_competing_kind_arm_voids_the_nested_selector`, red on 826b11b4 exit 100; Helm f12-dynamic renders
+  DaemonSet + maxSurge, with/range-else and `$`/dict controls StatefulSet + partition. F13: F10 record now
+  distinguishes Helm render from the Kubernetes 1.29 StatefulSet schema failure. Gates on e584c2d3: fmt 0, lint 0,
+  ast-grep 0, lint:fc 0, nextest 1607/1607, integration profile 848/848, 0 fixtures moved (lanes 157/1/23).
+  Newly listed open (pre-existing): a partly resolving kind scalar keeps only its literal arms (helper-output
+  evaluation path). Inline-else parked as WIP 9c9bb1f9 in worktree `round8-frontend-else` (parser cuts a content
+  line at a structured else/end; Helm matrix + pre-fix probe recorded; range spelling gets no constraint on `x`).
+  Reviews: follow_up runs 7660883f / 5d5c270b; LAND → landing 6 (fixture-preserving) on its own TARGET. Builder
+  resumes inline-else. T7 126 GB free at 19:07 (builders' targets grow ~20 GB/h; watch). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
