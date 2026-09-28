@@ -5471,6 +5471,22 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   add a bundle-local replay description. Landing-4 chain: dump step running since 04:52 (lock held by pid
   15571; the machine also runs five builders).
 
+- 05:20 (Sep 28) — **k8s D1–D3 handed back (e9baab71, `final.patch` sha 6e9c79f6…, +162 LOC): D2/D3 clean,
+  D1 as built flips 51 corpus charts and adds a false rejection → rework 1 briefed.** D2 deletes
+  `load_source_schema_doc`; the release × filename × source walk stops on Uncertain →
+  `ProviderLookupResult::Unavailable` → `ChainLookupOutcome::Unavailable` + `Diagnostic::SchemaUnavailable`;
+  an unresolved `$ref` marks the fragment incomplete. D3 no memo of Unavailable, the kind-inference memo
+  deleted. D1 `capability_decision` Selected/Unreachable/Undecided — but every `semverCompare …
+  .Capabilities.KubeVersion` guard (Opaque) counts as Undecided, so 51 charts lose their provider
+  contracts (Ingress, PDB, NetworkPolicy, StatefulSet, RBAC, HPA helpers) and the PDB `50%`
+  int-or-string slot becomes a false rejection (pinned by the builder as "known"). 15 new tests in
+  `provider_cache_correctness.rs` (red 7/15 on 51ea8b45, stepwise green), cold = warm = offline invariant
+  cells; gates fmt/lint/lint:fc/ast-grep 0, unit 1591, k8s integration 96/96, chart_corpus 106/157. Decision
+  (brief `brief-k8s-rework1.md`): the Kubernetes version is a pinned input, so KubeVersion guards are
+  decided against the configured primary version with the typed semver-constraint parser (K1), the `50%`
+  pin is deleted (K2), single-alternative Undecided → Selected (K4), corpus expected ~0 mismatches (K3);
+  builder resumed. Landing-4 chain still in dump.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
