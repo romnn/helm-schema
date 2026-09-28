@@ -6291,6 +6291,27 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   independent-contract qualification, containment result, BaseOwner) captured in the resolver. Astra asked for design
   v2 with that first commit (follow_up 11bf8beb). Load 5; T7 166 GB. Orchestrator.
 
+- 00:45 (Sep 29) — **Frontend phase-2 plan v3 written** (`phase2/plan.md`, 99 lines: `Origin::{Literal{span,occurrence},
+  Action{ActionId,occurrence}}` with occurrence = helper-call chain + repetition index; "each source action is indexed
+  once; layout enumeration does not re-evaluate execution effects"; `literal_block` retires only after
+  `literal_mapping_value`/`literal_sequence_value` incl. local CRD projection use the new ownership). Builder paused;
+  2.1(a) starts when a heavy slot frees. **Runner v6.8 rework 3 handed back (runner-v6.8 HEAD 5346e98a;
+  `v68-rework3.patch` sha f2f3baf1…; run-all 603 ok + 80 Python; red 8 FAIL vs 2e968a72):** D1 real non-symlink
+  archive dir with no-follow links (symlink → "sealing refused (4)", gate exit kept); D2 pinned against real Helm
+  4.2.3 (pass summary on stdout, `Error: … failed` on stderr; last non-empty line of the right stream must equal the
+  summary; `trailing` mode → 9); D3 malformed/empty seal → 4; D4 strict `read_readable_rows` → 4; D5 two failed
+  attempts + retry after a finalize refusal with all seals verifying. Open point for reviewers: a refused seal keeps
+  the gate's exit and finalize does not demand that attempt's seal. Re-check dispatched (follow_up 73d3081f /
+  6b442c0c). **Tooling designs v2 written** (`proposals/target-guard.md` 105 lines: Python guard-and-execute wrapper,
+  `flock` claim, `.owner` = `R=` + `id=<token>` with the token in a gitignored `.target-owner-id`, both-marker
+  transitions, 21 tasks + goreleaser wired, runner v6.9 first, CI `cache-targets: false`, tests ported to
+  `scripts/tests/test_target_guard.py`; `proposals/cell-matrix.md` 118 lines: commit 1 harness move, commit 2
+  validator release parameter, commit 3 the tool; explicit generation recipe; three distinct versions; Helm's coalesced
+  dump for the schema columns with a marked Rust fallback; accept/reject + helmsweep class + k8s
+  valid/invalid/uncertain/empty; matrix.tsv + diagnostics.tsv + path-free manifest; `--check` byte-exact;
+  `--require-expected` defined; exit 3 for crashes). Final checks dispatched (follow_up e48030f1 / 426afeb4). Go given
+  for runner v6.9 (runner repo only, no cargo) meanwhile. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
