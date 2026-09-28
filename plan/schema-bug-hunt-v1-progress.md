@@ -5807,6 +5807,25 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   lands first (landing 6, after rework 4), F10 as its own one-fixture semantic candidate later. Brief
   `brief-frontend-rework4.md` (F12, F13); frontend builder told to park the inline-else side task. Orchestrator.
 
+- 17:12 (Sep 28) — **Runner v6.7 rework 1 handed back (runner-v6.7 HEAD 7690f4e9; `round8-runner-evidence/v67-rework1.patch`
+  = diff 743f80c..HEAD, 10 files +301/−9, sha 641eaca1…) and v6.8 stacked on it (runner-v6.8, worktree
+  `round8-runner-v68`, HEAD 88798461; `v68.patch` 9 files +164/−11, sha 516dbee1…).** Rework 1: R1
+  `CARGO_TARGET_DIR` and `CARGO_BUILD_BUILD_DIR` both exported = canonical TARGET, `target_owner` refuses any
+  other value (exit 8) before every step, bound as `cargo_dirs`; R2 marker accepted only in its exact written
+  form (`R=` then `receipt=`, UTF-8, nothing else), malformed → exit 8 before any write, never rewritten (8
+  malformed variants tested); R3 env files are READ as text with a strict grammar (blank/comment/`NAME=VALUE`,
+  R/E/TARGET/LANDING_FINISHED literal, no commands), scan before sourcing, unreadable/dangling/out-of-grammar →
+  exit 2, deviation: last assignment wins (refusing duplicates broke test_paths' overlap test); R4 ENVF absolute
+  before the cd; R5 fake-cargo records cwd, "no cargo ran in clone2" asserted with a positive control. Green
+  run-all exit 0 (534 checks + 79 Python); red test_target.sh vs 6d178200 16 FAIL. v6.8: `landing.py
+  sweep-readable` after the gate takes the failing / unresolved / CLI-disagreement rows into readable/rows.tsv,
+  runs the sweep's frozen `helm-schema lint --helm <bound Helm> … -f <override>` per row on the schema-free
+  control + the candidate's readable fixture, outputs under `$E/sweep/readable/`, phase.json binds Helm and CLI,
+  only the bound Helm 4.2.3 runs (exit 9), files sealed with the sweep, forged rows.tsv → exit 4 at finalize;
+  green run-all exit 0 (545 checks), red test_sweep.sh vs v6.7 11 FAIL. Both to sol/astra in one pass
+  (follow_up runs 73d3081f / 6b442c0c; separate verdicts). Merge order once LAND: v6.7 rework 1, then v6.8,
+  between chains; then landing-4/5 env files get `LANDING_FINISHED`. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
