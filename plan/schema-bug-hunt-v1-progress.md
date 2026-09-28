@@ -5906,6 +5906,53 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   domain. Direction: one typed anchor∘payload composition, not copied regex rules. Brief `brief-w4-rework4.md`
   (R8–R10); W4 builder on rework 4. Orchestrator.
 
+- 19:32 (Sep 28) — **Frontend phase 1 rework 4: LAND from both → landing 6** (`review-frontend-rework4-{sol,astra}.md`).
+  No P1/P2: F12 verified with Helm (dynamic arm DaemonSet/maxSurge, resolved arm StatefulSet/partition, else-if
+  chains with an unresolved arm abstain, `if false` dead arm loses precision safely); both call it a
+  fixture-preserving SEMANTIC candidate and keep F10 separate. P3s: partial scalar resolution (inline `if` with one
+  literal and one dynamic arm keeps only the literal; `resource_identity.rs:471/:832`) is pre-existing, unreachable
+  in the corpus (astra checked 8,239 templates) → follow-up; dead-arm precision loss → later; a test comment names
+  a reviewer's scratch cell → tidy. Landing gates (byte dump, test:all, luup2) are the chain's.
+- 19:34 (Sep 28) — **W1 rework 5: REWORK from both; R1 abstention ACCEPTED, R7 WITHDRAWN** (`review-w1-rework5-{sol,astra}.md`).
+  New P1s: argo-workflows false rejection — `workflow.serviceAccount.{annotations,labels,pullSecrets}` typed
+  unconditionally though gated by `create` (default false); `create:false, annotations:1` renders, base accepts,
+  new5 rejects (guard lost, likely `control.rs:1971`); mutation escapes through `pluck`/`first`
+  (`collections.rs:844/869/872` → `mod.rs:168/173`, later `len` truth reused at `:1545`), `dig`'s discarded
+  fallback (`traversal.rs:119`), constructed objects installed on the root then `tpl` (`eval_effect.rs:29`);
+  helper ARGUMENTS that mutate are missing from the freshness the helper receives (`analysis_db.rs:1250` vs
+  `:1164`); a stale empty dict bypasses merge freshness (`collections.rs:1349/1302`). P2s: `concat` lost result
+  nonemptiness (xs=[1] aborts, new5 accepts); the merge precision cost is real — traefik `service.annotations:
+  "x"`/`annotationsTCP: 1` abort in Helm (even with --skip-schema-validation), main rejects, new5 accepts: keep the
+  executed operand's map requirement independent of result truth, no unconditional `type: object`; the corpus
+  probe (`rework5/probe2.py`) replaces maps with `{}` instead of coalescing like Helm, omits dependency defaults
+  and counts compile errors — argo `workflow.serviceAccount={}` and schema-registry `kafka.sasl={}` pass BOTH
+  schemas properly coalesced. Loki's default abort is a correct rejection; oncall's is jv failing on a `\u`
+  regex (the queued emitter follow-up). All 112 matrix rows reproduced by both. Brief `brief-w1-rework6.md`
+  (R11–R17); W1 builder switched from the unset side task. Orchestrator.
+- 19:36 (Sep 28) — **W4/F75 rework 3: astra REWORK too** (`review-w4-rework3-astra.md`): R5 and R7 confirmed
+  repaired (independent contract kept inside guarded branches, consumer/fallback distinction holds through
+  emission via `path_resolver.rs:205`); blast radius endorsed (dex/kured/metrics-server/mailhog +2.6–3.2 %,
+  live anchor cells REJECT→ACCEPT correct, 288 unanchored probes unchanged). P2: `anchored_pattern`
+  (`scalar_preimage.rs:420`) only strips a leading textual `^` — pattern `foo` with `&foo bar` ACCEPTS through the
+  anchor name (false acceptance), `^foo$|^bar$` with `&x bar` and `(^foo$)` with `&x foo` REJECT although they
+  render and satisfy. Fix = compose the anchor prefix with the typed token grammar and transform provider
+  predicates over the suffix using parsed regex structure. Residual labels: enum/length-constrained anchors =
+  retained false rejection (rosterable); anchor names outside `[A-Za-z0-9_-]` are Helm YAML errors; direct-tpl
+  and coredns "abc" unchanged debt. `brief-w4-rework4.md` amended; builder informed. Orchestrator.
+- 19:38 (Sep 28) — **Runner v6.7 rework 2 handed back (runner-v6.7 HEAD d6653766; `v67-rework2.patch` 10 files
+  +327/−9 sha c4adebc8…):** LF-only line splitting with exit 2 on CR/VT/FF/U+001C–1E/U+0085/U+2028/U+2029
+  anywhere; unquoted values with `~ * ? [ ] { } = ! ^` refused (single-quoted control accepted); marker-
+  preservation `cmp` has its own check; all six env files parse. run-all exit 0 (554 checks + 79 Python); red
+  13 FAIL on 7690f4e. Astra asked to re-check A1/A2 (follow_up 6b442c0c); merge into the runner repo between
+  chains on LAND. Builder proceeds to v6.8 rework 1.
+- 19:42 (Sep 28) — **Landing 6 (frontend phase 1) ON THE CHAIN.** Fresh clone `/Volumes/T7/dev/round8-landing6`
+  from main 648a303a (code 9716e080), branch `landing-6`, `final-v5.patch` applied with `git apply --3way` (clean,
+  35 files +1880/−681) as fcae9bf1. `runner/landing-6.env` (63d1d8c): R/E/TARGET own —
+  `TARGET=/Volumes/T7/dev/round8-landing6-target` (fresh, per the one-target-per-clone rule), E
+  `/Volumes/T7/dev/round8-landing6-run1`, BASELINE f7be7ba5, same accepted sweep classes as landing 4. Chain
+  `dump → unit → lint → battery → integration → sweep → finalize` launched via nohup on runner v6.6 (743f80c +
+  env commit); `chain.log` in E. Expect 0 fixtures adopted (lanes 157/1/23 unchanged). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing

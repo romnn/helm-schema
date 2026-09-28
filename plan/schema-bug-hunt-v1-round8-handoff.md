@@ -146,13 +146,20 @@ gates only, drop the stray mongodbcommunity hunk), regexp (`round8-regexp-eviden
   from different binaries; the Claude work account weekly limit (reset Oct 2, 01:00) kills agents
   mid-turn — resume them with SendMessage, their context survives.
 
-## 6. Status (rewritten 2026-09-28 16:30 local, session 3 — resume here)
+## 6. Status (rewritten 2026-09-28 19:45 local, session 3 — resume here)
 
 Read the ledger entries from "22:15 (Sep 27) — Session 2" onward for the detail; this section is the map.
 
-- **main = 4b5db9c3** (landing 5 merged 13:39 as d42a1f33, landing 4 merged 16:14 as 4b5db9c3; plan-only commits
-  since). Nothing pushed. Strict verified closures 3/83. Post-merge `task lint` + unit on 4b5db9c3: running,
-  exits in `/Volumes/T7/dev/round8-main-postmerge/summary-l4.log` (record in the ledger).
+- **main code = 9716e080** (landing 5 d42a1f33, landing 4 4b5db9c3, then `fix(test): helm_wrapper uses ScratchDir`
+  because the combined tree did not compile — lint + unit green after it; plan-only commits since). Nothing pushed.
+  Strict verified closures 3/83.
+- **Landing 6 (frontend phase 1, fixture-preserving semantic) is ON THE CHAIN** since 19:42: clone
+  `/Volumes/T7/dev/round8-landing6` branch `landing-6` @ fcae9bf1 (= main 648a303a + `final-v5.patch`), env
+  `runner/landing-6.env`, own `TARGET=/Volumes/T7/dev/round8-landing6-target`, evidence
+  `/Volumes/T7/dev/round8-landing6-run1/` (`chain.log`, `receipt.json`). On "chain green": `git -C
+  /Volumes/T7/dev/helm-schema fetch /Volumes/T7/dev/round8-landing6 landing-6 && git merge --no-ff FETCH_HEAD -m
+  "Land frontend phase 1: … (receipt … sha256 <from chain.log>)"`, then lint + unit on main, ledger, this section.
+  F10 (trailing-else complement, one fixture, `frontend-main-f10` 987bb4f6) lands separately afterwards.
 - **Landing 4 LANDED** as 4b5db9c3 (receipt `/Volumes/T7/dev/round8-landing4-run1/receipt.json` sha256
   76f4a5aa…, v6.6, 0 fixtures adopted) after a `cargo clean -p` of all workspace crates: landing-4.env and
   landing-5.env shared `TARGET=/Volumes/T7/dev/round7-integrate/target` and cargo had aliased landing 5's
@@ -160,26 +167,27 @@ Read the ledger entries from "22:15 (Sep 27) — Session 2" onward for the detai
   runner v6.7 (rework 1 in progress) enforces it. Lock busy = exit 75: wait, never touch `round8/heavy.lock`.
 - **Landing 5 (wrappers) LANDED** as d42a1f33 (receipt `/Volumes/T7/dev/round8-landing5-run1/receipt.json`
   sha256 7b379a7e…; 0 fixtures adopted).
-- **Runner = v6.6 checked out** (`/Volumes/T7/dev/round8/runner` 743f80c). **v6.7** (exclusive TARGET per
-  clone, receipt /9; branch runner-v6.7, worktree `round8-runner-v67`, 6d178200) got REWORK from both
-  (`brief-runner-v67-rework1.md`: build-dir escape, strict marker parsing, no sourcing of peer env files,
-  absolute LANDING_ENV, real "no cargo ran" assertion); merge it into the runner repo between chains once
-  LAND, then mark landing-4.env/landing-5.env `LANDING_FINISHED`. v6.8 (readable `helm-schema lint`
-  diagnostics for failing sweep rows, `brief-runner-v68.md`) is parked behind the rework. Disk: 163 GB free
+- **Runner = v6.6 checked out** (`/Volumes/T7/dev/round8/runner` 63d1d8c = 743f80c + landing-6.env). **v6.7**
+  (exclusive TARGET per clone, forced cargo build dir, strict marker, env files read not executed, receipt /9;
+  branch runner-v6.7, worktree `round8-runner-v67`, rework 2 = d6653766; sol LAND, astra re-checking A1/A2)
+  merges between chains (i.e. after landing 6 finishes), then landing-4.env/landing-5.env get
+  `LANDING_FINISHED`. **v6.8** (readable `helm-schema lint` diagnostics for failing/unresolved/disagreeing sweep
+  rows; branch runner-v6.8) is in rework 1 (`brief-runner-v67-rework2-v68-rework1.md` B1–B7). Disk: 163 GB free
   at 16:11 after removing the dormant build caches round7-f13/target and round7-d3f23/target (finished tracks).
 - **Candidates and their state** (evidence dirs hold `handoff.md` + `final*.patch`; reviews in
   `/Volumes/T7/dev/round8/review-<track>-<round>-{sol,astra}.md`; briefs `brief-<track>-rework<n>.md`):
-  - W1 (`round8-w1` `track/w1-main`, rework 5 in progress off 2012d658, `brief-w1-rework5.md`: both reviewers
-    REWORK on rework 4 — jaeger annotation false rejection, unavailable operands vanish, `Elements`
-    nonemptiness/multiplicity, helper freshness both directions, root-context/pathless-dict mutation,
-    positional wildcard identity); side branch `track/w1-unset` parked; 35 corpus charts drift (battery
-    adjudicates); first SEMANTIC landing → needs the roster-baseline confirmation (recommendation: keep f7be7ba5).
-  - Frontend (`round8-frontend` `frontend-main`, rework 3 in progress off 1c537982, `brief-frontend-rework3.md`
-    F8–F11); 0 fixtures moved so far.
-  - W4/F75 (`round8-w4` `w4-main`, rework 3 in progress off b1a6ad1d, `brief-w4-rework3.md`: conditional
-    ownership must keep the independent provider preimage, anchored scalars, empty string intersection);
-    R1–R4 of rework 2 confirmed repaired; 76 corpus mismatches to adjudicate on the chain; BASE still c816e318 —
-    a rebase onto main is needed before landing (side branch `w4-rebase`, in a separate worktree).
+  - W1 (`round8-w1` `track/w1-main`, rework 6 in progress off fdb4f8c3, `brief-w1-rework6.md`: argo-workflows
+    guard loss, pluck/dig/root-constructed mutation escapes, helper-argument mutations, stale empty dict in
+    merge, concat nonemptiness, merge operand requirement, rebuilt corpus probe; R1 abstention accepted, R7
+    withdrawn); side branch `track/w1-unset` parked (worktree `round8-w1-unset`); 51 corpus charts drift
+    (battery adjudicates); first fixture-moving landing → needs the roster-baseline confirmation
+    (recommendation: keep f7be7ba5) and a rebase onto main.
+  - Frontend phase 1: LAND from both on e584c2d3 (rework 4) → landing 6 on the chain (above). Side work in
+    worktrees: `round8-frontend-f10` (F10) and `round8-frontend-else` (inline `{{else}}` false rejection, WIP).
+  - W4/F75 (`round8-w4` `w4-main`, rework 4 in progress off f493bb14, `brief-w4-rework4.md`: anchor token and
+    payload modelled separately, provider patterns applied to the payload via parsed regex structure, empty
+    intersection kept after guard union); R5/R7 confirmed; the 153-chart blast radius is endorsed by both as the
+    right scope (+2–4 % schema size); BASE still c816e318 — rebase needed (worktree `round8-w4-rebase`, stale).
   - k8s D1–D3 (`round8-k8s` `k8s-main`, rework 2 in progress off c42bfa6a, `brief-k8s-rework2.md`: DECISION (b)
     conditional provider contracts for values-driven KubeVersion guards, whole-condition `Has` decoding,
     Masterminds `||` semantics, prerelease-preserving version, K4 missing-else, comparator red evidence);
