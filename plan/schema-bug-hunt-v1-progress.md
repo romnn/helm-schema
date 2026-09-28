@@ -5521,6 +5521,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   complement, not an equality (stacks `workloadType=Other` renders StatefulSet); gates/bytes belong to the
   chain. Brief `brief-frontend-rework3.md` (F8–F11), builder resumed.
 
+- 06:00 (Sep 28) — **W4+F75 rebase handed back (91dccf1e, `final-v2.patch` sha fb01ab4c…, +259 LOC);
+  fresh pre-landing reviews started on both reviewers** (W4's old review context is stale; F75 was never
+  reviewed). Cherry-picks clean, no expectation respelled; matrices re-run with main as the base column
+  (trino 9 abort cells, gitea rc2+RWX, openebs cpuCount, alertmanager clusterPort → REJECT; datadog 81/90
+  → REJECT; main's `<no value>` false rejections → ACCEPT; no cell toward a false rejection); 14 tests, 11
+  red with main's production files; gates fmt/lint/lint:fc/ast-grep 0, unit 1599; chart_corpus 99/157 (58
+  mismatches, kibana loses a kibanaConfig-gated overlay = widening). Known regression recorded as a
+  residual, not fixed: helper-rendered `tpl` output in a plain slot — main rejects "a: b"/"true"/"123"/
+  "{{ .Release.Name }}: b" (Helm abort or K8s reject), the rebased tree accepts (self-path pattern guard
+  not lowered in `conditional_overlays`); the builder's probe restores them but adds a false rejection
+  ("a #b") because the overlay lane's scalar preimage lacks the base lane's comment/anchor/null-token arms.
+  The reviewers are asked whether a new false acceptance vs main is landable as a rostered residual or
+  must be fixed, and for the structural fix of both halves.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
