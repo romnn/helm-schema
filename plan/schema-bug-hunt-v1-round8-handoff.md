@@ -223,6 +223,13 @@ Read the ledger entries from "22:15 (Sep 27) — Session 2" onward for the detai
      [F1 builder, in its track].
   6. Codex re-checks of a single item at `high` effort instead of `xhigh` [orchestrator, immediate].
   7. Every fresh clone: `mise trust`; every worktree: own target — both now in memory and the runner [done].
+  8. helm-schema feature: `helm-schema explain <chart> <values-path>` — print the evidence behind a path's emitted
+     schema (source rows with file:line, guards/arm predicates, provider documents and pointers, overlay ownership,
+     abstention reasons). Reviewers and builders currently trace this by reading source; a typed provenance dump
+     from the IR/gen phases (no new heuristics, just exposing the facts the compiler already has) would shorten
+     every adjudication round [design cross-check first; builder slot after W1/W4].
+  User rule (23:55 Sep 28): do not accept a bad process, bad output, or a genuinely useful missing feature that
+  slows us down when it could just be implemented.
 - **Follow-ups queued**: sol's scratch P2 (nested `request` paths in copied records); wrappers P3s (scratch
   path in Helm messages, raw error formatting, Windows runtime test); the airflow/oncall `\u` URL pattern
   emitter defect; `if $d`/`empty $d` after `unset` (pre-existing); `required (dict)`/`(list)` false
