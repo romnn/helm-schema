@@ -5757,6 +5757,36 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   side branches now go in separate worktrees (rule sent to the k8s and W4 builders). Brief
   `brief-k8s-rework2.md` (R1–R6); k8s builder on rework 2. Orchestrator.
 
+- 16:18 (Sep 28) — **Post-merge gates on 4b5db9c3 FAILED: `task lint` exit 201, nextest exit 101 — the combined
+  tree does not compile** (`round8-main-postmerge/{lint,unit}-l4.log`): landing 5's `helm_wrapper.rs` (cli
+  tests) imports `tempfile` (`TempDir`, `Builder::new().prefix("helm wrapper ").tempdir_in(...)`) while landing 4
+  removed the `tempfile` dev-dependency from helm-schema-cli and clippy-disallowed its constructors. Neither
+  chain could see it: each proved its own clone. Fix (test-only, orchestrator, on main): `helm_wrapper.rs` uses
+  `ScratchDir::new("helm wrapper")` (a label with a space is a valid single component, so the
+  space-in-path property of the fixture dir is kept); `cargo fmt --check` 0; `task lint` + nextest re-running
+  (`{lint,unit}-l4b.log`, `summary-l4b.log`); commit as `fix(test)` once green. Lesson for the playbook: when
+  two landings are merged back to back, the merged main must pass lint + unit BEFORE the next landing clone is
+  cut from it (already the rule) — and a landing that touches a crate's dev-dependencies must be re-checked
+  against every other queued landing's tests.
+- 16:25 (Sep 28) — **Frontend phase 1 rework 3 handed back (frontend-main HEAD 826b11b4 = b2383563 F8 +
+  826b11b4 F9 on 1c537982; `final-v4.patch` 35 files +1794/−681 sha d3fc38ec…, +203 LOC; 0 fixtures moved).**
+  F8: a direct `kind: {{ .Values.x }}` under a document-level with/range records NO selector
+  (`resource_identity.rs:470` via `in_rebinding_action`) — departs from the brief's "keep the flat candidates"
+  (the root literals are not what the rebound scalar reads; keeping them would still reject the f8 cell:
+  root mode=StatefulSet, the rebound dot's mode=DaemonSet renders a DaemonSet). F9: a nested chain's selector
+  is inherited only as the region's SOLE kind-writing arm (`resource_identity.rs:381`; f9 flag=false renders
+  the parent else's DaemonSet). Matrix `rework/helm/f8-f10-matrix.log` (Helm 4.2.3, 1.29.0). Tests red→green
+  (`f8-red-1c537982.log`, `f9-red-b2383563.log`, exit 100). Gates on 826b11b4: fmt 0, lint 0, ast-grep 0,
+  lint:fc 0 (54), nextest 1605/1605, integration profile 848/848. **F10 held on side branch
+  `frontend-main-f10` (b85834d1, `f10-complement.patch` sha 748fd7a4…)**: a trailing `else` kind arm becomes
+  the selector's complement (`KindSelector { path, otherwise }`); moves exactly one fixture
+  (stacks-blockchain-api: StatefulSet guard `workloadType=StatefulSet` → `!=Deployment`), a TIGHTENING that
+  corrects a false acceptance (Other+maxSurge renders a StatefulSet the pinned k8s schema rejects; test red
+  on 826b11b4). The brief only allowed a stacks move for a corrected false rejection → orchestrator's
+  inclination: land phase 1 (0 fixtures) as a non-semantic candidate, then F10 as its own one-fixture semantic
+  candidate; both reviewers asked to verify and advise (follow_up on runs 7660883f / 5d5c270b). Frontend
+  builder freed only its own target's lint artifacts and incremental cache during the disk-full. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
