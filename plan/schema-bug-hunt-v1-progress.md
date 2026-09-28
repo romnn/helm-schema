@@ -5880,6 +5880,32 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Reviews: follow_up runs 7660883f / 5d5c270b; LAND → landing 6 (fixture-preserving) on its own TARGET. Builder
   resumes inline-else. T7 126 GB free at 19:07 (builders' targets grow ~20 GB/h; watch). Orchestrator.
 
+- 19:18 (Sep 28) — **Runner v6.7 rework 1: sol LAND, astra REWORK (one P2, one P3); v6.8: REWORK from both**
+  (`review-runner-v67-rework1-v68-{sol,astra}.md`). v6.7: both confirm both cargo dirs forced before the locked
+  ownership check and every cargo path incl. helmsweep (its Go build stages under TARGET) and producer --verify;
+  strict marker; env files read not executed; absolute ENVF. Astra P2: landing.py:762 `splitlines()` splits on
+  CR/U+2028/U+2029/FF/VT where zsh splits on LF only (`# comment<CR>TARGET=/other` read as an assignment by the
+  scanner, a comment by zsh — reproduced); unquoted `~` expands in zsh; P3: test_target.sh:45 `cmp` outside
+  `check`. v6.8 (both): Helm pin `startswith("v4.2.3")` admits v4.2.30/-rc.1; astra: wrapper/setup failures
+  (exit 2, SIGKILL, pre-Helm error) still seal as completed readable evidence (landing.py:1755); failed-gate
+  attempts are not sealed (run-landing.sh:305 dies before finish) so the principal rows escape the receipt
+  inventory; sol: missing-CLI-verdict differential failures (gate exit 7) get no parity row and no readable row
+  (landing.py:1718/1932); frozen CLI identity not sealed through finalize (landing.py:1108); README exit 9 vs code
+  exit 4 (both); readable output is a fresh candidate lint rerun, not a replay (document). Brief
+  `brief-runner-v67-rework2-v68-rework1.md` (A1–A2, B1–B7); v6.7 merges after A1/A2 (astra re-check by
+  follow_up), v6.8 after its rework. Orchestrator.
+- 19:20 (Sep 28) — **W4/F75 rework 3: sol REWORK (astra pending)** (`review-w4-rework3-sol.md`). Blast radius
+  endorsed: the shared plain-scalar preimage is the right scope (Helm accepts anchored `Always` in dex/kured
+  which v3 rejected; four moved charts grew 2.4–3.7 %; dex/kured/metallb/external-dns non-anchored samples show
+  no new tightening; metallb's `Ignore` rejection pre-existing in v3). R5 confirmed (`OwnedContract` global,
+  idempotent in guarded arms). P1: `scalar_preimage.rs:362` requires whitespace after `&name`, but Helm renders
+  `&a:b ok` (anchor a, payload `:b ok`) and `&a?b` — false rejections; model anchor and payload separately, then
+  the typed preimage over the payload. P2: `:420` leaves a pattern without leading `^` unchanged so kube-starrocks
+  `csiVolumes[].name` accepts `&foo '@@'` through the anchor name (Helm renders `@@`, CRD pattern failure). P2:
+  `resolve_policy.rs:755` unions guard evidence after the `false` intersection, reopening it for a nonempty guard
+  domain. Direction: one typed anchor∘payload composition, not copied regex rules. Brief `brief-w4-rework4.md`
+  (R8–R10); W4 builder on rework 4. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
