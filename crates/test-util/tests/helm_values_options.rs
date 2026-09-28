@@ -12,6 +12,7 @@ use indoc::indoc;
 use serde_json::{Value, json};
 use test_util::helm_values::{AcceptanceDocument, ValuesError, ValuesOptions, acceptance_values};
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 fn set(values: &[&str]) -> ValuesOptions {
     ValuesOptions {
@@ -80,7 +81,7 @@ fn set_indices_and_empty_values() -> eyre::Result<()> {
 /// `-f` files merge in order, each document by document, nulls kept.
 #[test]
 fn values_files_merge_every_document_in_order() -> eyre::Result<()> {
-    let dir = tempfile::tempdir()?;
+    let dir = ScratchDir::new("helm_values_options")?;
     let one = dir.path().join("one.yaml");
     let two = dir.path().join("two.yaml");
     let null = dir.path().join("null.yaml");
@@ -114,7 +115,7 @@ fn values_files_merge_every_document_in_order() -> eyre::Result<()> {
 /// Helm reads `y: 3` as `"true": 3`; the port refuses rather than keep `y`.
 #[test]
 fn yaml_1_1_scalars_are_refused() -> eyre::Result<()> {
-    let dir = tempfile::tempdir()?;
+    let dir = ScratchDir::new("helm_values_options")?;
     for (index, source) in [
         "y: 3\n",
         "enabled: yes\n",
@@ -145,8 +146,8 @@ fn yaml_1_1_scalars_are_refused() -> eyre::Result<()> {
     Ok(())
 }
 
-fn chart_with(files: &[(&str, &str)]) -> eyre::Result<tempfile::TempDir> {
-    let dir = tempfile::tempdir()?;
+fn chart_with(files: &[(&str, &str)]) -> eyre::Result<ScratchDir> {
+    let dir = ScratchDir::new("helm_values_options")?;
     for (name, contents) in files {
         let path: PathBuf = dir.path().join(name);
         fs::write(path, contents)?;

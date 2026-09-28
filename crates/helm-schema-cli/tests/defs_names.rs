@@ -12,6 +12,7 @@ use helm_schema_cli::Cli;
 use helm_schema_json_schema_minify::{rename_definitions, shorten_definition_names};
 use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 const HELM_SCHEMA_BIN: &str = env!("CARGO_BIN_EXE_helm-schema");
 
@@ -179,7 +180,7 @@ fn readable_schema(padding: usize) -> Value {
 
 #[test]
 fn shorten_writes_short_keys_and_the_map_back() -> eyre::Result<()> {
-    let dir = tempfile::tempdir()?;
+    let dir = ScratchDir::new("defs_names")?;
     let input = dir.path().join("values.schema.json");
     let output = dir.path().join("helm.schema.json");
     let map = dir.path().join("defs-map.json");
@@ -217,7 +218,7 @@ fn shorten_writes_short_keys_and_the_map_back() -> eyre::Result<()> {
 
 #[test]
 fn oversized_output_keeps_its_bytes_and_warns() -> eyre::Result<()> {
-    let dir = tempfile::tempdir()?;
+    let dir = ScratchDir::new("defs_names")?;
     let input = dir.path().join("values.schema.json");
     let output = dir.path().join("helm.schema.json");
     std::fs::write(
@@ -242,7 +243,7 @@ fn oversized_output_keeps_its_bytes_and_warns() -> eyre::Result<()> {
 
 #[test]
 fn generate_shortens_only_on_request_and_names_the_short_keys() -> eyre::Result<()> {
-    let dir = tempfile::tempdir()?;
+    let dir = ScratchDir::new("defs_names")?;
     let chart = test_util::workspace_testdata().join("fixture-charts/full-fixture");
     let readable_path = dir.path().join("readable.json");
     let shortened_path = dir.path().join("shortened.json");

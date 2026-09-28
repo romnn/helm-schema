@@ -39,11 +39,62 @@ func TestHelmEnvClearPrecedesPackageInitialization(t *testing.T) {
 	for _, mode := range []string{"template", "lint"} {
 		cmd := exec.Command(binary, mode, "--helm-env-clear", "--kube-version", "1.29.0",
 			"--values", filepath.Join(dir, "values.json"), filepath.Join(dir, "chart"))
-		cmd.Env = []string{"HOME=" + filepath.Join(dir, "home"), "PATH=" + os.Getenv("PATH")}
+		cmd.Env = append(tempEnv(t.TempDir()), "HOME="+filepath.Join(dir, "home"), "PATH="+os.Getenv("PATH"))
 		out, err := cmd.CombinedOutput()
 		if err != nil || strings.Contains(string(out), "leaked") {
 			t.Errorf("%s: %v\n%s", mode, err, out)
 		}
+	}
+}
+
+// tempEnv points every temporary-directory variable Go reads at dir.
+func tempEnv(dir string) []string {
+	return []string{"TMPDIR=" + dir, "TMP=" + dir, "TEMP=" + dir}
+}
+
+// The clean re-exec takes its temporary home from the caller's temporary
+// directory: pointed at a missing directory, it fails naming that
+// directory instead of falling back to the system temp.
+func TestHelmEnvClearUsesTheCallersTemporaryDirectory(t *testing.T) {
+	binary := buildBinary(t)
+	dir := t.TempDir()
+	writeFiles(t, dir, map[string]string{
+		"chart/Chart.yaml": "apiVersion: v2\nname: demo\nversion: 0.1.0\n",
+		"values.json":      "{}",
+	})
+	missing := filepath.Join(dir, "missing-tmp")
+	cmd := exec.Command(binary, "template", "--helm-env-clear", "--kube-version", "1.29.0",
+		"--values", filepath.Join(dir, "values.json"), filepath.Join(dir, "chart"))
+	cmd.Env = append(tempEnv(missing), "HOME="+filepath.Join(dir, "home"), "PATH="+os.Getenv("PATH"))
+	out, err := cmd.CombinedOutput()
+	if err == nil || !strings.Contains(string(out), missing) {
+		t.Errorf("want a failure naming %s, got %v\n%s", missing, err, out)
+	}
+}
+
+// The clean environment keeps exactly the caller's temporary-directory
+// variables besides HOME and PATH, sorted, so a clean child's temporary files
+// land where the caller's do.
+func TestCleanEnvKeepsOnlyTemporaryDirectoryVariables(t *testing.T) {
+	t.Setenv("TMPDIR", "/scratch/tmpdir")
+	t.Setenv("TMP", "/scratch/tmp")
+	t.Setenv("KUBECONFIG", "/leaked/config")
+	t.Setenv("HELM_DEBUG", "true")
+	for _, name := range []string{"TEMP", "GOTMPDIR"} {
+		if value, ok := os.LookupEnv(name); ok {
+			os.Unsetenv(name)
+			t.Cleanup(func() { os.Setenv(name, value) })
+		}
+	}
+	got := strings.Join(cleanEnv("/clean/home"), "\n")
+	want := strings.Join([]string{
+		"HOME=/clean/home",
+		"PATH=/usr/bin:/bin",
+		"TMP=/scratch/tmp",
+		"TMPDIR=/scratch/tmpdir",
+	}, "\n")
+	if got != want {
+		t.Errorf("cleanEnv:\n%s\nwant:\n%s", got, want)
 	}
 }
 

@@ -11,6 +11,7 @@ use helm_schema_test_support::generate;
 use helm_schema_test_support::registry::{ArtifactId, ArtifactTarget, PolicyId};
 use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 #[test]
 fn final_outputs_match_policy_annotation_fixtures() -> eyre::Result<()> {
@@ -92,7 +93,8 @@ fn narrowing_and_reference_modifiers_change_the_policy_fingerprint() -> eyre::Re
 #[test]
 fn override_loading_and_root_validation_precede_chart_generation() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
-    let tempdir = tempfile::tempdir().wrap_err("create invalid-input fixture directory")?;
+    let tempdir = ScratchDir::new("final_output_policy")
+        .wrap_err("create invalid-input fixture directory")?;
     let override_path = tempdir.path().join("invalid-override.json");
     std::fs::write(&override_path, b"null\n").wrap_err("write invalid override")?;
     let missing_chart = tempdir.path().join("missing-chart");

@@ -22,8 +22,9 @@ var cleanHome string
 var cleanEnvCommands = []string{"lint", "template", "sweep"}
 
 // reexecClean runs a command given --helm-env-clear again, as a child with
-// the same arguments under exactly HOME=<fresh empty directory> and
-// PATH=/usr/bin:/bin, and returns its exit code. Clearing the environment
+// the same arguments under exactly HOME=<fresh empty directory>,
+// PATH=/usr/bin:/bin and the caller's temporary-directory variables
+// (keptTempVars), and returns its exit code. Clearing the environment
 // inside the running process would be too late: client-go reads HOME while
 // its packages initialize, before main. done is false in that child, and
 // when no clean environment was asked for.
@@ -66,8 +67,22 @@ func reexecClean(args []string, stderr io.Writer) (code int, done bool) {
 	}
 }
 
+// keptTempVars survive the clean re-exec, so a clean child's temporary files
+// stay where the caller put its own: Go reads TMPDIR on Unix, TMP and TEMP on
+// Windows, and GOTMPDIR for the go command.
+var keptTempVars = []string{"GOTMPDIR", "TEMP", "TMP", "TMPDIR"}
+
+// cleanEnv is the sorted clean environment: HOME, PATH and those of
+// keptTempVars that this process has set.
 func cleanEnv(home string) []string {
-	return []string{"HOME=" + home, "PATH=/usr/bin:/bin"}
+	env := []string{"HOME=" + home, "PATH=/usr/bin:/bin"}
+	for _, name := range keptTempVars {
+		if value, ok := os.LookupEnv(name); ok {
+			env = append(env, name+"="+value)
+		}
+	}
+	slices.Sort(env)
+	return env
 }
 
 // requireCleanEnv refuses unless this process is the re-executed child and

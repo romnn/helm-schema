@@ -7,6 +7,7 @@ use crate::chart::discovery;
 use crate::chart::*;
 use crate::error::CliError;
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 #[test]
 fn legacy_boolean_alias_keys_are_aggregated_across_values_declarations() -> eyre::Result<()> {
@@ -45,7 +46,7 @@ fn legacy_boolean_alias_keys_are_aggregated_across_values_declarations() -> eyre
         "nested: {Off: child}\n",
     )?;
 
-    let override_dir = tempfile::tempdir()?;
+    let override_dir = ScratchDir::new("chart")?;
     let override_path = override_dir.path().join("override.yaml");
     std::fs::write(&override_path, "Y: override\n")?;
     let charts = discover_chart_contexts(&chart_dir)?;

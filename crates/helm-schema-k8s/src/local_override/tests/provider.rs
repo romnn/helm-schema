@@ -1,6 +1,7 @@
 use helm_schema_core::{ResourceRef, YamlPath};
 use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 use crate::doc_backed_schema::{
     LocalSchemaLeaf, descend_schema_path_expanding_leaf_with_root_metadata_source,
@@ -255,11 +256,8 @@ fn lazy_root_metadata_descent_enriches_only_metadata_leaf() {
 
 #[test]
 fn local_override_lookup_attaches_provider_source() {
-    let unique = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("system clock should be after unix epoch")
-        .as_nanos();
-    let root_dir = std::env::temp_dir().join(format!("helm-schema-local-override-source-{unique}"));
+    let scratch = ScratchDir::new("local-override-source").expect("create local override scratch");
+    let root_dir = scratch.path().to_path_buf();
     let group_dir = root_dir.join("example.com");
     std::fs::create_dir_all(&group_dir).expect("create local override test directory");
     std::fs::write(

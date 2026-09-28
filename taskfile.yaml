@@ -193,20 +193,28 @@ tasks:
   build:helmsweep:
     desc: "build the in-process Helm v4.2.3 lint/template driver of the landing sweep"
     dir: "{{.ROOT_DIR}}/tools/helmsweep"
+    vars:
+      # The go command's work files stay under the target directory, never in
+      # the caller's (or the system) temporary directory. Task lets inherited
+      # variables override its `env:`, so each command assigns them itself.
+      BUILD_TMP:
+        sh: echo "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build-tmp"
+      TEMP_ENV: GOTMPDIR="{{.BUILD_TMP}}" TMPDIR="{{.BUILD_TMP}}" TMP="{{.BUILD_TMP}}" TEMP="{{.BUILD_TMP}}"
     env:
       GOTOOLCHAIN: local
     cmds:
+      - mkdir -p "{{.BUILD_TMP}}"
       # A missing or different toolchain fails here; nothing falls back.
       - >-
-        test "$(mise exec go@{{.HELMSWEEP_GO}} -- go env GOVERSION)" = "go{{.HELMSWEEP_GO}}"
+        test "$({{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- go env GOVERSION)" = "go{{.HELMSWEEP_GO}}"
         || { echo "helmsweep needs go{{.HELMSWEEP_GO}}" >&2; exit 1; }
       # Tagged Helm module, digest-checked and patched, in a build-local copy
       # (stage.sh); the source tree holds only the patch.
-      - mise exec go@{{.HELMSWEEP_GO}} -- ./stage.sh "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build"
+      - '{{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- ./stage.sh "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build"'
       # No VCS stamp: the binary's sha256 (the verdict cache's build id)
       # changes only when its sources or toolchain do.
       - >-
-        cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build" && CGO_ENABLED=0
+        cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build" && {{.TEMP_ENV}} CGO_ENABLED=0
         mise exec go@{{.HELMSWEEP_GO}} -- go build -trimpath -buildvcs=false -ldflags "{{.HELMSWEEP_LDFLAGS}}"
         -o "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep{{exeExt}}" .
       # The binary must report the pinned toolchain, modules and patch.
@@ -222,13 +230,21 @@ tasks:
   test:helmsweep:
     desc: "vet, race-test and format-check the helmsweep driver against the patched Helm"
     dir: "{{.ROOT_DIR}}/tools/helmsweep"
+    vars:
+      # Go tests' t.TempDir and the go command's work files stay under the
+      # target directory, never in the system temporary directory. Task lets
+      # inherited variables override its `env:`, so each command assigns them.
+      TEST_TMP:
+        sh: echo "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-test-tmp"
+      TEMP_ENV: GOTMPDIR="{{.TEST_TMP}}" TMPDIR="{{.TEST_TMP}}" TMP="{{.TEST_TMP}}" TEMP="{{.TEST_TMP}}"
     env:
       GOTOOLCHAIN: local
     cmds:
-      - test -z "$(mise exec go@{{.HELMSWEEP_GO}} -- gofmt -l .)" || { echo "gofmt -l is not empty" >&2; exit 1; }
-      - mise exec go@{{.HELMSWEEP_GO}} -- ./stage.sh "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build"
-      - cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build" && mise exec go@{{.HELMSWEEP_GO}} -- go vet ./...
-      - cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build" && mise exec go@{{.HELMSWEEP_GO}} -- go test -race -count=1 ./...
+      - mkdir -p "{{.TEST_TMP}}"
+      - test -z "$({{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- gofmt -l .)" || { echo "gofmt -l is not empty" >&2; exit 1; }
+      - '{{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- ./stage.sh "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build"'
+      - cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build" && {{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- go vet ./...
+      - cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build" && {{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- go test -race -count=1 ./...
 
   test:integration:
     desc: "run integration tests in cargo workspace"

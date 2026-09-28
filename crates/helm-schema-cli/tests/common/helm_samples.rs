@@ -4,7 +4,7 @@ use std::process::Command;
 
 use color_eyre::eyre::{self, WrapErr as _};
 use serde_json::Value;
-use tempfile::TempDir;
+use test_util::scratch::ScratchDir;
 
 #[derive(Debug, Clone, Copy)]
 pub struct HelmValidationSample<'a> {
@@ -52,13 +52,14 @@ pub fn assert_generated_schema_accepts_helm_samples_for_path(
 }
 
 struct GeneratedSchemaHelmChart {
-    _temp_dir: TempDir,
+    _temp_dir: ScratchDir,
     chart_dir: PathBuf,
 }
 
 impl GeneratedSchemaHelmChart {
     fn new(chart_relative_path: &str, schema: &Value) -> eyre::Result<Self> {
-        let temp_dir = tempfile::tempdir().wrap_err("create temp dir for helm validation")?;
+        let temp_dir =
+            ScratchDir::new("helm_samples").wrap_err("create temp dir for helm validation")?;
         let chart_dir = temp_dir.path().join("chart");
         copy_chart_tree(
             &helm_schema_test_support::generate::chart_dir(chart_relative_path),
@@ -135,6 +136,7 @@ fn sanitize_sample_name(name: &str) -> String {
 
 fn run_helm_lint(chart_dir: &Path, values_file: Option<&Path>) -> eyre::Result<()> {
     let mut command = Command::new("helm");
+    command.envs(test_util::scratch::temp_env()?);
     command.arg("lint").arg(chart_dir);
     if let Some(values_file) = values_file {
         command.arg("-f").arg(values_file);
@@ -144,6 +146,7 @@ fn run_helm_lint(chart_dir: &Path, values_file: Option<&Path>) -> eyre::Result<(
 
 fn run_helm_template(chart_dir: &Path, values_file: Option<&Path>) -> eyre::Result<()> {
     let mut command = Command::new("helm");
+    command.envs(test_util::scratch::temp_env()?);
     command.arg("template").arg("test-release").arg(chart_dir);
     if let Some(values_file) = values_file {
         command.arg("-f").arg(values_file);

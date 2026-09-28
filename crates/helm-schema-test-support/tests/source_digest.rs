@@ -11,6 +11,7 @@ use helm_schema_test_support::registry::{
 use helm_schema_test_support::source_digest::{GENERATION_CRATES, generation_source_digest};
 use serde_json::Value;
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 fn write(root: &Path, relative: &str, contents: &str) -> eyre::Result<()> {
     let path = root.join(relative);
@@ -19,8 +20,8 @@ fn write(root: &Path, relative: &str, contents: &str) -> eyre::Result<()> {
 }
 
 /// A miniature workspace with every generation crate and the files around it.
-fn workspace() -> eyre::Result<tempfile::TempDir> {
-    let root = tempfile::tempdir()?;
+fn workspace() -> eyre::Result<ScratchDir> {
+    let root = ScratchDir::new("source_digest")?;
     for file in ["Cargo.toml", "Cargo.lock", ".cargo/config.toml"] {
         write(root.path(), file, "base")?;
     }
@@ -145,8 +146,8 @@ const HELPERS: test_util::DefineSourceSpec<'static> = test_util::DefineSourceSpe
     file_sources: &[],
 };
 
-fn testdata() -> eyre::Result<tempfile::TempDir> {
-    let root = tempfile::tempdir()?;
+fn testdata() -> eyre::Result<ScratchDir> {
+    let root = ScratchDir::new("source_digest")?;
     for file in [
         TEMPLATE,
         "charts/x/templates/_helpers.tpl",

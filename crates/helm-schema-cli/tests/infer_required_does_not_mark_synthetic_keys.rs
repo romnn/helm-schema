@@ -57,11 +57,11 @@ fn infer_required_skips_synthetic_top_level_value_keys() -> eyre::Result<()> {
         emission: SchemaProfile::default().into(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],
-            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")?),
             allow_net: false,
-            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")?),
             disable_k8s_schemas: false,
-            crd_override_dir: Some(test_util::cold_provider_cache_root("crd-override")),
+            crd_override_dir: Some(test_util::cold_provider_cache_root("crd-override")?),
             ..Default::default()
         },
     };

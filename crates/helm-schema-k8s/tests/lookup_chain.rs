@@ -2,6 +2,7 @@
 //! `PathUnresolved` silence, and the "`MissingSchema` only from chain"
 //! invariant.
 
+use color_eyre::eyre;
 use helm_schema_core::{
     ApiPresenceQuery, ProviderSchemaUse, ResourceRef, ResourceSchemaOracle, ValueKind, YamlPath,
 };
@@ -11,6 +12,7 @@ use helm_schema_k8s::{
 };
 use serde_json::Value;
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 #[derive(Debug)]
 struct FakeProvider {
@@ -286,14 +288,14 @@ fn chain_exposes_provider_kube_version() {
 }
 
 #[test]
-fn local_provider_emits_local_override_origin() {
+fn local_provider_emits_local_override_origin() -> eyre::Result<()> {
     // A LocalSchemaProvider configured against a real directory reports
     // its origin as LocalOverride from any chain query.
     use helm_schema_k8s::LocalSchemaProvider;
-    let tmp = std::env::temp_dir().join(format!("helm-schema.local-origin.{}", std::process::id()));
-    let _ = std::fs::create_dir_all(&tmp);
-    let provider = LocalSchemaProvider::new(&tmp);
+    let tmp = ScratchDir::new("local-origin")?;
+    let provider = LocalSchemaProvider::new(tmp.path());
     sim_assert_eq!(have: provider.origin(), want: ProviderOrigin::LocalOverride);
+    Ok(())
 }
 
 // Multi-candidate iteration in schema_fragment_for_use must not emit MissingSchema for

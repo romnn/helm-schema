@@ -214,10 +214,10 @@ Checked against the code; ledgers still use the removed forms.
 - `SCHEMA_DUMP`: removed from `chart_corpus`, the gen corpus and the IR corpus; the producer
   replaced it. It survives in two tests. `lean_profile_schemas_match_their_separate_fixture_lane`
   (`crates/helm-schema/tests/schema_emission_profiles.rs`, optional `SCHEMA_DUMP_CHART=<chart>`)
-  writes `$TMPDIR/helm-schema.emission-profile.lean.<chart>.schema.json` and **skips the
+  writes `<target>/schema-dump/helm-schema.emission-profile.lean.<chart>.schema.json` and **skips the
   assertion**, so a pass under it proves nothing; prefer the producer's lean artifacts.
   `generates_schema_for_fixture_chart_without_k8s_provider` (`crates/helm-schema-cli/tests/cli.rs`)
-  writes `$TMPDIR/helm-schema.cli.full-fixture.disable-k8s.schema.json` and still asserts.
+  writes `<target>/schema-dump/helm-schema.cli.full-fixture.disable-k8s.schema.json` and still asserts.
 - `IR_DUMP`: only `eprintln!`s the IR in four `extractor_inline_fixtures.rs` tests. `RANGE_VAR_DUMP`
   does the same in a helm-schema-ast unit test. Neither writes a fixture.
 - `SYMBOLIC_DUMP`, the `IrCorpusCase` `dump_env` field, and `schema_roundtrip.rs` no longer exist.
@@ -249,6 +249,6 @@ Checked against the code; ledgers still use the removed forms.
   refused by the debug-built tests as a stale producer.
 - **Ad-hoc CLI runs are not corpus evidence.** CLI defaults differ (tests included, Kubernetes
   `v1.35.0`, the user cache, network allowed). Reproduce a corpus artifact with `--only`.
-- **`$TMPDIR` fills up.** Legacy `SCHEMA_DUMP` output goes to `$TMPDIR`; chart schemas reach tens
-  of MB. When `/tmp` is a full tmpfs, shell commands fail with exit 1 and no output. Point
-  `TMPDIR` into `target/` for such runs.
+- **`<target>/schema-dump` holds dumps.** Legacy `SCHEMA_DUMP` output goes to
+  `<target>/schema-dump/` (`CARGO_TARGET_DIR` or the workspace `target/`); chart schemas reach
+  tens of MB and are overwritten, never swept.

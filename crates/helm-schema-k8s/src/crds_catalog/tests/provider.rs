@@ -1,6 +1,7 @@
 use helm_schema_core::{ResourceRef, YamlPath};
 use serde_json::json;
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 use super::*;
 use crate::cache::default_source_id;
@@ -11,11 +12,8 @@ fn widget_resource() -> ResourceRef {
 
 #[test]
 fn catalog_lookup_attaches_provider_source() {
-    let unique = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .expect("system clock should be after unix epoch")
-        .as_nanos();
-    let cache_dir = std::env::temp_dir().join(format!("helm-schema-crd-source-{unique}"));
+    let scratch = ScratchDir::new("crd-source").expect("create CRD cache scratch");
+    let cache_dir = scratch.path().to_path_buf();
     let relative_path = "example.com/widget_v1.json";
     let schema_path = crd_cache_path(&cache_dir, default_source_id(), relative_path);
     std::fs::create_dir_all(

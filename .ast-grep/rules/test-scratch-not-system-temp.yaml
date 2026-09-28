@@ -1,0 +1,19 @@
+id: test-scratch-not-system-temp
+language: Rust
+severity: error
+message: "test scratch must not live in the system temporary directory"
+note: "Use test_util::scratch::ScratchDir::new (or scratch::temp_env for a child process): scratch lives under the cargo target directory, where a killed run's leftovers are swept."
+files:
+  - "**/tests/**"
+  - "crates/test-util/**"
+  - "crates/helm-schema-test-support/**"
+rule:
+  any:
+    # Any path to it, however `std::env` was imported or renamed.
+    - pattern: $PATH::temp_dir
+    # A call after `use std::env::temp_dir;` or `use std::env::{temp_dir};`.
+    - pattern: temp_dir()
+    # An import that renames it: `use std::env::{temp_dir as tmp};`.
+    - all:
+        - kind: use_as_clause
+        - regex: '^(?:[\w:]*::)?temp_dir\s+as\s'

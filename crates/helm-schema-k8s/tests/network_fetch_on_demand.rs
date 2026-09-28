@@ -21,15 +21,13 @@ use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use helm_schema_core::{ResourceRef, YamlPath};
 use helm_schema_k8s::{CrdsCatalogSchemaProvider, K8sSchemaProvider, KubernetesJsonSchemaProvider};
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 /// Pinned so a fetch failure is never confused with "this version moved".
 const K8S_VERSION: &str = "v1.35.0";
 
-fn cold_cache(label: &str) -> eyre::Result<tempfile::TempDir> {
-    tempfile::Builder::new()
-        .prefix(&format!("helm-schema-network-{label}."))
-        .tempdir()
-        .wrap_err("create empty cache root")
+fn cold_cache(label: &str) -> eyre::Result<ScratchDir> {
+    ScratchDir::new(&format!("network-{label}")).wrap_err("create empty cache root")
 }
 
 fn root_schema(

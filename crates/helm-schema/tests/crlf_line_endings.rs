@@ -80,8 +80,8 @@ fn schema_for(chart_dir: VfsPath) -> eyre::Result<serde_json::Value> {
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
-            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")),
-            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")?),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")?),
             disable_k8s_schemas: true,
             ..Default::default()
         },

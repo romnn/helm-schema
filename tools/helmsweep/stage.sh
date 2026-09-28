@@ -15,6 +15,8 @@ module=$(GOFLAGS=-mod=mod go list -m -f '{{.Dir}}' helm.sh/helm/v4)
 rm -rf "$out"
 mkdir -p "$out/third_party"
 cp ./*.go go.mod go.sum helm-memo.patch "$out/"
+# The classifier's diagnostic -> class table, shared with the runner's tests.
+cp -R testdata "$out/"
 cp -R "$module" "$out/third_party/helm-v4.2.3"
 chmod -R u+w "$out/third_party/helm-v4.2.3"
 cd "$out/third_party/helm-v4.2.3"

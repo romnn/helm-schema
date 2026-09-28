@@ -8,6 +8,7 @@ use test_util::prelude::sim_assert_eq;
 fn render(extra_args: &[&str]) -> eyre::Result<Output> {
     let chart = test_util::workspace_testdata().join("charts/grouped-argument-evaluation");
     Command::new("helm")
+        .envs(test_util::scratch::temp_env()?)
         .arg("template")
         .arg("grouped-argument-evaluation")
         .arg(chart)

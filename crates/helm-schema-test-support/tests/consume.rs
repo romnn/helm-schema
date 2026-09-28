@@ -18,6 +18,7 @@ use helm_schema_test_support::manifest::{
 use helm_schema_test_support::registry::{self, ArtifactId, ArtifactTarget, IrId};
 use serde_json::Value;
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 const ID: ArtifactId = ArtifactId::Ir(IrId::NatsService);
 
@@ -59,7 +60,7 @@ fn write_manifest(out: &Path, manifest: &Manifest) -> eyre::Result<()> {
 fn refusal(
     tamper: impl FnOnce(&Path, &mut Manifest) -> eyre::Result<()>,
 ) -> eyre::Result<ProvenanceError> {
-    let out = tempfile::tempdir()?;
+    let out = ScratchDir::new("consume")?;
     let mut manifest = forge(out.path())?;
     tamper(out.path(), &mut manifest)?;
     write_manifest(out.path(), &manifest)?;
@@ -93,7 +94,7 @@ fn mismatched_field(tamper: fn(&mut ManifestEntry)) -> eyre::Result<&'static str
 
 #[test]
 fn complete_manifest_serves_the_verified_artifact() -> eyre::Result<()> {
-    let out = tempfile::tempdir()?;
+    let out = ScratchDir::new("consume")?;
     forge(out.path())?;
     let produced = consume_from(Some(out.path()), &ID.spec())?;
     let local = consume_from(None, &ID.spec())?;
@@ -229,7 +230,7 @@ fn changed_inputs_or_bytes_are_refused() -> eyre::Result<()> {
 
 #[test]
 fn full_verification_rechecks_every_artifacts_inputs() -> eyre::Result<()> {
-    let out = tempfile::tempdir()?;
+    let out = ScratchDir::new("consume")?;
     let manifest = forge(out.path())?;
     let Err(error) = manifest::verify_all(out.path(), &manifest) else {
         eyre::bail!("placeholder artifacts passed full verification");
@@ -243,7 +244,7 @@ fn full_verification_rechecks_every_artifacts_inputs() -> eyre::Result<()> {
 
 #[test]
 fn stale_compiled_producer_refuses_to_produce() -> eyre::Result<()> {
-    let out = tempfile::tempdir()?;
+    let out = ScratchDir::new("consume")?;
     let mut stale = BuildProvenance::compiled();
     stale.source_sha256 = "0".repeat(64);
     let Err(error) = generate::produce(out.path(), 1, &stale, false) else {
@@ -262,7 +263,7 @@ fn stale_compiled_producer_refuses_to_produce() -> eyre::Result<()> {
 
 #[test]
 fn producer_refuses_an_owned_output_directory() -> eyre::Result<()> {
-    let out = tempfile::tempdir()?;
+    let out = ScratchDir::new("consume")?;
     std::fs::write(out.path().join(LOCK_FILE), b"")?;
     let Err(error) = generate::produce(out.path(), 1, &BuildProvenance::compiled(), false) else {
         eyre::bail!("the producer ignored another run's lock");
@@ -287,7 +288,7 @@ fn local_generation_compares_with_the_committed_fixture() {
 
 #[test]
 fn helm_ready_companions_are_the_shortened_artifact_and_its_name_map() -> eyre::Result<()> {
-    let out = tempfile::tempdir()?;
+    let out = ScratchDir::new("consume")?;
     let spec = ArtifactId::FinalPolicy(registry::PolicyId::Full).spec();
     let entry = generate::produce_entries(&[spec.clone(), ID.spec()], out.path(), 1, true)?;
     let [schema_entry, ir_entry] = entry.as_slice() else {

@@ -23,6 +23,7 @@ use indoc::indoc;
 
 use semver::{Version, VersionReq};
 use serde::Deserialize;
+use test_util::scratch::ScratchDir;
 
 #[derive(Deserialize)]
 struct ChartLock {
@@ -200,7 +201,7 @@ fn nested_dependency_locks_are_discovered() -> eyre::Result<()> {
 /// locked version proves the vendored copy matches the packaged chart.
 #[test]
 fn unpacked_dependency_with_wrong_version_is_not_vendored() -> eyre::Result<()> {
-    let chart_dir = tempfile::tempdir()?;
+    let chart_dir = ScratchDir::new("corpus_integrity")?;
     let dependency_dir = chart_dir.path().join("charts").join("common");
     std::fs::create_dir_all(&dependency_dir)?;
     std::fs::write(

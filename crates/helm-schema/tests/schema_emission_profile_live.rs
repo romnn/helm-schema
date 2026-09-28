@@ -8,6 +8,7 @@ use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use indoc::indoc;
 use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 const HELM_VERSION: &str = "v4.2.3";
 const PROVIDER_VERSION: &str = "1.29.0";
@@ -165,6 +166,7 @@ fn replay_unconditional_fail_against_helm() -> eyre::Result<()> {
     assert_helm_version()?;
     let chart = test_util::workspace_testdata().join("charts/schema-emission-unconditional-fail");
     let output = Command::new("helm")
+        .envs(test_util::scratch::temp_env()?)
         .args(["template", "unconditional-fail"])
         .arg(chart)
         .arg("--skip-schema-validation")
@@ -243,14 +245,8 @@ fn replay_structural_helper_widening_matrix_against_helm() -> eyre::Result<()> {
 #[ignore = "live maintenance lane: requires pinned Helm"]
 fn replay_call_and_pipeline_invocation_families_against_helm() -> eyre::Result<()> {
     assert_helm_version()?;
-    let scratch_root = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .join("target/arch-v3-step4-live");
-    std::fs::create_dir_all(&scratch_root).wrap_err("create Step 4 live scratch root")?;
-    let chart = tempfile::Builder::new()
-        .prefix("invocation-families-")
-        .tempdir_in(scratch_root)
-        .wrap_err("create invocation-family chart")?;
+    let chart =
+        ScratchDir::new("invocation-families").wrap_err("create invocation-family chart")?;
     std::fs::create_dir(chart.path().join("templates"))?;
     std::fs::write(
         chart.path().join("Chart.yaml"),
@@ -282,6 +278,7 @@ fn replay_call_and_pipeline_invocation_families_against_helm() -> eyre::Result<(
                     serde_json::to_vec(&json!({ "input": value }))?,
                 )?;
                 let output = Command::new("helm")
+                    .envs(test_util::scratch::temp_env()?)
                     .args(["template", "invocation-families"])
                     .arg(chart.path())
                     .arg("--skip-schema-validation")
@@ -306,14 +303,7 @@ fn replay_call_and_pipeline_invocation_families_against_helm() -> eyre::Result<(
 #[ignore = "live maintenance lane: requires pinned Helm"]
 fn replay_else_with_successor_against_helm() -> eyre::Result<()> {
     assert_helm_version()?;
-    let scratch_root = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .join("target/round68-live");
-    std::fs::create_dir_all(&scratch_root).wrap_err("create live-control scratch root")?;
-    let chart = tempfile::Builder::new()
-        .prefix("else-with-successor-")
-        .tempdir_in(scratch_root)
-        .wrap_err("create else-with chart")?;
+    let chart = ScratchDir::new("else-with-successor").wrap_err("create else-with chart")?;
     std::fs::create_dir(chart.path().join("templates"))?;
     std::fs::write(
         chart.path().join("Chart.yaml"),
@@ -356,6 +346,7 @@ fn replay_else_with_successor_against_helm() -> eyre::Result<()> {
         (Some("second=selected"), true),
     ] {
         let mut command = Command::new("helm");
+        command.envs(test_util::scratch::temp_env()?);
         command
             .args(["template", "else-with-successor"])
             .arg(chart.path())
@@ -379,14 +370,7 @@ fn replay_else_with_successor_against_helm() -> eyre::Result<()> {
 #[ignore = "live maintenance lane: requires pinned Helm"]
 fn replay_chained_default_printf_against_helm() -> eyre::Result<()> {
     assert_helm_version()?;
-    let scratch_root = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .join("target/round68-live");
-    std::fs::create_dir_all(&scratch_root).wrap_err("create live-control scratch root")?;
-    let chart = tempfile::Builder::new()
-        .prefix("chained-default-")
-        .tempdir_in(scratch_root)
-        .wrap_err("create chained-default chart")?;
+    let chart = ScratchDir::new("chained-default").wrap_err("create chained-default chart")?;
     std::fs::create_dir(chart.path().join("templates"))?;
     std::fs::write(
         chart.path().join("Chart.yaml"),
@@ -423,6 +407,7 @@ fn replay_chained_default_printf_against_helm() -> eyre::Result<()> {
         ("x=null,y=null,z=null", false),
     ] {
         let output = Command::new("helm")
+            .envs(test_util::scratch::temp_env()?)
             .args(["template", "chained-default"])
             .arg(chart.path())
             .arg("--skip-schema-validation")
@@ -443,14 +428,8 @@ fn replay_chained_default_printf_against_helm() -> eyre::Result<()> {
 #[ignore = "live maintenance lane: requires pinned Helm"]
 fn replay_opaque_formatter_default_against_helm() -> eyre::Result<()> {
     assert_helm_version()?;
-    let scratch_root = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .join("target/round74-live");
-    std::fs::create_dir_all(&scratch_root).wrap_err("create live-control scratch root")?;
-    let chart = tempfile::Builder::new()
-        .prefix("opaque-formatter-default-")
-        .tempdir_in(scratch_root)
-        .wrap_err("create opaque-default chart")?;
+    let chart =
+        ScratchDir::new("opaque-formatter-default").wrap_err("create opaque-default chart")?;
     std::fs::create_dir(chart.path().join("templates"))?;
     std::fs::write(
         chart.path().join("Chart.yaml"),
@@ -562,6 +541,7 @@ fn replay_opaque_formatter_expression(
         ),
     ] {
         let mut command = Command::new("helm");
+        command.envs(test_util::scratch::temp_env()?);
         command
             .args(["template", "opaque-formatter-default"])
             .arg(chart)
@@ -589,14 +569,8 @@ fn replay_opaque_formatter_expression(
 #[ignore = "live maintenance lane: requires pinned Helm"]
 fn replay_literal_default_primary_reachability_against_helm() -> eyre::Result<()> {
     assert_helm_version()?;
-    let scratch_root = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .join("target/round74-live");
-    std::fs::create_dir_all(&scratch_root).wrap_err("create live-control scratch root")?;
-    let chart = tempfile::Builder::new()
-        .prefix("literal-default-primary-")
-        .tempdir_in(scratch_root)
-        .wrap_err("create literal-default chart")?;
+    let chart =
+        ScratchDir::new("literal-default-primary").wrap_err("create literal-default chart")?;
     std::fs::create_dir(chart.path().join("templates"))?;
     std::fs::write(
         chart.path().join("Chart.yaml"),
@@ -632,6 +606,7 @@ fn replay_literal_default_primary_reachability_against_helm() -> eyre::Result<()
             ("omega=selected", true, "string fallback"),
         ] {
             let output = Command::new("helm")
+                .envs(test_util::scratch::temp_env()?)
                 .args(["template", "literal-default-primary"])
                 .arg(chart.path())
                 .arg("--skip-schema-validation")
@@ -663,6 +638,7 @@ fn replay_literal_default_primary_reachability_against_helm() -> eyre::Result<()
         ("omega=7", true, "eager fallback argument present"),
     ] {
         let output = Command::new("helm")
+            .envs(test_util::scratch::temp_env()?)
             .args(["template", "literal-default-primary"])
             .arg(chart.path())
             .arg("--skip-schema-validation")
@@ -695,6 +671,7 @@ fn replay_oauth2_proxy_tpl_default_eagerness_against_helm() -> eyre::Result<()> 
         ("", "ghcr.io", true, "selected string fallback"),
     ] {
         let output = Command::new("helm")
+            .envs(test_util::scratch::temp_env()?)
             .args(["template", "oauth2-proxy"])
             .arg(&chart)
             .arg("--skip-schema-validation")
@@ -716,11 +693,7 @@ fn replay_oauth2_proxy_tpl_default_eagerness_against_helm() -> eyre::Result<()> 
 #[ignore = "live maintenance lane: requires pinned Helm"]
 fn replay_yaml_boolean_key_composition_against_helm() -> eyre::Result<()> {
     assert_helm_version()?;
-    let scratch_root = Path::new(env!("CARGO_MANIFEST_DIR"))
-        .join("../..")
-        .join("target/round71-live");
-    std::fs::create_dir_all(&scratch_root).wrap_err("create live-control scratch root")?;
-    let chart = create_yaml_boolean_key_chart(&scratch_root)?;
+    let chart = create_yaml_boolean_key_chart()?;
 
     let defaults = render_yaml_boolean_key_chart(chart.path(), None, None)?;
     sim_assert_eq!(have: defaults["dot-y"].as_str(), want: Some("nil"));
@@ -790,6 +763,7 @@ fn replay_selector_independent_ranged_provider_use_against_helm() -> eyre::Resul
     let chart = test_util::workspace_testdata().join("charts/schema-emission-kind-range");
     for set_arg in [None, Some(("--set", "entries=2"))] {
         let mut command = Command::new("helm");
+        command.envs(test_util::scratch::temp_env()?);
         command
             .args(["template", "schema-emission-kind-range"])
             .arg(&chart)
@@ -835,6 +809,7 @@ fn replay_round68_corpus_loosenings_against_helm() -> eyre::Result<()> {
     let mut failures = Vec::new();
     for (chart, path, value, renders) in cases {
         let output = Command::new("helm")
+            .envs(test_util::scratch::temp_env()?)
             .args(["template", "round68"])
             .arg(charts.join(chart))
             .arg("--skip-schema-validation")
@@ -1027,6 +1002,7 @@ fn helm_embedded_validator_matches_rust_for_touched_constructs() -> eyre::Result
 
 fn assert_helm_version() -> eyre::Result<()> {
     let output = Command::new("helm")
+        .envs(test_util::scratch::temp_env()?)
         .args(["version", "--template", "{{.Version}}"])
         .output()
         .wrap_err("run helm version")?;
@@ -1046,6 +1022,7 @@ fn render_yaml_boolean_key_chart(
     set: Option<&str>,
 ) -> eyre::Result<Value> {
     let mut command = Command::new("helm");
+    command.envs(test_util::scratch::temp_env()?);
     command
         .args(["template", "yaml-boolean-keys"])
         .arg(chart)
@@ -1072,11 +1049,8 @@ fn render_yaml_boolean_key_chart(
     serde_json::to_value(data).wrap_err("convert rendered YAML boolean-key data")
 }
 
-fn create_yaml_boolean_key_chart(scratch_root: &Path) -> eyre::Result<tempfile::TempDir> {
-    let chart = tempfile::Builder::new()
-        .prefix("yaml-boolean-keys-")
-        .tempdir_in(scratch_root)
-        .wrap_err("create YAML boolean-key chart")?;
+fn create_yaml_boolean_key_chart() -> eyre::Result<ScratchDir> {
+    let chart = ScratchDir::new("yaml-boolean-keys").wrap_err("create YAML boolean-key chart")?;
     std::fs::create_dir(chart.path().join("templates"))?;
     std::fs::write(
         chart.path().join("Chart.yaml"),
@@ -1124,6 +1098,7 @@ fn create_yaml_boolean_key_chart(scratch_root: &Path) -> eyre::Result<tempfile::
 
 fn render_control(chart: &Path, transport: &LiveTransport) -> eyre::Result<Output> {
     let mut command = Command::new("helm");
+    command.envs(test_util::scratch::temp_env()?);
     command
         .args(["template", "profile-controls"])
         .arg(chart)
@@ -1131,7 +1106,8 @@ fn render_control(chart: &Path, transport: &LiveTransport) -> eyre::Result<Outpu
     let values_dir;
     match transport {
         LiveTransport::ValuesFileJson(instance) => {
-            values_dir = tempfile::tempdir().wrap_err("create values tempdir")?;
+            values_dir = ScratchDir::new("schema_emission_profile_live")
+                .wrap_err("create values tempdir")?;
             let values_path = values_dir.path().join("values.json");
             std::fs::write(&values_path, serde_json::to_vec(instance)?)
                 .wrap_err("write values transport")?;
@@ -1148,7 +1124,8 @@ fn render_control(chart: &Path, transport: &LiveTransport) -> eyre::Result<Outpu
 }
 
 fn validate_rendered_sink(rendered: &[u8]) -> eyre::Result<bool> {
-    let dir = tempfile::tempdir().wrap_err("create rendered-manifest tempdir")?;
+    let dir = ScratchDir::new("schema_emission_profile_live")
+        .wrap_err("create rendered-manifest tempdir")?;
     let manifest = dir.path().join("rendered.yaml");
     std::fs::write(&manifest, rendered).wrap_err("write rendered manifest")?;
     let output = Command::new("kubeconform")
@@ -1160,7 +1137,7 @@ fn validate_rendered_sink(rendered: &[u8]) -> eyre::Result<bool> {
 }
 
 fn helm_validates_schema(schema: &Value, instance: &Value) -> eyre::Result<bool> {
-    let dir = tempfile::tempdir().wrap_err("create parity chart")?;
+    let dir = ScratchDir::new("schema_emission_profile_live").wrap_err("create parity chart")?;
     let templates = dir.path().join("templates");
     std::fs::create_dir(&templates).wrap_err("create parity templates directory")?;
     std::fs::write(
@@ -1197,6 +1174,7 @@ fn helm_validates_schema(schema: &Value, instance: &Value) -> eyre::Result<bool>
         .to_str()
         .ok_or_eyre("parity chart path is not UTF-8")?;
     let output = Command::new("helm")
+        .envs(test_util::scratch::temp_env()?)
         .args(["template", "validator-parity", chart, "-f"])
         .arg(values_path)
         .output()

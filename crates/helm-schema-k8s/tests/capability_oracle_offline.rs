@@ -19,22 +19,14 @@ use helm_schema_k8s::{
     K8sSchemaProvider, K8sVersionChain, KubernetesJsonSchemaProvider, default_source_id,
 };
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 /// Shared provider fixtures for K8s integration tests.
 pub mod common;
 use common::MockFetcher;
 
 fn tmp_dir(label: &str) -> eyre::Result<std::path::PathBuf> {
-    let p = std::env::temp_dir().join(format!(
-        "helm-schema.{label}.{}.{}",
-        std::process::id(),
-        std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .map(|d| d.as_nanos())
-            .unwrap_or(0)
-    ));
-    std::fs::create_dir_all(&p)?;
-    Ok(p)
+    Ok(ScratchDir::new(label)?.keep())
 }
 
 /// Offline mode plus a cache partially populated by an earlier run plus an

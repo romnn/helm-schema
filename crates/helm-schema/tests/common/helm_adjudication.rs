@@ -21,6 +21,7 @@ use indoc::indoc;
 use serde::Deserialize as _;
 use serde_json::Value;
 use test_util::helm_values::{AcceptanceDocument, ValuesError, acceptance_values};
+use test_util::scratch::ScratchDir;
 
 use crate::helm_cache_policy::render_cacheability;
 use crate::helm_invocation::{
@@ -71,10 +72,7 @@ impl PinnedHelmChart {
     pub(crate) fn prepare(chart_path: &Path) -> eyre::Result<Self> {
         let runner = HelmRunner::shared()?;
         // Retain successful and failed cases so a verdict remains reproducible.
-        let evidence_dir = tempfile::Builder::new()
-            .prefix("helm-schema-adjudication-")
-            .tempdir()?
-            .keep();
+        let evidence_dir = ScratchDir::new("adjudication")?.keep();
         eprintln!("Helm adjudication evidence: {}", evidence_dir.display());
         let render_chart = runner.staging_dir()?;
         let coalesce_chart = runner.staging_dir()?;
@@ -194,7 +192,7 @@ impl PinnedHelmChart {
         eyre::ensure!(
             values.is_some() || !rendered.success(),
             "Helm rendered values it could not coalesce; evidence={}",
-            evidence_dir.display()
+            crate::helm_invocation::preserve_failure(&evidence_dir).display()
         );
         Ok(HelmProbe {
             values,
@@ -384,7 +382,7 @@ fn copy_chart_archive(
         "compressed chart exceeds adjudication budget: {}",
         source.display()
     );
-    let scratch = tempfile::tempdir()?;
+    let scratch = ScratchDir::new("chart-archive")?;
     let mut archive = tar::Archive::new(GzDecoder::new(fs::File::open(source)?));
     for entry in archive.entries()? {
         let mut entry = entry?;
@@ -439,7 +437,7 @@ fn copy_chart_archive(
                 || source_root.join("Chart.template.yaml").is_file()),
         "chart archive root has no manifest"
     );
-    let sanitized = tempfile::tempdir()?;
+    let sanitized = ScratchDir::new("chart-sanitized")?;
     copy_chart_tree(
         &source_root,
         sanitized.path(),
@@ -744,11 +742,8 @@ impl OfflineKubernetesValidator {
 
     /// A proven violation is decisive even when another resource lacks a schema.
     pub(crate) fn validate(&self, rendered: &[u8]) -> eyre::Result<KubernetesVerdict> {
-        let case = tempfile::Builder::new()
-            .prefix("helm-schema-yaml-decoder-")
-            .tempdir()?
-            .keep();
-        let documents = decode(rendered, &case)?
+        let case = ScratchDir::new("yaml-decoder")?.keep();
+        let documents = decode(HelmRunner::shared()?, rendered, &case)?
             .documents
             .map_err(|rejection| eyre::eyre!("{rejection}"))?;
         let mut evidence = ResourceEvidence::default();
@@ -782,7 +777,11 @@ impl OfflineKubernetesValidator {
         let defaults = self.defaults_evaluation(chart)?;
         let mut unpaired: Vec<&(Value, Vec<ViolationKey>)> = defaults.iter().collect();
         let mut changed = ResourceEvidence::default();
-        let decoded = decode(&probe.rendered.stdout, &probe.evidence_dir)?;
+        let decoded = decode(
+            HelmRunner::shared()?,
+            &probe.rendered.stdout,
+            &probe.evidence_dir,
+        )?;
         if let Some(record) = &decoded.record {
             chart.record(record);
         }
@@ -854,7 +853,11 @@ impl OfflineKubernetesValidator {
         if !probe.rendered.success() {
             return Ok(Vec::new());
         }
-        let decoded = decode(&probe.rendered.stdout, &probe.evidence_dir)?;
+        let decoded = decode(
+            HelmRunner::shared()?,
+            &probe.rendered.stdout,
+            &probe.evidence_dir,
+        )?;
         if let Some(record) = &decoded.record {
             chart.record(record);
         }
@@ -1002,14 +1005,14 @@ impl OfflineKubernetesValidator {
 
 /// Documents decoded by Helm's `fromYaml`, or why Helm could not decode them,
 /// with the Helm child's record when one ran.
-struct Decoded {
-    documents: Result<Vec<Value>, String>,
+pub(crate) struct Decoded {
+    pub(crate) documents: Result<Vec<Value>, String>,
     record: Option<InvocationRecord>,
 }
 
 /// Decodes `rendered` through Helm's `fromYaml` in the directory `decode`
 /// under `case`. Only a failure to run the decoder is an error.
-fn decode(rendered: &[u8], case: &Path) -> eyre::Result<Decoded> {
+pub(crate) fn decode(runner: &HelmRunner, rendered: &[u8], case: &Path) -> eyre::Result<Decoded> {
     let rejected = |rejection: String| Decoded {
         documents: Err(rejection),
         record: None,
@@ -1036,7 +1039,6 @@ fn decode(rendered: &[u8], case: &Path) -> eyre::Result<Decoded> {
             Ok(serde_yaml::Value::Null)
         ));
     }
-    let runner = HelmRunner::shared()?;
     let case = case.join("decode");
     fs::create_dir(&case)?;
     let chart = runner.staging_dir()?;
@@ -1056,20 +1058,23 @@ fn decode(rendered: &[u8], case: &Path) -> eyre::Result<Decoded> {
         case.join("values.json"),
         serde_json::to_vec(&serde_json::json!({"documents": filenames}))?,
     )?;
+    // The runner records the decoder chart (documents included); a preserved
+    // failure also needs the YAML those documents were split from.
+    fs::write(case.join("rendered.yaml"), rendered)?;
     // The decoder chart is fixed; its documents are part of its content.
-    let output = run_helm(
-        &chart,
-        &case,
-        "decode",
+    let values = fs::read(case.join("values.json"))?;
+    let request = TemplateRequest {
+        chart: &chart,
+        values: &values,
         kubernetes_version,
-        &Cacheability::Cacheable,
-    )?;
+    };
+    let output = runner.template(&request, &case, "decode", &Cacheability::Cacheable)?;
     let documents = if output.success() {
         decoder_documents(&output.stdout, &case, empty)
     } else {
         Err(format!(
             "Helm YAML decoding failed; evidence={}: {}",
-            case.display(),
+            crate::helm_invocation::preserve_failure(&case).display(),
             String::from_utf8_lossy(&output.stderr)
         ))
     };

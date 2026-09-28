@@ -1,5 +1,6 @@
 use color_eyre::eyre::{self, OptionExt as _};
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 use referencing::uri;
 use serde_json::json;
@@ -9,7 +10,7 @@ use super::*;
 
 #[test]
 fn file_retrieval_respects_fetch_policy() -> eyre::Result<()> {
-    let temp_dir = tempfile::tempdir()?;
+    let temp_dir = ScratchDir::new("flatten")?;
     let directory = temp_dir.path().join("directory with #");
     std::fs::create_dir(&directory)?;
     let path = directory.join("schema.json");
@@ -83,7 +84,7 @@ fn network_retrieval_rejects_loopback_and_link_local_hosts() {
 
 #[test]
 fn file_retrieval_respects_load_budget() -> eyre::Result<()> {
-    let temp_dir = tempfile::tempdir()?;
+    let temp_dir = ScratchDir::new("flatten")?;
     let directory = temp_dir.path().join("file-budget directory with #");
     std::fs::create_dir(&directory)?;
     let path = directory.join("schema.json");

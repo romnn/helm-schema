@@ -44,7 +44,7 @@ it off.
 
 | Variable | Why it matters |
 |---|---|
-| `TMPDIR` | Every temporary root goes here: per-chart evidence directories `helm-schema-adjudication-*`, the Helm root `helm-schema-helm-root-*` (without `SCHEMA_HELM_INVOCATION_CACHE`), and staged chart copies. Evidence and Helm roots are **kept on purpose**, so verdicts stay reproducible. They are never cleaned up, and a killed run leaks them too. Point `TMPDIR` at a fresh per-run directory on a large disk, create it **before** starting (cargo and the C compiler also use it; a missing `TMPDIR` fails the build with exit 101), and delete it after reading the evidence. |
+| `TMPDIR` | Not used for test scratch any more: per-chart evidence (`adjudication-*`), the Helm root (`helm-root-*`, without `SCHEMA_HELM_INVOCATION_CACHE`) and staged chart copies live under `<target>/scratch/<crate>/<label>-<pid>-<nonce>-<n>` (`crates/test-util/src/scratch.rs`), and Helm children get `TMPDIR`, `TMP` and `TEMP` = `<helm root>/tmp`. Scratch is kept while its process runs and swept by the next test process after it dies. A failure's reported `evidence=<dir>`, and each case a failing final gate implicates, is copied with the prepared charts it used to `<target>/evidence/<crate>/…`, which no sweep touches; marked entries there are pruned after seven days (an age limit, not a byte bound). `HELM_SCHEMA_SCRATCH_ROOT` overrides the scratch root. cargo and the C compiler still use `TMPDIR`; if you set it, create it **before** starting (a missing `TMPDIR` fails the build with exit 101). |
 | `CARGO_TARGET_DIR` | `find_helmsweep` looks in the target directory of the running test binary, so build helmsweep into the same target directory as the test. |
 
 Helm children run with a cleared environment, so the caller's `HELM_*` and
@@ -54,5 +54,5 @@ Helm children run with a cleared environment, so the caller's `HELM_*` and
 
 - `HELM_SCHEMA_CORPUS_ARTIFACTS` (producer artifacts consumed by `task test:integration`),
   `SCHEMA_DUMP` and `SCHEMA_DUMP_CHART` (the lean fixture lane test writes its lean dumps to
-  the system temp directory instead of asserting): see `corpus-fixtures`. The battery reads
+  `<target>/schema-dump/` instead of asserting): see `corpus-fixtures`. The battery reads
   none of them.

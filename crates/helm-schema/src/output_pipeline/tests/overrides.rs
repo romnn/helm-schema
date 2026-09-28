@@ -3,6 +3,7 @@ use std::collections::BTreeMap;
 use std::fs;
 use std::path::PathBuf;
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 use color_eyre::eyre;
 use serde_json::Value;
@@ -11,13 +12,6 @@ use crate::output_pipeline::{
     EmitRequest, FinalOutputPolicy, OutputPipelineOptions, PolicyInputOptions, PreparedEmitRequest,
     ReferencePolicy, apply_schema_output_pipeline, load_emit_request, prepare_emit_request,
 };
-
-fn test_temp_dir(name: &str) -> PathBuf {
-    std::env::temp_dir().join(format!(
-        "helm-schema-output-pipeline-{name}-{}",
-        std::process::id()
-    ))
-}
 
 fn policy_options() -> PolicyInputOptions {
     PolicyInputOptions {
@@ -60,8 +54,8 @@ fn output_policy() -> FinalOutputPolicy {
 
 #[test]
 fn prepared_override_schemas_bundle_refs_before_merge() {
-    let temp_dir = test_temp_dir("prepared-overrides");
-    fs::create_dir_all(&temp_dir).expect("create temp dir");
+    let scratch = ScratchDir::new("prepared-overrides").expect("create temp dir");
+    let temp_dir = scratch.path();
     fs::write(
         temp_dir.join("shared.json"),
         indoc! {r#"
@@ -104,7 +98,7 @@ fn prepared_override_schemas_bundle_refs_before_merge() {
         schema,
         &BTreeMap::new(),
         prepared,
-        &temp_dir,
+        temp_dir,
         output_policy(),
     )
     .expect("apply output pipeline");
@@ -124,14 +118,12 @@ fn prepared_override_schemas_bundle_refs_before_merge() {
         })),
         "prepared override refs should carry resolved content under $defs"
     );
-
-    fs::remove_dir_all(&temp_dir).expect("remove temp dir");
 }
 
 #[test]
 fn bundled_overrides_allocate_names_across_the_base_and_every_override() -> eyre::Result<()> {
-    let temp_dir = test_temp_dir("shared-bundle-namespace");
-    fs::create_dir_all(&temp_dir)?;
+    let scratch = ScratchDir::new("shared-bundle-namespace")?;
+    let temp_dir = scratch.path();
     fs::write(temp_dir.join("alpha.json"), r#"{"const":"alpha"}"#)?;
     fs::write(temp_dir.join("beta.json"), r#"{"const":7}"#)?;
     let alpha_override = temp_dir.join("alpha-override.json");
@@ -169,7 +161,7 @@ fn bundled_overrides_allocate_names_across_the_base_and_every_override() -> eyre
     sim_assert_eq!(have: reversed.identity().digest == ordered_digest, want: false);
 
     let output =
-        apply_schema_output_pipeline(base, &BTreeMap::new(), prepared, &temp_dir, output_policy())?;
+        apply_schema_output_pipeline(base, &BTreeMap::new(), prepared, temp_dir, output_policy())?;
 
     sim_assert_eq!(
         have: output.pointer("/properties/alpha/$ref"),
@@ -205,14 +197,13 @@ fn bundled_overrides_allocate_names_across_the_base_and_every_override() -> eyre
         want: false
     );
 
-    fs::remove_dir_all(&temp_dir)?;
     Ok(())
 }
 
 #[test]
 fn bundled_overrides_share_one_definition_for_the_same_external_target() -> eyre::Result<()> {
-    let temp_dir = test_temp_dir("shared-bundle-target");
-    fs::create_dir_all(&temp_dir)?;
+    let scratch = ScratchDir::new("shared-bundle-target")?;
+    let temp_dir = scratch.path();
     fs::write(temp_dir.join("shared.json"), r#"{"const":"shared"}"#)?;
     let alpha_override = temp_dir.join("alpha-override.json");
     fs::write(
@@ -239,7 +230,7 @@ fn bundled_overrides_share_one_definition_for_the_same_external_target() -> eyre
     sim_assert_eq!(have: repeated.identity().digest, want: digest);
 
     let output =
-        apply_schema_output_pipeline(base, &BTreeMap::new(), prepared, &temp_dir, output_policy())?;
+        apply_schema_output_pipeline(base, &BTreeMap::new(), prepared, temp_dir, output_policy())?;
 
     sim_assert_eq!(
         have: output.pointer("/properties/alpha/$ref"),
@@ -256,14 +247,13 @@ fn bundled_overrides_share_one_definition_for_the_same_external_target() -> eyre
         }))
     );
 
-    fs::remove_dir_all(&temp_dir)?;
     Ok(())
 }
 
 #[test]
 fn fully_inlined_export_override_refs_resolve_before_merge() {
-    let temp_dir = test_temp_dir("prepared-overrides-inline");
-    fs::create_dir_all(&temp_dir).expect("create temp dir");
+    let scratch = ScratchDir::new("prepared-overrides-inline").expect("create temp dir");
+    let temp_dir = scratch.path();
     fs::write(
         temp_dir.join("shared.json"),
         indoc! {r#"
@@ -306,7 +296,7 @@ fn fully_inlined_export_override_refs_resolve_before_merge() {
         schema,
         &BTreeMap::new(),
         prepared,
-        &temp_dir,
+        temp_dir,
         output_policy(),
     )
     .expect("apply output pipeline");
@@ -319,14 +309,12 @@ fn fully_inlined_export_override_refs_resolve_before_merge() {
         }),
         "fully inlined export refs should replace inferred constraints after dereferencing"
     );
-
-    fs::remove_dir_all(&temp_dir).expect("remove temp dir");
 }
 
 #[test]
 fn override_refs_are_preserved_when_reference_mode_preserves_refs() {
-    let temp_dir = test_temp_dir("prepared-overrides-keep-refs");
-    fs::create_dir_all(&temp_dir).expect("create temp dir");
+    let scratch = ScratchDir::new("prepared-overrides-keep-refs").expect("create temp dir");
+    let temp_dir = scratch.path();
     let override_path = temp_dir.join("override.json");
     fs::write(
         &override_path,
@@ -356,7 +344,7 @@ fn override_refs_are_preserved_when_reference_mode_preserves_refs() {
         schema,
         &BTreeMap::new(),
         prepared,
-        &temp_dir,
+        temp_dir,
         output_policy(),
     )
     .expect("apply output pipeline");
@@ -367,14 +355,12 @@ fn override_refs_are_preserved_when_reference_mode_preserves_refs() {
             .and_then(Value::as_str),
         want: Some("./shared.json#/definitions/cloud"),
     );
-
-    fs::remove_dir_all(&temp_dir).expect("remove temp dir");
 }
 
 #[test]
 fn override_loader_rejects_non_schema_roots() -> eyre::Result<()> {
-    let temp_dir = test_temp_dir("invalid-root");
-    fs::create_dir_all(&temp_dir)?;
+    let scratch = ScratchDir::new("invalid-root")?;
+    let temp_dir = scratch.path();
     for (index, root) in [
         serde_json::json!(null),
         serde_json::json!(3),
@@ -389,14 +375,13 @@ fn override_loader_rejects_non_schema_roots() -> eyre::Result<()> {
         let result = prepare(&[path], ReferencePolicy::PreserveRefs);
         sim_assert_eq!(have: result.is_err(), want: true);
     }
-    fs::remove_dir_all(&temp_dir)?;
     Ok(())
 }
 
 #[test]
 fn prepared_override_identity_includes_replacement_intent() -> eyre::Result<()> {
-    let temp_dir = test_temp_dir("override-identity");
-    fs::create_dir_all(&temp_dir)?;
+    let scratch = ScratchDir::new("override-identity")?;
+    let temp_dir = scratch.path();
     fs::write(
         temp_dir.join("shared.json"),
         r#"{"enum":[null,"azure","minikube"]}"#,
@@ -419,14 +404,13 @@ fn prepared_override_identity_includes_replacement_intent() -> eyre::Result<()> 
         want: false
     );
 
-    fs::remove_dir_all(&temp_dir)?;
     Ok(())
 }
 
 #[test]
 fn caller_authored_ref_replace_keys_do_not_collide_with_merge_intent() -> eyre::Result<()> {
-    let temp_dir = test_temp_dir("caller-ref-replace");
-    fs::create_dir_all(&temp_dir)?;
+    let scratch = ScratchDir::new("caller-ref-replace")?;
+    let temp_dir = scratch.path();
     fs::write(
         temp_dir.join("shared.json"),
         r#"{"enum":["azure","minikube"]}"#,
@@ -464,7 +448,7 @@ fn caller_authored_ref_replace_keys_do_not_collide_with_merge_intent() -> eyre::
             base.clone(),
             &BTreeMap::new(),
             prepared,
-            &temp_dir,
+            temp_dir,
             output_policy(),
         )?;
         sim_assert_eq!(
@@ -494,14 +478,13 @@ fn caller_authored_ref_replace_keys_do_not_collide_with_merge_intent() -> eyre::
         }
     }
 
-    fs::remove_dir_all(&temp_dir)?;
     Ok(())
 }
 
 #[test]
 fn final_override_replacement_prunes_the_orphaned_generator_definition() -> eyre::Result<()> {
-    let temp_dir = test_temp_dir("orphaned-generated-definition");
-    fs::create_dir_all(&temp_dir)?;
+    let scratch = ScratchDir::new("orphaned-generated-definition")?;
+    let temp_dir = scratch.path();
     let override_path = temp_dir.join("override.json");
     fs::write(
         &override_path,
@@ -523,7 +506,7 @@ fn final_override_replacement_prunes_the_orphaned_generator_definition() -> eyre
         schema,
         &BTreeMap::new(),
         prepared,
-        &temp_dir,
+        temp_dir,
         output_policy(),
     )?;
 
@@ -532,6 +515,5 @@ fn final_override_replacement_prunes_the_orphaned_generator_definition() -> eyre
         have: output.pointer("/properties/value"),
         want: Some(&serde_json::json!({ "anyOf": [{ "type": "integer" }] }))
     );
-    fs::remove_dir_all(&temp_dir)?;
     Ok(())
 }
