@@ -6132,6 +6132,27 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   new heavy work when ≥3 are active; priority by closure value — W1 (F2/F45/F66), W4/F75 (F34/F65/F75), k8s D1–D3,
   then F1 and frontend phase 2; reviews and plans (read-only) do not count. Recorded in memory. Orchestrator.
 
+- 22:44 (Sep 28) — **Landing 6 CHAIN GREEN** (`round8-landing6-run1/chain.log`: dump 20:06–20:24, unit, lint, battery
+  20:46–21:04, integration OK 21:19, sweep 21:19–22:43, finalize; receipt
+  `/Volumes/T7/dev/round8-landing6-run1/receipt.json` sha256
+  68285d5167fa6c0845ea5502f3c75e32ccda86a4ccacae2f036a6eafb9f7e364; 0 of 202 adopted; own target).
+- 22:52 (Sep 28) — **Landing 6 merged into main: cb42c017** (`git merge --no-ff` of landing-6 @ fcae9bf1 onto
+  5fa8f873; message names the receipt and sha; 0 fixtures). Not pushed. Post-merge `task lint` + nextest running
+  (`round8-main-postmerge/{lint,unit}-l6.log`). **Runner v6.7 merged into the runner repo** (`git merge --no-ff
+  runner-v6.7` = 423a6148, LAND from both), landing-4/5/6 env files marked `LANDING_FINISHED`, tests/run-all.sh
+  running (`round8-runner-evidence/run-all-after-v67-merge.log`; commit follows when green). Every future landing
+  runs on v6.7: own TARGET, owner marker, receipt /9. Orchestrator.
+- 22:55 (Sep 28) — **User: optimise landings per TOKEN, not per hour; "3" was a suggestion, my call.** Machine load
+  was ~150 (frontend builder's report). Decision: heavy set = the three candidates closest to landing — W1 rework
+  6, W4 rework 5 (its 4d0fce8d pre-battery STOPPED: the chain runs the battery anyway), k8s rework 3 — plus the
+  post-merge gates. PAUSED after a checkpoint: F1 (rebase in progress) and frontend (partial-kind integration run;
+  phase 2 coding not started). Frontend phase-2 plan (`round8-frontend-evidence/phase2/plan.md`, 79 lines: 2.1 E
+  seam with tree-sitter-yaml 0.7.2 + out-of-band provenance + 64-state cap, 2.2/2.3 S with the audit rows and the
+  inline-else composition cells as reds; placement cells land in 3.1, F12 partial resolution in 3.2) sent to both
+  reviewers as a read-only design cross-check (follow_up 7660883f / 5d5c270b). Partial-kind side branch 98cf9a8b
+  handed back (7 red→green tests, gates green except the integration run left unconfirmed; `partial-kind/final.patch`
+  sha 60000289…) — parked; superseded by phase-2/3.2 if the plan lands. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
