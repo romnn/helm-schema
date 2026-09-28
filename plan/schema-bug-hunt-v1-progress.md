@@ -5953,6 +5953,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `dump → unit → lint → battery → integration → sweep → finalize` launched via nohup on runner v6.6 (743f80c +
   env commit); `chain.log` in E. Expect 0 fixtures adopted (lanes 157/1/23 unchanged). Orchestrator.
 
+- 20:06 (Sep 28) — **Landing 6 first launch refused at `dump` (rc 4): the fresh clone's `mise.toml` was untrusted**
+  (`chain.log`: "Config files in /Volumes/T7/dev/round8-landing6/mise.toml are not trusted"; error record
+  `round8-landing6-run1/error-dump-20260928T200545-63865.txt`; nothing built, lock released). `mise.toml` is
+  byte-identical to main's; `mise trust /Volumes/T7/dev/round8-landing6/mise.toml`, then the chain relaunched at
+  20:06 on the same E (lock owner pid 71916, token 487b1e5d…). Rule for every new landing clone: `mise trust` it
+  right after `git clone` (recorded in hand-off §6 and memory). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing

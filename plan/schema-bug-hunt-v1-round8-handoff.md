@@ -160,6 +160,8 @@ Read the ledger entries from "22:15 (Sep 27) — Session 2" onward for the detai
   /Volumes/T7/dev/helm-schema fetch /Volumes/T7/dev/round8-landing6 landing-6 && git merge --no-ff FETCH_HEAD -m
   "Land frontend phase 1: … (receipt … sha256 <from chain.log>)"`, then lint + unit on main, ledger, this section.
   F10 (trailing-else complement, one fixture, `frontend-main-f10` 987bb4f6) lands separately afterwards.
+  Hazard: a fresh clone needs `mise trust <clone>/mise.toml` before the runner can build in it (first launch
+  of landing 6 was refused at dump for that reason; relaunched 20:06).
 - **Landing 4 LANDED** as 4b5db9c3 (receipt `/Volumes/T7/dev/round8-landing4-run1/receipt.json` sha256
   76f4a5aa…, v6.6, 0 fixtures adopted) after a `cargo clean -p` of all workspace crates: landing-4.env and
   landing-5.env shared `TARGET=/Volumes/T7/dev/round7-integrate/target` and cargo had aliased landing 5's
