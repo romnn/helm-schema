@@ -5681,6 +5681,29 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   matrix, APIService probe-table entry with red/green. Note: the k8s builder freed space by deleting only
   `debug/incremental` inside its own target and ran with CARGO_INCREMENTAL=0. Orchestrator.
 
+- 15:36 (Sep 28) — **k8s reviews dispatched as fresh runs** (the earlier astra k8s run 2ae22af6 had expired):
+  sol 20260928T133519-3677d240, astra 20260928T133601-e1cee4f7 (full-context briefs incl. the values-driven
+  design question A–G). k8s builder meanwhile: `k8s-rebase` onto main d42a1f33, datadog image-tag Helm matrix,
+  APIService probe-table entry with red/green.
+- 15:38 (Sep 28) — **W4/F75 rework 2 handed back (w4-main HEAD b1a6ad1d = 86a4fd3a R1+tests, b1a6ad1d R2 on
+  91dccf1e; `final-v3.patch` 28 files sha f652890b…, +279 LOC vs main).** R1 `conditional_overlays.rs:519
+  partition_path` keeps self-path non-wildcard MatchesPattern (:592) / NotMatchesPattern (:600 + string-type
+  conjunct) as overlay partitions (three duplicate target checks deleted). R2: astra's dataflow confirmed by
+  instrumentation (`rebase/scratch-merge.log`): the overlay reaches `resolve_policy.rs:741` where merging
+  `{"type":"string"}` into the preimage union collapsed its string alternatives; fix `string_contract_alternatives`
+  (:746/:766) keeps the base union's own string alternatives when the only hint is the runtime string contract;
+  `contract_rows.rs:220` passes an unconditional string contract into overlay branch facts. A first general
+  merge.rs rule (86a4fd3a) was replaced because it false-rejected coredns `defaultMode: "420 # x"`. Contract
+  (`rebase/matrix-helper-hole-v2.txt`, main/91dccf1e/v3): "a: b"/"true"/"123" REJECT again; "a #b"/"a #"/"null #
+  hi" ACCEPT; guarded-helper-hole "a: b"/"true" now rejected (main wrongly accepted); W4/F75 matrices rerun on
+  v3, no cell moved; `"^[\w.-]+$"` fixture fixed (Helm rejects it as invalid syntax). Tests `tpl_plain_slot.rs`
+  ×3 incl. the R4 known-abstention pin; red exit 100 on 91dccf1e prod and exit 100 on the guard-only probe
+  (`rebase/red-v3.txt`), green 17/17. Gates: fmt/lint/lint:fc/ast-grep 0, nextest 1602/1602, chart_corpus
+  81/157 — 76 mismatches (58 + 18 new, none dropped; coredns serviceType checked correct). Pre-existing on
+  main, not a regression: a direct `{{ tpl .Values.name . }}` slot rejects "a #b"/"a #"/"null # hi" (sol's
+  path_resolver.rs:503 lane). Reviews: follow_up on runs 68054652 (sol) / aeb245af (astra). Builder meanwhile:
+  `w4-rebase` onto d42a1f33 and Helm adjudication of the 18 new mismatches. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
