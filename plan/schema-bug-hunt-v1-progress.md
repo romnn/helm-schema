@@ -5463,6 +5463,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   also confirms: no generation or shortening algorithm changed, runner deletion present, byte-identical
   template output across its fresh Helm cells, blocked-stdout termination in 10–41 ms.
 
+- 05:08 (Sep 28) — **Scratch round 4: LAND from both reviewers** (`review-scratch-rework3-{sol,astra}.md`).
+  S14–S17 closed; the pre-execution invocation record captures no ambient secrets (explicit child env,
+  paths and hashes), one file per stage, no unbounded growth; preserved bundles intentionally carry chart
+  and values bytes; no production Rust or fixture bytes changed. Follow-up (sol P2, not blocking): the
+  copied record's nested `request` keeps the original absolute paths — label it as the cache identity or
+  add a bundle-local replay description. Landing-4 chain: dump step running since 04:52 (lock held by pid
+  15571; the machine also runs five builders).
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
