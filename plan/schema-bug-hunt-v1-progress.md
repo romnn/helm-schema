@@ -6125,6 +6125,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   become phase 2's red acceptance cells; the frontend builder starts phase 2 right after landing 6 merges (plan
   hand-back first, cross-checked by both Codex reviewers, then commit-by-commit per the brief). Orchestrator.
 
+- 22:50 (Sep 28) — **User direction: cap compile-heavy builders at ~3 concurrent** (more compete for the machine and
+  are slower and less token-efficient; the earlier steady state was ~3). Currently running: W1 rework 6, W4
+  (pre-battery → rework 5), k8s rework 3, F1 resume, frontend phase-2 plan (heavy: five), runner v6.8 rework 2 (light),
+  plus landing 6's sweep. Policy from now: let these finish; on each hand-back count active heavy builders and QUEUE
+  new heavy work when ≥3 are active; priority by closure value — W1 (F2/F45/F66), W4/F75 (F34/F65/F75), k8s D1–D3,
+  then F1 and frontend phase 2; reviews and plans (read-only) do not count. Recorded in memory. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing

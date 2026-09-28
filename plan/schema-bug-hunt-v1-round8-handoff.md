@@ -205,9 +205,10 @@ Read the ledger entries from "22:15 (Sep 27) — Session 2" onward for the detai
   20260928T133601-e1cee4f7 (astra). Answers are read from `turns/<latest>/last-message.md` (the transcript
   file grows only after a `result` call); `collect-codex.py` saves and registers them (`codex-runs.tsv`).
 - **User decisions**: personal Claude account only, Claude via native subagents, agentmux for Codex only;
-  keep ~3 implementors running while Codex reviews; spend the weekly quota by its reset and resume after
-  (reset happened 10:00 local Sep 28); roster baseline: recommendation to keep f7be7ba5 for the campaign,
-  NOT yet confirmed by the user — no semantic landing before that.
+  keep ~3 compile-heavy implementors running (cap, 22:50 Sep 28: more compete for the machine; queue new heavy
+  work on hand-back when ≥3 are active; reviews/plans are free); spend the weekly quota by its reset and resume after
+  (reset happened 10:00 local Sep 28); roster baseline: DECIDED 22:40 Sep 28 (orchestrator under the user's delegation): keep f7be7ba5 for the
+  whole campaign; fixture-moving landings may proceed.
 - **Follow-ups queued**: sol's scratch P2 (nested `request` paths in copied records); wrappers P3s (scratch
   path in Helm messages, raw error formatting, Windows runtime test); the airflow/oncall `\u` URL pattern
   emitter defect; `if $d`/`empty $d` after `unset` (pre-existing); `required (dict)`/`(list)` false
