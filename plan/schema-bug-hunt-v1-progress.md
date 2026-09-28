@@ -5960,6 +5960,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   20:06 on the same E (lock owner pid 71916, token 487b1e5d…). Rule for every new landing clone: `mise trust` it
   right after `git clone` (recorded in hand-off §6 and memory). Orchestrator.
 
+- 20:28 (Sep 28) — **Landing 6: dump green** (202 fixture rows, 0 of 202 adopted — fixture-preserving as expected;
+  20:06–20:24), unit running (lock owner pid 7796). T7 128 GB free.
+- 20:29 (Sep 28) — **Runner v6.7 rework 2: astra REWORK on one P2** (`review-runner-v67-rework2-astra.md`): the
+  trailing-comment separator `\s+#` (landing.py:757) accepts Unicode whitespace (U+00A0, U+2003) that zsh does not
+  treat as a separator, so `TARGET=/decoy<NBSP>#comment; TARGET=/shared` scans as /decoy but sources as /shared
+  (reproduced: two files for different clones passing the scan with the same real TARGET). Fix: `[ \t]+#.*`, with
+  NBSP / other Unicode-space regressions incl. the hidden reassignment. A2 resolved; every quoting probe
+  (single-quoted `\`/`$`/backticks literal, `NAME=a\ b` refused, quoted empty strings, nine line breaks) behaves as
+  zsh; no regression. Runner builder asked for rework 3 (this one item) ahead of v6.8. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
