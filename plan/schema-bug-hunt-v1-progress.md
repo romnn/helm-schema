@@ -5487,6 +5487,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   pin is deleted (K2), single-alternative Undecided → Selected (K4), corpus expected ~0 mismatches (K3);
   builder resumed. Landing-4 chain still in dump.
 
+- 05:35 (Sep 28) — **Frontend rework 2 handed back (1c537982, `final-v3.patch` sha dcc57419…, +198 LOC
+  total, 0 fixtures moved); round-3 re-review as follow-ups.** F5 (1e614ad5): kind overlays partition only
+  by a proven kind selector — `ResourceRef.kind_selector` (non-serialized) set for `kind: {{ .Values.x }}`
+  and for `if` chains whose kind arms are all `eq <path> "<kind>"` guards (trailing `else` allowed, nested
+  chain as a region's only kind arm); `final_signals.rs` partitions only uses whose selector is the guard's
+  own path (the first version, requiring `eq` on every arm, changed the `stacks-blockchain-api` fixture and
+  was corrected). F6 (1c537982): a `kind:` under a document-level `with`/`range` keeps neither arm
+  conditions nor a chain selector, read from the Go-template tree (the YAML structure lets the entry escape
+  the ill-nested region). Five red/green tests; gates fmt/lint/ast-grep/lint:fc (54) 0, unit 1601,
+  integration 848 incl. lanes 157/1/23. Open (pre-existing or conservative): helper-local `$var`,
+  equivalent-context calls abstain, inline `{{else}}`, F6 covers with/range `else` branches.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
