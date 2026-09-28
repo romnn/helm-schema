@@ -311,49 +311,22 @@ fn definition_name_options_parse() -> eyre::Result<()> {
 }
 
 #[test]
-fn expand_defs_rewrites_short_keys_in_helm_logs() -> eyre::Result<()> {
-    let dir = tempfile::tempdir()?;
-    let map = dir.path().join("defs-map.json");
-    let log = dir.path().join("helm.log");
-    let readable = dir.path().join("helm.readable.log");
-    std::fs::write(
-        &map,
-        serde_json::to_vec(&json!({ "2b": "k8s/io.k8s.api.core.v1.Probe", "1": "values/web" }))?,
-    )?;
-    // Recorded from `helm lint` (Helm v4.3.0) on a shortened schema.
-    std::fs::write(
-        &log,
-        indoc::indoc! {r#"
-            [ERROR] templates/: values don't meet the specifications of the schema(s) in the following chart(s):
-            "file:///values.schema.json#/$defs/2b" is not valid against metaschema: jsonschema validation failed with 'http://json-schema.org/draft-07/schema#'
-        "#},
-    )?;
-
-    run(&[
+fn helm_logs_are_translated_by_lint_and_template_not_expand_defs() -> eyre::Result<()> {
+    let expand = Cli::try_parse_from([
+        "helm-schema",
         "expand-defs",
         "--map",
-        path_arg(&map)?,
-        path_arg(&log)?,
-        path_arg(&readable)?,
-    ])?;
-
-    sim_assert_eq!(
-        have: std::fs::read_to_string(&readable)?,
-        want: indoc::indoc! {r#"
-            [ERROR] templates/: values don't meet the specifications of the schema(s) in the following chart(s):
-            "file:///values.schema.json#/$defs/k8s~1io.k8s.api.core.v1.Probe" is not valid against metaschema: jsonschema validation failed with 'http://json-schema.org/draft-07/schema#'
-        "#}
-        .to_string()
+        "defs-map.json",
+        "helm.log",
+        "helm.readable.log",
+    ]);
+    assert!(expand.is_err(), "{expand:?}");
+    let help = Command::new(HELM_SCHEMA_BIN).arg("--help").output()?;
+    let help = String::from_utf8(help.stdout)?;
+    assert!(!help.contains("expand-defs"), "{help}");
+    assert!(
+        help.contains("  lint ") && help.contains("  template "),
+        "{help}"
     );
-    let refused = Command::new(HELM_SCHEMA_BIN)
-        .args([
-            "expand-defs",
-            "--map",
-            path_arg(&map)?,
-            "-",
-            path_arg(&readable)?,
-        ])
-        .output()?;
-    assert!(!refused.status.success(), "`-` is refused");
     Ok(())
 }

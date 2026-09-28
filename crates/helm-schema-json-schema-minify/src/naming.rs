@@ -142,33 +142,52 @@ pub fn shorten_definition_names(schema: &Value) -> ShortenedSchema {
     }
 }
 
-/// Replaces every short definition key that follows `$defs/` in `text` with
-/// its readable name, spelled as in a `$ref` (see [`definition_reference`]).
+/// Replaces every short definition key in a root definition reference
+/// `#/$defs/<key>` in `text` with its readable name, spelled as in a `$ref`
+/// (see [`definition_reference`]).
 ///
 /// Error messages from Helm and JSON Schema validators locate schema
 /// positions as pointers, such as `file:///values.schema.json#/$defs/2b`.
+/// The key is the complete reference token after `#/$defs/`, which ends at
+/// `/`, a quote, whitespace, a control byte or the end of `text`; it is
+/// translated only when the whole token is a key of `readable_names`, so key
+/// `1` leaves `#/$defs/1+x` or `#/$defs/1~0x` alone. A pointer below a
+/// definition, such as `#/$defs/1/properties/a`, keeps its suffix. Every
+/// other byte, including invalid UTF-8, is kept as is.
 #[must_use]
 pub fn expand_short_definition_names(
-    text: &str,
+    text: &[u8],
     readable_names: &BTreeMap<String, String>,
-) -> String {
-    let marker = format!("{DEFINITIONS_KEY}/");
-    let mut expanded = String::with_capacity(text.len());
+) -> Vec<u8> {
+    let marker = format!("#/{DEFINITIONS_KEY}/");
+    let marker = marker.as_bytes();
+    let mut expanded = Vec::with_capacity(text.len());
     let mut rest = text;
-    while let Some(start) = rest.find(&marker) {
+    while let Some(start) = rest
+        .windows(marker.len())
+        .position(|window| window == marker)
+    {
         let (before, after) = rest.split_at(start + marker.len());
-        expanded.push_str(before);
+        expanded.extend_from_slice(before);
         let key_len = after
-            .find(|character: char| !character.is_ascii_alphanumeric())
+            .iter()
+            .position(|&byte| {
+                b"/\"'`".contains(&byte) || byte.is_ascii_whitespace() || byte.is_ascii_control()
+            })
             .unwrap_or(after.len());
         let (key, remainder) = after.split_at(key_len);
-        match readable_names.get(key) {
-            Some(readable) => expanded.push_str(&definition_pointer_token(readable)),
-            None => expanded.push_str(key),
+        let readable = std::str::from_utf8(key)
+            .ok()
+            .and_then(|key| readable_names.get(key));
+        match readable {
+            Some(readable) => {
+                expanded.extend_from_slice(definition_pointer_token(readable).as_bytes());
+            }
+            None => expanded.extend_from_slice(key),
         }
         rest = remainder;
     }
-    expanded.push_str(rest);
+    expanded.extend_from_slice(rest);
     expanded
 }
 

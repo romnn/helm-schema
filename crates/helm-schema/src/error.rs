@@ -151,25 +151,9 @@ pub enum CliError {
         source: serde_json::Error,
     },
 
-    /// A text file to expand could not be read.
-    #[error("failed to read {path}")]
-    ReadText {
-        /// File that could not be read.
-        path: PathBuf,
-        /// Underlying filesystem failure.
-        #[source]
-        source: std::io::Error,
-    },
-
-    /// A `$defs` name map is not a JSON object of strings.
-    #[error("failed to parse the $defs name map {path}")]
-    ParseDefsMap {
-        /// Map file that could not be parsed.
-        path: PathBuf,
-        /// Underlying parse failure.
-        #[source]
-        source: serde_json::Error,
-    },
+    /// Helm could not be run on the shortened chart copy.
+    #[error(transparent)]
+    Helm(#[from] crate::helm::HelmRunError),
 
     /// Wraps any failure surfaced by the `jsonschema` / `referencing`
     /// full-inlining pass: file-not-found, JSON parse error, malformed

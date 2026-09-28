@@ -10,6 +10,8 @@ mod fetch_policy;
 pub mod flatten;
 /// Schema-generation inputs and staged output artifacts.
 pub mod generation;
+/// Running Helm on a chart copy with a shortened root schema.
+pub mod helm;
 mod load_budget;
 mod output_pipeline;
 mod provider_builder;

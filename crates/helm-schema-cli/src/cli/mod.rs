@@ -2,7 +2,7 @@ mod chart_args;
 mod crd_args;
 mod diag_args;
 mod emission_args;
-mod expand_defs_args;
+mod helm_args;
 mod inference_args;
 mod k8s_args;
 mod output_args;
@@ -18,7 +18,7 @@ pub use chart_args::ChartArgs;
 pub use crd_args::{CrdArgs, CrdVersionLookup};
 pub use diag_args::{DiagArgs, DiagFormat};
 pub use emission_args::{EmissionArgs, PolicyToggle};
-pub use expand_defs_args::ExpandDefsArgs;
+pub use helm_args::HelmArgs;
 pub use inference_args::InferenceArgs;
 pub use k8s_args::{DEFAULT_AUTO_WINDOW, K8sArgs, K8sVersionFallback};
 pub use output_args::{DefsNames, OutputArgs};
@@ -116,7 +116,16 @@ pub enum Command {
     /// reviewed artifact; the map translates error messages that mention a
     /// short key back to readable names.
     Shorten(ShortenArgs),
-    /// Replace the short `$defs` keys a Helm or validator log mentions with
-    /// their readable names, using the map `shorten` wrote.
-    ExpandDefs(ExpandDefsArgs),
+    /// Run `helm lint` on a copy of the chart whose `values.schema.json` has
+    /// short `$defs` keys, and exit with Helm's status.
+    ///
+    /// Helm's output names readable definitions again. Paths in Helm
+    /// arguments stay relative to the current directory.
+    Lint(HelmArgs),
+    /// Run `helm template` on a copy of the chart whose `values.schema.json`
+    /// has short `$defs` keys, and exit with Helm's status.
+    ///
+    /// The chart comes first, so Helm's one-chart form applies: name the
+    /// release with `--name-template`, not with a positional `NAME`.
+    Template(HelmArgs),
 }

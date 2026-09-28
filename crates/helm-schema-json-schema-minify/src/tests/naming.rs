@@ -622,7 +622,7 @@ fn shortening_decodes_encoded_references_and_abstains_on_others() {
 }
 
 #[test]
-fn helm_errors_translate_back_to_readable_names() {
+fn helm_errors_translate_back_to_readable_names() -> eyre::Result<()> {
     let readable_names = BTreeMap::from([
         (
             "2b".to_string(),
@@ -640,7 +640,7 @@ fn helm_errors_translate_back_to_readable_names() {
     "#};
 
     sim_assert_eq!(
-        have: expand_short_definition_names(helm_error, &readable_names),
+        have: String::from_utf8(expand_short_definition_names(helm_error.as_bytes(), &readable_names))?,
         want: indoc::indoc! {r#"
             [ERROR] templates/: values don't meet the specifications of the schema(s) in the following chart(s):
             refchk:
@@ -649,6 +649,33 @@ fn helm_errors_translate_back_to_readable_names() {
             json-pointer in "file:///values.schema.json#/$defs/values~1web/properties/a" not found; $defs/21 and $defs/1b stay
         "#}
         .to_string()
+    );
+    Ok(())
+}
+
+#[test]
+fn only_complete_definition_tokens_translate() {
+    let readable_names = BTreeMap::from([("1".to_string(), "values/web".to_string())]);
+    let unchanged: [&[u8]; 11] = [
+        b"#/$defs/1-extra",
+        b"#/$defs/1b",
+        b"#/$defs/1~0x",
+        b"#/$defs/1%20x",
+        b"#/$defs/1.x",
+        b"#/$defs/1+foo",
+        b"#/$defs/1:x",
+        b"#/$defs/1@x",
+        "#/$defs/1\u{e9}".as_bytes(),
+        b"#/properties/$defs/1",
+        b"$defs/1",
+    ];
+    for text in unchanged {
+        sim_assert_eq!(have: expand_short_definition_names(text, &readable_names), want: text.to_vec());
+    }
+    let log = b"'#/$defs/1' \"#/$defs/1/$defs/1\"\r\n\xff#/$defs/1";
+    sim_assert_eq!(
+        have: expand_short_definition_names(log, &readable_names),
+        want: b"'#/$defs/values~1web' \"#/$defs/values~1web/$defs/1\"\r\n\xff#/$defs/values~1web".to_vec()
     );
 }
 
