@@ -6097,6 +6097,34 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `brief-k8s-rework3.md` (K1–K3); astra's k8s verdict pending. Landing 6 sweep: fast pass collected (2036 fast rows,
   181 differential rows), differential running. T7 219 GB free. Orchestrator.
 
+- 14:17 (Sep 28) — **Disk: the dormant build caches `round7-f13/target` (40 GB) and `round7-d3f23/target`
+  (42 GB) were removed.** Both belonged to finished tracks only (wrappers/f13/kubever/regexp and
+  scratch/d3f23 hand-offs; no open files; no active builder or brief names them). Active targets are
+  round7-f9 (W1), round7-f78 (W4), round7-f4 (k8s), round8-frontend-target, round7-integrate (landing),
+  helm-schema/target (main post-merge gates). T7 was down to 80 GB free at 14:07 (the live battery and four
+  builders write ~8 GB per 15 min); 144 GB free afterwards. Evidence dirs were not touched (round8-f9-evidence
+  16 GB is the largest; user's call). Orchestrator.
+  (Appended 22:40: the 14:17 write was refused by the auto-mode classifier as destructive; the user delegated the
+  pending decisions at 22:38 and the entry is recorded now.)
+
+- 22:40 (Sep 28) — **User delegation and two decisions (orchestrator, under the user's delegation "you're the
+  orchestrator").** (1) ROSTER BASELINE: keep `ROSTER_BASELINE = f7be7ba5` for the whole campaign; every live
+  battery adjudicates flips against it; the roster rows are edited only by adjudicated evidence, never to make a run
+  pass (acceptance-battery skill rules). W1 and F10 are no longer blocked on this. (2) The user restated the big
+  goal: fix all divergences over time, everything green and correct, architecture per the architecture reviews,
+  no brittle heuristics, compiler-style phases, simple and elegant; asked what happened to the line-driven
+  frontend heuristic work. Answer recorded: it is the **rendered-layout frontend refactor** (user decision 14:35
+  Sep 27; design `brief-frontend-rendered-layout-astra.md` + `design-d5-rendered-layout-sol.md`); phase 1
+  (retire the 22 text-reparsing sites, textual control-keyword reclassifiers, `starts_with("{{-")`; two
+  Helm-proven corrections) is exactly **landing 6, on the chain now**; phases 2–4 (render skeleton with YAML parse
+  and provenance; trim/indent/helper composition before parent assignment; deletion of the line/adoption/repair
+  model — `Frame`, owner/seed layout, `process_line`, content/action-line layout) are briefed but not started.
+  The inline-else P1s found today (opaque content after a mid-line boundary; partial scalars across boundaries)
+  are symptoms of that remaining line model, so patching `parse.rs` further is a local fix inside code phase 4
+  deletes → DIRECTION CHANGE: inline-else rework 1 is stopped; its Helm cells and both reviewers' adjacent cells
+  become phase 2's red acceptance cells; the frontend builder starts phase 2 right after landing 6 merges (plan
+  hand-back first, cross-checked by both Codex reviewers, then commit-by-commit per the brief). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
