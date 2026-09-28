@@ -6351,6 +6351,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   for its red run, W4 rework 6 written but unbuilt behind the rebased battery (helmsweep serving), runner v6.9 in
   its test tally. T7 146 GB free. Orchestrator.
 
+- 02:05 (Sep 29) — **Runner v6.9 handed back; both reviews dispatched; tooling designs v3 written.** v6.9 = branch
+  runner-v6.9 HEAD 0c94e907 on ae25207 (worktree `round8-runner-v69`); `round8-runner-evidence/v69.patch` (547
+  lines, sha256 24ead14c…). Mechanism (builder report): ownership metadata moved out of the target into a sibling
+  `$TARGET.owner/` (`lock` flock, `owner` = `R=`+`id=<32 hex>`, `landing-owner` = `R=`+`receipt=` still bound under
+  the receipt's `target_owner`), so `cargo clean` cannot delete it (G1); incarnation token in the clone's git dir
+  (`target-owner-id`, hard-linked into place, never replaced; a recreated clone has a new git dir) (G3); legacy
+  `$TARGET/.landing-owner` never adopted, new `migrate-target` step under both locks with receipt/marker/clone checks
+  (G2); guard-vs-runner race test deferred to the guard landing. Green run-all exit 0 (660 zsh ok, py 82 OK;
+  `green/v69/`); red on ae25207 test_target.sh 64 FAIL (`red/v69/`); one test_lock SIGTERM flake seen once, green on
+  rerun (known). Reviews: sol + astra fresh xhigh runs (ids in codex-runs.tsv). Designs v3 in
+  `round8-runner-evidence/proposals/` (target-guard 96 lines G1–G6, cell-matrix 120 lines M1–M7) — go straight to
+  implementation per the 01:00 decision; the runner builder started the guard in `round8-target-guard` (rebasing
+  onto current main first). Load 14–17, T7 140 GB. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
