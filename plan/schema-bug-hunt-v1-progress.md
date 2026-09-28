@@ -5415,6 +5415,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `brief-frontend-rework2.md` (F5–F7). Running: wrappers rework, W4/F75 rebase, k8s D1–D3, scratch rework 3,
   runner Go fix, W1 rework 4, frontend rework 2.
 
+- 04:25 (Sep 28) — **Runner v6.6 merged into the production runner (3e9128a, `--no-ff`; lock free);
+  classify patch final (61a04445, `final.patch` sha 571e172e…).** The Go rework 3 (test-only: the
+  unreadable-Chart.yaml case as a subtest with a verified permission-denied precondition and skip; an
+  unparsable-values sweep row asserting a cache miss on rerun; README sentence on pinned ignored chart
+  tests) matches astra's request exactly; accepted by the orchestrator without a fourth Codex round (test
+  code only). Go gates: `go test -race` 25 PASS, vet incl. windows 0, gofmt empty, build prints the release
+  line. Runner suite last green on 5eaf229 (cf20933 changed README only). `landing-4.env` template is in
+  the runner; landing 4 = scratch (rework 3 pending) + classify on runner v6.6. Six builders running.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
