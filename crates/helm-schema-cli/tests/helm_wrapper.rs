@@ -9,15 +9,15 @@ use std::process::{Command, Output};
 
 use color_eyre::eyre::{self, WrapErr as _};
 use serde_json::{Map, Value, json};
-use tempfile::TempDir;
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 const HELM_SCHEMA_BIN: &str = env!("CARGO_BIN_EXE_helm-schema");
 
 /// A fresh copy of the fixture chart under a directory whose name has a
 /// space, and an empty `TMPDIR` for the wrapper.
 struct Case {
-    dir: TempDir,
+    dir: ScratchDir,
 }
 
 impl Case {
@@ -31,9 +31,7 @@ impl Case {
             version.starts_with("v4.2.3"),
             "these tests need Helm v4.2.3 on PATH, found {version:?}"
         );
-        let dir = tempfile::Builder::new()
-            .prefix("helm wrapper ")
-            .tempdir_in(env!("CARGO_TARGET_TMPDIR"))?;
+        let dir = ScratchDir::new("helm wrapper")?;
         copy_dir(&fixture("chart"), &dir.path().join("wrapped"))?;
         std::fs::create_dir(dir.path().join("tmp"))?;
         Ok(Self { dir })
