@@ -5369,6 +5369,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   spellings bound, V11 CLI-log-only case; table 66 cases; run-all 498 checks + 79 py green. Wrappers
   reviews still running. Follow-up offsets in `round8/followups-pending.tsv`.
 
+- 02:50 (Sep 28) — **Wrappers REWORK (both); three builders launched on the user's instruction to keep
+  throughput high while eight re-reviews run.** Wrappers (`review-wrappers-prelanding-{sol,astra}.md`):
+  P1 `template` stdout is rewritten (a literal `$defs/1` in rendered YAML becomes the readable name) →
+  relay template stdout byte-for-byte, translate stderr; P2 translator treats `+`/`:`/`@`/non-ASCII as
+  token ends and rescans suffixes; P2 signals swallowed under output backpressure (reproduced: SIGTERM
+  ignored with stdout unread, exit 0), Windows flag never read, copy ignores a queued signal, library
+  installs global handlers it never restores; P2 failed kill skips wait; P2 a `0444` root schema cannot be
+  replaced (fs::copy keeps the mode); P3 lint:fc WARN on Windows (`Event::Signal` never constructed) — the
+  hand-off's "0 diagnostics" was wrong; scratch paths in messages deferred; `signal-hook` accepted; no
+  schema algorithm changed. Brief `brief-wrappers-rework.md` (W1–W6), builder resumed. New tracks: W4+F75
+  rebase (clone `round8-w4`, the uncommitted F75 work checkpointed as ad85b72e on `w4-f75-checkpoint`, the
+  stray mongodbcommunity bundle hunk dropped, branch `w4-main` off c816e318, target `round7-f78/target`,
+  brief `brief-w4-f75-rebase.md`) and k8s D1–D3 (clone `round8-k8s`, branch `k8s-main` off c816e318, target
+  `round7-f4/target`, brief `brief-k8s-d1-d3.md`, spec `spec-k8s-provider-red-tests-astra.md`). User
+  decisions: keep three implementors running while Codex works; the remaining quota (92 % used at 02:25,
+  reset 10:00) is to be used, a cut-off is resumed after the reset.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
