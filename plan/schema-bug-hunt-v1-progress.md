@@ -5386,6 +5386,35 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   decisions: keep three implementors running while Codex works; the remaining quota (92 % used at 02:25,
   reset 10:00) is to be used, a cut-off is resumed after the reset.
 
+- 04:15 (Sep 28) — **Third review round in: runner v6.6 LAND (one Go test item), scratch REWORK on P2s,
+  W1 and frontend REWORK; four builders resumed (seven agents running).** Files
+  `review-{scratch-rework2,runner-v66-rework2,w1-rework3,frontend-rework1}-{sol,astra}.md` (saved from each
+  run's latest `turns/*/last-message.md`; the transcript file does not grow until `result` is called).
+  Runner: sol LAND (P3: a pinned ignored chart test still fails the chart-presence check — fail-closed; the
+  Go sweep test lost its unresolved-cache rerun check); astra REWORK on one P2: the mode-000 Chart.yaml
+  test assumes Unix permissions (Windows/root) → subtest with a verified precondition; astra reclassified all
+  6,108 landing-3 cells: only cert-manager control → `loader` and common control → `library-chart` change,
+  nothing becomes unknown; V8–V11 closed. Brief `brief-runner-v66-rework3.md` (V12–V13). Scratch: S1/S8/S9
+  sound within the trust boundary; P2 bare-runner cases without `prepared.json` lack replay inputs, Task's
+  env precedence lets inherited `TMPDIR`/`GOTMPDIR` override the task env (both tasks), `preserve()` copies
+  before marking (partial bundles never pruned), P3 decoder-failure bundle test via injected failure. Brief
+  `brief-scratch-rework3.md` (S14–S17). W1: both P1 on compositions — `$o := dict "t" (last (uniq …))` then
+  `$o.t` (rule A checks syntax, not origin), `dict "d" $o.d` passed to a helper then mutated (sharing lost
+  through constructors), `with (dict "d" $d)` reading `.d | len` (freshness lost on dot rebinding; direct
+  `unset .Values.m` untracked), `required (deepCopy (len …))` (exemption by function name); sol found a
+  pre-existing main false rejection `required "bad" (dict)`/`(list)`; all 61 matrix rows reproduced by both.
+  Decision (brief `brief-w1-rework4.md`): identity, sharing and freshness become properties of values —
+  positional identity a facet of list values dropped by uniq/append/prepend/concat/without/chunk/sortAlpha
+  (element domain kept), escaping containers share contents, the freshness mark on the AbstractValue, a
+  typed nil-or-empty-string predicate for `required`; delete the syntactic checks. Frontend: 1.3′
+  equivalent to the base, 1.6 fixes a base false rejection (both); astra P1 `final_signals.rs:19/81`
+  invents a partition from an unrelated `eq .Values.mode "DaemonSet"` guard once the helper condition is
+  dropped (DaemonSet overlay rejects a rendered `partition`); sol P2 document-level `with`/`range` regions
+  around the `kind:` call site (pre-existing); sol P1 `test:integration`/`test:all`/luup2 not run — the
+  landing chain's and the orchestrator's gates, recorded against the landing. Brief
+  `brief-frontend-rework2.md` (F5–F7). Running: wrappers rework, W4/F75 rebase, k8s D1–D3, scratch rework 3,
+  runner Go fix, W1 rework 4, frontend rework 2.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
