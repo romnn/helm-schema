@@ -6070,6 +6070,33 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (own dump + helmsweep in its worktree target, per the acceptance-battery skill) so unmatched flips among the 153
   moves are known before the landing chain. Orchestrator.
 
+- 22:31 (Sep 28) — **Seven verdicts.** (1) **Runner v6.7 rework 3: LAND from both** (astra: A3 closed, 52 Unicode-
+  whitespace probes refused, no regression; `review-runner-v67-rework3-v68-rework1-astra.md`) → merge 423a6148 into
+  the runner repo once landing 6's chain releases it. (2) **v6.8 rework 1: astra LAND (two P3), sol REWORK**
+  (`review-runner-v68-rework1-sol.md`): a header-only lint (`==> Linting` is printed at the start) seals as completed
+  (landing.py:1812); a retry archives the sweep so the failed attempt's readable seal points at moved paths and is
+  never verified (run-landing.sh:267 / landing.py:1187); phase binding ignores attempt id and rows (both P3);
+  refusal codes for malformed helm-schema.json / phase.json / missing end evidence (both P3). Brief
+  `brief-runner-v68-rework2.md` (C1–C4). (3) **Frontend inline-else: REWORK from both** (two P1s): after a
+  mid-line boundary the rest of the line is opaque ActionLineText (parse.rs:218/:443) so `{{ else }}  key: …` loses
+  the mapping entry (Helm renders `key: world`); truncating the value at the boundary (parse.rs:217/:454) makes
+  holes.rs:801 treat `.Values.x` as a whole-value hole although `key: {{ .Values.x }}{{end}}-suffix` renders
+  `true-suffix` → false rejection; the `well_nested` flag has no reader (P3). Brief
+  `brief-frontend-inline-else-rework1.md` (E1–E2); frontend builder switched from partial-kind. (4) **W4/F75 rework
+  4: REWORK from both** — R8–R10 and the pattern rows confirmed, 41 non-anchored probes unchanged; remaining: scoped
+  regex flags lost because groups are stripped before `has_inline_flags` (`(?i:[^a])` accepts `&x A`), indicator
+  payload with a comment rejected (`&a:b #c` renders), attached `#` accepted (`&a#b`, Helm aborts), separator
+  backtracking (`^ foo$` accepts `&x  foo`), early return at :345 bypasses the indicator arm for pattern strings,
+  and R4's template-program cell is a candidate-introduced false acceptance relative to main (label it so). Brief
+  `brief-w4-rework5.md` (R11–R15); W4 builder finishes its 4d0fce8d pre-battery first. (5) **k8s rework 2: sol
+  REWORK, decision (b) confirmed** (`review-k8s-rework2-sol.md`): chain.rs:397 must suppress only for
+  UndecidedCapability (remove the Unavailable arm + the second walk :407–413, keep the SchemaUnavailable
+  diagnostic; path_resolver.rs:275 erases containerPort's integer in the base path); vector/open_webui reshapes and
+  matrix rows 29/33 need explicit acceptance adjudication (chart_reaudit cells); P3 simplifications. R1 Helm checks
+  on jenkins/harbor/loki/mariadb confirm the conditional contract; fluent_bit PSP live at 1.24, dead at 1.29. Brief
+  `brief-k8s-rework3.md` (K1–K3); astra's k8s verdict pending. Landing 6 sweep: fast pass collected (2036 fast rows,
+  181 differential rows), differential running. T7 219 GB free. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
