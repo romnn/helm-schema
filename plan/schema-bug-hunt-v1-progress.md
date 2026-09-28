@@ -5499,6 +5499,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   integration 848 incl. lanes 157/1/23. Open (pre-existing or conservative): helper-local `$var`,
   equivalent-context calls abstain, inline `{{else}}`, F6 covers with/range `else` branches.
 
+- 05:40 (Sep 28) — **Wrappers final (f8323df9, `final.patch` sha 6e3fcec9…, +411 net LOC): astra's last P2/P3
+  fixed (cleanup warning on its own thread, errors ignored, never delaying an interrupt; docs promise
+  cleanup on Unix only; rustdoc on the surviving relay); two new regression cells red then green (17/17);
+  `task test:integration` 865; no fixture bytes.** A short confirmation follow-up went to astra; unless it
+  returns a P1, the wrappers are landing 5 on the chain right after landing 4 (unit step green at 05:35).
+  Frontend round-3 follow-ups running on both reviewers.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
