@@ -5826,6 +5826,25 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (follow_up runs 73d3081f / 6b442c0c; separate verdicts). Merge order once LAND: v6.7 rework 1, then v6.8,
   between chains; then landing-4/5 env files get `LANDING_FINISHED`. Orchestrator.
 
+- 17:20 (Sep 28) — **W4/F75 rework 3 handed back (w4-main HEAD f493bb14 = eb68270b R5–R7 + f493bb14 lint-clean
+  tests on b1a6ad1d; `final-v4.patch` 38 files sha 16315ded…, +346 LOC vs main).** R5 `base_schema.rs:160
+  guarded_only_base` / `BaseOwner::OwnedContract`: a path whose base is owned by guarded arms keeps its
+  independent base contract (always-executing consumers, `path_resolver.rs:198`) instead of `{}` —
+  prometheus-redis-exporter/metabase cells REJECT again. R6 `scalar_preimage.rs:362–420`: EVERY typed string
+  spelling of the plain-scalar preimage gets a copy behind `&name ` (token-start-anchored patterns rewritten
+  past the anchor; enum/maxLength arms get no copy) — "&x ok"/"&x null" accepted, "&x true" rejected. R7
+  `resolve_policy.rs:768/789`: a string contract over a union without a string arm yields `false`. Tests:
+  string_contract_slots.rs ×4, tpl_plain_slot.rs +3 anchored cells, 10 expected schemas updated; red on
+  b1a6ad1d exit 100 (16 failures), green 1606/1606. Gates: fmt/lint/lint:fc/ast-grep 0, nextest 1606/1606,
+  chart_corpus 4/157 — **153 mismatches (76 → 153; the 77 new attributed to R6 "by construction", no Helm
+  cells run on them)**. Side task parked: `w4-rebase` moved to worktree `round8-w4-rebase`, rebase of
+  b1a6ad1d onto d42a1f33 conflict-free but now stale; 18-chart adjudication not run. Reviews (follow_up runs
+  68054652 / aeb245af) with the blast radius as an explicit design question: per-spelling anchored copies vs a
+  single composed anchor prefix vs restriction to the provider-projected identity-domain preimage; Helm
+  sample of the moved charts for rewrite-induced tightenings; residuals (anchor names outside
+  `[A-Za-z0-9_-]`, anchors on enum/length slots, direct-tpl lane, coredns "abc"). Builder meanwhile measures
+  the per-chart size delta and runs Helm cells on ≥10 moved charts in a worktree. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
