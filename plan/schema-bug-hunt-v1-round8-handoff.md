@@ -194,10 +194,10 @@ Read the ledger entries from "22:15 (Sep 27) — Session 2" onward for the detai
     conditional provider contracts for values-driven KubeVersion guards, whole-condition `Has` decoding,
     Masterminds `||` semantics, prerelease-preserving version, K4 missing-else, comparator red evidence);
     BASE c816e318 — rebase needed (`k8s-rebase` in a separate worktree). D2/D3 endorsed by both.
-- **Builder agents** (native subagents of this session; all four resumed after the 10:00 quota reset;
-  resume with SendMessage): W1 `ae88c76cb6bda5467`, frontend `a69f98e6d3af1e500`, W4 `a8dd06d301e7c2760`,
-  k8s `a1ff77c400aeaa4df`; done: wrappers `ac59ade2d4da19ac0`, scratch `a159f489c3a3fd5c0`, runner
-  `a67c3c0781e99d708`. If the session itself is gone, start fresh builders from each track's `handoff.md` +
+- **Builder agents** (native subagents of this session; resume with SendMessage): W1 `ae88c76cb6bda5467`,
+  frontend `a69f98e6d3af1e500`, W4 `a8dd06d301e7c2760`, k8s `a1ff77c400aeaa4df`, runner `a67c3c0781e99d708`
+  (v6.7/v6.8), F1 `a1fb0ea167e8d1a85` (started 22:25 from the checkpoint, `brief-f1-resume.md`); done: wrappers
+  `ac59ade2d4da19ac0`, scratch `a159f489c3a3fd5c0`. If the session itself is gone, start fresh builders from each track's `handoff.md` +
   brief.
 - **Codex runs** (follow_up keeps context; runs expire after ~24 h — the first k8s astra run did): W1
   92580cac/416b8635, frontend 7660883f/5d5c270b, scratch be7d3a37/908ce142, runner 73d3081f/6b442c0c,

@@ -6034,6 +6034,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   e1cee4f7. Builder meanwhile: rework onto `k8s-rebase` over main 9716e080 in its worktree with its own target.
   Orchestrator.
 
+- 22:25 (Sep 28) — **F1 builder started (seventh implementor)** from the checkpoint `round8-f1-evidence/handoff.md`
+  (clone `round8-f1`, branch f1-global-policy, HEAD d5b9bf4c on BASE 1c449bd9; design
+  `brief-f1-global-and-policy-options-astra.md` + `crosscheck-f1-brief-sol.md`). Brief `brief-f1-resume.md`: rebase
+  onto main code 9716e080 first (conflicts recorded), new own target `round8-f1-target` (round7-f31/target is gone),
+  then the checkpoint's next steps 1–6 (explain the 5 `fixture_verdicts` "unexpected fix" rows structurally, refine
+  `global_consumed`, record the missing REDs, all gates, corpus lane list, Helm matrix refresh, final.patch vs
+  9716e080). User asked when the counter moves: answered — landing 6 (frontend) closes none of the 83; W1 (F2/F45/
+  F66) → 6/83 earliest midday Sep 29 if rework 6 lands and the roster baseline is confirmed; W4/F75 (F34/F65/F75) →
+  9/83 Sep 29 evening at the earliest; F1 now in progress. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
