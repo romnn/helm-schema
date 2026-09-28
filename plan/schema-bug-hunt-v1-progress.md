@@ -5578,6 +5578,29 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `summary-l5.log`); result to be recorded. Landing 4 merges on top when its chain is green (possible textual
   conflict in `crates/helm-schema-cli/tests/defs_names.rs`; lint + unit rerun on the merged main).
 
+- 13:49 (Sep 28) — **Post-merge gates on main d42a1f33 green:** `task lint` exit 0, `cargo nextest run --workspace`
+  exit 0 (`/Volumes/T7/dev/round8-main-postmerge/{lint,unit}-l5.log`, 11:39–11:49 UTC). Landing 4 battery
+  running since 13:36 (nextest SLOW marks >600 s, normal for the live battery). T7 88 GB free.
+- 13:50 (Sep 28) — **W1 rework 4 handed back (2012d658 on a0f34143, `final-v5.patch` sha e9607b70…, 53 files,
+  +428 LOC vs main); both reviewers re-reviewing (follow_up on runs 92580cac / 416b8635).** Builder's claims
+  (verify in review): A″ `AbstractValue::Elements` (list with element domain, no positions; produced by
+  uniq/append/prepend/concat; first/last/index yield the choice of elements) replaces the rework-3 syntactic
+  bare-selector key check — identity decided by the key's value; C″/B″ `Effects.mutated_paths` records the
+  input maps reached by set/unset/merge/include/tpl contexts and withholds len/keys/merge truth from any value
+  naming a mutated map (rework-3 per-local flag deleted; D1 scan kept for dict-literal membership only);
+  D″ `required` fails iff provably nil/"" (or/and follow the selected operand, coalesce nil when falsy;
+  static empty dict/list failure deleted — fixes main's `required (dict)`/`(list)` false rejection).
+  Matrix `rework4/matrix.txt` 93 rows Helm 4.2.3: agrees on every row but the two open `open-unset-*` rows
+  (main also rejects). Tests: 23 new full-schema tests in `fail_validators.rs:5359+`, red 17/30 on
+  a0f34143+tests, green 30/30. Gates: fmt 0, lint 0, ast-grep 0, lint:fc 0 (51), nextest 1649/1649,
+  chart_corpus 122/157 (35 mismatches: the 33 of rework 3 byte-identical + eck_stack loosening `required
+  (or spec.version version)` where version 0 renders, + jaeger tightening where `len (keys $annotations)`
+  regains exact truth and binds the annotations sink — both to adjudicate). Residuals: truth read inside a
+  helper after the caller mutated the map; helpers mutating via root `.`/`$` tracked only via their own
+  summaries. Meanwhile the W1 builder works the queued `if $d`/`empty $d` after `unset $d` false rejection
+  on a side branch `track/w1-unset` off 2012d658 (hand-back under `round8-w1-evidence/unset/`), so the
+  review target stays frozen. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
