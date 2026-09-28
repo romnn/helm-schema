@@ -5644,6 +5644,43 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   the `helm-schema lint` readable-log step if small); runner builder a67c3c0781e99d708 resumed on it in a
   worktree. Every new landing gets its own TARGET (`round8-landing<N>-target`). Orchestrator.
 
+- 14:45 (Sep 28) — **Runner v6.7 handed back (branch runner-v6.7, worktree `round8-runner-v67`, HEAD 6d178200 on
+  743f80c; `round8-runner-evidence/v67.patch` 8 files +150/−6, sha 59e096b4…).** Dump claims `$TARGET/.landing-owner`
+  (R + receipt path); a TARGET with builds but no marker refuses at dump (exit 8); every step incl. finalize checks
+  the marker under the lock, exit 8 on a foreign/malformed marker, never rewrites a foreign one; receipt /9 binds
+  the marker next to `target` (changed marker → exit 4 at the next step); every step scans the runner dir's
+  `landing-*.env` and refuses (exit 2) when two name the same TARGET for different clones; `LANDING_FINISHED=`
+  marks retired env files (landing-2/3 marked). tests/run-all.sh exit 0 (11 zsh suites, 515 checks + 79 Python
+  tests); new tests/test_target.sh red on 743f80c (12 FAIL). Item 5 (readable logs) not folded in — it is a new
+  sweep phase; briefed separately as v6.8 (`brief-runner-v68.md`: readable `helm-schema lint` output only for
+  failing/unresolved/differential rows, bound and sealed). Both reviewers on v6.7 (follow_up runs 73d3081f /
+  6b442c0c); merge between chains only. Builder's post-merge steps: landing-5.env gets `LANDING_FINISHED`,
+  landing-4.env would need its own TARGET and a rerun from dump under v6.7. Orchestrator.
+- 15:08 (Sep 28) — **Landing 4: `integration` green on the clean rebuild** (`chain.log` OK[battery] then
+  OK[integration]); sweep running.
+- 15:10 (Sep 28) — **k8s D1–D3 rework 1 handed back (k8s-main HEAD c42bfa6a on BASE c816e318, `final-v2.patch`
+  39 files sha 0e5525c6…, +356 LOC).** K1 opaque guards → `CapabilityOracle::opaque_condition_holds`
+  (core `capability_liveness.rs:13`) evaluated three-valued by `helm_schema_ast::capability_condition_holds`
+  (`capability_branch.rs:100`) over the pinned release (semverCompare / eq..ge over KubeVersion
+  Version/GitVersion/Major/Minor, `APIVersions.Has` via the oracle, and/or/not); Masterminds comparator lists and
+  `||` in `semver_constraint_matches_version`; K4 all-equal alternatives → Selected; K2 PDB "50%" pin deleted;
+  D2/D3 unchanged. Helm matrix `helm-matrix/matrix-rework1-4.2.3.txt` (1.29.0 / 1.20.0 / 1.5.0, `-0` idiom,
+  unparsable constraint aborts, values-driven flips with --set). Tests: provider_cache_correctness.rs 22 (red 5
+  on e9baab71+tests, green); comparator-list tests written with the fix (no separate red — `git stash` denied).
+  Gates: fmt/lint/lint:fc/ast-grep 0, nextest 1594/1594, integration profile 779/91/24 (all 91 = fixture
+  mismatches of 26 corpus charts + 1 lean + 1 gen, or their consumers). Corpus 51 → 26 mismatches; 25 stay
+  Undecided and DROP their provider contract (loosening): 21 values-driven KubeVersion guards (bitnami
+  `common.capabilities.kubeVersion`, loki, `$kubeTargetVersion`, `.Values.kubeVersion | default`), third-party
+  `Has` (cert-manager, monitoring.coreos, projectcalico, cloud.google, VPA), prometheus_adapter
+  (apiregistration.k8s.io/v1 has no probe-table entry); datadog moved because the evaluator now decides a
+  value-side image-tag `semverCompare` (needs Helm adjudication). Builder's blocker = the values-driven class
+  (Undecided per K1 vs a conditional schema). Orchestrator's position put to both reviewers: the structural answer
+  is CONDITIONAL (Selected while the override path is absent/empty; unknown under an override), not a blanket
+  Undecided that drops a quarter of the corpus. Reviews: astra follow_up on run 2ae22af6, sol fresh run (id in
+  `codex-runs.tsv` when saved). Builder meanwhile: rebase branch `k8s-rebase` onto main d42a1f33, datadog Helm
+  matrix, APIService probe-table entry with red/green. Note: the k8s builder freed space by deleting only
+  `debug/incremental` inside its own target and ran with CARGO_INCREMENTAL=0. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
