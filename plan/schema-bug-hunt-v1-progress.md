@@ -6277,6 +6277,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   runs 68054652 / aeb245af (R16/R17 verdict requested). Builder next: rebase a91b6666 onto cb42c017 in its own-target
   worktree and run the live battery there per the new corpus-fixtures rule. Orchestrator.
 
+- 00:36 (Sep 29) — **Frontend phase-2 plan v2: astra LAND-THE-PLAN, sol REVISE with two precise corrections**
+  (`review-frontend-phase2-plan-v2-{sol,astra}.md`): `Origin` distinguishes literal text (no ActionId) from action
+  output with a source-index invariant (an ActionId recurs across arms/helper calls/repetitions — never deduplicate
+  pieces or effects globally by it); the 2.3 gate names the remaining `literal_block` callers (literal.rs:10/:25 incl.
+  local CRD projection). Decision: adopt as plan v3 without another round; 2.1(a) starts when a heavy slot frees.
+  **`explain` design: sol REVISE-DESIGN** (`crosscheck-explain-provenance-sol.md`): inventory corrections on cb42c017
+  (ContractProvenance keeps file + byte span + helper names only; guarded fallback hints are combined before
+  ContractPathSchemaEvidence; ProviderSchemaSource has no content digest; values path info lacks file/digest/pointer/
+  layer); `ContractUse` derives Eq/Ord/Hash over provenance so retention must sit beside the compared identity;
+  output-boundary attribution through override replacement/bundling/pruning/minify/renaming; LOC budget optimistic;
+  recommended first landing = a typed path-local generation decision record (ResolvePolicy dispositions,
+  independent-contract qualification, containment result, BaseOwner) captured in the resolver. Astra asked for design
+  v2 with that first commit (follow_up 11bf8beb). Load 5; T7 166 GB. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
