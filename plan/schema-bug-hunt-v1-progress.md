@@ -6224,6 +6224,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   the cell-matrix implementation notes without building. Landing order for these: target-guard (no compile) as
   soon as its check returns → cell-matrix and explain in builder slots as W1/W4/k8s free them. Orchestrator.
 
+- 23:58 (Sep 28) — **Process tooling pre-staged (runner builder, no builds):** target-guard clone `round8-target-guard`
+  (main c3046769, mise-trusted), branch `target-guard` aac2591d = zsh suite `scripts/tests/target-guard.sh` only
+  (fake cargo; 45 cases incl. every malformed-marker variant, foreign `CARGO_BUILD_BUILD_DIR`, `.landing-owner`
+  coexistence, symlinks, unset target; red 36 FAIL / 9 trivially ok; `task lint` wiring case gated behind
+  TARGET_GUARD_TASK_TESTS=1). cell-matrix implementation notes (`proposals/cell-matrix-impl-notes.md`): reuse
+  `coalesce_chart_values`/`acceptance_values`, `ValuesOptions::merge_values`, `PinnedHelmChart::adjudicate`,
+  `HelmRunner::template` + `InvocationRequest::key()` (helm-invocation/v3 replay store), `jsonschema::validator_for` +
+  `ViolationKey`; finding: kubeconform is NOT needed — the battery's `OfflineKubernetesValidator` (pinned
+  testdata/provider-bundle, CRDs included, `verify_bundles_unchanged()`) gives Valid/Invalid/Uncertain; minimal move =
+  `helm_adjudication`, `helm_invocation`, `helm_cache_policy`, `kubernetes_version` together into
+  `helm-schema-test-support/src/helm/` as its own commit gated by an unchanged battery run (INVOCATION_FORMAT stays
+  v3; helm_pool and rosters stay test-only). Pending my go after the design cross-checks: move whole vs split; Helm's
+  own coalesced dump for the schema column with the Rust port as a marked fallback (leaning yes to both). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
