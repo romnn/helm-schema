@@ -208,6 +208,21 @@ Read the ledger entries from "22:15 (Sep 27) — Session 2" onward for the detai
   work on hand-back when ≥3 are active; reviews/plans are free); spend the weekly quota by its reset and resume after
   (reset happened 10:00 local Sep 28); roster baseline: DECIDED 22:40 Sep 28 (orchestrator under the user's delegation): keep f7be7ba5 for the
   whole campaign; fixture-moving landings may proceed.
+- **Process improvements (user mandate 23:50 Sep 28: chase these as first-class work; owner in brackets):**
+  1. Shared cell-matrix tool in `helm-schema-test-support`: a TSV of (chart, override JSON, kube-version) → one row per
+     cell with verdicts from N CLI binaries + Helm 4.2.3 render + kubeconform strict, emitted as the `matrix-*.txt`
+     files builders and reviewers hand-write today [runner builder: proposal; then a builder slot].
+  2. Builders run the schema-only round-74 battery (baseline = their base commit) over their moved fixtures before
+     hand-back instead of ad-hoc Python probes (W1's probe2.py coalesced wrongly) [document in corpus-fixtures skill].
+  3. Adjacent-spelling cell bank per feature class (anchors, comments, flow indicators, quoting, trims, mid-line
+     boundaries) as reusable test fixtures, run before hand-back — most REWORK rounds today found one adjacent cell
+     [W4/frontend builders after their tracks land].
+  4. Target-dir owner guard for builders: generalise the runner's `.landing-owner` marker into a `task` pre-check that
+     refuses to build when the target was last built from another checkout path [runner builder: proposal].
+  5. Family-witness gate: size checks must apply main's `$defs` shortening (F1 builder found 5 spurious F74 rows)
+     [F1 builder, in its track].
+  6. Codex re-checks of a single item at `high` effort instead of `xhigh` [orchestrator, immediate].
+  7. Every fresh clone: `mise trust`; every worktree: own target — both now in memory and the runner [done].
 - **Follow-ups queued**: sol's scratch P2 (nested `request` paths in copied records); wrappers P3s (scratch
   path in Helm messages, raw error formatting, Windows runtime test); the airflow/oncall `\u` URL pattern
   emitter defect; `if $d`/`empty $d` after `unset` (pre-existing); `required (dict)`/`(list)` false

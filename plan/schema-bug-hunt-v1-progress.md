@@ -6195,6 +6195,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   to both reviewers as one candidate. Concurrency: k8s back on heavy work and F1 resumed → four heavy builders while
   load is ~7; pause one if load climbs past ~20. Orchestrator.
 
+- 23:52 (Sep 28) — **User mandate: chase process improvements as first-class work.** Seven items queued in hand-off §6
+  "Process improvements" with owners (shared cell-matrix tool; schema-only battery before hand-back; adjacent-spelling
+  cell bank; target-dir owner guard for builders; shortening-aware family-witness size check; `high`-effort single-item
+  re-checks; mise-trust/own-target rules done). Astra's phase-2 plan cross-check: REVISE-THE-PLAN with seven
+  corrections (`review-frontend-phase2-plan-astra.md`: byte-level differential at every 2.1 checkpoint; no
+  uncertainty fallback for migrated constructs; 64-state overflow must widen, never truncate; composition cells in
+  2.2 count as removed false rejections, precise guarded schemas need the ArmId→predicate consumer (2.2 or 3.1);
+  deletion inventory qualified by consumers incl. `BlockScalar.body.end` readers at eval.rs:3049/:3145 and
+  `document_spans` → resource_identity.rs:60; 2.1 E lands independently, 2.2/2.3 only after W1/W4/k8s). Sol's
+  pending. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
