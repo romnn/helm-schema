@@ -74,8 +74,14 @@ helm-schema ./path/to/chart --output values.schema.json --compact
 
 `$defs` entries carry readable schema-path names. To hand Helm a schema over
 its 5 MiB chart-file limit, shorten them (`helm-schema shorten readable.json
-values.schema.json --map defs-map.json --compact`) and translate Helm logs back
-with `helm-schema expand-defs --map defs-map.json helm.log helm.readable.log`.
+values.schema.json --map defs-map.json --compact`), or let helm-schema run
+Helm on a temporary copy of the chart whose schema is shortened; Helm's output
+names the readable definitions and the command exits with Helm's status:
+
+```bash
+helm-schema lint ./path/to/chart -f my-values.yaml
+helm-schema template ./path/to/chart --name-template my-release
+```
 
 For exceptionally conditional charts that exceed Helm's 5 MiB chart-file
 limit or compile slowly during `helm lint`, emit the lean validation profile:

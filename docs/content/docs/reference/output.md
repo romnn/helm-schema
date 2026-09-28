@@ -131,6 +131,11 @@ readable name of every short key, so a Helm or validator error that mentions
 `#/$defs/2b` can be translated back
 (`helm_schema::output::expand_short_definition_names`).
 
+`helm-schema lint` and `helm-schema template` do all of this for one Helm run:
+they shorten the chart's root schema in a temporary copy, run Helm on it, and
+translate Helm's output back to readable names (see
+[CLI reference]({{< relref "cli.md" >}})).
+
 ## Emission profiles
 
 The default `full` profile emits every supported constraint. For exceptionally
