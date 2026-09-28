@@ -6238,6 +6238,29 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   v3; helm_pool and rosters stay test-only). Pending my go after the design cross-checks: move whole vs split; Helm's
   own coalesced dump for the schema column with the Rust port as a marked fallback (leaning yes to both). Orchestrator.
 
+- 00:15 (Sep 29) — **Six reviews in.** (1) **Runner v6.8 rework 2: REWORK from both** (sol P2: a pre-existing
+  `$E/attempt-evidence` symlink is followed by mkdir/os.link → hard links outside E; P3 malformed/empty historical seal;
+  astra P2: the C1 summary check accepts the summary anywhere in either stream, not as the terminal line; P3 malformed
+  readable rows escape as exit 1 before `readable_problems`; P3 retry coverage) → `brief-runner-v68-rework3.md`
+  (D1–D5). (2) **Frontend phase-2 plan: REVISE-THE-PLAN from both** (shadow-only parser with a serialized-byte
+  differential per checkpoint; overflow widens; no uncertainty fallback for migrated constructs; 2.2 claims only "no
+  false rejection" for the crossing cells, precision needs the ArmId→predicate consumer; deletions follow their last
+  consumer — `BlockScalar.body.end` readers, `document_spans` → resource identity; 2.1 lands alone, 2.2/2.3 after
+  W1/W4/k8s) → `brief-frontend-phase2-plan-revision.md`; frontend builder revises the plan (no builds). (3)
+  **Tooling designs: REVISE-DESIGN ×2 from both** — target-guard: exclusive interprocess claim (tmp+rename is not
+  exclusive; `run: once` is per-invocation), guard-and-execute wrapper per cargo command instead of Task `env:`
+  (precedence unreliable; cargo CLI config beats env), `.owner` as the common claim with an incarnation token for
+  recreated checkouts, runner v6.9 to parse/whitelist both markers BEFORE enabling, audit the real command graph incl.
+  hard-coded `./target` consumers, Python for portability, CI with fresh job-owned targets; cell_matrix: move the
+  reusable harness (render runner, replay policy, chart preparation, validation primitives) into test-support behind a
+  narrow boundary, pin schema generation like rendering (CLI default kube 1.35 vs validator 1.29!), keep overrides and
+  coalesced documents distinct (Helm's coalesced dump for the schema column, Rust port as marked fallback), declare the
+  prepared-chart policy, offline validator Valid/Invalid/Uncertain as the k8s column (no kubeconform), reuse the full
+  replay key, accept/reject verdicts with sorted diagnostics separately, portable evidence manifest and a
+  non-vacuous `--require-expected` → `brief-tooling-designs-v2.md` (T1–T7, C1–C8, decisions marked). (4) astra's
+  `helm-schema explain` design (`design-explain-provenance-astra.md`, 22 KB) sent to sol for cross-check (follow_up
+  e48030f1). Runner builder: v6.8 rework 3 first, then both v2 designs. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
