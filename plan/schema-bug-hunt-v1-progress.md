@@ -5342,6 +5342,33 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   V4/V7 confirmed closed, `INSTALLATION FAILED:` is install-only (refused as unknown, fine). Brief
   `brief-runner-v66-rework2.md` (V8–V11). Wrappers pre-landing follow-ups still running.
 
+- 02:25 (Sep 28) — **Four hand-backs in one hour (frontend rework, scratch rework 2, W1 rework 3, runner
+  rework 2); eight follow-up re-reviews running.** Frontend (`frontend-main` ab4dd0da, `final-v2.patch`
+  sha c46b5144…, +140 LOC): the five commits cherry-picked cleanly; 1.3′ (22a91438) no longer narrows —
+  `HelperParts` keeps helper kind-arm conditions as the base did; NEW commit 1.6 (semantic, red/green): an
+  arm keeps its condition only when every call passes the caller's own dot, arms reached through another
+  context or inside a dot-rebinding `with`/`range` body abstain (the builder extended the rule to
+  `with`/`range` because the base FALSELY REJECTS `maxSurge` that Helm renders in chart `f1-with`); the
+  equivalence differential now asserts (0 differences over 8239 files on rebased 1.1); lanes 157/1/23
+  against main's fixtures; a12.log re-recorded; unit 1596, integration 848; open pre-existing: the
+  content-line inline `{{else}}` false rejection and a helper-local `$var` scope oddity. Scratch
+  (af0528e1, `final.patch` sha 0277ec24…, 86 files, LOC 0): markers validated by grammar + owner match,
+  evidence entries marked and pruned only when marked, Drop/`remove_marked` keep the marker until the dir
+  is gone, Go `isolateEnv`/clean-child/`build:helmsweep` temp vars, battery gate failures preserve every
+  implicated flip's bundle (`an_unlisted_false_acceptance_reports_a_bundle_that_reproduces_it` deletes the
+  originals and re-renders from the bundle byte-identically), bundle-relative `prepared.json`; untested:
+  a decoder-failure bundle. W1 rework 3 (a0f34143, `final-v4.patch` sha a2b35f85…, +235 LOC vs main):
+  A membership keys = bare selectors only (element-selection identity deleted); B per-value Read/Shared/
+  Mutated scan, projections share only when mutated; C truth validity as an effect mark carried through
+  merge/and/or/deepCopy/pipelines (rework 2's syntactic flag deleted); D `required` ignores `len`/`keys`
+  subjects; 61-row matrix, 16 new full-schema tests red 16/17 → green 17/17; the same 33 corpus charts
+  drift (byte-identical across the three W1 CLIs). Runner rework 2 (5eaf229; classify f92108bd,
+  `final.patch` sha 03ca2e49…): V8 `IGNORED_LANE_TESTS` pin, V9 outer-diagnostic-only with the recorded
+  Helm 4.2.3 missing-Chart.yaml wordings (permission denied → unknown; a lint with any `[ERROR]` is no
+  longer `missing-dependency`; Windows lint wording unknown), V10 `rustc -vV` and both cargo config
+  spellings bound, V11 CLI-log-only case; table 66 cases; run-all 498 checks + 79 py green. Wrappers
+  reviews still running. Follow-up offsets in `round8/followups-pending.tsv`.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
