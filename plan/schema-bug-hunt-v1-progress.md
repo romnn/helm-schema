@@ -5986,6 +5986,54 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   optional prefix = follow-up, estimate in `handoff-r6.md`). Reviews: follow_up runs 68054652 / aeb245af. Builder
   meanwhile: Helm sample of moved charts + w4-rebase refreshed onto 9716e080 in its worktree. Orchestrator.
 
+- 21:20 (Sep 28) — **Landing 6: unit, lint, battery, integration green; sweep running** (`chain.log`; battery
+  20:46–21:04, integration OK 21:19; `adopted.tsv` 0 rows). T7 114 GB free.
+- 21:30 (Sep 28) — **Runner v6.7 rework 3 handed back (runner-v6.7 HEAD 423a6148; `v67-rework3.patch` 10 files
+  +341/−9 sha 609efddb…, supersedes rework 2):** trailing comment only after ASCII space/tab, unquoted values
+  exclude every Unicode space (NBSP hidden reassignment → exit 2), names and `$NAME` ASCII-only; run-all exit 0
+  (558 checks + 79 Python); red vs d665376: NBSP and U+2003 cases FAIL. **v6.8 rework 1 handed back (runner-v6.8
+  HEAD 22bae919 on 423a614; `v68-rework1.patch` 9 files +300/−15 sha db047b63…):** B1 exact v4.2.3 (+build
+  metadata) else exit 9; B2 a readable run counts only with exit 0/1 AND Helm's `==> Linting` header, else exit 9
+  (side effect: a pre-lint Helm failure now refuses the step); B3 `receipt seal-readable` on a failed gate before
+  `die` (inventory in the failed attempt's `notes.sealed_readable`); B4 `parity-incomplete.tsv` for rows without a
+  CLI verdict, sealed and selected; B5 helm-schema.json + tools/helm-schema sealed, finalize checks phase.json
+  against the bound Helm and CLI record (exit 4); B6 exit routes aligned (changed CLI at phase → 9; refusals at
+  end/finalize → 4; `finish` now passes through any end refusal's exit); B7 README caveats; test_receipt expects 51
+  sealed sweep files; readable-phase variable −1 for skipped. Green on the rebased tree run-all exit 0 (582 + 79);
+  red test_sweep.sh vs pre-rework v6.8 11 FAIL. Astra asked to close A3 and review v6.8 rework 1 (follow_up
+  6b442c0c); sol reviews v6.8 rework 1 (73d3081f). v6.7 merges after landing 6's chain. Orchestrator.
+- 21:33 (Sep 28) — **Frontend inline-else handed back (worktree `round8-frontend-else`, branch frontend-inline-else,
+  HEAD 0478b325 on e584c2d3; `inline-else/final.patch` 4 files +249/−6 sha bd9d29f5…, +26 LOC).** parse.rs:
+  `structural_boundary_before` finds the first RegionBranch/RegionEnd of a Structured region on a content line;
+  the line is laid out up to it in the branch it renders in, the rest goes through `process_line_actions` as an
+  unclean boundary (region stays ill-nested); the CST now matches the own-line spelling for inline, trim, with,
+  else-if and range (the range spelling previously had NO constraint on `x`). Helm matrix: every inline spelling
+  renders like its own-line twin. Tests: gen `inline_else.rs` ×5 (full-schema equality with the twin + Helm-rendered
+  values; red 0/5 on e584c2d3), syntax golden CST test (red/green). Gates: fmt 0, lint 0, ast-grep 0, lint:fc 0,
+  nextest 1612/1612, integration profile 849/849, 0 fixtures moved (157/1/23). **Builder found the cargo
+  target-aliasing hazard between WORKTREES too** (its first build compiled against the F10 worktree's
+  helm-schema-core), purged all 14 crates from `round8-frontend-target` and built in its own
+  `round8-frontend-else-target`. STANDING RULE (orchestrator): every worktree builds in its own target dir; the
+  W1/W4/k8s builders were told to purge and split targets and to re-run any gate evidence produced from a shared
+  target after another worktree built there. Reviews: follow_up runs 7660883f / 5d5c270b. Frontend builder's next
+  item: the partial-resolution kind scalar (both reviewers' follow-up) in worktree `round8-frontend-partial` with
+  its own target. Orchestrator.
+- 21:36 (Sep 28) — **k8s rework 2 handed back (k8s-main HEAD 5929cb14, 14 commits on c42bfa6a; `final-v3.patch` 57
+  files sha 21644bdb…, +964 LOC).** R1 conditional provider contracts (19 values-driven charts move; jenkins cell
+  accepted again); R2 whole-condition `Has` (kafka_ui, opensearch, vector); R3 explicit Masterminds semantics
+  (fluent_bit `<=1.25-0` decided → PSP dead at 1.29, loosening); R4 prerelease kept; R5 K4 all-paths; R6 red
+  evidence; plus 2a4e25cd (an unresolved slot keeps the declared default's JSON type as an alternative — bitnami
+  postgresql probes failed `helm lint` before), d7e69d60 (dead harness table deleted), APIService probe entry
+  (prometheus_adapter fixed), pgadmin4 fixed. Matrices `matrix-rework2-4.2.3.txt` (v3 accepts every R1 cell c42
+  rejected) and `matrix-datadog-4.2.3.txt` (60 rows, nothing Helm renders rejected). Gates: fmt/lint/lint:fc/
+  ast-grep 0, nextest 1601/1601, integration profile 783/96/24 (fixture moves + consumers + one decision). DECISION
+  for the reviewers: `cli generates_schema_for_fixture_chart_without_k8s_provider` on a cold offline cache —
+  Unavailable docs make R1 drop default-derived typing (containerPort integer → `{}`); orchestrator's position: an
+  Unavailable provider withholds the provider contract (with a diagnostic) but never erases chart-derived typing;
+  options (a) adopt / (b) only Undecided counts as unresolved (chain.rs:397). Reviews: follow_up runs 3677d240 /
+  e1cee4f7. Builder meanwhile: rework onto `k8s-rebase` over main 9716e080 in its worktree with its own target.
+  Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
