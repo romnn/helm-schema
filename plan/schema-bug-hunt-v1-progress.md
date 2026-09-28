@@ -6291,7 +6291,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   independent-contract qualification, containment result, BaseOwner) captured in the resolver. Astra asked for design
   v2 with that first commit (follow_up 11bf8beb). Load 5; T7 166 GB. Orchestrator.
 
-- 00:45 (Sep 29) — **Frontend phase-2 plan v3 written** (`phase2/plan.md`, 99 lines: `Origin::{Literal{span,occurrence},
+- 00:38 (Sep 29) — **Frontend phase-2 plan v3 written** (`phase2/plan.md`, 99 lines: `Origin::{Literal{span,occurrence},
   Action{ActionId,occurrence}}` with occurrence = helper-call chain + repetition index; "each source action is indexed
   once; layout enumeration does not re-evaluate execution effects"; `literal_block` retires only after
   `literal_mapping_value`/`literal_sequence_value` incl. local CRD projection use the new ownership). Builder paused;
@@ -6311,6 +6311,28 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   valid/invalid/uncertain/empty; matrix.tsv + diagnostics.tsv + path-free manifest; `--check` byte-exact;
   `--require-expected` defined; exit 3 for crashes). Final checks dispatched (follow_up e48030f1 / 426afeb4). Go given
   for runner v6.9 (runner repo only, no cargo) meanwhile. Orchestrator.
+
+- 01:00 (Sep 29) — **Seven answers.** (1) **Runner v6.8 rework 3: LAND from both** (`review-runner-v68-rework3-{sol,astra}.md`;
+  the refused-seal open point accepted as implemented) → runner-v6.8 (5346e98a) merged into the runner repo (no chain
+  running), tests/run-all.sh running in the background (`round8-runner-evidence/run-all-after-v68-merge.log`).
+  (2) **Tooling designs v2: REVISE-DESIGN ×2 from both** (`review-tooling-designs-v2-{sol,astra}.md`): target-guard —
+  `cargo clean` deletes the lock/markers (keep ownership metadata outside cargo's deletable dir or a locked clean
+  protocol), legacy `.landing-owner` adoption bypasses incarnation (explicit migration or fresh target), token
+  initialisation races across two targets of one checkout (atomic publish / checkout lock), validate cargo's cwd and
+  relative manifest paths, goreleaser must set both vars inside the container, `bench:emission-profiles`'s script and
+  `bench:representative` still hard-code `./target`; cell_matrix — preserve the original override bytes for Helm,
+  define the "no coalesced instance" outcome (NotValidated; never `{}`), opaque Cacheability/PreparedTree, inject the
+  selected HelmRunner through prepare/run_helm/validate + release in both validator constructors and the cache
+  identity, `--no-config` in the recipe, verify the bundle against the committed digest before use, `unresolved:*`
+  never a passing expectation. DECISION: v3 goes straight to implementation with a code review at hand-back →
+  `brief-tooling-designs-v3.md` (G1–G6, M1–M7). (3) **W4/F75 rework 5: REWORK from both; R16 approved by both**
+  (`review-w4-rework5-{sol,astra}.md`): provider-constrained comment spellings rejected (`foo #c`, `&x foo #c`,
+  `&x?foo #c` render; scalar_preimage.rs:350/:470), comment patterns accept text after a newline (`420 # x\ninvalid:
+  [`, mailhog `"true # c\nbroken: ["` main REJECT → v6 ACCEPT while Helm aborts; :470/:846/:867), zero-width
+  assertions at indicator payloads (`^\b:foo` vs `&x:foo`; :558/:649), roster cells for R14's class abstentions,
+  merge.rs:275 fold rostered; LOC direction: owned token grammars to delete :846/:344. → `brief-w4-rework6.md`
+  (R18–R22). (4) astra's `explain` design v2 (`design-explain-provenance-v2-astra.md`, 26 KB) → sol cross-check
+  (follow_up e48030f1). Load 10–20 (four heavy builders); T7 154 GB. Orchestrator.
 
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
