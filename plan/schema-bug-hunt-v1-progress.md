@@ -5601,6 +5601,49 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   on a side branch `track/w1-unset` off 2012d658 (hand-back under `round8-w1-evidence/unset/`), so the
   review target stays frozen. Orchestrator.
 
+- 14:15 (Sep 28) — **W1 rework 4: astra REWORK with five P1s** (`review-w1-rework4-astra.md`, run 416b8635
+  turn 3; every cell executed on Helm 4.2.3 / kube 1.29.0 and renders while 2012d658 rejects). (1) jaeger:
+  the regained `len (keys $annotations)` truth activates a string-only annotation sink constraint
+  (`expr_call_eval/mod.rs:1536` → `member_projection.rs:316/:472`); `commonAnnotations: {review: 1}` renders,
+  new schema rejects → a real false rejection, fixture must not be adopted. (2) an unavailable sequence
+  operand (`rest (list …)` widened to None) contributes no elements at `collections.rs:836`, so
+  `first (append (rest (list "drop" "large")) .Values.k)` manufactures `k == "large"`. (3) `Elements` is
+  statically truthy even over an empty source (`abstract_value.rs:899`) and ranged with exact multiplicity
+  (`control.rs:2012/:2485`; `range uniq (list "x" "x")` runs once in Helm, twice in the plan). (4) helper
+  freshness misses both directions (`summary.rs:252` fresh interpreter ignores the caller's mutation;
+  `assignments.rs:376` shortcut drops the mutation footprint) — not landable residuals. (5) root-context and
+  pathless-dict mutation is invisible to `mutated_paths` (`mod.rs:182/:202`, `holes.rs:629`): `tpl .Values.t .`
+  can unset anything. P3: eck_stack's removed failure is justified (version 0 renders, "" aborts) but both
+  saved schemas still reject 0 via an existing type constraint. Brief `brief-w1-rework5.md` (R1–R6); the W1
+  builder parked the `track/w1-unset` side task and started rework 5. Orchestrator.
+- 14:25 (Sep 28) — **W1 rework 4: sol REWORK too** (`review-w1-rework4-sol.md`, run 92580cac turn 3). Confirms
+  jaeger (adds `serialization.rs:581` as the point where the string-only sink constraint is permitted on the
+  `toYaml` input), Elements inventing length (`range (concat xs ys)` with both empty never runs; `range (uniq
+  (list k k))` runs once), and helper freshness (`summary.rs:243`; summary cache key `analysis_db.rs:1022`
+  omits the caller's mutated paths; unresolved `include .Values.helper .` records no paths). New P1 (R7):
+  a wildcard member chosen positionally (`first (concat $.Values.xs)`, `first (uniq …)`, `index (concat …) 0`,
+  `last (concat …)`) still satisfies `exact_input_identity` (`condition_predicate.rs:1258`), so under
+  `range .Values.xs` every item is constrained although Helm tests one position — renders with
+  xs=["large","small"]. Independent 93-row rerun: nothing toward a false rejection. Brief amended (R7);
+  builder informed. Orchestrator.
+- 14:13 (Sep 28) — **Landing 4 FAILED at `integration` (cannot list the tests): helm-schema-cli did not compile
+  against the minify crate — the shared CARGO_TARGET_DIR aliased landing 5's artifacts.** The battery relaunch
+  at 13:36 had reported OK (14:06) but is void. Cause: `landing-4.env` and `landing-5.env` both name
+  `TARGET=/Volumes/T7/dev/round7-integrate/target`; cargo hashes path packages relative to the workspace root
+  (identical unit hashes for both clones) and fingerprints by mtime, and landing 4's sources (04:45) are older
+  than landing 5's build outputs, so cargo reused landing 5's rlibs and test binaries for landing 4
+  (`gate-integration-list.log`: `expand_short_definition_names` expected `&[u8]`, landing 5's signature). The
+  runner's per-step lock lets foreign chains interleave between one chain's steps, so a clean at dump would
+  not protect later steps. Landing 4's dump/unit/lint (04:52–05:33) predate any landing-5 build and stand.
+  Also: three orchestrator files were written into the landing-4 clone by a cwd race (moved out; clone clean).
+- 14:19 (Sep 28) — **Landing 4 relaunched from `battery` after `cargo clean -p` of all 14 workspace crates in
+  the shared target** (a first relaunch at 14:17 ran before the clean took effect and was terminated at
+  14:18; the runner released the lock on TERM). Lock owner pid 18721, token ef140a64…; `chain.log` records both
+  relaunch lines. Runner v6.7 brief `brief-runner-v67.md` (exclusive TARGET per landing clone: owner marker
+  under $TARGET, refusal on a foreign owner, TARGET in the receipt, env-file uniqueness, README rule; fold in
+  the `helm-schema lint` readable-log step if small); runner builder a67c3c0781e99d708 resumed on it in a
+  worktree. Every new landing gets its own TARGET (`round8-landing<N>-target`). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
