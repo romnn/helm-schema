@@ -179,6 +179,31 @@ An empty canonical diff means ordering-only. It is triage, not a verdict: it als
 arrays under those key names, and it cannot see through `$defs` renames. An ordering-only change
 still changes fixture bytes, so it still goes through the battery.
 
+## Before hand-back: adjudicate your own fixture moves
+
+A builder whose change moves corpus fixture bytes must not hand back on parsed-JSON lane
+counts or an ad-hoc probe script. Ad-hoc probes have coalesced values wrongly (an empty-map
+override is MERGED by Helm, dependency defaults apply, validator compile errors are not
+rejections). Use the battery harness, which coalesces exactly like Helm:
+
+1. One clean producer dump of your final HEAD into your own target:
+   `cargo run -p helm-schema-test-support --bin corpus_generation -- --out <target>/dump-<sha>`.
+2. Screen flips schema-only against the commit you started from (no Helm needed):
+   `TMPDIR=<target>/tmp SCHEMA_ACCEPTANCE_BASELINE_REF=<base sha> SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=<dump>
+   SCHEMA_PROBE_COVERAGE_REPORT=<evidence>/coverage.json cargo nextest run -p helm-schema --profile
+   integration --test schema_emission_profiles -E 'test(round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced)'
+   --run-ignored ignored-only --no-capture`. Zero screened flips means your moves are ordering-only or
+   probe-invisible; say which.
+3. If it screens flips, run the same command live (`ADJUDICATE_WITH_HELM=1`, baseline = `ROSTER_BASELINE`
+   from `known_false_acceptances.rs`, `SCHEMA_ACCEPTANCE_ALLOW_MATCHED_FLIPS=1`, `task build:helmsweep` into
+   your target first). Report the summary line, every unmatched flip with its evidence dir and your
+   structural explanation, and every roster row that "no longer fails alike". Never edit a roster to make
+   the run pass; the landing chain repeats this run and the orchestrator adjudicates adoption.
+4. Cells that the battery cannot probe (a specific override the reviewer or you care about) go in a
+   Helm 4.2.3 matrix with columns base / HEAD / Helm render / kubeconform, over Helm-coalesced values.
+
+The acceptance-battery skill has the variable reference and the vacuous-run tell-tales.
+
 ## Adding a chart to the corpus
 
 1. Vendor the chart, dependencies included exactly as packaged, under `testdata/charts/<dir>/`,
