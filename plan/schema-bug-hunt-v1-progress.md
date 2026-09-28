@@ -6216,6 +6216,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   follow-up). Both sent to fresh Codex design cross-checks (sol/astra, read-only; ids in codex-runs.tsv on save).
   Orchestrator.
 
+- 00:10 (Sep 29) — **User: land the process fixes ASAP.** Done now: corpus-fixtures skill gains "Before hand-back:
+  adjudicate your own fixture moves" (schema-only battery vs the base commit, then live vs ROSTER_BASELINE; no
+  ad-hoc probes; docs commit on main). In flight: design cross-checks of cell-matrix + target-guard (sol
+  20260928T214904-e48030f1, astra 20260928T214910-426afeb4); `helm-schema explain` provenance design (astra
+  20260928T214957-11bf8beb, sol cross-checks after). Runner builder pre-stages the target-guard clone (mise trust) and
+  the cell-matrix implementation notes without building. Landing order for these: target-guard (no compile) as
+  soon as its check returns → cell-matrix and explain in builder slots as W1/W4/k8s free them. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
