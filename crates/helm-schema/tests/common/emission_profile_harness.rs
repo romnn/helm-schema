@@ -11,6 +11,7 @@ use jsonschema::Validator;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 use test_util::helm_values::ValuesError;
+use test_util::scratch::ScratchDir;
 use vfs::VfsPath;
 
 use crate::helm_adjudication::ViolationKey;
@@ -385,7 +386,7 @@ pub(crate) fn read_coalesced_defaults(chart_relative_path: &str) -> eyre::Result
 /// Every other chart is used in place.
 pub(crate) struct HelmChartDir {
     path: std::path::PathBuf,
-    _staged: Option<tempfile::TempDir>,
+    _staged: Option<ScratchDir>,
 }
 
 impl HelmChartDir {
@@ -397,7 +398,7 @@ impl HelmChartDir {
                 _staged: None,
             });
         }
-        let staged = tempfile::tempdir()?;
+        let staged = ScratchDir::new("staged-chart")?;
         let path = staged.path().join("chart");
         copy_dir(&source, &path)?;
         std::fs::copy(path.join("Chart.template.yaml"), path.join("Chart.yaml"))?;

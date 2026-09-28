@@ -30,6 +30,7 @@ use std::time::{Duration, Instant};
 use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use serde::{Deserialize, Serialize};
 use sha2::{Digest as _, Sha256};
+use test_util::scratch::ScratchDir;
 use wait4::Wait4 as _;
 
 /// Names a persistent Helm invocation store.
@@ -267,11 +268,9 @@ impl HelmRunner {
             .get_or_init(|| {
                 let runner = match std::env::var_os(INVOCATION_CACHE_VAR) {
                     Some(root) => Self::new(&PathBuf::from(root).join("v2"), true),
-                    None => tempfile::Builder::new()
-                        .prefix("helm-schema-helm-root-")
-                        .tempdir()
-                        .map_err(eyre::Report::from)
-                        .and_then(|root| Self::new(&root.keep(), false)),
+                    None => {
+                        ScratchDir::new("helm-root").and_then(|root| Self::new(&root.keep(), false))
+                    }
                 };
                 runner.map_err(|error| format!("{error:?}"))
             })
@@ -351,6 +350,7 @@ impl HelmRunner {
 
     fn unstarted(root: &Path, replay: bool, program: PathBuf) -> eyre::Result<Self> {
         fs::create_dir_all(root.join("home"))?;
+        fs::create_dir_all(root.join("tmp"))?;
         let root = root.canonicalize()?;
         let program_stamp = FileStamp::of(&program)?;
         let program_sha256 = hex(&Sha256::digest(fs::read(&program)?));
@@ -428,6 +428,7 @@ impl HelmRunner {
         let (values_path, values_sha256) = self.publish_input(request.values)?;
         let chart = utf8(&request.chart.path)?;
         let values = utf8(&values_path)?;
+
         let home = self.root.join("home");
         let environment = self.environment()?;
         let call = TemplateCall {
@@ -477,6 +478,17 @@ impl HelmRunner {
         stage: &str,
         cacheability: &Cacheability,
     ) -> eyre::Result<HelmExecution> {
+        // The stage's inputs are recorded before anything runs, so a failure's
+        // preserved bundle always carries its chart and values; a completed
+        // stage adds its measurements.
+        let record_path = case.join(format!("{stage}{INVOCATION_RECORD_SUFFIX}"));
+        let mut record_json = serde_json::json!({
+            "chart": call.chart,
+            "values": call.values,
+            "kubernetes_version": call.kubernetes_version,
+            "request": invocation,
+        });
+        fs::write(&record_path, serde_json::to_vec_pretty(&record_json)?)?;
         self.verify_program()?;
         let request = invocation.encode()?;
         let key = invocation.key()?;
@@ -534,14 +546,11 @@ impl HelmRunner {
             stdout_bytes: u64::try_from(stdout.len())?,
             stderr_bytes: u64::try_from(stderr.len())?,
         };
-        fs::write(
-            case.join(format!("{stage}.invocation.json")),
-            serde_json::to_vec_pretty(&serde_json::json!({
-                "record": record,
-                "request": invocation,
-                "entry": entry,
-            }))?,
-        )?;
+        if let Some(fields) = record_json.as_object_mut() {
+            fields.insert("record".to_string(), serde_json::to_value(&record)?);
+            fields.insert("entry".to_string(), serde_json::to_value(&entry)?);
+        }
+        fs::write(&record_path, serde_json::to_vec_pretty(&record_json)?)?;
         Ok(HelmExecution {
             exit_code: result.exit_code,
             stdout,
@@ -573,16 +582,24 @@ impl HelmRunner {
             .stdout(fs::File::create(&stdout_path)?)
             .stderr(fs::File::create(&stderr_path)?)
             .spawn()
-            .wrap_err_with(|| format!("start Helm {stage}; evidence={}", case.display()))?;
-        let usage = child
-            .wait4()
-            .wrap_err_with(|| format!("wait for Helm {stage}; evidence={}", case.display()))?;
+            .wrap_err_with(|| {
+                format!(
+                    "start Helm {stage}; evidence={}",
+                    preserve_failure(case).display()
+                )
+            })?;
+        let usage = child.wait4().wrap_err_with(|| {
+            format!(
+                "wait for Helm {stage}; evidence={}",
+                preserve_failure(case).display()
+            )
+        })?;
         let elapsed_ms = elapsed_ms(started);
         let Some(exit_code @ (0 | 1)) = usage.status.code() else {
             eyre::bail!(
                 "Helm {stage} ended abnormally ({}); evidence={}",
                 usage.status,
-                case.display()
+                preserve_failure(case).display()
             );
         };
         let stdout = fs::read(&stdout_path)?;
@@ -613,16 +630,22 @@ impl HelmRunner {
         Ok(())
     }
 
-    /// The child environment: nothing inherited, Helm's directories inside the root.
+    /// The child environment: nothing inherited, Helm's directories and the
+    /// Go temporary directory (`TMPDIR` on Unix, `TMP`/`TEMP` on Windows)
+    /// inside the root.
     fn environment(&self) -> eyre::Result<Vec<(String, String)>> {
         let home = self.root.join("home");
         let home = utf8(&home)?;
+        let tmp = self.root.join("tmp");
         let mut environment = vec![
             ("HELM_CACHE_HOME".to_string(), format!("{home}/cache")),
             ("HELM_CONFIG_HOME".to_string(), format!("{home}/config")),
             ("HELM_DATA_HOME".to_string(), format!("{home}/data")),
             ("HOME".to_string(), home.to_string()),
             ("LC_ALL".to_string(), "C".to_string()),
+            ("TEMP".to_string(), utf8(&tmp)?.to_string()),
+            ("TMP".to_string(), utf8(&tmp)?.to_string()),
+            ("TMPDIR".to_string(), utf8(&tmp)?.to_string()),
             ("TZ".to_string(), "UTC".to_string()),
         ];
         environment.sort();
@@ -728,19 +751,24 @@ impl ResidentPool {
         let started = Instant::now();
         let answer = resident
             .render(call, &stdout_path, &stderr_path, self.timeout)
-            .wrap_err_with(|| format!("helmsweep serve failed; evidence={}", case.display()))?;
+            .wrap_err_with(|| {
+                format!(
+                    "helmsweep serve failed; evidence={}",
+                    preserve_failure(case).display()
+                )
+            })?;
         let elapsed_ms = elapsed_ms(started);
         if let Some(error) = answer.error {
             eyre::bail!(
                 "Helm {stage} ended abnormally in helmsweep ({error}); evidence={}",
-                case.display()
+                preserve_failure(case).display()
             );
         }
         let Some(exit_code @ (0 | 1)) = answer.exit_code else {
             eyre::bail!(
                 "helmsweep answered exit code {:?}; evidence={}",
                 answer.exit_code,
-                case.display()
+                preserve_failure(case).display()
             );
         };
         if answer.held_bytes <= RETIRE_ABOVE_BYTES {
@@ -1093,4 +1121,86 @@ fn hex(bytes: &[u8]) -> String {
         let _ = write!(text, "{byte:02x}");
     }
     text
+}
+
+/// Names the record [`HelmRunner::template`] writes into a case before it
+/// runs a stage: the stage's chart tree, values file and Kubernetes version.
+const INVOCATION_RECORD_SUFFIX: &str = ".invocation.json";
+
+/// Copies a failure's evidence directory out of the sweep's reach into
+/// `<target>/evidence/` and returns the path to report. Every stage the case
+/// ran brings its chart tree (`charts/<stage>`) and values
+/// (`inputs/<stage>.values.json`), and the copied invocation records and the
+/// chart's `prepared.json` name those copies by bundle-relative paths, so
+/// the bundle reproduces the case alone. A directory that cannot be copied
+/// is reported where it is.
+pub(crate) fn preserve_failure(case: &Path) -> PathBuf {
+    match preserve_bundle(case) {
+        Ok(preserved) => preserved,
+        Err(error) => {
+            eprintln!("evidence {} stays in scratch: {error:#}", case.display());
+            case.to_path_buf()
+        }
+    }
+}
+
+fn preserve_bundle(case: &Path) -> eyre::Result<PathBuf> {
+    let preserved = test_util::scratch::preserve(case)?;
+    // Original path -> bundle-relative copy.
+    let mut copies: BTreeMap<String, String> = BTreeMap::new();
+    for entry in fs::read_dir(&preserved)? {
+        let record_path = entry?.path();
+        let Some(stage) = record_path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .and_then(|name| name.strip_suffix(INVOCATION_RECORD_SUFFIX))
+            .map(str::to_string)
+        else {
+            continue;
+        };
+        let mut record: serde_json::Map<String, serde_json::Value> =
+            serde_json::from_slice(&fs::read(&record_path)?)?;
+        for (field, relative) in [
+            ("chart", format!("charts/{stage}")),
+            ("values", format!("inputs/{stage}.values.json")),
+        ] {
+            let original = record
+                .get(field)
+                .and_then(serde_json::Value::as_str)
+                .ok_or_eyre("invocation record lacks a path")?
+                .to_string();
+            let copy = preserved.join(&relative);
+            if field == "chart" {
+                test_util::scratch::copy_tree(Path::new(&original), &copy)?;
+            } else {
+                fs::create_dir_all(preserved.join("inputs"))?;
+                fs::copy(&original, &copy)?;
+            }
+            record.insert(
+                field.to_string(),
+                serde_json::Value::String(relative.clone()),
+            );
+            copies.insert(original, relative);
+        }
+        fs::write(&record_path, serde_json::to_vec_pretty(&record)?)?;
+    }
+    // A probe's chart evidence names the same trees; point it at the copies.
+    if let Some(prepared) = case
+        .parent()
+        .map(|parent| parent.join("prepared.json"))
+        .filter(|prepared| prepared.is_file())
+    {
+        let mut fields: serde_json::Map<String, serde_json::Value> =
+            serde_json::from_slice(&fs::read(&prepared)?)?;
+        for value in fields.values_mut() {
+            if let Some(copy) = value.as_str().and_then(|original| copies.get(original)) {
+                *value = serde_json::Value::String(copy.clone());
+            }
+        }
+        fs::write(
+            preserved.join("prepared.json"),
+            serde_json::to_vec_pretty(&fields)?,
+        )?;
+    }
+    Ok(preserved)
 }

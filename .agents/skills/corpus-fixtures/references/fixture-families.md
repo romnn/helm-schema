@@ -50,7 +50,7 @@ Update these from the test's own diff output, and adjudicate them like any other
 
 | Fixture | Test | Notes |
 |---|---|---|
-| `crates/helm-schema-cli/tests/fixtures/full_fixture.disable_k8s.schema.json` | `cli.rs` `generates_schema_for_fixture_chart_without_k8s_provider` (integration) | chart `testdata/fixture-charts/full-fixture`, cold provider caches; `SCHEMA_DUMP=1` writes `$TMPDIR/helm-schema.cli.full-fixture.disable-k8s.schema.json` (no trailing newline, same as the fixture) |
+| `crates/helm-schema-cli/tests/fixtures/full_fixture.disable_k8s.schema.json` | `cli.rs` `generates_schema_for_fixture_chart_without_k8s_provider` (integration) | chart `testdata/fixture-charts/full-fixture`, cold provider caches; `SCHEMA_DUMP=1` writes `<target>/schema-dump/helm-schema.cli.full-fixture.disable-k8s.schema.json` (no trailing newline, same as the fixture) |
 | `crates/helm-schema-gen/src/tests/fixtures/root_values_merge_source_presence.schema.json` | `crates/helm-schema-gen/src/tests/fail_validators.rs` (unit, default profile) | `include_str!` |
 | `crates/helm-schema-syntax/tests/fixtures/*.cst.txt` | `crates/helm-schema-syntax/tests/corpus.rs` | `TemplatedDocument::dump()` of corpus templates, `include_str!` |
 | `crates/helm-schema-k8s/tests/fixtures/networkpolicy_v1_35_*.json` | `crates/helm-schema-k8s/tests/kubernetes_json_schema_networkpolicy.rs` | provider materialization |

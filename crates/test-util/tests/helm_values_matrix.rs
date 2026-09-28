@@ -16,6 +16,7 @@ use test_util::helm_values::{
     AcceptanceDocument, DependencyValues, ValuesError, ValuesOptions, acceptance_values,
 };
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 /// How the matrix chart `p` carries its dependency `sub`.
 enum Child<'a> {
@@ -24,8 +25,8 @@ enum Child<'a> {
     Packaged { values: &'a str },
 }
 
-fn chart(root_values: &str, child: &Child<'_>) -> eyre::Result<tempfile::TempDir> {
-    let dir = tempfile::tempdir()?;
+fn chart(root_values: &str, child: &Child<'_>) -> eyre::Result<ScratchDir> {
+    let dir = ScratchDir::new("helm_values_matrix")?;
     let root = dir.path();
     let fields = match child {
         Child::None => None,
@@ -109,7 +110,7 @@ fn template(dir: &Path, overrides: &Value) -> eyre::Result<Value> {
 #[test]
 fn null_overrides_meet_or_miss_their_defaults() -> eyre::Result<()> {
     let meets = chart("{x: 1}", &Child::None)?;
-    let dir = tempfile::tempdir()?;
+    let dir = ScratchDir::new("helm_values_matrix")?;
     let null_file = dir.path().join("null.yaml");
     fs::write(&null_file, "{x: null}\n")?;
     let file = ValuesOptions {

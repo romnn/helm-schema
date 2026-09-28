@@ -99,8 +99,11 @@ live run it covers.
   directory. Alternatively set `HELM_SCHEMA_HELMSWEEP=<path>`, or use
   `SCHEMA_HELM_ENGINE=cli` with Helm v4.2.3 on `PATH`, which is slower. The
   runner refuses any other Helm build.
-- **A private TMPDIR** that already exists, on a disk with room. Evidence and
-  Helm roots are kept there and never cleaned up (see Pitfalls).
+- **Room under the cargo target directory.** Evidence and Helm roots live in
+  `<target>/scratch/<crate>/<label>-<pid>-<nonce>-<n>` (`crates/test-util/src/scratch.rs`)
+  and are swept after the run's process exits, by the next test process;
+  failure evidence is copied to `<target>/evidence/` (kept seven days). A
+  `TMPDIR`, if set, must already exist (see Pitfalls).
 
 ## Commands
 
@@ -253,7 +256,7 @@ naming it.
 |---|---|---|
 | nextest exits 4, "no tests to run" | default profile, or `--run-ignored` missing | `--profile integration --run-ignored ignored-only` |
 | exit 101 before any test, with a compiler or `ring` temp-file error | `TMPDIR` does not exist | `mkdir -p` it first |
-| Bash or builds fail oddly, disk or tmpfs full | earlier runs or killed runs leaked `helm-schema-adjudication-*` / `helm-schema-helm-root-*` dirs | use a per-run `TMPDIR` on a big disk and delete it after reading the evidence |
+| a `Helm adjudication evidence:` or `HELM_FLIP` dir is gone | successful scratch is swept after its process exits | failure evidence lives on under `<target>/evidence/`; re-run the chart to inspect a success |
 | "the false-acceptance rosters are adjudicated against …" | live run with a baseline other than `ROSTER_BASELINE` | use `$ROSTER` |
 | "fixture acceptance flips differ from the pre-registered count" | live run against the roster baseline without allowing matched flips | set `SCHEMA_ACCEPTANCE_ALLOW_MATCHED_FLIPS=1` |
 | "fixture flips were not all live-adjudicated" | schema-only run found flips | rerun live to adjudicate them |

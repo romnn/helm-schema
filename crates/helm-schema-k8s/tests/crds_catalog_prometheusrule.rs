@@ -3,22 +3,15 @@
 use color_eyre::eyre;
 use helm_schema_core::{ResourceRef, YamlPath};
 use helm_schema_k8s::{CrdsCatalogSchemaProvider, K8sSchemaProvider, LocalSchemaProvider};
+use test_util::scratch::ScratchDir;
 
 /// Shared provider fixtures for K8s integration tests.
 pub mod common;
 use common::bundled_crd_provider;
-use std::sync::atomic::{AtomicUsize, Ordering};
 use test_util::prelude::sim_assert_eq;
 
-static TMP_COUNTER: AtomicUsize = AtomicUsize::new(0);
-
 fn make_temp_dir(group_dir: &str) -> eyre::Result<std::path::PathBuf> {
-    let n = TMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-    let dir = std::env::temp_dir().join(format!(
-        "helm-schema.crds-catalog-test.{}.{}",
-        std::process::id(),
-        n
-    ));
+    let dir = ScratchDir::new("crds-catalog-test")?.keep();
     std::fs::create_dir_all(dir.join(group_dir))?;
     Ok(dir)
 }

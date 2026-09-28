@@ -16,6 +16,7 @@ use helm_schema_gen::{PreparedValuesDocuments, ValuesSchemaInput, generate_value
 use helm_schema_ir::{ContractIr, SymbolicIrContext};
 use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProvider};
 use serde_json::Value;
+use test_util::scratch::ScratchDir;
 use vfs::VfsPath;
 
 use crate::manifest::{
@@ -125,7 +126,7 @@ pub fn emit_policy(session: &AnalysisSession, recipe: &PolicyRecipe) -> eyre::Re
     let Some(file) = recipe.override_file else {
         return Ok(session.emit(request)?);
     };
-    let dir = tempfile::tempdir().wrap_err("create override directory")?;
+    let dir = ScratchDir::new("overrides").wrap_err("create override directory")?;
     let path = dir.path().join(file.name);
     std::fs::write(&path, file.contents)
         .wrap_err_with(|| format!("write override {}", path.display()))?;

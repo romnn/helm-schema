@@ -20,6 +20,17 @@ disallowed-macros = [
   { path = "std::dbg", reason = "remove before commit" },
 ]
 
+# Test scratch lives under the cargo target directory, where a killed run's
+# leftovers are swept, never in the system temporary directory, where they
+# accumulate. `std::env::temp_dir` has a legitimate production use, so the
+# ast-grep rule `test-scratch-not-system-temp` guards it in test code instead.
+disallowed-methods = [
+  { path = "tempfile::tempdir", reason = "use `test_util::scratch::ScratchDir::new` so scratch lives under the cargo target directory" },
+  { path = "tempfile::TempDir::new", reason = "use `test_util::scratch::ScratchDir::new` so scratch lives under the cargo target directory" },
+  { path = "tempfile::Builder::tempdir", reason = "use `test_util::scratch::ScratchDir::new`, or `tempdir_in` inside one" },
+  { path = "tempfile::NamedTempFile::new", reason = "create the file inside a `test_util::scratch::ScratchDir`, or use `NamedTempFile::new_in`" },
+]
+
 pass-by-value-size-limit = 64
 stack-size-threshold = 131072
 enum-variant-size-threshold = 128

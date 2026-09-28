@@ -5,12 +5,13 @@ use std::process::Command;
 use color_eyre::eyre::{self, WrapErr as _};
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 const HELM_SCHEMA_BIN: &str = env!("CARGO_BIN_EXE_helm-schema");
 
 #[test]
 fn multiple_override_external_refs_use_distinct_bundled_definitions() -> eyre::Result<()> {
-    let temp = tempfile::tempdir()?;
+    let temp = ScratchDir::new("override_bundling")?;
     let chart = temp.path().join("chart");
     std::fs::create_dir_all(chart.join("templates"))?;
     std::fs::write(

@@ -1,0 +1,63 @@
+id: test-scratch-not-system-temp
+valid:
+  - |
+    fn main() {
+        let scratch = test_util::scratch::ScratchDir::new("chart")?;
+    }
+  - |
+    fn main() {
+        let root = test_util::scratch::root().join("dump.json");
+    }
+  - |
+    fn main() {
+        let temp_dir = scratch.path();
+        let file = temp_dir.join("values.yaml");
+    }
+  - |
+    use std::collections::{BTreeMap as Map};
+    fn main() {
+        let map = Map::new();
+    }
+invalid:
+  - |
+    fn main() {
+        let root = std::env::temp_dir().join("chart");
+    }
+  - |
+    fn main() {
+        let root = env::temp_dir();
+    }
+  - |
+    fn cache_root() -> PathBuf {
+        dirs::cache_dir().unwrap_or_else(std::env::temp_dir)
+    }
+  - |
+    use std::env::temp_dir;
+    fn main() {
+        let root = temp_dir();
+    }
+  - |
+    use std::env::{temp_dir};
+    fn main() {
+        let root = temp_dir().join("chart");
+    }
+  - |
+    use std::env as e;
+    fn main() {
+        let root = e::temp_dir();
+    }
+  - |
+    use std::{env as e};
+    fn main() {
+        let root = e::temp_dir().join("chart");
+    }
+  - |
+    use std::env::{temp_dir as tmp};
+    fn main() {
+        let root = tmp().join("chart");
+    }
+  - |
+    use std::env::temp_dir as tmp;
+    fn main() {
+        let root = tmp();
+    }

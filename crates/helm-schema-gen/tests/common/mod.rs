@@ -178,6 +178,7 @@ pub fn helm_template_render_with_args(
     extra_args: &[&str],
 ) -> eyre::Result<String> {
     let mut cmd = Command::new("helm");
+    cmd.envs(test_util::scratch::temp_env()?);
     cmd.arg("template").arg("test-release").arg(chart_dir);
 
     if let Some(template) = show_only {

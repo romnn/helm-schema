@@ -15,6 +15,7 @@ use indoc::{formatdoc, indoc};
 use serde_json::json;
 use test_util::helm_values::AcceptanceDocument;
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 #[path = "common/helm_adjudication.rs"]
 mod helm_adjudication;
@@ -48,8 +49,8 @@ fn write_chart(root: &Path, name: &str, values: &str) -> eyre::Result<()> {
 
 #[test]
 fn unchanged_unknown_resources_pair_with_their_defaults() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
-    let cache = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_adjudication")?;
+    let cache = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "differential", "token: original\n")?;
     fs::write(
         root.path().join("templates/resource.yaml"),
@@ -85,8 +86,8 @@ fn unchanged_unknown_resources_pair_with_their_defaults() -> eyre::Result<()> {
 /// Every Helm child a probe runs is measured under its stage, beside its outputs.
 #[test]
 fn every_helm_child_is_recorded_under_its_stage() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
-    let cache = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_adjudication")?;
+    let cache = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "measured", "token: original\n")?;
     write_configmap_schema(cache.path())?;
     fs::write(
@@ -140,8 +141,8 @@ fn every_helm_child_is_recorded_under_its_stage() -> eyre::Result<()> {
 /// coalescence and decoding, which run fixed templates, stay replayable.
 #[test]
 fn only_renders_of_a_nondeterministic_chart_bypass_replay() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
-    let cache = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_adjudication")?;
+    let cache = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "clock", "token: original\n")?;
     write_configmap_schema(cache.path())?;
     fs::write(
@@ -187,9 +188,9 @@ fn compiled_schemas_are_shared_by_bundle_content() -> eyre::Result<()> {
         "metadata": {"properties": {"name": {"type": "string"}}}
     }});
     let [original, copy, different] = [
-        tempfile::tempdir()?,
-        tempfile::tempdir()?,
-        tempfile::tempdir()?,
+        ScratchDir::new("helm_adjudication")?,
+        ScratchDir::new("helm_adjudication")?,
+        ScratchDir::new("helm_adjudication")?,
     ];
     write_cached_schema(original.path(), "configmap-v1.json", &strict)?;
     write_cached_schema(copy.path(), "configmap-v1.json", &strict)?;
@@ -223,9 +224,9 @@ fn compiled_schemas_are_shared_by_bundle_content() -> eyre::Result<()> {
 /// stays unproved even when it repeats a paired document.
 #[test]
 fn duplicate_documents_pair_with_multiplicity() -> eyre::Result<()> {
-    let cache = tempfile::tempdir()?;
+    let cache = ScratchDir::new("helm_adjudication")?;
     for (defaults, overlay, uncertain) in [(1, 2, 1), (2, 1, 0), (2, 2, 0), (1, 3, 2)] {
-        let root = tempfile::tempdir()?;
+        let root = ScratchDir::new("helm_adjudication")?;
         write_chart(root.path(), "duplicates", &format!("copies: {defaults}\n"))?;
         fs::write(
             root.path().join("templates/resources.yaml"),
@@ -251,8 +252,8 @@ fn duplicate_documents_pair_with_multiplicity() -> eyre::Result<()> {
 
 #[test]
 fn a_changed_resource_violation_is_new_beside_an_unchanged_unknown() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
-    let cache = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_adjudication")?;
+    let cache = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "invalid", "token: valid\n")?;
     write_configmap_schema(cache.path())?;
     fs::write(
@@ -290,8 +291,8 @@ fn a_changed_resource_violation_is_new_beside_an_unchanged_unknown() -> eyre::Re
 /// violated assertion, so a changed document inherits them wherever it lands.
 #[test]
 fn defaults_violations_are_keyed_by_resource_not_position() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
-    let cache = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_adjudication")?;
+    let cache = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "defaults", "extra: false\n")?;
     write_configmap_schema(cache.path())?;
     fs::write(
@@ -334,8 +335,8 @@ fn defaults_violations_are_keyed_by_resource_not_position() -> eyre::Result<()> 
 /// part of the violation.
 #[test]
 fn a_different_invalid_value_is_a_new_violation() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
-    let cache = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_adjudication")?;
+    let cache = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "revalued", "token: true\n")?;
     write_configmap_schema(cache.path())?;
     fs::write(
@@ -369,8 +370,8 @@ fn a_different_invalid_value_is_a_new_violation() -> eyre::Result<()> {
 /// resource (`nameOverride`) renders the defaults' own violation.
 #[test]
 fn a_renamed_resource_inherits_the_defaults_violations() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
-    let cache = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_adjudication")?;
+    let cache = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "renamed", "name: original\n")?;
     write_configmap_schema(cache.path())?;
     fs::write(
@@ -400,8 +401,8 @@ fn a_renamed_resource_inherits_the_defaults_violations() -> eyre::Result<()> {
 /// so a changed one stays undecided.
 #[test]
 fn inexact_documents_stay_uncertain() -> eyre::Result<()> {
-    let cache = tempfile::tempdir()?;
-    let root = tempfile::tempdir()?;
+    let cache = ScratchDir::new("helm_adjudication")?;
+    let root = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "uncertain", "{}")?;
     fs::write(
         root.path().join("templates/resource.yaml"),
@@ -440,7 +441,7 @@ fn write_configmap_schema(cache: &Path) -> eyre::Result<()> {
 
 #[test]
 fn coalescence_preserves_null_ownership_before_render_mutation() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "parent", "owned: 1\n")?;
     write_chart(&root.path().join("charts/child"), "child", "owned: 2\n")?;
     fs::write(
@@ -513,7 +514,7 @@ fn helm_schema_acceptance(
     overlay: &serde_json::Value,
     schema: &serde_json::Value,
 ) -> eyre::Result<BTreeSet<AcceptanceDocument>> {
-    let work = tempfile::tempdir()?;
+    let work = ScratchDir::new("helm_adjudication")?;
     let copy = work.path().join("chart");
     copy_dir(chart, &copy)?;
     fs::write(copy.join("values.schema.json"), serde_json::to_vec(schema)?)?;
@@ -522,6 +523,7 @@ fn helm_schema_acceptance(
     let mut accepted = BTreeSet::from(AcceptanceDocument::ALL);
 
     let lint = Command::new("helm")
+        .envs(test_util::scratch::temp_env()?)
         .arg("lint")
         .arg(&copy)
         .arg("-f")
@@ -539,6 +541,7 @@ fn helm_schema_acceptance(
     }
 
     let template = Command::new("helm")
+        .envs(test_util::scratch::temp_env()?)
         .args(["template", "acceptance"])
         .arg(&copy)
         .arg("-f")
@@ -571,7 +574,7 @@ fn copy_dir(from: &Path, to: &Path) -> eyre::Result<()> {
 
 #[test]
 fn packed_dependencies_are_sanitized_recursively_without_changing_sources() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "parent", "{}")?;
     fs::rename(
         root.path().join("Chart.yaml"),
@@ -584,7 +587,7 @@ fn packed_dependencies_are_sanitized_recursively_without_changing_sources() -> e
         "{{ fail \"excluded root test\" }}",
     )?;
 
-    let child = tempfile::tempdir()?;
+    let child = ScratchDir::new("helm_adjudication")?;
     write_chart(child.path(), "child", "childDefault: 3\n")?;
     fs::write(child.path().join("values.schema.json"), "false")?;
     fs::create_dir_all(child.path().join("templates/tests"))?;
@@ -592,7 +595,7 @@ fn packed_dependencies_are_sanitized_recursively_without_changing_sources() -> e
         child.path().join("templates/tests/fail.yaml"),
         "{{ fail \"excluded child test\" }}",
     )?;
-    let grandchild = tempfile::tempdir()?;
+    let grandchild = ScratchDir::new("helm_adjudication")?;
     write_chart(grandchild.path(), "grandchild", "leaf: 4\n")?;
     fs::write(grandchild.path().join("values.schema.json"), "false")?;
     pack_chart(
@@ -646,7 +649,7 @@ fn packed_dependencies_are_sanitized_recursively_without_changing_sources() -> e
 /// times, yield identical trees and archive bytes.
 #[test]
 fn preparation_is_independent_of_timestamps_and_preparation_time() -> eyre::Result<()> {
-    let child = tempfile::tempdir()?;
+    let child = ScratchDir::new("helm_adjudication")?;
     write_chart(child.path(), "child", "childDefault: 3\n")?;
     fs::write(
         child.path().join("templates/config.yaml"),
@@ -654,7 +657,7 @@ fn preparation_is_independent_of_timestamps_and_preparation_time() -> eyre::Resu
     )?;
     let mut prepared = Vec::new();
     for (index, mtime) in [(0_u64, 1_000_000_000_u64), (1, 1_700_000_000)] {
-        let root = tempfile::tempdir()?;
+        let root = ScratchDir::new("helm_adjudication")?;
         write_chart(root.path(), "parent", "{}")?;
         fs::create_dir_all(root.path().join("charts/local/templates"))?;
         write_chart(&root.path().join("charts/local"), "local", "leaf: 1\n")?;
@@ -716,7 +719,7 @@ fn pack_chart(root: &Path, archive: &Path, name: &str) -> eyre::Result<()> {
 
 #[test]
 fn render_abort_keeps_the_exact_document_and_evidence() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "aborting", "{}")?;
     fs::write(
         root.path().join("templates/fail.yaml"),
@@ -734,7 +737,7 @@ fn render_abort_keeps_the_exact_document_and_evidence() -> eyre::Result<()> {
 
 #[test]
 fn offline_validator_distinguishes_invalid_resources_from_missing_schemas() -> eyre::Result<()> {
-    let cache = tempfile::tempdir()?;
+    let cache = ScratchDir::new("helm_adjudication")?;
     let schema = json!({"type": "object", "properties": {
         "apiVersion": {"const": "v1"}, "kind": {"const": "ConfigMap"},
         "metadata": {"type": "object", "required": ["name"], "properties": {"name": {"type": "string"}}}
@@ -772,7 +775,7 @@ fn offline_validator_distinguishes_invalid_resources_from_missing_schemas() -> e
 
 #[test]
 fn unresolved_schema_references_do_not_fetch_or_prove_validity() -> eyre::Result<()> {
-    let cache = tempfile::tempdir()?;
+    let cache = ScratchDir::new("helm_adjudication")?;
     write_cached_schema(
         cache.path(),
         "configmap-v1.json",
@@ -799,7 +802,7 @@ fn unresolved_schema_references_do_not_fetch_or_prove_validity() -> eyre::Result
 #[test]
 fn helm_yaml_decoding_preserves_boolean_keys_octal_scalars_and_unicode_boundaries()
 -> eyre::Result<()> {
-    let cache = tempfile::tempdir()?;
+    let cache = ScratchDir::new("helm_adjudication")?;
     let expected = json!({"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "café"}, "data": {"true": 10, "plain": true, "quoted": "on", "config": "---\nyes\n"}});
     // An exact schema makes every decoded scalar and key part of the assertion.
     write_cached_schema(
@@ -846,7 +849,7 @@ fn helm_yaml_decoding_preserves_boolean_keys_octal_scalars_and_unicode_boundarie
 
 #[test]
 fn helm_yaml_decoder_errors_remain_uncertain() -> eyre::Result<()> {
-    let cache = tempfile::tempdir()?;
+    let cache = ScratchDir::new("helm_adjudication")?;
     let validator = OfflineKubernetesValidator::new(cache.path())?;
     // Helm fromYaml reports sequence roots through its Error member.
     let source = "[one, two]";
@@ -864,7 +867,7 @@ fn helm_yaml_decoder_errors_remain_uncertain() -> eyre::Result<()> {
 
 #[test]
 fn raw_document_transport_preserves_unicode_line_breaks() -> eyre::Result<()> {
-    let cache = tempfile::tempdir()?;
+    let cache = ScratchDir::new("helm_adjudication")?;
     let expected = json!({"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "transport"}, "data": {"nel": "before\nafter\n", "ls": "before\u{2028}after\n", "ps": "before\u{2029}after\n"}});
     write_cached_schema(
         cache.path(),
@@ -893,7 +896,7 @@ fn raw_document_transport_preserves_unicode_line_breaks() -> eyre::Result<()> {
 #[test]
 fn kubernetes_document_framing_preserves_unicode_yaml_and_physical_boundaries() -> eyre::Result<()>
 {
-    let cache = tempfile::tempdir()?;
+    let cache = ScratchDir::new("helm_adjudication")?;
     write_cached_schema(
         cache.path(),
         "configmap-v1.json",
@@ -958,7 +961,7 @@ fn kubernetes_document_framing_preserves_unicode_yaml_and_physical_boundaries() 
 
 #[test]
 fn integers_that_helm_normalization_can_round_remain_uncertain() -> eyre::Result<()> {
-    let cache = tempfile::tempdir()?;
+    let cache = ScratchDir::new("helm_adjudication")?;
     let expected = json!({"apiVersion": "v1", "kind": "ConfigMap", "metadata": {"name": "number"}, "value": 9_007_199_254_740_993_u64});
     write_cached_schema(
         cache.path(),
@@ -979,7 +982,7 @@ fn integers_that_helm_normalization_can_round_remain_uncertain() -> eyre::Result
 
 #[test]
 fn archive_links_are_rejected_before_helm_execution() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "parent", "{}")?;
     fs::create_dir_all(root.path().join("charts"))?;
     let archive = fs::File::create(root.path().join("charts/unsafe.tgz"))?;
@@ -1002,7 +1005,7 @@ fn archive_links_are_rejected_before_helm_execution() -> eyre::Result<()> {
 
 #[test]
 fn schema_identity_must_match_the_exact_resource_group() -> eyre::Result<()> {
-    let cache = tempfile::tempdir()?;
+    let cache = ScratchDir::new("helm_adjudication")?;
     let schema = json!({"properties": {
         "apiVersion": {"enum": ["apps/v1"]}, "kind": {"enum": ["Deployment"]},
         "spec": {"properties": {"replicas": {"type": "integer"}}}
@@ -1054,7 +1057,7 @@ fn schema_identity_metadata_must_be_complete_and_consistent() -> eyre::Result<()
             false,
         ),
     ] {
-        let cache = tempfile::tempdir()?;
+        let cache = ScratchDir::new("helm_adjudication")?;
         write_cached_schema(cache.path(), "configmap-v1.json", &schema)?;
         let validator = OfflineKubernetesValidator::new(cache.path())?;
         let verdict = validator.validate(&serde_json::to_vec(&resource)?)?;
@@ -1075,10 +1078,10 @@ fn schema_identity_metadata_must_be_complete_and_consistent() -> eyre::Result<()
 
 #[test]
 fn packed_dependencies_preserve_the_parent_ignore_boundary() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "parent", "{}")?;
     fs::write(root.path().join(".helmignore"), "payload.txt")?;
-    let child = tempfile::tempdir()?;
+    let child = ScratchDir::new("helm_adjudication")?;
     write_chart(child.path(), "child", "{}")?;
     fs::write(child.path().join("payload.txt"), "kept")?;
     fs::write(
@@ -1094,6 +1097,7 @@ fn packed_dependencies_preserve_the_parent_ignore_boundary() -> eyre::Result<()>
     )?;
     pack_chart(child.path(), &root.path().join("charts/child.tgz"), "child")?;
     let original = Command::new("helm")
+        .envs(test_util::scratch::temp_env()?)
         .args(["template", "adjudication"])
         .arg(root.path())
         .args(["--kube-version", "1.29.0"])
@@ -1118,7 +1122,7 @@ fn packed_dependencies_preserve_the_parent_ignore_boundary() -> eyre::Result<()>
 
 #[test]
 fn template_exclusions_only_apply_to_actual_chart_roots() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "files", "{}")?;
     fs::create_dir_all(root.path().join("files/templates/tests"))?;
     fs::write(
@@ -1172,7 +1176,7 @@ fn write_cached_schema(
 /// The violations `validate` proves for a chart rendering `template` with
 /// its defaults, judged against the pinned bundle.
 fn pinned_violations(name: &str, template: &str) -> eyre::Result<KubernetesVerdict> {
-    let root = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), name, "{}\n")?;
     fs::write(root.path().join("templates/resource.yaml"), template)?;
     let chart = PinnedHelmChart::prepare(root.path())?;
@@ -1228,7 +1232,7 @@ fn a_document_without_api_version_or_kind_is_a_violation() -> eyre::Result<()> {
     let verdict = pinned_violations("comments", "# nothing rendered here\n")?;
     sim_assert_eq!(have: verdict, want: KubernetesVerdict::Valid);
     // The defaults render's own `{}` pairs and adds nothing.
-    let root = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "unidentified", "{}\n")?;
     fs::write(
         root.path().join("templates/resource.yaml"),
@@ -1236,7 +1240,7 @@ fn a_document_without_api_version_or_kind_is_a_violation() -> eyre::Result<()> {
     )?;
     let chart = PinnedHelmChart::prepare(root.path())?;
     let probe = chart.adjudicate(&json!({}))?;
-    let cache = tempfile::tempdir()?;
+    let cache = ScratchDir::new("helm_adjudication")?;
     let comparison =
         OfflineKubernetesValidator::new(cache.path())?.compare_with_defaults(&chart, &probe)?;
     assert!(
@@ -1251,7 +1255,7 @@ fn a_document_without_api_version_or_kind_is_a_violation() -> eyre::Result<()> {
 #[test]
 fn a_pinned_crd_schema_decides_a_crd_resource() -> eyre::Result<()> {
     let judge = |template: &str| -> eyre::Result<KubernetesVerdict> {
-        let root = tempfile::tempdir()?;
+        let root = ScratchDir::new("helm_adjudication")?;
         write_chart(root.path(), "crd", "{}\n")?;
         fs::write(root.path().join("templates/resource.yaml"), template)?;
         let chart = PinnedHelmChart::prepare(root.path())?;
@@ -1293,7 +1297,7 @@ fn a_pinned_crd_schema_decides_a_crd_resource() -> eyre::Result<()> {
 /// The Kubernetes version a chart whose manifest declares `kube_version`
 /// renders its defaults under, as the templates observe it.
 fn rendered_kubernetes_version(kube_version: Option<&str>) -> eyre::Result<String> {
-    let root = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "versioned", "{}\n")?;
     if let Some(constraint) = kube_version {
         fs::write(
@@ -1362,7 +1366,7 @@ fn a_wildcard_constraint_takes_its_helm_verified_version() -> eyre::Result<()> {
 /// A spelling neither the evaluator nor a Helm verdict decides abstains.
 #[test]
 fn an_undecided_constraint_is_refused() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "undecided", "{}\n")?;
     fs::write(
         root.path().join("Chart.yaml"),
@@ -1390,7 +1394,7 @@ fn an_undecided_constraint_is_refused() -> eyre::Result<()> {
 /// render to adjudicate against.
 #[test]
 fn a_constraint_no_pinned_version_satisfies_is_refused() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "unsatisfiable", "{}\n")?;
     fs::write(
         root.path().join("Chart.yaml"),
@@ -1457,6 +1461,72 @@ fn corpus_charts_render_under_the_version_their_manifest_admits() -> eyre::Resul
             ("jupyterhub".to_string(), "1.33.0"),
             ("okteto".to_string(), "1.33.0"),
         ]),
+    );
+    Ok(())
+}
+
+/// A decoder run that Helm fails keeps a complete bundle: the invocation
+/// record, the decoder chart with the documents, the values and the YAML the
+/// documents were split from, all by bundle-relative paths.
+#[cfg(unix)]
+#[test]
+fn a_failed_yaml_decoding_preserves_a_complete_bundle() -> eyre::Result<()> {
+    use std::os::unix::fs::PermissionsExt as _;
+
+    let root = ScratchDir::new("helm_adjudication")?;
+    let programs = ScratchDir::new("helm_adjudication")?;
+    let program = programs.path().join("helm");
+    fs::write(
+        &program,
+        indoc! {r#"
+            #!/bin/sh
+            if [ "$1" = version ]; then printf v4.2.3; exit 0; fi
+            echo 'injected decoder failure' >&2
+            exit 1
+        "#},
+    )?;
+    fs::set_permissions(&program, fs::Permissions::from_mode(0o755))?;
+    let runner = helm_invocation::HelmRunner::with_program(root.path(), false, program)?;
+    let case = ScratchDir::new("helm_adjudication")?;
+    let rendered = indoc! {"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: decoded
+    "};
+    let decoded = helm_adjudication::decode(&runner, rendered.as_bytes(), case.path())?;
+    let Err(failure) = decoded.documents else {
+        eyre::bail!("an injected decoder failure decoded");
+    };
+
+    let relative = case.path().join("decode").canonicalize()?;
+    let relative = relative.strip_prefix(test_util::scratch::root().canonicalize()?)?;
+    let bundle = test_util::scratch::evidence_root().join(relative);
+    eyre::ensure!(
+        failure.contains(&format!("evidence={}", bundle.display()))
+            && failure.contains("injected decoder failure"),
+        "the failure does not report the bundle {}: {failure}",
+        bundle.display()
+    );
+    let record: serde_json::Value =
+        serde_json::from_slice(&fs::read(bundle.join("decode.invocation.json"))?)?;
+    sim_assert_eq!(
+        have: (
+            record["chart"].as_str(),
+            record["values"].as_str(),
+            record["kubernetes_version"].is_string(),
+            fs::read_to_string(bundle.join("charts/decode/documents/0.yaml"))?,
+            fs::read(bundle.join("inputs/decode.values.json"))?,
+            fs::read_to_string(bundle.join("rendered.yaml"))?,
+        ),
+        want: (
+            Some("charts/decode"),
+            Some("inputs/decode.values.json"),
+            true,
+            rendered.to_string(),
+            fs::read(case.path().join("decode/values.json"))?,
+            rendered.to_string(),
+        )
     );
     Ok(())
 }

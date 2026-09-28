@@ -103,7 +103,11 @@ Every failure message ends with `evidence=<dir>`.
 
 Each chart prints `Helm adjudication evidence: <dir>` and each flip prints
 `HELM_FLIP <verdict>: evidence=<probe dir>`. You only see these lines with
-`--no-capture`. Both directories are under `TMPDIR`.
+`--no-capture`. Both directories are under `<target>/scratch/helm-schema/` and are swept once
+the test process has exited and another test process starts. A failure's `evidence=<dir>`
+has already been copied, with its prepared charts, under `<target>/evidence/helm-schema/`;
+so have the cases of unlisted false or undecided acceptances and, when the flip count gate
+fails, every adjudicated flip. The copied `prepared.json` names the charts by bundle-relative paths.
 
 - `<dir>/prepared.json` holds the source chart, the prepared render and
   coalesce copies, the `--kube-version`, and render cacheability.

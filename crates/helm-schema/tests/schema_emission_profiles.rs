@@ -3,7 +3,9 @@
 use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use serde::Serialize;
 use serde_json::json;
+use std::path::PathBuf;
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 #[path = "common/emission_profile_harness.rs"]
 mod harness;
@@ -116,6 +118,10 @@ struct HelmAdjudicationCoverage {
     /// `chart: probe` of every composed probe no values file reaches. A
     /// roster row naming one cannot be observed and is kept, not "fixed".
     unreachable_cases: Vec<String>,
+    /// The evidence directory of every adjudicated flip, preserved when a
+    /// final gate fails.
+    #[serde(skip)]
+    flip_evidence: Vec<PathBuf>,
 }
 
 /// A false acceptance the battery observed, to be matched by the roster.
@@ -124,6 +130,8 @@ struct ObservedFalseAcceptance {
     case: String,
     rejection: Rejection,
     baseline: Baseline,
+    #[serde(skip)]
+    evidence: Option<PathBuf>,
 }
 
 /// An accepted cell Kubernetes cannot decide, to be matched by the roster.
@@ -131,10 +139,19 @@ struct ObservedFalseAcceptance {
 struct ObservedUndecidedAcceptance {
     case: String,
     uncertain: Vec<String>,
+    #[serde(skip)]
+    evidence: Option<PathBuf>,
 }
 
 impl HelmAdjudicationCoverage {
-    fn record_verdict(&mut self, verdict: HelmFlipVerdict, case: String) -> Option<bool> {
+    /// Counts `verdict` for `case`, keeping the flip's evidence directory
+    /// (`None` for a verdict without one) for the final gates.
+    fn record_verdict(
+        &mut self,
+        verdict: HelmFlipVerdict,
+        case: String,
+        evidence: Option<PathBuf>,
+    ) -> Option<bool> {
         let candidate_accepts = match verdict {
             HelmFlipVerdict::Collapsed => {
                 self.screened_flips_collapsed += 1;
@@ -158,7 +175,11 @@ impl HelmAdjudicationCoverage {
             }
             HelmFlipVerdict::LooseningWithUncertainKubernetes(uncertain) => {
                 self.loosenings_with_uncertain_kubernetes
-                    .push(ObservedUndecidedAcceptance { case, uncertain });
+                    .push(ObservedUndecidedAcceptance {
+                        case,
+                        uncertain,
+                        evidence: evidence.clone(),
+                    });
                 true
             }
             HelmFlipVerdict::CandidateAcceptsHelmAborts => {
@@ -166,6 +187,7 @@ impl HelmAdjudicationCoverage {
                     case,
                     rejection: Rejection::HelmAborts,
                     baseline: Baseline::RejectsUnlikeItsDefaults,
+                    evidence: evidence.clone(),
                 });
                 true
             }
@@ -174,6 +196,7 @@ impl HelmAdjudicationCoverage {
                     case,
                     rejection: Rejection::KubernetesRejects,
                     baseline: Baseline::RejectsUnlikeItsDefaults,
+                    evidence: evidence.clone(),
                 });
                 true
             }
@@ -182,11 +205,13 @@ impl HelmAdjudicationCoverage {
                     case,
                     rejection,
                     baseline: Baseline::RejectsItsDefaults,
+                    evidence: evidence.clone(),
                 });
                 true
             }
         };
         self.flips_adjudicated += 1;
+        self.flip_evidence.extend(evidence);
         Some(candidate_accepts)
     }
 }
@@ -234,6 +259,18 @@ fn false_acceptance_rows_not_observed(
     fixed
 }
 
+/// `; evidence=<dir>` naming the preserved copy of an observed cell's
+/// evidence, which a failing gate reports; empty without evidence.
+fn preserved_evidence(evidence: Option<&PathBuf>) -> String {
+    match evidence {
+        Some(evidence) => format!(
+            "; evidence={}",
+            helm_invocation::preserve_failure(evidence).display()
+        ),
+        None => String::new(),
+    }
+}
+
 /// Every problem with the adjudicated outcomes: unaccounted flips, and
 /// accepted cells Kubernetes cannot decide or Helm or Kubernetes reject that
 /// the rosters do not list, or that they list but that no longer fail alike
@@ -262,7 +299,12 @@ fn validate_helm_adjudication_coverage(
             .iter()
             .any(|group| group.lists(&observed.case, &observed.uncertain));
         if !listed {
-            unlisted_undecided.push(format!("{} ({:?})", observed.case, observed.uncertain));
+            unlisted_undecided.push(format!(
+                "{} ({:?}){}",
+                observed.case,
+                observed.uncertain,
+                preserved_evidence(observed.evidence.as_ref())
+            ));
         }
     }
     if !unlisted_undecided.is_empty() {
@@ -278,8 +320,11 @@ fn validate_helm_adjudication_coverage(
             .any(|group| group.lists(&observed.case, observed.rejection, observed.baseline));
         if !listed {
             unlisted.push(format!(
-                "{} ({:?}, {:?})",
-                observed.case, observed.rejection, observed.baseline
+                "{} ({:?}, {:?}){}",
+                observed.case,
+                observed.rejection,
+                observed.baseline,
+                preserved_evidence(observed.evidence.as_ref())
             ));
         }
     }
@@ -327,7 +372,7 @@ fn matched_flip_validation_accepts_confirmed_outcomes() -> eyre::Result<()> {
         HelmFlipVerdict::LooseningMatchedKubernetesValidation,
         HelmFlipVerdict::LooseningMatchedDefaultsViolations,
     ] {
-        coverage.record_verdict(verdict, "confirmed".to_string());
+        coverage.record_verdict(verdict, "confirmed".to_string(), None);
         validate_helm_adjudication_coverage(&coverage, &[], &[])?;
     }
     Ok(())
@@ -341,6 +386,7 @@ fn uncertain_loosening_is_not_matched_by_the_render() {
     coverage.record_verdict(
         HelmFlipVerdict::LooseningWithUncertainKubernetes(vec!["reason".to_string()]),
         "uncertain".to_string(),
+        None,
     );
     assert!(validate_helm_adjudication_coverage(&coverage, &[], &[]).is_err());
 }
@@ -376,6 +422,7 @@ fn known_undecided_acceptances_are_matched_exactly() -> eyre::Result<()> {
             "document 1: example.test/v1/Kind name: pinned CRD schema not found".to_string(),
         ]),
         "chart: a <- true".to_string(),
+        None,
     );
     let reported: &[&str] = &["document 1: example.test/v1/Kind name: pinned CRD schema not found"];
     validate_helm_adjudication_coverage(&coverage, &[], &[group("chart", reported, PROBES)])?;
@@ -568,6 +615,7 @@ fn helm_adjudication_validation_rejects_unregistered_accepted_abort() {
     coverage.record_verdict(
         HelmFlipVerdict::CandidateAcceptsHelmAborts,
         "chart: probe".to_string(),
+        None,
     );
 
     assert!(validate_helm_adjudication_coverage(&coverage, &[], &[]).is_err());
@@ -605,7 +653,7 @@ fn helm_adjudication_records_each_outcome_once() {
             Some(true),
         ),
     ] {
-        sim_assert_eq!(have: coverage.record_verdict(verdict, "case".to_string()), want: accepted);
+        sim_assert_eq!(have: coverage.record_verdict(verdict, "case".to_string(), None), want: accepted);
     }
     sim_assert_eq!(have: json!(coverage), want: json!({
         "enabled": false, "screening_is_exact": false, "screened_flips": 0,
@@ -725,11 +773,13 @@ fn known_false_acceptances_are_matched_by_the_roster() -> eyre::Result<()> {
         coverage.record_verdict(
             HelmFlipVerdict::UninformativeBaselineFalseAcceptance(Rejection::HelmAborts),
             case.to_string(),
+            None,
         );
     }
     coverage.record_verdict(
         HelmFlipVerdict::CandidateAcceptsHelmAborts,
         "chart: d <- null deletion".to_string(),
+        None,
     );
     validate_helm_adjudication_coverage(
         &coverage,
@@ -920,9 +970,13 @@ fn lean_profile_schemas_match_their_separate_fixture_lane() -> eyre::Result<()> 
             .join("emission-profile-schemas/lean")
             .join(format!("{chart}.schema.json"));
         if std::env::var(test_util::SCHEMA_DUMP_VAR).is_ok() {
-            let dump_path = std::env::temp_dir().join(format!(
-                "helm-schema.emission-profile.lean.{chart}.schema.json"
-            ));
+            std::fs::create_dir_all(test_util::scratch::target_dir().join("schema-dump"))
+                .wrap_err("create schema dump root")?;
+            let dump_path = test_util::scratch::target_dir()
+                .join("schema-dump")
+                .join(format!(
+                    "helm-schema.emission-profile.lean.{chart}.schema.json"
+                ));
             let mut bytes = serde_json::to_vec_pretty(&lean).wrap_err("serialize lean schema")?;
             bytes.push(b'\n');
             std::fs::write(&dump_path, bytes)
@@ -1903,11 +1957,23 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
         KNOWN_FALSE_ACCEPTANCES,
         KNOWN_UNDECIDED_ACCEPTANCES,
     )?;
-    if std::env::var_os(ALLOW_MATCHED_FLIPS_VAR).is_none() {
-        eyre::ensure!(
-            flips.len() == PREREGISTERED_ACCEPTANCE_FLIP_ALLOWANCE,
-            "fixture acceptance flips differ from the pre-registered count:\n{}",
-            flips.join("\n")
+    if std::env::var_os(ALLOW_MATCHED_FLIPS_VAR).is_none()
+        && flips.len() != PREREGISTERED_ACCEPTANCE_FLIP_ALLOWANCE
+    {
+        let evidence: Vec<String> = report
+            .helm_adjudication
+            .flip_evidence
+            .iter()
+            .map(|evidence| {
+                helm_invocation::preserve_failure(evidence)
+                    .display()
+                    .to_string()
+            })
+            .collect();
+        eyre::bail!(
+            "fixture acceptance flips differ from the pre-registered count:\n{}\nevidence:\n{}",
+            flips.join("\n"),
+            evidence.join("\n")
         );
     }
     eprintln!(
@@ -2334,7 +2400,7 @@ fn fold_results(
                         eprintln!("HELM_FLIP {verdict:?}: evidence={}", evidence.display());
                         if let Some(candidate_accepts) = comparison
                             .helm_adjudication
-                            .record_verdict(verdict, probe.case.clone())
+                            .record_verdict(verdict, probe.case.clone(), Some(evidence))
                         {
                             comparison.flips.push(format!(
                                 "{}: candidate accepts={candidate_accepts}",
@@ -2657,8 +2723,10 @@ fn adjudicate_flip(
         serde_json::to_vec_pretty(&evidence)?,
     )
     .wrap_err("write exact schema verdict evidence")?;
-    let verdict = verdict
-        .map_err(|reason| eyre::eyre!("{reason}; evidence={}", probe.evidence_dir.display()))?;
+    let verdict = verdict.map_err(|reason| {
+        let evidence = helm_invocation::preserve_failure(&probe.evidence_dir);
+        eyre::eyre!("{reason}; evidence={}", evidence.display())
+    })?;
     Ok((verdict, probe.evidence_dir))
 }
 
@@ -2667,7 +2735,7 @@ fn adjudicate_flip(
 /// render's.
 #[test]
 fn loosenings_need_complete_evidence_beyond_the_defaults_render() -> eyre::Result<()> {
-    let source = tempfile::tempdir()?;
+    let source = ScratchDir::new("schema_emission_profiles")?;
     std::fs::create_dir(source.path().join("templates"))?;
     std::fs::write(
         source.path().join("Chart.yaml"),
@@ -2727,7 +2795,7 @@ fn loosenings_need_complete_evidence_beyond_the_defaults_render() -> eyre::Resul
     let inherited =
         adjudicate_round74_flip(&chart, &json!({"tag": "b"}), &accept_all, &kubernetes)?;
     sim_assert_eq!(have: inherited, want: HelmFlipVerdict::LooseningMatchedDefaultsViolations);
-    coverage.record_verdict(inherited, "inherited".to_string());
+    coverage.record_verdict(inherited, "inherited".to_string(), None);
     validate_helm_adjudication_coverage(&coverage, &[], &[])?;
 
     // An added resource without a schema leaves the acceptance unproved, even
@@ -2746,7 +2814,7 @@ fn loosenings_need_complete_evidence_beyond_the_defaults_render() -> eyre::Resul
         ]),
     );
     let mut added_coverage = HelmAdjudicationCoverage::default();
-    added_coverage.record_verdict(added, "added".to_string());
+    added_coverage.record_verdict(added, "added".to_string(), None);
     assert!(validate_helm_adjudication_coverage(&added_coverage, &[], &[]).is_err());
 
     // Two changed copies of one identity inherit the defaults' single violation once.
@@ -2757,9 +2825,111 @@ fn loosenings_need_complete_evidence_beyond_the_defaults_render() -> eyre::Resul
     Ok(())
 }
 
+/// A false acceptance missing from the roster fails the final gate with a
+/// preserved bundle, and that bundle alone reproduces the case: with the
+/// original scratch deleted, rendering its chart copy with its values yields
+/// the recorded render.
+#[test]
+fn an_unlisted_false_acceptance_reports_a_bundle_that_reproduces_it() -> eyre::Result<()> {
+    let source = ScratchDir::new("schema_emission_profiles")?;
+    std::fs::create_dir(source.path().join("templates"))?;
+    std::fs::write(
+        source.path().join("Chart.yaml"),
+        indoc::indoc! {"
+        apiVersion: v2
+        name: preserved-evidence
+        version: 0.1.0
+    "},
+    )?;
+    std::fs::write(source.path().join("values.yaml"), "name: valid\n")?;
+    std::fs::write(
+        source.path().join("templates/configmap.yaml"),
+        indoc::indoc! {"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: {{ .Values.name }}
+    "},
+    )?;
+    let chart = PinnedHelmChart::prepare(source.path())?;
+    let cache =
+        test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache");
+    let kubernetes = OfflineKubernetesValidator::new(&cache)?;
+    let string_name = json!({"properties": {"name": {"type": "string"}}});
+    let loosening = ProfileSchemas::compile(&string_name, &json!({}), json!({}))?;
+    let (verdict, evidence) =
+        adjudicate_flip(&chart, &json!({"name": true}), &loosening, &kubernetes)?;
+    sim_assert_eq!(have: verdict.clone(), want: HelmFlipVerdict::CandidateAcceptsKubernetesRejects);
+
+    let mut coverage = HelmAdjudicationCoverage::default();
+    coverage.record_verdict(
+        verdict,
+        "synthetic: name <- true".to_string(),
+        Some(evidence.clone()),
+    );
+    let Err(error) = validate_helm_adjudication_coverage(&coverage, &[], &[]) else {
+        eyre::bail!("an unlisted false acceptance passed the gate");
+    };
+    let scratch_root = test_util::scratch::root().canonicalize()?;
+    let bundle = test_util::scratch::evidence_root()
+        .join(evidence.canonicalize()?.strip_prefix(&scratch_root)?);
+    eyre::ensure!(
+        error
+            .to_string()
+            .contains(&format!("evidence={}", bundle.display())),
+        "the gate does not report the preserved bundle {}: {error}",
+        bundle.display()
+    );
+
+    // Delete the original scratch: the chart's evidence and its prepared trees.
+    let original: serde_json::Value = serde_json::from_slice(&std::fs::read(
+        evidence
+            .parent()
+            .ok_or_eyre("probe case has no parent")?
+            .join("prepared.json"),
+    )?)?;
+    for name in ["render", "coalesce"] {
+        let tree = original[name]
+            .as_str()
+            .ok_or_eyre("prepared.json names no tree")?;
+        std::fs::remove_dir_all(tree)?;
+    }
+    std::fs::remove_dir_all(evidence.parent().ok_or_eyre("probe case has no parent")?)?;
+
+    let prepared: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(bundle.join("prepared.json"))?)?;
+    let render = prepared["render"]
+        .as_str()
+        .ok_or_eyre("bundle names no render chart")?;
+    let kubernetes_version = prepared["kubernetes_version"]
+        .as_str()
+        .ok_or_eyre("bundle names no Kubernetes version")?;
+    let runner = helm_invocation::HelmRunner::shared()?;
+    let staged = runner.staging_dir()?;
+    test_util::scratch::copy_tree(&bundle.join(render), &staged)?;
+    let tree = runner.publish_tree(&staged)?;
+    let rerun = ScratchDir::new("schema_emission_profiles")?;
+    let values = std::fs::read(bundle.join("values.json"))?;
+    runner.template(
+        &helm_invocation::TemplateRequest {
+            chart: &tree,
+            values: &values,
+            kubernetes_version,
+        },
+        rerun.path(),
+        "render",
+        &helm_invocation::Cacheability::Bypass("reproduce a preserved bundle".to_string()),
+    )?;
+    sim_assert_eq!(
+        have: std::fs::read(rerun.path().join("render.yaml"))?,
+        want: std::fs::read(bundle.join("render.yaml"))?
+    );
+    Ok(())
+}
+
 #[test]
 fn exact_flip_adjudication_uses_coalesced_values_and_kubernetes_evidence() -> eyre::Result<()> {
-    let source = tempfile::tempdir()?;
+    let source = ScratchDir::new("schema_emission_profiles")?;
     std::fs::create_dir(source.path().join("templates"))?;
     std::fs::write(
         source.path().join("Chart.yaml"),
@@ -2814,7 +2984,7 @@ fn exact_flip_adjudication_uses_coalesced_values_and_kubernetes_evidence() -> ey
     // Neither successful rendering nor a missing provider schema proves a tightening valid.
     let unjustified = ProfileSchemas::compile(&json!({}), &json!(false), json!({}))?;
     assert!(adjudicate_round74_flip(&chart, &json!({}), &unjustified, &kubernetes).is_err());
-    let empty_cache = tempfile::tempdir()?;
+    let empty_cache = ScratchDir::new("schema_emission_profiles")?;
     let missing = OfflineKubernetesValidator::new(empty_cache.path())?;
     assert!(
         adjudicate_round74_flip(&chart, &json!({"name": true}), &tightening, &missing).is_err()
@@ -2858,7 +3028,7 @@ fn exact_flip_adjudication_uses_coalesced_values_and_kubernetes_evidence() -> ey
 /// acceptance of the candidate rather than a loosening.
 #[test]
 fn a_baseline_rejecting_its_own_defaults_is_no_evidence() -> eyre::Result<()> {
-    let source = tempfile::tempdir()?;
+    let source = ScratchDir::new("schema_emission_profiles")?;
     std::fs::create_dir(source.path().join("templates"))?;
     std::fs::write(
         source.path().join("Chart.yaml"),
@@ -2914,7 +3084,7 @@ fn a_baseline_rejecting_its_own_defaults_is_no_evidence() -> eyre::Result<()> {
 #[test]
 fn a_different_missing_property_is_evidence_against_a_baseline_rejecting_its_defaults()
 -> eyre::Result<()> {
-    let source = tempfile::tempdir()?;
+    let source = ScratchDir::new("schema_emission_profiles")?;
     std::fs::create_dir(source.path().join("templates"))?;
     std::fs::write(
         source.path().join("Chart.yaml"),
@@ -2959,7 +3129,7 @@ fn a_different_missing_property_is_evidence_against_a_baseline_rejecting_its_def
 /// candidate schema is no new reason.
 #[test]
 fn a_new_rejection_behind_a_baseline_rejection_is_adjudicated() -> eyre::Result<()> {
-    let source = tempfile::tempdir()?;
+    let source = ScratchDir::new("schema_emission_profiles")?;
     std::fs::create_dir(source.path().join("templates"))?;
     std::fs::write(
         source.path().join("Chart.yaml"),
@@ -3020,7 +3190,7 @@ fn a_new_rejection_behind_a_baseline_rejection_is_adjudicated() -> eyre::Result<
 
 #[test]
 fn scalar_overrides_of_subchart_tables_are_adjudicated_by_helm_exit() -> eyre::Result<()> {
-    let source = tempfile::tempdir()?;
+    let source = ScratchDir::new("schema_emission_profiles")?;
     let child = source.path().join("charts/child");
     std::fs::create_dir_all(source.path().join("templates"))?;
     std::fs::create_dir_all(child.join("templates"))?;
@@ -3115,7 +3285,7 @@ fn scalar_overrides_of_subchart_tables_are_adjudicated_by_helm_exit() -> eyre::R
 
 #[test]
 fn kubernetes_verdicts_are_relative_to_the_defaults_render() -> eyre::Result<()> {
-    let source = tempfile::tempdir()?;
+    let source = ScratchDir::new("schema_emission_profiles")?;
     std::fs::create_dir(source.path().join("templates"))?;
     std::fs::write(
         source.path().join("Chart.yaml"),
@@ -3239,6 +3409,7 @@ fn middle_lean_transition_has_only_preregistered_tightenings() -> eyre::Result<(
     let adjudicate_live = adjudicates_live();
     if adjudicate_live {
         let output = std::process::Command::new("helm")
+            .envs(test_util::scratch::temp_env()?)
             .args(["version", "--template", "{{.Version}}"])
             .output()
             .wrap_err("read Helm version for transition adjudication")?;
@@ -3314,11 +3485,13 @@ fn adjudicate_transition_tightening(
         }
     };
     let chart_path = test_util::workspace_testdata().join("charts").join(chart);
-    let tempdir = tempfile::tempdir().wrap_err("create live adjudication directory")?;
+    let tempdir = ScratchDir::new("schema_emission_profiles")
+        .wrap_err("create live adjudication directory")?;
     let values_path = tempdir.path().join("values.json");
     std::fs::write(&values_path, serde_json::to_vec(&values)?)
         .wrap_err("write live adjudication values")?;
     let rendered = std::process::Command::new("helm")
+        .envs(test_util::scratch::temp_env()?)
         .args(["template", "step2-lean-transition"])
         .arg(chart_path)
         .arg("--skip-schema-validation")

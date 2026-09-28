@@ -8,14 +8,17 @@ use vfs::VfsPath;
 
 /// Helm values coalescing over chart directories.
 pub mod helm_values;
+pub mod scratch;
 /// S-expression fixtures and parsing utilities.
 pub mod sexpr;
+#[cfg(test)]
+mod tests;
 
 #[doc(hidden)]
 pub use similar_asserts::assert_eq as __similar_assert_eq;
 
-/// When set, schema tests also write the schema they generate to the system
-/// temporary directory for inspection.
+/// When set, schema tests also write the schema they generate to
+/// `<target>/schema-dump/` ([`scratch::target_dir`]) for inspection.
 pub const SCHEMA_DUMP_VAR: &str = "SCHEMA_DUMP";
 
 /// Asserts that `have` equals `want` and renders a readable diff on failure.
@@ -149,16 +152,24 @@ pub fn workspace_testdata() -> PathBuf {
 /// directory lets one provider's layout check read the other's content as a
 /// legacy layout and wipe it.
 ///
-/// The base is process-scoped: under nextest's process-per-test model each
-/// test gets its own directories, and offline providers only ever write the
-/// layout marker into them.
-#[must_use]
-pub fn cold_provider_cache_root(role: &str) -> PathBuf {
-    static BASE: OnceLock<PathBuf> = OnceLock::new();
-    BASE.get_or_init(|| {
-        std::env::temp_dir().join(format!("helm-schema.cold-cache.{}", std::process::id()))
-    })
-    .join(role)
+/// The base is a process-scoped [`scratch::ScratchDir`]: under nextest's
+/// process-per-test model each test gets its own directories, and offline
+/// providers only ever write the layout marker into them.
+///
+/// # Errors
+///
+/// Returns an error when the scratch base cannot be created.
+pub fn cold_provider_cache_root(role: &str) -> eyre::Result<PathBuf> {
+    static BASE: OnceLock<std::result::Result<PathBuf, String>> = OnceLock::new();
+    let base = BASE.get_or_init(|| {
+        scratch::ScratchDir::new("cold-cache")
+            .map(scratch::ScratchDir::keep)
+            .map_err(|error| format!("{error:?}"))
+    });
+    match base {
+        Ok(base) => Ok(base.join(role)),
+        Err(error) => Err(eyre!("{error}")).wrap_err("create the cold provider cache base"),
+    }
 }
 
 /// Reads a file relative to the workspace `testdata/` directory.

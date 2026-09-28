@@ -104,7 +104,7 @@ fn generate(chart_dir: VfsPath) -> eyre::Result<serde_json::Value> {
             k8s_versions: vec!["v1.29.0".to_string()],
             k8s_schema_cache_dir: None,
             allow_net: false,
-            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")?),
             disable_k8s_schemas: true,
             crd_override_dir: None,
             ..Default::default()

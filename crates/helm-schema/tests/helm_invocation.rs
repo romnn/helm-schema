@@ -9,6 +9,7 @@ use flate2::Compression;
 use flate2::write::GzEncoder;
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 #[path = "common/helm_cache_policy.rs"]
 mod helm_cache_policy;
@@ -118,9 +119,9 @@ fn each_identity_field_changes_the_key() -> eyre::Result<()> {
 fn nested_archive_bytes_decide_the_tree_identity() -> eyre::Result<()> {
     let mut identities = BTreeSet::new();
     for value in ["a", "b"] {
-        let root = tempfile::tempdir()?;
+        let root = ScratchDir::new("helm_invocation")?;
         write_chart(root.path(), "{}")?;
-        let child = tempfile::tempdir()?;
+        let child = ScratchDir::new("helm_invocation")?;
         write_chart(child.path(), &format!("nested: {value}\n"))?;
         let archive = fs::File::create(root.path().join("charts.tgz"))?;
         let mut builder = tar::Builder::new(GzEncoder::new(archive, Compression::default()));
@@ -181,7 +182,7 @@ fn render(
     stage: &str,
     cacheability: &Cacheability,
 ) -> eyre::Result<Observed> {
-    let case = tempfile::tempdir()?;
+    let case = ScratchDir::new("helm_invocation")?;
     let execution = runner.template(
         &TemplateRequest {
             chart,
@@ -205,7 +206,7 @@ fn render(
 /// part in the key, and any changed input executes again.
 #[test]
 fn identical_invocations_replay_and_changed_inputs_execute() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_invocation")?;
     let runner = HelmRunner::new(root.path(), true)?;
     let chart = publish_chart(&runner, "value: default\n")?;
     let cacheable = Cacheability::Cacheable;
@@ -270,7 +271,7 @@ fn identical_invocations_replay_and_changed_inputs_execute() -> eyre::Result<()>
 /// bypassed chart always executes; a runner without replay never replays.
 #[test]
 fn failures_replay_and_bypassed_or_private_invocations_execute() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_invocation")?;
     let runner = HelmRunner::new(root.path(), true)?;
     let chart = publish_chart(&runner, "value: default\n")?;
     let cacheable = Cacheability::Cacheable;
@@ -327,7 +328,7 @@ fn failures_replay_and_bypassed_or_private_invocations_execute() -> eyre::Result
 /// truncated or incomplete entry is a miss: never a partial replay.
 #[test]
 fn killed_writers_and_corrupt_entries_are_misses() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_invocation")?;
     let runner = HelmRunner::new(root.path(), true)?;
     let chart = publish_chart(&runner, "value: default\n")?;
     let cacheable = Cacheability::Cacheable;
@@ -412,12 +413,12 @@ fn copy_dir(from: &Path, to: &Path) -> eyre::Result<()> {
 /// from executions.
 #[test]
 fn replays_are_accounted_apart_from_executions() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_invocation")?;
     let runner = HelmRunner::new(root.path(), true)?;
     let chart = publish_chart(&runner, "value: default\n")?;
     let mut records = Vec::new();
     for _ in 0..2 {
-        let case = tempfile::tempdir()?;
+        let case = ScratchDir::new("helm_invocation")?;
         let execution = runner.template(
             &TemplateRequest {
                 chart: &chart,
@@ -453,7 +454,7 @@ fn policy_chart(
     for (name, source) in templates {
         fs::write(root.join("templates").join(name), source)?;
     }
-    let child = tempfile::tempdir()?;
+    let child = ScratchDir::new("helm_invocation")?;
     write_chart(child.path(), "{}")?;
     for (name, source) in dependency_templates {
         fs::write(child.path().join("templates").join(name), source)?;
@@ -470,7 +471,7 @@ fn cacheability_of(
     templates: &[(&str, &str)],
     dependency_templates: &[(&str, &str)],
 ) -> eyre::Result<Cacheability> {
-    let root = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_invocation")?;
     policy_chart(root.path(), templates, dependency_templates)?;
     render_cacheability(root.path())
 }
@@ -583,8 +584,8 @@ fn fake_helm(directory: &Path, body: &str) -> eyre::Result<std::path::PathBuf> {
 #[cfg(unix)]
 #[test]
 fn abnormal_executions_are_harness_failures() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
-    let programs = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_invocation")?;
+    let programs = ScratchDir::new("helm_invocation")?;
     let real = HelmRunner::new(root.path(), true)?;
     let chart = publish_chart(&real, "value: default\n")?;
     for (body, expected) in [
@@ -597,7 +598,7 @@ fn abnormal_executions_are_harness_failures() -> eyre::Result<()> {
         if body == "exit 0" {
             fs::remove_file(&program)?;
         }
-        let case = tempfile::tempdir()?;
+        let case = ScratchDir::new("helm_invocation")?;
         let request = TemplateRequest {
             chart: &chart,
             values: br#"{"value": "a"}"#,
@@ -613,8 +614,49 @@ fn abnormal_executions_are_harness_failures() -> eyre::Result<()> {
                 format!("{error:?}").contains(expected),
                 "{body}: unexpected failure {error:?}"
             );
+            // A missing program fails its check before any case evidence exists.
+            if body != "exit 0" {
+                check_preserved_bundle(case.path(), &format!("{error:?}"), request.values)?;
+            }
         }
     }
+    Ok(())
+}
+
+/// `error` names the preserved bundle of `case`, and the bundle alone holds
+/// the render stage's inputs: its chart copy, its values and its Kubernetes
+/// version, named by bundle-relative paths.
+#[cfg(unix)]
+fn check_preserved_bundle(case: &Path, error: &str, values: &[u8]) -> eyre::Result<()> {
+    let relative = case
+        .canonicalize()?
+        .strip_prefix(test_util::scratch::root().canonicalize()?)?
+        .to_path_buf();
+    let bundle = test_util::scratch::evidence_root().join(relative);
+    eyre::ensure!(
+        error.contains(&format!("evidence={}", bundle.display())),
+        "the failure does not report the preserved bundle {}: {error}",
+        bundle.display()
+    );
+    let record: serde_json::Value =
+        serde_json::from_slice(&fs::read(bundle.join("render.invocation.json"))?)?;
+    let field = |name: &str| record.get(name).and_then(serde_json::Value::as_str);
+    sim_assert_eq!(
+        have: (
+            field("chart"),
+            field("values"),
+            field("kubernetes_version"),
+            bundle.join("charts/render/Chart.yaml").is_file(),
+            fs::read(bundle.join("inputs/render.values.json"))?,
+        ),
+        want: (
+            Some("charts/render"),
+            Some("inputs/render.values.json"),
+            Some("1.29.0"),
+            true,
+            values.to_vec(),
+        )
+    );
     Ok(())
 }
 
@@ -733,8 +775,8 @@ fn the_shared_runner_is_made_once() -> eyre::Result<()> {
 #[cfg(unix)]
 #[test]
 fn a_changed_helm_executable_is_a_harness_failure() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
-    let programs = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_invocation")?;
+    let programs = ScratchDir::new("helm_invocation")?;
     let real = HelmRunner::new(root.path(), true)?;
     let chart = publish_chart(&real, "value: default\n")?;
     let program = fake_helm(programs.path(), "exit 1")?;
@@ -744,7 +786,7 @@ fn a_changed_helm_executable_is_a_harness_failure() -> eyre::Result<()> {
         values: br#"{"value": "a"}"#,
         kubernetes_version: "1.29.0",
     };
-    let case = tempfile::tempdir()?;
+    let case = ScratchDir::new("helm_invocation")?;
     runner.template(&request, case.path(), "render", &Cacheability::Cacheable)?;
     let replaced = fake_helm(programs.path(), "exit 0")?;
     fs::rename(&replaced, &program)?;
@@ -763,7 +805,7 @@ fn a_changed_helm_executable_is_a_harness_failure() -> eyre::Result<()> {
 /// chart outside a client-only template never does.
 #[test]
 fn lookup_charts_replay_only_as_client_only_templates() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_invocation")?;
     let runner = HelmRunner::new(root.path(), true)?;
     let chart = publish_chart(&runner, "value: default\n")?;
     let values = r#"{"value": "a"}"#;
@@ -818,7 +860,7 @@ fn a_panicking_job_propagates_without_deadlock() -> eyre::Result<()> {
 /// its invocations are keyed apart from the CLI's.
 #[test]
 fn the_resident_server_renders_exactly_as_the_cli() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_invocation")?;
     let cli = HelmRunner::with_program(root.path(), false, find_helm()?)?;
     let resident =
         HelmRunner::with_helmsweep(root.path(), false, find_helmsweep()?, RENDER_TIMEOUT)?;
@@ -901,7 +943,7 @@ fn fake_helmsweep(directory: &Path, name: &str, body: &str) -> eyre::Result<std:
 #[cfg(unix)]
 #[test]
 fn resident_protocol_failures_are_harness_failures() -> eyre::Result<()> {
-    let programs = tempfile::tempdir()?;
+    let programs = ScratchDir::new("helm_invocation")?;
     let answer = |line: &str| format!("while read -r request; do printf '%s\\n' '{line}'; done");
     for (name, body, expected) in [
         ("exits", "exit 0".to_string(), "without answering"),
@@ -929,7 +971,7 @@ fn resident_protocol_failures_are_harness_failures() -> eyre::Result<()> {
             "exit code Some(2)",
         ),
     ] {
-        let root = tempfile::tempdir()?;
+        let root = ScratchDir::new("helm_invocation")?;
         let program = fake_helmsweep(programs.path(), name, &body)?;
         let runner = HelmRunner::with_helmsweep(
             root.path(),
@@ -943,7 +985,7 @@ fn resident_protocol_failures_are_harness_failures() -> eyre::Result<()> {
             values: br#"{"value": "a"}"#,
             kubernetes_version: "1.29.0",
         };
-        let case = tempfile::tempdir()?;
+        let case = ScratchDir::new("helm_invocation")?;
         let mut failures = Vec::new();
         for _ in 0..2 {
             let Err(error) =
@@ -951,6 +993,7 @@ fn resident_protocol_failures_are_harness_failures() -> eyre::Result<()> {
             else {
                 eyre::bail!("{name}: a protocol failure became a Helm verdict");
             };
+            check_preserved_bundle(case.path(), &format!("{error:?}"), request.values)?;
             failures.push(format!("{error:?}"));
         }
         eyre::ensure!(
@@ -963,7 +1006,7 @@ fn resident_protocol_failures_are_harness_failures() -> eyre::Result<()> {
             .map(|entry| Ok(entry?.file_name().to_string_lossy().into_owned()))
             .collect::<eyre::Result<Vec<_>>>()?;
         stored.sort();
-        sim_assert_eq!(have: stored, want: vec!["home", "inputs", "staging", "trees"]);
+        sim_assert_eq!(have: stored, want: vec!["home", "inputs", "staging", "tmp", "trees"]);
     }
     Ok(())
 }
@@ -973,7 +1016,7 @@ fn resident_protocol_failures_are_harness_failures() -> eyre::Result<()> {
 /// tree state and Go version, the Kubernetes version and API versions.
 #[test]
 fn templates_see_the_release_capabilities_in_both_engines() -> eyre::Result<()> {
-    let root = tempfile::tempdir()?;
+    let root = ScratchDir::new("helm_invocation")?;
     let cli = HelmRunner::with_program(root.path(), false, find_helm()?)?;
     let resident =
         HelmRunner::with_helmsweep(root.path(), false, find_helmsweep()?, RENDER_TIMEOUT)?;
@@ -1034,7 +1077,7 @@ fn templates_see_the_release_capabilities_in_both_engines() -> eyre::Result<()> 
 #[cfg(unix)]
 #[test]
 fn large_idle_resident_servers_are_retired() -> eyre::Result<()> {
-    let programs = tempfile::tempdir()?;
+    let programs = ScratchDir::new("helm_invocation")?;
     for (held, servers) in [(1_u64, 1_usize), (1 << 30, 2)] {
         let starts = programs.path().join(format!("starts-{held}"));
         let body = indoc::formatdoc!(
@@ -1048,7 +1091,7 @@ fn large_idle_resident_servers_are_retired() -> eyre::Result<()> {
             done"#,
             starts = starts.display()
         );
-        let root = tempfile::tempdir()?;
+        let root = ScratchDir::new("helm_invocation")?;
         let program = fake_helmsweep(programs.path(), &format!("held-{held}"), &body)?;
         let runner = HelmRunner::with_helmsweep(root.path(), false, program, RENDER_TIMEOUT)?;
         let chart = publish_chart(&runner, "value: default\n")?;

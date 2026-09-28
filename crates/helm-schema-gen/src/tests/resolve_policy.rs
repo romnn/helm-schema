@@ -5,6 +5,7 @@ use crate::resolve_policy::{
 };
 use color_eyre::eyre::{self, OptionExt as _};
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 #[test]
 fn conditional_schema_acceptance_memo_uses_complete_document_keys() {
@@ -57,7 +58,7 @@ fn conditional_schema_acceptance_memo_reuses_one_entry_per_document() {
 
 #[test]
 fn conditional_schema_acceptance_memo_bypasses_external_resources() -> eyre::Result<()> {
-    let directory = tempfile::tempdir()?;
+    let directory = ScratchDir::new("resolve_policy")?;
     let referenced = directory.path().join("member.json");
     std::fs::write(&referenced, r#"{ "type": "string" }"#)?;
     let external = serde_json::json!({ "$ref": format!("file://{}", referenced.display()) });

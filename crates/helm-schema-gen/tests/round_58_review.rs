@@ -7,6 +7,7 @@ use color_eyre::eyre::{self, WrapErr as _};
 fn render(extra_args: &[&str]) -> eyre::Result<Output> {
     let chart = test_util::workspace_testdata().join("charts/round-58-review");
     Command::new("helm")
+        .envs(test_util::scratch::temp_env()?)
         .arg("template")
         .arg("round-58")
         .arg(chart)

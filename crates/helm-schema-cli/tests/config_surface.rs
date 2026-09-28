@@ -9,6 +9,7 @@ use flate2::write::GzEncoder;
 use indoc::indoc;
 use serde_json::Value;
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 const HELM_SCHEMA_BIN: &str = env!("CARGO_BIN_EXE_helm-schema");
 const TEMPORAL_CONFIG: &str = indoc! {"
@@ -69,7 +70,7 @@ fn yaml(output: &Output) -> eyre::Result<Value> {
 
 #[test]
 fn directory_and_packaged_chart_config_resolution_agree() -> eyre::Result<()> {
-    let temp = tempfile::tempdir()?;
+    let temp = ScratchDir::new("config_surface")?;
     let chart = temp.path().join("chart");
     write_chart(&chart, Some(TEMPORAL_CONFIG))?;
     let archive = temp.path().join("config-surface-0.1.0.tgz");
@@ -113,7 +114,7 @@ fn directory_and_packaged_chart_config_resolution_agree() -> eyre::Result<()> {
 
 #[test]
 fn relative_explicit_config_is_resolved_from_invocation_directory() -> eyre::Result<()> {
-    let temp = tempfile::tempdir()?;
+    let temp = ScratchDir::new("config_surface")?;
     let chart = temp.path().join("chart");
     write_chart(&chart, None)?;
     std::fs::write(temp.path().join("policy.yaml"), TEMPORAL_CONFIG)?;
@@ -153,7 +154,7 @@ fn relative_explicit_config_is_resolved_from_invocation_directory() -> eyre::Res
 
 #[test]
 fn config_weakening_diagnostic_survives_downstream_failure() -> eyre::Result<()> {
-    let temp = tempfile::tempdir()?;
+    let temp = ScratchDir::new("config_surface")?;
     let chart = temp.path().join("chart");
     write_chart(&chart, Some(TEMPORAL_CONFIG))?;
 
@@ -175,7 +176,7 @@ fn config_weakening_diagnostic_survives_downstream_failure() -> eyre::Result<()>
 
 #[test]
 fn print_effective_config_stops_before_chart_analysis() -> eyre::Result<()> {
-    let temp = tempfile::tempdir()?;
+    let temp = ScratchDir::new("config_surface")?;
     std::fs::write(temp.path().join("helm-schema.yaml"), "version: 1\n")?;
     std::fs::write(
         temp.path().join("not-a-chart"),
@@ -197,7 +198,7 @@ fn print_effective_config_stops_before_chart_analysis() -> eyre::Result<()> {
 
 #[test]
 fn no_config_ignores_a_malformed_discovered_document() -> eyre::Result<()> {
-    let temp = tempfile::tempdir()?;
+    let temp = ScratchDir::new("config_surface")?;
     let chart = temp.path().join("chart");
     write_chart(&chart, Some("version: [\n"))?;
 
@@ -220,7 +221,7 @@ fn no_config_ignores_a_malformed_discovered_document() -> eyre::Result<()> {
 
 #[test]
 fn explicit_cli_profile_resets_file_knob_deltas() -> eyre::Result<()> {
-    let temp = tempfile::tempdir()?;
+    let temp = ScratchDir::new("config_surface")?;
     let chart = temp.path().join("chart");
     write_chart(&chart, Some(TEMPORAL_CONFIG))?;
 
@@ -247,7 +248,7 @@ fn explicit_cli_profile_resets_file_knob_deltas() -> eyre::Result<()> {
 
 #[test]
 fn temporal_config_drives_generation_and_annotation() -> eyre::Result<()> {
-    let temp = tempfile::tempdir()?;
+    let temp = ScratchDir::new("config_surface")?;
     let chart = temp.path().join("chart");
     write_chart(&chart, Some(TEMPORAL_CONFIG))?;
     std::fs::write(

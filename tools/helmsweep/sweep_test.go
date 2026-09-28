@@ -89,15 +89,26 @@ func newSweeper(t *testing.T, roster, work string) *sweeper {
 	}
 }
 
-// isolateEnv gives the test the environment clearHelmEnv gives a sweep,
-// restoring the original afterwards.
+// isolateEnv gives the test the environment cleanEnv gives a clean child,
+// HOME, PATH and the caller's temporary-directory variables, restoring the
+// original afterwards. The kept variables keep t.TempDir and Helm's own
+// temporary files where the caller put them, not in the system temp.
 func isolateEnv(t *testing.T) {
+	kept := map[string]string{}
+	for _, name := range keptTempVars {
+		if value, ok := os.LookupEnv(name); ok {
+			kept[name] = value
+		}
+	}
 	for _, kv := range os.Environ() {
 		name, _, _ := strings.Cut(kv, "=")
 		t.Setenv(name, "")
 		if err := os.Unsetenv(name); err != nil {
 			t.Fatal(err)
 		}
+	}
+	for name, value := range kept {
+		t.Setenv(name, value)
 	}
 	t.Setenv("HOME", t.TempDir())
 	t.Setenv("PATH", "/usr/bin:/bin")

@@ -4,12 +4,13 @@ use helm_schema::generation::{EmissionSelection, SchemaProfile};
 use helm_schema::output::LoadBudget;
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 use super::resolve;
 use crate::cli::{EmissionArgs, PolicyToggle, SchemaProfile as CliSchemaProfile};
 
-fn chart_with_config(config: &str) -> eyre::Result<tempfile::TempDir> {
-    let chart = tempfile::tempdir()?;
+fn chart_with_config(config: &str) -> eyre::Result<ScratchDir> {
+    let chart = ScratchDir::new("config")?;
     std::fs::write(
         chart.path().join("Chart.yaml"),
         indoc! {"

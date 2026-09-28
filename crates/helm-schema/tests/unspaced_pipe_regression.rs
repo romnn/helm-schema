@@ -14,6 +14,7 @@ use helm_schema::provider::ProviderOptions;
 use indoc::indoc;
 use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 use vfs::VfsPath;
 
 const CHART_YAML: &str = indoc! {"
@@ -101,7 +102,7 @@ fn emit_schema(chart_dir: &Path) -> eyre::Result<Value> {
 }
 
 fn schema_for_spacing(spacing: &str) -> eyre::Result<Value> {
-    let tempdir = tempfile::tempdir().wrap_err("create chart directory")?;
+    let tempdir = ScratchDir::new("unspaced_pipe_regression").wrap_err("create chart directory")?;
     write_chart(tempdir.path(), &job_template(spacing))?;
     emit_schema(tempdir.path())
 }
