@@ -146,79 +146,49 @@ gates only, drop the stray mongodbcommunity hunk), regexp (`round8-regexp-eviden
   from different binaries; the Claude work account weekly limit (reset Oct 2, 01:00) kills agents
   mid-turn — resume them with SendMessage, their context survives.
 
-## 6. Status at hand-off time (2026-09-27, 09:30 local) — FINAL
+## 6. Status (rewritten 2026-09-28 05:25 local, session 2, quota cut-off imminent — resume here)
 
-Everything the user queued as "basically ready" is on main. Nothing was pushed.
+Read the ledger entries from "22:15 (Sep 27) — Session 2" onward for the detail; this section is the map.
 
-- **main = 0c21000f**: landing 1 (c02c01f8: F23 + okteto/graylog roster + Helm pool v2 +
-  helmsweep), landing 2 (74139f94: corpus producer, perf1, Helm value coalescer + roster baseline
-  pin, helmsweep v2, battery resident client, test fixes — its `$defs` naming used content-hash
-  keys, which the user rejected) and landing 3 (0c21000f: readable source/meaning-named `$defs` in all
-  fixtures, explicit `helm-schema shorten` / `expand-defs`, producer `--helm-ready` companions,
-  runner v6.4, `$ref` handling via `referencing` + `fluent-uri`). Receipts:
-  `/Volumes/T7/dev/round8-d3f23-landing3/receipt.json`, `/Volumes/T7/dev/round8-landing2-run6/
-  receipt.json`, `/Volumes/T7/dev/round8-landing3-run2/receipt.json`. Ledger entries 01:25,
-  09:30 and 17:20 (Sep 27) hold the step timings.
-- **The landing chain now takes ~55 min end to end** (dump 3.5, unit 0.4, lint 1.7, battery 14,
-  integration 4, sweep 32 incl. the CLI differential, finalize). Runner = v6.4
-  (`/Volumes/T7/dev/round8/runner`, branch `runner-v3-fail-closed`, merge 931672d + env commits;
-  `SWEEP_ENGINE=helmsweep`, every roster row runs, `SWEEP_DIFF_CAP=3` by user decision, producer
-  dump mode with a frozen producer copy, receipt /6). Template env: `runner/landing-3.env`.
-  Worktrees `round8-runner-v6*` can be pruned (remove the dirs, then `git worktree prune`).
-- **FIRST PRIORITY next session — test scratch must live under the target dir, never in the
-  system temp folder.** Agreed earlier and recorded only as a hygiene note, never implemented: the
-  battery and its siblings create per-run scratch with `tempfile` in the default system temp dir
-  (`/var/folders/.../T` on the small internal disk). `TempDir` cleans up only on normal drop, so
-  every killed or timed-out battery run leaked its dirs: on 2026-09-27 that was 70 GB
-  (`helm-schema-adjudication-*` 45 GB / 1,109 dirs, `helm-schema-helm-root-*` 27 GB / 939 dirs,
-  plus ~9,000 small `helm-schema.cold-cache*`, `capability_oracle_*`, `yaml-decoder*`,
-  `per-root-k8s*` unit-test dirs), which filled the disk and broke a landing (Go linker ENOSPC).
-  Runner v5.1+ sets `TMPDIR`/`GOTMPDIR` under `$TARGET` only for the helmsweep build and the sweep
-  step. Fix: (1) one `test-util` helper that creates every test temp dir under
-  `<CARGO_TARGET_DIR or target>/tmp/<crate>/<test>-<pid>` and sweeps entries whose owning pid is
-  gone at start; switch every `tempfile::tempdir()` / `TempDir::new()` / `env::temp_dir()` in
-  tests to it (largest users: `crates/helm-schema/tests/helm_adjudication.rs` 49,
-  `helm_invocation.rs` 24, `schema_emission_profiles.rs` 10, `schema_emission_profile_live.rs` 9,
-  `helm-schema-cli/tests/config_surface.rs` 7, `common/helm_adjudication.rs`, `common/
-  helm_invocation.rs`, `helm-schema-test-support/tests/consume.rs`, `defs_names.rs`, test-util's
-  helm_values tests, k8s cache tests); (2) helmsweep and the Helm child processes get `TMPDIR`
-  and `HELM_*` homes under the same root; (3) the runner exports `TMPDIR` under `$TARGET` for
-  EVERY step; (4) a clippy `disallowed-methods` entry for `tempfile::tempdir`,
-  `tempfile::TempDir::new` and `std::env::temp_dir` in test code, pointing at the helper, so it
-  cannot regress; (5) a test that a killed child's scratch is swept on the next run.
-- **Roster baseline coupling (design item):** the known-false-acceptance roster is observed as
-  flips against `ROSTER_BASELINE` (f7be7ba5, pinned in `known_false_acceptances.rs`). The first
-  SEMANTIC landing must keep BASELINE=f7be7ba5 for the battery (the pin refuses anything else);
-  when the baseline is advanced, rows that predate it stop being observable as flips and need an
-  absolute home (their K8s-rejects evidence is absolute). Decide before the first semantic landing.
-- **Next landings (semantic; each needs review/rework first, §3):** W1 rework (green, needs a
-  Codex re-review), frontend phase 1 (green, 0 fixtures moved, unreviewed; conflicts with F9/W4),
-  F75 (over budget, one regression), F1 and F2 checkpoints, k8s D1–D3 (not started), B6 stack
-  (blocked on the agent-container fix, brief `brief-agent-container-defect-astra.md`).
-- **Queued user feature (not this session): `helm-schema lint` and `helm-schema template`
-  wrappers.** Each takes a chart whose `values.schema.json` is readable, shortens it into a temporary
-  copy (`helm-schema shorten`), runs the real `helm lint` / `helm template` on that copy with the
-  user's remaining arguments, prints Helm's output with short `$defs` keys translated back to
-  readable names through the mapping, and exits with Helm's exit code. Once they exist, delete the
-  `expand-defs` subcommand and the landing runner's readable-log copy step (the runner keeps
-  classifying Helm's raw logs). User request, 2026-09-27.
-- **Hygiene follow-ups found while landing:** (1) the battery harness leaks multi-GB temp dirs
-  under the system temp folder when killed (69 GB found; the runner now sets GOTMPDIR/TMPDIR
-  under `$TARGET`, the harness itself should create its temp roots under the target dir and
-  sweep stale ones at start); (2) the emitted airflow and oncall schemas do not compile in Helm
-  (`\u` escapes in URL `pattern`; ledger 17:45 Sep 26) — emitter fix + test; (3) the sweep
-  classifiers (Python `classify_helm` and Go `classify.go` must agree) should give "unable to
-  detect chart" a loader class and "library charts are not installable" a `library-chart` class
-  instead of the catch-all (today accepted per chart in `landing-2.env`); (4) helmsweep's
-  `stage.sh` build step is unverified on native Windows; (5) the Go sweep cache rarely hits on
-  this corpus (bitnami `common` calls `keys`, grafana helpers call `tpl`) — fine at this speed;
-  (6) Helm's compile of `values.schema.json` dominates every lint (openebs 4–10 min): emitting
-  `definitions` instead of `$defs` measured 3.5× faster on okteto — a separate output-policy
-  candidate.
-- **Review debt:** helmsweep v1 and runner v5/v6 landed on parity evidence before the cross-
-  vendor review; that review (`review-helmsweep-battery-go-astra.md`) was then applied in
-  helmsweep v2 and runner v6.2/v6.3. The landing-2 assembly (`round8-landing2-evidence/
-  conflicts.md`) and runner v5.1–v6.3 (`round8-runner-evidence/handoff.md`) had no separate Codex
-  review; queue one when the next session starts.
-- Old evidence dirs `round8-d3f23-landing`, `round8-d3f23-landing2`, `round8-landing2-run` to
-  `-run5` are history only. Codex runs all collected (`round8/codex-runs.tsv`); no agent running.
+- **main = ec0e6d5c** (plan-only commits on 4efa0f9d). Nothing pushed. Strict verified closures 3/83.
+- **Landing 4 (test infra) is ON THE CHAIN**: clone `/Volumes/T7/dev/round8-landing4` branch `landing-4`
+  (5dd91afd scratch a3166561 + 6fc92b6b classify 61a04445), env `runner/landing-4.env`, evidence
+  `/Volumes/T7/dev/round8-landing4-run1/` (`chain.log`, `receipt.json`); started 04:52, dump green
+  (16 min; 0 of 202 artifacts adopted = no fixture bytes moved), unit running at 05:19. On "chain green":
+  `git -C /Volumes/T7/dev/helm-schema fetch /Volumes/T7/dev/round8-landing4 landing-4 && git merge --no-ff
+  FETCH_HEAD -m "landing 4: … (receipt … sha256 <from chain.log>)"`, then ledger + this section. On a
+  failed step: read that step's log only, fix the smallest thing, restart from the earliest stale step.
+- **Runner = v6.6** (`/Volumes/T7/dev/round8/runner` 3d763e7; reviewed 3 rounds; env template
+  `landing-4.env` format: per-cell `ACCEPTED_SWEEP_UNRESOLVED`, `IGNORED_LANE_TESTS`, no lint waiver,
+  receipt /8). Runner v6.5/v6.6 worktrees `round8-runner-v65` can be pruned.
+- **Candidates and their state** (evidence dirs hold `handoff.md` + `final*.patch`; reviews in
+  `/Volumes/T7/dev/round8/review-<track>-<round>-{sol,astra}.md`; briefs `brief-<track>-rework<n>.md`):
+  - Wrappers (`round8-wrappers` branch `helm-wrappers`, HEAD d2a4c14f+, +405 LOC, no schema change): one
+    last item in progress (non-panicking cleanup warning + docs note, astra P2/P3); then LAND → **landing 5**
+    on the chain right after landing 4 (no roster decision needed).
+  - W1 (`round8-w1` `track/w1-main`, rework 4 in progress off a0f34143: identity/sharing/freshness as
+    value properties, `brief-w1-rework4.md`); 33 corpus charts drift (battery adjudicates); first SEMANTIC
+    landing → needs the roster-baseline confirmation (default keep f7be7ba5).
+  - Frontend (`round8-frontend` `frontend-main`, rework 2 in progress off ab4dd0da: `final_signals`
+    provenance + document-level `with`/`range` call sites, `brief-frontend-rework2.md`); 0 fixtures moved.
+  - W4/F75 rebase (`round8-w4` `w4-main`, in progress, `brief-w4-f75-rebase.md`) → fresh Codex review.
+  - k8s D1–D3 (`round8-k8s` `k8s-main`, rework 1 in progress off e9baab71: decide KubeVersion guards
+    against the configured version, `brief-k8s-rework1.md`) → fresh Codex review.
+- **Builder agents** (native subagents of the session; resume with SendMessage "checkpoint now" after the
+  quota reset): wrappers `ac59ade2d4da19ac0`, W1 `ae88c76cb6bda5467`, frontend `a69f98e6d3af1e500`, W4
+  `a8dd06d301e7c2760`, k8s `a1ff77c400aeaa4df`, scratch `a159f489c3a3fd5c0` (done), runner
+  `a67c3c0781e99d708` (done). If the session itself is gone, start fresh builders from each track's
+  `handoff.md` + brief.
+- **Codex runs** (follow_up keeps context): W1 92580cac/416b8635, frontend 7660883f/5d5c270b, scratch
+  be7d3a37/908ce142, runner 73d3081f/6b442c0c, wrappers 7a44129c/b7481bb6. Answers are read from
+  `turns/<latest>/last-message.md` (the transcript file grows only after a `result` call); register in
+  `codex-runs.tsv` after writing the file.
+- **User decisions this session**: personal Claude account only, Claude via native subagents, agentmux for
+  Codex only; keep ~3 implementors running while Codex reviews; spend the weekly quota by its reset
+  (10:00 local) and resume after; roster baseline: recommendation to keep f7be7ba5 for the campaign, NOT
+  yet confirmed by the user.
+- **Follow-ups queued**: sol's scratch P2 (nested `request` paths in copied records); wrappers P3s
+  (scratch path in Helm messages, raw error formatting, Windows runtime test); the airflow/oncall `\u`
+  URL pattern emitter defect; `if $d`/`empty $d` after `unset` (pre-existing); `required (dict)`/`(list)`
+  false rejection on main (hole_effects.rs:150); k8s items outside the spec (forward-incompatible layout,
+  cache-write failure, inference trusting a partial inventory, CRD online probe repeats without the memo).
