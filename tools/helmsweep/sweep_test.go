@@ -10,9 +10,11 @@ import (
 	"testing"
 )
 
-// A chart whose rows cover a schema rejection, a template abort, and a
-// template message that matches the gate's loader pattern (so the lint cells'
-// log records decide their class and must be attributed).
+// A chart whose rows cover a schema rejection, a template abort, a template
+// abort whose message names Helm's missing-Chart.yaml error (the lint cells'
+// log records name it, so they must be attributed; the gate classifies the
+// outer diagnostic, so every cell keeps its verdict), and a values file Helm
+// cannot parse (every cell unresolved, so never cached).
 var fixtureChart = map[string]string{
 	"Chart.yaml":  "apiVersion: v2\nname: demo\nversion: 0.1.0\n",
 	"values.yaml": "replicas: 1\nname: demo\nboom: false\nmessage: boom requested\n",
@@ -29,7 +31,8 @@ var fixtureRows = []struct{ name, values string }{
 	{"defaults", "{}"},
 	{"replicas", `{"replicas":"x"}`},
 	{"boom", `{"boom":true}`},
-	{"boom+loader", `{"boom":true,"message":"unable to load chart"}`},
+	{"boom+loader", `{"boom":true,"message":"unable to detect chart at /x/Chart.yaml: open /x/Chart.yaml: no such file or directory"}`},
+	{"unparsable", `{"replicas":`},
 }
 
 // The Helm v4.2.3 CLI's (rc, class) per row for base, cand and plain, as
@@ -38,7 +41,8 @@ var fixtureWant = [][3]string{
 	{"0 pass", "0 pass", "0 pass"},
 	{"0 pass", "1 reject", "0 pass"},
 	{"0 pass", "0 pass", "1 reject"},
-	{"0 unresolved:loader", "0 unresolved:loader", "1 unresolved:loader"},
+	{"0 pass", "0 pass", "1 reject"},
+	{"1 unresolved:values-file", "1 unresolved:values-file", "1 unresolved:values-file"},
 }
 
 func sha(data string) string { return fmt.Sprintf("%x", sha256.Sum256([]byte(data))) }
@@ -186,9 +190,14 @@ func TestSweepWritesTheGateFilesAndHitsOnRerun(t *testing.T) {
 			t.Errorf("%s differs on the cached rerun", name)
 		}
 	}
-	// Unidentified verdicts (row 3) are never cached.
+	// Every identified verdict hits; the unresolved row (4) misses again.
 	if hits := strings.Count(string(second["cells.tsv"]), "\thit\t"); hits != 3*len(fixtureRows)-3 {
 		t.Errorf("cached rerun hit %d cells, want %d:\n%s", hits, 3*len(fixtureRows)-3, second["cells.tsv"])
+	}
+	for _, cell := range cells {
+		if !strings.Contains(string(second["cells.tsv"]), fmt.Sprintf("demo\t4\t%s\t1\tunresolved:values-file\tmiss\t", cell)) {
+			t.Errorf("the unresolved %s cell of row 4 did not miss on the rerun:\n%s", cell, second["cells.tsv"])
+		}
 	}
 }
 

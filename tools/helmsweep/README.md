@@ -31,7 +31,7 @@ stages the patched Helm module and this module's sources in
 | `version` | prints `build <sha256 of the executable>`, `go`, the Helm and jsonschema module versions and `patch <sha256>` |
 | `lint [--helm-env-clear] --kube-version K --values F CHART` | one `helm lint CHART --kube-version K -f F`: prints the CLI's combined output, exits with its code |
 | `template [--helm-env-clear] --kube-version K --values F CHART` | one `helm template t CHART --skip-schema-validation --kube-version K -f F`: prints the CLI's stderr, exits with its code |
-| `classify lint\|template RC LOG` | prints the gate's class of a log (a port of `landing.py classify_helm`) |
+| `classify lint\|template RC LOG` | prints the gate's class of a log (a port of `landing.py classify_helm`; both are tested against `testdata/helm-classes.json`, a byte-identical copy of the runner's `tests/helm-classes.json`) |
 | `sweep --roster R --roster-sha256 H --work W [--jobs N] --cache C --helm-env-clear` | the sweep, below |
 | `serve` | a resident `helm template` server for helm-schema's battery, below |
 

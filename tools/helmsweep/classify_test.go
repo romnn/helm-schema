@@ -2,58 +2,42 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
+	"os"
 	"path/filepath"
 	"testing"
 )
 
-// One fixture per class of landing.py classify_helm, with the Python text
-// quirks the port reproduces.
+// testdata/helm-classes.json is the diagnostic -> class table the runner's
+// landing.py classify_helm is tested against too (a byte-identical copy in
+// the runner's tests/): one fixture per class, with the Python text quirks
+// the port reproduces.
 func TestClassifyMatchesTheGate(t *testing.T) {
-	const (
-		linted = "==> Linting /w/c/cand\n"
-		failed = "\nError: 1 chart(s) linted, 1 chart(s) failed\n"
-	)
-	cases := []struct {
-		name, mode string
-		rc         int
-		log        string
-		want       string
-	}{
-		{"lint pass", "lint", 0, linted + "\n1 chart(s) linted, 0 chart(s) failed\n", "pass"},
-		{"lint pass with warnings", "lint", 0, "level=INFO msg=x\n" + linted + "[INFO] Chart.yaml: icon is recommended\n\n1 chart(s) linted, 0 chart(s) failed\n", "pass"},
-		{"lint values reject", "lint", 1, linted + "[ERROR] values.yaml: - at '': false schema\n" + failed, "reject"},
-		{"lint template reject", "lint", 1, linted + "[ERROR] templates/: values don't meet the specifications of the schema(s)\n" + failed, "reject"},
-		{"lint other error", "lint", 1, linted + "[ERROR] Chart.yaml: version is required\n" + failed, "unresolved:unknown-lint-failure"},
-		{"lint error without [ERROR]", "lint", 1, linted + failed, "unresolved:unknown-lint-failure"},
-		{"lint no summary", "lint", 0, linted, "unresolved:no-lint-summary"},
-		{"lint U+2028 starts a line", "lint", 1, linted + "[ERROR] values.yaml: x [ERROR] Chart.yaml: y\n" + failed, "unresolved:unknown-lint-failure"},
-		{"lint CR is a line break", "lint", 0, linted + "\r\n1 chart(s) linted, 0 chart(s) failed\r\n", "pass"},
-		{"abnormal exit", "lint", 2, "panic: boom\n", "unresolved:exit-2"},
-		{"abnormal template exit", "template", 137, "", "unresolved:exit-137"},
-		{"missing dependency", "template", 1, "Error: an error occurred while checking for chart dependencies. You may need to run 'helm dependency build' to fetch missing dependencies: found in Chart.yaml, but missing in charts/ directory: x\n", "unresolved:missing-dependency"},
-		{"loader", "lint", 1, "==> Linting /c\nError unable to check Chart.yaml file in chart: stat /c/Chart.yaml: no such file or directory\n" + failed, "unresolved:loader"},
-		{"loader in a log record", "lint", 0, "level=INFO msg=\"funcMap fail\" message=\"unable to load chart\"\n" + linted + "\n1 chart(s) linted, 0 chart(s) failed\n", "unresolved:loader"},
-		{"invalid kube version", "lint", 1, "Error: invalid kube version '1.x': bad\n", "unresolved:invalid-kube-version"},
-		{"kube version incompatible", "template", 1, "Error: chart requires kubeVersion: >=1.30 which is incompatible with Kubernetes v1.29.0\n", "unresolved:kube-version-incompatible"},
-		{"values file", "lint", 1, "Error: open /p/ov/1.json: no such file or directory\n", "unresolved:values-file"},
-		{"values file parse", "template", 1, "Error: failed to parse /p/ov/1.json: error converting YAML to JSON\n", "unresolved:values-file"},
-		{"usage", "template", 1, "Error: unknown flag: --nope\n", "unresolved:usage"},
-		{"template pass", "template", 0, "level=WARN msg=x\n", "pass"},
-		{"template execution error", "template", 1, "Error: execution error at (c/templates/a.yaml:2:4): no\n\nUse --debug flag to render out invalid YAML\n", "reject"},
-		{"template parse error", "template", 1, "Error: parse error at (c/templates/a.yaml:3): unexpected EOF\n", "reject"},
-		{"template yaml error", "template", 1, "Error: YAML parse error on c/templates/a.yaml: error converting YAML to JSON\n", "reject"},
-		{"template executing", "template", 1, "Error: template: c/templates/a.yaml:3:5: executing \"x\" at <.Values.a.b>: nil pointer\n", "reject"},
-		{"template multi-line executing", "template", 1, "Error: c/templates/a.yaml:3:5\n  executing \"x\" at <y>: z\n", "reject"},
-		{"template multi-line executing, Unicode space", "template", 1, "Error: c/templates/a.yaml:3:5\n executing \"x\" at <y>: z\n", "reject"},
-		{"template schema in control", "template", 1, "Error: values don't meet the specifications of the schema(s) in the following chart(s):\n", "unresolved:schema-in-control"},
-		{"template unknown", "template", 1, "Error: something else\n", "unresolved:unknown-template-failure"},
-		{"invalid UTF-8", "template", 1, "Error: execution error at (\xff\xfe", "reject"},
+	data, err := os.ReadFile(filepath.Join("testdata", "helm-classes.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var cases []struct {
+		Name, Mode, Log, Class string
+		RC                     int
+	}
+	if err := json.Unmarshal(data, &cases); err != nil {
+		t.Fatal(err)
+	}
+	if len(cases) == 0 {
+		t.Fatal("testdata/helm-classes.json holds no cases")
 	}
 	for _, c := range cases {
-		if got := classify(c.mode, c.rc, []byte(c.log)); got != c.want {
-			t.Errorf("%s: classify = %q, want %q", c.name, got, c.want)
+		if got := classify(c.Mode, c.RC, []byte(c.Log)); got != c.Class {
+			t.Errorf("%s: classify = %q, want %q", c.Name, got, c.Class)
 		}
+	}
+	// JSON cannot carry invalid UTF-8; Python reads it as U+FFFD.
+	if got := classify("template", 1, []byte("Error: execution error at (\xff\xfe")); got != "reject" {
+		t.Errorf("invalid UTF-8: classify = %q, want reject", got)
 	}
 }
 
@@ -62,7 +46,7 @@ func TestSensitiveRecords(t *testing.T) {
 	for record, want := range map[string]bool{
 		"level=INFO msg=\"funcMap fail\" message=\"Image tags must be strings.\"\n": false,
 		"level=INFO msg=\"warning: skipped value for x: Not a table.\"\n":           false,
-		"level=INFO msg=\"funcMap fail\" message=\"unable to load chart\"\n":        true,
+		"level=INFO msg=\"funcMap fail\" message=\"unable to detect chart\"\n":      true,
 		"level=INFO msg=\"funcMap fail\" message=\"chart requires kubeVersion\"\n":  true,
 		"level=INFO msg=\"x [ERROR] y\"\n":                                          true,
 		"level=WARN msg=\"values don't meet the specifications of the schema\"\n":   true,
@@ -88,6 +72,8 @@ func TestHelmCellsReachTheInfrastructureClasses(t *testing.T) {
 		"dep/templates/cm.yaml":  "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: x\n",
 		"kube/Chart.yaml":        chart + "kubeVersion: \">=1.40.0-0\"\n",
 		"kube/templates/cm.yaml": "apiVersion: v1\nkind: ConfigMap\nmetadata:\n  name: x\n",
+		"lib/Chart.yaml":         "apiVersion: v2\nname: lib\nversion: 0.1.0\ntype: library\n",
+		"lib/templates/_h.tpl":   "{{- define \"lib.x\" -}}x{{- end -}}\n",
 	})
 	values := filepath.Join(root, "values.json")
 	cases := []struct {
@@ -96,7 +82,9 @@ func TestHelmCellsReachTheInfrastructureClasses(t *testing.T) {
 		{"lint", "ok", "1.29.0", "missing.json", "1 unresolved:values-file"},
 		{"template", "ok", "1.29.0", "missing.json", "1 unresolved:values-file"},
 		{"lint", "nochart", "1.29.0", "", "1 unresolved:loader"},
-		{"template", "nochart", "1.29.0", "", "1 unresolved:unknown-template-failure"},
+		{"template", "nochart", "1.29.0", "", "1 unresolved:loader"},
+		{"lint", "lib", "1.29.0", "", "0 pass"},
+		{"template", "lib", "1.29.0", "", "1 unresolved:library-chart"},
 		{"lint", "dep", "1.29.0", "", "0 unresolved:missing-dependency"},
 		{"template", "dep", "1.29.0", "", "1 unresolved:missing-dependency"},
 		{"lint", "kube", "1.29.0", "", "0 pass"},
@@ -116,6 +104,24 @@ func TestHelmCellsReachTheInfrastructureClasses(t *testing.T) {
 			t.Errorf("%s %s %s: %s, want %s; log:\n%s", c.mode, c.chart, c.kube, got, c.want, log)
 		}
 	}
+	// An unreadable Chart.yaml is not the adjudicated missing-file loader case.
+	// Only where the mode really denies reading (not on Windows or as root).
+	t.Run("unreadable Chart.yaml", func(t *testing.T) {
+		writeFiles(t, root, map[string]string{"unreadable/Chart.yaml": chart})
+		path := filepath.Join(root, "unreadable/Chart.yaml")
+		if err := os.Chmod(path, 0); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := os.ReadFile(path); !errors.Is(err, fs.ErrPermission) {
+			t.Skipf("mode 000 does not deny reading here (%v)", err)
+		}
+		for mode, want := range map[string]string{"template": "1 unresolved:unknown-template-failure", "lint": "1 unresolved:unknown-lint-failure"} {
+			rc, log := runCell(mode, filepath.Join(root, "unreadable"), "1.29.0", values)
+			if got := fmt.Sprintf("%d %s", rc, classify(mode, rc, log)); got != want {
+				t.Errorf("%s unreadable: %s, want %s; log:\n%s", mode, got, want, log)
+			}
+		}
+	})
 }
 
 func TestClassifyCommandReportsAMissingLog(t *testing.T) {

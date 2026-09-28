@@ -17,20 +17,37 @@ const (
 	classReject = "reject"
 
 	schemaInControl = "values don't meet the specifications of the schema"
+	missingFile     = `(no such file or directory|The system cannot find the file specified\.)`
 )
+
+type class struct {
+	why string
+	re  *regexp.Regexp
+}
 
 var (
 	lintVerdictLine = regexp.MustCompile(`^\[ERROR\] (values\.yaml: |templates/)`)
-	infrastructure  = []struct {
-		why string
-		re  *regexp.Regexp
-	}{
-		{"missing-dependency", regexp.MustCompile(`missing these dependencies|but missing in charts/ directory|error occurred while checking for chart dependencies`)},
-		{"loader", regexp.MustCompile(`unable to load chart|cannot load (Chart|requirements|values)\.yaml|Chart\.yaml file is missing|unable to check Chart\.yaml|non-absolute URLs|error unpacking`)},
+	// Operational failures (the runner's own inputs or invocation),
+	// recognized anywhere: never acceptable.
+	operational = []class{
 		{"invalid-kube-version", regexp.MustCompile(`invalid kube version`)},
-		{"kube-version-incompatible", regexp.MustCompile(`chart requires kubeVersion`)},
 		{"values-file", regexp.MustCompile(`(?m)^Error: (open |failed to parse )`)},
 		{"usage", regexp.MustCompile(`(?m)^Error: (unknown (flag|command|shorthand)|accepts |requires )`)},
+	}
+	// The chart-property classes ACCEPTED_SWEEP_UNRESOLVED may excuse,
+	// recognized only as Helm's outer diagnostic, never inside a payload: a
+	// whole line of a lint that reported no [ERROR] message, and the whole
+	// first "Error: " line of a template run. Helm wraps any Chart.yaml read
+	// error; only a missing file is the adjudicated loader case.
+	lintClasses = []class{
+		{"loader", regexp.MustCompile(`^Error unable to check Chart\.yaml file in chart: stat .*Chart\.yaml: ` + missingFile + `$`)},
+		{"missing-dependency", regexp.MustCompile(`^\[WARNING\] .*: chart directory is missing these dependencies: .*$`)},
+	}
+	templateClasses = []class{
+		{"loader", regexp.MustCompile(`^Error: unable to detect chart at .*Chart\.yaml: open .*Chart\.yaml: ` + missingFile + `$`)},
+		{"library-chart", regexp.MustCompile(`^Error: library charts are not installable$`)},
+		{"missing-dependency", regexp.MustCompile(`^Error: an error occurred while checking for chart dependencies\. .*$`)},
+		{"kube-version-incompatible", regexp.MustCompile(`^Error: chart requires kubeVersion: .*$`)},
 	}
 	templateVerdict = regexp.MustCompile(`(?m)^Error: (execution error at \(|template: |parse error at \(|YAML parse error on |[^` + pySpace + `]+:` + pyDigit + `+:` + pyDigit + `+\n[` + pySpace + `]+executing )`)
 	lintPassSummary = regexp.MustCompile(`(?m)^1 chart\(s\) linted, 0 chart\(s\) failed$`)
@@ -50,12 +67,24 @@ func classify(mode string, rc int, log []byte) string {
 	if rc != 0 && rc != 1 {
 		return fmt.Sprintf("unresolved:exit-%d", rc)
 	}
-	for _, p := range infrastructure {
+	for _, p := range operational {
 		if p.re.MatchString(text) {
 			return "unresolved:" + p.why
 		}
 	}
+	lines := strings.Split(pyLineBreaks.Replace(text), "\n")
 	if mode == "lint" {
+		lintErrors := false
+		for _, line := range lines {
+			lintErrors = lintErrors || strings.HasPrefix(line, "[ERROR]")
+		}
+		for _, p := range lintClasses {
+			for _, line := range lines {
+				if !lintErrors && p.re.MatchString(line) {
+					return "unresolved:" + p.why
+				}
+			}
+		}
 		if rc == 0 {
 			if lintPassSummary.MatchString(text) {
 				return classPass
@@ -63,7 +92,7 @@ func classify(mode string, rc int, log []byte) string {
 			return "unresolved:no-lint-summary"
 		}
 		errorLines := 0
-		for _, line := range strings.Split(pyLineBreaks.Replace(text), "\n") {
+		for _, line := range lines {
 			if strings.HasPrefix(line, "[ERROR]") {
 				if !lintVerdictLine.MatchString(line) {
 					return "unresolved:unknown-lint-failure"
@@ -75,6 +104,18 @@ func classify(mode string, rc int, log []byte) string {
 			return classReject
 		}
 		return "unresolved:unknown-lint-failure"
+	}
+	outer := ""
+	for _, line := range lines {
+		if strings.HasPrefix(line, "Error: ") {
+			outer = line
+			break
+		}
+	}
+	for _, p := range templateClasses {
+		if p.re.MatchString(outer) {
+			return "unresolved:" + p.why
+		}
 	}
 	if rc == 0 {
 		return classPass

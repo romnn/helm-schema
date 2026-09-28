@@ -321,7 +321,7 @@ func runInstall(args []string, client *action.Install, valueOpts *values.Options
 // were part of a cell's log: it matches one of the classifier's patterns or
 // carries one of the strings the classifier looks for.
 func sensitiveRecord(record string) bool {
-	for _, p := range infrastructure {
+	for _, p := range operational {
 		if p.re.MatchString(record) {
 			return true
 		}
@@ -329,7 +329,11 @@ func sensitiveRecord(record string) bool {
 	if templateVerdict.MatchString(record) {
 		return true
 	}
-	for _, marker := range []string{"[ERROR]", "==> Linting ", "chart(s) linted", schemaInControl} {
+	// The chart-property classes are whole lines; a record naming their
+	// phrases is flagged anyway.
+	for _, marker := range []string{"[ERROR]", "==> Linting ", "chart(s) linted", schemaInControl, "unable to detect chart",
+		"unable to check Chart.yaml", "library charts are not installable", "missing these dependencies",
+		"checking for chart dependencies", "chart requires kubeVersion"} {
 		if strings.Contains(record, marker) {
 			return true
 		}
