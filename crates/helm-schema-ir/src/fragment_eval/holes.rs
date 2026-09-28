@@ -2,11 +2,11 @@
 //! `AbstractValue` lattice (with bound-helper resolution) and lower into
 //! fragment nodes; partial scalars combine per-segment arms with a bounded
 //! cartesian product; inline `{{ if }}…{{ end }}` regions inside scalars
-//! re-parse structurally and become guarded scalar arms.
+//! evaluate their parsed nodes and become guarded scalar arms.
 
 use std::collections::BTreeSet;
 
-use helm_schema_ast::{TemplateExpr, parse_expr_text};
+use helm_schema_ast::TemplateExpr;
 use helm_schema_syntax::{BlockScalar, ScalarPart, ScalarParts, Span};
 
 use crate::ValueKind;
@@ -195,21 +195,6 @@ fn splice_target_helper_call(exprs: &[TemplateExpr]) -> Option<(&str, Option<&Te
     Some((name, args.get(1)))
 }
 
-/// Whether an action hole is a control-flow fragment (`{{ if … }}`,
-/// `{{ else }}`, `{{ end }}`, …) rather than an output expression. These
-/// appear as bare holes inside block-scalar bodies where the region
-/// structure itself is represented separately.
-fn hole_is_control_fragment(text: &str) -> bool {
-    let mut inner = text.trim();
-    if let Some(rest) = inner.strip_prefix("{{") {
-        inner = rest.trim_start_matches('-').trim_start();
-    }
-    matches!(
-        inner.split_whitespace().next(),
-        Some("if" | "else" | "end" | "range" | "with" | "define" | "block")
-    )
-}
-
 fn combine_scalar_arms(
     base: Vec<(PathCondition, Vec<StringPart>)>,
     segment: Vec<(PathCondition, Vec<StringPart>)>,
@@ -278,11 +263,7 @@ impl Interpreter<'_> {
         &mut self,
         span: Span,
     ) -> (Guarded<AbstractFragment>, Option<usize>) {
-        let text = self.text(span);
-        if hole_is_control_fragment(text) {
-            return (Guarded::empty(), None);
-        }
-        let exprs = parse_expr_text(text);
+        let exprs = self.hole_exprs(span);
         if exprs.is_empty() {
             return (Guarded::empty(), None);
         }
@@ -682,11 +663,7 @@ impl Interpreter<'_> {
     /// Evaluate a hole rendered inside a partial scalar: guarded arms of
     /// string parts.
     pub(super) fn eval_hole_parts(&mut self, span: Span) -> Vec<(PathCondition, Vec<StringPart>)> {
-        let text = self.text(span);
-        if hole_is_control_fragment(text) {
-            return Vec::new();
-        }
-        let exprs = parse_expr_text(text);
+        let exprs = self.hole_exprs(span);
         if exprs.is_empty() {
             return Vec::new();
         }
@@ -797,7 +774,8 @@ impl Interpreter<'_> {
     /// range body-shape classification).
     pub(super) fn scalar_parts_render_fragment(&self, parts: &ScalarParts) -> bool {
         parts.parts.iter().any(|part| match part {
-            ScalarPart::Hole(span) => parse_expr_text(self.text(*span))
+            ScalarPart::Hole(span) => self
+                .hole_exprs(*span)
                 .iter()
                 .any(TemplateExpr::renders_yaml_fragment),
             ScalarPart::Text(_) => false,
@@ -1210,7 +1188,8 @@ impl Interpreter<'_> {
                     }
                 }
                 None => {
-                    if parse_expr_text(self.text(*hole))
+                    if self
+                        .hole_exprs(*hole)
                         .iter()
                         .any(TemplateExpr::renders_yaml_fragment)
                     {
@@ -1248,7 +1227,8 @@ impl Interpreter<'_> {
     /// without minting structure, everything else contributes partial
     /// scalar text.
     pub(super) fn eval_block_adopted_output(&mut self, span: Span) -> Guarded<AbstractFragment> {
-        if parse_expr_text(self.text(span))
+        if self
+            .hole_exprs(span)
             .iter()
             .any(TemplateExpr::renders_yaml_fragment)
         {
@@ -1276,7 +1256,7 @@ impl Interpreter<'_> {
     /// serialized text rather than structural members of the enclosing
     /// document.
     fn eval_suppressed_fragment_hole(&mut self, span: Span) {
-        let exprs = parse_expr_text(self.text(span));
+        let exprs = self.hole_exprs(span);
         if exprs.is_empty() {
             return;
         }

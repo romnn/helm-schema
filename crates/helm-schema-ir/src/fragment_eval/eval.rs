@@ -43,7 +43,7 @@ use std::collections::{BTreeMap, BTreeSet, BinaryHeap, HashMap, HashSet};
 use std::rc::Rc;
 
 use helm_schema_ast::{
-    ResourceSpan, TemplateExpr, TemplateHeader, parse_expr_text,
+    ParsedActions, ResourceSpan, TemplateExpr, TemplateHeader,
     range_has_destructured_variable_definition, range_header_from_source,
 };
 use helm_schema_syntax as syntax;
@@ -145,6 +145,8 @@ pub(crate) struct ControlFacts {
 /// bindings, so helper bodies compute them once and reuse them across every
 /// memoized-summary miss.
 pub(crate) struct BodyEvalFacts {
+    /// Every action of the body with its expressions, lowered once.
+    pub(super) actions: ParsedActions,
     pub(super) control_facts: HashMap<usize, ControlFacts>,
     pub(super) resource_spans: Vec<ResourceSpan>,
     pub(super) adoption_plan: AdoptionPlan,
@@ -357,15 +359,28 @@ impl BodyEvalFacts {
     ) -> Self {
         let mut control_facts = HashMap::new();
         collect_control_facts(tree.root_node(), source, &mut control_facts);
+        let actions = ParsedActions::lower(tree.root_node(), source, document.actions());
+        let adoption_plan = collect_adoption_plan(
+            SourceActions {
+                text: source,
+                actions: &actions,
+            },
+            document.roots(),
+        );
         Self {
+            actions,
             control_facts,
-            resource_spans: crate::resource_identity::collect_resource_spans(document, db),
-            adoption_plan: collect_adoption_plan(source, document.roots()),
+            resource_spans: crate::resource_identity::collect_resource_spans(
+                document,
+                tree.root_node(),
+                db,
+            ),
+            adoption_plan,
         }
     }
 }
 
-fn collect_adoption_plan(source: &str, nodes: &[Node]) -> AdoptionPlan {
+fn collect_adoption_plan(source: SourceActions<'_>, nodes: &[Node]) -> AdoptionPlan {
     let mut plan = AdoptionPlan::default();
     let mut path = Vec::new();
     let mut containers = Vec::new();
@@ -402,7 +417,7 @@ struct PlannedNode {
 }
 
 fn collect_adoptions(
-    source: &str,
+    source: SourceActions<'_>,
     nodes: &[Node],
     path: &mut Vec<NodePathStep>,
     containers: &mut Vec<(usize, usize)>,
@@ -429,7 +444,7 @@ struct PlannedExtent {
 }
 
 fn collect_adoption_node(
-    source: &str,
+    source: SourceActions<'_>,
     node: &Node,
     path: &mut Vec<NodePathStep>,
     containers: &mut Vec<(usize, usize)>,
@@ -485,7 +500,7 @@ fn leaf_extent(end: usize, disposition: LayoutDisposition) -> PlannedExtent {
 /// Plans a mapping entry: its children form an adoption slot keyed by the
 /// enclosing container, and the entry reaches as far as they do.
 fn plan_mapping_entry(
-    source: &str,
+    source: SourceActions<'_>,
     entry: &syntax::MappingEntry,
     path: &mut Vec<NodePathStep>,
     containers: &mut Vec<(usize, usize)>,
@@ -540,7 +555,7 @@ fn plan_mapping_entry(
 /// Plans a sequence item. An item that already carries its own value or
 /// block scalar opens no slot for later content to be adopted into.
 fn plan_sequence_item(
-    source: &str,
+    source: SourceActions<'_>,
     item: &syntax::SequenceItem,
     path: &mut Vec<NodePathStep>,
     containers: &mut Vec<(usize, usize)>,
@@ -597,7 +612,7 @@ fn plan_sequence_item(
 /// bodies are planned in place, and a region that escapes an enclosing
 /// container records the CST path back to it.
 fn plan_control_region(
-    source: &str,
+    source: SourceActions<'_>,
     region: &ControlRegion,
     path: &mut Vec<NodePathStep>,
     containers: &mut Vec<(usize, usize)>,
@@ -783,7 +798,7 @@ fn collect_control_facts(
 /// `nindent 4` splice BEFORE the column-0 splice that follows. Only the first
 /// container is still open when its splice runs.
 fn established_content_mark_from_source(
-    source: &str,
+    source: SourceActions<'_>,
     children: &[Node],
     container_indent: usize,
 ) -> Option<usize> {
@@ -793,8 +808,7 @@ fn established_content_mark_from_source(
             Node::Mapping(entry) => (entry.indent > container_indent).then_some(entry.span.start),
             Node::Sequence(item) => (item.indent > container_indent).then_some(item.span.start),
             Node::Scalar(line) => (line.indent > container_indent).then_some(line.span.start),
-            Node::Output(action) => (output_render_indent_from_source(source, action.span)
-                > container_indent)
+            Node::Output(action) => (source.output_render_indent(action.span) > container_indent)
                 .then_some(action.span.start),
             Node::Control(region) => region
                 .branches
@@ -808,20 +822,41 @@ fn established_content_mark_from_source(
         .min()
 }
 
-fn output_render_indent_from_source(source: &str, span: Span) -> usize {
-    parse_expr_text(source.get(span.start..span.end).unwrap_or(""))
-        .iter()
-        .rev()
-        .find_map(TemplateExpr::fragment_indent_width)
-        .unwrap_or_else(|| {
-            let line_start = source
-                .get(..span.start)
-                .and_then(|prefix| prefix.rfind('\n'))
-                .map_or(0, |newline| newline + 1);
-            source
-                .get(line_start..)
-                .map_or(0, |line| line.len() - line.trim_start_matches(' ').len())
-        })
+/// A body's source text with its lowered actions: what locating rendered
+/// output reads, both while planning adoptions and while evaluating.
+#[derive(Clone, Copy)]
+struct SourceActions<'a> {
+    text: &'a str,
+    actions: &'a ParsedActions,
+}
+
+impl SourceActions<'_> {
+    /// The column a bare output's text renders at: the width its expression
+    /// states, else the action's own source column.
+    fn output_render_indent(&self, span: Span) -> usize {
+        self.actions
+            .at(span)
+            .and_then(|parsed| {
+                parsed
+                    .expressions
+                    .iter()
+                    .rev()
+                    .find_map(TemplateExpr::fragment_indent_width)
+            })
+            .unwrap_or_else(|| self.line_indent(span.start))
+    }
+
+    /// The indentation of the line containing `byte`.
+    fn line_indent(&self, byte: usize) -> usize {
+        let line_start = self
+            .text
+            .get(..byte)
+            .and_then(|prefix| prefix.rfind('\n'))
+            .map_or(0, |newline| newline + 1);
+        self.text
+            .get(line_start..)
+            .map_or(0, |line| line.len() - line.trim_start_matches(' ').len())
+    }
 }
 
 /// The byte where a container's first deeper *content* child appears (the
@@ -1416,6 +1451,9 @@ pub(super) struct DotBinding {
 
 pub(super) struct Interpreter<'a> {
     pub(super) source: &'a str,
+    /// The Go-template tree of `source`, parsed once; inline regions
+    /// evaluate its nodes directly.
+    pub(super) tree: &'a tree_sitter::Tree,
     pub(super) source_path: Option<&'a str>,
     /// Byte offset of this source within its file (helper bodies evaluate
     /// over the define body text; provenance spans stay file-absolute).
@@ -1558,11 +1596,11 @@ impl<'a> Interpreter<'a> {
         source: &'a str,
         source_path: Option<&'a str>,
         db: &'a IrAnalysisDb,
-        tree: &tree_sitter::Tree,
+        tree: &'a tree_sitter::Tree,
         document: &TemplatedDocument<'_>,
     ) -> Self {
         let body_facts = Rc::new(BodyEvalFacts::collect(source, db, tree, document));
-        Self::with_body_facts(source, source_path, db, document, body_facts)
+        Self::with_body_facts(source, source_path, db, tree, document, body_facts)
     }
 
     /// A fresh interpreter reusing precomputed source-only facts (helper
@@ -1571,6 +1609,7 @@ impl<'a> Interpreter<'a> {
         source: &'a str,
         source_path: Option<&'a str>,
         db: &'a IrAnalysisDb,
+        tree: &'a tree_sitter::Tree,
         document: &TemplatedDocument<'_>,
         body_facts: Rc<BodyEvalFacts>,
     ) -> Self {
@@ -1578,6 +1617,7 @@ impl<'a> Interpreter<'a> {
         collect_inline_regions(document.roots(), &mut inline_regions);
         Self {
             source,
+            tree,
             source_path,
             source_offset: 0,
             db,
@@ -1624,6 +1664,26 @@ impl<'a> Interpreter<'a> {
 
     pub(super) fn text(&self, span: Span) -> &'a str {
         self.source.get(span.start..span.end).unwrap_or("")
+    }
+
+    /// The expressions the hole action at `span` renders, lowered once per
+    /// source. A control bracket (`{{ if … }}`, `{{else}}`, `{{end}}`, in
+    /// any spacing) renders nothing of its own: its condition belongs to
+    /// the region the bracket opens or divides.
+    pub(super) fn hole_exprs(&self, span: Span) -> Rc<[TemplateExpr]> {
+        match self.body_facts.actions.at(span) {
+            Some(parsed)
+                if !matches!(
+                    parsed.action.kind,
+                    syntax::ActionKind::RegionOpen { .. }
+                        | syntax::ActionKind::RegionBranch { .. }
+                        | syntax::ActionKind::RegionEnd { .. }
+                ) =>
+            {
+                Rc::clone(&parsed.expressions)
+            }
+            _ => Rc::from([]),
+        }
     }
 
     /// The site facts of one output hole: the smallest resource span
@@ -1676,7 +1736,7 @@ impl<'a> Interpreter<'a> {
         (resource, resource_span.path_prefix.clone())
     }
 
-    /// Lower an inline kind chain's raw guard texts into per-arm
+    /// Lower an inline kind chain's parsed guard conditions into per-arm
     /// predicates. An arm holds where its own guard does AND every earlier
     /// guard failed. Any undecodable guard abstains entirely: dropping one
     /// arm would leave an incomplete partition that misassigns rows.
@@ -1692,12 +1752,7 @@ impl<'a> Interpreter<'a> {
         let mut branches = Vec::new();
         for source in sources {
             let mut conjuncts = prior_negations.clone();
-            if let Some(text) = &source.condition {
-                let wrapped = format!("{{{{ {} }}}}", text.trim());
-                let exprs = helm_schema_ast::parse_action_expressions(&wrapped);
-                let [expr] = exprs.as_slice() else {
-                    return Vec::new();
-                };
+            if let Some(expr) = &source.condition {
                 if !context.condition_lowering_is_usable_for_control(expr) {
                     return Vec::new();
                 }
@@ -2859,9 +2914,16 @@ impl<'a> Interpreter<'a> {
             .get(span.start..)
             .and_then(|rest| rest.find('\n'))
             .map_or(self.source.len(), |offset| span.start + offset);
-        let line = self.source.get(line_start..line_end).unwrap_or("");
-        for expr in helm_schema_ast::parse_action_expressions(line) {
-            if let Some(width) = expr.fragment_indent_width() {
+        for parsed in self
+            .body_facts
+            .actions
+            .starting_in(Span::new(line_start, line_end))
+        {
+            if let Some(width) = parsed
+                .expressions
+                .iter()
+                .find_map(TemplateExpr::fragment_indent_width)
+            {
                 return width;
             }
         }
@@ -2886,12 +2948,17 @@ impl<'a> Interpreter<'a> {
                 .filter_map(|child| self.helper_root_content_indent(child))
                 .min(),
             Node::Output(action)
-                if parse_expr_text(self.text(action.span))
+                if self
+                    .hole_exprs(action.span)
                     .iter()
                     .rev()
                     .find_map(TemplateExpr::fragment_indent_width)
                     .is_none()
-                    && self.text(action.span).trim_start().starts_with("{{-") =>
+                    && self
+                        .body_facts
+                        .actions
+                        .at(action.span)
+                        .is_some_and(|parsed| parsed.action.trim_left) =>
             {
                 Some(0)
             }
@@ -2900,26 +2967,22 @@ impl<'a> Interpreter<'a> {
         }
     }
 
+    fn source_actions(&self) -> SourceActions<'_> {
+        SourceActions {
+            text: self.source,
+            actions: &self.body_facts.actions,
+        }
+    }
+
     /// The column a bare output's text renders at: the width its expression
     /// states, else the action's own source column.
     pub(super) fn output_render_indent(&self, span: Span) -> usize {
-        parse_expr_text(self.text(span))
-            .iter()
-            .rev()
-            .find_map(TemplateExpr::fragment_indent_width)
-            .unwrap_or_else(|| self.line_indent(span.start))
+        self.source_actions().output_render_indent(span)
     }
 
     /// The indentation of the line containing `byte`.
     pub(super) fn line_indent(&self, byte: usize) -> usize {
-        let line_start = self
-            .source
-            .get(..byte)
-            .and_then(|prefix| prefix.rfind('\n'))
-            .map_or(0, |newline| newline + 1);
-        self.source
-            .get(line_start..)
-            .map_or(0, |line| line.len() - line.trim_start_matches(' ').len())
+        self.source_actions().line_indent(byte)
     }
 
     #[expect(
@@ -3271,10 +3334,11 @@ impl<'a> Interpreter<'a> {
                     })
             }
             Node::Output(action) => {
-                // Deeper lines always belong; the explicit-width probe (a
-                // re-parse) only runs for the rare same-or-shallower case.
+                // Deeper lines always belong; the explicit-width probe only
+                // runs for the rare same-or-shallower case.
                 self.line_indent(action.span.start) > container_indent
-                    || parse_expr_text(self.text(action.span))
+                    || self
+                        .hole_exprs(action.span)
                         .iter()
                         .rev()
                         .any(|expr| expr.fragment_indent_width().is_some())
@@ -3293,20 +3357,21 @@ impl<'a> Interpreter<'a> {
     }
 
     pub(super) fn control_render_indent(&self, span: Span) -> Option<usize> {
-        let text = self.text(span);
-        let tree = parse_go_template(text)?;
-        self.template_render_indent(tree.root_node(), text, span.start)
+        self.template_render_indent(self.region_node(span)?)
     }
 
-    fn template_render_indent(
-        &self,
-        node: tree_sitter::Node<'_>,
-        source: &str,
-        source_offset: usize,
-    ) -> Option<usize> {
-        match node_action(source, node) {
+    /// The Go-template node of the control region spanning exactly `span`.
+    pub(super) fn region_node(&self, span: Span) -> Option<tree_sitter::Node<'a>> {
+        self.tree
+            .root_node()
+            .descendant_for_byte_range(span.start, span.end)
+            .filter(|node| node.start_byte() == span.start && node.end_byte() == span.end)
+    }
+
+    fn template_render_indent(&self, node: tree_sitter::Node<'_>) -> Option<usize> {
+        match node_action(self.source, node) {
             NodeAction::Text => {
-                let text = node.utf8_text(source.as_bytes()).ok()?;
+                let text = node.utf8_text(self.source.as_bytes()).ok()?;
                 text.split_inclusive('\n')
                     .scan(node.start_byte(), |line_start, line| {
                         let start = *line_start;
@@ -3318,19 +3383,15 @@ impl<'a> Interpreter<'a> {
                             line.char_indices().find_map(|(offset, character)| {
                                 (!character.is_whitespace()).then_some(offset)
                             })?;
-                        Some(self.line_indent(source_offset + line_start + content_offset))
+                        Some(self.line_indent(line_start + content_offset))
                     })
                     .min()
             }
             NodeAction::Output(expressions) => expressions
-                .as_ref()
-                .and_then(|expressions| {
-                    expressions
-                        .iter()
-                        .rev()
-                        .find_map(TemplateExpr::fragment_indent_width)
-                })
-                .or_else(|| Some(self.line_indent(source_offset + node.start_byte()))),
+                .iter()
+                .rev()
+                .find_map(TemplateExpr::fragment_indent_width)
+                .or_else(|| Some(self.line_indent(node.start_byte()))),
             NodeAction::If(_) | NodeAction::With(_) | NodeAction::Range(_) => {
                 let mut cursor = node.walk();
                 let mut minimum = None;
@@ -3339,8 +3400,7 @@ impl<'a> Interpreter<'a> {
                         if matches!(
                             cursor.field_name(),
                             Some("consequence" | "alternative" | "option")
-                        ) && let Some(indent) =
-                            self.template_render_indent(cursor.node(), source, source_offset)
+                        ) && let Some(indent) = self.template_render_indent(cursor.node())
                         {
                             minimum =
                                 Some(minimum.map_or(indent, |current: usize| current.min(indent)));
@@ -3355,7 +3415,7 @@ impl<'a> Interpreter<'a> {
             NodeAction::Descend => {
                 let mut cursor = node.walk();
                 node.named_children(&mut cursor)
-                    .filter_map(|child| self.template_render_indent(child, source, source_offset))
+                    .filter_map(|child| self.template_render_indent(child))
                     .min()
             }
             NodeAction::Suppressed | NodeAction::Assignment(_) => None,

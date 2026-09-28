@@ -11,9 +11,12 @@ mod template_action;
 mod tree_sitter_utils;
 mod values_comments;
 
-pub use capability_branch::{decode_guard, decode_guard_expr};
+pub use capability_branch::{decode_guard_expr, decode_header_guard};
 pub use expr::unconditional_include_names;
-pub use expr::{Literal, TemplateExpr, parse_action_expressions};
+pub use expr::{
+    Literal, ParsedAction, ParsedActions, TemplateExpr, node_expressions, parse_action_expressions,
+    span_expressions,
+};
 pub(crate) use helm_schema_syntax::structural_mapping_colon;
 pub use helm_schema_syntax::{parse_yaml_key, unquote_yaml_scalar};
 pub use printf_eval::{
@@ -60,23 +63,20 @@ impl TemplateHeader {
         }
     }
 
-    /// Parses an `if` or `with` control header into a typed expression.
+    /// Builds a control header from its already-parsed node: an `if` or
+    /// `with` condition, or a `range` clause. A node the grammar could not
+    /// convert keeps its source text as an unknown expression.
     #[must_use]
-    pub fn parse_control(raw: impl Into<String>) -> Self {
-        let raw = raw.into();
-        let expr = parse_control_expr(&raw).unwrap_or_else(|| TemplateExpr::Unknown(raw.clone()));
-        Self::new(raw, expr)
-    }
-
-    /// Parses a `range` header into a typed expression.
-    #[must_use]
-    pub(crate) fn parse_range(raw: impl Into<String>) -> Self {
-        let raw = raw.into();
-        let wrapped = format!("{{{{ range {raw} }}}}{{{{ end }}}}");
-        let expr = parse_action_expressions(&wrapped)
-            .into_iter()
-            .next()
-            .unwrap_or_else(|| TemplateExpr::Unknown(raw.clone()));
+    pub fn from_node(node: tree_sitter::Node<'_>, source: &str) -> Self {
+        let raw = node
+            .utf8_text(source.as_bytes())
+            .unwrap_or_default()
+            .trim()
+            .to_string();
+        let expr = match expr::node_expressions(node, source).into_iter().next() {
+            Some(TemplateExpr::Unknown(_)) | None => TemplateExpr::Unknown(raw.clone()),
+            Some(expr) => expr,
+        };
         Self::new(raw, expr)
     }
 
@@ -91,40 +91,6 @@ impl TemplateHeader {
     pub fn expr(&self) -> &TemplateExpr {
         &self.expr
     }
-}
-
-fn parse_control_expr(raw: &str) -> Option<TemplateExpr> {
-    let parsed = parse_action_expressions(&format!("{{{{ {raw} }}}}"))
-        .into_iter()
-        .next();
-    match parsed {
-        Some(TemplateExpr::Unknown(_)) | None => {
-            let condition = normalized_control_condition(raw)?;
-            parse_action_expressions(&format!("{{{{ {condition} }}}}"))
-                .into_iter()
-                .next()
-        }
-        expr => expr,
-    }
-}
-
-fn normalized_control_condition(raw: &str) -> Option<&str> {
-    let mut text = raw.trim();
-    if let Some(rest) = text.strip_prefix("{{") {
-        text = rest.trim_start();
-        if let Some(rest) = text.strip_prefix('-') {
-            text = rest.trim_start();
-        }
-        let rest = text.strip_suffix("}}")?;
-        text = rest.trim_end();
-        if let Some(rest) = text.strip_suffix('-') {
-            text = rest.trim_end();
-        }
-    }
-
-    text.strip_prefix("else if ")
-        .or_else(|| text.strip_prefix("if "))
-        .or_else(|| text.strip_prefix("with "))
 }
 
 /// What an indexed chart file source is to Helm.

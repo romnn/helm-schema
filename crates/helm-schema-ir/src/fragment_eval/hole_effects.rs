@@ -6,7 +6,7 @@
 //! `AbstractValue` lattice (with bound-helper resolution) and lower into
 //! fragment nodes; partial scalars combine per-segment arms with a bounded
 //! cartesian product; inline `{{ if }}…{{ end }}` regions inside scalars
-//! re-parse structurally and become guarded scalar arms.
+//! evaluate their parsed nodes and become guarded scalar arms.
 
 use helm_schema_ast::TemplateExpr;
 

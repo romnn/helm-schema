@@ -1,21 +1,14 @@
 use helm_schema_core::CapabilityGuard;
 
-use crate::{TemplateExpr, parse_action_expressions};
+use crate::{TemplateExpr, TemplateHeader};
 
-/// Decodes a capability condition, preserving unsupported forms as opaque guards.
+/// Decodes a parsed control header into a capability guard, preserving
+/// unsupported conditions as opaque guards over their source text.
 #[must_use]
-pub fn decode_guard(cond: &str) -> CapabilityGuard {
-    let trimmed = cond.trim();
-    let wrapped = format!("{{{{ {trimmed} }}}}");
-    let exprs = parse_action_expressions(&wrapped);
-    for expr in &exprs {
-        if let Some(guard) = decode_guard_expr(expr, trimmed) {
-            return guard;
-        }
-    }
-    CapabilityGuard::Opaque {
-        text: cond.trim().to_string(),
-    }
+pub fn decode_header_guard(header: &TemplateHeader) -> CapabilityGuard {
+    decode_guard_expr(header.expr(), header.raw()).unwrap_or_else(|| CapabilityGuard::Opaque {
+        text: header.raw().trim().to_string(),
+    })
 }
 
 /// Extracts a capability guard from one typed expression when possible.

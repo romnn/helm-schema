@@ -2,12 +2,13 @@ use crate::{
     DefineIndex, TemplateExpr, TemplateHeader, contains_template_action, parse_action_expressions,
     render_printf_scalar_values,
 };
+use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_core::GuardValue;
 use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 
 #[test]
-fn template_header_parse_control_normalizes_control_keyword_prefix() {
+fn template_header_from_node_converts_the_parsed_condition() -> eyre::Result<()> {
     let expected = TemplateExpr::Field(vec![
         "Values".to_string(),
         "signoz".to_string(),
@@ -15,31 +16,118 @@ fn template_header_parse_control_normalizes_control_keyword_prefix() {
         "create".to_string(),
     ]);
 
-    for raw in [
-        "if .Values.signoz.serviceAccount.create",
-        "{{- if .Values.signoz.serviceAccount.create -}}",
+    for source in [
+        "{{ if .Values.signoz.serviceAccount.create }}x{{ end }}",
+        "{{- if .Values.signoz.serviceAccount.create -}}x{{ end }}",
+        "{{if(.Values.signoz.serviceAccount.create)}}x{{end}}",
     ] {
-        let header = TemplateHeader::parse_control(raw);
-        sim_assert_eq!(have: header.expr(), want: &expected, "raw={raw}");
+        let tree = crate::parse_go_template(source).ok_or_eyre("tree-sitter parse")?;
+        let mut cursor = tree.root_node().walk();
+        let action = tree
+            .root_node()
+            .named_children(&mut cursor)
+            .find(|node| node.kind() == "if_action")
+            .ok_or_eyre("if action")?;
+        let condition = action
+            .child_by_field_name("condition")
+            .ok_or_eyre("condition")?;
+        let header = TemplateHeader::from_node(condition, source);
+        sim_assert_eq!(have: header.expr().deparen(), want: &expected, "source={source}");
     }
+    Ok(())
 }
 
 #[test]
-fn template_header_parse_range_preserves_typed_include_call() {
-    let header = TemplateHeader::parse_range("$i, $v := include \"items\" .");
-
-    sim_assert_eq!(have: header.raw(), want: "$i, $v := include \"items\" .");
-
-    let mut saw_include = false;
-    header.expr().walk(|expr| {
-        if let TemplateExpr::Call { function, args } = expr
-            && function == "include"
-            && matches!(args.first(), Some(TemplateExpr::Literal(lit)) if lit.as_string() == Some("items"))
-        {
-            saw_include = true;
+fn range_header_from_source_lowers_the_parsed_range_clause() -> eyre::Result<()> {
+    let source = r#"{{ range $i, $v := include "items" . }}{{ $v }}{{ end }}"#;
+    let tree = crate::parse_go_template(source).ok_or_eyre("tree-sitter parse")?;
+    let mut cursor = tree.root_node().walk();
+    let range = tree
+        .root_node()
+        .named_children(&mut cursor)
+        .find(|node| node.kind() == "range_action")
+        .ok_or_eyre("range action")?;
+    let header = crate::range_header_from_source(range, source).ok_or_eyre("range header")?;
+    sim_assert_eq!(have: header.raw(), want: r#"include "items" ."#);
+    sim_assert_eq!(
+        have: header.expr(),
+        want: &TemplateExpr::Call {
+            function: "include".to_string(),
+            args: vec![
+                TemplateExpr::Literal(crate::Literal::String("items".to_string())),
+                TemplateExpr::Field(Vec::new()),
+            ],
         }
-    });
-    assert!(saw_include, "expected typed range header include call");
+    );
+    Ok(())
+}
+
+/// Lowering an action from the retained document tree yields exactly what
+/// parsing the action's own text yields, for every action that renders or
+/// binds: the retained facts replace the text parse without changing it.
+#[test]
+fn lowered_action_expressions_match_parsing_each_action_text() -> eyre::Result<()> {
+    let sources = [
+        indoc! {r#"
+            metadata:
+              name: {{ include "app.fullname" . | trunc 63 }}
+              labels: {{- toYaml .Values.labels | nindent 4 }}
+            {{- $root := . }}
+            {{ $count = add $count 1 -}}
+            data:
+              {{- range $key, $value := .Values.data }}
+              {{ $key }}: {{ $value | quote }}
+              {{- end }}
+              {{- with .Values.extra }}
+              extra: {{ . }}
+              {{- else }}
+              extra: {{ template "app.extra" $root }}
+              {{- end }}
+        "#},
+        indoc! {r#"
+            key: {{ if .Values.flag }}prefix {{-3}} {{ .Values.x }}{{ end }}
+            script: |-
+              {{if(.Values.flag)}}{{ .Values.x }}{{end}}
+            multi: {{ printf "%s-%s"
+              .Values.a
+              .Values.b }}
+            {{/* a comment */}}
+            {{- define "helper" -}}
+            {{ default "x" .Values.y }}
+            {{- end -}}
+        "#},
+        indoc! {r"
+            broken: {{ .Values.a | }}
+            unclosed: {{ .Values.b
+            {{ if }}
+        "},
+    ];
+    for source in sources {
+        let tree = crate::parse_go_template(source).ok_or_eyre("tree-sitter parse")?;
+        let document =
+            helm_schema_syntax::TemplatedDocument::parse_with_root(source, tree.root_node());
+        let lowered = crate::ParsedActions::lower(tree.root_node(), source, document.actions());
+        for action in document.actions() {
+            if !matches!(
+                action.kind,
+                helm_schema_syntax::ActionKind::Output { .. }
+                    | helm_schema_syntax::ActionKind::Assign
+                    | helm_schema_syntax::ActionKind::TemplateComment
+            ) {
+                continue;
+            }
+            let text = source
+                .get(action.span.start..action.span.end)
+                .ok_or_eyre("action span")?;
+            let parsed = lowered.at(action.span).ok_or_eyre("lowered action")?;
+            sim_assert_eq!(
+                have: parsed.expressions.to_vec(),
+                want: parse_action_expressions(text),
+                "action={text}"
+            );
+        }
+    }
+    Ok(())
 }
 
 #[test]

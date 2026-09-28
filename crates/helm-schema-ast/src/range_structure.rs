@@ -11,25 +11,19 @@ pub fn range_variable_name_expr(expr: &TemplateExpr) -> Option<String> {
     Some(name.trim_start_matches('$').to_string())
 }
 
-fn range_header_text_from_source(node: tree_sitter::Node<'_>, source: &str) -> Option<String> {
+/// The typed header of a range node's iterated clause.
+#[must_use]
+pub fn range_header_from_source(
+    node: tree_sitter::Node<'_>,
+    source: &str,
+) -> Option<TemplateHeader> {
     let range = node.child_by_field_name("range").or_else(|| {
         let mut walker = node.walk();
         node.named_children(&mut walker)
             .filter(|child| child.kind() == "range_variable_definition")
             .find_map(|child| child.child_by_field_name("range"))
     })?;
-    range
-        .utf8_text(source.as_bytes())
-        .ok()
-        .map(|text| text.trim().to_string())
-}
-
-/// Parses a range node's source header into a typed template header.
-pub fn range_header_from_source(
-    node: tree_sitter::Node<'_>,
-    source: &str,
-) -> Option<TemplateHeader> {
-    range_header_text_from_source(node, source).map(TemplateHeader::parse_range)
+    Some(TemplateHeader::from_node(range, source))
 }
 
 /// Reports whether a range header binds separate key and value variables.

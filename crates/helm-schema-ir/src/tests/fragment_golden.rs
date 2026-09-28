@@ -1215,3 +1215,35 @@ fn default_chain_arms_follow_the_selection_order() {
     "#};
     assert_fragment_dump(source, "", expected);
 }
+
+/// A control bracket inside a block scalar renders nothing of its own,
+/// compact or spaced: the `else if` condition is evaluated only when the
+/// `if` failed (Helm 4.2.3: `flag=true` renders `a` without consulting `y`;
+/// `flag=false` renders `other` exactly when `toYaml .Values.y` is `a`), so
+/// `y` is read under `not(flag)` alone and never as block content.
+#[test]
+fn compact_else_if_bracket_in_a_block_scalar_reads_only_its_condition() {
+    let source = indoc! {r#"
+        data:
+        {{- if .Values.flag }}
+          key: |-
+            a{{else if eq (toYaml .Values.y) "a"}}
+          key: other{{end}}
+    "#};
+    let expected = indoc! {r#"
+        when always:
+          mapping:
+            key "data":
+              when always:
+                mapping:
+                  key "key":
+                    when truthy(flag):
+                      scalar suppressed [text{"    a"}]
+                    when (approximate(y) && !(truthy(flag))):
+                      scalar [text{"other"}]
+        reads:
+          flag [truthy(flag)]
+          y [not(flag)]
+    "#};
+    assert_fragment_dump(source, "", expected);
+}

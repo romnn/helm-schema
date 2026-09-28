@@ -150,7 +150,7 @@ fn walk_template_exprs(
     visit: &mut impl FnMut(&TemplateExpr),
 ) {
     match node_action(source, node) {
-        NodeAction::Assignment(Some(exprs)) | NodeAction::Output(Some(exprs)) => {
+        NodeAction::Assignment(exprs) | NodeAction::Output(exprs) => {
             for expr in &exprs {
                 visit(expr);
             }
@@ -160,11 +160,9 @@ fn walk_template_exprs(
         | NodeAction::Range(Some(header)) => visit(header.expr()),
         NodeAction::Text
         | NodeAction::Suppressed
-        | NodeAction::Assignment(None)
         | NodeAction::If(None)
         | NodeAction::With(None)
         | NodeAction::Range(None)
-        | NodeAction::Output(None)
         | NodeAction::Descend => {}
     }
 

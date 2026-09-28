@@ -1,6 +1,7 @@
 use super::*;
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_core::ConditionalOverlayFlavor;
+use indoc::formatdoc;
 use test_util::prelude::sim_assert_eq;
 
 #[test]
@@ -486,4 +487,412 @@ fn type_of_dispatch_keeps_serialized_arm_structured() {
              instance={instance}; schema={schema}"
         );
     }
+}
+
+/// A `kind:` rendered by a called helper whose arms select the shared
+/// `spec.updateStrategy` slot's kind, with the body's two slot writes
+/// guarded by the same `.Values.flag`.
+fn helper_kind_schema(kind_action: &str, helpers: &str, values_yaml: &str) -> Value {
+    let src = formatdoc! {r"
+        apiVersion: apps/v1
+        kind: {kind_action}
+        metadata:
+          name: test
+        spec:
+          {{{{- if and .Values.flag .Values.updateStrategy }}}}
+          updateStrategy: {{{{- toYaml .Values.updateStrategy | nindent 4 }}}}
+          {{{{- end }}}}
+          {{{{- if and (not .Values.flag) .Values.daemonUpdateStrategy }}}}
+          updateStrategy: {{{{- toYaml .Values.daemonUpdateStrategy | nindent 4 }}}}
+          {{{{- end }}}}
+    "};
+    strict_schema(&src, helpers, values_yaml)
+}
+
+fn strict_schema(src: &str, helpers: &str, values_yaml: &str) -> Value {
+    let signals = schema_signals_for(parse_ir_with_helpers(src, helpers));
+    generate_values_schema(
+        ValuesSchemaInput::new(&signals, &strict_provider())
+            .with_values_documents(&prepared_values_documents(Some(values_yaml))),
+    )
+}
+
+const HELPER_KIND: &str = r#"{{- define "kind" -}}{{ if .Values.flag }}StatefulSet{{ else }}DaemonSet{{ end }}{{- end -}}"#;
+
+/// Astra's cell K with a shared slot: `include "kind" .` hands the helper
+/// the caller's own context, so its `.Values.flag` arms bind exactly as an
+/// inline chain would and each guarded row resolves to its arm's kind
+/// (Helm 4.2.3, `rework/helm/f1-matrix.log` `f1-same`: `flag=true` renders
+/// a `StatefulSet`, `flag=false` a `DaemonSet`).
+#[test]
+fn same_context_helper_kind_arms_partition_the_shared_slot() {
+    let values_yaml = indoc! {"
+        flag: false
+        updateStrategy: ~
+        daemonUpdateStrategy: ~
+    "};
+    let schema = helper_kind_schema(r#"{{ include "kind" . }}"#, HELPER_KIND, values_yaml);
+
+    for overrides in [
+        serde_json::json!({ "flag": true, "updateStrategy": { "rollingUpdate": { "partition": 1 } } }),
+        serde_json::json!({ "daemonUpdateStrategy": { "rollingUpdate": { "maxSurge": 1 } } }),
+    ] {
+        let instance = composed_instance(values_yaml, overrides);
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "each arm's row resolves to its OWN kind's slot schema: \
+             instance={instance}; schema={schema}"
+        );
+    }
+    for overrides in [
+        serde_json::json!({ "flag": true, "updateStrategy": { "rollingUpdate": { "maxSurge": 1 } } }),
+        serde_json::json!({ "daemonUpdateStrategy": { "rollingUpdate": { "partition": 1 } } }),
+    ] {
+        let instance = composed_instance(values_yaml, overrides);
+        assert!(
+            !schema_accepts_instance(&schema, &instance),
+            "a member from the OTHER kind's slot schema is rejected: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// `include "kind" (dict "Values" .Values.inner)` binds the helper's
+/// `.Values.flag` to `inner.flag`, not the document's `flag`: the arms say
+/// nothing about the document's rows, so the partition abstains (Helm
+/// 4.2.3, `f1-dict`: `flag=true, inner.flag=false` renders a `DaemonSet`
+/// with `maxSurge`).
+#[test]
+fn different_context_helper_kind_arms_abstain() {
+    let values_yaml = indoc! {"
+        flag: false
+        inner:
+          flag: false
+        updateStrategy: ~
+        daemonUpdateStrategy: ~
+    "};
+    let schema = helper_kind_schema(
+        r#"{{ include "kind" (dict "Values" .Values.inner) }}"#,
+        HELPER_KIND,
+        values_yaml,
+    );
+
+    for overrides in [
+        serde_json::json!({
+            "flag": true,
+            "inner": { "flag": false },
+            "updateStrategy": { "rollingUpdate": { "maxSurge": 1 } },
+        }),
+        serde_json::json!({
+            "inner": { "flag": true },
+            "daemonUpdateStrategy": { "rollingUpdate": { "partition": 1 } },
+        }),
+    ] {
+        let instance = composed_instance(values_yaml, overrides);
+        assert!(
+            schema_accepts_instance(&schema, &instance),
+            "a rendered manifest valid for the helper-selected kind is accepted: \
+             instance={instance}; schema={schema}"
+        );
+    }
+}
+
+/// A helper that forwards `.` from inside `with .Values.inner` hands the
+/// kind helper the rebound dot, so its arms bind to `inner.Values.flag`
+/// and the partition abstains (Helm 4.2.3, `f1-with`: `flag=true` with the
+/// default `inner.Values.flag=false` renders a `DaemonSet` with
+/// `maxSurge`).
+#[test]
+fn rebound_dot_helper_kind_arms_abstain() {
+    let helpers = formatdoc! {r#"
+        {HELPER_KIND}
+        {{{{- define "outer" -}}}}{{{{ with .Values.inner }}}}{{{{ include "kind" . }}}}{{{{ end }}}}{{{{- end -}}}}
+    "#};
+    let values_yaml = indoc! {"
+        flag: false
+        inner:
+          Values:
+            flag: false
+        updateStrategy: ~
+        daemonUpdateStrategy: ~
+    "};
+    let schema = helper_kind_schema(r#"{{ include "outer" . }}"#, &helpers, values_yaml);
+
+    let instance = composed_instance(
+        values_yaml,
+        serde_json::json!({ "flag": true, "updateStrategy": { "rollingUpdate": { "maxSurge": 1 } } }),
+    );
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "a rendered manifest valid for the helper-selected kind is accepted: \
+         instance={instance}; schema={schema}"
+    );
+}
+
+/// The regression cells: the helper's arms are unbound (another context
+/// or `$`), so the kind stays an unresolved `StatefulSet`/`DaemonSet` union.
+/// The row's `eq .Values.mode "DaemonSet"` guard compares a value to a
+/// candidate kind but does not select the kind, so it must not partition
+/// the row onto the `DaemonSet` schema.
+fn unrelated_mode_guard_schema(kind_action: &str) -> (Value, &'static str) {
+    let src = formatdoc! {r#"
+        apiVersion: apps/v1
+        kind: {kind_action}
+        metadata:
+          name: test
+        spec:
+        {{{{- if and .Values.flag (eq .Values.mode "DaemonSet") .Values.updateStrategy }}}}
+          updateStrategy: {{{{- toYaml .Values.updateStrategy | nindent 4 }}}}
+        {{{{- end }}}}
+    "#};
+    let values_yaml = indoc! {"
+        flag: false
+        mode: DaemonSet
+        updateStrategy: ~
+    "};
+    (strict_schema(&src, HELPER_KIND, values_yaml), values_yaml)
+}
+
+/// Helm 4.2.3, `rework/helm/f5-f6-matrix.log` `f5-dict`: `flag=true`
+/// renders a `StatefulSet` whose `rollingUpdate.partition: 1` is valid.
+#[test]
+fn unbound_dict_helper_kind_is_not_partitioned_by_an_unrelated_guard() {
+    let (schema, values_yaml) =
+        unrelated_mode_guard_schema(r#"{{ include "kind" (dict "Values" .Values) }}"#);
+    let instance = composed_instance(
+        values_yaml,
+        serde_json::json!({ "flag": true, "updateStrategy": { "rollingUpdate": { "partition": 1 } } }),
+    );
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "the StatefulSet Helm renders accepts its partition: instance={instance}; schema={schema}"
+    );
+}
+
+/// Helm 4.2.3, `f5-root`: the same cell through `include "kind" $`.
+#[test]
+fn unbound_root_helper_kind_is_not_partitioned_by_an_unrelated_guard() {
+    let (schema, values_yaml) = unrelated_mode_guard_schema(r#"{{ include "kind" $ }}"#);
+    let instance = composed_instance(
+        values_yaml,
+        serde_json::json!({ "flag": true, "updateStrategy": { "rollingUpdate": { "partition": 1 } } }),
+    );
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "the StatefulSet Helm renders accepts its partition: instance={instance}; schema={schema}"
+    );
+}
+
+/// A document-level region that rebinds the dot around the `kind:` line:
+/// the helper's arms bind to the region's dot, while the `spec` rows'
+/// `.Values.flag` reads the root.
+fn rebound_header_schema(open: &str, values_yaml: &str) -> Value {
+    let src = formatdoc! {r#"
+        apiVersion: apps/v1
+        {open}
+        kind: {{{{ include "kind" . }}}}
+        {{{{- end }}}}
+        metadata:
+          name: test
+        spec:
+        {{{{- if and .Values.flag .Values.updateStrategy }}}}
+          updateStrategy: {{{{- toYaml .Values.updateStrategy | nindent 4 }}}}
+        {{{{- end }}}}
+    "#};
+    strict_schema(&src, HELPER_KIND, values_yaml)
+}
+
+/// Helm 4.2.3, `rework/helm/f5-f6-matrix.log` `f6-with`: `flag=true` with
+/// the default `inner.Values.flag=false` renders a `DaemonSet` whose
+/// `maxSurge` is valid.
+#[test]
+fn with_rebound_header_helper_kind_arms_abstain() {
+    let values_yaml = indoc! {"
+        flag: false
+        inner:
+          Values:
+            flag: false
+        updateStrategy: ~
+    "};
+    let schema = rebound_header_schema("{{- with .Values.inner }}", values_yaml);
+    let instance = composed_instance(
+        values_yaml,
+        serde_json::json!({ "flag": true, "updateStrategy": { "rollingUpdate": { "maxSurge": 1 } } }),
+    );
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "the DaemonSet Helm renders accepts its maxSurge: instance={instance}; schema={schema}"
+    );
+}
+
+/// Helm 4.2.3, `f6-range`: the same cell through `range $k, $v := .Values.items`.
+#[test]
+fn range_rebound_header_helper_kind_arms_abstain() {
+    let values_yaml = indoc! {"
+        flag: false
+        items:
+          one:
+            Values:
+              flag: false
+        updateStrategy: ~
+    "};
+    let schema = rebound_header_schema("{{- range $k, $v := .Values.items }}", values_yaml);
+    let instance = composed_instance(
+        values_yaml,
+        serde_json::json!({ "flag": true, "updateStrategy": { "rollingUpdate": { "maxSurge": 1 } } }),
+    );
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "the DaemonSet Helm renders accepts its maxSurge: instance={instance}; schema={schema}"
+    );
+}
+
+/// `kind: {{ .Values.mode }}` inside a document-level region that rebinds
+/// the dot reads the region's `Values.mode`, not the root `mode` the row's
+/// guard compares, so the root comparisons prove neither the kind nor its
+/// candidates.
+fn direct_rebound_schema(open: &str, values_yaml: &str) -> Value {
+    let src = formatdoc! {r#"
+        apiVersion: apps/v1
+        {open}
+        kind: {{{{ .Values.mode }}}}
+        {{{{- end }}}}
+        metadata:
+          name: test
+        spec:
+        {{{{- if and (eq .Values.mode "StatefulSet") .Values.updateStrategy }}}}
+          updateStrategy: {{{{- toYaml .Values.updateStrategy | nindent 4 }}}}
+        {{{{- end }}}}
+    "#};
+    strict_schema(&src, "", values_yaml)
+}
+
+/// Helm 4.2.3, `rework/helm/f8-f10-matrix.log` `f8-with`: root
+/// `mode=StatefulSet` with `inner.Values.mode=DaemonSet` renders a
+/// `DaemonSet` whose `maxSurge` is valid.
+#[test]
+fn with_rebound_direct_kind_selector_is_not_proven() {
+    let values_yaml = indoc! {"
+        mode: StatefulSet
+        inner:
+          Values:
+            mode: DaemonSet
+        updateStrategy: ~
+    "};
+    let schema = direct_rebound_schema("{{- with .Values.inner }}", values_yaml);
+    let instance = composed_instance(
+        values_yaml,
+        serde_json::json!({ "updateStrategy": { "rollingUpdate": { "maxSurge": 1 } } }),
+    );
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "the DaemonSet Helm renders accepts its maxSurge: instance={instance}; schema={schema}"
+    );
+}
+
+/// Helm 4.2.3, `f8-range`: the same cell through `range $k, $v := .Values.items`.
+#[test]
+fn range_rebound_direct_kind_selector_is_not_proven() {
+    let values_yaml = indoc! {"
+        mode: StatefulSet
+        items:
+          one:
+            Values:
+              mode: DaemonSet
+        updateStrategy: ~
+    "};
+    let schema = direct_rebound_schema("{{- range $k, $v := .Values.items }}", values_yaml);
+    let instance = composed_instance(
+        values_yaml,
+        serde_json::json!({ "updateStrategy": { "rollingUpdate": { "maxSurge": 1 } } }),
+    );
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "the DaemonSet Helm renders accepts its maxSurge: instance={instance}; schema={schema}"
+    );
+}
+
+/// Helm 4.2.3, `rework/helm/f8-f10-matrix.log` `f9-nested`: the nested
+/// `mode` chain is not the parent's only kind-writing arm; the parent's
+/// `else` renders a `DaemonSet` whatever `mode` says, so `flag=false` with
+/// `mode=StatefulSet` renders a `DaemonSet` whose `maxSurge` is valid.
+#[test]
+fn nested_chain_selector_does_not_escape_a_competing_parent_arm() {
+    let src = indoc! {r#"
+        apiVersion: apps/v1
+        {{- if .Values.flag }}
+        {{- if eq .Values.mode "Deployment" }}
+        kind: Deployment
+        {{- else }}
+        kind: StatefulSet
+        {{- end }}
+        {{- else }}
+        kind: DaemonSet
+        {{- end }}
+        metadata:
+          name: test
+        spec:
+        {{- if and (eq .Values.mode "StatefulSet") .Values.updateStrategy }}
+          updateStrategy: {{- toYaml .Values.updateStrategy | nindent 4 }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        flag: false
+        mode: StatefulSet
+        updateStrategy: ~
+    "};
+    let schema = strict_schema(src, "", values_yaml);
+    let instance = composed_instance(
+        values_yaml,
+        serde_json::json!({ "updateStrategy": { "rollingUpdate": { "maxSurge": 1 } } }),
+    );
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "the DaemonSet Helm renders accepts its maxSurge: instance={instance}; schema={schema}"
+    );
+}
+
+/// Astra's `dynamic-parent-arm-closed` cell: the nested `mode` chain
+/// competes with a parent `else` writing `kind: {{ .Values.otherKind }}`.
+/// That unresolved kind write proves the literal candidates non-exhaustive,
+/// so neither the nested selector nor the candidates may type the row.
+/// Helm 4.2.3, `rework/helm/f12-matrix.log` `f12-dynamic`: `flag=false`
+/// with `mode=StatefulSet` renders `otherKind=DaemonSet` with a valid
+/// `maxSurge`.
+#[test]
+fn dynamic_competing_kind_arm_voids_the_nested_selector() {
+    let src = indoc! {r#"
+        {{- if .Values.flag }}
+        {{- if eq .Values.mode "Deployment" }}
+        kind: Deployment
+        {{- else }}
+        kind: StatefulSet
+        {{- end }}
+        apiVersion: apps/v1
+        {{- else }}
+        kind: {{ .Values.otherKind }}
+        apiVersion: apps/v1
+        {{- end }}
+        metadata:
+          name: test
+        spec:
+        {{- if and (eq .Values.mode "StatefulSet") .Values.updateStrategy }}
+          updateStrategy: {{- toYaml .Values.updateStrategy | nindent 4 }}
+        {{- end }}
+    "#};
+    let values_yaml = indoc! {"
+        flag: false
+        mode: StatefulSet
+        otherKind: DaemonSet
+        updateStrategy: ~
+    "};
+    let schema = strict_schema(src, "", values_yaml);
+    let instance = composed_instance(
+        values_yaml,
+        serde_json::json!({ "updateStrategy": { "rollingUpdate": { "maxSurge": 1 } } }),
+    );
+    assert!(
+        schema_accepts_instance(&schema, &instance),
+        "the DaemonSet Helm renders accepts its maxSurge: instance={instance}; schema={schema}"
+    );
 }

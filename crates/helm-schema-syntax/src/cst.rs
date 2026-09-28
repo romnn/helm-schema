@@ -24,6 +24,7 @@ pub struct TemplatedDocument<'src> {
     pub(crate) source: &'src str,
     pub(crate) roots: Vec<Node>,
     pub(crate) document_spans: Vec<Span>,
+    pub(crate) actions: Vec<crate::TemplateAction>,
 }
 
 impl<'src> TemplatedDocument<'src> {
@@ -57,6 +58,13 @@ impl<'src> TemplatedDocument<'src> {
     #[must_use]
     pub fn roots(&self) -> &[Node] {
         &self.roots
+    }
+
+    /// Every template action of the source in byte order, as the layout
+    /// parse consumed them.
+    #[must_use]
+    pub fn actions(&self) -> &[crate::TemplateAction] {
+        &self.actions
     }
 
     /// Top-level document spans, split at `---` separator lines (nonempty

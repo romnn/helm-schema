@@ -46,7 +46,7 @@ mod literal;
 mod parse;
 mod yaml_scan;
 
-pub use actions::parse_go_template;
+pub use actions::{ActionId, ActionKind, TemplateAction, parse_go_template};
 pub use cst::{
     BlockScalar, CommentLine, ControlBranch, ControlKind, ControlRegion, MappingEntry, Node,
     OpaqueKind, OpaqueNode, OutputAction, ScalarLine, ScalarPart, ScalarParts, SequenceItem, Span,

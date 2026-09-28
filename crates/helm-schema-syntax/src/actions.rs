@@ -30,17 +30,33 @@ pub fn parse_go_template(source: &str) -> Option<tree_sitter::Tree> {
     GO_TEMPLATE_PARSER.with_borrow_mut(|parser| parser.as_mut()?.parse(source, None))
 }
 
+/// One `{{ … }}` action of the source, as the Go-template tree delimits it.
 #[derive(Clone, Copy, Debug)]
-pub(crate) struct ActionToken {
-    pub(crate) span: Span,
-    pub(crate) kind: TokenKind,
+pub struct TemplateAction {
+    /// The action's byte range, delimiters included.
+    pub span: Span,
+    /// What the action does.
+    pub kind: ActionKind,
+    /// The left delimiter is `{{-`, which trims the whitespace before the
+    /// action. `{{-3}}` is a plain `{{` before the literal `-3`.
+    pub trim_left: bool,
+    /// The right delimiter is `-}}`, which trims the whitespace after the
+    /// action.
+    pub trim_right: bool,
 }
 
+/// The position of an action in its document's byte-ordered action list.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub struct ActionId(pub usize);
+
+/// The role of one template action, read off its Go-template tree node.
 #[derive(Clone, Copy, Debug)]
-pub(crate) enum TokenKind {
+pub enum ActionKind {
     /// `{{ pipeline }}` — renders output at this position.
     Output {
+        /// The expression between the delimiters.
         expr_span: Span,
+        /// The width of a terminal literal `indent`/`nindent` call.
         render_indent: Option<usize>,
     },
     /// `{{ $x := … }}` / `{{ $x = … }}` — renders nothing.
@@ -54,24 +70,36 @@ pub(crate) enum TokenKind {
     /// Header of a control region; `region_end` is the byte end of the whole
     /// `{{ … }}…{{ end }}` construct.
     RegionOpen {
+        /// The region's index in source order.
         region: usize,
+        /// The control action that opens the region.
         kind: ControlKind,
+        /// The byte end of the whole region.
         region_end: usize,
     },
     /// An `{{ else }}` / `{{ else if … }}` / `{{ else with … }}` boundary.
-    RegionBranch { region: usize },
+    RegionBranch {
+        /// The index of the region the boundary belongs to.
+        region: usize,
+    },
     /// The `{{ end }}` closer.
-    RegionEnd { region: usize },
+    RegionEnd {
+        /// The index of the region the closer ends.
+        region: usize,
+    },
     /// Unparsable action content.
     Error,
 }
 
-pub(crate) fn collect_action_tokens(root: tree_sitter::Node<'_>, source: &str) -> Vec<ActionToken> {
+pub(crate) fn collect_action_tokens(
+    root: tree_sitter::Node<'_>,
+    source: &str,
+) -> Vec<TemplateAction> {
     let mut out = Vec::new();
     let mut next_region = 0usize;
     walk_body(root, &mut next_region, &mut out);
     for token in &mut out {
-        let TokenKind::Output {
+        let ActionKind::Output {
             expr_span,
             render_indent,
         } = &mut token.kind
@@ -135,7 +163,7 @@ fn control_kind(node_kind: &str) -> Option<ControlKind> {
 /// Walk a body-level node (the template root, an `ERROR` recovery node):
 /// inline `{{ expr }}` actions arrive as flat delimiter/content sibling runs
 /// because `_pipeline_action` is inlined in the grammar.
-fn walk_body(node: tree_sitter::Node<'_>, next_region: &mut usize, out: &mut Vec<ActionToken>) {
+fn walk_body(node: tree_sitter::Node<'_>, next_region: &mut usize, out: &mut Vec<TemplateAction>) {
     let mut group = GroupState::default();
     let mut cursor = node.walk();
     if !cursor.goto_first_child() {
@@ -155,14 +183,14 @@ fn dispatch_body_child<'tree>(
     child: tree_sitter::Node<'tree>,
     next_region: &mut usize,
     group: &mut GroupState<'tree>,
-    out: &mut Vec<ActionToken>,
+    out: &mut Vec<TemplateAction>,
 ) {
     let kind = child.kind();
     if !child.is_named() {
         if is_left_delimiter(kind) {
             group.open(child, out);
         } else if is_right_delimiter(kind) {
-            group.close(child.end_byte(), out);
+            group.close(child, out);
         }
         return;
     }
@@ -174,30 +202,21 @@ fn dispatch_body_child<'tree>(
             // A comment outside a delimiter group only occurs in recovery
             // trees; the grouped path handles the normal case.
         }
-        "template_action" => out.push(ActionToken {
-            span: node_span(child),
-            kind: TokenKind::Output {
+        "template_action" => out.push(node_action(
+            child,
+            ActionKind::Output {
                 expr_span: node_span(child),
                 render_indent: None,
             },
-        }),
-        "break_action" => out.push(ActionToken {
-            span: node_span(child),
-            kind: TokenKind::Break,
-        }),
-        "continue_action" => out.push(ActionToken {
-            span: node_span(child),
-            kind: TokenKind::Continue,
-        }),
+        )),
+        "break_action" => out.push(node_action(child, ActionKind::Break)),
+        "continue_action" => out.push(node_action(child, ActionKind::Continue)),
         "ERROR" => walk_body(child, next_region, out),
         _ => {
             if let Some(control) = control_kind(kind) {
                 walk_control(child, control, next_region, out);
             } else {
-                out.push(ActionToken {
-                    span: node_span(child),
-                    kind: TokenKind::Error,
-                });
+                out.push(untrimmed(node_span(child), ActionKind::Error));
             }
         }
     }
@@ -210,7 +229,7 @@ fn walk_control(
     node: tree_sitter::Node<'_>,
     kind: ControlKind,
     next_region: &mut usize,
-    out: &mut Vec<ActionToken>,
+    out: &mut Vec<TemplateAction>,
 ) {
     let region = *next_region;
     *next_region += 1;
@@ -231,6 +250,7 @@ fn walk_control(
             if !child.is_named() && field.is_none() && is_right_delimiter(child.kind()) {
                 let closed = Bracket {
                     end: child.end_byte(),
+                    trim_right: child.kind() == "-}}",
                     ..*state
                 };
                 bracket = None;
@@ -246,6 +266,8 @@ fn walk_control(
             bracket = Some(Bracket {
                 start: child.start_byte(),
                 end: child.end_byte(),
+                trim_left: child.kind() == "{{-",
+                trim_right: false,
                 has_else: false,
                 has_end: false,
             });
@@ -263,6 +285,8 @@ fn walk_control(
 struct Bracket {
     start: usize,
     end: usize,
+    trim_left: bool,
+    trim_right: bool,
     has_else: bool,
     has_end: bool,
 }
@@ -273,58 +297,66 @@ fn emit_bracket(
     kind: ControlKind,
     region_end: usize,
     opened: &mut bool,
-    out: &mut Vec<ActionToken>,
+    out: &mut Vec<TemplateAction>,
 ) {
     let span = Span::new(bracket.start, bracket.end);
     let token_kind = if !*opened {
         *opened = true;
-        TokenKind::RegionOpen {
+        ActionKind::RegionOpen {
             region,
             kind,
             region_end,
         }
     } else if bracket.has_end {
-        TokenKind::RegionEnd { region }
+        ActionKind::RegionEnd { region }
     } else if bracket.has_else {
-        TokenKind::RegionBranch { region }
+        ActionKind::RegionBranch { region }
     } else {
-        TokenKind::Error
+        ActionKind::Error
     };
-    out.push(ActionToken {
+    out.push(TemplateAction {
         span,
         kind: token_kind,
+        trim_left: bracket.trim_left,
+        trim_right: bracket.trim_right,
     });
 }
 
 /// State machine grouping a flat `{{`, content…, `}}` sibling run into one
 /// action token. Defensive against recovery trees: unbalanced delimiters
-/// surface as [`TokenKind::Error`] tokens instead of being dropped.
+/// surface as [`ActionKind::Error`] tokens instead of being dropped.
 #[derive(Default)]
 struct GroupState<'tree> {
     start: Option<usize>,
+    trim_left: bool,
     named: Vec<tree_sitter::Node<'tree>>,
 }
 
 impl<'tree> GroupState<'tree> {
-    fn open(&mut self, child: tree_sitter::Node<'tree>, out: &mut Vec<ActionToken>) {
+    fn open(&mut self, child: tree_sitter::Node<'tree>, out: &mut Vec<TemplateAction>) {
         if let Some(start) = self.start.take() {
-            out.push(ActionToken {
-                span: Span::new(start, child.start_byte()),
-                kind: TokenKind::Error,
-            });
+            out.push(untrimmed(
+                Span::new(start, child.start_byte()),
+                ActionKind::Error,
+            ));
             self.named.clear();
         }
         self.start = Some(child.start_byte());
+        self.trim_left = child.kind() == "{{-";
     }
 
-    fn close(&mut self, end: usize, out: &mut Vec<ActionToken>) {
+    fn close(&mut self, delimiter: tree_sitter::Node<'tree>, out: &mut Vec<TemplateAction>) {
         let Some(start) = self.start.take() else {
             return;
         };
-        let span = Span::new(start, end);
         let kind = classify_group(&self.named);
         self.named.clear();
-        out.push(ActionToken { span, kind });
+        out.push(TemplateAction {
+            span: Span::new(start, delimiter.end_byte()),
+            kind,
+            trim_left: self.trim_left,
+            trim_right: delimiter.kind() == "-}}",
+        });
     }
 
     /// Returns `true` when the child was consumed as group content.
@@ -336,28 +368,25 @@ impl<'tree> GroupState<'tree> {
         false
     }
 
-    fn finish(&mut self, node_end: usize, out: &mut Vec<ActionToken>) {
+    fn finish(&mut self, node_end: usize, out: &mut Vec<TemplateAction>) {
         if let Some(start) = self.start.take() {
-            out.push(ActionToken {
-                span: Span::new(start, node_end),
-                kind: TokenKind::Error,
-            });
+            out.push(untrimmed(Span::new(start, node_end), ActionKind::Error));
             self.named.clear();
         }
     }
 }
 
-fn classify_group(named: &[tree_sitter::Node<'_>]) -> TokenKind {
+fn classify_group(named: &[tree_sitter::Node<'_>]) -> ActionKind {
     let Some(first) = named.first() else {
-        return TokenKind::Error;
+        return ActionKind::Error;
     };
     match first.kind() {
-        "comment" => TokenKind::TemplateComment,
-        "variable_definition" | "assignment" => TokenKind::Assign,
-        "ERROR" => TokenKind::Error,
+        "comment" => ActionKind::TemplateComment,
+        "variable_definition" | "assignment" => ActionKind::Assign,
+        "ERROR" => ActionKind::Error,
         _ => {
             let last = named.last().unwrap_or(first);
-            TokenKind::Output {
+            ActionKind::Output {
                 expr_span: Span::new(first.start_byte(), last.end_byte()),
                 render_indent: None,
             }
@@ -368,3 +397,30 @@ fn classify_group(named: &[tree_sitter::Node<'_>]) -> TokenKind {
 fn node_span(node: tree_sitter::Node<'_>) -> Span {
     Span::new(node.start_byte(), node.end_byte())
 }
+
+/// A single-node action (`{{ template … }}`, `{{ break }}`), whose delimiter
+/// tokens are its own first and last children.
+fn node_action(node: tree_sitter::Node<'_>, kind: ActionKind) -> TemplateAction {
+    let mut cursor = node.walk();
+    let last = node.children(&mut cursor).last();
+    TemplateAction {
+        span: node_span(node),
+        kind,
+        trim_left: node.child(0).is_some_and(|child| child.kind() == "{{-"),
+        trim_right: last.is_some_and(|child| child.kind() == "-}}"),
+    }
+}
+
+/// An action recovered from an unbalanced delimiter run.
+fn untrimmed(span: Span, kind: ActionKind) -> TemplateAction {
+    TemplateAction {
+        span,
+        kind,
+        trim_left: false,
+        trim_right: false,
+    }
+}
+
+#[cfg(test)]
+#[path = "tests/actions.rs"]
+mod tests;
