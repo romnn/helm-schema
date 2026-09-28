@@ -5787,6 +5787,26 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   candidate; both reviewers asked to verify and advise (follow_up on runs 7660883f / 5d5c270b). Frontend
   builder freed only its own target's lint artifacts and incremental cache during the disk-full. Orchestrator.
 
+- 16:46 (Sep 28) — **Main compiles again: `fix(test): helm_wrapper uses ScratchDir` committed as 9716e080** on
+  top of 4b5db9c3 (+ plan commits). Gates on that tree: `task lint` exit 0, `cargo nextest run --workspace`
+  exit 0 (1596 tests run, 1596 passed; `round8-main-postmerge/{lint,unit}-l4b.log`). main = 9716e080.
+- 17:00 (Sep 28) — **Frontend rework 3: REWORK from both, one shared P1** (`review-frontend-rework3-{sol,astra}.md`).
+  F12: F9's "sole kind-writing arm" test counts only RESOLVED kinds (`resource_identity.rs:331`
+  `sub.kind.is_some()`), so a competing arm with `kind: {{ .Values.otherKind }}` leaves the nested selector
+  inherited (:381) and `final_signals.rs:28` applies StatefulSet's strict schema while Helm renders
+  otherKind=DaemonSet with maxSurge (both executed the cell through argo-rollouts' extraObjects; analyzer
+  result source-traced). Fix: track kind writes independently of literal resolution; an unresolved kind arm
+  invalidates selector provenance and makes the candidate set non-exhaustive. Both confirm F8's departure
+  from the brief is right (abstention for a rebound kind; with/range else keeps the enclosing dot; `$`/dict
+  contexts and coincident root values render StatefulSet/partition), F9 fixes its static case, hashes and
+  evidence match. F10: both say KEEP SEPARATE — the complement `workloadType != Deployment` is the right
+  structural reading of the trailing else, but astra: Helm RENDERS Other+maxSurge, the rejection is a
+  Kubernetes-provider failure, so the hand-off's "corrected false acceptance" wording must distinguish Helm
+  success from provider failure; adjudicate F10 via its own clean dump + battery. Astra: phase 1 is
+  fixture-preserving but not non-semantic (behavior changes outside the corpus). Decision recorded: phase 1
+  lands first (landing 6, after rework 4), F10 as its own one-fixture semantic candidate later. Brief
+  `brief-frontend-rework4.md` (F12, F13); frontend builder told to park the inline-else side task. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
