@@ -15,6 +15,7 @@ use serde_json::Value;
 use crate::analysis::analyze_charts;
 use crate::chart;
 use crate::error::EngineResult;
+use crate::explain::{ExplainFormat, PathGenerationDecision};
 use crate::generation::{GenerateOptions, GeneratedSchema, ResolvedContract};
 use crate::output_pipeline::{
     EmitRequest, FinalOutputPolicy, PolicyInputOptions, PreparedEmitRequest,
@@ -57,6 +58,12 @@ pub struct ValuePathExplanation {
     pub type_hints: Vec<Value>,
     /// Whether a defaulting operation supplies an absent value.
     pub has_default_fallback: bool,
+    /// The decisions schema generation took for the path; `None` when
+    /// generation never resolved, lowered or materialized it.
+    ///
+    /// Overlay and requirement-implication references index the path's
+    /// evidence in [`AnalysisSession::contract_schema_signals`].
+    pub generation: Option<PathGenerationDecision>,
 }
 
 struct PreparedSession {
@@ -303,11 +310,13 @@ impl AnalysisSession {
         )
     }
 
-    /// Explain one values path using the current contract and chart evidence.
+    /// Explain one values path using the current contract and chart
+    /// evidence, and the decisions the memoized schema generation took for it.
     ///
     /// # Errors
     ///
-    /// Returns an error when chart analysis or contract finalization fails.
+    /// Returns an error when chart analysis, contract finalization, or schema
+    /// generation fails.
     pub fn explain(&self, path: &str) -> EngineResult<ValuePathExplanation> {
         let normalized_path = normalize_values_path(path);
         let finalized_contract = self.finalized_contract()?;
@@ -344,6 +353,11 @@ impl AnalysisSession {
             .unwrap_or_default();
         let has_default_fallback =
             evidence.is_some_and(|evidence| evidence.requiredness.has_default_fallback);
+        let generation = self
+            .resolved()?
+            .generation_decisions
+            .path(&normalized_values_path)
+            .cloned();
 
         Ok(ValuePathExplanation {
             path: normalized_path,
@@ -354,7 +368,30 @@ impl AnalysisSession {
             metadata_fields,
             type_hints,
             has_default_fallback,
+            generation,
         })
+    }
+
+    /// Render the generation decisions for one values path as a versioned
+    /// report scoped to generation decisions.
+    ///
+    /// A path generation never reached yields a report with status
+    /// `not_observed`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when chart analysis, contract finalization, or schema
+    /// generation fails, or when the report cannot be serialized.
+    pub fn explain_generation(&self, path: &str, format: ExplainFormat) -> EngineResult<String> {
+        let path = helm_schema_core::ValuesPath::parse(&normalize_values_path(path));
+        let finalized_contract = self.finalized_contract()?;
+        let resolved = self.resolved()?;
+        Ok(crate::explain::generation_report(
+            &path,
+            resolved.generation_decisions.path(&path),
+            finalized_contract.schema_signals().evidence_for(&path),
+            format,
+        )?)
     }
 
     fn prepared(&self) -> EngineResult<Arc<PreparedSession>> {
@@ -396,6 +433,7 @@ impl AnalysisSession {
                 schema: generated.schema,
                 emission_report: generated.emission_report,
                 definition_origins: generated.definition_origins,
+                generation_decisions: generated.generation_decisions,
             })
         })
     }
