@@ -7062,6 +7062,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   reviewers asked where to cut. `final-v9.patch` sha256 45dcedd4…. Reviews: astra follow_up 7422b55d turn 3,
   sol(6.1) fresh 20260929T234249-89e63fe7. Landing order unchanged: F1 (landing 9) → W4 → k8s → W1. Orchestrator.
 
+- 01:45 (Sep 30) — **F1 rework 7 handed back (1a61de76): attribution = (b) candidate is the assert regeneration +
+  (c) annotate regeneration accepts outright + (d) explain unread; baseline not consulted; nacos witness isolated
+  (`service.ports` default {http:{port:8080}}) → 8 cells ATTRIBUTED, Helm renders all 8; the original-defaults
+  control declines via "annotate rejects". Red on aebc91bd 2 fail → green 7/7. Gates-v8-final: fmt/lint/lint:fc/
+  ast-grep/verify 0, nextest 1658/1659 (the 5 promotion rows), integration the same 145 adoptable. `final-v8.patch`
+  sha256 be77fa60…. Re-checks: astra follow_up e0604b5e turn 7, sol follow_up 34eb74f4 turn 3. Landing-9 clone
+  re-staged: main 566309de + 14 F1 commits + K17 + cell_matrix + catalog 345d5be3 (three patches clean; 17 commits);
+  env header updated. Launch on LAND ×2. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
