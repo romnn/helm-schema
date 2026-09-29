@@ -44,6 +44,7 @@ mod dump;
 mod lines;
 mod literal;
 mod parse;
+mod rendered;
 mod yaml;
 mod yaml_scan;
 
@@ -52,6 +53,10 @@ pub use cst::{
     BlockScalar, CommentLine, ControlBranch, ControlKind, ControlRegion, MappingEntry, Node,
     OpaqueKind, OpaqueNode, OutputAction, ScalarLine, ScalarPart, ScalarParts, SequenceItem, Span,
     TemplatedDocument,
+};
+pub use rendered::{
+    BodyLayout, BranchChoice, HoleShape, HoleShapes, LayoutUncertainty, MAX_LAYOUT_STATES,
+    Occurrence, PieceId, RenderedArm, RenderedBody, RenderedPiece, UnknownShapes, render_body,
 };
 pub use yaml::parse_yaml;
 pub use yaml_scan::{parse_yaml_key, structural_mapping_colon, unquote_yaml_scalar};
