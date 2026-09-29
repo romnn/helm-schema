@@ -301,9 +301,7 @@ impl LoweredEmissionPlan {
         );
         let mut decisions = GenerationDecisions::default();
         let dependency_roots = dependency_values_roots(&contract_schema_signals);
-        let helm_global_namespaces = chart_values_roots(&dependency_roots)
-            .map(helm_global_namespace)
-            .collect::<BTreeSet<_>>();
+        let helm_global_namespaces = helm_global_namespaces(&dependency_roots);
         let resolved_paths = PathSchemaResolver::new(
             &contract_schema_signals,
             &documents.input_defaults,
@@ -875,6 +873,15 @@ fn dependency_values_roots(signals: &ContractSchemaSignals) -> BTreeSet<Vec<Stri
 /// The analyzed chart's empty root followed by every dependency root.
 fn chart_values_roots(dependency_roots: &BTreeSet<Vec<String>>) -> impl Iterator<Item = &[String]> {
     std::iter::once(&[][..]).chain(dependency_roots.iter().map(Vec::as_slice))
+}
+
+/// Helm's `global` namespace beneath every chart values root.
+fn helm_global_namespaces(
+    dependency_roots: &BTreeSet<Vec<String>>,
+) -> BTreeSet<helm_schema_core::ValuesPath> {
+    chart_values_roots(dependency_roots)
+        .map(helm_global_namespace)
+        .collect()
 }
 
 /// Helm's `global` namespace beneath a chart values root.
