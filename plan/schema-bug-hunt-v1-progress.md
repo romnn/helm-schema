@@ -6506,6 +6506,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   rework 1 started, explain C1 in its integration gate. The W4 review runs (68054652/aeb245af, Sep 28 03:45) are past
   the 24 h window → W4 rework 6 gets fresh runs. Load 39. Orchestrator.
 
+- 04:35 (Sep 29) — **explain C1 handed back, byte-identical; reviews dispatched.** Clone `round8-explain` branch
+  explain-c1 HEAD 812bcbcd (5 commits) on main 91ff7e76 (= cb42c017 production); `round8-explain-evidence/final.patch`
+  sha256 20d162d0…; handoff.md 60 lines. Mechanism: one typed `GenerationDecisions` record (gen/src/
+  generation_decisions.rs) captured at resolve_policy.rs:333, path_resolver.rs:130/:202, overlay_lowering.rs:455–490
+  + member_projection.rs:595, base_schema.rs:88 → emission_plan.rs:780/:342; references by index into owning
+  signals, no copies, never read back; `ResolvedContract` carries it; `AnalysisSession::explain_generation`
+  (session.rs:385, format_version 1) beside the kept `ValuePathExplanation` fields; no CLI (sol's corrections);
+  single-flight `SessionCache::get_or_try_init`. Tests: tests/explain.rs (8, pinned JSON+text for
+  prometheus-redis-exporter service.type and jaeger commonAnnotations from instrumentation), gen/src/tests/
+  generation_decisions.rs (3); reds on the base worktree (single-flight 4 generations vs 1). Gates: fmt/lint/lint:fc
+  (55)/ast-grep 0, unit 1619, test:integration 877 passed, dump --verify 0 of 202 fixtures differ, schema-only
+  battery flips=0 (160 charts, 270,470 probes). LOC +721 prod (budget 700–1,100), test ≈ +600. Reviews: sol
+  e48030f1 turn 5 / astra 11bf8beb turn 3 (follow-ups on the design runs). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
