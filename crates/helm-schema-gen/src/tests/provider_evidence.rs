@@ -2771,7 +2771,7 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() -> eyre::Result<()>
         &serde_yaml::Value::Null,
         &provider_resolutions,
     )
-    .resolve_all();
+    .resolve_all(&mut crate::generation_decisions::GenerationDecisions::default());
     let resolved_metric_relabelings = resolved
         .iter()
         .find(|path| {
@@ -2809,11 +2809,12 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() -> eyre::Result<()>
     );
     let metric_relabelings_path =
         helm_schema_core::ValuesPath::parse("serviceMonitor.metricRelabelings");
-    let resolved_overlay = crate::path_resolver::PathSchemaResolver::resolve_single_path_evidence(
-        &metric_relabelings_path,
-        &overlay.evidence.as_path_evidence(),
-        &provider_resolutions,
-    );
+    let (resolved_overlay, _) =
+        crate::path_resolver::PathSchemaResolver::resolve_single_path_evidence(
+            &metric_relabelings_path,
+            &overlay.evidence.as_path_evidence(),
+            &provider_resolutions,
+        );
     sim_assert_eq!(
         have: resolved_overlay.schema.pointer("/anyOf/0/type").and_then(Value::as_str),
         want: Some("array"),
@@ -2899,7 +2900,7 @@ fn zalando_extra_envs_keeps_podspec_envvar_shape() -> eyre::Result<()> {
         &serde_yaml::Value::Null,
         &provider_resolutions,
     )
-    .resolve_all();
+    .resolve_all(&mut crate::generation_decisions::GenerationDecisions::default());
     let resolved_extra_envs = resolved
         .iter()
         .find(|path| path.value_path == helm_schema_core::ValuesPath::parse("extraEnvs"))

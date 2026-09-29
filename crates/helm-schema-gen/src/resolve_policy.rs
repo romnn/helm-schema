@@ -11,6 +11,10 @@ use crate::condition_encoding::{
     value_references_helm_truthy,
 };
 use crate::foreign_schema::ForeignSchemaRestriction;
+use crate::generation_decisions::{
+    ChannelAdjustment, ChannelDisposition, DropReason, FalsyEscapeReason, MergeBase,
+    NullAdmissionReason, PolicyEvaluation, PolicyRule,
+};
 use crate::merge::{merge_schema_list, merge_two_schemas, union_schema_list};
 use crate::path_schema::{
     generalize_fixed_object_schema_to_open_map, merge_explicit_empty_placeholder,
@@ -84,6 +88,12 @@ pub(crate) const PLAIN_SCALAR_NUMBER_TOKEN_PATTERN: &str = r"^(([+-]_*)?(0|[1-9]
 /// here rather than being spread across root-schema construction.
 #[derive(Debug, Default, Clone, Copy)]
 pub(crate) struct ResolvePolicy;
+
+/// One resolve-policy run: the resolved schema and the decisions it took.
+pub(crate) struct PolicyOutcome {
+    pub(crate) schema: Value,
+    pub(crate) evaluation: PolicyEvaluation,
+}
 
 /// Structural facts for one `.Values.*` path.
 #[derive(Debug, Clone, Copy, Default)]
@@ -320,7 +330,7 @@ impl ResolvePolicy {
         clippy::too_many_lines,
         reason = "keeping this semantic lowering operation together makes its state transitions easier to audit"
     )]
-    pub(crate) fn resolve_schema_for_value_path(input: ValuePathSchemaInputs) -> Value {
+    pub(crate) fn resolve_schema_for_value_path(input: ValuePathSchemaInputs) -> PolicyOutcome {
         let ValuePathSchemaInputs::Complete {
             facts,
             provider_schema,
@@ -336,12 +346,20 @@ impl ResolvePolicy {
         let type_hint_schema = type_hint_schema.into_value();
         let guarded_type_hint_schema = guarded_type_hint_schema.into_value();
         let fallback_type_hint_schema = fallback_type_hint_schema.into_value();
+        let mut provider = ChannelDisposition::input(&provider_schema);
+        let mut declared_default = ChannelDisposition::input(&values_yaml_schema);
+        let mut guard_domain = ChannelDisposition::input(&guard_predicate_schema);
+        let type_hints = ChannelDisposition::input(&type_hint_schema);
+        let mut guarded_type_hints = ChannelDisposition::widening_input(&guarded_type_hint_schema);
+        let mut fallback_type_hints = ChannelDisposition::input(&fallback_type_hint_schema);
+        let mut rules = Vec::new();
         // A literal fallback documents intent, not a contract: like the
         // declared default, its type must not narrow a path that some
         // serializing or totally-formatting render provably tolerates any
         // input at (flux2's `--log-level={{ .Values.logLevel |
         // default "info" }}` embeds every value kind as argument text).
         let fallback_type_hint_schema = if facts.contract.used_as_serialized {
+            fallback_type_hints.discard(DropReason::SerializedRender);
             empty_schema()
         } else {
             fallback_type_hint_schema
@@ -376,20 +394,24 @@ impl ResolvePolicy {
             && is_empty_schema(&provider_schema)
             && is_empty_schema(&type_hint_schema)
             && is_empty_schema(&guarded_type_hint_schema);
-        let values_yaml_schema =
-            if control_only_without_contract || facts.contract.used_as_serialized {
-                empty_schema()
-            } else if facts.contract.is_partial_scalar_value_path
-                && is_scalar_schema(&values_yaml_schema)
-            {
-                // A scalar spliced into a partial string slot (`-v={{ x }}`)
-                // prints ANY scalar; the declared default's type is intent,
-                // not a constraint, so it widens to the scalar union. Real
-                // contracts from other uses still apply below.
-                scalar_union_schema()
-            } else {
-                values_yaml_schema
-            };
+        let values_yaml_schema = if control_only_without_contract {
+            declared_default.discard(DropReason::ControlOnlyWithoutContract);
+            empty_schema()
+        } else if facts.contract.used_as_serialized {
+            declared_default.discard(DropReason::SerializedRender);
+            empty_schema()
+        } else if facts.contract.is_partial_scalar_value_path
+            && is_scalar_schema(&values_yaml_schema)
+        {
+            // A scalar spliced into a partial string slot (`-v={{ x }}`)
+            // prints ANY scalar; the declared default's type is intent,
+            // not a constraint, so it widens to the scalar union. Real
+            // contracts from other uses still apply below.
+            declared_default.adjust(ChannelAdjustment::WidenedToScalarUnion);
+            scalar_union_schema()
+        } else {
+            values_yaml_schema
+        };
         // The same argument defers guard-derived typing on serialized
         // paths: a `typeIs "string"` guard partitions branches, and a
         // serialized sibling branch proves the complement renders too, so
@@ -402,11 +424,13 @@ impl ResolvePolicy {
         // uses are all conditional still use the guard domain to replace a
         // declared fallback shape in the selected arm.
         let mut guard_predicate_schema = if facts.contract.has_unconditional_render_use {
+            guard_domain.discard(DropReason::UnconditionalRenderUse);
             empty_schema()
         } else {
             guard_predicate_schema
         };
         let deferred_guard_schema = if facts.contract.used_as_serialized {
+            guard_domain.defer_to_widening();
             std::mem::replace(&mut guard_predicate_schema, empty_schema())
         } else {
             empty_schema()
@@ -422,6 +446,7 @@ impl ResolvePolicy {
             values_yaml_schema,
             facts,
             &provider_schema,
+            &mut declared_default,
         );
         let provider_schema = Self::adjust_provider_schema_for_value_path(
             facts,
@@ -429,6 +454,7 @@ impl ResolvePolicy {
             &values_yaml_schema,
             &type_hint_schema,
             &guard_predicate_schema,
+            &mut provider,
         );
         let preserve_common_plain_string =
             schema_covers_strict_plain_scalar_string(&provider_schema);
@@ -438,9 +464,12 @@ impl ResolvePolicy {
             &type_hint_schema,
             &guard_predicate_schema,
         );
+        if !is_empty_schema(&partial_scalar_schema) {
+            rules.push(PolicyRule::PartialScalarDomain);
+        }
         let guard_predicate_schema =
             merge_schema_list(vec![guard_predicate_schema, partial_scalar_schema]);
-        let merged = Self::resolve_merged_schema_for_value_path(
+        let (merged, merge_base) = Self::resolve_merged_schema_for_value_path(
             ValuePathSchemaInputs::Complete {
                 facts,
                 provider_schema: SchemaNode::from_value(provider_schema),
@@ -454,37 +483,52 @@ impl ResolvePolicy {
         );
         let merged =
             if preserve_common_plain_string && !schema_covers_strict_plain_scalar_string(&merged) {
+                rules.push(PolicyRule::PlainStringPreserved);
                 union_schema_list(vec![merged, strict_plain_scalar_string_schema()])
             } else {
                 merged
             };
         let widening_schema = merge_two_schemas(guarded_type_hint_schema, deferred_guard_schema);
-        let merged = if !is_empty_schema(&merged) && !is_empty_schema(&widening_schema) {
+        let widened = !is_empty_schema(&merged) && !is_empty_schema(&widening_schema);
+        guarded_type_hints.settle_widening(widened);
+        guard_domain.settle_widening(widened);
+        let merged = if widened {
             union_schema_list(vec![merged, widening_schema])
         } else {
             merged
         };
+        // Every Helm-falsy value either skips a self-guarded consumer,
+        // survives every falsy-tolerant consumer, or takes a literal
+        // fallback before any consumer runs. Keeping only the declared
+        // falsy default made schema validity depend on which off-state
+        // the chart happened to ship. A path-wide runtime string
+        // contract disables the escape: that consumer parses the raw
+        // value before any selection runs. A contract carried only by
+        // guarded overlays does not. Falsy-tolerant uses (merge operands,
+        // digest rows) extend the escape only for leaf paths: a falsy
+        // parent would still abort its descendants' field reads, so
+        // referenced descendants keep the strict base.
+        let falsy_escape = if facts.contract.has_render_use
+            && facts.contract.all_render_uses_self_guarded.holds()
+            && !facts.contract.has_unconditional_render_use
+        {
+            Some(FalsyEscapeReason::SelfGuardedRenders)
+        } else if facts.contract.has_render_use
+            && facts.contract.all_render_uses_falsy_tolerant.holds()
+            && !facts.contract.has_referenced_descendants
+        {
+            Some(FalsyEscapeReason::FalsyTolerantRenders)
+        } else if fallback_hint_only_typing {
+            Some(FalsyEscapeReason::FallbackHintOnly)
+        } else {
+            None
+        };
         let merged = if !is_empty_schema(&merged)
             && !facts.contract.is_direct_ranged_source
             && !facts.contract.has_non_self_guarded_string_contract
-            && ((facts.contract.has_render_use
-                && ((facts.contract.all_render_uses_self_guarded.holds()
-                    && !facts.contract.has_unconditional_render_use)
-                    || (facts.contract.all_render_uses_falsy_tolerant.holds()
-                        && !facts.contract.has_referenced_descendants)))
-                || fallback_hint_only_typing)
+            && let Some(reason) = falsy_escape
         {
-            // Every Helm-falsy value either skips a self-guarded consumer,
-            // survives every falsy-tolerant consumer, or takes a literal
-            // fallback before any consumer runs. Keeping only the declared
-            // falsy default made schema validity depend on which off-state
-            // the chart happened to ship. A path-wide runtime string
-            // contract disables the escape: that consumer parses the raw
-            // value before any selection runs. A contract carried only by
-            // guarded overlays does not. Falsy-tolerant uses (merge operands,
-            // digest rows) extend the escape only for leaf paths: a falsy
-            // parent would still abort its descendants' field reads, so
-            // referenced descendants keep the strict base.
+            rules.push(PolicyRule::HelmFalsyEscape { reason });
             union_schema_list(vec![merged, helm_falsy_schema()])
         } else {
             merged
@@ -512,16 +556,29 @@ impl ResolvePolicy {
         let nullable_scalar_without_strict_raw_consumer = is_scalar_like_schema(&merged)
             && facts.contract.is_nullable
             && !facts.contract.has_non_self_guarded_string_contract;
-        let resolved = if (preserve_explicit_null_default
-            || nullable_scalar_without_strict_raw_consumer
-            || self_guarded_structure_tolerates_null
-            || runtime_default_tolerates_null)
+        let null_admission = if preserve_explicit_null_default {
+            Some(NullAdmissionReason::ExplicitNullDefault)
+        } else if nullable_scalar_without_strict_raw_consumer {
+            Some(NullAdmissionReason::NullableScalar)
+        } else if self_guarded_structure_tolerates_null {
+            Some(NullAdmissionReason::SelfGuardedStructure)
+        } else if runtime_default_tolerates_null {
+            Some(NullAdmissionReason::RuntimeDefault)
+        } else {
+            None
+        };
+        let resolved = if let Some(reason) = null_admission
             && !is_empty_schema(&merged)
         {
+            rules.push(PolicyRule::NullAdmitted { reason });
             add_null_schema(merged)
         } else if preserve_explicit_null_default {
+            rules.push(PolicyRule::ExplicitNullUnconstrained);
             empty_schema()
         } else if facts.empty_map_placeholder_has_structural_object_use(&merged) {
+            rules.push(PolicyRule::EmptyMapPlaceholder {
+                merge_layered_open_map: facts.contract.has_merge_layered_use,
+            });
             // A merge-layered render proves any user-supplied map renders
             // here — its member typing rides the synthesized layer arms —
             // so the declared `{}` keeps an open-map lane, and the layer's
@@ -556,6 +613,7 @@ impl ResolvePolicy {
             // (istiod's `range $key, $val := .Values.env` has no values.yaml
             // default at all); its keys are data, so member probes must not
             // close it. The stamp only applies to object-typed schemas.
+            rules.push(PolicyRule::OpenIterableMap);
             crate::path_schema::stamp_explicit_map_openness(merged)
         } else if facts.contract.used_as_serialized
             && facts.contract.has_referenced_descendants
@@ -565,6 +623,7 @@ impl ResolvePolicy {
             // carrier merge reads a bare `{}` as an empty placeholder and
             // closes it, while an explicit `additionalProperties: {}`
             // counts as openness evidence and survives.
+            rules.push(PolicyRule::SerializedDescendantHost);
             serde_json::json!({ "additionalProperties": {} })
         } else {
             merged
@@ -574,7 +633,7 @@ impl ResolvePolicy {
         // structure in the loop body) integer counts, regardless of the
         // declared default's shape. Guarded member implications below
         // still narrow the live states.
-        if facts.contract.is_direct_ranged_source {
+        let schema = if facts.contract.is_direct_ranged_source {
             // A serialized sibling use renders any input at its own site,
             // but cannot erase the runtime domain of an independently
             // executing direct range.
@@ -582,7 +641,9 @@ impl ResolvePolicy {
                 !facts.contract.has_destructured_range_use
                     && !facts.contract.has_json_decoded_range_use,
             );
-            if is_empty_schema(&resolved) {
+            let sole_evidence = is_empty_schema(&resolved);
+            rules.push(PolicyRule::RuntimeIterableDomain { sole_evidence });
+            if sole_evidence {
                 // The direct range is the only evidence: its runtime
                 // domain is the path's whole domain (a non-empty base
                 // also keeps the carrier's item rows from re-typing the
@@ -593,6 +654,19 @@ impl ResolvePolicy {
             }
         } else {
             resolved
+        };
+        PolicyOutcome {
+            schema,
+            evaluation: PolicyEvaluation {
+                provider,
+                declared_default,
+                guard_domain,
+                type_hints,
+                guarded_type_hints,
+                fallback_type_hints,
+                merge_base,
+                rules,
+            },
         }
     }
 
@@ -600,9 +674,11 @@ impl ResolvePolicy {
         values_yaml_schema: Value,
         facts: ValuePathSchemaFacts,
         provider_schema: &Value,
+        disposition: &mut ChannelDisposition,
     ) -> Value {
         let values_yaml_schema =
             if facts.empty_map_placeholder_has_structural_object_use(provider_schema) {
+                disposition.discard(DropReason::StructuralObjectPlaceholder);
                 empty_schema()
             } else {
                 values_yaml_schema
@@ -614,12 +690,14 @@ impl ResolvePolicy {
                 && is_empty_schema(provider_schema)
                 && should_open_fragment_values_schema(&values_yaml_schema, facts)
             {
+                disposition.adjust(ChannelAdjustment::OpenedFragment);
                 open_fragment_values_schema(values_yaml_schema)
             } else {
                 values_yaml_schema
             };
 
         if facts.contract.is_ranged_source && facts.values_yaml.is_mapping {
+            disposition.adjust(ChannelAdjustment::GeneralizedToOpenMap);
             generalize_fixed_object_schema_to_open_map(values_yaml_schema)
         } else {
             values_yaml_schema
@@ -632,15 +710,17 @@ impl ResolvePolicy {
         values_yaml_schema: &Value,
         type_hint_schema: &Value,
         guard_predicate_schema: &Value,
+        disposition: &mut ChannelDisposition,
     ) -> Value {
         if facts.contract.used_as_fragment
             && is_scalar_schema(values_yaml_schema)
             && (is_scalar_like_schema(type_hint_schema)
                 || is_scalar_like_schema(guard_predicate_schema))
+            && let Some(restricted) =
+                ForeignSchemaRestriction::Scalar.apply(provider_schema.clone())
         {
-            ForeignSchemaRestriction::Scalar
-                .apply(provider_schema.clone())
-                .unwrap_or(provider_schema)
+            disposition.adjust(ChannelAdjustment::RestrictedToScalar);
+            restricted
         } else {
             provider_schema
         }
@@ -668,7 +748,7 @@ impl ResolvePolicy {
     fn resolve_merged_schema_for_value_path(
         input: ValuePathSchemaInputs,
         preserve_empty_string_fallback: bool,
-    ) -> Value {
+    ) -> (Value, MergeBase) {
         let ValuePathSchemaInputs::Complete {
             facts,
             provider_schema,
@@ -682,44 +762,57 @@ impl ResolvePolicy {
         let values_yaml_schema = values_yaml_schema.into_value();
         let guard_predicate_schema = guard_predicate_schema.into_value();
         let type_hint_schema = type_hint_schema.into_value();
-        let base = if !is_empty_schema(&provider_schema) {
+        let (base, merge_base) = if !is_empty_schema(&provider_schema) {
             if is_empty_schema(&values_yaml_schema) {
-                provider_schema
-            } else {
+                (provider_schema, MergeBase::Provider)
+            } else if facts.contract.has_referenced_descendants
+                && is_declared_object_schema(&values_yaml_schema)
+                && is_scalar_schema(&provider_schema)
+            {
                 // Some charts use scalar "preset" values that are fed into helpers which
                 // expand into full K8s objects in the rendered manifest (e.g. affinity presets).
                 // In these cases the *input* type in values.yaml is the scalar, not the output
                 // object type, so prefer the values.yaml scalar schema.
-                if facts.contract.has_referenced_descendants
-                    && is_declared_object_schema(&values_yaml_schema)
-                    && is_scalar_schema(&provider_schema)
+                (
+                    values_yaml_schema,
+                    MergeBase::DeclaredObjectOverScalarProvider,
+                )
+            } else if facts.contract.used_as_fragment
+                && is_declared_object_schema(&values_yaml_schema)
+                && is_open_string_map_schema(&provider_schema)
+            {
+                (
+                    provider_schema,
+                    MergeBase::ProviderStringMapOverDeclaredObject,
+                )
+            } else if facts.contract.used_as_fragment
+                && is_scalar_schema(&values_yaml_schema)
+                && is_object_or_array_schema(&provider_schema)
+            {
+                (
+                    values_yaml_schema,
+                    MergeBase::DeclaredScalarOverStructuredProvider,
+                )
+            } else if let Some(values_yaml_ty) = schema_type(&values_yaml_schema)
+                && is_scalar_schema(&values_yaml_schema)
+                && schema_allows_type(&provider_schema, values_yaml_ty)
+            {
+                if preserve_empty_string_fallback
+                    && values_yaml_ty == "string"
+                    && !schema_permits_empty_string(&provider_schema)
                 {
-                    values_yaml_schema
-                } else if facts.contract.used_as_fragment
-                    && is_declared_object_schema(&values_yaml_schema)
-                    && is_open_string_map_schema(&provider_schema)
-                {
-                    provider_schema
-                } else if facts.contract.used_as_fragment
-                    && is_scalar_schema(&values_yaml_schema)
-                    && is_object_or_array_schema(&provider_schema)
-                {
-                    values_yaml_schema
-                } else if let Some(values_yaml_ty) = schema_type(&values_yaml_schema)
-                    && is_scalar_schema(&values_yaml_schema)
-                    && schema_allows_type(&provider_schema, values_yaml_ty)
-                {
-                    if preserve_empty_string_fallback
-                        && values_yaml_ty == "string"
-                        && !schema_permits_empty_string(&provider_schema)
-                    {
-                        union_schema_list(vec![provider_schema, empty_string_schema()])
-                    } else {
-                        provider_schema
-                    }
+                    (
+                        union_schema_list(vec![provider_schema, empty_string_schema()]),
+                        MergeBase::ProviderWithEmptyStringFallback,
+                    )
                 } else {
-                    merge_two_schemas(provider_schema, values_yaml_schema)
+                    (provider_schema, MergeBase::ProviderAdmitsDeclaredScalar)
                 }
+            } else {
+                (
+                    merge_two_schemas(provider_schema, values_yaml_schema),
+                    MergeBase::ProviderMergedWithDeclared,
+                )
             }
         } else if facts.contract.used_as_fragment
             && !facts.contract.used_as_serialized
@@ -731,11 +824,11 @@ impl ResolvePolicy {
             // render in a mapping-value slot. The splice claims no
             // shape; independent consumers narrow through their own
             // guarded lanes.
-            empty_schema()
+            (empty_schema(), MergeBase::UnconstrainedFragment)
         } else if !is_empty_schema(&values_yaml_schema) {
-            values_yaml_schema
+            (values_yaml_schema, MergeBase::DeclaredDefault)
         } else {
-            empty_schema()
+            (empty_schema(), MergeBase::NoEvidence)
         };
 
         let base = merge_two_schemas(base, type_hint_schema);
@@ -744,11 +837,12 @@ impl ResolvePolicy {
         // declared default shape must not erase a structurally handled
         // alternative, so the guard domain unions with the base instead of
         // intersecting it.
-        if is_empty_schema(&base) || is_empty_schema(&guard_predicate_schema) {
+        let merged = if is_empty_schema(&base) || is_empty_schema(&guard_predicate_schema) {
             merge_two_schemas(base, guard_predicate_schema)
         } else {
             union_schema_list(vec![base, guard_predicate_schema])
-        }
+        };
+        (merged, merge_base)
     }
 }
 

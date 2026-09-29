@@ -7,6 +7,9 @@ use serde_yaml::Value as YamlValue;
 
 use helm_schema_core::{ContractPathSchemaEvidence, ContractSchemaSignals, MetadataFieldKind};
 
+use crate::generation_decisions::{
+    GenerationDecisions, IndependentChannels, IndependentQualification, PathResolution,
+};
 use crate::merge::{intersect_schema_list, merge_schema_list};
 use crate::provider_resolution::ProviderSchemaResolutions;
 use crate::provider_schema::ProviderSchemaCandidate;
@@ -97,12 +100,17 @@ impl<'a> PathSchemaResolver<'a> {
         value_path: &ValuesPath,
         evidence: &ContractPathSchemaEvidence,
         provider_resolutions: &ProviderSchemaResolutions,
-    ) -> ResolvedPathSchema {
+    ) -> (ResolvedPathSchema, PathResolution) {
         resolve_path_evidence(value_path, evidence, None, false, provider_resolutions)
     }
 
+    /// Resolve every referenced path, recording each resolution's policy
+    /// decisions as the path's base resolution.
     #[tracing::instrument(skip_all)]
-    pub(crate) fn resolve_all(self) -> Vec<ResolvedPathSchema> {
+    pub(crate) fn resolve_all(
+        self,
+        decisions: &mut GenerationDecisions,
+    ) -> Vec<ResolvedPathSchema> {
         let Self {
             schema_evidence_by_value_path,
             values_yaml_info,
@@ -115,13 +123,15 @@ impl<'a> PathSchemaResolver<'a> {
                 evidence.is_referenced_value_path || !evidence.requirement_implications.is_empty()
             })
             .map(|(value_path, evidence)| {
-                resolve_path_evidence(
+                let (resolved, resolution) = resolve_path_evidence(
                     value_path,
                     evidence,
                     values_yaml_info.get(value_path),
                     runtime_default_paths.contains(value_path),
                     provider_resolutions,
-                )
+                );
+                decisions.path_mut(value_path).base = Some(resolution);
+                resolved
             })
             .collect()
     }
@@ -133,7 +143,7 @@ fn resolve_path_evidence(
     values_yaml_info: Option<&ValuesYamlPathInfo>,
     has_runtime_default: bool,
     provider_resolutions: &ProviderSchemaResolutions,
-) -> ResolvedPathSchema {
+) -> (ResolvedPathSchema, PathResolution) {
     let path_segments = value_path
         .segments()
         .map(helm_schema_core::Segment::encode_component)
@@ -151,10 +161,11 @@ fn resolve_path_evidence(
     );
     let (structural_policy_inputs, _) =
         build_path_schema_inputs(value_path, evidence, None, false, provider_resolutions);
-    let independent_base_contract =
+    let (independent_base_contract, independent_contract) =
         independent_base_contract(value_path, &structural_policy_inputs);
-    let structural_schema = ResolvePolicy::resolve_schema_for_value_path(structural_policy_inputs);
-    let mut schema = ResolvePolicy::resolve_schema_for_value_path(policy_inputs);
+    let structural = ResolvePolicy::resolve_schema_for_value_path(structural_policy_inputs);
+    let effective = ResolvePolicy::resolve_schema_for_value_path(policy_inputs);
+    let mut schema = effective.schema;
     if let Some(values_yaml_info) = values_yaml_info {
         for declared_default in &values_yaml_info.declared_defaults {
             schema = crate::resolve_policy::open_objects_rejecting_declared_members(
@@ -166,11 +177,11 @@ fn resolve_path_evidence(
     let provider_schema_candidate =
         provider_schema_candidate.filter(|provider_schema| provider_schema.survives_as(&schema));
 
-    ResolvedPathSchema {
+    let resolved = ResolvedPathSchema {
         value_path: value_path.clone(),
         path_segments,
         schema,
-        structural_schema,
+        structural_schema: structural.schema,
         independent_base_contract,
         values_yaml_schema: values_yaml_info
             .map(|path_info| path_info.schema.clone())
@@ -179,25 +190,37 @@ fn resolve_path_evidence(
         used_as_serialized,
         used_as_pathless_fragment,
         accepted_dependency_values_root_fragment,
-    }
+    };
+    let resolution = PathResolution {
+        effective: effective.evaluation,
+        structural: structural.evaluation,
+        independent_contract,
+    };
+    (resolved, resolution)
 }
 
-fn independent_base_contract(
+pub(crate) fn independent_base_contract(
     value_path: &ValuesPath,
     inputs: &ValuePathSchemaInputs,
-) -> Option<IndependentBaseContract> {
-    let literal_path = value_path
+) -> (Option<IndependentBaseContract>, IndependentQualification) {
+    let Some(literal_path) = value_path
         .segments()
         .map(|segment| segment.literal().map(str::to_string))
-        .collect::<Option<Vec<_>>>()?;
+        .collect::<Option<Vec<_>>>()
+    else {
+        return (None, IndependentQualification::WildcardPath);
+    };
     let ValuePathSchemaInputs::Complete {
         facts,
         provider_schema,
         ..
     } = inputs;
-    let strict_string = facts.contract.has_non_self_guarded_string_contract;
-    if !strict_string && provider_schema.is_empty_schema() {
-        return None;
+    let channels = IndependentChannels {
+        strict_string: facts.contract.has_non_self_guarded_string_contract,
+        provider: !provider_schema.is_empty_schema(),
+    };
+    if !channels.strict_string && !channels.provider {
+        return (None, IndependentQualification::NoIndependentConsumer);
     }
     // Provider transformations resolve separately from the raw-string
     // obligation: independent consumers intersect, while hints merge alternatives.
@@ -212,15 +235,31 @@ fn independent_base_contract(
             guarded_type_hint_schema: SchemaNode::empty(),
             fallback_type_hint_schema: SchemaNode::empty(),
         });
-    let schema = if strict_string {
-        intersect_schema_list(vec![provider_contract, type_schema("string")])
+    let evaluation = provider_contract.evaluation;
+    let schema = if channels.strict_string {
+        intersect_schema_list(vec![provider_contract.schema, type_schema("string")])
     } else {
-        provider_contract
+        provider_contract.schema
     };
-    (!is_empty_schema(&schema) && schema != Value::Bool(true)).then_some(IndependentBaseContract {
-        literal_path,
-        schema,
-    })
+    if is_empty_schema(&schema) || schema == Value::Bool(true) {
+        return (
+            None,
+            IndependentQualification::RejectedEmpty {
+                channels,
+                evaluation,
+            },
+        );
+    }
+    (
+        Some(IndependentBaseContract {
+            literal_path,
+            schema,
+        }),
+        IndependentQualification::Qualified {
+            channels,
+            evaluation,
+        },
+    )
 }
 
 fn provider_schemas_for_path_evidence(

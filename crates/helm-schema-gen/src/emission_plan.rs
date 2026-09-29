@@ -12,6 +12,7 @@ use crate::condition_encoding::{
 };
 use crate::emission_policy::{EmissionClass, EmissionOrigin, EmissionPolicy};
 use crate::emission_report::{EmissionReport, FactRecord, InsertionAbstentionCounts};
+use crate::generation_decisions::{BaseOwnerDecision, GenerationDecisions};
 use crate::overlay_lowering::{
     ConditionalHostPreparation, LoweredConjunct, append_selected_constraints,
     append_terminal_clauses, collect_conditional_schemas, prepare_conditional_hosts,
@@ -37,6 +38,7 @@ pub(crate) struct LoweredEmissionPlan {
     terminal_schemas: Vec<LoweredConjunct>,
     support: EmissionSupportPlan,
     insertion_abstentions: InsertionAbstentionCounts,
+    decisions: GenerationDecisions,
 }
 
 #[derive(Clone)]
@@ -203,6 +205,8 @@ struct EmissionSupportPlan {
 pub(crate) struct ProjectedTree {
     pub(crate) document: SchemaDocument,
     pub(crate) emission_report: EmissionReport,
+    /// The base owner materialized for each resolved path.
+    pub(crate) base_owners: BTreeMap<helm_schema_core::ValuesPath, BaseOwnerDecision>,
     provider_definitions: BTreeMap<String, Value>,
     /// Content origins of the private provider-definition handles.
     definition_origins: BTreeMap<String, Vec<DefinitionOrigin>>,
@@ -292,19 +296,21 @@ impl LoweredEmissionPlan {
             &contract_schema_signals,
             input.provider,
         );
+        let mut decisions = GenerationDecisions::default();
         let resolved_paths = PathSchemaResolver::new(
             &contract_schema_signals,
             &documents.input_defaults,
             &documents.runtime_defaults,
             &provider_resolutions,
         )
-        .resolve_all();
+        .resolve_all(&mut decisions);
         let (conditional_schemas, insertion_abstentions) = collect_conditional_schemas(
             &resolved_paths,
             &contract_schema_signals,
             &documents.composed,
             &documents.runtime_defaults,
             &provider_resolutions,
+            &mut decisions,
         );
         let terminal_schemas = contract_schema_signals
             .terminal_clauses()
@@ -327,7 +333,21 @@ impl LoweredEmissionPlan {
             terminal_schemas,
             support,
             insertion_abstentions,
+            decisions,
         }
+    }
+
+    /// The plan's decisions completed by the base owners one projection
+    /// materialized.
+    pub(crate) fn into_generation_decisions(
+        self,
+        base_owners: BTreeMap<helm_schema_core::ValuesPath, BaseOwnerDecision>,
+    ) -> GenerationDecisions {
+        let mut decisions = self.decisions;
+        for (path, base_owner) in base_owners {
+            decisions.path_mut(&path).base_owner = Some(base_owner);
+        }
+        decisions
     }
 
     pub(crate) fn project(&self, policy: EmissionPolicy) -> ProjectedTree {
@@ -369,7 +389,7 @@ impl LoweredEmissionPlan {
             &self.values_descriptions,
             &mut definition_origins,
         );
-        let (mut document, base_document_abstentions) = materialize_base_document(
+        let (mut document, base_document_abstentions, base_owners) = materialize_base_document(
             &self.contract_schema_signals,
             &self.documents.input_defaults,
             &resolved_paths,
@@ -418,6 +438,7 @@ impl LoweredEmissionPlan {
         ProjectedTree {
             document,
             emission_report,
+            base_owners,
             provider_definitions,
             definition_origins,
         }
@@ -462,6 +483,7 @@ impl LoweredEmissionPlan {
         let ProjectedTree {
             document,
             emission_report,
+            base_owners: _,
             provider_definitions,
             definition_origins,
         } = projected;
@@ -661,6 +683,7 @@ impl EmissionSupportPlan {
                     &no_owning_ancestors,
                     &no_preserving_ancestors,
                 )
+                .owner
                 .owns_descendants()
             })
             .map(|resolved_path| resolved_path.path_segments.clone())
@@ -674,6 +697,7 @@ impl EmissionSupportPlan {
                     &no_owning_ancestors,
                     &no_preserving_ancestors,
                 )
+                .owner
                 .preserves_descendants()
             })
             .map(|resolved_path| resolved_path.path_segments.clone())
@@ -737,21 +761,30 @@ fn materialize_base_document(
     input_defaults: &YamlValue,
     resolved_paths: &[ResolvedPathSchema],
     support: &EmissionSupportPlan,
-) -> (SchemaDocument, usize) {
+) -> (
+    SchemaDocument,
+    usize,
+    BTreeMap<helm_schema_core::ValuesPath, BaseOwnerDecision>,
+) {
     let mut document = SchemaDocument::new_root_object();
     let mut insertion_abstentions = 0;
+    let mut base_owners = BTreeMap::new();
     let base_span = tracing::info_span!("base_path_insertion").entered();
     for resolved_path in resolved_paths {
-        let owner = classify_base(
+        let decision = classify_base(
             resolved_path,
             &support.conditional_targets,
             &support.owning_paths,
             &support.preserving_paths,
         );
+        base_owners.insert(resolved_path.value_path.clone(), decision);
+        let owner = decision.owner;
         let Some(schema) = owner.schema(resolved_path) else {
             continue;
         };
-        if let BaseOwner::IndependentContract(contract) = owner {
+        if owner == BaseOwner::IndependentContract
+            && let Some(contract) = &resolved_path.independent_base_contract
+        {
             document.conjoin_literal_path_schema(contract.literal_path(), schema);
             continue;
         }
@@ -786,7 +819,7 @@ fn materialize_base_document(
         );
     }
     drop(base_span);
-    (document, insertion_abstentions)
+    (document, insertion_abstentions, base_owners)
 }
 
 fn tree_segment_spelling(segment: &helm_schema_core::Segment) -> String {

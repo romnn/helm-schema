@@ -3,14 +3,23 @@ use std::collections::{BTreeMap, BTreeSet};
 use serde_json::{Map, Number, Value};
 use serde_yaml::Value as YamlValue;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) enum JsonSchemaType {
+/// A JSON Schema `type` name.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum JsonSchemaType {
+    /// `array`.
     Array,
+    /// `boolean`.
     Boolean,
+    /// `integer`.
     Integer,
+    /// `null`.
     Null,
+    /// `number`.
     Number,
+    /// `object`.
     Object,
+    /// `string`.
     String,
 }
 
