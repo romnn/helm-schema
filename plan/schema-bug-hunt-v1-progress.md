@@ -6417,6 +6417,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   target (`battery-v5/`) per the corpus-fixtures skill. NOTE: the W1 review runs 92580cac/416b8635 (Sep 27 20:12)
   are past the 24 h window → W1 rework 6 gets fresh runs. Orchestrator.
 
+- 02:50 (Sep 29) — **Runner v6.9 rework 1 handed back; re-checks dispatched.** HEAD 61efdfa9 on runner-v6.9
+  (`round8-runner-evidence/v69-v2.patch`, 679 lines, sha256 8a99a447…). `migrate-target` deleted (code, tests,
+  README); pre-v6.9 marker → exit 8 "use a fresh TARGET (and a fresh E)". V1 invalid token → exit 8 before any
+  publish; V2 unique O_EXCL|O_NOFOLLOW temps for owner/landing-owner/token (fixed `.tmp` names no longer used; a
+  symlink at the unique name → exit 8); V3 control-byte grammar for both markers with CR/NUL/CRLF/missing-LF/symlink
+  cases; V4 mkdir FileExistsError → lstat validation; V5 gotmp/tmp only after the ownership check, TARGET never
+  created by target_owner, OSError/git failure → exit 8 (EPERM/EXDEV/ENOTSUP tested); V6 FIFO lock → fstat → exit 8
+  (the `binding` item went with the deletion); V7 symlinked TARGET, unwritable parent, reclone, real linked worktree,
+  clean-vs-waiter inode unchanged. Green run-all exit 0 (686 zsh ok, py 87); reds on ae25207 (85 FAIL) and on
+  0c94e907 itemised (20 FAIL + py 2F/4E). LOC landing.py 2214→2212 vs 0c94e907. target-guard.md v3 updated (99
+  lines, "fresh target, never adoption"); the guard implementation already follows the final rules (py suite 34 OK;
+  guard-run gates fmt/lint/test:guard/build:helmsweep/test 1616 passed; guard red 33 failures on main's taskfile).
+  Re-checks: sol dac69f8f / astra 3d256941 follow-ups. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
