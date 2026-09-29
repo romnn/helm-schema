@@ -6489,7 +6489,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `brief-target-guard-rework1.md` (T1–T8, incl. runner v6.10 for T2's corpus and T7); runner builder messaged.
   Orchestrator.
 
-- 04:05 (Sep 29) — **Disk: five dormant build targets removed (~94 GB).** T7 was at 88 GB free (−30 GB/h with six
+- 03:34 (Sep 29) — **Disk: five dormant build targets removed (~94 GB).** T7 was at 88 GB free (−30 GB/h with six
   builders and two live batteries). Survey (`du -sg`): helm-schema/target 40, round7-f4 33, round7-f78 30,
   w4-rebase 23, frontend-else 19, target-guard 17, k8s-rebase 17, round7-integrate 17, frontend-partial 16,
   f1 16, round7-f9 12, explain 10, landing6 9, frontend 8, f1-red 5 (GB). Removed after `ps`/`lsof +D` showed no
@@ -6500,13 +6500,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   f1-red (rework reds), frontend (phase 2 paused), all evidence dirs (round8-f9-evidence 16 GB is the user's call).
   Orchestrator.
 
-- 04:15 (Sep 29) — **Disk after the cleanup: 170 GB free** (88 → 170). Runner run-all after the v6.9 merge 9/12 tests
+- 03:50 (Sep 29) — **Disk after the cleanup: 170 GB free** (88 → 170). Runner run-all after the v6.9 merge 9/12 tests
   green so far (still running). Builders: W1 rework 6 in probe runs, W4 rework 6 writing its regression at the
   dispatch-remainder level, k8s live battery still running, F1 rework 1 on the typed-prefix collection side, guard
   rework 1 started, explain C1 in its integration gate. The W4 review runs (68054652/aeb245af, Sep 28 03:45) are past
   the 24 h window → W4 rework 6 gets fresh runs. Load 39. Orchestrator.
 
-- 04:35 (Sep 29) — **explain C1 handed back, byte-identical; reviews dispatched.** Clone `round8-explain` branch
+- 04:15 (Sep 29) — **explain C1 handed back, byte-identical; reviews dispatched.** Clone `round8-explain` branch
   explain-c1 HEAD 812bcbcd (5 commits) on main 91ff7e76 (= cb42c017 production); `round8-explain-evidence/final.patch`
   sha256 20d162d0…; handoff.md 60 lines. Mechanism: one typed `GenerationDecisions` record (gen/src/
   generation_decisions.rs) captured at resolve_policy.rs:333, path_resolver.rs:130/:202, overlay_lowering.rs:455–490
@@ -6520,14 +6520,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   battery flips=0 (160 charts, 270,470 probes). LOC +721 prod (budget 700–1,100), test ≈ +600. Reviews: sol
   e48030f1 turn 5 / astra 11bf8beb turn 3 (follow-ups on the design runs). Orchestrator.
 
-- 04:40 (Sep 29) — **Frontend phase 2.1(a) resumed** in the slot explain C1 freed (builder a69f98e6d3af1e500; worktree
+- 04:16 (Sep 29) — **Frontend phase 2.1(a) resumed** in the slot explain C1 freed (builder a69f98e6d3af1e500; worktree
   `round8-frontend-phase2`, own target; lands alone on its raw-byte proof per plan v3). Heavy set: W1 rework 6, W4
   rework 6, k8s battery→rework 5, F1 rework 1, frontend 2.1; guard rework light. Orchestrator.
 
-- 04:42 (Sep 29) — **Runner suite green on the merged v6.9** (b7f5c67): `tests/run-all.sh` 12/12 exit 0
+- 04:16 (Sep 29) — **Runner suite green on the merged v6.9** (b7f5c67): `tests/run-all.sh` 12/12 exit 0
   (`round8-runner-evidence/run-all-after-v69-merge.log`). The runner is ready for landing 7. Orchestrator.
 
-- 04:55 (Sep 29) — **Guard rework 1 + runner v6.10 handed back; re-checks dispatched.** Guard HEAD 231bef9a
+- 04:26 (Sep 29) — **Guard rework 1 + runner v6.10 handed back; re-checks dispatched.** Guard HEAD 231bef9a
   (`target-guard-v2.patch`, 1768 lines, sha256 9f20567e…; handoff v2): T1 cargo-fc `--env`/`--unset-env` of the
   protected variables → exit 8 before cargo-fc starts (tested through the real cargo-fc with a recording driver on
   check:fc/test:fc/lint:fc); T2 landing.py's exact grammar + ONE shared byte corpus
@@ -6542,7 +6542,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Re-checks: sol fb75bd55 / astra 46a7c5d4 follow-ups. Runner builder proceeds to cell_matrix commit 1 (379de2aa,
   fmt/lint/lint:fc/unit green; integration + dump + schema-only battery next). Orchestrator.
 
-- 05:20 (Sep 29) — **Four answers: explain C1 REWORK from both; guard rework 1 and runner v6.10 REWORK from both.**
+- 04:43 (Sep 29) — **Four answers: explain C1 REWORK from both; guard rework 1 and runner v6.10 REWORK from both.**
   explain (`review-explain-c1-{sol,astra}.md`): byte identity independently verified by both (all 202 fixtures equal
   91ff7e76, manifest digests match), invariants hold, lock order acyclic, pinned decisions correct. Remaining: the
   example's JSON stdout is not one document (terminal/RAW_CONTRACT debug on stdout), `GuardReferences` numeric map
@@ -6558,7 +6558,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   without explicit UTF-8. → `brief-target-guard-rework2.md` (G1–G4, R1–R2); runner builder to do it before
   continuing cell_matrix. Disk 173 GB; load 53 (five heavy). Orchestrator.
 
-- 05:35 (Sep 29) — **k8s battery on e81c1074 confirms the K9 class at corpus scale.** `round8-k8s-evidence/battery-v5/`
+- 05:09 (Sep 29) — **k8s battery on e81c1074 confirms the K9 class at corpus scale.** `round8-k8s-evidence/battery-v5/`
   (rebase target only; dump corpus-e81c1074, 204 files; lint:fc and ast-grep on e81c1074 green): schema-only vs
   cb42c017 screened flips (exit 100 as expected); LIVE vs the roster baseline: **470 false acceptances not on the
   roster** — sealed-secrets 270, nacos 190, cluster-autoscaler 9, kube-prometheus-stack 1 — the bitnami values-driven
@@ -6569,7 +6569,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   moves before hand-back") exists to produce earlier: from now on the battery runs before the review, not beside
   it. Orchestrator.
 
-- 06:35 (Sep 29) — **explain C1 rework 1 handed back; re-checks dispatched.** HEAD 8f8fcff0 (+3 commits: fa3ae055
+- 06:15 (Sep 29) — **explain C1 rework 1 handed back; re-checks dispatched.** HEAD 8f8fcff0 (+3 commits: fa3ae055
   test-only battery harness, 7211078f session re-entrancy, 8f8fcff0 report + example); `final-v2.patch` sha256
   f08a506a…; handoff.md with the battery command (v2/battery/command.sh) and its environment printed in the log.
   E1 example = thin main over `run(args, options, stdout, stderr)`, one JSON document on stdout, diagnostics to
@@ -6584,7 +6584,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   on-disk fixture") and the acceptance-battery skill's fallback wording become stale → update in the landing.
   Re-checks: sol e48030f1 turn 6 / astra 11bf8beb turn 4. Orchestrator.
 
-- 06:50 (Sep 29) — **Guard rework 2 + runner v6.10 rework 1 handed back; re-checks dispatched; cell_matrix commit 1
+- 07:04 (Sep 29) — **Guard rework 2 + runner v6.10 rework 1 handed back; re-checks dispatched; cell_matrix commit 1
   byte-identical.** Guard HEAD 6d4cbb26 (`target-guard-v3.patch`, 1941 lines, sha256 8ba7d5b4…): G1 cargo-style
   subcommand finder (three prefix layouts × 4 override forms through the real cargo-fc); G2 `cargo metadata
   --no-deps --offline` walk of all cargo-fc metadata keys refusing protected `env` add/remove/set; G3
@@ -6598,7 +6598,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   lint:fc/unit 0, test:integration 869/24 skipped, zero fixtures moved, schema-only battery with the candidate dump
   flips=0. Re-checks: sol fb75bd55 / astra 46a7c5d4 turn 3. Orchestrator.
 
-- 07:05 (Sep 29) — **cell_matrix and frontend 2.1 handed back, both byte-identical; four fresh reviews dispatched.**
+- 07:07 (Sep 29) — **cell_matrix and frontend 2.1 handed back, both byte-identical; four fresh reviews dispatched.**
   cell_matrix (clone `round8-target-guard`, branch cell-matrix on 0de46c35): 379de2aa harness move (Helm harness →
   `helm-schema-test-support/src/helm/`, runner injected through prepare/coalesce/render/decode, exact values bytes +
   kube version, opaque `PreparedTree`/`Cacheability`, release parameter) with the byte-identity gate green (unit
@@ -6616,7 +6616,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (plan v3: 2.1 deletes nothing). Reviews: fresh sol+astra runs for each (ids in codex-runs.tsv). Runner builder →
   v6.11 (TERM window) light work; frontend builder paused. Load 16; T7 131 GB. Orchestrator.
 
-- 07:15 (Sep 29) — **explain C1 rework 1: sol LAND, astra REWORK (one P2).** (`review-explain-c1-rework1-{sol,astra}.md`).
+- 07:08 (Sep 29) — **explain C1 rework 1: sol LAND, astra REWORK (one P2).** (`review-explain-c1-rework1-{sol,astra}.md`).
   Both re-verified byte identity (202 fixtures = base) and the battery record; the `"null"` quoting, the `#[path]`
   example inclusion and the synthetic skipped-overlay test are accepted. astra P2: the re-entry guard checks only
   the requested cache's initializing thread, so a callback on a thread initializing `resolved` that calls
@@ -6626,7 +6626,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `brief-explain-c1-rework2.md` (E8–E9). Landing 7 stays staged (`round8-landing7`, landing-7.env) and will be
   re-cherry-picked from the rework-2 HEAD. Orchestrator.
 
-- 07:45 (Sep 29) — **Six answers: runner v6.10 LAND (merged); guard rework 2 REWORK; frontend 2.1 REWORK; cell_matrix
+- 07:31 (Sep 29) — **Six answers: runner v6.10 LAND (merged); guard rework 2 REWORK; frontend 2.1 REWORK; cell_matrix
   commit 1 LAND / commit 2 REWORK.** (1) v6.10 rework 1 LAND from both → merged (7664af0); run-all with
   GUARD_SRC = `guard-src-v3/target-guard.py` running (`run-all-after-v610-merge.log`; a first launch pointed
   GUARD_SRC at the guard clone, which is checked out on cell-matrix and has no guard script → killed and relaunched
@@ -6647,7 +6647,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `--check` preflight, scratch-path diagnostics and comment-only `valid`, scratch root, timeouts, claimed coverage
   absent → `brief-cell-matrix-rework1.md` (C1–C10). Disk 124 GB; load 28. Orchestrator.
 
-- 08:40 (Sep 29) — **Seven hand-backs in one hour; ten Codex re-checks dispatched; landing 7 staged.** (1) explain C1
+- 14:21 (Sep 29) — **Seven hand-backs; ten Codex re-checks dispatched; landing 7 staged.** (1) explain C1
   rework 2 HEAD b43d00c0 (`final-v3.patch` sha256 d6b304d0…): a total `SessionPhase` order with per-thread
   `InitializingPhases`; a query for a phase ≥ the innermost phase the thread is initializing fails with
   `ReentrantSessionQuery{requested, initializing}` before taking the lock (red: deadlock after 60 s); skill docs
@@ -6690,6 +6690,11 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   P6 4 MiB skeleton bound, P7 2.2 consumer rules in plan.md; 42/42 syntax tests, byte-identical (0/203, digest
   59b9b368…), battery flips=0; LOC +901 vs base; re-checks sol f1fd34af / astra 803dbdb3 turn 2. Runner suite after
   the v6.10 merge: 12/12 exit 0. Disk 97 GB (survey running); load 9. Orchestrator.
+
+- 14:25 (Sep 29) — **Timestamp correction.** The fourteen entries from "Disk: five dormant build targets removed" to
+  "Seven hand-backs" carried estimated times 30 min ahead of the clock, and the last one was written at 14:21 after
+  the session had been idle from about 07:35 to 14:00 (the six hand-backs and the reviewers' answers accumulated
+  meanwhile; nothing was lost). Each is now set to its `chore(plan)` commit time. Orchestrator.
 
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
