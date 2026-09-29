@@ -6773,7 +6773,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   harness). Closures: still 3/83 strict (this landing is process/tooling, not a family). Next landing: frontend 2.1
   rework 2 (re-checks running) as landing 8, byte-identity. Orchestrator.
 
-- 17:00 (Sep 29) — **Guard rework 4 + runner v6.11 rework 1 handed back; re-checks dispatched.** Guard rebased onto
+- 18:57 (Sep 29) — **Guard rework 4 + runner v6.11 rework 1 handed back; re-checks dispatched.** Guard rebased onto
   main 58bf21a3 (c964afaf..718830e7; `target-guard-v5.patch` = `git diff main HEAD`, 2324 lines, sha256 ad2c2a64…;
   snapshot guard-src-v5): G10 cargo-exact alias reading (layers, `config` masks `config.toml`, recursive `include`,
   array concatenation, `CARGO_ALIAS_*`; probed against cargo 1.98 with a `cargo-echoargs` conformance test); G11/G12
