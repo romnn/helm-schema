@@ -6696,7 +6696,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   the session had been idle from about 07:35 to 14:00 (the six hand-backs and the reviewers' answers accumulated
   meanwhile; nothing was lost). Each is now set to its `chore(plan)` commit time. Orchestrator.
 
-- 14:50 (Sep 29) — **W4 rework 6 handed back; battery found three more classes; reviews dispatched; decisions.**
+- 14:45 (Sep 29) — **W4 rework 6 handed back; battery found three more classes; reviews dispatched; decisions.**
   w4-main HEAD 8ca759d6 on c816e318 (`final-v7.patch` sha256 3d464c74…; +11074/−663); rebased candidate
   `round8-w4-rebase` 8f0af114 on cb42c017. R18/19/20/22: one composition anchor + pinned payload + optional comment
   (provider patterns judge only the payload; one comment rule stopping at CR/LF; `\b`/`\B` after an indicator
