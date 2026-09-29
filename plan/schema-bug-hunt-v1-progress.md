@@ -6431,6 +6431,21 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   guard-run gates fmt/lint/test:guard/build:helmsweep/test 1616 passed; guard red 33 failures on main's taskfile).
   Re-checks: sol dac69f8f / astra 3d256941 follow-ups. Orchestrator.
 
+- 03:05 (Sep 29) — **Target guard handed back; reviews dispatched.** Clone `round8-target-guard` branch target-guard
+  HEAD 3e36d4f0 (one commit on main b95e945d); `round8-runner-evidence/target-guard.patch` (1182 lines, sha256
+  7b4abe58…), matching runner v6.9 rework 1's layout and rules. `scripts/target-guard.py` (244 lines, stdlib):
+  claims `<T>.owner/{lock,owner,landing-owner}` with the git-dir token, control-byte grammar, O_EXCL|O_NOFOLLOW
+  temps, invalid token / OS error / pre-v6.9 marker → exit 8, nothing created in T; exec mode refuses an inherited
+  CARGO_BUILD_BUILD_DIR ≠ T, a cwd outside R, `--target-dir`, `--config`, `-C…`, a foreign `--manifest-path`, then
+  forces both cargo vars. taskfile: every cargo command guarded (19 tasks), task-level `TARGET: {sh: guard --print}`
+  replaces every `${CARGO_TARGET_DIR:-…}`/`./target`, bench:representative's CLI_ARGS bug fixed, docs:schemas and
+  goreleaser guarded, `test:guard`; CI rust-cache `cache-targets: false` + `task test:guard` on three OSes; the
+  pre-staged zsh suite deleted for scripts/tests/test_target_guard.py (34 tests incl. races and a 43-task taskfile
+  audit). Gates: fmt 0, lint:actions 0, test:guard 0, `task lint` 0 (through the guard), build:helmsweep 0,
+  `task test` 0 (1616); red 33 failures against main's taskfile. Not run: lint:fc (ordered now), test:integration,
+  Windows. Reviews: sol/astra fresh xhigh runs (ids in codex-runs.tsv). Load 60 → the runner builder holds its
+  compiles until load < 40. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
