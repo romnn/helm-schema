@@ -6616,6 +6616,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (plan v3: 2.1 deletes nothing). Reviews: fresh sol+astra runs for each (ids in codex-runs.tsv). Runner builder →
   v6.11 (TERM window) light work; frontend builder paused. Load 16; T7 131 GB. Orchestrator.
 
+- 07:15 (Sep 29) — **explain C1 rework 1: sol LAND, astra REWORK (one P2).** (`review-explain-c1-rework1-{sol,astra}.md`).
+  Both re-verified byte identity (202 fixtures = base) and the battery record; the `"null"` quoting, the `#[path]`
+  example inclusion and the synthetic skipped-overlay test are accepted. astra P2: the re-entry guard checks only
+  the requested cache's initializing thread, so a callback on a thread initializing `resolved` that calls
+  `generated_schema` while another thread holds `generated` and waits on `resolved` deadlocks (session.rs:175/:288);
+  rule: a thread initializing phase P must not request any phase ≥ P → typed error before blocking. P3: CLAUDE.md
+  and the acceptance-battery skill still describe the deleted fixture fallback → fixed in the candidate. →
+  `brief-explain-c1-rework2.md` (E8–E9). Landing 7 stays staged (`round8-landing7`, landing-7.env) and will be
+  re-cherry-picked from the rework-2 HEAD. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
