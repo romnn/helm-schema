@@ -6806,6 +6806,22 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Re-checks: sol 84f4a917 / astra e0604b5e turn 3. Two follow_up calls earlier blocked ~2 h (16:52 → 18:57);
   timestamps corrected. Orchestrator.
 
+- 19:05 (Sep 29) — **Frontend 2.1: LAND from both; landing 8 launched. k8s rework 6 handed back; fresh reviews.**
+  Frontend 2.1 rework 2 re-checks (`review-frontend-phase21-rework2-{sol,astra}.md`): LAND, no remaining findings
+  (sol compared `reads_as_number` with go-yaml v2's resolver). Landing 8 = `round8-landing8` branch landing-8 = main
+  58bf21a3+ + the seven frontend-phase2 commits (e2fcde05..a4b0a195 cherry-picked; tip 85605710), env
+  `landing-8.env` (693f581; own TARGET), chain launched 19:01 (dump holds the lock); expected 0 fixture moves.
+  Disk: `round8-landing7-target` (+ its `.owner`) and `round8-explain-target` removed after the merge (68 GB free
+  before). k8s rework 6: `k8s-rebase` rebased onto main 58bf21a3, HEAD 0d089cb2 (`final-v7.patch` = `git diff
+  58bf21a3 HEAD`, 75 files, sha256 45497348…): K14 empty-redefinition rule, the apiVersion arm keeps its kind (kps
+  v1 arm pairs with the Prometheus CRD), F13 + F5 roster rows with evidence, K15 chart-local CRDs in the validator
+  (test-only, content-keyed cache), and an UNBRIEFED sixth commit 0d089cb2 in scalar_preimage.rs (a string field
+  with only `minLength ≤ 1` also accepts a Go-formatted map and `text # comment`; 15 more fixtures move, all matched
+  loosenings) — flagged to the reviewers as W4's territory with a possible conflict against W4 rework 7's comment
+  handling. Live battery: 7982 adjudicated, unmatched = nacos ×8 only, 0 unrostered false acceptances, both new
+  rows observed; stale spinnaker row noted. Reviews: fresh sol/astra runs (the rework-5 runs expired at 15:35).
+  Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
