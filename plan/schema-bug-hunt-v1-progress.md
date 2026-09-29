@@ -6626,6 +6626,27 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `brief-explain-c1-rework2.md` (E8–E9). Landing 7 stays staged (`round8-landing7`, landing-7.env) and will be
   re-cherry-picked from the rework-2 HEAD. Orchestrator.
 
+- 07:45 (Sep 29) — **Six answers: runner v6.10 LAND (merged); guard rework 2 REWORK; frontend 2.1 REWORK; cell_matrix
+  commit 1 LAND / commit 2 REWORK.** (1) v6.10 rework 1 LAND from both → merged (7664af0); run-all with
+  GUARD_SRC = `guard-src-v3/target-guard.py` running (`run-all-after-v610-merge.log`; a first launch pointed
+  GUARD_SRC at the guard clone, which is checked out on cell-matrix and has no guard script → killed and relaunched
+  with the snapshot, whose sha equals the target-guard branch's script). The TERM window is non-blocking (reaped as
+  abandoned by the next begin); v6.11 stays small. (2) Guard rework 2 (`review-target-guard-rework2-{sol,astra}.md`):
+  `env.override` not scanned (both), cargo aliases (`[alias]`, `CARGO_ALIAS_*`) bypass both checks, grouped short
+  options (`-vC /foreign`, `-vZ … fc`), `--manifest-path` read after a bare `--` for fc, two tests unconditional on
+  POSIX → `brief-target-guard-rework3.md` (G5–G9). (3) Frontend 2.1 (`review-frontend-phase21-{sol,astra}.md`): an
+  empty hole removes a flow-sequence element while `Known`; literal `decoded` uses serde_yaml's dialect (Helm's
+  fromYaml gives yes/on→true, 010→8, `y:`→"true"); `block` treated as its default body though a `define` wins; merge
+  keys bypass; unbound source string; missing skeleton byte bound; Overflow-product note for 2.2 →
+  `brief-frontend-phase21-rework1.md` (P1–P7). (4) cell_matrix (`review-cell-matrix-{sol,astra}.md`): commit 1
+  LAND from both (harness move preserves the battery: env names, evidence layout, `helm-invocation/v3`, pool
+  defaults; M1–M7 audited pass) → DECISION: lands with landing 7 beside explain C1; commit 2 REWORK: the recipe
+  passes one dir to both `--crd-catalog-cache-dir` and `--crd-override-dir` (real CLI exits 3; fake-generator tests
+  missed it), explicit-version cells refused by the battery's kubeVersion selection, three-version semantics
+  unlabelled, relative bin/bundle paths after chdir, bundle digest gap during generation, manifest gaps and no
+  `--check` preflight, scratch-path diagnostics and comment-only `valid`, scratch root, timeouts, claimed coverage
+  absent → `brief-cell-matrix-rework1.md` (C1–C10). Disk 124 GB; load 28. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
