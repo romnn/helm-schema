@@ -472,6 +472,11 @@ fn tags_aliases_and_parse_errors_are_uncertain() -> eyre::Result<()> {
         arm [p0] "a: [1,\nb: 2\n"
           uncertain Parse
     "#});
+    // A tagged block scalar abstains like a tagged plain one.
+    sim_assert_eq!(have: layouts("a: !!str |-\n  1\n", &UnknownShapes)?, want: indoc! {r#"
+        arm [p0] "a: !!str |-\n  1\n"
+          uncertain TagOrAlias
+    "#});
     Ok(())
 }
 
@@ -511,6 +516,471 @@ fn block_headers_decode_style_chomping_and_indentation() -> eyre::Result<()> {
           block n10 BlockHeader { folded: false, chomping: Clip, indentation: None }
           block n13 BlockHeader { folded: true, chomping: Keep, indentation: Some(1) }
           decoded {"a":"  x","b":"y\n\n","c":"z\n","d":"w\n"}
+    "#});
+    Ok(())
+}
+
+/// `inline-else/helm/{inline,own,trim}` (Helm 4.2.3, `phase2/helm/cells.log`): the else written
+/// mid-line, on its own line, or trimmed renders `key: H` / `key: none` alike, so all three
+/// spellings own the same arms.
+#[test]
+fn inline_own_and_trim_cells_render_the_same_arms() -> eyre::Result<()> {
+    let want = indoc! {r#"
+    arm [p0 p1 p2 p4] "data:\n  key: h2\n"
+      Document[0..3]
+        Mapping[0..3]
+          Pair[0..3]
+            Scalar(Plain)[0..0]
+            Mapping[1..3]
+              Pair[1..2]
+                Scalar(Plain)[1..1]
+                Scalar(Plain)[2..2]
+    arm [p0 p3 p4] "data:\n  key: none\n"
+      Document[0..2]
+        Mapping[0..2]
+          Pair[0..2]
+            Scalar(Plain)[0..0]
+            Mapping[1..2]
+              Pair[1..1]
+                Scalar(Plain)[1..1]
+                Scalar(Plain)[1..1]
+      decoded {"data":{"key":"none"}}
+    "#};
+    for source in [
+        indoc! {r"
+            data:
+            {{- if .Values.flag }}
+              key: {{ .Values.x }}{{else}}
+              key: none{{end}}
+        "},
+        indoc! {r"
+            data:
+            {{- if .Values.flag }}
+              key: {{ .Values.x }}
+            {{- else }}
+              key: none
+            {{- end }}
+        "},
+        indoc! {r"
+            data:
+            {{- if .Values.flag }}
+              key: {{ .Values.x }}{{- else }}
+              key: none{{- end }}
+        "},
+    ] {
+        sim_assert_eq!(have: layouts(source, &ScalarShapes)?, want: want);
+    }
+    Ok(())
+}
+
+/// `inline-else/helm/with`: an `if`/`else` inside `with` renders three arms; an empty `cfg`
+/// renders `data:` alone, which Helm decodes to `data: null`.
+#[test]
+fn with_cell_layouts() -> eyre::Result<()> {
+    let source = indoc! {r"
+        data:
+        {{- with .Values.cfg }}
+        {{- if .flag }}
+          key: {{ .x }}{{else}}
+          key: none{{end}}
+        {{- end }}
+    "};
+    sim_assert_eq!(have: layouts(source, &ScalarShapes)?, want: indoc! {r#"
+        arm [p0 p1 p2 p4] "data:\n  key: h2\n"
+          Document[0..3]
+            Mapping[0..3]
+              Pair[0..3]
+                Scalar(Plain)[0..0]
+                Mapping[1..3]
+                  Pair[1..2]
+                    Scalar(Plain)[1..1]
+                    Scalar(Plain)[2..2]
+        arm [p0 p3 p4] "data:\n  key: none\n"
+          Document[0..2]
+            Mapping[0..2]
+              Pair[0..2]
+                Scalar(Plain)[0..0]
+                Mapping[1..2]
+                  Pair[1..1]
+                    Scalar(Plain)[1..1]
+                    Scalar(Plain)[1..1]
+          decoded {"data":{"key":"none"}}
+        arm [p0 p4] "data:\n"
+          Document[0..1]
+            Mapping[0..1]
+              Pair[0..0]
+                Scalar(Plain)[0..0]
+          decoded {"data":null}
+    "#});
+    Ok(())
+}
+
+/// `inline-else/helm/{elseif,elseif-own}`: one arm per branch of the chain (`H`, `Z`, `none`),
+/// whether each `else if` is written mid-line or on its own line.
+#[test]
+fn elseif_and_elseif_own_cells_render_the_same_arms() -> eyre::Result<()> {
+    let want = indoc! {r#"
+    arm [p0 p1 p2 p6] "data:\n  key: h2\n"
+      Document[0..3]
+        Mapping[0..3]
+          Pair[0..3]
+            Scalar(Plain)[0..0]
+            Mapping[1..3]
+              Pair[1..2]
+                Scalar(Plain)[1..1]
+                Scalar(Plain)[2..2]
+    arm [p0 p3 p4 p6] "data:\n  key: h2\n"
+      Document[0..3]
+        Mapping[0..3]
+          Pair[0..3]
+            Scalar(Plain)[0..0]
+            Mapping[1..3]
+              Pair[1..2]
+                Scalar(Plain)[1..1]
+                Scalar(Plain)[2..2]
+    arm [p0 p5 p6] "data:\n  key: none\n"
+      Document[0..2]
+        Mapping[0..2]
+          Pair[0..2]
+            Scalar(Plain)[0..0]
+            Mapping[1..2]
+              Pair[1..1]
+                Scalar(Plain)[1..1]
+                Scalar(Plain)[1..1]
+      decoded {"data":{"key":"none"}}
+    "#};
+    for source in [
+        indoc! {r"
+            data:
+            {{- if .Values.a }}
+              key: {{ .Values.x }}{{else if .Values.b}}
+              key: {{ .Values.z }}{{else}}
+              key: none{{end}}
+        "},
+        indoc! {r"
+            data:
+            {{- if .Values.a }}
+              key: {{ .Values.x }}
+            {{- else if .Values.b }}
+              key: {{ .Values.z }}
+            {{- else }}
+              key: none
+            {{- end }}
+        "},
+    ] {
+        sim_assert_eq!(have: layouts(source, &ScalarShapes)?, want: want);
+    }
+    Ok(())
+}
+
+/// `inline-else/helm/range`: the `range` body repeats a value-dependent number of times, so it
+/// claims no layout until 3.1.
+#[test]
+fn range_cell_is_uncertain() -> eyre::Result<()> {
+    let source = indoc! {r"
+        data:
+        {{- range .Values.items }}
+        {{- if .flag }}
+          key-{{ .name }}: {{ .x }}{{else}}
+          none-{{ .name }}: none{{end}}
+        {{- end }}
+    "};
+    sim_assert_eq!(have: layouts(source, &ScalarShapes)?, want: indoc! {r"
+        body Uncertain(Range)
+    "});
+    Ok(())
+}
+
+/// `two-ends`: two regions closing on one line; the taken arm is `key: H-suffix`, and every other
+/// arm renders `-suffix` under `data:`, which Helm also refuses to parse.
+#[test]
+fn two_ends_cell_layouts() -> eyre::Result<()> {
+    let source = indoc! {r"
+        data:
+        {{if .Values.a}}{{if .Values.b}}
+          key: {{ .Values.x }}{{end}}{{end}}-suffix
+    "};
+    sim_assert_eq!(have: layouts(source, &ScalarShapes)?, want: indoc! {r#"
+        arm [p0 p1 p2 p3] "data:\n\n  key: h2-suffix\n"
+          Document[0..3]
+            Mapping[0..3]
+              Pair[0..3]
+                Scalar(Plain)[0..0]
+                Mapping[1..3]
+                  Pair[1..3]
+                    Scalar(Plain)[1..1]
+                    Scalar(Plain)[2..3]
+        arm [p0 p3] "data:\n-suffix\n"
+          uncertain Parse
+    "#});
+    Ok(())
+}
+
+/// `opens-and-closes`: a region opened and closed inside one value renders the value alone in
+/// each arm; the key stays in the shared literal.
+#[test]
+fn opens_and_closes_cell_layouts() -> eyre::Result<()> {
+    let source = indoc! {r"
+        data:
+          key: {{if .Values.flag}}{{ .Values.x }}{{else}}none{{end}}
+    "};
+    sim_assert_eq!(have: layouts(source, &ScalarShapes)?, want: indoc! {r#"
+        arm [p0 p1 p3] "data:\n  key: h1\n"
+          Document[0..2]
+            Mapping[0..2]
+              Pair[0..2]
+                Scalar(Plain)[0..0]
+                Mapping[0..2]
+                  Pair[0..1]
+                    Scalar(Plain)[0..0]
+                    Scalar(Plain)[1..1]
+        arm [p0 p2 p3] "data:\n  key: none\n"
+          Document[0..2]
+            Mapping[0..2]
+              Pair[0..2]
+                Scalar(Plain)[0..0]
+                Mapping[0..2]
+                  Pair[0..1]
+                    Scalar(Plain)[0..0]
+                    Scalar(Plain)[1..1]
+          decoded {"data":{"key":"none"}}
+    "#});
+    Ok(())
+}
+
+/// `nested-inline`: a region nested inline in another's consequence renders one arm per reachable
+/// branch (`H`, `a`, `none`).
+#[test]
+fn nested_inline_cell_layouts() -> eyre::Result<()> {
+    let source = indoc! {r"
+        data:
+          key: {{if .Values.a}}{{if .Values.b}}{{ .Values.x }}{{else}}a{{end}}{{else}}none{{end}}
+    "};
+    sim_assert_eq!(have: layouts(source, &ScalarShapes)?, want: indoc! {r#"
+        arm [p0 p1 p4] "data:\n  key: h1\n"
+          Document[0..2]
+            Mapping[0..2]
+              Pair[0..2]
+                Scalar(Plain)[0..0]
+                Mapping[0..2]
+                  Pair[0..1]
+                    Scalar(Plain)[0..0]
+                    Scalar(Plain)[1..1]
+        arm [p0 p2 p4] "data:\n  key: a\n"
+          Document[0..2]
+            Mapping[0..2]
+              Pair[0..2]
+                Scalar(Plain)[0..0]
+                Mapping[0..2]
+                  Pair[0..1]
+                    Scalar(Plain)[0..0]
+                    Scalar(Plain)[1..1]
+          decoded {"data":{"key":"a"}}
+        arm [p0 p3 p4] "data:\n  key: none\n"
+          Document[0..2]
+            Mapping[0..2]
+              Pair[0..2]
+                Scalar(Plain)[0..0]
+                Mapping[0..2]
+                  Pair[0..1]
+                    Scalar(Plain)[0..0]
+                    Scalar(Plain)[1..1]
+          decoded {"data":{"key":"none"}}
+    "#});
+    Ok(())
+}
+
+/// `flow`: a region inside a flow mapping keeps the mapping in every arm (`{key: H}`,
+/// `{key: none}`).
+#[test]
+fn flow_cell_layouts() -> eyre::Result<()> {
+    let source = indoc! {r"
+        data: {key: {{if .Values.flag}}{{ .Values.x }}{{else}}none{{end}}}
+    "};
+    sim_assert_eq!(have: layouts(source, &ScalarShapes)?, want: indoc! {r#"
+        arm [p0 p1 p3] "data: {key: h1}\n"
+          Document[0..2]
+            Mapping[0..2]
+              Pair[0..2]
+                Scalar(Plain)[0..0]
+                FlowMapping[0..2]
+                  FlowPair[0..1]
+                    Scalar(Plain)[0..0]
+                    Scalar(Plain)[1..1]
+        arm [p0 p2 p3] "data: {key: none}\n"
+          Document[0..2]
+            Mapping[0..2]
+              Pair[0..2]
+                Scalar(Plain)[0..0]
+                FlowMapping[0..2]
+                  FlowPair[0..1]
+                    Scalar(Plain)[0..0]
+                    Scalar(Plain)[1..1]
+          decoded {"data":{"key":"none"}}
+    "#});
+    Ok(())
+}
+
+/// `yaml-comment`: YAML comments belong to the arm that renders them (` # set` beside the value,
+/// `# unset` on its own line).
+#[test]
+fn yaml_comment_cell_layouts() -> eyre::Result<()> {
+    let source = indoc! {r"
+        data:
+        {{if .Values.flag}}
+          key: {{ .Values.x }} # set{{else}}
+          # unset
+          key: none{{end}}
+    "};
+    sim_assert_eq!(have: layouts(source, &ScalarShapes)?, want: indoc! {r#"
+        arm [p0 p1 p2 p3 p5] "data:\n\n  key: h2 # set\n"
+          Document[0..4]
+            Mapping[0..4]
+              Pair[0..4]
+                Scalar(Plain)[0..0]
+                Mapping[1..4]
+                  Pair[1..2]
+                    Scalar(Plain)[1..1]
+                    Scalar(Plain)[2..2]
+                  Comment[3..3]
+        arm [p0 p4 p5] "data:\n\n  # unset\n  key: none\n"
+          Document[0..2]
+            Mapping[0..2]
+              Pair[0..2]
+                Scalar(Plain)[0..0]
+                Comment[1..1]
+                Mapping[1..2]
+                  Pair[1..1]
+                    Scalar(Plain)[1..1]
+                    Scalar(Plain)[1..1]
+          decoded {"data":{"key":"none"}}
+    "#});
+    Ok(())
+}
+
+/// `trailing-comment`: the comment after `{{end}}` is in every arm; with the region skipped it
+/// is all that follows `data:`, which Helm renders as `data: null`.
+#[test]
+fn trailing_comment_cell_layouts() -> eyre::Result<()> {
+    let source = indoc! {r"
+        data:
+        {{if .Values.flag}}
+          key: {{ .Values.x }}{{end}} # trailing
+    "};
+    sim_assert_eq!(have: layouts(source, &ScalarShapes)?, want: indoc! {r#"
+        arm [p0 p1 p2 p3] "data:\n\n  key: h2 # trailing\n"
+          Document[0..3]
+            Mapping[0..3]
+              Pair[0..3]
+                Scalar(Plain)[0..0]
+                Mapping[1..3]
+                  Pair[1..2]
+                    Scalar(Plain)[1..1]
+                    Scalar(Plain)[2..2]
+                  Comment[3..3]
+        arm [p0 p3] "data:\n # trailing\n"
+          Document[0..1]
+            Mapping[0..1]
+              Pair[0..0]
+                Scalar(Plain)[0..0]
+              Comment[1..1]
+          decoded {"data":null}
+    "#});
+    Ok(())
+}
+
+/// `template-comment`: template comments render nothing, in either arm or after `{{end}}`.
+#[test]
+fn template_comment_cell_layouts() -> eyre::Result<()> {
+    let source = indoc! {r"
+        data:
+        {{if .Values.flag}}
+          key: {{ .Values.x }}{{/* the value */}}{{else}}
+          key: none{{end}}{{/* done */}}
+    "};
+    sim_assert_eq!(have: layouts(source, &ScalarShapes)?, want: indoc! {r#"
+        arm [p0 p1 p2 p4] "data:\n\n  key: h2\n"
+          Document[0..3]
+            Mapping[0..3]
+              Pair[0..3]
+                Scalar(Plain)[0..0]
+                Mapping[1..3]
+                  Pair[1..2]
+                    Scalar(Plain)[1..1]
+                    Scalar(Plain)[2..2]
+        arm [p0 p3 p4] "data:\n\n  key: none\n"
+          Document[0..2]
+            Mapping[0..2]
+              Pair[0..2]
+                Scalar(Plain)[0..0]
+                Mapping[1..2]
+                  Pair[1..1]
+                    Scalar(Plain)[1..1]
+                    Scalar(Plain)[1..1]
+          decoded {"data":{"key":"none"}}
+    "#});
+    Ok(())
+}
+
+/// An opener whose condition spans lines and a closer split across lines trim and branch like
+/// their one-line spellings.
+#[test]
+fn multiline_actions_render_like_single_line_ones() -> eyre::Result<()> {
+    let source = indoc! {r"
+        data:
+        {{- if and
+              .Values.a
+              .Values.b }}
+          key: {{ .Values.x }}
+        {{- end
+        }}
+    "};
+    sim_assert_eq!(have: layouts(source, &ScalarShapes)?, want: indoc! {r#"
+        arm [p0 p1 p2 p3] "data:\n  key: h2\n"
+          Document[0..3]
+            Mapping[0..3]
+              Pair[0..3]
+                Scalar(Plain)[0..0]
+                Mapping[1..3]
+                  Pair[1..2]
+                    Scalar(Plain)[1..1]
+                    Scalar(Plain)[2..2]
+        arm [p0 p3] "data:\n"
+          Document[0..1]
+            Mapping[0..1]
+              Pair[0..0]
+                Scalar(Plain)[0..0]
+          decoded {"data":null}
+    "#});
+    Ok(())
+}
+
+/// A `---` indented inside a block scalar is content; at column zero it starts the next document.
+/// Helm's manifest splitter also needs the marker right after a line break.
+#[test]
+fn document_markers_split_only_at_column_zero() -> eyre::Result<()> {
+    let source = indoc! {r"
+        a: |
+          ---
+          x
+        ---
+        b: 1
+    "};
+    sim_assert_eq!(have: layouts(source, &UnknownShapes)?, want: indoc! {r#"
+        arm [p0] "a: |\n  ---\n  x\n---\nb: 1\n"
+          Document[0..0]
+            Mapping[0..0]
+              Pair[0..0]
+                Scalar(Plain)[0..0]
+                BlockScalar[0..0]
+          Document[0..0]
+            Mapping[0..0]
+              Pair[0..0]
+                Scalar(Plain)[0..0]
+                Scalar(Plain)[0..0]
+          block n4 BlockHeader { folded: false, chomping: Clip, indentation: None }
+          decoded {"a":"---\nx\n"}
+          decoded {"b":1}
     "#});
     Ok(())
 }
