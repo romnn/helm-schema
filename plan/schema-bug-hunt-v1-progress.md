@@ -7030,6 +7030,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   null override (K17 semantics violated) → `brief-w1-rework7.md`, builder redirected. Landing 9 waits for F1 rework
   6. Disk 146 GB after the guard targets; load ~17. Orchestrator.
 
+- 01:30 (Sep 30) — **F1 rework 6 handed back (aebc91bd; identity deleted, harness −126 LOC) with a design conflict;
+  decision: drop R18(a).** The builder implemented R18 as briefed and found the nacos witness declined ×8: every
+  schema (baseline f7be7ba5, assert and annotate regenerations) rejects nacos' own defaults at `service.ports`
+  (main's defect that W4 R25 fixes), so (a) "baseline accepts" fails and (c) fails too. Orchestrator decision: the
+  attribution question is why the CANDIDATE rejects, which (c) annotate-accepts-outright answers completely
+  whatever the baseline rejected for; so (a) is dropped and both-reject flips are attributable — this is also what
+  the k8s landing's 8 nacos cells need after W4 lands. The witness must isolate the mechanism: witness chart copy
+  with an accepted `service.ports` default (Helm-verified) → 8 cells attributed; one original-defaults cell kept as
+  the "declined while an unrelated rejection remains" control. Builder resumed (rework 6b, test-only). Deliverables
+  so far: `final-v7.patch` sha256 e8990a27…, gates-v7-final green apart from the 5 promotion rows, R20 controls
+  (minContains, tuple limits, propertyNames, closed objects, `$ref` rename) all with Helm renders; the builder also
+  added (b) "the candidate IS the assert regeneration (JSON-equal)". Landing 9 waits for the re-check. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
