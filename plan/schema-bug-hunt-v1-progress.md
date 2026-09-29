@@ -6377,6 +6377,26 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   builder messaged. Load 42 (W1 unit suite, k8s integration, F1 live battery, W4 dump+suite); T7 128 GB. No new
   builder until a hand-back. Orchestrator.
 
+- 02:32 (Sep 29) — **F1 handed back as a landing candidate; reviews dispatched; explain C1 builder started.** F1 =
+  clone `round8-f1` branch f1-global-policy HEAD a967bdac on cb42c017 (clean rebase); `round8-f1-evidence/final.patch`
+  sha256 62e32f61…, handoff.md 52 lines. Builder report: every discovered dependency prefix registered
+  (collection.rs:83-91; `ValuesRoots.top_level_mapping_paths` deleted), `global_consumed` counts registrations
+  (Helm aborts on `--set global=5` / `global: null` for an alias `global`), `global` reserved after default backfill;
+  NEW beyond the brief: a dependency root without a parent default rejects null (Helm 4.2.3 "type mismatch on kid";
+  input_channels.rs:64) and the vacuous `allOf [{}, {type: object}]` arms are removed; policy vocabulary v2; the gate
+  size check measures the shortened bytes. Matrix 29 cells, 0 violations, main falsely rejects 11 cells Helm renders;
+  new CLI accepts all rendering cells except d5/g3 (F73 root closure, render with `--open-root`). Gates: fmt/lint/
+  lint:fc/ast-grep 0; nextest workspace exit 100 with ONLY `fixture_verdicts` failing on 5 "unexpected fix" rows
+  attributed to landed F23-4f (cilium ×3 → F69, okteto Unfiled, promtail F54; `unexpected-fix/README.md`); dump+verify
+  0; chart_corpus 141/159 mismatches = 158 moved fixtures (`gates/moved-fixtures.tsv`, none adopted); live battery
+  against the roster baseline PASS (8007 flips all matched, rosters exact); tokei +315. Not run: test:integration
+  full, test:all, luup2. Reviews: sol 84f4a917 / astra e0604b5e (fresh xhigh; asked to verify the null-rejecting
+  dependency-root rule against Helm incl. aliased/nested/condition-disabled/library deps, probe the 158 moved
+  fixtures for false rejections, confirm d5/g3 = F73, and adjudicate the 5 promotion rows). Catalog promotion of the
+  5 rows is a landing-assembly commit once both reviewers confirm. F1's slot freed → explain C1 builder spawned
+  (fresh clone `round8-explain`, own target, `brief-explain-c1.md`). Heavy now: W1 unit suite, k8s integration, W4
+  dump+suite, explain build; load 24; T7 122 GB. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
