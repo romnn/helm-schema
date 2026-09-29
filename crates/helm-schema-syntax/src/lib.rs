@@ -58,5 +58,8 @@ pub use rendered::{
     BodyLayout, BranchChoice, HoleShape, HoleShapes, LayoutUncertainty, MAX_LAYOUT_STATES,
     Occurrence, PieceId, RenderedArm, RenderedBody, RenderedPiece, UnknownShapes, render_body,
 };
-pub use yaml::parse_yaml;
+pub use yaml::{
+    ArmLayout, BlockHeader, BlockScalarOwnership, Chomping, ScalarStyle, Skeleton, SkeletonSegment,
+    YamlNode, YamlNodeKind, YamlOwnership, arm_layout, parse_yaml,
+};
 pub use yaml_scan::{parse_yaml_key, structural_mapping_colon, unquote_yaml_scalar};
