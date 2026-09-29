@@ -6446,6 +6446,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Windows. Reviews: sol/astra fresh xhigh runs (ids in codex-runs.tsv). Load 60 → the runner builder holds its
   compiles until load < 40. Orchestrator.
 
+- 03:30 (Sep 29) — **Eight answers (1/2): runner v6.9 LAND and merged; F1 sol LAND / astra REWORK (confirmed false
+  rejection).** (1) v6.9 rework 1: LAND from both (`review-runner-v69-rework1-{sol,astra}.md`; no remaining
+  findings, no dangling migrate-target reference, marker bytes match the v3 design) → runner-v6.9 (61efdfa9) merged
+  into the runner repo (no chain running); run-all in the background
+  (`round8-runner-evidence/run-all-after-v69-merge.log`). Landing 7 onward uses the `<TARGET>.owner/` layout.
+  (2) F1 (`review-f1-{sol,astra}.md`): sol LAND (Helm cells rerun: undeclared alias roots reject null and scalars,
+  `kid: {}` renders `--set kid=null`, nested/condition-disabled/library deps reject null, alias `global` g4/g5 abort
+  g6 renders; d5/g3 = F73; the 5 promotions confirmed by both from 9813acac→83247085 + Helm). astra REWORK P1:
+  Helm coalesces before pruning disabled dependencies, so a null beneath a pruned ancestor survives and renders —
+  openebs `loki.enabled=false, engines.replicated.mayastor.enabled=false, mayastor.loki.minio=null` and oncall
+  `prometheus.enabled=false, prometheus.alertmanager=null` render, main accepts, candidate REJECTS (a false
+  rejection; blocks landing). P2 verdict-only consumer tests; sol: the g5/g6 test explanation and a missing
+  `kid: null` parent cell (sol and astra disagree on its Helm verdict → builder pins it). Representation: typed
+  prefix → string → ValuesPath round trip, parallel `dependency_roots`/`chart_roots`, +315 LOC. →
+  `brief-f1-rework1.md` (R1–R5), F1 builder resumed. Disk: T7 92 GB free (−30 GB/h) → survey running.
+  Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
