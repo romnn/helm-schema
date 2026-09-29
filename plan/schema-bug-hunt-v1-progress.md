@@ -6714,6 +6714,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   THE branch (w4-main retired), patch vs cb42c017. Reviews: fresh sol/astra runs (the rework-5 runs expired).
   Process note: one gate run overlapped bisect builds; all gates re-run alone afterwards. Orchestrator.
 
+- 14:50 (Sep 29) — **explain C1: LAND from both; landing 7 chain launched.** Re-checks
+  (`review-explain-c1-rework2-{sol,astra}.md`): sol "LAND still holds" (phase order matches every initializer,
+  per-session per-thread bookkeeping, the error rename touches no landed API); astra LAND (all 202 baseline
+  comparisons and 203 v3 = v2 artifacts verified; the only P3 was the CLAUDE.md wording, applied by me in the landing
+  clone incl. the vacuous-run paragraph). Landing 7 = `round8-landing7` branch landing-7 HEAD f532bab1 = main
+  1b89d144 + explain-c1 (8 commits, b43d00c0 tip) + cell_matrix commit 1 (379de2aa → 370b46a4) + `docs:` CLAUDE.md;
+  env `landing-7.env` (b32d1ab; own TARGET, v6.10 layout). First launch refused by the strict env grammar
+  (`landing-4.env:30 LANDING_FINISHED=… (landed; target retired)` unquoted — the runner reads every env file) →
+  quoted in landing-4/5/6.env (adf9714), relaunched 14:47: lock held by the dump (pid 36547),
+  `round8-landing7-target.owner/{lock,owner,landing-owner}` created. Expected: 0 fixture moves, battery flips=0.
+  Disk: six more dormant targets removed (explain-red, frontend-f10, f6, f5, d5, the old frontend; ~23 GB; no
+  process on any); 95 GB free before. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
