@@ -29,11 +29,6 @@ impl GenerationDecisions {
         self.paths.get(path)
     }
 
-    /// Every path with recorded decisions, in path order.
-    pub fn iter(&self) -> impl Iterator<Item = (&ValuesPath, &PathGenerationDecision)> {
-        self.paths.iter()
-    }
-
     pub(crate) fn path_mut(&mut self, path: &ValuesPath) -> &mut PathGenerationDecision {
         self.paths.entry(path.clone()).or_default()
     }

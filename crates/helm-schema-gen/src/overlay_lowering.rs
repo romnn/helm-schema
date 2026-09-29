@@ -314,30 +314,18 @@ pub(crate) fn collect_conditional_schemas(
                     implication_has_self_presence_guard(implication, target_value_path)
                 })
         };
-        for (implication, implication_ref) in evidence
-            .requirement_implications
-            .iter()
-            .enumerate()
-            .map(|(index, implication)| {
-                (
-                    implication,
-                    ImplicationRef {
-                        origin: EmissionOrigin::RequirementImplication,
-                        index,
-                    },
-                )
-            })
-            .chain(synthesized.iter().enumerate().map(|(index, implication)| {
-                (
-                    implication,
-                    ImplicationRef {
-                        origin: EmissionOrigin::Backprojection,
-                        index,
-                    },
-                )
-            }))
+        for (implication, origin, index) in
+            evidence
+                .requirement_implications
+                .iter()
+                .enumerate()
+                .map(|(index, implication)| {
+                    (implication, EmissionOrigin::RequirementImplication, index)
+                })
+                .chain(synthesized.iter().enumerate().map(|(index, implication)| {
+                    (implication, EmissionOrigin::Backprojection, index)
+                }))
         {
-            let origin = implication_ref.origin;
             if is_bare_iterable_implication(implication)
                 && member_implication_covers_range_domain(
                     &evidence.requirement_implications,
@@ -454,38 +442,35 @@ pub(crate) fn collect_conditional_schemas(
             // guarded requirement. A compatible values.yaml sample does not
             // constrain states where an unrelated caller gate keeps every
             // consumer dormant.
-            let short_circuit_reason = if member_host_only && !member_host_complete_domain {
-                Some(ContainmentShortCircuit::IncompleteMemberHost)
+            let short_circuit = |short_circuit_reason| ContainmentCheck::NotEvaluated {
+                short_circuit_reason,
+            };
+            let (check, preserve_base_schema) = if member_host_only && !member_host_complete_domain
+            {
+                (
+                    short_circuit(ContainmentShortCircuit::IncompleteMemberHost),
+                    true,
+                )
             } else if implication.outer_guards.is_empty() {
-                Some(ContainmentShortCircuit::UnguardedRequirement)
+                (
+                    short_circuit(ContainmentShortCircuit::UnguardedRequirement),
+                    true,
+                )
             } else if implication_has_self_truthy_guard(implication, target_value_path) {
-                Some(ContainmentShortCircuit::SelfTruthyGuard)
+                (
+                    short_circuit(ContainmentShortCircuit::SelfTruthyGuard),
+                    false,
+                )
             } else if presence_scoped_type_arm {
-                Some(ContainmentShortCircuit::SelfPresenceTypeArm)
+                (
+                    short_circuit(ContainmentShortCircuit::SelfPresenceTypeArm),
+                    false,
+                )
             } else {
-                None
-            };
-            let check = match short_circuit_reason {
-                Some(short_circuit_reason) => ContainmentCheck::NotEvaluated {
-                    short_circuit_reason,
-                },
-                None => {
-                    structural_domain_containment(&resolved_target.structural_schema, implication)
-                }
-            };
-            let preserve_base_schema = match &check {
-                ContainmentCheck::Evaluated { contains, .. } => *contains,
-                ContainmentCheck::NotEvaluated {
-                    short_circuit_reason:
-                        ContainmentShortCircuit::IncompleteMemberHost
-                        | ContainmentShortCircuit::UnguardedRequirement,
-                } => true,
-                ContainmentCheck::NotEvaluated {
-                    short_circuit_reason:
-                        ContainmentShortCircuit::SelfTruthyGuard
-                        | ContainmentShortCircuit::SelfPresenceTypeArm
-                        | ContainmentShortCircuit::EmptyStructuralDomain,
-                } => false,
+                let check =
+                    structural_domain_containment(&resolved_target.structural_schema, implication);
+                let contains = matches!(check, ContainmentCheck::Evaluated { contains: true, .. });
+                (check, contains)
             };
             let base_effect = if !preserve_base_schema {
                 ConditionalBaseEffect::Own
@@ -498,7 +483,7 @@ pub(crate) fn collect_conditional_schemas(
                 .path_mut(target_value_path)
                 .containment_checks
                 .push(ContainmentDecision {
-                    implication: implication_ref,
+                    implication: ImplicationRef { origin, index },
                     check,
                     base_effect,
                 });
