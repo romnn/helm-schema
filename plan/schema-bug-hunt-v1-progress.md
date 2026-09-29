@@ -6787,6 +6787,25 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   guard-src-v5 exit 0. Re-checks: sol fb75bd55 / astra 46a7c5d4 turn 5. Runner builder → cell_matrix rework 2 (rebased
   onto main). Orchestrator.
 
+- 19:00 (Sep 29) — **Post-merge gates green on main 58bf21a3** (fmt 0, `task lint` 0, nextest workspace 0;
+  `round8-landing7-run1/post-merge-main.log`). **F1 rework 2 handed back on a new base; re-checks dispatched.**
+  Branch `f1-global-policy-v3` in `round8-f1`, HEAD e939ec5e on landing-7 f532bab1 (= main 58bf21a3 content) because
+  R10 uses the landed GenerationDecisions API; F1 is one squash commit 8c23d9bb (per-commit rebase conflicted;
+  series kept on `f1-rework2-pre-rebase`) + test-only commits (R10 verdict, ~20 integration expectations that still
+  expected main's schemas, lint, two policy fixtures). `final-v3.patch` sha256 6d2fa60e…. R6 child-activation guard
+  on the second-pass object requirement (Datadog now accepted), R7 terminal only for listed dependencies, R8 Helm's
+  enablement rule (boolean conditions in order, non-boolean skipped, tags), R9 typed paths through seeding. R10:
+  a new battery verdict `TighteningMatchedDeclaredTypesPolicy` (own report list; nothing rostered; unread status
+  from `AnalysisSession::explain`; nacos witness: all 8 probes matched with the `annotate` regeneration and false
+  rejections without it) with two amendments to my brief — "annotate accepts" became "annotate rejects for no reason
+  the baseline doesn't share" (nacos defaults fail `service.ports` everywhere) and the pathless seeding claim is not
+  a read — both sent to the reviewers for scrutiny. Gates 0 except fixture_verdicts (5 promotion rows) and 145
+  producer-fixture moves; dump corpus-0a0bd1de; live battery PASS (8007 matched, 0 policy attributions on this
+  tree); 156 fixtures moved, none adopted; LOC +404. Residuals on main too: the child's own schema asserts its
+  aliased dependency as root; condition/tag paths typed boolean though Helm skips non-boolean conditions.
+  Re-checks: sol 84f4a917 / astra e0604b5e turn 3. Two follow_up calls earlier blocked ~2 h (16:52 → 18:57);
+  timestamps corrected. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
