@@ -6397,6 +6397,26 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (fresh clone `round8-explain`, own target, `brief-explain-c1.md`). Heavy now: W1 unit suite, k8s integration, W4
   dump+suite, explain build; load 24; T7 122 GB. Orchestrator.
 
+- 02:45 (Sep 29) — **k8s rework 4 handed back; reviews dispatched; battery ordered on the rebased candidate.**
+  `k8s-main` HEAD c32997b8 on c816e318 (`round8-k8s-evidence/final-v5.patch`, 67 files, sha256 4bc9676e…); hand-port
+  onto cb42c017 = `k8s-rebase` HEAD e81c1074 in `round8-k8s-rebase` (`rebase/conflicts-v5.md`; arm conditions are
+  parsed TemplateExprs there; `ApiVersionArmSource` drops Eq; `collect_if_region` split) = the landing candidate.
+  Items: K5 Masterminds partial/wildcard bounds (48 Helm semverCompare cells as the table; concrete-vs-regex grid),
+  K6 "may emit nothing" tracked through nested chains (a live arm never falls through to its else), K4 apiVersion
+  arms as ordinary row branches + `map_value_paths` scoping (fixes the parent `ingress.enabled` leak; Open WebUI 40
+  cells v5 = main, 4 e2e4d0b9 false rejections fixed), K7 not done (follow-up with the ResourceRef→IR carrier).
+  Gates c32997b8: fmt/lint/lint:fc/ast-grep 0, unit 1606/1606, integration 102 fixture-move failures; e81c1074: fmt 0,
+  lint 0, unit 1635/1635, same 102; lint:fc/ast-grep/dump/battery not run. LOC +1,007. Corpus: open_webui passes;
+  **grafana moves and loosens** (PDB helper's first arm renders `.Values.podDisruptionBudget.apiVersion` → chain
+  Undecided → PDB contract abstains; follow-up R1 conditional contract for helper-internal values-guarded arms);
+  jira/graylog move via K4 scoping (28 cells unchanged). Builder note: `git rebase --abort` was denied by the
+  permission system; it resolved the rebase commit by commit instead (no workaround). Reviews: sol 3677d240 / astra
+  e1cee4f7 follow-ups (asked: Masterminds boundary cells, K6 empty-arm shapes, whether the grafana loosening is a
+  candidate-introduced false acceptance, K4 aliased/nested/global scoping, hand-port drift, decision (b) cells).
+  Builder ordered to run lint:fc/ast-grep + one clean dump + schema-only and live battery on e81c1074 in its own
+  target (`battery-v5/`) per the corpus-fixtures skill. NOTE: the W1 review runs 92580cac/416b8635 (Sep 27 20:12)
+  are past the 24 h window → W1 rework 6 gets fresh runs. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
