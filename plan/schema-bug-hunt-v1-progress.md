@@ -6463,6 +6463,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `brief-f1-rework1.md` (R1–R5), F1 builder resumed. Disk: T7 92 GB free (−30 GB/h) → survey running.
   Orchestrator.
 
+- 03:40 (Sep 29) — **Eight answers (2/2): k8s rework 4 REWORK from both** (`review-k8s-rework4-{sol,astra}.md`).
+  sol P1: comma groups mishandle prereleases (`>=1.25-0, <1.26` is TRUE for 1.25.9-rc.1 in Helm — Masterminds enables
+  prereleases for the whole AND group; candidate false; the grid covers single comparators only). astra P1: R1 does
+  not preserve the contract on the real Jenkins/Argo Rollouts charts (`maxUnavailable=true` accepted by the
+  candidate, rejected by main and Kubernetes; `api_version_arms: []` through the local-variable/helper path). Both
+  P2: the grafana loosening is a demonstrated FALSE ACCEPTANCE (`maxUnavailable: true`, `unhealthyPodEvictionPolicy:
+  true` under `apiVersion: policy/v1`) — preserve the conditional contract for literal overrides and the proven empty
+  fallback, keep unknown regions open. P3s: `kind_selector` unscoped across dependencies (inherited), `~0.0.0`
+  lowering vs Helm (duplicate semver interpretation to delete), K4 alias/nested/global runtime gaps, opensearch
+  `clusterName=7` residual to label. Confirmed good: K5 single boundaries, K6 empty-emission, Open WebUI cells,
+  hand-port, decision (b) Unavailable handling. DECISION: `k8s-rebase` (on cb42c017) is now the only branch; rework
+  5 there → `brief-k8s-rework5.md` (K8–K13); the running battery on e81c1074 is kept as evidence. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
