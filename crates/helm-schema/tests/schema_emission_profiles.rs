@@ -2066,6 +2066,7 @@ fn corpus_acceptance_flips() -> eyre::Result<(usize, usize, Vec<String>, Vec<Pro
 
 fn corpus_acceptance_comparison() -> eyre::Result<AcceptanceComparison> {
     let baseline_ref = baseline_ref()?;
+    let candidate_dump = candidate_dump_dir(std::env::var_os(CANDIDATE_DUMP_VAR))?;
     let fixture_dir = test_util::workspace_testdata().join("chart-corpus-schemas");
     let mut fixture_paths = std::fs::read_dir(&fixture_dir)
         .wrap_err_with(|| format!("read {}", fixture_dir.display()))?
@@ -2094,12 +2095,11 @@ fn corpus_acceptance_comparison() -> eyre::Result<AcceptanceComparison> {
             inputs: ChartInputs::Fixture {
                 baseline_ref: baseline_ref.clone(),
                 relative_path: format!("testdata/chart-corpus-schemas/{filename}"),
-                dump_filename: format!("helm-schema.cli.chart-corpus.{chart}.schema.json"),
-                fixture_path: fixture_path.clone(),
+                candidate_path: candidate_dump
+                    .join(format!("helm-schema.cli.chart-corpus.{chart}.schema.json")),
             },
         });
     }
-    let lean_fixture_dir = test_util::workspace_testdata().join("emission-profile-schemas/lean");
     for chart in LEAN_FIXTURE_CHARTS {
         if chart_filter.is_some() {
             continue;
@@ -2111,8 +2111,9 @@ fn corpus_acceptance_comparison() -> eyre::Result<AcceptanceComparison> {
             inputs: ChartInputs::Fixture {
                 baseline_ref: baseline_ref.clone(),
                 relative_path: format!("testdata/emission-profile-schemas/lean/{filename}"),
-                dump_filename: format!("helm-schema.emission-profile.lean.{chart}.schema.json"),
-                fixture_path: lean_fixture_dir.join(&filename),
+                candidate_path: candidate_dump.join(format!(
+                    "helm-schema.emission-profile.lean.{chart}.schema.json"
+                )),
             },
         });
     }
@@ -2143,21 +2144,27 @@ fn read_schema_at_ref(reference: &str, relative_path: &str) -> eyre::Result<serd
     Ok(schema)
 }
 
-fn read_acceptance_candidate(
-    fixture_path: &std::path::Path,
-    dump_filename: &str,
-) -> eyre::Result<serde_json::Value> {
-    let candidate_path = if let Some(dir) = std::env::var_os(CANDIDATE_DUMP_VAR) {
-        std::path::PathBuf::from(dir).join(dump_filename)
-    } else {
-        eyre::ensure!(
-            !adjudicates_live(),
-            "live adjudication requires {CANDIDATE_DUMP_VAR}"
-        );
-        fixture_path.to_path_buf()
-    };
+/// The producer dump the candidate schemas come from. Every mode requires it:
+/// the committed fixtures are the candidate's own fallback, so comparing
+/// against them screens a schema against itself and proves nothing.
+fn candidate_dump_dir(value: Option<std::ffi::OsString>) -> eyre::Result<PathBuf> {
+    value.map(PathBuf::from).ok_or_else(|| {
+        eyre::eyre!(
+            "{CANDIDATE_DUMP_VAR} must name the producer dump of the candidate build; the \
+             committed fixtures are not a candidate"
+        )
+    })
+}
+
+#[test]
+fn preservation_battery_requires_candidate_dump() {
+    assert!(candidate_dump_dir(None).is_err());
+    assert!(candidate_dump_dir(Some("/dump".into())).is_ok());
+}
+
+fn read_acceptance_candidate(candidate_path: &std::path::Path) -> eyre::Result<serde_json::Value> {
     serde_json::from_str(
-        &std::fs::read_to_string(&candidate_path)
+        &std::fs::read_to_string(candidate_path)
             .wrap_err_with(|| format!("read {}", candidate_path.display()))?,
     )
     .wrap_err_with(|| format!("parse {}", candidate_path.display()))
@@ -2176,8 +2183,7 @@ enum ChartInputs {
     Fixture {
         baseline_ref: String,
         relative_path: String,
-        fixture_path: std::path::PathBuf,
-        dump_filename: String,
+        candidate_path: PathBuf,
     },
     Given {
         baseline: serde_json::Value,
@@ -2196,11 +2202,10 @@ impl ChartInputs {
             Self::Fixture {
                 baseline_ref,
                 relative_path,
-                fixture_path,
-                dump_filename,
+                candidate_path,
             } => {
                 let baseline = read_schema_at_ref(&baseline_ref, &relative_path)?;
-                let candidate = read_acceptance_candidate(&fixture_path, &dump_filename)?;
+                let candidate = read_acceptance_candidate(&candidate_path)?;
                 let defaults = read_coalesced_defaults(chart)?;
                 Ok((baseline, candidate, defaults))
             }
