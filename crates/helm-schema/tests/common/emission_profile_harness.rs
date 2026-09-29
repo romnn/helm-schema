@@ -7,6 +7,9 @@ use flate2::read::GzDecoder;
 use helm_schema::AnalysisSession;
 use helm_schema::generation::{GenerateOptions, GeneratedSchema, SchemaProfile};
 use helm_schema::provider::ProviderOptions;
+use helm_schema_json_schema_walk::{
+    SchemaTraversalContext, schema_child_context_for_keyword, try_map_schema_context,
+};
 use jsonschema::Validator;
 use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value, json};
@@ -178,26 +181,36 @@ pub(crate) struct SemanticControl {
     pub(crate) rationale: &'static str,
 }
 
-/// One violated assertion: the value it rejects and what it asserts.
+/// One violated assertion: the value it rejects, what it asserts and how it
+/// fails. Two schemas place one assertion at different locations and name
+/// its definitions differently, so the location is no part of it; the
+/// argument, the reported failure and the siblings the keyword reads are:
+/// `type: boolean` and `type: integer` at one value are two assertions, and
+/// so are two `additionalProperties: false` that reject different keys.
 #[derive(Debug)]
 pub(crate) struct ViolatedAssertion {
     /// The violating value.
     pub(crate) instance_path: jsonschema::paths::Location,
     /// The violated keyword.
     pub(crate) keyword: String,
-    /// The keyword's argument with every local `$ref` replaced by its
-    /// target. Two schemas place one assertion at different locations and
-    /// name its definitions differently, so the argument, not where it
-    /// sits, identifies the assertion: `type: boolean` and `type: integer`
-    /// at one value are two assertions.
+    /// The keyword's argument, every local `$ref` in a schema position
+    /// replaced by its target; `const` and `enum` values stay data.
     pub(crate) assertion: Value,
+    /// What the validator reports: the property `required` misses, the
+    /// keys `additionalProperties` rejects, else the offending value.
+    detail: String,
+    /// The sibling keywords the violated keyword reads: for
+    /// `additionalProperties`, the admitted property names and patterns.
+    siblings: Value,
 }
 
 impl ViolatedAssertion {
-    fn is_the_same_as(&self, other: &Self) -> bool {
+    pub(crate) fn is_the_same_as(&self, other: &Self) -> bool {
         self.instance_path.as_str() == other.instance_path.as_str()
             && self.keyword == other.keyword
             && self.assertion == other.assertion
+            && self.detail == other.detail
+            && self.siblings == other.siblings
     }
 }
 
@@ -241,11 +254,6 @@ impl ProfileSchemas {
             .into_iter()
             .filter(|violation| !baseline.iter().any(|known| known.is_the_same_as(violation)))
             .collect()
-    }
-
-    /// The chart's coalesced defaults.
-    pub(crate) fn defaults(&self) -> &Value {
-        &self.defaults
     }
 
     pub(crate) fn verdicts(&self, probe: &ProbeInstance) -> (bool, bool) {
@@ -831,7 +839,7 @@ fn synthesized_guard_witness_candidates(
 }
 
 /// The violations `validator` reports on a values document.
-fn violated_assertions(
+pub(crate) fn violated_assertions(
     validator: &Validator,
     schema: &Value,
     instance: &Value,
@@ -840,55 +848,93 @@ fn violated_assertions(
         .iter_errors(instance)
         .map(|error| {
             let location = error.schema_path().as_str();
+            let (parent, keyword_name) = location.rsplit_once('/').unwrap_or(("", location));
             let assertion = match schema.pointer(location) {
-                Some(argument) => inline_local_refs(argument, schema, &mut Vec::new()),
+                Some(argument) => inline_local_refs(
+                    argument,
+                    schema_child_context_for_keyword(keyword_name),
+                    schema,
+                    &mut Vec::new(),
+                ),
                 None => json!({ "unresolved keyword location": location }),
+            };
+            let keyword = error.kind().keyword().to_string();
+            let siblings = match (keyword.as_str(), schema.pointer(parent)) {
+                ("additionalProperties", Some(parent)) => json!({
+                    "properties": member_names(parent.get("properties")),
+                    "patternProperties": member_names(parent.get("patternProperties")),
+                }),
+                _ => Value::Null,
             };
             ViolatedAssertion {
                 instance_path: error.instance_path().clone(),
-                keyword: error.kind().keyword().to_string(),
+                detail: ViolationKey::new("", "", &error).detail,
+                keyword,
                 assertion,
+                siblings,
             }
         })
         .collect()
 }
 
-/// `value` with every local `$ref` replaced by its target in `root`; a
-/// reference already being expanded (`open`) stays a reference.
-fn inline_local_refs(value: &Value, root: &Value, open: &mut Vec<String>) -> Value {
-    match value {
-        Value::Object(members) => {
-            let mut inlined = Map::new();
-            for (key, member) in members {
-                let target = match (key.as_str(), member.as_str()) {
-                    ("$ref", Some(reference)) if !open.iter().any(|seen| seen == reference) => {
-                        reference
-                            .strip_prefix('#')
-                            .and_then(|pointer| root.pointer(pointer))
-                    }
-                    _ => None,
-                };
-                let member = match (target, member.as_str()) {
-                    (Some(target), Some(reference)) => {
-                        open.push(reference.to_string());
-                        let target = inline_local_refs(target, root, open);
-                        open.pop();
-                        target
-                    }
-                    _ => inline_local_refs(member, root, open),
-                };
-                inlined.insert(key.clone(), member);
-            }
-            Value::Object(inlined)
-        }
-        Value::Array(items) => Value::Array(
-            items
-                .iter()
-                .map(|item| inline_local_refs(item, root, open))
-                .collect(),
-        ),
-        _ => value.clone(),
+fn member_names(members: Option<&Value>) -> Vec<&str> {
+    members
+        .and_then(Value::as_object)
+        .map(|members| members.keys().map(String::as_str).collect())
+        .unwrap_or_default()
+}
+
+/// `value`, read in `context`, with every local `$ref` in a schema position
+/// replaced by its target in `root`; a reference already being expanded
+/// (`open`) stays a reference, and data (`const`, `enum`, ...) is kept.
+fn inline_local_refs(
+    value: &Value,
+    context: SchemaTraversalContext,
+    root: &Value,
+    open: &mut Vec<String>,
+) -> Value {
+    let inlined = try_map_schema_context(value, context, |value, context, _depth| {
+        Ok::<_, std::convert::Infallible>(inline_reference(value, context, root, open))
+    });
+    match inlined {
+        Ok(value) => value,
+        Err(never) => match never {},
     }
+}
+
+/// A schema whose local `$ref` resolves in `root`, with the reference
+/// replaced by its target and every sibling inlined in turn.
+fn inline_reference(
+    schema: &Value,
+    context: SchemaTraversalContext,
+    root: &Value,
+    open: &mut Vec<String>,
+) -> Option<Value> {
+    if context != SchemaTraversalContext::Schema {
+        return None;
+    }
+    let Value::Object(members) = schema else {
+        return None;
+    };
+    let reference = members.get("$ref")?.as_str()?;
+    if open.iter().any(|seen| seen == reference) {
+        return None;
+    }
+    let target = reference
+        .strip_prefix('#')
+        .and_then(|pointer| root.pointer(pointer))?;
+    open.push(reference.to_string());
+    let mut inlined = Map::new();
+    for (key, member) in members {
+        let member = if key == "$ref" {
+            inline_local_refs(target, SchemaTraversalContext::Schema, root, open)
+        } else {
+            inline_local_refs(member, schema_child_context_for_keyword(key), root, open)
+        };
+        inlined.insert(key.clone(), member);
+    }
+    open.pop();
+    Some(Value::Object(inlined))
 }
 
 fn violations(validator: &Validator, instance: &Value) -> Vec<ViolationKey> {
