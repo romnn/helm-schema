@@ -6489,6 +6489,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `brief-target-guard-rework1.md` (T1–T8, incl. runner v6.10 for T2's corpus and T7); runner builder messaged.
   Orchestrator.
 
+- 04:05 (Sep 29) — **Disk: five dormant build targets removed (~94 GB).** T7 was at 88 GB free (−30 GB/h with six
+  builders and two live batteries). Survey (`du -sg`): helm-schema/target 40, round7-f4 33, round7-f78 30,
+  w4-rebase 23, frontend-else 19, target-guard 17, k8s-rebase 17, round7-integrate 17, frontend-partial 16,
+  f1 16, round7-f9 12, explain 10, landing6 9, frontend 8, f1-red 5 (GB). Removed after `ps`/`lsof +D` showed no
+  process and no open file: `round8-frontend-else-target` (inline-else track superseded by phase 2; commit 0478b325
+  kept), `round8-frontend-partial-target` (partial-kind parked; 98cf9a8b kept), `round7-integrate/target` (landings
+  4/5, retired), `round8-landing6-target` (landing 6, retired), `round7-f4/target` (k8s-main, retired by the 03:40
+  decision; k8s-rebase has its own target). Kept: every active builder target, main's target (post-merge gates),
+  f1-red (rework reds), frontend (phase 2 paused), all evidence dirs (round8-f9-evidence 16 GB is the user's call).
+  Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
