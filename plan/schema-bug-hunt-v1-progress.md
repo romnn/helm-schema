@@ -6910,6 +6910,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   both k8s reviewers say LAND on it alone (follow-ups 55944b2d / 81dce31e). k8s waits for F1 → W4 (K16).
   Orchestrator.
 
+- 21:56 (Sep 29) — **K17: LAND ×2 alone (lands with landing 9). cell_matrix rework 2: REWORK from both.** K17
+  (`review-k8s-k17-{sol,astra}.md`): the predicate is broader than the comment (Helm also keeps propagated `global`
+  nulls) but safe because the composed document is screened and live adjudication recomposes through Helm;
+  existing reachable verdicts unchanged; the bidirectional roster gate stays exact (233 rows: 0 unlisted, 0
+  unobserved, 0 unreachable exemptions). cell_matrix (`review-cell-matrix-rework2-{sol,astra}.md`): `output_within`
+  kills only the direct child and joins the readers without a deadline (a background descendant blocks past
+  `--timeout`); an ambient `SCHEMA_HELM_INVOCATION_CACHE` bypasses `--scratch` isolation; the reviewers' sandbox
+  denies `mktemp -d` so the reviewer command could not start → `brief-cell-matrix-rework3.md` (C16–C18). The F1
+  builder delivered `promotions.patch` (5 rows in `crates/helm-schema/tests/common/family_witnesses.rs`: F69 ×3 and
+  okteto → `Fixed(Accepts)`, promtail F54 → `Fixed(Rejects)`; fixed by landed F23-4f) plus `promotions-f1.patch`
+  (9 F1 rows) for landing 9's assembly. Disk 133 GB; load 20. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
