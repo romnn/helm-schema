@@ -6524,6 +6524,9 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `round8-frontend-phase2`, own target; lands alone on its raw-byte proof per plan v3). Heavy set: W1 rework 6, W4
   rework 6, k8s battery→rework 5, F1 rework 1, frontend 2.1; guard rework light. Orchestrator.
 
+- 04:42 (Sep 29) — **Runner suite green on the merged v6.9** (b7f5c67): `tests/run-all.sh` 12/12 exit 0
+  (`round8-runner-evidence/run-all-after-v69-merge.log`). The runner is ready for landing 7. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
