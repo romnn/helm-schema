@@ -7,12 +7,9 @@ use flate2::read::GzDecoder;
 use helm_schema::AnalysisSession;
 use helm_schema::generation::{GenerateOptions, GeneratedSchema, SchemaProfile};
 use helm_schema::provider::ProviderOptions;
-use helm_schema_json_schema_walk::{
-    SchemaTraversalContext, schema_child_context_for_keyword, try_map_schema_context,
-};
 use jsonschema::Validator;
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value, json};
+use serde_json::{Map, Value};
 use test_util::helm_values::ValuesError;
 use test_util::scratch::ScratchDir;
 use vfs::VfsPath;
@@ -181,40 +178,9 @@ pub(crate) struct SemanticControl {
     pub(crate) rationale: &'static str,
 }
 
-/// One violated assertion: the value it rejects, what it asserts and the
-/// validator's complete report of how it fails. Two schemas place one
-/// assertion at different locations and name its definitions differently,
-/// so no schema location is part of it; everything the validator reports
-/// is: `type: boolean` and `type: integer` at one value are two assertions,
-/// and so are two `additionalProperties: false` rejecting different keys,
-/// two `propertyNames` rejecting different names and two `additionalItems`
-/// counting from different limits.
-#[derive(Debug)]
-pub(crate) struct ViolatedAssertion {
-    /// The violating value.
-    pub(crate) instance_path: jsonschema::paths::Location,
-    /// The violated keyword.
-    pub(crate) keyword: String,
-    /// The keyword's argument, every local `$ref` in a schema position
-    /// replaced by its target; `const` and `enum` values stay data.
-    pub(crate) assertion: Value,
-    /// The validator's report, from [`reported_failure`].
-    failure: Value,
-}
-
-impl ViolatedAssertion {
-    pub(crate) fn is_the_same_as(&self, other: &Self) -> bool {
-        self.instance_path.as_str() == other.instance_path.as_str()
-            && self.keyword == other.keyword
-            && self.assertion == other.assertion
-            && self.failure == other.failure
-    }
-}
-
 pub(crate) struct ProfileSchemas {
     full: Validator,
     lean: Validator,
-    full_schema: Value,
     lean_schema: Value,
     defaults: Value,
 }
@@ -232,25 +198,19 @@ impl ProfileSchemas {
         Ok(Self {
             full,
             lean,
-            full_schema: full_schema.clone(),
             lean_schema: lean_schema.clone(),
             defaults,
         })
     }
 
-    /// The assertions `validator`, compiled from `schema`, violates on
-    /// `instance` that the baseline does not violate there.
-    pub(crate) fn assertions_unlike_the_baseline(
-        &self,
-        validator: &Validator,
-        schema: &Value,
-        instance: &Value,
-    ) -> Vec<ViolatedAssertion> {
-        let baseline = violated_assertions(&self.full, &self.full_schema, instance);
-        violated_assertions(validator, schema, instance)
-            .into_iter()
-            .filter(|violation| !baseline.iter().any(|known| known.is_the_same_as(violation)))
-            .collect()
+    /// The candidate schema as compiled.
+    pub(crate) fn candidate_schema(&self) -> &Value {
+        &self.lean_schema
+    }
+
+    /// Whether the baseline and the candidate accept `instance` as given.
+    pub(crate) fn document_verdicts(&self, instance: &Value) -> (bool, bool) {
+        (self.full.is_valid(instance), self.lean.is_valid(instance))
     }
 
     pub(crate) fn verdicts(&self, probe: &ProbeInstance) -> (bool, bool) {
@@ -313,12 +273,6 @@ impl ProfileSchemas {
             ),
         };
         judged.into_iter().collect::<BTreeSet<_>>() == defaults.into_iter().collect()
-    }
-
-    /// The candidate's violated assertions on `instance` that the baseline
-    /// does not violate there.
-    pub(crate) fn new_candidate_assertions(&self, instance: &Value) -> Vec<ViolatedAssertion> {
-        self.assertions_unlike_the_baseline(&self.lean, &self.lean_schema, instance)
     }
 
     fn errors(&self, instance: &Value) -> (Vec<ViolationKey>, Vec<ViolationKey>) {
@@ -836,118 +790,6 @@ fn synthesized_guard_witness_candidates(
 }
 
 /// The violations `validator` reports on a values document.
-pub(crate) fn violated_assertions(
-    validator: &Validator,
-    schema: &Value,
-    instance: &Value,
-) -> Vec<ViolatedAssertion> {
-    validator
-        .iter_errors(instance)
-        .map(|error| {
-            let location = error.schema_path().as_str();
-            let keyword_name = location.rsplit('/').next().unwrap_or(location);
-            let assertion = match schema.pointer(location) {
-                Some(argument) => inline_local_refs(
-                    argument,
-                    schema_child_context_for_keyword(keyword_name),
-                    schema,
-                    &mut Vec::new(),
-                ),
-                None => json!({ "unresolved keyword location": location }),
-            };
-            ViolatedAssertion {
-                instance_path: error.instance_path().clone(),
-                keyword: error.kind().keyword().to_string(),
-                assertion,
-                failure: reported_failure(&error),
-            }
-        })
-        .collect()
-}
-
-/// Everything the validator reports about `error` except schema locations:
-/// the instance it names, and its kind with every payload (the rejected
-/// keys, the missing property, the limit, the expected value, ...). The
-/// failures a kind wraps (`anyOf`/`oneOf` branches, the rejected
-/// `propertyNames` name) are rendered the same way, since their own
-/// reports carry locations.
-fn reported_failure(error: &jsonschema::ValidationError<'_>) -> Value {
-    use jsonschema::error::ValidationErrorKind as Kind;
-    let kind = match error.kind() {
-        Kind::AnyOf { context }
-        | Kind::OneOfNotValid { context }
-        | Kind::OneOfMultipleValid { context } => {
-            let branches: Vec<Vec<Value>> = context
-                .iter()
-                .map(|branch| branch.iter().map(reported_failure).collect())
-                .collect();
-            json!({ "keyword": error.kind().keyword(), "branches": branches })
-        }
-        Kind::PropertyNames { error: name } => {
-            json!({ "keyword": "propertyNames", "name": reported_failure(name) })
-        }
-        other => json!(format!("{other:?}")),
-    };
-    json!({
-        "instance_path": error.instance_path().as_str(),
-        "instance": error.instance().as_ref(),
-        "kind": kind,
-    })
-}
-
-/// `value`, read in `context`, with every local `$ref` in a schema position
-/// replaced by its target in `root`; a reference already being expanded
-/// (`open`) stays a reference, and data (`const`, `enum`, ...) is kept.
-fn inline_local_refs(
-    value: &Value,
-    context: SchemaTraversalContext,
-    root: &Value,
-    open: &mut Vec<String>,
-) -> Value {
-    let inlined = try_map_schema_context(value, context, |value, context, _depth| {
-        Ok::<_, std::convert::Infallible>(inline_reference(value, context, root, open))
-    });
-    match inlined {
-        Ok(value) => value,
-        Err(never) => match never {},
-    }
-}
-
-/// A schema whose local `$ref` resolves in `root`, with the reference
-/// replaced by its target and every sibling inlined in turn.
-fn inline_reference(
-    schema: &Value,
-    context: SchemaTraversalContext,
-    root: &Value,
-    open: &mut Vec<String>,
-) -> Option<Value> {
-    if context != SchemaTraversalContext::Schema {
-        return None;
-    }
-    let Value::Object(members) = schema else {
-        return None;
-    };
-    let reference = members.get("$ref")?.as_str()?;
-    if open.iter().any(|seen| seen == reference) {
-        return None;
-    }
-    let target = reference
-        .strip_prefix('#')
-        .and_then(|pointer| root.pointer(pointer))?;
-    open.push(reference.to_string());
-    let mut inlined = Map::new();
-    for (key, member) in members {
-        let member = if key == "$ref" {
-            inline_local_refs(target, SchemaTraversalContext::Schema, root, open)
-        } else {
-            inline_local_refs(member, schema_child_context_for_keyword(key), root, open)
-        };
-        inlined.insert(key.clone(), member);
-    }
-    open.pop();
-    Some(Value::Object(inlined))
-}
-
 fn violations(validator: &Validator, instance: &Value) -> Vec<ViolationKey> {
     validator
         .iter_errors(instance)
