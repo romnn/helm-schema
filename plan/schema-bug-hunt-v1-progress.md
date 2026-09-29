@@ -6520,6 +6520,10 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   battery flips=0 (160 charts, 270,470 probes). LOC +721 prod (budget 700–1,100), test ≈ +600. Reviews: sol
   e48030f1 turn 5 / astra 11bf8beb turn 3 (follow-ups on the design runs). Orchestrator.
 
+- 04:40 (Sep 29) — **Frontend phase 2.1(a) resumed** in the slot explain C1 freed (builder a69f98e6d3af1e500; worktree
+  `round8-frontend-phase2`, own target; lands alone on its raw-byte proof per plan v3). Heavy set: W1 rework 6, W4
+  rework 6, k8s battery→rework 5, F1 rework 1, frontend 2.1; guard rework light. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
