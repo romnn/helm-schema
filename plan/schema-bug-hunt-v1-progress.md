@@ -7007,6 +7007,29 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Reviews: astra follow_up 46a7c5d4 turn 7, sol(6.1) follow_up 7bc50b66 turn 2; if not LAND ×2 the guard is parked.
   Runner builder idle after this (no tooling queued). Orchestrator.
 
+- 00:43 (Sep 30) — **Eight verdicts. F1 rework 5: REWORK ×2 (identity again) → rework 6 DELETES the identity.
+  cell_matrix rework 3: LAND ×2 → folded into landing 9. Guard rework 6: REWORK ×2 → PARKED. W1 rework 6: REWORK ×2
+  → rework 7 briefed (R21–R28).** F1 (`review-f1-rework5-{sol,astra}.md`): both accept the three catalog patches
+  and the causal assert-vs-annotate control; both find the identity still incomplete (`minContains` reports the
+  payload-free `Contains` kind → the changed predicate vanishes → false rejection attributed) and too fine
+  (`Not{schema}` Debug-rendered with raw `$ref` → a shared failure looks candidate-only). Orchestrator decision
+  (`brief-f1-rework6.md`): attribute a flip to the policy iff baseline accepts → assert rejects → the ANNOTATE
+  regeneration accepts the document outright (+ the explain unread cross-check); both-reject tightenings are never
+  attributed; delete ViolatedAssertion/reported_failure/inliner/subtraction (R18–R20, harness LOC down). Builder
+  resumed. cell_matrix (`review-cell-matrix-rework3-{astra,sol}.md`): LAND ×2 (group kill keeps output under the
+  deadline, `-<child pid>` never group 0, setsid escape an accepted residual for trusted tooling; the reviewers'
+  sandbox denies the writability probe so exit 2, out/ byte-identical) → cherry-picked into the landing-9 clone as
+  6617fcff (test-support only; env header updated). Guard (`review-target-guard-rework6-{astra,sol}.md`): the
+  five prior repros now refuse, no false refusal of the real task invocations, but new P1s (`-F` masking `--env`/
+  `--target-dir`, relative CARGO_HOME per member, `HOME` env patches, `[target.*].runner`) → per the last-round rule
+  the guard is PARKED (branch target-guard at 163bd01a and its pre-rebase branches kept; builder targets removed,
+  +47 GB). W1 (`review-w1-rework6-{astra,sol}.md`, 189/216 lines): 26 measured new false rejections (the 25 + argocd-
+  image-updater `config.sshConfig.probe: null`), R12/R13 freshness holes, R16's two AST shortcuts unsound
+  (short-circuited `set`, syntactic `fail` as termination), 11 of 21 false acceptances to fix (traefik ×6 via the
+  `$service.single` arm, grafana/KPS ×3 `.name`, longhorn ×2) and 10 to roster; the builder's probe6.py deleted every
+  null override (K17 semantics violated) → `brief-w1-rework7.md`, builder redirected. Landing 9 waits for F1 rework
+  6. Disk 146 GB after the guard targets; load ~17. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
