@@ -6727,6 +6727,37 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Disk: six more dormant targets removed (explain-red, frontend-f10, f6, f5, d5, the old frontend; ~23 GB; no
   process on any); 95 GB free before. Orchestrator.
 
+- 15:50 (Sep 29) — **Twelve re-check answers: REWORK across the board (cell_matrix commit 1 stays LAND).** Landing 7
+  chain: dump/unit/lint/battery/integration OK, sweep running. (1) F1 (`review-f1-rework1-{sol,astra}.md`): a
+  disabled aliased dependency still required to be an object (Datadog renders, v2 rejects); the non-table-default
+  terminal fires for a vendored `charts/kid` with no dependency metadata (Helm skips processImportValues) and the
+  pruned-sibling case; activation predicates use template truthiness but Helm skips non-boolean conditions;
+  string round trip in values_seed.rs → `brief-f1-rework2.md` (R6–R10). (2) k8s (`review-k8s-rework5-{sol,astra}.md`)
+  with the four adjudications: nacos ×8 are false rejections owned by F1's policy — DECISION: F1 rework 2 adds a
+  policy-attributed battery adjudication (matched only when the schema under `annotate` accepts and the failing
+  assertion under `assert` is exactly the declared-default type on an unread path, using the landed explain C1
+  decisions; roster nothing) and k8s lands after F1; cluster-autoscaler → F13 row with the valid-group control;
+  alertmanager.apiVersion → FIX (kind/apiVersion correlation: the cross-product lookup stops at an unavailable
+  PrometheusAgent pair before the local Prometheus CRD contract; no sink-only string rule); signoz → F5 row; plus Go's
+  empty-definition exception (analysis_db.rs:80), the battery ignoring chart-local CRDs, final gates →
+  `brief-k8s-rework6.md`. Define precedence verified against engine.go:283/:497. (3) Guard rework 3 + v6.11
+  (`review-target-guard-rework3-{sol,astra}.md`): alias reader misses `include`, array concatenation across layers and
+  the `.cargo/config` masking rule; the expanded `lint` alias's `--` lets clippy-wrapper forward `--target-dir`;
+  `cargo feature-combinations` and inner aliases of `fc` bypass; v6.11: a process-group signal hitting the python
+  child between save() and print takes the exit-4 branch with an empty ATTEMPT → `brief-target-guard-rework4.md`
+  (G10–G14, V8–V9). (4) cell_matrix (`review-cell-matrix-rework1-{sol,astra}.md`): `--validate-release` path
+  traversal, symlink scratch escape, unbounded version/classify probes, generation timeout without cell ids,
+  `--check` needs scratch writes (reviewers could not reproduce read-only) → `brief-cell-matrix-rework2.md`
+  (C11–C15; `--scratch` for check mode). (5) Frontend 2.1 (`review-frontend-phase21-rework1-{sol,astra}.md`):
+  numeric divergence misses `1_0e2`/`1e1_0`/`.1_0`/`-.1_0`; placeholder bytes exceed the cap before the check →
+  `brief-frontend-phase21-rework2.md` (P8–P9). (6) W4 (`review-w4-rework6-{sol,astra}.md`): redis-ha confirmed (R26);
+  TWO new candidate-introduced false acceptances — a quoted `#` taken as a comment (`"foo #c"` under `^"foo$`) and
+  unterminated quoted scalars (`"foo #c` accepted, Helm aborts) with the complementary `"bar #foo"` false rejection;
+  R4 `{{ .Release.Name }}: b` test must expect rejection; owned-token regex round trip still present (deletion
+  target for the +789 LOC); merge.rs:142 bypass; residual account (12/14 of the v6 documents, retained annotation
+  constraints main also rejects); nacos 75 rosterable only as masked pre-existing debt with the counterfactual
+  evidence (all fail only at `service/ports/anyOf`) → `brief-w4-rework7.md` (R26–R35). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
