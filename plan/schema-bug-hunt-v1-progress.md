@@ -7043,6 +7043,25 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (minContains, tuple limits, propertyNames, closed objects, `$ref` rename) all with Helm renders; the builder also
   added (b) "the candidate IS the assert regeneration (JSON-equal)". Landing 9 waits for the re-check. Orchestrator.
 
+- 01:43 (Sep 30) — **W4 rework 8 handed back rebased (w4-rebase 62d28e1b on main 16cd0d2a, 34 commits) with a disclosed
+  Traefik FALSE ACCEPTANCE main rejects → rework 9 ordered; reviews dispatched in parallel.** R36–R39 done
+  (typed TplContext Root/Other with unclosed/missing-include/self-cycle abort claims; Go-pattern regex dialect;
+  Go-formatted mapping sinks only for bare `type: string`; block-style constant helpers honour trim markers), plus
+  c91eb704 merging two abort captures into one after signoz's pretty schema crossed Helm's 5 MiB limit. Gates:
+  fmt/lint/lint:fc/ast-grep 0, nextest 1714/1714, clean dump + verify + helmsweep 0, live battery 160 charts /
+  270 494 probes / 9 606 flips / 0 unmatched / 0 unrostered; `task test:integration` 201 = 158 adoptable fixture
+  failures + `traefik_local_plugin_mount_paths_bind_provider_presence`: a `localPlugins` member with `hostPath`
+  but no `mountPath` is accepted (K8s rejects the null mountPath); bisected to the F75 checkpoint 40bcf1f2 —
+  F75 types the plugin-type helper's output, `eq $pluginType "localPath"` becomes an approximate condition and
+  `extend_lowerable_predicate` (conditional_overlays.rs:391) drops the whole render. Earlier rounds missed it
+  because the builder's gate script ran chart_corpus alone instead of `task test:integration` (orchestrator
+  lapse too: the hand-offs said "chart_corpus integration" and I accepted them). Decision: fix structurally —
+  lower approximate conditions through their sound subset (remainder unsupported) and decode `eq`/`ne` member
+  guards in provider_requirement_synthesis — full integration profile, fresh dump, battery, matrix, fixture
+  diff vs dump-62d28e1b. Schema growth flagged (signoz 5.17 MB pretty, 1.4% under the limit; oncall 13.7 MB):
+  reviewers asked where to cut. `final-v9.patch` sha256 45dcedd4…. Reviews: astra follow_up 7422b55d turn 3,
+  sol(6.1) fresh 20260929T234249-89e63fe7. Landing order unchanged: F1 (landing 9) → W4 → k8s → W1. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
