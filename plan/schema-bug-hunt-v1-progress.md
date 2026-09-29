@@ -6527,6 +6527,21 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
 - 04:42 (Sep 29) — **Runner suite green on the merged v6.9** (b7f5c67): `tests/run-all.sh` 12/12 exit 0
   (`round8-runner-evidence/run-all-after-v69-merge.log`). The runner is ready for landing 7. Orchestrator.
 
+- 04:55 (Sep 29) — **Guard rework 1 + runner v6.10 handed back; re-checks dispatched.** Guard HEAD 231bef9a
+  (`target-guard-v2.patch`, 1768 lines, sha256 9f20567e…; handoff v2): T1 cargo-fc `--env`/`--unset-env` of the
+  protected variables → exit 8 before cargo-fc starts (tested through the real cargo-fc with a recording driver on
+  check:fc/test:fc/lint:fc); T2 landing.py's exact grammar + ONE shared byte corpus
+  `scripts/tests/target-ownership-corpus.json` (50 cases, sha256 14f40744…) byte-identical in both repos and
+  asserted by both suites; T3 protocol fixtures as bytes; T4 explicit UTF-8 + R validated before any claim; T5
+  Windows lock retries contention only; T6 cross-drive/`\\?\` handling; T7 clean:build guarded; T8 nested test:all
+  runtime test + out-of-guarantee list. Gates: fmt/lint:actions/test:guard (44)/lint/lint:fc/build:helmsweep/test
+  (1616) all 0; red vs 3e36d4f0 39F+3E. Runner v6.10 HEAD 001a202f on b7f5c67 (`v610.patch`, 536 lines, sha256
+  1ed9a929…): non-dump steps refuse an unclaimed TARGET with exit 8 before creating anything; `read_checkout_owner`
+  + Conformance corpus test; runner-vs-guard interop tests via GUARD_SRC (both orders, foreign-clone refusal, shared
+  lock race); run-all now REQUIRES GUARD_SRC (README). Green run-all exit 0 (701 zsh, py 88); red on b7f5c67 4+1+1.
+  Re-checks: sol fb75bd55 / astra 46a7c5d4 follow-ups. Runner builder proceeds to cell_matrix commit 1 (379de2aa,
+  fmt/lint/lint:fc/unit green; integration + dump + schema-only battery next). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
