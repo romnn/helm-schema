@@ -728,7 +728,8 @@ fn branch_only_type_hint_keeps_declared_shape_until_base_classification() {
         type_hint_schema: SchemaNode::empty(),
         guarded_type_hint_schema: SchemaNode::from_value(serde_json::json!({ "type": "string" })),
         fallback_type_hint_schema: SchemaNode::empty(),
-    });
+    })
+    .schema;
 
     sim_assert_eq!(
         have: resolved,
@@ -757,7 +758,8 @@ fn branch_only_string_hint_widens_restricted_string_provider_domain() {
         type_hint_schema: SchemaNode::empty(),
         guarded_type_hint_schema: SchemaNode::from_value(serde_json::json!({ "type": "string" })),
         fallback_type_hint_schema: SchemaNode::empty(),
-    });
+    })
+    .schema;
 
     sim_assert_eq!(
         have: resolved,
@@ -809,7 +811,7 @@ fn common_plain_string_survives_all_provider_evidence_merges() {
         type_hint_schema: SchemaNode::from_value(serde_json::json!({ "type": "string" })),
         guarded_type_hint_schema: SchemaNode::empty(),
         fallback_type_hint_schema: SchemaNode::empty(),
-    });
+    }).schema;
 
     sim_assert_eq!(
         have: schema_covers_strict_plain_scalar_string(&resolved),
@@ -842,7 +844,8 @@ fn runtime_default_refill_accepts_null_without_parent_consumer() {
         type_hint_schema: SchemaNode::empty(),
         guarded_type_hint_schema: SchemaNode::empty(),
         fallback_type_hint_schema: SchemaNode::empty(),
-    });
+    })
+    .schema;
 
     sim_assert_eq!(
         have: resolved,
@@ -875,7 +878,8 @@ fn runtime_default_refill_accepts_null_without_parent_consumer() {
             type_hint_schema: SchemaNode::empty(),
             guarded_type_hint_schema: SchemaNode::empty(),
             fallback_type_hint_schema: SchemaNode::empty(),
-        });
+        })
+        .schema;
     sim_assert_eq!(have: parent_consumed, want: provider_schema);
 
     let dependency_root =
@@ -899,7 +903,8 @@ fn runtime_default_refill_accepts_null_without_parent_consumer() {
             type_hint_schema: SchemaNode::empty(),
             guarded_type_hint_schema: SchemaNode::empty(),
             fallback_type_hint_schema: SchemaNode::empty(),
-        });
+        })
+        .schema;
     sim_assert_eq!(have: dependency_root, want: provider_schema);
 }
 

@@ -23,34 +23,41 @@ use serde_json::Value;
 use test_util::helm_values::{AcceptanceDocument, ValuesError, acceptance_values};
 use test_util::scratch::ScratchDir;
 
-use crate::helm_cache_policy::render_cacheability;
-use crate::helm_invocation::{
-    Cacheability, HelmExecution, HelmRunner, InvocationRecord, PreparedTree, TemplateRequest,
-    tree_sha256,
+use crate::helm::cache_policy::render_cacheability;
+use crate::helm::invocation::{
+    Cacheability, HelmExecution, HelmRunner, InvocationRecord, PreparedTree, Replay,
+    TemplateRequest, tree_sha256,
 };
-use crate::kubernetes_version::chart_kubernetes_version;
+use crate::helm::kubernetes_version::chart_kubernetes_version;
 
 /// Values obtained from template-free Helm execution, before chart mutation.
-pub(crate) struct CoalescedValues(Value);
+pub struct CoalescedValues(Value);
 
 impl CoalescedValues {
-    pub(crate) const fn as_json(&self) -> &Value {
+    /// The coalesced values document.
+    #[must_use]
+    pub const fn as_json(&self) -> &Value {
         &self.0
     }
 }
 
-pub(crate) struct HelmProbe {
+/// One adjudicated values file: Helm's coalesced values and its render.
+pub struct HelmProbe {
     /// `None` when Helm aborts while coalescing values, e.g. on a non-table subchart scope.
-    pub(crate) values: Option<CoalescedValues>,
-    pub(crate) rendered: HelmExecution,
-    pub(crate) evidence_dir: PathBuf,
+    pub values: Option<CoalescedValues>,
+    /// The render of the same values file.
+    pub rendered: HelmExecution,
+    /// The case directory holding both executions' inputs and outputs.
+    pub evidence_dir: PathBuf,
 }
 
 /// A defaults document with the violations it carries.
 type EvaluatedDocument = (Value, Vec<ViolationKey>);
 
 /// Private copies share chart inputs and differ only in their template bodies.
-pub(crate) struct PinnedHelmChart {
+pub struct PinnedHelmChart {
+    /// The Helm every execution of this chart runs on.
+    runner: &'static HelmRunner,
     evidence_dir: PathBuf,
     render_chart: PreparedTree,
     coalesce_chart: PreparedTree,
@@ -69,8 +76,15 @@ pub(crate) struct PinnedHelmChart {
 }
 
 impl PinnedHelmChart {
-    pub(crate) fn prepare(chart_path: &Path) -> eyre::Result<Self> {
-        let runner = HelmRunner::shared()?;
+    /// Prepares the chart at `chart_path` for `runner`: a render copy without
+    /// shipped `values.schema.json` files or `templates/tests`, and a
+    /// template-free copy that dumps Helm's coalesced values.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the chart cannot be copied, has no manifest, or
+    /// no pinned Kubernetes version satisfies it.
+    pub fn prepare(runner: &'static HelmRunner, chart_path: &Path) -> eyre::Result<Self> {
         // Retain successful and failed cases so a verdict remains reproducible.
         let evidence_dir = ScratchDir::new("adjudication")?.keep();
         eprintln!("Helm adjudication evidence: {}", evidence_dir.display());
@@ -118,13 +132,14 @@ impl PinnedHelmChart {
             evidence_dir.join("prepared.json"),
             serde_json::to_vec_pretty(&serde_json::json!({
                 "source": chart_path,
-                "render": render_chart.path,
-                "coalesce": coalesce_chart.path,
+                "render": render_chart.path(),
+                "coalesce": coalesce_chart.path(),
                 "kubernetes_version": kubernetes_version,
                 "render_cacheability": render_cacheability,
             }))?,
         )?;
         Ok(Self {
+            runner,
             evidence_dir,
             render_chart,
             coalesce_chart,
@@ -136,16 +151,20 @@ impl PinnedHelmChart {
         })
     }
 
-    pub(crate) const fn render_tree(&self) -> &PreparedTree {
+    /// The prepared chart Helm renders.
+    #[must_use]
+    pub const fn render_tree(&self) -> &PreparedTree {
         &self.render_chart
     }
 
-    pub(crate) const fn coalesce_tree(&self) -> &PreparedTree {
+    /// The template-free copy that dumps Helm's coalesced values.
+    #[must_use]
+    pub const fn coalesce_tree(&self) -> &PreparedTree {
         &self.coalesce_chart
     }
 
     /// The Helm children run so far, in execution order.
-    pub(crate) fn invocations(&self) -> Vec<InvocationRecord> {
+    pub fn invocations(&self) -> Vec<InvocationRecord> {
         self.invocations
             .lock()
             .unwrap_or_else(PoisonError::into_inner)
@@ -153,7 +172,7 @@ impl PinnedHelmChart {
     }
 
     /// The largest peak resident set size of any Helm child run so far.
-    pub(crate) fn peak_child_rss(&self) -> u64 {
+    pub fn peak_child_rss(&self) -> u64 {
         self.peak_child_rss.load(Ordering::Relaxed)
     }
 
@@ -166,25 +185,60 @@ impl PinnedHelmChart {
             .push(record.clone());
     }
 
-    /// Both executions read the same saved overlay, including when rendering aborts.
-    pub(crate) fn adjudicate(&self, overlay: &Value) -> eyre::Result<HelmProbe> {
-        self.adjudicate_as(overlay, "render")
+    /// The Kubernetes version the chart renders under by default.
+    #[must_use]
+    pub const fn kubernetes_version(&self) -> &'static str {
+        self.kubernetes_version
     }
 
-    fn adjudicate_as(&self, overlay: &Value, stage: &str) -> eyre::Result<HelmProbe> {
+    /// Both executions read the same saved overlay, including when rendering aborts.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when Helm cannot be run or its values dump cannot be read.
+    pub fn adjudicate(&self, overlay: &Value) -> eyre::Result<HelmProbe> {
+        self.adjudicate_as(
+            &serde_json::to_vec_pretty(overlay)?,
+            "render",
+            self.kubernetes_version,
+        )
+    }
+
+    /// Coalesces and renders the exact values file `values` under
+    /// `kubernetes_version`: Helm reads these bytes, not a re-encoding.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when Helm cannot be run or its values dump cannot be read.
+    pub fn adjudicate_file(
+        &self,
+        values: &[u8],
+        kubernetes_version: &str,
+    ) -> eyre::Result<HelmProbe> {
+        self.adjudicate_as(values, "render", kubernetes_version)
+    }
+
+    fn adjudicate_as(
+        &self,
+        values: &[u8],
+        stage: &str,
+        kubernetes_version: &str,
+    ) -> eyre::Result<HelmProbe> {
         let evidence_dir = self.new_case()?;
+        fs::write(evidence_dir.join("values.json"), values)?;
         let (values, record) = coalesce_in(
+            self.runner,
             &self.coalesce_chart,
             &evidence_dir,
-            overlay,
-            self.kubernetes_version,
+            kubernetes_version,
         )?;
         self.record(&record);
         let rendered = run_helm(
+            self.runner,
             &self.render_chart,
             &evidence_dir,
             stage,
-            self.kubernetes_version,
+            kubernetes_version,
             &self.render_cacheability,
         )?;
         self.record(&rendered.record);
@@ -192,7 +246,7 @@ impl PinnedHelmChart {
         eyre::ensure!(
             values.is_some() || !rendered.success(),
             "Helm rendered values it could not coalesce; evidence={}",
-            crate::helm_invocation::preserve_failure(&evidence_dir).display()
+            crate::helm::invocation::preserve_failure(&evidence_dir).display()
         );
         Ok(HelmProbe {
             values,
@@ -205,13 +259,13 @@ impl PinnedHelmChart {
     /// by the Rust port over the same private chart copy Helm renders.
     /// `helm template` prints only the template document; lint's two are
     /// never printed.
-    pub(crate) fn acceptance_documents(
+    pub fn acceptance_documents(
         &self,
         overlay: &Value,
     ) -> BTreeMap<AcceptanceDocument, Result<Value, ValuesError>> {
         let mut documents = BTreeMap::new();
         for kind in AcceptanceDocument::ALL {
-            let document = acceptance_values(&self.render_chart.path, overlay.clone(), kind)
+            let document = acceptance_values(self.render_chart.path(), overlay.clone(), kind)
                 .map(|values| values.root);
             documents.insert(kind, document);
         }
@@ -226,6 +280,7 @@ impl PinnedHelmChart {
     }
 }
 
+/// Coalesces the values file saved in `case` in the template-free `chart`.
 /// Returns `None` when Helm aborts before values reach templates.
 ///
 /// Helm v4.2.3 `coalesceDeps` (pkg/chart/common/util/coalesce.go:118-119) aborts with "type
@@ -234,22 +289,19 @@ impl PinnedHelmChart {
 /// table" (coalesce.go:350), keeps the user's value and continues, so that warning never
 /// decides a verdict.
 fn coalesce_in(
+    runner: &HelmRunner,
     chart: &PreparedTree,
     case: &Path,
-    overlay: &Value,
     kubernetes_version: &str,
 ) -> eyre::Result<(Option<CoalescedValues>, InvocationRecord)> {
-    fs::write(
-        case.join("values.json"),
-        serde_json::to_vec_pretty(overlay)?,
-    )?;
-    // The template-free copy renders only the fixed values dump.
+    // The template-free copy renders only the fixed values dump, a chart of ours.
     let output = run_helm(
+        runner,
         chart,
         case,
         "coalesce",
         kubernetes_version,
-        &Cacheability::Cacheable,
+        &Cacheability::trusted(Replay::Cacheable),
     )?;
     if !output.success() {
         return Ok((None, output.record));
@@ -275,6 +327,7 @@ fn coalesce_in(
 
 /// Renders `chart` with the values file saved in `case`.
 fn run_helm(
+    runner: &HelmRunner,
     chart: &PreparedTree,
     case: &Path,
     stage: &str,
@@ -287,7 +340,7 @@ fn run_helm(
         values: &values,
         kubernetes_version,
     };
-    HelmRunner::shared()?.template(&request, case, stage, cacheability)
+    runner.template(&request, case, stage, cacheability)
 }
 
 #[derive(Default)]
@@ -506,10 +559,14 @@ fn normalized_header(kind: tar::EntryType, mode: u32, size: u64) -> tar::Header 
     header
 }
 
+/// Whether rendered resources are valid under the pinned Kubernetes schemas.
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) enum KubernetesVerdict {
+pub enum KubernetesVerdict {
+    /// Every resource was validated and none violates its schema.
     Valid,
+    /// These violations are proven.
     Invalid(Vec<KubernetesViolation>),
+    /// No violation is proven, but these resources could not be decided.
     Uncertain(Vec<String>),
 }
 
@@ -518,27 +575,27 @@ pub(crate) enum KubernetesVerdict {
 /// without changing what the document violates. A values document has no
 /// `api_version` or `kind`.
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
-pub(crate) struct ViolationKey {
-    pub(crate) api_version: String,
-    pub(crate) kind: String,
+pub struct ViolationKey {
+    /// The resource's apiVersion; empty for a values document.
+    pub api_version: String,
+    /// The resource's kind; empty for a values document.
+    pub kind: String,
     /// Pointer to the violating value.
-    pub(crate) instance_path: String,
+    pub instance_path: String,
     /// Keyword location of the violated assertion.
-    pub(crate) schema_path: String,
+    pub schema_path: String,
     /// The violated keyword.
-    pub(crate) keyword: String,
+    pub keyword: String,
     /// What tells violations of one assertion apart: the property a
     /// `required` misses, the properties `additionalProperties` rejects,
     /// else the offending value when it is a scalar and its type when not.
-    pub(crate) detail: String,
+    pub detail: String,
 }
 
 impl ViolationKey {
-    pub(crate) fn new(
-        api_version: &str,
-        kind: &str,
-        error: &jsonschema::ValidationError<'_>,
-    ) -> Self {
+    /// The key of `error` in a document of `api_version`/`kind`.
+    #[must_use]
+    pub fn new(api_version: &str, kind: &str, error: &jsonschema::ValidationError<'_>) -> Self {
         let detail = match error.kind() {
             jsonschema::error::ValidationErrorKind::Required { property } => property.to_string(),
             jsonschema::error::ValidationErrorKind::AdditionalProperties { unexpected } => {
@@ -573,13 +630,17 @@ impl fmt::Display for ViolationKey {
 
 /// One schema violation of a rendered resource.
 #[derive(Debug, PartialEq, Eq)]
-pub(crate) struct KubernetesViolation {
+pub struct KubernetesViolation {
     /// Position in the rendered stream, such as `document 2/items/0`.
-    pub(crate) location: String,
-    pub(crate) namespace: Option<String>,
-    pub(crate) name: Option<String>,
-    pub(crate) key: ViolationKey,
-    pub(crate) message: String,
+    pub location: String,
+    /// The resource's namespace, if it names one.
+    pub namespace: Option<String>,
+    /// The resource's name, if it has one.
+    pub name: Option<String>,
+    /// What is violated.
+    pub key: ViolationKey,
+    /// The validator's message.
+    pub message: String,
 }
 
 impl KubernetesViolation {
@@ -623,15 +684,15 @@ impl fmt::Display for KubernetesViolation {
 
 /// A probe render judged against the chart's defaults render.
 #[derive(Debug, Default)]
-pub(crate) struct DefaultsComparison {
+pub struct DefaultsComparison {
     /// Violations of new or changed documents beyond what the unpaired
     /// defaults documents carry.
-    pub(crate) new_violations: Vec<KubernetesViolation>,
+    pub new_violations: Vec<KubernetesViolation>,
     /// Violations of new or changed documents that the unpaired defaults
     /// documents carry too, counted with multiplicity.
-    pub(crate) inherited_violations: Vec<KubernetesViolation>,
+    pub inherited_violations: Vec<KubernetesViolation>,
     /// New or changed documents whose validity could not be decided.
-    pub(crate) uncertain: Vec<String>,
+    pub uncertain: Vec<String>,
 }
 
 #[derive(Default)]
@@ -640,8 +701,8 @@ struct ResourceEvidence {
     uncertain: Vec<String>,
 }
 
-/// The Kubernetes release the offline bundle validates against.
-const KUBERNETES_RELEASE: &str = "v1.29.0-standalone-strict";
+/// The Kubernetes release the corpus's offline bundle validates against.
+pub const KUBERNETES_RELEASE: &str = "v1.29.0-standalone-strict";
 
 /// How resource schemas are compiled and judged. Changing the compilation
 /// options or the identity proof must change this.
@@ -659,7 +720,9 @@ struct CompiledSchemas(Mutex<BTreeMap<(String, String), CompiledSchema>>);
 /// bundles, never by their location.
 static COMPILED_SCHEMAS: OnceLock<Mutex<BTreeMap<String, Arc<CompiledSchemas>>>> = OnceLock::new();
 
-pub(crate) struct OfflineKubernetesValidator {
+/// Validates rendered resources against pinned, offline Kubernetes (and CRD)
+/// schema bundles.
+pub struct OfflineKubernetesValidator {
     provider: KubernetesJsonSchemaProvider,
     /// The pinned CRD catalog that decides non-built-in kinds, if any.
     crds: Option<CrdsCatalogSchemaProvider>,
@@ -670,13 +733,14 @@ pub(crate) struct OfflineKubernetesValidator {
 }
 
 impl OfflineKubernetesValidator {
-    /// Judges resources by the offline Kubernetes bundle cached at `cache`.
+    /// Judges resources by the offline Kubernetes bundle cached at `cache`
+    /// for `release` (such as [`KUBERNETES_RELEASE`]).
     ///
     /// # Errors
     ///
     /// Returns an error when the bundle cannot be read.
-    pub(crate) fn new(cache: &Path) -> eyre::Result<Self> {
-        Self::with_bundles(cache, None)
+    pub fn new(cache: &Path, release: &str) -> eyre::Result<Self> {
+        Self::with_bundles(cache, None, release)
     }
 
     /// Also judges CRD kinds by the schemas pinned in the CRD catalog cache
@@ -685,16 +749,16 @@ impl OfflineKubernetesValidator {
     /// # Errors
     ///
     /// Returns an error when either bundle cannot be read.
-    pub(crate) fn with_crd_catalog(cache: &Path, crds: &Path) -> eyre::Result<Self> {
-        Self::with_bundles(cache, Some(crds))
+    pub fn with_crd_catalog(cache: &Path, crds: &Path, release: &str) -> eyre::Result<Self> {
+        Self::with_bundles(cache, Some(crds), release)
     }
 
-    fn with_bundles(cache: &Path, crds: Option<&Path>) -> eyre::Result<Self> {
+    fn with_bundles(cache: &Path, crds: Option<&Path>, release: &str) -> eyre::Result<Self> {
         let mut bundles = vec![(cache.to_path_buf(), tree_sha256(cache)?)];
         if let Some(crds) = crds {
             bundles.push((crds.to_path_buf(), tree_sha256(crds)?));
         }
-        let mut identity = format!("{VALIDATOR_POLICY}\n{KUBERNETES_RELEASE}\n");
+        let mut identity = format!("{VALIDATOR_POLICY}\n{release}\n");
         for (_, sha256) in &bundles {
             identity.push_str(sha256);
             identity.push('\n');
@@ -710,7 +774,7 @@ impl OfflineKubernetesValidator {
             .or_default()
             .clone();
         Ok(Self {
-            provider: KubernetesJsonSchemaProvider::new(KUBERNETES_RELEASE)
+            provider: KubernetesJsonSchemaProvider::new(release)
                 .with_cache_dir(cache)
                 .with_allow_download(false),
             crds: crds.map(|crds| {
@@ -729,7 +793,7 @@ impl OfflineKubernetesValidator {
     /// # Errors
     ///
     /// Returns an error naming the changed bundle.
-    pub(crate) fn verify_bundles_unchanged(&self) -> eyre::Result<()> {
+    pub fn verify_bundles_unchanged(&self) -> eyre::Result<()> {
         for (path, sha256) in &self.bundles {
             eyre::ensure!(
                 tree_sha256(path)? == *sha256,
@@ -741,9 +805,18 @@ impl OfflineKubernetesValidator {
     }
 
     /// A proven violation is decisive even when another resource lacks a schema.
-    pub(crate) fn validate(&self, rendered: &[u8]) -> eyre::Result<KubernetesVerdict> {
+    /// `runner` decodes the YAML as Kubernetes would, through Helm's `fromYaml`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the decoder cannot be run or rejects `rendered`.
+    pub fn validate(
+        &self,
+        runner: &HelmRunner,
+        rendered: &[u8],
+    ) -> eyre::Result<KubernetesVerdict> {
         let case = ScratchDir::new("yaml-decoder")?.keep();
-        let documents = decode(HelmRunner::shared()?, rendered, &case)?
+        let documents = decode(runner, rendered, &case)?
             .documents
             .map_err(|rejection| eyre::eyre!("{rejection}"))?;
         let mut evidence = ResourceEvidence::default();
@@ -769,7 +842,11 @@ impl OfflineKubernetesValidator {
     /// completely; its violations are inherited only as far as the unpaired
     /// defaults documents carry the same ones, counted with multiplicity. A
     /// failed defaults render leaves no baseline, so every document is new.
-    pub(crate) fn compare_with_defaults(
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when Helm cannot render or decode the defaults or the probe.
+    pub fn compare_with_defaults(
         &self,
         chart: &PinnedHelmChart,
         probe: &HelmProbe,
@@ -777,11 +854,7 @@ impl OfflineKubernetesValidator {
         let defaults = self.defaults_evaluation(chart)?;
         let mut unpaired: Vec<&(Value, Vec<ViolationKey>)> = defaults.iter().collect();
         let mut changed = ResourceEvidence::default();
-        let decoded = decode(
-            HelmRunner::shared()?,
-            &probe.rendered.stdout,
-            &probe.evidence_dir,
-        )?;
+        let decoded = decode(chart.runner, &probe.rendered.stdout, &probe.evidence_dir)?;
         if let Some(record) = &decoded.record {
             chart.record(record);
         }
@@ -849,15 +922,15 @@ impl OfflineKubernetesValidator {
         &self,
         chart: &PinnedHelmChart,
     ) -> eyre::Result<Vec<(Value, Vec<ViolationKey>)>> {
-        let probe = chart.adjudicate_as(&serde_json::json!({}), "control")?;
+        let probe = chart.adjudicate_as(
+            &serde_json::to_vec_pretty(&serde_json::json!({}))?,
+            "control",
+            chart.kubernetes_version,
+        )?;
         if !probe.rendered.success() {
             return Ok(Vec::new());
         }
-        let decoded = decode(
-            HelmRunner::shared()?,
-            &probe.rendered.stdout,
-            &probe.evidence_dir,
-        )?;
+        let decoded = decode(chart.runner, &probe.rendered.stdout, &probe.evidence_dir)?;
         if let Some(record) = &decoded.record {
             chart.record(record);
         }
@@ -1005,14 +1078,19 @@ impl OfflineKubernetesValidator {
 
 /// Documents decoded by Helm's `fromYaml`, or why Helm could not decode them,
 /// with the Helm child's record when one ran.
-pub(crate) struct Decoded {
-    pub(crate) documents: Result<Vec<Value>, String>,
+pub struct Decoded {
+    /// The decoded documents, or Helm's reason for rejecting the YAML.
+    pub documents: Result<Vec<Value>, String>,
     record: Option<InvocationRecord>,
 }
 
 /// Decodes `rendered` through Helm's `fromYaml` in the directory `decode`
-/// under `case`. Only a failure to run the decoder is an error.
-pub(crate) fn decode(runner: &HelmRunner, rendered: &[u8], case: &Path) -> eyre::Result<Decoded> {
+/// under `case`.
+///
+/// # Errors
+///
+/// Only a failure to run the decoder is an error.
+pub fn decode(runner: &HelmRunner, rendered: &[u8], case: &Path) -> eyre::Result<Decoded> {
     let rejected = |rejection: String| Decoded {
         documents: Err(rejection),
         record: None,
@@ -1068,13 +1146,18 @@ pub(crate) fn decode(runner: &HelmRunner, rendered: &[u8], case: &Path) -> eyre:
         values: &values,
         kubernetes_version,
     };
-    let output = runner.template(&request, &case, "decode", &Cacheability::Cacheable)?;
+    let output = runner.template(
+        &request,
+        &case,
+        "decode",
+        &Cacheability::trusted(Replay::Cacheable),
+    )?;
     let documents = if output.success() {
         decoder_documents(&output.stdout, &case, empty)
     } else {
         Err(format!(
             "Helm YAML decoding failed; evidence={}: {}",
-            crate::helm_invocation::preserve_failure(&case).display(),
+            crate::helm::invocation::preserve_failure(&case).display(),
             String::from_utf8_lossy(&output.stderr)
         ))
     };

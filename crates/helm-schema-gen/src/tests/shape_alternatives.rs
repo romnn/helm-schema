@@ -465,7 +465,8 @@ fn self_guarded_empty_string_preserves_empty_fallback_branch() {
         type_hint_schema: SchemaNode::empty(),
         guarded_type_hint_schema: SchemaNode::empty(),
         fallback_type_hint_schema: SchemaNode::empty(),
-    });
+    })
+    .schema;
 
     assert!(
         permits_empty_string(&schema),

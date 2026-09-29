@@ -10,20 +10,11 @@ use test_util::scratch::ScratchDir;
 #[path = "common/emission_profile_harness.rs"]
 mod harness;
 
-#[path = "common/helm_adjudication.rs"]
-mod helm_adjudication;
-
-#[path = "common/helm_cache_policy.rs"]
-mod helm_cache_policy;
-
-#[path = "common/helm_invocation.rs"]
-mod helm_invocation;
+use helm_schema_test_support::helm::adjudication as helm_adjudication;
+use helm_schema_test_support::helm::invocation as helm_invocation;
 
 #[path = "common/helm_pool.rs"]
 mod helm_pool;
-
-#[path = "common/kubernetes_version.rs"]
-mod kubernetes_version;
 
 #[path = "common/known_false_acceptances.rs"]
 mod known_false_acceptances;
@@ -2066,6 +2057,7 @@ fn corpus_acceptance_flips() -> eyre::Result<(usize, usize, Vec<String>, Vec<Pro
 
 fn corpus_acceptance_comparison() -> eyre::Result<AcceptanceComparison> {
     let baseline_ref = baseline_ref()?;
+    let candidate_dump = candidate_dump_dir(std::env::var_os(CANDIDATE_DUMP_VAR))?;
     let fixture_dir = test_util::workspace_testdata().join("chart-corpus-schemas");
     let mut fixture_paths = std::fs::read_dir(&fixture_dir)
         .wrap_err_with(|| format!("read {}", fixture_dir.display()))?
@@ -2094,12 +2086,11 @@ fn corpus_acceptance_comparison() -> eyre::Result<AcceptanceComparison> {
             inputs: ChartInputs::Fixture {
                 baseline_ref: baseline_ref.clone(),
                 relative_path: format!("testdata/chart-corpus-schemas/{filename}"),
-                dump_filename: format!("helm-schema.cli.chart-corpus.{chart}.schema.json"),
-                fixture_path: fixture_path.clone(),
+                candidate_path: candidate_dump
+                    .join(format!("helm-schema.cli.chart-corpus.{chart}.schema.json")),
             },
         });
     }
-    let lean_fixture_dir = test_util::workspace_testdata().join("emission-profile-schemas/lean");
     for chart in LEAN_FIXTURE_CHARTS {
         if chart_filter.is_some() {
             continue;
@@ -2111,8 +2102,9 @@ fn corpus_acceptance_comparison() -> eyre::Result<AcceptanceComparison> {
             inputs: ChartInputs::Fixture {
                 baseline_ref: baseline_ref.clone(),
                 relative_path: format!("testdata/emission-profile-schemas/lean/{filename}"),
-                dump_filename: format!("helm-schema.emission-profile.lean.{chart}.schema.json"),
-                fixture_path: lean_fixture_dir.join(&filename),
+                candidate_path: candidate_dump.join(format!(
+                    "helm-schema.emission-profile.lean.{chart}.schema.json"
+                )),
             },
         });
     }
@@ -2143,21 +2135,27 @@ fn read_schema_at_ref(reference: &str, relative_path: &str) -> eyre::Result<serd
     Ok(schema)
 }
 
-fn read_acceptance_candidate(
-    fixture_path: &std::path::Path,
-    dump_filename: &str,
-) -> eyre::Result<serde_json::Value> {
-    let candidate_path = if let Some(dir) = std::env::var_os(CANDIDATE_DUMP_VAR) {
-        std::path::PathBuf::from(dir).join(dump_filename)
-    } else {
-        eyre::ensure!(
-            !adjudicates_live(),
-            "live adjudication requires {CANDIDATE_DUMP_VAR}"
-        );
-        fixture_path.to_path_buf()
-    };
+/// The producer dump the candidate schemas come from. Every mode requires it:
+/// the committed fixtures are the candidate's own fallback, so comparing
+/// against them screens a schema against itself and proves nothing.
+fn candidate_dump_dir(value: Option<std::ffi::OsString>) -> eyre::Result<PathBuf> {
+    value.map(PathBuf::from).ok_or_else(|| {
+        eyre::eyre!(
+            "{CANDIDATE_DUMP_VAR} must name the producer dump of the candidate build; the \
+             committed fixtures are not a candidate"
+        )
+    })
+}
+
+#[test]
+fn preservation_battery_requires_candidate_dump() {
+    assert!(candidate_dump_dir(None).is_err());
+    assert!(candidate_dump_dir(Some("/dump".into())).is_ok());
+}
+
+fn read_acceptance_candidate(candidate_path: &std::path::Path) -> eyre::Result<serde_json::Value> {
     serde_json::from_str(
-        &std::fs::read_to_string(&candidate_path)
+        &std::fs::read_to_string(candidate_path)
             .wrap_err_with(|| format!("read {}", candidate_path.display()))?,
     )
     .wrap_err_with(|| format!("parse {}", candidate_path.display()))
@@ -2176,8 +2174,7 @@ enum ChartInputs {
     Fixture {
         baseline_ref: String,
         relative_path: String,
-        fixture_path: std::path::PathBuf,
-        dump_filename: String,
+        candidate_path: PathBuf,
     },
     Given {
         baseline: serde_json::Value,
@@ -2196,11 +2193,10 @@ impl ChartInputs {
             Self::Fixture {
                 baseline_ref,
                 relative_path,
-                fixture_path,
-                dump_filename,
+                candidate_path,
             } => {
                 let baseline = read_schema_at_ref(&baseline_ref, &relative_path)?;
-                let candidate = read_acceptance_candidate(&fixture_path, &dump_filename)?;
+                let candidate = read_acceptance_candidate(&candidate_path)?;
                 let defaults = read_coalesced_defaults(chart)?;
                 Ok((baseline, candidate, defaults))
             }
@@ -2237,7 +2233,9 @@ impl ChartHelm {
         self.chart
             .get_or_init(|| {
                 let started = std::time::Instant::now();
-                let chart = PinnedHelmChart::prepare(path).map_err(|error| error.to_string());
+                let chart = helm_invocation::HelmRunner::shared()
+                    .and_then(|runner| PinnedHelmChart::prepare(runner, path))
+                    .map_err(|error| error.to_string());
                 self.preparation_ms
                     .store(elapsed_ms(started), std::sync::atomic::Ordering::Relaxed);
                 chart
@@ -2304,6 +2302,7 @@ fn compare_charts(charts: Vec<ComparedChart>) -> eyre::Result<AcceptanceComparis
         Some(OfflineKubernetesValidator::with_crd_catalog(
             &cache,
             &test_util::workspace_testdata().join("provider-bundle/crds-catalog-cache"),
+            helm_adjudication::KUBERNETES_RELEASE,
         )?)
     } else {
         None
@@ -2426,8 +2425,8 @@ fn record_helm_costs(helm_charts: &[Option<std::sync::Arc<ChartHelm>>], costs: &
         if let Some(Ok(chart)) = helm.chart.get() {
             cost.helm = helm_invocation::stage_totals(&chart.invocations());
             cost.prepared_trees = Some((
-                chart.render_tree().sha256.clone(),
-                chart.coalesce_tree().sha256.clone(),
+                chart.render_tree().sha256().to_string(),
+                chart.coalesce_tree().sha256().to_string(),
             ));
         }
     }
@@ -2783,10 +2782,11 @@ fn loosenings_need_complete_evidence_beyond_the_defaults_render() -> eyre::Resul
         {{- end }}
     "#},
     )?;
-    let chart = PinnedHelmChart::prepare(source.path())?;
+    let chart = PinnedHelmChart::prepare(helm_invocation::HelmRunner::shared()?, source.path())?;
     let cache =
         test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache");
-    let kubernetes = OfflineKubernetesValidator::new(&cache)?;
+    let kubernetes =
+        OfflineKubernetesValidator::new(&cache, helm_adjudication::KUBERNETES_RELEASE)?;
     // The baseline accepts the defaults `{}`, so its rejections are evidence.
     let accept_all = ProfileSchemas::compile(&json!({"maxProperties": 0}), &json!({}), json!({}))?;
     let mut coverage = HelmAdjudicationCoverage::default();
@@ -2802,7 +2802,10 @@ fn loosenings_need_complete_evidence_beyond_the_defaults_render() -> eyre::Resul
     // though the render's proven violations are all the defaults' own.
     let render = chart.adjudicate(&json!({"extra": true}))?;
     assert!(matches!(
-        kubernetes.validate(&render.rendered.stdout)?,
+        kubernetes.validate(
+            helm_invocation::HelmRunner::shared()?,
+            &render.rendered.stdout
+        )?,
         KubernetesVerdict::Invalid(_)
     ));
     let added = adjudicate_round74_flip(&chart, &json!({"extra": true}), &accept_all, &kubernetes)?;
@@ -2851,10 +2854,11 @@ fn an_unlisted_false_acceptance_reports_a_bundle_that_reproduces_it() -> eyre::R
           name: {{ .Values.name }}
     "},
     )?;
-    let chart = PinnedHelmChart::prepare(source.path())?;
+    let chart = PinnedHelmChart::prepare(helm_invocation::HelmRunner::shared()?, source.path())?;
     let cache =
         test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache");
-    let kubernetes = OfflineKubernetesValidator::new(&cache)?;
+    let kubernetes =
+        OfflineKubernetesValidator::new(&cache, helm_adjudication::KUBERNETES_RELEASE)?;
     let string_name = json!({"properties": {"name": {"type": "string"}}});
     let loosening = ProfileSchemas::compile(&string_name, &json!({}), json!({}))?;
     let (verdict, evidence) =
@@ -2918,7 +2922,7 @@ fn an_unlisted_false_acceptance_reports_a_bundle_that_reproduces_it() -> eyre::R
         },
         rerun.path(),
         "render",
-        &helm_invocation::Cacheability::Bypass("reproduce a preserved bundle".to_string()),
+        &helm_invocation::Cacheability::bypass("reproduce a preserved bundle".to_string()),
     )?;
     sim_assert_eq!(
         have: std::fs::read(rerun.path().join("render.yaml"))?,
@@ -2955,10 +2959,11 @@ fn exact_flip_adjudication_uses_coalesced_values_and_kubernetes_evidence() -> ey
           name: {{ .Values.name }}
     "},
     )?;
-    let chart = PinnedHelmChart::prepare(source.path())?;
+    let chart = PinnedHelmChart::prepare(helm_invocation::HelmRunner::shared()?, source.path())?;
     let cache =
         test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache");
-    let kubernetes = OfflineKubernetesValidator::new(&cache)?;
+    let kubernetes =
+        OfflineKubernetesValidator::new(&cache, helm_adjudication::KUBERNETES_RELEASE)?;
     let string_name = json!({"properties": {"name": {"type": "string"}}});
     let tightening = ProfileSchemas::compile(&json!({}), &string_name, json!({}))?;
 
@@ -2985,7 +2990,8 @@ fn exact_flip_adjudication_uses_coalesced_values_and_kubernetes_evidence() -> ey
     let unjustified = ProfileSchemas::compile(&json!({}), &json!(false), json!({}))?;
     assert!(adjudicate_round74_flip(&chart, &json!({}), &unjustified, &kubernetes).is_err());
     let empty_cache = ScratchDir::new("schema_emission_profiles")?;
-    let missing = OfflineKubernetesValidator::new(empty_cache.path())?;
+    let missing =
+        OfflineKubernetesValidator::new(empty_cache.path(), helm_adjudication::KUBERNETES_RELEASE)?;
     assert!(
         adjudicate_round74_flip(&chart, &json!({"name": true}), &tightening, &missing).is_err()
     );
@@ -3048,10 +3054,11 @@ fn a_baseline_rejecting_its_own_defaults_is_no_evidence() -> eyre::Result<()> {
           name: {{ .Values.name }}
     "},
     )?;
-    let chart = PinnedHelmChart::prepare(source.path())?;
+    let chart = PinnedHelmChart::prepare(helm_invocation::HelmRunner::shared()?, source.path())?;
     let cache =
         test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache");
-    let kubernetes = OfflineKubernetesValidator::new(&cache)?;
+    let kubernetes =
+        OfflineKubernetesValidator::new(&cache, helm_adjudication::KUBERNETES_RELEASE)?;
     let blanket = ProfileSchemas::compile(&json!({"required": ["unset"]}), &json!({}), json!({}))?;
     sim_assert_eq!(
         have: adjudicate_round74_flip(&chart, &json!({"name": "["}), &blanket, &kubernetes)?,
@@ -3106,10 +3113,11 @@ fn a_different_missing_property_is_evidence_against_a_baseline_rejecting_its_def
           b: {{ required "b" .Values.b | quote }}
     "#},
     )?;
-    let chart = PinnedHelmChart::prepare(source.path())?;
+    let chart = PinnedHelmChart::prepare(helm_invocation::HelmRunner::shared()?, source.path())?;
     let cache =
         test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache");
-    let kubernetes = OfflineKubernetesValidator::new(&cache)?;
+    let kubernetes =
+        OfflineKubernetesValidator::new(&cache, helm_adjudication::KUBERNETES_RELEASE)?;
     // The baseline rejects the defaults for missing `a`, and the probe for missing `b`.
     let requires_both = ProfileSchemas::compile(
         &json!({"required": ["a", "b"]}),
@@ -3158,10 +3166,11 @@ fn a_new_rejection_behind_a_baseline_rejection_is_adjudicated() -> eyre::Result<
           b: {{ .Values.b | quote }}
     "},
     )?;
-    let chart = PinnedHelmChart::prepare(source.path())?;
+    let chart = PinnedHelmChart::prepare(helm_invocation::HelmRunner::shared()?, source.path())?;
     let cache =
         test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache");
-    let kubernetes = OfflineKubernetesValidator::new(&cache)?;
+    let kubernetes =
+        OfflineKubernetesValidator::new(&cache, helm_adjudication::KUBERNETES_RELEASE)?;
     let string_a = json!({"properties": {"a": {"type": "string"}}});
     // Helm renders `{a: 1, b: 1}`; both schemas reject it, the candidate also for `b`.
     let hidden = ProfileSchemas::compile(
@@ -3235,10 +3244,11 @@ fn scalar_overrides_of_subchart_tables_are_adjudicated_by_helm_exit() -> eyre::R
           strict: {{ .Values.strict.mode | quote }}
     "},
     )?;
-    let chart = PinnedHelmChart::prepare(source.path())?;
+    let chart = PinnedHelmChart::prepare(helm_invocation::HelmRunner::shared()?, source.path())?;
     let cache =
         test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache");
-    let kubernetes = OfflineKubernetesValidator::new(&cache)?;
+    let kubernetes =
+        OfflineKubernetesValidator::new(&cache, helm_adjudication::KUBERNETES_RELEASE)?;
 
     // A scalar subchart scope aborts coalescence: "type mismatch on child".
     let child_scope = json!({"properties": {"child": {"type": "object"}}});
@@ -3330,10 +3340,11 @@ fn kubernetes_verdicts_are_relative_to_the_defaults_render() -> eyre::Result<()>
         {{- end }}
     "},
     )?;
-    let chart = PinnedHelmChart::prepare(source.path())?;
+    let chart = PinnedHelmChart::prepare(helm_invocation::HelmRunner::shared()?, source.path())?;
     let cache =
         test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache");
-    let kubernetes = OfflineKubernetesValidator::new(&cache)?;
+    let kubernetes =
+        OfflineKubernetesValidator::new(&cache, helm_adjudication::KUBERNETES_RELEASE)?;
     let base_label = json!({"properties": {"label": {"const": "base"}}});
     let loosening = ProfileSchemas::compile(&base_label, &json!({}), json!({}))?;
 
@@ -3364,12 +3375,13 @@ fn kubernetes_verdicts_are_relative_to_the_defaults_render() -> eyre::Result<()>
 #[test]
 fn existing_configmap_name_tightenings_match_kubernetes_rejections() -> eyre::Result<()> {
     let chart_path = test_util::workspace_testdata().join("charts/oauth2-proxy");
-    let chart = PinnedHelmChart::prepare(&chart_path)?;
+    let chart = PinnedHelmChart::prepare(helm_invocation::HelmRunner::shared()?, &chart_path)?;
     let candidate = read_chart_schema_fixture("oauth2-proxy")?;
     let profiles = ProfileSchemas::compile(&json!({}), &candidate, json!({}))?;
     let cache =
         test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache");
-    let kubernetes = OfflineKubernetesValidator::new(&cache)?;
+    let kubernetes =
+        OfflineKubernetesValidator::new(&cache, helm_adjudication::KUBERNETES_RELEASE)?;
 
     // Each source value becomes a non-string ConfigMap volume name after Helm's YAML conversion.
     for name in [json!(true), json!(1.5), json!("3")] {

@@ -48,6 +48,8 @@ pub struct ResolvedContract {
     /// Content origins of the private definition handles in `schema`, named
     /// by the output pipeline after minimization.
     pub definition_origins: BTreeMap<String, Vec<DefinitionOrigin>>,
+    /// The per-path decisions the emitter run took while producing `schema`.
+    pub generation_decisions: helm_schema_gen::GenerationDecisions,
 }
 
 /// Final schema after optional generation transforms.

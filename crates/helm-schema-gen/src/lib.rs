@@ -8,6 +8,7 @@ mod emission_plan;
 mod emission_policy;
 mod emission_report;
 mod foreign_schema;
+mod generation_decisions;
 mod merge;
 mod overlay_lowering;
 mod path_resolver;
@@ -33,6 +34,7 @@ use helm_schema_core::{ContractSchemaSignals, ResourceSchemaOracle};
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
+pub use base_schema::BaseOwner;
 use emission_plan::LoweredEmissionPlan;
 pub use emission_policy::{
     ConditionalAnchors, EmissionClassKind, EmissionOrigin, EmissionPolicy, EmissionPolicyDelta,
@@ -43,6 +45,15 @@ pub use emission_report::{
     CanonicalizationCounts, CarrierCounts, EmissionReport, FactCounts, InsertionAbstentionCounts,
     LintDocument, LintOutcome, LintWithdrawal, MandatoryOutcomes,
 };
+pub use generation_decisions::{
+    BaseOwnerDecision, BaseOwnerRule, ChannelAdjustment, ChannelDisposition, ContainmentCheck,
+    ContainmentDecision, ContainmentShortCircuit, DropReason, FalsyEscapeReason,
+    GenerationDecisions, ImplicationRef, IndependentChannels, IndependentQualification, MergeBase,
+    NullAdmissionReason, OverlayResolution, PathGenerationDecision, PathResolution,
+    PolicyEvaluation, PolicyRule, QualifiedContract,
+};
+pub use overlay_lowering::ConditionalBaseEffect;
+pub use schema_node::JsonSchemaType;
 
 /// Parsed values documents consumed together during schema lowering.
 #[derive(Debug, Clone, PartialEq)]
@@ -193,18 +204,23 @@ pub struct GeneratedValuesSchema {
     /// `helm_schema_json_schema_minify::minimize_schema` does, so no readable
     /// spelling influences those decisions.
     pub definition_origins: BTreeMap<String, Vec<helm_schema_json_schema_minify::DefinitionOrigin>>,
+    /// The per-path decisions this run took while resolving, lowering and
+    /// materializing the schema.
+    pub generation_decisions: GenerationDecisions,
 }
 
 /// Generates a JSON Schema and the fact-level accounting from the same emitter run.
 #[tracing::instrument(skip_all)]
 pub fn generate_values_schema_with_report(input: ValuesSchemaInput<'_>) -> GeneratedValuesSchema {
     let plan = LoweredEmissionPlan::build(&input);
-    let projected = plan.project(input.emission_policy);
+    let mut projected = plan.project(input.emission_policy);
+    let base_owners = std::mem::take(&mut projected.base_owners);
     let completed = plan.complete(projected);
     GeneratedValuesSchema {
         schema: completed.schema,
         emission_report: completed.emission_report,
         definition_origins: completed.definition_origins,
+        generation_decisions: plan.into_generation_decisions(base_owners),
     }
 }
 

@@ -3,6 +3,7 @@ use super::{
     ContractSchemaSignals, EmissionOrigin, LoweredConjunct, ProviderSchemaFragment,
     ProviderSchemaResolutions, ResolvedPathSchema, SchemaNode, Value,
 };
+use crate::generation_decisions::{ContainmentCheck, ContainmentShortCircuit};
 use crate::schema_node::JsonSchemaType;
 
 pub(crate) fn member_descendant_projection(
@@ -589,13 +590,25 @@ pub(super) fn implication_has_self_presence_guard(
         .any(|guard| guard.is_self_presence_for(target_value_path))
 }
 
-pub(super) fn resolved_schema_admits_fail_requirement_domain(
-    resolved_schema: &Value,
+/// Whether the structural schema's runtime types contain the types a
+/// requirement admits.
+pub(super) fn structural_domain_containment(
+    structural_schema: &Value,
     implication: &helm_schema_core::ContractRequirementImplication,
-) -> bool {
-    !crate::schema_model::is_empty_schema(resolved_schema)
-        && fail_requirement_runtime_types(implication)
-            .is_subset(&SchemaNode::from_value(resolved_schema.clone()).runtime_types())
+) -> ContainmentCheck {
+    if crate::schema_model::is_empty_schema(structural_schema) {
+        return ContainmentCheck::NotEvaluated {
+            short_circuit_reason: ContainmentShortCircuit::EmptyStructuralDomain,
+        };
+    }
+    let requirement_types = fail_requirement_runtime_types(implication);
+    let structural_types = SchemaNode::from_value(structural_schema.clone()).runtime_types();
+    let contains = requirement_types.is_subset(&structural_types);
+    ContainmentCheck::Evaluated {
+        structural_types,
+        requirement_types,
+        contains,
+    }
 }
 
 fn fail_requirement_runtime_types(

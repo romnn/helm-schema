@@ -15,6 +15,10 @@ use crate::emission_policy::{
     ConditionalFlavor, EmissionClass, EmissionOrigin, GuardScopes, NestedGuardScope, TerminalWhen,
 };
 use crate::emission_report::{EmissionReport, InsertionAbstentionCounts};
+use crate::generation_decisions::{
+    ContainmentCheck, ContainmentDecision, ContainmentShortCircuit, GenerationDecisions,
+    ImplicationRef, OverlayResolution,
+};
 use crate::path_resolver::{PathSchemaResolver, ResolvedPathSchema};
 use crate::provider_resolution::ProviderSchemaResolutions;
 use crate::provider_schema::ProviderSchemaCandidate;
@@ -25,8 +29,10 @@ use crate::schema_node::SchemaNode;
 use crate::schema_tree::SchemaDocument;
 use crate::values_yaml::yaml_value_at_values_path;
 
-#[derive(Debug, Clone, Copy)]
-pub(crate) enum ConditionalBaseEffect {
+/// How a lowered conditional conjunct participates in base ownership.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ConditionalBaseEffect {
     /// This pure requirement does not participate in base ownership.
     None,
     /// The conditional domain owns the path and leaves no unconditional base.
@@ -171,6 +177,7 @@ pub(crate) fn collect_conditional_schemas(
     values_yaml_doc: &YamlValue,
     runtime_defaults_doc: &YamlValue,
     provider_resolutions: &ProviderSchemaResolutions,
+    decisions: &mut GenerationDecisions,
 ) -> (Vec<LoweredConjunct>, InsertionAbstentionCounts) {
     let mut insertion_abstentions = InsertionAbstentionCounts::default();
     let mut synthesized_implications =
@@ -307,15 +314,17 @@ pub(crate) fn collect_conditional_schemas(
                     implication_has_self_presence_guard(implication, target_value_path)
                 })
         };
-        for (implication, origin) in evidence
-            .requirement_implications
-            .iter()
-            .map(|implication| (implication, EmissionOrigin::RequirementImplication))
-            .chain(
-                synthesized
-                    .iter()
-                    .map(|implication| (implication, EmissionOrigin::Backprojection)),
-            )
+        for (implication, origin, index) in
+            evidence
+                .requirement_implications
+                .iter()
+                .enumerate()
+                .map(|(index, implication)| {
+                    (implication, EmissionOrigin::RequirementImplication, index)
+                })
+                .chain(synthesized.iter().enumerate().map(|(index, implication)| {
+                    (implication, EmissionOrigin::Backprojection, index)
+                }))
         {
             if is_bare_iterable_implication(implication)
                 && member_implication_covers_range_domain(
@@ -433,15 +442,36 @@ pub(crate) fn collect_conditional_schemas(
             // guarded requirement. A compatible values.yaml sample does not
             // constrain states where an unrelated caller gate keeps every
             // consumer dormant.
-            let resolved_domain = &resolved_target.structural_schema;
-            let preserve_base_schema = (member_host_only && !member_host_complete_domain)
-                || implication.outer_guards.is_empty()
-                || (!implication_has_self_truthy_guard(implication, target_value_path)
-                    && !presence_scoped_type_arm
-                    && resolved_schema_admits_fail_requirement_domain(
-                        resolved_domain,
-                        implication,
-                    ));
+            let short_circuit = |short_circuit_reason| ContainmentCheck::NotEvaluated {
+                short_circuit_reason,
+            };
+            let (check, preserve_base_schema) = if member_host_only && !member_host_complete_domain
+            {
+                (
+                    short_circuit(ContainmentShortCircuit::IncompleteMemberHost),
+                    true,
+                )
+            } else if implication.outer_guards.is_empty() {
+                (
+                    short_circuit(ContainmentShortCircuit::UnguardedRequirement),
+                    true,
+                )
+            } else if implication_has_self_truthy_guard(implication, target_value_path) {
+                (
+                    short_circuit(ContainmentShortCircuit::SelfTruthyGuard),
+                    false,
+                )
+            } else if presence_scoped_type_arm {
+                (
+                    short_circuit(ContainmentShortCircuit::SelfPresenceTypeArm),
+                    false,
+                )
+            } else {
+                let check =
+                    structural_domain_containment(&resolved_target.structural_schema, implication);
+                let contains = matches!(check, ContainmentCheck::Evaluated { contains: true, .. });
+                (check, contains)
+            };
             let base_effect = if !preserve_base_schema {
                 ConditionalBaseEffect::Own
             } else if member_host_only && !member_host_complete_domain {
@@ -449,6 +479,14 @@ pub(crate) fn collect_conditional_schemas(
             } else {
                 ConditionalBaseEffect::None
             };
+            decisions
+                .path_mut(target_value_path)
+                .containment_checks
+                .push(ContainmentDecision {
+                    implication: ImplicationRef { origin, index },
+                    check,
+                    base_effect,
+                });
             conditionals.push(LoweredConjunct::schema(
                 origin,
                 ConditionalFlavor::Ordinary,
@@ -467,8 +505,7 @@ pub(crate) fn collect_conditional_schemas(
             ));
         }
 
-        for source_overlay in &evidence.conditional_overlays {
-            let overlay = source_overlay;
+        for (overlay_index, overlay) in evidence.conditional_overlays.iter().enumerate() {
             let flavor = match overlay.flavor {
                 helm_schema_core::ConditionalOverlayFlavor::Ordinary => ConditionalFlavor::Ordinary,
                 helm_schema_core::ConditionalOverlayFlavor::KindBranch => {
@@ -505,7 +542,7 @@ pub(crate) fn collect_conditional_schemas(
                 })
                 .unwrap_or_else(|| conditional_ancestor_segments(&target_segments, &outer_guards));
             let active_by_defaults = evaluate_guard_set_on_values(&overlay.guards, values_yaml_doc);
-            let resolved_overlay =
+            let (resolved_overlay, overlay_resolution) =
                 resolve_overlay_target_schema(target_value_path, overlay, provider_resolutions);
             // The range header supplies the branch's complete runtime
             // domain. Its declared sample shape cannot remain as an
@@ -513,6 +550,16 @@ pub(crate) fn collect_conditional_schemas(
             // lanes while the range is active.
             let preserve_overlay_base = !overlay.evidence.facts.is_ranged_source
                 && (overlay.preserve_base_schema || has_unconditional_self_presence_contract);
+            let overlay_base_effect = if preserve_overlay_base {
+                ConditionalBaseEffect::Preserve
+            } else {
+                ConditionalBaseEffect::Own
+            };
+            let mut overlay_decision = OverlayResolution {
+                overlay: overlay_index,
+                evaluation: overlay_resolution.effective,
+                base_effect: Some(overlay_base_effect),
+            };
             // A ranged branch's runtime domain is structural evidence, not
             // a declared-default placeholder. Add it before conditional
             // policy so a fixed map default cannot reintroduce literal
@@ -543,13 +590,13 @@ pub(crate) fn collect_conditional_schemas(
                     nested_guard_scopes.clone(),
                     SchemaNode::empty(),
                     None,
-                    if preserve_overlay_base {
-                        ConditionalBaseEffect::Preserve
-                    } else {
-                        ConditionalBaseEffect::Own
-                    },
+                    overlay_base_effect,
                     false,
                 ));
+                decisions
+                    .path_mut(target_value_path)
+                    .overlays
+                    .push(overlay_decision);
                 continue;
             }
             let range_allows_integer = overlay
@@ -629,14 +676,16 @@ pub(crate) fn collect_conditional_schemas(
                         nested_guard_scopes.clone(),
                         SchemaNode::from_value(target_schema),
                         None,
-                        if preserve_overlay_base {
-                            ConditionalBaseEffect::Preserve
-                        } else {
-                            ConditionalBaseEffect::Own
-                        },
+                        overlay_base_effect,
                         false,
                     ));
+                } else {
+                    overlay_decision.base_effect = None;
                 }
+                decisions
+                    .path_mut(target_value_path)
+                    .overlays
+                    .push(overlay_decision);
                 continue;
             }
             let provider_schema_candidate = resolved_overlay
@@ -656,13 +705,13 @@ pub(crate) fn collect_conditional_schemas(
                 nested_guard_scopes,
                 SchemaNode::from_value(target_schema),
                 provider_schema_candidate,
-                if preserve_overlay_base {
-                    ConditionalBaseEffect::Preserve
-                } else {
-                    ConditionalBaseEffect::Own
-                },
+                overlay_base_effect,
                 false,
             ));
+            decisions
+                .path_mut(target_value_path)
+                .overlays
+                .push(overlay_decision);
         }
     }
 
@@ -695,5 +744,5 @@ use member_projection::{
     append_merge_shadow_arms, append_omitted_member_arms, implication_has_self_presence_guard,
     implication_has_self_truthy_guard, is_bare_iterable_implication,
     is_unconditional_self_presence_overlay, member_implication_covers_range_domain,
-    resolved_schema_admits_fail_requirement_domain, structural_collection_member_projection,
+    structural_collection_member_projection, structural_domain_containment,
 };

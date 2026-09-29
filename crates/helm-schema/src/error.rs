@@ -97,6 +97,19 @@ pub enum CliError {
     #[error("no charts discovered")]
     NoChartsDiscovered,
 
+    /// A session query reached a phase at or above the one its thread is
+    /// initializing, for example from a tracing subscriber inside
+    /// generation; waiting could deadlock.
+    #[error(
+        "session query for the {requested} phase re-entered the session while initializing the {initializing} phase"
+    )]
+    ReentrantSessionQuery {
+        /// The phase the query asked for.
+        requested: &'static str,
+        /// The innermost phase the querying thread is initializing.
+        initializing: &'static str,
+    },
+
     /// A discovered subchart path has no usable chart name.
     #[error("subchart name missing for {path}")]
     SubchartNameMissing {

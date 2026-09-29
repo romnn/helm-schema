@@ -520,7 +520,8 @@ pub enum EmissionClassKind {
 }
 
 /// Producer category used for emission diagnostics and accounting.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum EmissionOrigin {
     /// Guarded path evidence.
     Overlay,

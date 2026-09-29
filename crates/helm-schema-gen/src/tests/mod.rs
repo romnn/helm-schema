@@ -35,6 +35,7 @@ mod fallback_selection;
 mod file_template_contracts;
 mod fragment_projection;
 mod fragment_seeds;
+mod generation_decisions;
 mod grouped_argument_evaluation;
 mod guard_lowering;
 mod helper_projection;

@@ -2,13 +2,16 @@ use std::collections::{BTreeMap, BTreeSet};
 
 use serde_json::Value;
 
+use crate::generation_decisions::{BaseOwnerDecision, BaseOwnerRule, QualifiedContract};
 use crate::overlay_lowering::{ConditionalBaseEffect, LoweredConjunct};
-use crate::path_resolver::{IndependentBaseContract, ResolvedPathSchema};
+use crate::path_resolver::ResolvedPathSchema;
 use crate::schema_model::is_fixed_object_schema;
 use crate::schema_node::SchemaNode;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub(crate) enum BaseOwner<'a> {
+/// The owner of a path's unconditional base schema.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum BaseOwner {
     /// Not a conditional target: the resolved schema verbatim.
     Resolved,
     /// A serialization transform owns the subtree because its sink exposes
@@ -21,13 +24,14 @@ pub(crate) enum BaseOwner<'a> {
     Empty,
     /// Pathless dependency root with guarded-only descendants.
     UnknownObject,
-    /// An independent contract conjoined beneath a serialization-owned ancestor.
-    IndependentContract(&'a IndependentBaseContract),
+    /// The path's independent contract conjoined beneath a
+    /// serialization-owned ancestor.
+    IndependentContract,
     /// A strict ancestor owns this subtree through replacement.
     OwnedByAncestor,
 }
 
-impl BaseOwner<'_> {
+impl BaseOwner {
     pub(crate) fn schema(self, resolved_path: &ResolvedPathSchema) -> Option<SchemaNode> {
         match self {
             Self::Resolved | Self::Serialized => {
@@ -38,7 +42,10 @@ impl BaseOwner<'_> {
             ))),
             Self::Empty => Some(SchemaNode::foreign(crate::schema_model::empty_schema())),
             Self::UnknownObject => Some(SchemaNode::unknown_object()),
-            Self::IndependentContract(contract) => Some(contract.schema()),
+            Self::IndependentContract => resolved_path
+                .independent_base_contract
+                .as_ref()
+                .map(crate::path_resolver::IndependentBaseContract::schema),
             Self::OwnedByAncestor => None,
         }
     }
@@ -49,7 +56,7 @@ impl BaseOwner<'_> {
             Self::Resolved
             | Self::UnknownObject
             | Self::OwnedByAncestor
-            | Self::IndependentContract(_) => false,
+            | Self::IndependentContract => false,
         }
     }
 
@@ -61,7 +68,7 @@ impl BaseOwner<'_> {
             | Self::Empty
             | Self::UnknownObject
             | Self::OwnedByAncestor
-            | Self::IndependentContract(_) => false,
+            | Self::IndependentContract => false,
         }
     }
 
@@ -73,17 +80,41 @@ impl BaseOwner<'_> {
             | Self::Empty
             | Self::UnknownObject
             | Self::OwnedByAncestor
-            | Self::IndependentContract(_) => false,
+            | Self::IndependentContract => false,
         }
     }
 }
 
-pub(crate) fn classify_base<'a>(
-    resolved_path: &'a ResolvedPathSchema,
+pub(crate) fn classify_base(
+    resolved_path: &ResolvedPathSchema,
     conditional_targets: &ConditionalTargetIndex,
     owning_ancestors: &BTreeSet<Vec<String>>,
     preserving_ancestors: &BTreeSet<Vec<String>>,
-) -> BaseOwner<'a> {
+) -> BaseOwnerDecision {
+    let (owner, rule) = select_base_owner(
+        resolved_path,
+        conditional_targets,
+        owning_ancestors,
+        preserving_ancestors,
+    );
+    let qualified_contract = match (&resolved_path.independent_base_contract, owner) {
+        (None, _) => QualifiedContract::NotQualified,
+        (Some(_), BaseOwner::IndependentContract) => QualifiedContract::Retained,
+        (Some(_), _) => QualifiedContract::Discarded,
+    };
+    BaseOwnerDecision {
+        owner,
+        rule,
+        qualified_contract,
+    }
+}
+
+fn select_base_owner(
+    resolved_path: &ResolvedPathSchema,
+    conditional_targets: &ConditionalTargetIndex,
+    owning_ancestors: &BTreeSet<Vec<String>>,
+    preserving_ancestors: &BTreeSet<Vec<String>>,
+) -> (BaseOwner, BaseOwnerRule) {
     let has_owning_ancestor = (1..resolved_path.path_segments.len()).any(|length| {
         resolved_path
             .path_segments
@@ -95,14 +126,18 @@ pub(crate) fn classify_base<'a>(
         // collection's conditional lane. Inserting them into the base would
         // rebuild an unconditional object carrier and eliminate valid array
         // lanes. Literal descendants remain independent base evidence.
-        return BaseOwner::OwnedByAncestor;
+        return (
+            BaseOwner::OwnedByAncestor,
+            BaseOwnerRule::GuardedCollectionMember,
+        );
     }
     if has_owning_ancestor {
-        return if let Some(contract) = &resolved_path.independent_base_contract {
-            BaseOwner::IndependentContract(contract)
+        let owner = if resolved_path.independent_base_contract.is_some() {
+            BaseOwner::IndependentContract
         } else {
             BaseOwner::OwnedByAncestor
         };
+        return (owner, BaseOwnerRule::OwningAncestor);
     }
 
     let has_preserving_ancestor = (1..resolved_path.path_segments.len()).any(|length| {
@@ -113,35 +148,30 @@ pub(crate) fn classify_base<'a>(
     });
 
     if is_pathless_dependency_root_with_guarded_descendant(resolved_path, conditional_targets) {
-        return BaseOwner::UnknownObject;
+        return (
+            BaseOwner::UnknownObject,
+            BaseOwnerRule::PathlessDependencyRoot,
+        );
     }
 
     let target = conditional_targets.targets.get(&resolved_path.value_path);
     if has_preserving_ancestor {
         if let Some(target) = target {
-            return if target.preserve_base_schema {
-                BaseOwner::ResolvedUnclosed
-            } else {
-                BaseOwner::Empty
-            };
+            return (target.owner(), BaseOwnerRule::PreservingAncestorTarget);
         }
     } else if resolved_path.used_as_serialized {
-        return BaseOwner::Serialized;
+        return (BaseOwner::Serialized, BaseOwnerRule::SerializedRender);
     }
 
     if let Some(target) = target {
-        return if target.preserve_base_schema {
-            BaseOwner::ResolvedUnclosed
-        } else {
-            BaseOwner::Empty
-        };
+        return (target.owner(), BaseOwnerRule::ConditionalTarget);
     }
 
     if resolved_path.used_as_serialized {
-        return BaseOwner::Serialized;
+        return (BaseOwner::Serialized, BaseOwnerRule::SerializedRender);
     }
 
-    BaseOwner::Resolved
+    (BaseOwner::Resolved, BaseOwnerRule::Unconditional)
 }
 
 /// Unclose fixed objects (top level or union arms) in a conditional target's
@@ -193,6 +223,16 @@ fn is_pathless_dependency_root_with_guarded_descendant(
 #[derive(Debug, Clone, Copy)]
 struct ConditionalTargetSummary {
     preserve_base_schema: bool,
+}
+
+impl ConditionalTargetSummary {
+    fn owner(self) -> BaseOwner {
+        if self.preserve_base_schema {
+            BaseOwner::ResolvedUnclosed
+        } else {
+            BaseOwner::Empty
+        }
+    }
 }
 
 #[derive(Clone)]

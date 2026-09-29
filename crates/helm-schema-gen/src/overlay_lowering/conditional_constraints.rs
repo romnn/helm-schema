@@ -13,7 +13,10 @@ pub(super) fn resolve_overlay_target_schema(
     target_value_path: &ValuesPath,
     overlay: &ConditionalPathOverlay,
     provider_resolutions: &crate::provider_resolution::ProviderSchemaResolutions,
-) -> ResolvedPathSchema {
+) -> (
+    ResolvedPathSchema,
+    crate::generation_decisions::PathResolution,
+) {
     let evidence = overlay.evidence.as_path_evidence();
     PathSchemaResolver::resolve_single_path_evidence(
         target_value_path,

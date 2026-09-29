@@ -1,10 +1,13 @@
 use std::collections::{BTreeMap, BTreeSet};
 
+use serde::Serialize;
+
 use crate::{Guard, GuardValue, Predicate, ProviderSchemaUse, ValuesPath};
 
 /// Values-decidable guard expression that can be lowered into JSON Schema
 /// conditionals.
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ConditionalGuard {
     /// The value at `path` is Helm-truthy.
     Truthy {

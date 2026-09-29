@@ -5,6 +5,8 @@ mod chart;
 /// Root chart source opening for directories and packaged archives.
 pub mod chart_source;
 mod error;
+/// Generation-decision records and their versioned report.
+pub mod explain;
 mod fetch_policy;
 /// JSON Schema reference bundling and inlining.
 pub mod flatten;

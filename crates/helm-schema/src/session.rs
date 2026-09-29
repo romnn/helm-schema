@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
@@ -14,7 +14,8 @@ use serde_json::Value;
 
 use crate::analysis::analyze_charts;
 use crate::chart;
-use crate::error::EngineResult;
+use crate::error::{CliError, EngineResult};
+use crate::explain::{ExplainFormat, PathGenerationDecision};
 use crate::generation::{GenerateOptions, GeneratedSchema, ResolvedContract};
 use crate::output_pipeline::{
     EmitRequest, FinalOutputPolicy, PolicyInputOptions, PreparedEmitRequest,
@@ -57,6 +58,15 @@ pub struct ValuePathExplanation {
     pub type_hints: Vec<Value>,
     /// Whether a defaulting operation supplies an absent value.
     pub has_default_fallback: bool,
+    /// The decisions schema generation took for the path; `None` when
+    /// generation never resolved, lowered or materialized it.
+    ///
+    /// Overlay references and requirement-implication references of origin
+    /// `requirement_implication` index the path's evidence in
+    /// [`AnalysisSession::contract_schema_signals`]. Backprojection
+    /// references are opaque identifiers: their implications are
+    /// synthesized during lowering and keep no retained record.
+    pub generation: Option<PathGenerationDecision>,
 }
 
 struct PreparedSession {
@@ -133,37 +143,124 @@ pub struct AnalysisSession {
     resolved_contract: SessionCache<ResolvedContract>,
     generated_schema: SessionCache<GeneratedSchema>,
     resolved_emission_policy: SessionCache<helm_schema_gen::ResolvedEmissionPolicy>,
+    initializing: InitializingPhases,
 }
 
-struct SessionCache<T> {
+/// A session phase, ordered so that initializing a phase only ever queries
+/// phases below it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) enum SessionPhase {
+    EmissionPolicy,
+    Prepared,
+    FinalizedContract,
+    ResolvedContract,
+    GeneratedSchema,
+}
+
+impl SessionPhase {
+    const fn name(self) -> &'static str {
+        match self {
+            Self::EmissionPolicy => "emission policy",
+            Self::Prepared => "prepared",
+            Self::FinalizedContract => "finalized contract",
+            Self::ResolvedContract => "resolved contract",
+            Self::GeneratedSchema => "generated schema",
+        }
+    }
+}
+
+/// The phases each thread of one session is initializing, innermost last.
+///
+/// A thread may only query phases below the one it is initializing. Every
+/// thread therefore takes the cache locks in descending phase order, and a
+/// query that would break the order (a callback from inside initialization
+/// reaching back up) fails before it blocks.
+#[derive(Default)]
+pub(crate) struct InitializingPhases(Mutex<HashMap<std::thread::ThreadId, Vec<SessionPhase>>>);
+
+impl InitializingPhases {
+    fn check(&self, requested: SessionPhase) -> EngineResult<()> {
+        let initializing = lock(&self.0)
+            .get(&std::thread::current().id())
+            .and_then(|phases| phases.last().copied());
+        match initializing {
+            Some(initializing) if requested >= initializing => {
+                Err(CliError::ReentrantSessionQuery {
+                    requested: requested.name(),
+                    initializing: initializing.name(),
+                })
+            }
+            _ => Ok(()),
+        }
+    }
+
+    fn enter(&self, phase: SessionPhase) -> InitializingPhase<'_> {
+        lock(&self.0)
+            .entry(std::thread::current().id())
+            .or_default()
+            .push(phase);
+        InitializingPhase(self)
+    }
+}
+
+/// Marks one phase as initializing on the current thread until its
+/// initialization returns or unwinds.
+struct InitializingPhase<'a>(&'a InitializingPhases);
+
+impl Drop for InitializingPhase<'_> {
+    fn drop(&mut self) {
+        let mut phases = lock(&self.0.0);
+        let thread = std::thread::current().id();
+        if let Some(stack) = phases.get_mut(&thread) {
+            stack.pop();
+            if stack.is_empty() {
+                phases.remove(&thread);
+            }
+        }
+    }
+}
+
+/// A single-flight memo: concurrent first callers wait for one computation.
+///
+/// The lock is held while `init` runs; [`InitializingPhases`] keeps every
+/// thread's lock acquisitions in descending phase order.
+pub(crate) struct SessionCache<T> {
+    phase: SessionPhase,
     value: Mutex<Option<Arc<T>>>,
 }
 
 impl<T> SessionCache<T> {
-    fn new() -> Self {
+    pub(crate) fn new(phase: SessionPhase) -> Self {
         Self {
+            phase,
             value: Mutex::new(None),
         }
     }
 
-    fn get_or_try_init(&self, init: impl FnOnce() -> EngineResult<T>) -> EngineResult<Arc<T>> {
-        {
-            let guard = self
-                .value
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner);
-            if let Some(value) = guard.as_ref() {
-                return Ok(Arc::clone(value));
-            }
+    pub(crate) fn get_or_try_init(
+        &self,
+        initializing: &InitializingPhases,
+        init: impl FnOnce() -> EngineResult<T>,
+    ) -> EngineResult<Arc<T>> {
+        initializing.check(self.phase)?;
+        let mut guard = lock(&self.value);
+        if let Some(value) = guard.as_ref() {
+            return Ok(Arc::clone(value));
         }
-
-        let value = Arc::new(init()?);
-        let mut guard = self
-            .value
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
-        Ok(Arc::clone(guard.get_or_insert_with(|| Arc::clone(&value))))
+        let value = {
+            let _initializing = initializing.enter(self.phase);
+            init()?
+        };
+        let value = Arc::new(value);
+        *guard = Some(Arc::clone(&value));
+        Ok(value)
     }
+}
+
+fn lock<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
+    mutex
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
 impl AnalysisSession {
@@ -179,11 +276,12 @@ impl AnalysisSession {
         Self {
             opts,
             diagnostics,
-            prepared: SessionCache::new(),
-            finalized_contract: SessionCache::new(),
-            resolved_contract: SessionCache::new(),
-            generated_schema: SessionCache::new(),
-            resolved_emission_policy: SessionCache::new(),
+            prepared: SessionCache::new(SessionPhase::Prepared),
+            finalized_contract: SessionCache::new(SessionPhase::FinalizedContract),
+            resolved_contract: SessionCache::new(SessionPhase::ResolvedContract),
+            generated_schema: SessionCache::new(SessionPhase::GeneratedSchema),
+            resolved_emission_policy: SessionCache::new(SessionPhase::EmissionPolicy),
+            initializing: InitializingPhases::default(),
         }
     }
 
@@ -238,24 +336,26 @@ impl AnalysisSession {
     ///
     /// Returns an error when resolving the contract or preparing chart values fails.
     pub fn generated_schema(&self) -> EngineResult<GeneratedSchema> {
-        Ok((*self.generated_schema.get_or_try_init(|| {
-            let resolved = self.resolved()?;
-            let mut schema = resolved.schema.clone();
-            if self.opts.infer_required {
-                helm_schema_gen::required_inference::apply_required_inference(
-                    &mut schema,
-                    self.finalized_contract()?
-                        .schema_signals()
-                        .schema_evidence_by_value_path(),
-                    &self.prepared()?.explicit_value_paths,
-                );
-            }
-            Ok(GeneratedSchema {
-                schema,
-                emission_report: resolved.emission_report.clone(),
-                definition_origins: resolved.definition_origins.clone(),
-            })
-        })?)
+        Ok((*self
+            .generated_schema
+            .get_or_try_init(&self.initializing, || {
+                let resolved = self.resolved()?;
+                let mut schema = resolved.schema.clone();
+                if self.opts.infer_required {
+                    helm_schema_gen::required_inference::apply_required_inference(
+                        &mut schema,
+                        self.finalized_contract()?
+                            .schema_signals()
+                            .schema_evidence_by_value_path(),
+                        &self.prepared()?.explicit_value_paths,
+                    );
+                }
+                Ok(GeneratedSchema {
+                    schema,
+                    emission_report: resolved.emission_report.clone(),
+                    definition_origins: resolved.definition_origins.clone(),
+                })
+            })?)
         .clone())
     }
 
@@ -305,11 +405,13 @@ impl AnalysisSession {
         )
     }
 
-    /// Explain one values path using the current contract and chart evidence.
+    /// Explain one values path using the current contract and chart
+    /// evidence, and the decisions the memoized schema generation took for it.
     ///
     /// # Errors
     ///
-    /// Returns an error when chart analysis or contract finalization fails.
+    /// Returns an error when chart analysis, contract finalization, or schema
+    /// generation fails.
     pub fn explain(&self, path: &str) -> EngineResult<ValuePathExplanation> {
         let normalized_path = normalize_values_path(path);
         let finalized_contract = self.finalized_contract()?;
@@ -346,6 +448,11 @@ impl AnalysisSession {
             .unwrap_or_default();
         let has_default_fallback =
             evidence.is_some_and(|evidence| evidence.requiredness.has_default_fallback);
+        let generation = self
+            .resolved()?
+            .generation_decisions
+            .path(&normalized_values_path)
+            .cloned();
 
         Ok(ValuePathExplanation {
             path: normalized_path,
@@ -356,12 +463,36 @@ impl AnalysisSession {
             metadata_fields,
             type_hints,
             has_default_fallback,
+            generation,
         })
     }
 
+    /// Render the generation decisions for one values path as a versioned
+    /// report scoped to generation decisions.
+    ///
+    /// A path generation never reached yields a report with status
+    /// `not_observed`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when chart analysis, contract finalization, or schema
+    /// generation fails, or when the report cannot be serialized.
+    pub fn explain_generation(&self, path: &str, format: ExplainFormat) -> EngineResult<String> {
+        let path = helm_schema_core::ValuesPath::parse(&normalize_values_path(path));
+        let finalized_contract = self.finalized_contract()?;
+        let resolved = self.resolved()?;
+        Ok(crate::explain::generation_report(
+            &path,
+            resolved.generation_decisions.path(&path),
+            finalized_contract.schema_signals().evidence_for(&path),
+            format,
+        )?)
+    }
+
     fn prepared(&self) -> EngineResult<Arc<PreparedSession>> {
-        self.prepared
-            .get_or_try_init(|| PreparedSession::from_generate_options(&self.opts))
+        self.prepared.get_or_try_init(&self.initializing, || {
+            PreparedSession::from_generate_options(&self.opts)
+        })
     }
 
     fn chart_base_dir(&self) -> &Path {
@@ -369,43 +500,46 @@ impl AnalysisSession {
     }
 
     fn finalized_contract(&self) -> EngineResult<Arc<FinalizedContract>> {
-        self.finalized_contract.get_or_try_init(|| {
-            let prepared = self.prepared()?;
-            let finalized = prepared.analysis.contract.clone().finalize();
-            emit_input_channel_diagnostics(finalized.schema_signals(), &self.diagnostics);
-            Ok(finalized)
-        })
+        self.finalized_contract
+            .get_or_try_init(&self.initializing, || {
+                let prepared = self.prepared()?;
+                let finalized = prepared.analysis.contract.clone().finalize();
+                emit_input_channel_diagnostics(finalized.schema_signals(), &self.diagnostics);
+                Ok(finalized)
+            })
     }
 
     fn resolved(&self) -> EngineResult<Arc<ResolvedContract>> {
-        self.resolved_contract.get_or_try_init(|| {
-            let prepared = self.prepared()?;
-            let finalized_contract = self.finalized_contract()?;
-            let mut provider_options = self.opts.provider.clone();
-            provider_options.local_schema_universe = prepared.analysis.local_schemas.clone();
-            let provider =
-                provider_builder::build_provider(&provider_options, Some(&self.diagnostics));
+        self.resolved_contract
+            .get_or_try_init(&self.initializing, || {
+                let prepared = self.prepared()?;
+                let finalized_contract = self.finalized_contract()?;
+                let mut provider_options = self.opts.provider.clone();
+                provider_options.local_schema_universe = prepared.analysis.local_schemas.clone();
+                let provider =
+                    provider_builder::build_provider(&provider_options, Some(&self.diagnostics));
 
-            let generated = generate_values_schema_with_report(
-                ValuesSchemaInput::new(finalized_contract.schema_signals(), &provider)
-                    .with_values_documents(&prepared.values_documents)
-                    .with_shadowed_input_paths(&prepared.shadowed_input_paths)
-                    .with_values_descriptions(&prepared.values_descriptions)
-                    .with_emission_policy(self.resolved_emission_policy()?.policy()),
-            );
+                let generated = generate_values_schema_with_report(
+                    ValuesSchemaInput::new(finalized_contract.schema_signals(), &provider)
+                        .with_values_documents(&prepared.values_documents)
+                        .with_shadowed_input_paths(&prepared.shadowed_input_paths)
+                        .with_values_descriptions(&prepared.values_descriptions)
+                        .with_emission_policy(self.resolved_emission_policy()?.policy()),
+                );
 
-            Ok(ResolvedContract {
-                schema: generated.schema,
-                emission_report: generated.emission_report,
-                definition_origins: generated.definition_origins,
+                Ok(ResolvedContract {
+                    schema: generated.schema,
+                    emission_report: generated.emission_report,
+                    definition_origins: generated.definition_origins,
+                    generation_decisions: generated.generation_decisions,
+                })
             })
-        })
     }
 
     fn resolved_emission_policy(&self) -> EngineResult<helm_schema_gen::ResolvedEmissionPolicy> {
         Ok(*self
             .resolved_emission_policy
-            .get_or_try_init(|| Ok(self.opts.emission.resolve()?))?)
+            .get_or_try_init(&self.initializing, || Ok(self.opts.emission.resolve()?))?)
     }
 
     #[cfg(all(feature = "bench-support", test))]
