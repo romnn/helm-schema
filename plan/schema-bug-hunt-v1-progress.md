@@ -6899,6 +6899,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   prod LOC 0. Re-checks: sol eb2a31d3 / astra ad9b3c05 turn 3 (asked to run the reviewer command themselves).
   Runner builder → guard rework 5 + v6.11 rework 2. Orchestrator.
 
+- 21:47 (Sep 29) — **k8s rework 7 done (drop + K17); K17 sent for an early-landing review.** `k8s-rebase` HEAD
+  2a9a6bf8 on ce06db40 (0d089cb2 dropped, backup `k8s-rebase-pre-v8`; the namespaceOverride rule handed to W4 with
+  15 Helm+kubeconform cells in `rework6/namespace-override-handoff.md`). K17 (test-only): once an override reaches a
+  subchart, Helm keeps that subchart's null defaults while the defaults document drops them, so the exact probe
+  comparison labelled such probes unreachable and the roster gate skipped rows (spinnaker) — a probe differing
+  only by added null-valued keys is now reachable and screened on Helm's own document; unreachable composed probes
+  150 → 120, 6 more matched flips; the spinnaker row is observed; the whole-corpus battery still stops on the
+  expected nacos ×8 + kps ×1. DECISION: K17 improves every track's battery, so it lands with landing 9 (F1) if
+  both k8s reviewers say LAND on it alone (follow-ups 55944b2d / 81dce31e). k8s waits for F1 → W4 (K16).
+  Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
