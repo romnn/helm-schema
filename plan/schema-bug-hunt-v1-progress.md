@@ -6365,6 +6365,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   implementation per the 01:00 decision; the runner builder started the guard in `round8-target-guard` (rebasing
   onto current main first). Load 14–17, T7 140 GB. Orchestrator.
 
+- 02:15 (Sep 29) — **Runner v6.9: REWORK from both** (`review-runner-v69-{sol,astra}.md`, runs dac69f8f / 3d256941,
+  7–9 min each). Shared P1s: a migrated v6.8 landing cannot continue because `binding.runner` script hashes changed
+  (exit 4 at the next step; the migration test starts from a v6.9 dump and hides it); an invalid existing token is
+  published as `id=None` and the dump proceeds. P2s: publication writes through predictable `owner.tmp` symlinks,
+  marker grammar accepts CR/NUL in path fields, `lexists`→`mkdir` race yields a spurious exit 8, `gotmp`/`tmp` are
+  created before the ownership check, link/publication errors and FIFO locks bypass the documented exits, `binding`
+  type unchecked; astra's residual: migration cannot prove checkout continuity for a recreated clone. DECISION
+  (orchestrator): delete `migrate-target` entirely — nothing needs migrating (only the v2 relic landing-f23.env), a
+  pre-v6.9 target refuses with exit 8 "use a fresh TARGET"; fixes V1–V7 → `brief-runner-v69-rework1.md`, runner
+  builder messaged. Load 42 (W1 unit suite, k8s integration, F1 live battery, W4 dump+suite); T7 128 GB. No new
+  builder until a hand-back. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
