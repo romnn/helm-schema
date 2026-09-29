@@ -135,6 +135,10 @@ pub struct AnalysisSession {
     resolved_emission_policy: SessionCache<helm_schema_gen::ResolvedEmissionPolicy>,
 }
 
+/// A single-flight memo: concurrent first callers wait for one computation.
+///
+/// The lock is held while `init` runs. Initializers only query caches of
+/// earlier phases, so the locks are always taken in one phase order.
 struct SessionCache<T> {
     value: Mutex<Option<Arc<T>>>,
 }
@@ -147,22 +151,16 @@ impl<T> SessionCache<T> {
     }
 
     fn get_or_try_init(&self, init: impl FnOnce() -> EngineResult<T>) -> EngineResult<Arc<T>> {
-        {
-            let guard = self
-                .value
-                .lock()
-                .unwrap_or_else(std::sync::PoisonError::into_inner);
-            if let Some(value) = guard.as_ref() {
-                return Ok(Arc::clone(value));
-            }
-        }
-
-        let value = Arc::new(init()?);
         let mut guard = self
             .value
             .lock()
             .unwrap_or_else(std::sync::PoisonError::into_inner);
-        Ok(Arc::clone(guard.get_or_insert_with(|| Arc::clone(&value))))
+        if let Some(value) = guard.as_ref() {
+            return Ok(Arc::clone(value));
+        }
+        let value = Arc::new(init()?);
+        *guard = Some(Arc::clone(&value));
+        Ok(value)
     }
 }
 
