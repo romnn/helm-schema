@@ -6806,7 +6806,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Re-checks: sol 84f4a917 / astra e0604b5e turn 3. Two follow_up calls earlier blocked ~2 h (16:52 → 18:57);
   timestamps corrected. Orchestrator.
 
-- 19:05 (Sep 29) — **Frontend 2.1: LAND from both; landing 8 launched. k8s rework 6 handed back; fresh reviews.**
+- 19:49 (Sep 29) — **Frontend 2.1: LAND from both; landing 8 launched (19:01). k8s rework 6 handed back; fresh reviews.**
   Frontend 2.1 rework 2 re-checks (`review-frontend-phase21-rework2-{sol,astra}.md`): LAND, no remaining findings
   (sol compared `reads_as_number` with go-yaml v2's resolver). Landing 8 = `round8-landing8` branch landing-8 = main
   58bf21a3+ + the seven frontend-phase2 commits (e2fcde05..a4b0a195 cherry-picked; tip 85605710), env
@@ -6821,6 +6821,22 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   handling. Live battery: 7982 adjudicated, unmatched = nacos ×8 only, 0 unrostered false acceptances, both new
   rows observed; stale spinnaker row noted. Reviews: fresh sol/astra runs (the rework-5 runs expired at 15:35).
   Orchestrator.
+
+- 20:35 (Sep 29) — **W4 rework 7 handed back with a clean battery; re-checks dispatched.** `round8-w4-rebase` HEAD
+  3329fa27 on cb42c017 (`final-v8.patch` sha256 0e7dff3b…; `rebase/r7/handoff.md`). One commit per item: R26
+  masterGroupName (the chart's Go regex `^[\w-\.]+$` never compiled in Rust so the `""` arm never classified — Go
+  regex literals now evaluated through their Rust spelling, `ecma_compatible_pattern` moved to core), R26 annotations
+  (the auth Secret's `mustMerge` layer widened the string-map sink; stays inside the path-level sink contract),
+  R29/R30/R32 (plain lanes no longer open on a quote; two quoted lanes judge foreign patterns on the quoted content;
+  owned tokens composed directly, `anchored_token_spelling` deleted; the end tail no longer admits trailing blanks
+  — also fixes `&x true  ` as a bool in a string slot), R33 merge fold, R31/R35 (release-name DNS-1123 rule; helper
+  summaries keep tpl's remainder; route-equivalence test), R34 pins, R27/R28 (graylog row out; 75 nacos rows with
+  the counterfactual evidence). Gates 0, unit 1663, dump + verify 0, **live battery exit 0: 9606 flips, 0
+  unmatched, 0 unrostered**. LOC +913 vs main. Matrix v7 153 rows: one candidate-introduced false acceptance left,
+  `{{ include "rendered-name" . }}: b` (tpl template-program abstention) — the builder asks whether to keep it as a
+  documented abstention or type more actions; sent to both reviewers for an explicit recommendation. Two overlapping
+  builds during gates; all gates re-run alone. Re-checks: sol 1117faa9 / astra 7422b55d turn 2. The two agentmux
+  `start` calls for k8s took ~40 min to return (agentmux queueing); timestamps use the clock. Orchestrator.
 
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
