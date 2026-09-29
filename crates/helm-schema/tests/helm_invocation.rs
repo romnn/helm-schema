@@ -11,21 +11,15 @@ use indoc::indoc;
 use test_util::prelude::sim_assert_eq;
 use test_util::scratch::ScratchDir;
 
-#[path = "common/helm_cache_policy.rs"]
-mod helm_cache_policy;
-
-#[path = "common/helm_invocation.rs"]
-mod helm_invocation;
-
 #[path = "common/helm_pool.rs"]
 mod helm_pool;
 
-use helm_cache_policy::render_cacheability;
-use helm_invocation::{
-    Cacheability, HelmRunner, InvocationRequest, Outcome, PreparedTree, RENDER_TIMEOUT,
+use helm_pool::{Ordinal, PoolLimits, run_ordered};
+use helm_schema_test_support::helm::cache_policy::render_cacheability;
+use helm_schema_test_support::helm::invocation::{
+    Cacheability, HelmRunner, InvocationRequest, Outcome, PreparedTree, RENDER_TIMEOUT, Replay,
     TemplateRequest, find_helm, find_helmsweep, stage_totals, tree_sha256,
 };
-use helm_pool::{Ordinal, PoolLimits, run_ordered};
 
 fn base_request() -> InvocationRequest {
     InvocationRequest {
@@ -209,7 +203,7 @@ fn identical_invocations_replay_and_changed_inputs_execute() -> eyre::Result<()>
     let root = ScratchDir::new("helm_invocation")?;
     let runner = HelmRunner::new(root.path(), true)?;
     let chart = publish_chart(&runner, "value: default\n")?;
-    let cacheable = Cacheability::Cacheable;
+    let cacheable = render_cacheability(chart.path())?;
     let first = render(
         &runner,
         &chart,
@@ -274,7 +268,7 @@ fn failures_replay_and_bypassed_or_private_invocations_execute() -> eyre::Result
     let root = ScratchDir::new("helm_invocation")?;
     let runner = HelmRunner::new(root.path(), true)?;
     let chart = publish_chart(&runner, "value: default\n")?;
-    let cacheable = Cacheability::Cacheable;
+    let cacheable = render_cacheability(chart.path())?;
     let failed = render(
         &runner,
         &chart,
@@ -299,7 +293,7 @@ fn failures_replay_and_bypassed_or_private_invocations_execute() -> eyre::Result
     );
     sim_assert_eq!(have: failed_again.outcome, want: Outcome::Replayed);
 
-    let bypass = Cacheability::Bypass("calls now".to_string());
+    let bypass = Cacheability::bypass("calls now".to_string());
     for _ in 0..2 {
         let bypassed = render(
             &runner,
@@ -331,7 +325,7 @@ fn killed_writers_and_corrupt_entries_are_misses() -> eyre::Result<()> {
     let root = ScratchDir::new("helm_invocation")?;
     let runner = HelmRunner::new(root.path(), true)?;
     let chart = publish_chart(&runner, "value: default\n")?;
-    let cacheable = Cacheability::Cacheable;
+    let cacheable = render_cacheability(chart.path())?;
     let values = r#"{"value": "a"}"#;
     let first = render(&runner, &chart, values, "1.29.0", "render", &cacheable)?;
     let entry = root
@@ -427,7 +421,7 @@ fn replays_are_accounted_apart_from_executions() -> eyre::Result<()> {
             },
             case.path(),
             "render",
-            &Cacheability::Cacheable,
+            &render_cacheability(chart.path())?,
         )?;
         records.push(execution.record);
     }
@@ -470,10 +464,10 @@ fn policy_chart(
 fn cacheability_of(
     templates: &[(&str, &str)],
     dependency_templates: &[(&str, &str)],
-) -> eyre::Result<Cacheability> {
+) -> eyre::Result<Replay> {
     let root = ScratchDir::new("helm_invocation")?;
     policy_chart(root.path(), templates, dependency_templates)?;
-    render_cacheability(root.path())
+    Ok(render_cacheability(root.path())?.replay().clone())
 }
 
 /// Clocks, randomness, generated keys, unordered map iteration and `tpl`
@@ -497,14 +491,14 @@ fn nondeterministic_template_calls_bypass_render_replay() -> eyre::Result<()> {
     ];
     sim_assert_eq!(
         have: cacheability_of(&deterministic, &[("config.yaml", "a: {{ include \"name\" . }}")])?,
-        want: Cacheability::Cacheable,
+        want: Replay::Cacheable,
     );
     sim_assert_eq!(
         have: cacheability_of(
             &[("secret.yaml", "{{ $s := lookup \"v1\" \"Secret\" \"ns\" \"n\" }}")],
             &[],
         )?,
-        want: Cacheability::ClientOnly,
+        want: Replay::ClientOnly,
     );
     for (templates, dependency, reason) in [
         (
@@ -558,7 +552,7 @@ fn nondeterministic_template_calls_bypass_render_replay() -> eyre::Result<()> {
     ] {
         sim_assert_eq!(
             have: cacheability_of(&templates, &dependency)?,
-            want: Cacheability::Bypass(reason.to_string()),
+            want: Replay::Bypass(reason.to_string()),
         );
     }
     Ok(())
@@ -605,9 +599,12 @@ fn abnormal_executions_are_harness_failures() -> eyre::Result<()> {
             kubernetes_version: "1.29.0",
         };
         for _ in 0..2 {
-            let Err(error) =
-                runner.template(&request, case.path(), "render", &Cacheability::Cacheable)
-            else {
+            let Err(error) = runner.template(
+                &request,
+                case.path(),
+                "render",
+                &render_cacheability(chart.path())?,
+            ) else {
                 eyre::bail!("{body}: an abnormal execution became a Helm verdict");
             };
             eyre::ensure!(
@@ -787,11 +784,20 @@ fn a_changed_helm_executable_is_a_harness_failure() -> eyre::Result<()> {
         kubernetes_version: "1.29.0",
     };
     let case = ScratchDir::new("helm_invocation")?;
-    runner.template(&request, case.path(), "render", &Cacheability::Cacheable)?;
+    runner.template(
+        &request,
+        case.path(),
+        "render",
+        &render_cacheability(chart.path())?,
+    )?;
     let replaced = fake_helm(programs.path(), "exit 0")?;
     fs::rename(&replaced, &program)?;
-    let Err(error) = runner.template(&request, case.path(), "render", &Cacheability::Cacheable)
-    else {
+    let Err(error) = runner.template(
+        &request,
+        case.path(),
+        "render",
+        &render_cacheability(chart.path())?,
+    ) else {
         eyre::bail!("a replaced Helm executable ran under the old identity");
     };
     eyre::ensure!(
@@ -807,9 +813,16 @@ fn a_changed_helm_executable_is_a_harness_failure() -> eyre::Result<()> {
 fn lookup_charts_replay_only_as_client_only_templates() -> eyre::Result<()> {
     let root = ScratchDir::new("helm_invocation")?;
     let runner = HelmRunner::new(root.path(), true)?;
-    let chart = publish_chart(&runner, "value: default\n")?;
+    let staged = runner.staging_dir()?;
+    write_chart(&staged, "value: default\n")?;
+    fs::write(
+        staged.join("templates/secret.yaml"),
+        "{{ $s := lookup \"v1\" \"Secret\" \"ns\" \"n\" }}",
+    )?;
+    let chart = runner.publish_tree(&staged)?;
     let values = r#"{"value": "a"}"#;
-    let client_only = Cacheability::ClientOnly;
+    let client_only = render_cacheability(chart.path())?;
+    sim_assert_eq!(have: client_only.replay(), want: &Replay::ClientOnly);
     render(&runner, &chart, values, "1.29.0", "render", &client_only)?;
     let again = render(&runner, &chart, values, "1.29.0", "render", &client_only)?;
     sim_assert_eq!(have: again.outcome, want: Outcome::Replayed);
@@ -900,7 +913,7 @@ fn the_resident_server_renders_exactly_as_the_cli() -> eyre::Result<()> {
             values,
             kubernetes_version,
             stage,
-            &Cacheability::Cacheable,
+            &render_cacheability(chart.path())?,
         )?;
         let have = render(
             &resident,
@@ -908,7 +921,7 @@ fn the_resident_server_renders_exactly_as_the_cli() -> eyre::Result<()> {
             values,
             kubernetes_version,
             stage,
-            &Cacheability::Cacheable,
+            &render_cacheability(chart.path())?,
         )?;
         sim_assert_eq!(
             have: (have.success, String::from_utf8_lossy(&have.stdout), String::from_utf8_lossy(&have.stderr)),
@@ -988,9 +1001,12 @@ fn resident_protocol_failures_are_harness_failures() -> eyre::Result<()> {
         let case = ScratchDir::new("helm_invocation")?;
         let mut failures = Vec::new();
         for _ in 0..2 {
-            let Err(error) =
-                runner.template(&request, case.path(), "render", &Cacheability::Cacheable)
-            else {
+            let Err(error) = runner.template(
+                &request,
+                case.path(),
+                "render",
+                &render_cacheability(chart.path())?,
+            ) else {
                 eyre::bail!("{name}: a protocol failure became a Helm verdict");
             };
             check_preserved_bundle(case.path(), &format!("{error:?}"), request.values)?;
@@ -1050,7 +1066,7 @@ fn templates_see_the_release_capabilities_in_both_engines() -> eyre::Result<()> 
             "{}",
             kubernetes_version,
             "render",
-            &Cacheability::Cacheable,
+            &render_cacheability(chart.path())?,
         )?;
         let have = render(
             &resident,
@@ -1058,7 +1074,7 @@ fn templates_see_the_release_capabilities_in_both_engines() -> eyre::Result<()> 
             "{}",
             kubernetes_version,
             "render",
-            &Cacheability::Cacheable,
+            &render_cacheability(chart.path())?,
         )?;
         let want_text = String::from_utf8(want.stdout)?;
         eyre::ensure!(
@@ -1102,7 +1118,7 @@ fn large_idle_resident_servers_are_retired() -> eyre::Result<()> {
                 "{}",
                 "1.29.0",
                 "render",
-                &Cacheability::Cacheable,
+                &render_cacheability(chart.path())?,
             )?;
         }
         sim_assert_eq!(have: fs::read_to_string(&starts)?.lines().count(), want: servers);

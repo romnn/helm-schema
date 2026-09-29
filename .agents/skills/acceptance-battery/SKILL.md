@@ -26,10 +26,12 @@ tests only pin bytes. This battery is the evidence that changed bytes are
 correct.
 
 - Harness in `crates/helm-schema/tests/common/`: `emission_profile_harness.rs`
-  (probes, screening, coverage), `helm_adjudication.rs` (pinned Helm chart
-  copies, offline Kubernetes validator), `helm_invocation.rs` (Helm engine,
-  replay store), `helm_pool.rs` (worker/memory pool), and
-  `known_false_acceptances.rs` (rosters, `ROSTER_BASELINE`).
+  (probes, screening, coverage), `helm_pool.rs` (worker/memory pool), and
+  `known_false_acceptances.rs` (rosters, `ROSTER_BASELINE`). The shared Helm
+  layer lives in `crates/helm-schema-test-support/src/helm/` (also used by the
+  `cell_matrix` tool): `adjudication.rs` (pinned Helm chart copies, offline
+  Kubernetes validator), `invocation.rs` (Helm engine, replay store),
+  `cache_policy.rs` (render replayability) and `kubernetes_version.rs`.
 - Details: [references/env-vars.md](references/env-vars.md) lists every
   variable. [references/verdicts-and-rosters.md](references/verdicts-and-rosters.md)
   covers probe classes, verdicts, evidence files, roster rules, and baseline

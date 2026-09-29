@@ -91,7 +91,7 @@ first: `git grep -nE '<old version>|<old commit>|<old go version>|<old digest pr
     `internal/version` symbol names still exist in the new release), the task descriptions, and the
     hard-coded lines in `build:helmsweep`'s identity loop (Helm replace line, `helm-build`,
     jsonschema version).
-11. **Rust test pins**: `crates/helm-schema/tests/common/helm_invocation.rs`
+11. **Rust test pins**: `crates/helm-schema-test-support/src/helm/invocation.rs`
     (`PINNED_HELM_VERSION`, `HELMSWEEP_HELM_LINES`), fake `version` outputs in
     `crates/helm-schema/tests/helm_invocation.rs`, the version assertions in
     `schema_emission_profiles.rs` and `schema_emission_profile_live.rs`.

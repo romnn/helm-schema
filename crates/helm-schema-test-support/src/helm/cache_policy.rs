@@ -18,7 +18,7 @@ use color_eyre::eyre;
 use flate2::read::GzDecoder;
 use helm_schema_ast::{TemplateExpr, contains_template_action, parse_action_expressions};
 
-use crate::helm_invocation::Cacheability;
+use crate::helm::invocation::{Cacheability, Replay};
 
 /// Template functions whose result can differ between identical invocations.
 const NONDETERMINISTIC_FUNCTIONS: &[&str] = &[
@@ -73,7 +73,7 @@ const CLUSTER_FUNCTION: &str = "lookup";
 /// # Errors
 ///
 /// Returns an error when the chart or one of its archives cannot be read.
-pub(crate) fn render_cacheability(chart: &Path) -> eyre::Result<Cacheability> {
+pub fn render_cacheability(chart: &Path) -> eyre::Result<Cacheability> {
     let mut reasons = BTreeSet::new();
     scan_directory(chart, "", &mut reasons)?;
     let lookups = reasons
@@ -81,18 +81,18 @@ pub(crate) fn render_cacheability(chart: &Path) -> eyre::Result<Cacheability> {
         .filter(|reason| reason.ends_with(&format!(": calls {CLUSTER_FUNCTION}")))
         .count();
     let mut reasons = reasons.into_iter();
-    Ok(match reasons.next() {
-        None => Cacheability::Cacheable,
-        Some(_) if lookups == reasons.len() + 1 => Cacheability::ClientOnly,
+    Ok(Cacheability::trusted(match reasons.next() {
+        None => Replay::Cacheable,
+        Some(_) if lookups == reasons.len() + 1 => Replay::ClientOnly,
         Some(first) => {
             let more = reasons.count();
-            Cacheability::Bypass(if more == 0 {
+            Replay::Bypass(if more == 0 {
                 first
             } else {
                 format!("{first} (and {more} more)")
             })
         }
-    })
+    }))
 }
 
 fn scan_directory(

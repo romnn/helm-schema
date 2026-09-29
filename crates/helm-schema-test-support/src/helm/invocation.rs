@@ -68,22 +68,46 @@ const HELMSWEEP_HELM_LINES: [&str; 2] = [
 
 /// How long a resident server may take to answer one render before it is
 /// a harness failure.
-pub(crate) const RENDER_TIMEOUT: Duration = Duration::from_secs(600);
+pub const RENDER_TIMEOUT: Duration = Duration::from_secs(600);
 
 /// A resident server holding more than this after a render is retired, not
 /// kept idle: idle servers stay small beside the pool's memory budget.
 const RETIRE_ABOVE_BYTES: u64 = 128 << 20;
 
-/// A chart tree at its content address.
+/// A chart tree at its content address, made only by [`HelmRunner::publish_tree`].
 #[derive(Clone, Debug)]
-pub(crate) struct PreparedTree {
-    pub(crate) path: PathBuf,
-    pub(crate) sha256: String,
+pub struct PreparedTree {
+    path: PathBuf,
+    sha256: String,
+}
+
+impl PreparedTree {
+    /// Where the tree lives, under the runner's root.
+    #[must_use]
+    pub fn path(&self) -> &Path {
+        &self.path
+    }
+
+    /// The tree's content identity ([`tree_sha256`]).
+    #[must_use]
+    pub fn sha256(&self) -> &str {
+        &self.sha256
+    }
 }
 
 /// Whether an execution may be replayed from, and published to, the store.
+///
+/// Callers cannot declare a render replayable: a render's policy comes from
+/// its chart's content ([`render_cacheability`](crate::helm::cache_policy::render_cacheability)),
+/// and only this module tree marks its own fixed charts replayable.
+/// [`Cacheability::bypass`] is always safe.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-pub(crate) enum Cacheability {
+pub struct Cacheability(Replay);
+
+/// The replay policy a [`Cacheability`] carries.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+pub enum Replay {
+    /// Identical inputs produce identical output.
     Cacheable,
     /// Replayable only as a client-only `helm template`, where `lookup`
     /// answers empty: nothing reaches a cluster.
@@ -92,74 +116,113 @@ pub(crate) enum Cacheability {
     Bypass(String),
 }
 
+impl Cacheability {
+    /// Never replayed, for `reason`.
+    #[must_use]
+    pub const fn bypass(reason: String) -> Self {
+        Self(Replay::Bypass(reason))
+    }
+
+    /// The policy, for inspection.
+    #[must_use]
+    pub const fn replay(&self) -> &Replay {
+        &self.0
+    }
+
+    /// A policy this crate decided from a chart's content or for a chart it
+    /// wrote itself.
+    pub(crate) const fn trusted(replay: Replay) -> Self {
+        Self(replay)
+    }
+}
+
 /// How the outputs of one invocation were obtained.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize)]
-pub(crate) enum Outcome {
+pub enum Outcome {
+    /// Run by Helm now.
     Executed,
     /// Replayed from the store entry of an earlier identical execution.
     Replayed,
+    /// Run by Helm now, never stored, for this reason.
     Bypassed(String),
 }
 
 /// One completed Helm execution: Helm ran and exited with its own status.
-pub(crate) struct HelmExecution {
+pub struct HelmExecution {
     /// Helm's exit code: 0 on success, 1 when Helm reports an error.
-    pub(crate) exit_code: i32,
-    pub(crate) stdout: Vec<u8>,
-    pub(crate) stderr: Vec<u8>,
-    pub(crate) record: InvocationRecord,
+    pub exit_code: i32,
+    /// Helm's stdout.
+    pub stdout: Vec<u8>,
+    /// Helm's stderr.
+    pub stderr: Vec<u8>,
+    /// What the execution cost and how it was obtained.
+    pub record: InvocationRecord,
 }
 
 impl HelmExecution {
-    pub(crate) const fn success(&self) -> bool {
+    /// Whether Helm exited 0.
+    #[must_use]
+    pub const fn success(&self) -> bool {
         self.exit_code == 0
     }
 }
 
 /// What one invocation cost, retained beside its outputs.
 #[derive(Clone, Debug, Serialize)]
-pub(crate) struct InvocationRecord {
-    pub(crate) stage: String,
-    pub(crate) key: String,
-    pub(crate) outcome: Outcome,
-    pub(crate) exit_code: i32,
+pub struct InvocationRecord {
+    /// The caller's label for the execution, such as `render` or `coalesce`.
+    pub stage: String,
+    /// The invocation key ([`InvocationRequest::key`]).
+    pub key: String,
+    /// How the outputs were obtained.
+    pub outcome: Outcome,
+    /// Helm's exit code.
+    pub exit_code: i32,
     /// Duration of the original execution, also for a replay.
-    pub(crate) elapsed_ms: u64,
+    pub elapsed_ms: u64,
     /// Time spent finding and verifying a stored entry.
-    pub(crate) lookup_ms: u64,
+    pub lookup_ms: u64,
     /// Peak memory of the original execution alone: a CLI child's own
     /// `wait4` peak, or the memory a resident server held while it rendered.
-    pub(crate) max_rss_bytes: u64,
+    pub max_rss_bytes: u64,
     /// Lifetime peak of the resident server that rendered, 0 for the CLI
     /// and replays: telemetry of the server, not of this render.
-    pub(crate) server_max_rss_bytes: u64,
-    pub(crate) input_bytes: u64,
-    pub(crate) stdout_bytes: u64,
-    pub(crate) stderr_bytes: u64,
+    pub server_max_rss_bytes: u64,
+    /// Size of the values file.
+    pub input_bytes: u64,
+    /// Size of Helm's stdout.
+    pub stdout_bytes: u64,
+    /// Size of Helm's stderr.
+    pub stderr_bytes: u64,
 }
 
 /// Everything that identifies one Helm execution.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-pub(crate) struct InvocationRequest {
-    pub(crate) format: String,
-    pub(crate) platform: String,
+pub struct InvocationRequest {
+    /// The key and entry format, such as `helm-schema/helm-invocation/v3`.
+    pub format: String,
+    /// `<os>-<arch>`.
+    pub platform: String,
     /// `helm-cli` or `helmsweep` (the resident server).
-    pub(crate) engine: String,
+    pub engine: String,
     /// The engine program's bytes and its reported version: Helm's for the
     /// CLI, the complete `helmsweep version` (build id, Go, Helm, jsonschema
     /// and patch) for the resident server.
-    pub(crate) program_sha256: String,
-    pub(crate) program_version: String,
-    pub(crate) working_directory: String,
+    pub program_sha256: String,
+    /// The engine program's reported version.
+    pub program_version: String,
+    /// The child's working directory, the runner's root.
+    pub working_directory: String,
     /// The child's complete environment, sorted by name.
-    pub(crate) environment: Vec<(String, String)>,
-    pub(crate) arguments: Vec<String>,
+    pub environment: Vec<(String, String)>,
+    /// The child's arguments.
+    pub arguments: Vec<String>,
     /// The content identity of each path an argument or the environment
     /// names, in argument order, then Helm's home directory.
-    pub(crate) inputs: Vec<(String, String)>,
+    pub inputs: Vec<(String, String)>,
     /// Whether the invocation is a client-only `helm template`: no server
     /// dry run, no validation against a cluster, and no kubeconfig.
-    pub(crate) client_only: bool,
+    pub client_only: bool,
 }
 
 impl InvocationRequest {
@@ -180,7 +243,11 @@ impl InvocationRequest {
     }
 
     /// SHA-256 of the domain-separated stored encoding of the request.
-    pub(crate) fn key(&self) -> eyre::Result<String> {
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the request cannot be encoded.
+    pub fn key(&self) -> eyre::Result<String> {
         Ok(key_of(&self.encode()?))
     }
 }
@@ -193,11 +260,13 @@ fn key_of(request: &[u8]) -> String {
 }
 
 /// A `helm template` of a prepared chart with one values file.
-pub(crate) struct TemplateRequest<'a> {
-    pub(crate) chart: &'a PreparedTree,
+pub struct TemplateRequest<'a> {
+    /// The chart Helm renders.
+    pub chart: &'a PreparedTree,
     /// The exact bytes Helm reads through `-f`.
-    pub(crate) values: &'a [u8],
-    pub(crate) kubernetes_version: &'a str,
+    pub values: &'a [u8],
+    /// Helm's `--kube-version`.
+    pub kubernetes_version: &'a str,
 }
 
 /// The result half of a stored entry.
@@ -244,7 +313,7 @@ impl FileStamp {
 }
 
 /// The pinned Helm engine and the root its inputs and entries live under.
-pub(crate) struct HelmRunner {
+pub struct HelmRunner {
     program: PathBuf,
     program_sha256: String,
     program_version: String,
@@ -263,7 +332,11 @@ impl HelmRunner {
     /// The runner of this process, with the Helm version checked once.
     /// `SCHEMA_HELM_INVOCATION_CACHE` names a persistent store; without it
     /// a private temporary root is used and nothing is replayed.
-    pub(crate) fn shared() -> eyre::Result<&'static Self> {
+    ///
+    /// # Errors
+    ///
+    /// Returns the error [`HelmRunner::new`] returned for this process.
+    pub fn shared() -> eyre::Result<&'static Self> {
         SHARED_RUNNER
             .get_or_init(|| {
                 let runner = match std::env::var_os(INVOCATION_CACHE_VAR) {
@@ -286,7 +359,7 @@ impl HelmRunner {
     ///
     /// Returns an error for an unknown engine, a missing or unpinned engine
     /// program, or a `root` that cannot be created.
-    pub(crate) fn new(root: &Path, replay: bool) -> eyre::Result<Self> {
+    pub fn new(root: &Path, replay: bool) -> eyre::Result<Self> {
         match std::env::var(ENGINE_VAR).as_deref() {
             Ok("cli") => Self::with_program(root, replay, find_helm()?),
             Ok("helmsweep") | Err(std::env::VarError::NotPresent) => {
@@ -302,7 +375,7 @@ impl HelmRunner {
     ///
     /// Returns an error when `program` is not the pinned Helm release or
     /// `root` cannot be created.
-    pub(crate) fn with_program(root: &Path, replay: bool, program: PathBuf) -> eyre::Result<Self> {
+    pub fn with_program(root: &Path, replay: bool, program: PathBuf) -> eyre::Result<Self> {
         let runner = Self::unstarted(root, replay, program)?;
         let version = runner.program_output(&["version", "--template", "{{.Version}}"])?;
         eyre::ensure!(
@@ -323,7 +396,7 @@ impl HelmRunner {
     ///
     /// Returns an error when `program` is not built from the pinned Helm or
     /// the server cannot be started.
-    pub(crate) fn with_helmsweep(
+    pub fn with_helmsweep(
         root: &Path,
         replay: bool,
         program: PathBuf,
@@ -384,7 +457,11 @@ impl HelmRunner {
     }
 
     /// A fresh directory on the root's filesystem for building a tree.
-    pub(crate) fn staging_dir(&self) -> eyre::Result<PathBuf> {
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the directory cannot be created.
+    pub fn staging_dir(&self) -> eyre::Result<PathBuf> {
         let staging = self.root.join("staging");
         fs::create_dir_all(&staging)?;
         Ok(tempfile::Builder::new()
@@ -395,7 +472,11 @@ impl HelmRunner {
 
     /// Moves the tree built at `staged` to its content address, or discards
     /// it when that address already holds the same content.
-    pub(crate) fn publish_tree(&self, staged: &Path) -> eyre::Result<PreparedTree> {
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the tree cannot be hashed or moved.
+    pub fn publish_tree(&self, staged: &Path) -> eyre::Result<PreparedTree> {
         let sha256 = tree_sha256(staged)?;
         let trees = self.root.join("trees");
         fs::create_dir_all(&trees)?;
@@ -418,7 +499,12 @@ impl HelmRunner {
     /// A child that cannot be started or waited for, that a signal ends, or
     /// that exits with a status other than Helm's own 0 or 1 is a harness
     /// failure, never a Helm verdict, and is never stored.
-    pub(crate) fn template(
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for such a harness failure or when the store or
+    /// case cannot be written.
+    pub fn template(
         &self,
         request: &TemplateRequest<'_>,
         case: &Path,
@@ -494,13 +580,13 @@ impl HelmRunner {
         let key = invocation.key()?;
         let entry = self.entry_dir(&key);
         let lookup = Instant::now();
-        let cacheability = match cacheability {
-            Cacheability::ClientOnly if !invocation.client_only => {
-                &Cacheability::Bypass("calls lookup outside a client-only template".to_string())
-            }
+        let lookup_outside =
+            Replay::Bypass("calls lookup outside a client-only template".to_string());
+        let cacheability = match cacheability.replay() {
+            Replay::ClientOnly if !invocation.client_only => &lookup_outside,
             other => other,
         };
-        let replayable = self.replay && !matches!(cacheability, Cacheability::Bypass(_));
+        let replayable = self.replay && !matches!(cacheability, Replay::Bypass(_));
         let stored = if replayable {
             read_entry(&entry, &request)?
         } else {
@@ -524,8 +610,8 @@ impl HelmRunner {
                     publish_entry(&entry, &request, &result, &stdout, &stderr)?;
                 }
                 let outcome = match cacheability {
-                    Cacheability::Cacheable | Cacheability::ClientOnly => Outcome::Executed,
-                    Cacheability::Bypass(reason) => Outcome::Bypassed(reason.clone()),
+                    Replay::Cacheable | Replay::ClientOnly => Outcome::Executed,
+                    Replay::Bypass(reason) => Outcome::Bypassed(reason.clone()),
                 };
                 (result, stdout, stderr, outcome, server_max_rss_bytes)
             };
@@ -985,7 +1071,11 @@ fn publish_entry(
 
 /// `HELM_SCHEMA_HELMSWEEP`, else `helmsweep` in the target directory this
 /// test binary was built into (`task build:helmsweep` puts it there).
-pub(crate) fn find_helmsweep() -> eyre::Result<PathBuf> {
+///
+/// # Errors
+///
+/// Returns an error when neither names a helmsweep program.
+pub fn find_helmsweep() -> eyre::Result<PathBuf> {
     if let Some(path) = std::env::var_os(HELMSWEEP_VAR) {
         return Ok(PathBuf::from(path).canonicalize()?);
     }
@@ -1005,7 +1095,12 @@ pub(crate) fn find_helmsweep() -> eyre::Result<PathBuf> {
     Ok(program.canonicalize()?)
 }
 
-pub(crate) fn find_helm() -> eyre::Result<PathBuf> {
+/// The first `helm` on `PATH`, canonicalized.
+///
+/// # Errors
+///
+/// Returns an error when `PATH` names no `helm`.
+pub fn find_helm() -> eyre::Result<PathBuf> {
     let path = std::env::var_os("PATH").ok_or_eyre("PATH is not set")?;
     for directory in std::env::split_paths(&path) {
         let candidate = directory.join(format!("helm{}", std::env::consts::EXE_SUFFIX));
@@ -1027,25 +1122,36 @@ fn elapsed_ms(started: Instant) -> u64 {
 
 /// The invocations of one stage, summed.
 #[derive(Clone, Debug, Default, Serialize)]
-pub(crate) struct StageTotals {
-    pub(crate) invocations: usize,
-    pub(crate) executed: usize,
-    pub(crate) replayed: usize,
-    pub(crate) bypassed: usize,
-    pub(crate) failures: usize,
+pub struct StageTotals {
+    /// Invocations of the stage.
+    pub invocations: usize,
+    /// Of those, executed now.
+    pub executed: usize,
+    /// Of those, replayed from the store.
+    pub replayed: usize,
+    /// Of those, executed without replay.
+    pub bypassed: usize,
+    /// Of those, with a nonzero exit code.
+    pub failures: usize,
     /// Duration of the original executions, replayed ones included.
-    pub(crate) elapsed_ms: u64,
+    pub elapsed_ms: u64,
     /// Duration of the executions this run actually performed.
-    pub(crate) executed_ms: u64,
-    pub(crate) lookup_ms: u64,
-    pub(crate) max_elapsed_ms: u64,
-    pub(crate) max_rss_bytes: u64,
-    pub(crate) input_bytes: u64,
-    pub(crate) stdout_bytes: u64,
+    pub executed_ms: u64,
+    /// Time spent finding and verifying stored entries.
+    pub lookup_ms: u64,
+    /// The longest original execution.
+    pub max_elapsed_ms: u64,
+    /// The largest peak memory of an execution.
+    pub max_rss_bytes: u64,
+    /// Total size of the values files.
+    pub input_bytes: u64,
+    /// Total size of Helm's stdout.
+    pub stdout_bytes: u64,
 }
 
 /// Sums `records` per stage.
-pub(crate) fn stage_totals(records: &[InvocationRecord]) -> BTreeMap<String, StageTotals> {
+#[must_use]
+pub fn stage_totals(records: &[InvocationRecord]) -> BTreeMap<String, StageTotals> {
     let mut totals = BTreeMap::<String, StageTotals>::new();
     for record in records {
         let stage = totals.entry(record.stage.clone()).or_default();
@@ -1076,7 +1182,7 @@ pub(crate) fn stage_totals(records: &[InvocationRecord]) -> BTreeMap<String, Sta
 /// # Errors
 ///
 /// Returns an error for an unreadable tree, a link, or a non-UTF-8 path.
-pub(crate) fn tree_sha256(root: &Path) -> eyre::Result<String> {
+pub fn tree_sha256(root: &Path) -> eyre::Result<String> {
     let mut hasher = Sha256::new();
     hash_field(&mut hasher, PREPARATION_POLICY.as_bytes());
     hash_tree(&mut hasher, root, "")?;
@@ -1134,7 +1240,8 @@ const INVOCATION_RECORD_SUFFIX: &str = ".invocation.json";
 /// chart's `prepared.json` name those copies by bundle-relative paths, so
 /// the bundle reproduces the case alone. A directory that cannot be copied
 /// is reported where it is.
-pub(crate) fn preserve_failure(case: &Path) -> PathBuf {
+#[must_use]
+pub fn preserve_failure(case: &Path) -> PathBuf {
     match preserve_bundle(case) {
         Ok(preserved) => preserved,
         Err(error) => {

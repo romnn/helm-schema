@@ -9,7 +9,7 @@ use serde_json::Value;
 
 /// The Kubernetes versions the corpus renders with, the corpus policy
 /// version first.
-pub(crate) const PINNED_KUBERNETES_VERSIONS: [&str; 2] = ["1.29.0", "1.33.0"];
+pub const PINNED_KUBERNETES_VERSIONS: [&str; 2] = ["1.29.0", "1.33.0"];
 
 /// Constraint spellings the shared evaluator abstains on, each with the first
 /// pinned version Helm v4.2.3 admits. Masterminds reads `x` as a wildcard:
@@ -34,7 +34,7 @@ const HELM_DECIDED_CONSTRAINTS: [(&str, &str); 1] = [(">=1.21.x-0", "1.29.0")];
 /// Returns an error when the manifest cannot be read, its `kubeVersion` is
 /// not a string, the shared constraint evaluator cannot decide it, or no
 /// pinned version satisfies it.
-pub(crate) fn chart_kubernetes_version(chart_dir: &Path) -> eyre::Result<&'static str> {
+pub fn chart_kubernetes_version(chart_dir: &Path) -> eyre::Result<&'static str> {
     // The adjudicator renders a chart that ships only a template manifest
     // with that manifest copied to `Chart.yaml`.
     let mut path = chart_dir.join("Chart.yaml");
