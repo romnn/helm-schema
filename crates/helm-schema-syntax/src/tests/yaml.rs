@@ -1016,7 +1016,10 @@ fn empty_output_may_not_remove_a_flow_sequence_element() -> eyre::Result<()> {
         "items: [{{ .Values.x }}]\n",
         "items: [a, {{ .Values.x }}]\n",
         "items: {k: {{ .Values.x }}}\n",
-        "items:\n- {{ .Values.x }}\n",
+        indoc! {r"
+            items:
+            - {{ .Values.x }}
+        "},
     ];
     sim_assert_eq!(have: cell_layouts(&cells, &MaybeEmptyScalarShapes)?, want: indoc! {r#"
         # "items: [{{ .Values.x }}]\n"
@@ -1068,7 +1071,10 @@ fn empty_output_may_not_remove_a_flow_sequence_element() -> eyre::Result<()> {
 #[test]
 fn merge_keys_over_collections_are_uncertain() -> eyre::Result<()> {
     let maybe_empty = [
-        "<{{ .Values.x }}<: {injected: 1}\nown: 2\n",
+        indoc! {r"
+            <{{ .Values.x }}<: {injected: 1}
+            own: 2
+        "},
         "<{{ .Values.x }}<: v\n",
     ];
     sim_assert_eq!(have: cell_layouts(&maybe_empty, &MaybeEmptyScalarShapes)?, want: indoc! {r#"
@@ -1084,17 +1090,35 @@ fn merge_keys_over_collections_are_uncertain() -> eyre::Result<()> {
                 Scalar(Plain)[2..2]
     "#});
     sim_assert_eq!(
-        have: layouts("{{ .Values.x }}:\n  injected: 1\n", &ScalarShapes)?,
+        have: layouts(
+            indoc! {r"
+                {{ .Values.x }}:
+                  injected: 1
+            "},
+            &ScalarShapes
+        )?,
         want: indoc! {r#"
             arm [p0 p1] "h0:\n  injected: 1\n"
               uncertain MergeKey
         "#}
     );
     let literal = [
-        "<<: {c: 1}\ne: 2\n",
-        "<<: [{c: 1}, {d: 2}]\ne: 2\n",
-        "\"<<\": {c: 1}\ne: 2\n",
-        "<<: 1\ne: 2\n",
+        indoc! {r"
+            <<: {c: 1}
+            e: 2
+        "},
+        indoc! {r"
+            <<: [{c: 1}, {d: 2}]
+            e: 2
+        "},
+        indoc! {r#"
+            "<<": {c: 1}
+            e: 2
+        "#},
+        indoc! {r"
+            <<: 1
+            e: 2
+        "},
     ];
     sim_assert_eq!(have: cell_layouts(&literal, &UnknownShapes)?, want: indoc! {r#"
         # "<<: {c: 1}\ne: 2\n"
@@ -1206,7 +1230,10 @@ fn dialect_sensitive_literals_are_withheld() -> eyre::Result<()> {
         "y: 1\n",
         "n: ~\n",
         "1: a\n",
-        "a: 1\na: 2\n",
+        indoc! {r"
+            a: 1
+            a: 2
+        "},
     ];
     sim_assert_eq!(have: cell_layouts(&diverge, &UnknownShapes)?, want: indoc! {r#"
         # "a: y\n"
@@ -1297,7 +1324,10 @@ fn block_renders_an_unresolved_call() -> eyre::Result<()> {
 /// span outside it, or a piece the body does not hold, is never read as text.
 #[test]
 fn pieces_resolve_only_in_their_own_source() -> eyre::Result<()> {
-    let source = "a: 1\nb: 2\n";
+    let source = indoc! {r"
+        a: 1
+        b: 2
+    "};
     let body = render(source, &UnknownShapes)?;
     let BodyLayout::Arms(arms) = &body.layout else {
         eyre::bail!("a literal body has one arm");
