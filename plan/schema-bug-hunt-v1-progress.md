@@ -6868,6 +6868,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   rows), integration 145 moves + 5 rows; batteries not rerun (attribution arm only). Re-checks: sol 84f4a917 / astra
   e0604b5e turn 4. Landing 9 = F1 after landing 8 (sweep still running). Orchestrator.
 
+- 21:05 (Sep 29) — **LANDING 8 MERGED (2f9e60d4): frontend phase 2.1.** Chain in `round8-landing8-run1` (runner
+  v6.10): dump (adopted 0 of 202) → unit → lint → battery → integration → sweep → finalize OK, "chain green" 21:03;
+  receipt `/Volumes/T7/dev/round8-landing8-run1/receipt.json` sha256
+  c0d29da1e17d33ef653ac383729551c4f28cf945bd923179b15a0e37e066663e. Merged `--no-ff` from branch landing-8 (the
+  seven frontend-phase2 commits e2fcde05..a4b0a195 on main): tree-sitter YAML parser, per-arm rendered pieces,
+  arm skeletons mapped to YAML ownership, the one-copy YAML 1.1 divergence rules (`yaml_dialect.rs`; test-util and
+  the values loader use it), skeleton goldens for every reviewer cell; shadow-only, no caller outside
+  helm-schema-syntax, zero fixture bytes moved. Post-merge sanity running on main's target
+  (`post-merge-main.log`). landing-8.env retired (2b578b3); landing-8 target removed. Builders told main moved.
+  Next: landing 9 = F1 (re-checks of rework 3 running); staging the clone now. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
