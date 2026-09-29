@@ -6859,6 +6859,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   namespaceOverride rule moved from k8s). Landing order stays F1 → W4 → k8s → W1. Landing 8 in its sweep. Disk 79 GB,
   load 13. Orchestrator.
 
+- 21:03 (Sep 29) — **F1 rework 3 handed back (test-only); re-checks dispatched.** HEAD 389c6d0c on f532bab1
+  (`final-v4.patch` sha256 7931bf22…): the policy attribution identifies a violated assertion by value path, keyword
+  and the keyword's argument with local `$ref`s inlined (schema location deliberately excluded: nacos's shared
+  `service.ports` anyOf sits at allOf/290 vs allOf/289 — sent to the reviewers as a deviation to judge); the mixed
+  control is red on e939ec5e (attributed) and green now (false rejection, "a template reads settings.size"); the
+  nacos witness still matches all 8. Gates fmt/lint/lint:fc/ast-grep 0, dump --verify 0, unit 1658/1659 (5 promotion
+  rows), integration 145 moves + 5 rows; batteries not rerun (attribution arm only). Re-checks: sol 84f4a917 / astra
+  e0604b5e turn 4. Landing 9 = F1 after landing 8 (sweep still running). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
