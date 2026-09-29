@@ -961,6 +961,33 @@ fn a_composed_probe_helm_cannot_reach_is_unreachable() -> eyre::Result<()> {
     Ok(())
 }
 
+/// Once an override reaches a subchart, Helm keeps that subchart's null
+/// defaults (spinnaker's `minio.makeBucketJob.annotations`), which its
+/// defaults document drops. A probe that differs from the document Helm
+/// composes only by those nulls reaches Helm as that document, so the
+/// roster's spinnaker `minio.ingress.enabled <- true` witness is observed
+/// instead of labelled unreachable.
+#[test]
+fn a_composed_probe_reaches_helm_with_the_null_defaults_it_keeps() -> eyre::Result<()> {
+    let chart = test_util::workspace_testdata().join("charts/spinnaker");
+    let defaults = test_util::helm_values::coalesce_chart_values(&chart, json!({}))?;
+    let mut composed = defaults.clone();
+    *composed
+        .pointer_mut("/minio/ingress/enabled")
+        .ok_or_eyre("minio declares ingress.enabled")? = json!(true);
+    let values = json!({"minio": {"ingress": {"enabled": true}}});
+    let document = test_util::helm_values::coalesce_chart_values(&chart, values.clone())?;
+    sim_assert_eq!(
+        have: document.pointer("/minio/makeBucketJob/annotations"),
+        want: Some(&serde_json::Value::Null)
+    );
+    sim_assert_eq!(
+        have: ProbeInstance::Coalesced(composed).helm_values_file(&chart, &defaults)?,
+        want: ProbeValuesFile::ReachableAs { values, document }
+    );
+    Ok(())
+}
+
 #[derive(Default)]
 struct AcceptanceComparison {
     charts_checked: usize,
@@ -2570,8 +2597,11 @@ fn screen_chart(
         if matches!(probe, ProbeInstance::Coalesced(_)) {
             coverage.composed_probes += 1;
         }
-        let overlay = match probe.helm_values_file(chart_dir.path(), &defaults) {
-            Ok(ProbeValuesFile::Reachable(overlay)) => overlay,
+        let (overlay, probe) = match probe.helm_values_file(chart_dir.path(), &defaults) {
+            Ok(ProbeValuesFile::Reachable(overlay)) => (overlay, probe),
+            Ok(ProbeValuesFile::ReachableAs { values, document }) => {
+                (values, ProbeInstance::Coalesced(document))
+            }
             Ok(ProbeValuesFile::Unreachable(reason)) => {
                 coverage.unreachable_probes.push(UnreachableProbe {
                     probe: probe_name,
@@ -3826,7 +3856,7 @@ fn adjudicate_transition_tightening(
     defaults: &serde_json::Value,
 ) -> eyre::Result<()> {
     let values = match probe.helm_values_file(HelmChartDir::stage(chart)?.path(), defaults)? {
-        ProbeValuesFile::Reachable(values) => values,
+        ProbeValuesFile::Reachable(values) | ProbeValuesFile::ReachableAs { values, .. } => values,
         ProbeValuesFile::Unreachable(reason) => {
             eprintln!("UNREACHABLE {chart}: {probe_name}: {reason}");
             return Ok(());
