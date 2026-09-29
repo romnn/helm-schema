@@ -8,6 +8,7 @@
 //! single artifact it needs from the current checkout and compares it with its
 //! committed fixture.
 
+pub mod cell_matrix;
 pub mod consume;
 pub mod generate;
 pub mod helm;

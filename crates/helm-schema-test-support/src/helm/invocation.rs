@@ -23,7 +23,7 @@ use std::fmt::Write as _;
 use std::fs;
 use std::io::{BufRead as _, BufReader, Write as _};
 use std::path::{Path, PathBuf};
-use std::process::{Child, ChildStdin, Command, Stdio};
+use std::process::{Child, ChildStdin, Command, Output, Stdio};
 use std::sync::{Mutex, OnceLock, PoisonError, mpsc};
 use std::time::{Duration, Instant};
 
@@ -324,6 +324,8 @@ pub struct HelmRunner {
     replay: bool,
     /// The resident servers, or `None` for the CLI engine.
     resident: Option<ResidentPool>,
+    /// How long one CLI child may run before it is a harness failure.
+    timeout: Duration,
 }
 
 static SHARED_RUNNER: OnceLock<Result<HelmRunner, String>> = OnceLock::new();
@@ -369,14 +371,33 @@ impl HelmRunner {
         }
     }
 
-    /// A runner executing `program` as Helm.
+    /// A runner executing `program` as Helm, each execution bounded by [`RENDER_TIMEOUT`].
     ///
     /// # Errors
     ///
     /// Returns an error when `program` is not the pinned Helm release or
     /// `root` cannot be created.
     pub fn with_program(root: &Path, replay: bool, program: PathBuf) -> eyre::Result<Self> {
-        let runner = Self::unstarted(root, replay, program)?;
+        Self::with_program_within(root, replay, program, RENDER_TIMEOUT)
+    }
+
+    /// A runner executing `program` as Helm, each execution (its identity probe included) bounded
+    /// by `timeout`.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when `program` is not the pinned Helm release, outlives `timeout`, or
+    /// `root` cannot be created.
+    pub fn with_program_within(
+        root: &Path,
+        replay: bool,
+        program: PathBuf,
+        timeout: Duration,
+    ) -> eyre::Result<Self> {
+        let runner = Self {
+            timeout,
+            ..Self::unstarted(root, replay, program)?
+        };
         let version = runner.program_output(&["version", "--template", "{{.Version}}"])?;
         eyre::ensure!(
             version == PINNED_HELM_VERSION,
@@ -435,18 +456,21 @@ impl HelmRunner {
             root,
             replay,
             resident: None,
+            timeout: RENDER_TIMEOUT,
         })
     }
 
     /// The engine program's stdout for `arguments` under the child environment.
     fn program_output(&self, arguments: &[&str]) -> eyre::Result<String> {
-        let output = Command::new(&self.program)
-            .env_clear()
-            .envs(self.environment()?)
-            .current_dir(&self.root)
-            .args(arguments)
-            .output()
-            .wrap_err_with(|| format!("run {} {arguments:?}", self.program.display()))?;
+        let output = output_within(
+            Command::new(&self.program)
+                .env_clear()
+                .envs(self.environment()?)
+                .current_dir(&self.root)
+                .args(arguments),
+            self.timeout,
+            &format!("{} {arguments:?}", self.program.display()),
+        )?;
         eyre::ensure!(
             output.status.success(),
             "{} {arguments:?} failed: {}",
@@ -454,6 +478,24 @@ impl HelmRunner {
             String::from_utf8_lossy(&output.stderr)
         );
         Ok(String::from_utf8(output.stdout)?)
+    }
+
+    /// The root the runner's inputs, trees and store entries live under.
+    #[must_use]
+    pub fn root(&self) -> &Path {
+        &self.root
+    }
+
+    /// The SHA-256 of the engine program's bytes.
+    #[must_use]
+    pub fn program_sha256(&self) -> &str {
+        &self.program_sha256
+    }
+
+    /// The engine program's reported version.
+    #[must_use]
+    pub fn program_version(&self) -> &str {
+        &self.program_version
     }
 
     /// A fresh directory on the root's filesystem for building a tree.
@@ -654,7 +696,9 @@ impl HelmRunner {
         let stdout_path = case.join(format!("{stage}.yaml"));
         let stderr_path = case.join(format!("{stage}.stderr"));
         let started = Instant::now();
-        let child = Command::new(&self.program)
+        let mut command = Command::new(&self.program);
+        own_process_group(&mut command);
+        let mut child = command
             .env_clear()
             .envs(
                 invocation
@@ -674,12 +718,27 @@ impl HelmRunner {
                     preserve_failure(case).display()
                 )
             })?;
-        let usage = child.wait4().wrap_err_with(|| {
-            format!(
-                "wait for Helm {stage}; evidence={}",
-                preserve_failure(case).display()
-            )
-        })?;
+        // A CLI child that outlives the timeout is killed: a harness failure, never a verdict.
+        let usage = loop {
+            let waited = child.try_wait4().wrap_err_with(|| {
+                format!(
+                    "wait for Helm {stage}; evidence={}",
+                    preserve_failure(case).display()
+                )
+            })?;
+            if let Some(usage) = waited {
+                break usage;
+            }
+            if started.elapsed() > self.timeout {
+                kill_process_group(&mut child);
+                eyre::bail!(
+                    "Helm {stage} timed out after {:?}; evidence={}",
+                    self.timeout,
+                    preserve_failure(case).display()
+                );
+            }
+            std::thread::sleep(Duration::from_millis(20));
+        };
         let elapsed_ms = elapsed_ms(started);
         let Some(exit_code @ (0 | 1)) = usage.status.code() else {
             eyre::bail!(
@@ -1109,6 +1168,99 @@ pub fn find_helm() -> eyre::Result<PathBuf> {
         }
     }
     eyre::bail!("no helm on PATH")
+}
+
+/// A command that ran longer than its timeout and was killed: a harness failure, never a verdict.
+#[derive(Debug, thiserror::Error)]
+#[error("{0}")]
+pub struct TimedOut(pub String);
+
+/// `command`'s output, with stdin closed; `what` names it in the error when it fails to start or
+/// outlives `timeout` ([`TimedOut`]). The deadline covers collecting the output too: a descendant that
+/// keeps the pipes open is waited for no longer. The command runs as its own process group, which is
+/// killed on a timeout, descendants included.
+///
+/// # Errors
+///
+/// Returns an error when `command` cannot start, cannot be waited for, or outlives `timeout`.
+pub fn output_within(command: &mut Command, timeout: Duration, what: &str) -> eyre::Result<Output> {
+    let deadline = Instant::now() + timeout;
+    own_process_group(command);
+    let mut child = command
+        .stdin(Stdio::null())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .wrap_err_with(|| format!("run {what}"))?;
+    let stdout = child.stdout.take().ok_or_eyre("no stdout pipe")?;
+    let stderr = child.stderr.take().ok_or_eyre("no stderr pipe")?;
+    // The pipes are drained while the child runs, so a large output cannot block it; a reader still
+    // blocked at the deadline is left behind.
+    let (sender, outputs) = mpsc::channel();
+    for (index, mut pipe) in [
+        (0, Box::new(stdout) as Box<dyn std::io::Read + Send>),
+        (1, Box::new(stderr)),
+    ] {
+        let sender = sender.clone();
+        std::thread::spawn(move || {
+            let mut bytes = Vec::new();
+            let read = std::io::Read::read_to_end(&mut pipe, &mut bytes).map(|_| bytes);
+            let _ = sender.send((index, read));
+        });
+    }
+    let timed_out = |child: &mut Child| -> eyre::Report {
+        kill_process_group(child);
+        TimedOut(format!("{what} timed out after {timeout:?}")).into()
+    };
+    let status = loop {
+        if let Some(status) = child
+            .try_wait()
+            .wrap_err_with(|| format!("wait for {what}"))?
+        {
+            break status;
+        }
+        if Instant::now() > deadline {
+            return Err(timed_out(&mut child));
+        }
+        std::thread::sleep(Duration::from_millis(20));
+    };
+    let mut collected = [Vec::new(), Vec::new()];
+    for _ in 0..2 {
+        let remaining = deadline.saturating_duration_since(Instant::now());
+        let Ok((index, read)) = outputs.recv_timeout(remaining) else {
+            return Err(timed_out(&mut child));
+        };
+        let bytes = read.wrap_err_with(|| format!("read the output of {what}"))?;
+        if let Some(slot) = collected.get_mut(index) {
+            *slot = bytes;
+        }
+    }
+    let [stdout, stderr] = collected;
+    Ok(Output {
+        status,
+        stdout,
+        stderr,
+    })
+}
+
+/// Makes `command` start its own process group, so [`kill_process_group`] reaches its descendants.
+fn own_process_group(command: &mut Command) {
+    #[cfg(unix)]
+    std::os::unix::process::CommandExt::process_group(command, 0);
+    #[cfg(not(unix))]
+    let _ = command;
+}
+
+/// Kills `child`'s process group (on Unix; elsewhere the child alone) and reaps the child.
+fn kill_process_group(child: &mut Child) {
+    #[cfg(unix)]
+    let _ = Command::new("/bin/kill")
+        .args(["-s", "KILL", "--", &format!("-{}", child.id())])
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status();
+    let _ = child.kill();
+    let _ = child.wait();
 }
 
 fn utf8(path: &Path) -> eyre::Result<&str> {

@@ -72,6 +72,8 @@ const SWEEP_LOCK: &str = ".sweep.lock";
 /// Evidence older than this is pruned when a process registers.
 const EVIDENCE_RETENTION: Duration = Duration::from_hours(7 * 24);
 
+/// The scratch root this process chose with [`use_root`], over [`ROOT_VAR`] and the target.
+static ROOT_OVERRIDE: OnceLock<PathBuf> = OnceLock::new();
 /// This process's registration, or why it failed.
 static OWNER: OnceLock<std::result::Result<Owner, String>> = OnceLock::new();
 static NEXT: AtomicU64 = AtomicU64::new(0);
@@ -190,19 +192,44 @@ pub fn target_dir() -> PathBuf {
     }
 }
 
-/// The scratch root: [`ROOT_VAR`] when set, else `<target>/scratch`.
+/// Makes `dir` this process's scratch root, in place of [`ROOT_VAR`] and `<target>/scratch`; its
+/// evidence then lives in `<dir>/.evidence`, which no sweep touches, so nothing is written under the
+/// target.
+///
+/// # Errors
+///
+/// Returns an error once a scratch directory exists or a root was already chosen.
+pub fn use_root(dir: &Path) -> eyre::Result<()> {
+    eyre::ensure!(
+        OWNER.get().is_none(),
+        "the scratch root is chosen before the first scratch directory"
+    );
+    ROOT_OVERRIDE
+        .set(dir.to_path_buf())
+        .map_err(|_| eyre!("the scratch root was already chosen"))
+}
+
+/// The scratch root: the root [`use_root`] chose, else [`ROOT_VAR`] when set, else
+/// `<target>/scratch`.
 #[must_use]
 pub fn root() -> PathBuf {
+    if let Some(dir) = ROOT_OVERRIDE.get() {
+        return dir.clone();
+    }
     match std::env::var_os(ROOT_VAR) {
         Some(dir) if !dir.is_empty() => PathBuf::from(dir),
         _ => target_dir().join("scratch"),
     }
 }
 
-/// `<target>/evidence`, where preserved failure evidence lives.
+/// `<target>/evidence` (`<root>/.evidence` under a root [`use_root`] chose), where preserved failure
+/// evidence lives.
 #[must_use]
 pub fn evidence_root() -> PathBuf {
-    target_dir().join("evidence")
+    match ROOT_OVERRIDE.get() {
+        Some(dir) => dir.join(".evidence"),
+        None => target_dir().join("evidence"),
+    }
 }
 
 /// Copies `dir`, a scratch directory or a directory inside one, to the same
