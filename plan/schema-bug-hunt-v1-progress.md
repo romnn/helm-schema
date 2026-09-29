@@ -6500,6 +6500,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   f1-red (rework reds), frontend (phase 2 paused), all evidence dirs (round8-f9-evidence 16 GB is the user's call).
   Orchestrator.
 
+- 04:15 (Sep 29) — **Disk after the cleanup: 170 GB free** (88 → 170). Runner run-all after the v6.9 merge 9/12 tests
+  green so far (still running). Builders: W1 rework 6 in probe runs, W4 rework 6 writing its regression at the
+  dispatch-remainder level, k8s live battery still running, F1 rework 1 on the typed-prefix collection side, guard
+  rework 1 started, explain C1 in its integration gate. The W4 review runs (68054652/aeb245af, Sep 28 03:45) are past
+  the 24 h window → W4 rework 6 gets fresh runs. Load 39. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
