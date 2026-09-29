@@ -273,15 +273,17 @@ gate's.
 - The corpus battery
   (`round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced`
   in `crates/helm-schema/tests/schema_emission_profiles.rs`) reads its
-  CANDIDATE from `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP`. Live adjudication
-  (`ADJUDICATE_WITH_HELM=1`) refuses to run without it; schema-only mode
-  falls back to the on-disk fixture. The `acceptance-battery` skill has
+  CANDIDATE from `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP`, which is required in
+  every mode: without it the battery fails immediately, live
+  (`ADJUDICATE_WITH_HELM=1`) or schema-only; the committed fixtures are
+  never a candidate. The `acceptance-battery` skill has
   the full procedure. **Any round
   that changes a fixture byte MUST run the battery with
   `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP` pointing at the one clean dump of
-  the final build, after that dump exists.** Run without it on
-  not-yet-regenerated fixtures, the battery compares a schema against
-  itself and proves nothing. Tell-tales of a vacuous run:
+  the final build, after that dump exists.** The harness refuses to run
+  without it (`preservation_battery_requires_candidate_dump`); before that
+  guard existed, a run without it compared a schema against itself and
+  proved nothing. Tell-tales of a vacuous run, still worth knowing:
   `flips_adjudicated: 0` on a round that changed bytes, and a per-chart
   `guards_discovered` count equal to the baseline-only count. The
   performance v1 A3 round (2026-09-05) reported zero flips this way and
