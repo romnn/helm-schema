@@ -6888,6 +6888,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   promotions patch is still outstanding from the builder. Disk 108 GB (frontend target freed); load 17;
   W1 alive in its final pipeline. Orchestrator.
 
+- 21:45 (Sep 29) — **cell_matrix rework 2 handed back; re-checks dispatched.** Branch cell-matrix rebased onto main
+  c38d1ca3, one commit d2dcb45c (`cell-matrix-v3.patch` = `git diff main HEAD`, 2870 lines, sha256 44732a87…):
+  C11 release names validated against the bundle's cache directories (traversal → exit 2; `@minor` from the
+  validated name), C12 scratch root resolved through its longest existing ancestor, C13 one `output_within`
+  helper bounding Helm's identity probe (`with_program_within`), helmsweep version/classify and each generation
+  (hang → exit 3 naming the command), C14 generation failures name chart + cells, C15 `--scratch <dir>` so
+  `--check` runs read-only against a checkout with a private scratch (reviewer command updated; the sample
+  reproduces byte for byte). Red 4/13, green 14/14; gates fmt/lint/lint:fc/unit (1661)/integration (899) all 0;
+  prod LOC 0. Re-checks: sol eb2a31d3 / astra ad9b3c05 turn 3 (asked to run the reviewer command themselves).
+  Runner builder → guard rework 5 + v6.11 rework 2. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
