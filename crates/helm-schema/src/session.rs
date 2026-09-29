@@ -14,7 +14,7 @@ use serde_json::Value;
 
 use crate::analysis::analyze_charts;
 use crate::chart;
-use crate::error::EngineResult;
+use crate::error::{CliError, EngineResult};
 use crate::explain::{ExplainFormat, PathGenerationDecision};
 use crate::generation::{GenerateOptions, GeneratedSchema, ResolvedContract};
 use crate::output_pipeline::{
@@ -61,8 +61,11 @@ pub struct ValuePathExplanation {
     /// The decisions schema generation took for the path; `None` when
     /// generation never resolved, lowered or materialized it.
     ///
-    /// Overlay and requirement-implication references index the path's
-    /// evidence in [`AnalysisSession::contract_schema_signals`].
+    /// Overlay references and requirement-implication references of origin
+    /// `requirement_implication` index the path's evidence in
+    /// [`AnalysisSession::contract_schema_signals`]. Backprojection
+    /// references are opaque identifiers: their implications are
+    /// synthesized during lowering and keep no retained record.
     pub generation: Option<PathGenerationDecision>,
 }
 
@@ -145,30 +148,68 @@ pub struct AnalysisSession {
 /// A single-flight memo: concurrent first callers wait for one computation.
 ///
 /// The lock is held while `init` runs. Initializers only query caches of
-/// earlier phases, so the locks are always taken in one phase order.
-struct SessionCache<T> {
+/// earlier phases, so the locks are always taken in one phase order. A query
+/// that re-enters the phase it is initializing on the same thread (from code
+/// the initializer calls back into) fails with
+/// [`CliError::ReentrantSessionQuery`] instead of waiting on itself.
+pub(crate) struct SessionCache<T> {
+    phase: &'static str,
     value: Mutex<Option<Arc<T>>>,
+    initializing_thread: Mutex<Option<std::thread::ThreadId>>,
 }
 
 impl<T> SessionCache<T> {
-    fn new() -> Self {
+    pub(crate) fn new(phase: &'static str) -> Self {
         Self {
+            phase,
             value: Mutex::new(None),
+            initializing_thread: Mutex::new(None),
         }
     }
 
-    fn get_or_try_init(&self, init: impl FnOnce() -> EngineResult<T>) -> EngineResult<Arc<T>> {
-        let mut guard = self
-            .value
-            .lock()
-            .unwrap_or_else(std::sync::PoisonError::into_inner);
+    pub(crate) fn get_or_try_init(
+        &self,
+        init: impl FnOnce() -> EngineResult<T>,
+    ) -> EngineResult<Arc<T>> {
+        let current_thread = std::thread::current().id();
+        if *lock(&self.initializing_thread) == Some(current_thread) {
+            return Err(CliError::ReentrantSessionQuery { phase: self.phase });
+        }
+        let mut guard = lock(&self.value);
         if let Some(value) = guard.as_ref() {
             return Ok(Arc::clone(value));
         }
-        let value = Arc::new(init()?);
+        let value = {
+            let _initializing = InitializingThread::mark(&self.initializing_thread, current_thread);
+            init()?
+        };
+        let value = Arc::new(value);
         *guard = Some(Arc::clone(&value));
         Ok(value)
     }
+}
+
+/// Marks the thread initializing a cache until initialization returns or
+/// unwinds.
+struct InitializingThread<'a>(&'a Mutex<Option<std::thread::ThreadId>>);
+
+impl<'a> InitializingThread<'a> {
+    fn mark(slot: &'a Mutex<Option<std::thread::ThreadId>>, thread: std::thread::ThreadId) -> Self {
+        *lock(slot) = Some(thread);
+        Self(slot)
+    }
+}
+
+impl Drop for InitializingThread<'_> {
+    fn drop(&mut self) {
+        *lock(self.0) = None;
+    }
+}
+
+fn lock<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
+    mutex
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
 }
 
 impl AnalysisSession {
@@ -184,11 +225,11 @@ impl AnalysisSession {
         Self {
             opts,
             diagnostics,
-            prepared: SessionCache::new(),
-            finalized_contract: SessionCache::new(),
-            resolved_contract: SessionCache::new(),
-            generated_schema: SessionCache::new(),
-            resolved_emission_policy: SessionCache::new(),
+            prepared: SessionCache::new("prepared"),
+            finalized_contract: SessionCache::new("finalized contract"),
+            resolved_contract: SessionCache::new("resolved contract"),
+            generated_schema: SessionCache::new("generated schema"),
+            resolved_emission_policy: SessionCache::new("emission policy"),
         }
     }
 
