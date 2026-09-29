@@ -5,7 +5,6 @@ use helm_schema_json_schema_minify::DefinitionOrigin;
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
-use crate::ValuesSchemaInput;
 use crate::base_schema::{BaseOwner, ConditionalTargetIndex, classify_base};
 use crate::condition_encoding::{
     HELM_TRUTHY_DEFINITION_NAME, helm_truthy_definition_schema, value_references_helm_truthy,
@@ -27,6 +26,7 @@ use crate::schema_tree::{
     draft07_root_document,
 };
 use crate::uncoalesced_root::UncoalescedRootGate;
+use crate::{AuthoringPolicy, ValuesSchemaInput};
 
 pub(crate) struct LoweredEmissionPlan {
     predicate_memo: helm_schema_core::PredicateMemo,
@@ -39,6 +39,7 @@ pub(crate) struct LoweredEmissionPlan {
     support: EmissionSupportPlan,
     insertion_abstentions: InsertionAbstentionCounts,
     decisions: GenerationDecisions,
+    authoring_policy: AuthoringPolicy,
 }
 
 #[derive(Clone)]
@@ -196,6 +197,8 @@ struct EmissionSupportPlan {
     owning_paths: BTreeSet<Vec<String>>,
     preserving_paths: BTreeSet<Vec<String>>,
     accepted_values_root_paths: Vec<Vec<String>>,
+    /// Every dependency instance's values root; with the analyzed chart's
+    /// empty root, the chart values roots.
     dependency_roots: BTreeSet<Vec<String>>,
     default_fill_skip_paths: BTreeSet<Vec<String>>,
     conditional_hosts: ConditionalHostPreparation,
@@ -297,10 +300,16 @@ impl LoweredEmissionPlan {
             input.provider,
         );
         let mut decisions = GenerationDecisions::default();
+        let dependency_roots = dependency_values_roots(&contract_schema_signals);
+        let helm_global_namespaces = chart_values_roots(&dependency_roots)
+            .map(helm_global_namespace)
+            .collect::<BTreeSet<_>>();
         let resolved_paths = PathSchemaResolver::new(
             &contract_schema_signals,
             &documents.input_defaults,
             &documents.runtime_defaults,
+            &helm_global_namespaces,
+            input.authoring_policy.declared_types,
             &provider_resolutions,
         )
         .resolve_all(&mut decisions);
@@ -310,6 +319,7 @@ impl LoweredEmissionPlan {
             &documents.composed,
             &documents.runtime_defaults,
             &provider_resolutions,
+            input.authoring_policy.declared_types,
             &mut decisions,
         );
         let terminal_schemas = contract_schema_signals
@@ -321,6 +331,7 @@ impl LoweredEmissionPlan {
             &contract_schema_signals,
             &resolved_paths,
             &conditional_schemas,
+            dependency_roots,
         );
 
         Self {
@@ -334,6 +345,7 @@ impl LoweredEmissionPlan {
             support,
             insertion_abstentions,
             decisions,
+            authoring_policy: input.authoring_policy,
         }
     }
 
@@ -394,6 +406,7 @@ impl LoweredEmissionPlan {
             &self.documents.input_defaults,
             &resolved_paths,
             &self.support,
+            self.authoring_policy,
         );
         emission_report.insertion_abstentions.base_document += base_document_abstentions;
         self.support.conditional_hosts.apply(&mut document);
@@ -446,7 +459,7 @@ impl LoweredEmissionPlan {
 
     pub(crate) fn complete(&self, projected: ProjectedTree) -> CompletedGeneratedSchema {
         let projected = self.merge_missing_defaults(projected);
-        let projected = Self::open_global_namespace(projected);
+        let projected = self.reserve_helm_global_namespaces(projected);
         let materialized = self.preserve_declared_defaults(projected);
         let materialized = Self::extract_repeated_payloads(materialized);
         let materialized = Self::insert_shared_definitions(materialized);
@@ -456,6 +469,7 @@ impl LoweredEmissionPlan {
             materialized.schema,
             materialized.emission_report,
             materialized.definition_origins,
+            self.authoring_policy.root,
         )
     }
 
@@ -470,12 +484,36 @@ impl LoweredEmissionPlan {
                 &self.documents.input_defaults,
                 &self.support.accepted_values_root_paths,
                 &self.support.default_fill_skip_paths,
+                self.authoring_policy.declared_types,
             );
         projected
     }
 
-    pub(crate) fn open_global_namespace(mut projected: ProjectedTree) -> ProjectedTree {
-        projected.document.open_helm_global_namespace();
+    /// Reserves Helm's `global` namespace at every chart values root, after
+    /// default backfill so no declared default can re-type it.
+    ///
+    /// A namespace no contract reaches stays unconstrained. Every evidence
+    /// row at or below a namespace is a template use (a direct read, or a
+    /// dependency's read projected onto each ancestor namespace Helm merges
+    /// into it) or a dependency values-root registration, which carries
+    /// Helm's table assertion on an instance aliased `global`. Values-file
+    /// seeds never reach a namespace, and `is_referenced_value_path` /
+    /// `has_referenced_descendants` are not consulted: seeds and
+    /// registrations set both, so they prove no read.
+    pub(crate) fn reserve_helm_global_namespaces(
+        &self,
+        mut projected: ProjectedTree,
+    ) -> ProjectedTree {
+        let evidence = self.contract_schema_signals.schema_evidence_by_value_path();
+        for chart_root in chart_values_roots(&self.support.dependency_roots) {
+            let namespace = helm_global_namespace(chart_root);
+            let consumed = evidence
+                .keys()
+                .any(|path| *path == namespace || path.is_descendant_of(&namespace));
+            projected
+                .document
+                .reserve_helm_global_namespace(chart_root, consumed);
+        }
         projected
     }
 
@@ -667,6 +705,7 @@ impl EmissionSupportPlan {
         contract_schema_signals: &ContractSchemaSignals,
         resolved_paths: &[ResolvedPathSchema],
         conditional_schemas: &[LoweredConjunct],
+        dependency_roots: BTreeSet<Vec<String>>,
     ) -> Self {
         // Keep conditional targets in base classification even when their
         // arms are omitted. A reduced document is the full document minus
@@ -708,12 +747,6 @@ impl EmissionSupportPlan {
             .filter(|(_, evidence)| evidence.facts.accepted_values_root_fragment)
             .map(|(path, _)| path.segments().map(tree_segment_spelling).collect())
             .collect::<Vec<_>>();
-        let dependency_roots = contract_schema_signals
-            .schema_evidence_by_value_path()
-            .iter()
-            .filter(|(_, evidence)| evidence.facts.accepted_dependency_values_root_fragment)
-            .map(|(path, _)| path.segments().map(tree_segment_spelling).collect())
-            .collect::<BTreeSet<_>>();
         // A serialized path's schema is deliberately unconstrained; the
         // declared-default filler keeps the slot without re-typing it,
         // exactly like a conditional target.
@@ -742,6 +775,12 @@ impl EmissionSupportPlan {
             default_fill_skip_paths
                 .insert(value_path.segments().map(tree_segment_spelling).collect());
         }
+        // Helm's `global` namespace is reserved without a declared shape.
+        for chart_root in chart_values_roots(&dependency_roots) {
+            let mut namespace = chart_root.to_vec();
+            namespace.push("global".to_string());
+            default_fill_skip_paths.insert(namespace);
+        }
         let mut support = Self {
             conditional_targets,
             owning_paths,
@@ -761,12 +800,13 @@ fn materialize_base_document(
     input_defaults: &YamlValue,
     resolved_paths: &[ResolvedPathSchema],
     support: &EmissionSupportPlan,
+    authoring_policy: AuthoringPolicy,
 ) -> (
     SchemaDocument,
     usize,
     BTreeMap<helm_schema_core::ValuesPath, BaseOwnerDecision>,
 ) {
-    let mut document = SchemaDocument::new_root_object();
+    let mut document = SchemaDocument::new_root_object(authoring_policy.root);
     let mut insertion_abstentions = 0;
     let mut base_owners = BTreeMap::new();
     let base_span = tracing::info_span!("base_path_insertion").entered();
@@ -822,6 +862,32 @@ fn materialize_base_document(
     (document, insertion_abstentions, base_owners)
 }
 
+/// Every dependency instance's values root, as tree segments.
+fn dependency_values_roots(signals: &ContractSchemaSignals) -> BTreeSet<Vec<String>> {
+    signals
+        .schema_evidence_by_value_path()
+        .iter()
+        .filter(|(_, evidence)| evidence.facts.accepted_dependency_values_root_fragment)
+        .map(|(path, _)| path.segments().map(tree_segment_spelling).collect())
+        .collect()
+}
+
+/// The analyzed chart's empty root followed by every dependency root.
+fn chart_values_roots(dependency_roots: &BTreeSet<Vec<String>>) -> impl Iterator<Item = &[String]> {
+    std::iter::once(&[][..]).chain(dependency_roots.iter().map(Vec::as_slice))
+}
+
+/// Helm's `global` namespace beneath a chart values root.
+fn helm_global_namespace(chart_root: &[String]) -> helm_schema_core::ValuesPath {
+    helm_schema_core::ValuesPath::from_segments(
+        chart_root
+            .iter()
+            .cloned()
+            .chain(std::iter::once("global".to_string()))
+            .map(helm_schema_core::Segment::from),
+    )
+}
+
 fn tree_segment_spelling(segment: &helm_schema_core::Segment) -> String {
     segment.literal().unwrap_or("*").to_owned()
 }
@@ -830,11 +896,12 @@ pub(crate) fn finish_generated(
     schema: Value,
     mut emission_report: EmissionReport,
     definition_origins: BTreeMap<String, Vec<DefinitionOrigin>>,
+    root_policy: crate::RootPolicy,
 ) -> CompletedGeneratedSchema {
     emission_report.carriers =
         count_emitted_carriers(&schema, emission_report.carriers.grouping_fan_in);
     CompletedGeneratedSchema {
-        schema: draft07_root_document(schema),
+        schema: draft07_root_document(schema, root_policy),
         emission_report,
         definition_origins,
     }

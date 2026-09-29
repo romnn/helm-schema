@@ -19,6 +19,7 @@ fn simple_template_schema() {
         "type": "object",
         "additionalProperties": false,
         "properties": {
+            "global": {},
             "enabled": {},
             "name": {},
             "replicas": {}
@@ -85,6 +86,7 @@ fn literal_star_index_generates_a_named_property() {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "properties": {
+            "global": {},
             "*": {},
         },
         "type": "object",
@@ -111,6 +113,7 @@ fn guarded_literal_star_index_keeps_the_guard_on_the_named_property() {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
         "properties": {
+            "global": {},
             "*": {},
         },
         "type": "object",
@@ -562,6 +565,7 @@ fn guard_only_values_without_type_evidence_stay_unconstrained() {
             "then": false,
         }],
         "properties": {
+            "global": {},
             "feature": {
                 "additionalProperties": {},
                 "properties": {
@@ -618,6 +622,7 @@ fn foreign_render_guard_does_not_inherit_the_rendered_paths_default_type() {
             },
         }],
         "properties": {
+            "global": {},
             "enabled": {},
             "name": {},
         },

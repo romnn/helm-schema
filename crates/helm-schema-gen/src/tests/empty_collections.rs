@@ -141,6 +141,7 @@ fn guard_only_empty_map_default_does_not_constrain_the_input_kind() {
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
             "properties": {
+                "global": {},
                 "config": {},
             },
             "type": "object",

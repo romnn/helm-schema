@@ -1132,6 +1132,7 @@ fn generate_options(
         values_files: Vec::new(),
         infer_required,
         emission: profile.into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],
             k8s_schema_cache_dir: Some(

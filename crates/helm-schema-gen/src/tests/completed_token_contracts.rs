@@ -272,6 +272,7 @@ fn double_quoted_tpl_constrains_only_action_free_input() {
             },
         ],
         "properties": {
+            "global": {},
             "repository": { "type": "string" },
         },
         "type": "object",
@@ -329,6 +330,7 @@ fn double_quoted_tpl_of_to_string_keeps_its_serialization_preimage() {
             },
         ],
         "properties": {
+            "global": {},
             "endpoint": {},
         },
         "type": "object",
@@ -463,6 +465,7 @@ fn conditionally_rendered_double_quoted_tpl_keeps_its_placement_language() {
         "additionalProperties": false,
         "allOf": conditionally_rendered_quoted_tpl_clauses(),
         "properties": {
+            "global": {},
             "endpoint": {},
             "volumes": {},
         },

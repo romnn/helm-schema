@@ -1146,10 +1146,10 @@ fn dependency_owned_host_schema() -> Value {
             enabled: true
     "};
     let mut contract = parse_ir(src);
-    contract.push_pathless_dependency_fragment("sub");
-    contract.push_pathless_dependency_fragment("other");
-    contract.push_pathless_dependency_fragment("gated");
-    contract.push_pathless_dependency_fragment("refilled");
+    contract.push_dependency_values_root(undeclared_dependency_root("sub"));
+    contract.push_dependency_values_root(undeclared_dependency_root("other"));
+    contract.push_dependency_values_root(undeclared_dependency_root("gated"));
+    contract.push_dependency_values_root(undeclared_dependency_root("refilled"));
     schema_for_dependency_values_yaml(contract, dependency_owned_values_yaml(), subchart_yaml)
 }
 

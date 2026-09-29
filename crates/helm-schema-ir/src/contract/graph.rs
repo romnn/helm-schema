@@ -22,7 +22,32 @@ pub struct ContractIr {
     /// rewrite, so a wrapper map there aborts rendering (nats'
     /// `nameOverride` through `fullname | trunc`).
     values_program_wrapper_exclusions: BTreeSet<helm_schema_core::ValuesPath>,
-    dependency_values_root_fragments: BTreeSet<String>,
+    dependency_values_roots: BTreeSet<DependencyValuesRoot>,
+}
+
+/// A dependency chart instance's values root, with the chart-tree facts that
+/// decide when Helm v4.2.3 type-asserts it (`type mismatch on <key>`).
+///
+/// Helm asserts every dependency root twice: once over every loaded chart
+/// before disabled charts are pruned, where a nested root is keyed by its
+/// chart NAME and the parent's declared default deletes a user null first;
+/// and once while rendering, only for active charts, after each parent's
+/// defaults have absorbed its dependencies' tables. A pruned root therefore
+/// keeps a user null (and, when unasserted before pruning, a scalar) in the
+/// final document.
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct DependencyValuesRoot {
+    /// The instance's values path.
+    pub path: helm_schema_core::ValuesPath,
+    /// Guard alternatives under which Helm enables this instance and every
+    /// ancestor; empty when it always is.
+    pub active: Vec<Vec<Guard>>,
+    /// The root is asserted before pruning: it is a direct dependency of the
+    /// analyzed chart, or every nested edge on its path is keyed by the
+    /// chart's own name.
+    pub asserted_before_pruning: bool,
+    /// The parent chart's own `values.yaml` declares the key.
+    pub declared_by_parent: bool,
 }
 
 impl ContractIr {
@@ -52,10 +77,9 @@ impl ContractIr {
     ///
     /// Pathless claims make a value path visible to downstream schema
     /// generation without asserting any rendered Kubernetes field shape.
-    pub fn push_pathless_scalar(&mut self, source_expr: impl Into<String>) {
-        let source_expr = source_expr.into();
+    pub fn push_pathless_scalar(&mut self, path: helm_schema_core::ValuesPath) {
         self.push(ContractUse::new(
-            helm_schema_core::ValuesPath::parse(&source_expr),
+            path,
             YamlPath(Vec::new()),
             ValueKind::Scalar,
             Vec::new(),
@@ -63,18 +87,17 @@ impl ContractIr {
         ));
     }
 
-    /// Records a pathless fragment accepted at a dependency values root.
-    pub fn push_pathless_dependency_fragment(&mut self, source_expr: impl Into<String>) {
-        self.dependency_values_root_fragments
-            .insert(source_expr.into());
+    /// Records a dependency chart instance's values root.
+    pub fn push_dependency_values_root(&mut self, root: DependencyValuesRoot) {
+        self.dependency_values_roots.insert(root);
     }
 
     /// Move all claims from another contract graph into this graph.
     pub fn append(&mut self, mut other: Self) {
         self.uses.append(&mut other.uses);
         self.dependency_uses.append(&mut other.dependency_uses);
-        self.dependency_values_root_fragments
-            .append(&mut other.dependency_values_root_fragments);
+        self.dependency_values_roots
+            .append(&mut other.dependency_values_roots);
         self.observed_facts.absorb(&other.observed_facts);
         self.values_program_wrappers
             .append(&mut other.values_program_wrappers);
@@ -199,14 +222,27 @@ impl ContractIr {
             observed_facts,
             values_program_wrappers,
             values_program_wrapper_exclusions,
-            dependency_values_root_fragments,
+            dependency_values_roots,
         } = self;
         for contract_use in uses.iter_mut().chain(dependency_uses) {
             contract_use.map_value_paths(&mut map);
         }
-        *dependency_values_root_fragments = std::mem::take(dependency_values_root_fragments)
+        *dependency_values_roots = std::mem::take(dependency_values_roots)
             .into_iter()
-            .map(|path| map(helm_schema_core::ValuesPath::parse(&path)).encode())
+            .map(|root| DependencyValuesRoot {
+                path: map(root.path),
+                active: root
+                    .active
+                    .into_iter()
+                    .map(|guards| {
+                        guards
+                            .into_iter()
+                            .map(|guard| guard.map_value_paths(&mut map))
+                            .collect()
+                    })
+                    .collect(),
+                ..root
+            })
             .collect();
         observed_facts.map_value_paths(&mut map);
         *values_program_wrappers = std::mem::take(values_program_wrappers)
@@ -320,11 +356,11 @@ impl ContractIr {
             observed_facts,
             values_program_wrappers,
             values_program_wrapper_exclusions,
-            dependency_values_root_fragments,
+            dependency_values_roots,
         } = self;
-        for source_expr in &dependency_values_root_fragments {
+        for root in &dependency_values_roots {
             dependency_uses.push(ContractUse::new(
-                helm_schema_core::ValuesPath::parse(source_expr),
+                root.path.clone(),
                 YamlPath(Vec::new()),
                 ValueKind::Fragment,
                 Vec::new(),
@@ -339,7 +375,7 @@ impl ContractIr {
             &observed_facts,
             values_program_wrappers,
             values_program_wrapper_exclusions,
-            &dependency_values_root_fragments,
+            &dependency_values_roots,
             &predicate_memo,
         )
     }

@@ -1,6 +1,8 @@
 mod options;
 
+pub use options::AuthoringPolicy;
 pub use options::ConditionalAnchors;
+pub use options::DeclaredTypes;
 pub use options::EmissionClassKind;
 pub use options::EmissionPolicy;
 pub use options::EmissionPolicyDelta;
@@ -14,6 +16,7 @@ pub use options::LintOutcome;
 pub use options::LintWithdrawal;
 pub use options::ResolvedContract;
 pub use options::ResolvedEmissionPolicy;
+pub use options::RootPolicy;
 pub use options::SchemaProfile;
 
 /// Values path type carried by [`LintWithdrawal`].

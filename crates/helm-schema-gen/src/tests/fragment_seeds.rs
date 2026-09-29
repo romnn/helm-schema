@@ -303,7 +303,7 @@ fn parent_values_seed_does_not_override_exact_defaulted_child_path() {
         digest: false,
         merge_operand: false,
     }]);
-    contract.push_pathless_scalar("signoz-otel-gateway");
+    contract.push_pathless_scalar(helm_schema_core::ValuesPath::parse("signoz-otel-gateway"));
     contract.add_type_hint("signoz-otel-gateway.serviceAccount.name", "string");
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_documents(
@@ -372,7 +372,7 @@ fn guarded_fragment_parent_seed_stays_open_after_guard_child_insert() {
         digest: false,
         merge_operand: false,
     }]);
-    contract.push_pathless_scalar("clickhouse");
+    contract.push_pathless_scalar(helm_schema_core::ValuesPath::parse("clickhouse"));
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_documents(
             &prepared_values_documents(Some(indoc! {r"
@@ -451,7 +451,7 @@ fn referenced_empty_string_child_survives_parent_pruning() {
             merge_operand: false,
         },
     ]);
-    contract.push_pathless_scalar("signoz");
+    contract.push_pathless_scalar(helm_schema_core::ValuesPath::parse("signoz"));
     contract.add_type_hint("signoz.smtpVars.enabled", "boolean");
 
     let schema = generate_values_schema(
@@ -527,7 +527,7 @@ fn guarded_array_fragment_parent_seed_stays_array_shaped() {
         digest: false,
         merge_operand: false,
     }]);
-    contract.push_pathless_scalar("alertmanager");
+    contract.push_pathless_scalar(helm_schema_core::ValuesPath::parse("alertmanager"));
     contract.add_type_hint("alertmanager.enabled", "boolean");
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_documents(
@@ -576,7 +576,7 @@ fn guarded_null_object_fragment_parent_seed_preserves_null_default() {
         digest: false,
         merge_operand: false,
     }]);
-    contract.push_pathless_scalar("clickhouse");
+    contract.push_pathless_scalar(helm_schema_core::ValuesPath::parse("clickhouse"));
     contract.add_type_hint("clickhouse.enabled", "boolean");
     let schema = generate_values_schema(
         ValuesSchemaInput::new(&schema_signals_for(contract), &NoopProvider).with_values_documents(

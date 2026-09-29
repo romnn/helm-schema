@@ -136,6 +136,7 @@ fn boolean_alias_rejection_precedes_template_analysis() -> eyre::Result<()> {
         values_files: Vec::new(),
         infer_required: false,
         emission: crate::generation::SchemaProfile::default().into(),
+        authoring: crate::generation::AuthoringPolicy::default(),
         provider: crate::provider::ProviderOptions {
             disable_k8s_schemas: true,
             allow_net: false,

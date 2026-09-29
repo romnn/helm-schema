@@ -3,8 +3,10 @@
 use helm_schema_core::ConditionalGuard;
 use serde::Serialize;
 
-/// Version of the emission-policy vocabulary used in output annotations.
-pub const POLICY_VOCABULARY_VERSION: u64 = 1;
+/// Version of the policy vocabulary used in output annotations.
+///
+/// Version 2 adds the caller authoring settings beside the emission policy.
+pub const POLICY_VOCABULARY_VERSION: u64 = 2;
 
 /// Selects how much analyzed contract evidence is emitted as JSON Schema.
 ///

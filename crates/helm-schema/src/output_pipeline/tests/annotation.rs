@@ -128,3 +128,57 @@ fn reference_modifier_changes_the_policy_fingerprint() -> eyre::Result<()> {
     );
     Ok(())
 }
+
+/// Each authoring setting is recorded in the annotation and separates the
+/// policy fingerprint, deterministically.
+#[test]
+fn authoring_policy_is_annotated_and_fingerprinted() -> eyre::Result<()> {
+    use crate::generation::{AuthoringPolicy, DeclaredTypes, RootPolicy};
+
+    let schema = json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "type": "object"
+    });
+    let mut observed = Vec::new();
+    let mut fingerprints = std::collections::BTreeSet::new();
+    for root in [RootPolicy::Closed, RootPolicy::Open] {
+        for declared_types in [DeclaredTypes::Assert, DeclaredTypes::Annotate] {
+            let policy = FinalOutputPolicy::new(
+                SchemaProfile::Full.resolved_policy(),
+                false,
+                AuthoringPolicy {
+                    root,
+                    declared_types,
+                },
+            );
+            let mut outputs = Vec::new();
+            for _ in 0..2 {
+                outputs.push(apply_schema_output_pipeline(
+                    schema.clone(),
+                    &std::collections::BTreeMap::new(),
+                    request(ReferencePolicy::SelfContained),
+                    std::path::Path::new("/does/not/matter"),
+                    policy,
+                )?);
+            }
+            sim_assert_eq!(have: &outputs[0], want: &outputs[1]);
+            let annotation = &outputs[0]["x-helm-schema-policy"];
+            observed.push((
+                annotation["policy-vocabulary-version"].clone(),
+                annotation["authoring"].clone(),
+            ));
+            fingerprints.insert(annotation["policy-fingerprint"].clone().to_string());
+        }
+    }
+    sim_assert_eq!(
+        have: observed,
+        want: vec![
+            (json!(2), json!({"declared-types": "assert", "root": "closed"})),
+            (json!(2), json!({"declared-types": "annotate", "root": "closed"})),
+            (json!(2), json!({"declared-types": "assert", "root": "open"})),
+            (json!(2), json!({"declared-types": "annotate", "root": "open"})),
+        ]
+    );
+    sim_assert_eq!(have: fingerprints.len(), want: 4);
+    Ok(())
+}

@@ -351,6 +351,52 @@ entry stays in its own namespace for inspection / debugging but is not returned.
     the chart explicitly handles them being unset. Off by default — the
     generated schema stays as permissive as the template logic allows.
 
+### Authoring assertions and recovered constraints
+
+A generated schema carries two kinds of constraint:
+
+- **Recovered constraints** follow from what the chart does: a value a
+  template feeds to `trunc`, ranges over, or renders into a typed Kubernetes
+  field is rejected when Helm would abort or render an invalid resource.
+- **Authoring assertions** follow from how the chart is written: the values
+  root is closed, so a key no template reads is reported, and a declared
+  default asserts its type, so `replicas: "3"` is reported when the chart
+  ships `replicas: 1`. Helm can render values an authoring assertion
+  rejects; the assertion exists to catch misspelled keys and wrong types in
+  your values files.
+
+Two options select the authoring assertions. Neither changes a recovered
+constraint.
+
+- `--open-root`
+  - Omits the generated `additionalProperties: false` at the chart values
+    root, so unknown top-level keys pass. Nested structural and Kubernetes
+    closures, member contracts, and requirements stay. Dependency instance
+    roots are open carriers under either setting.
+- `--declared-types=assert|annotate` (default `assert`)
+  - `annotate` keeps each declared default as documentation (property
+    names, descriptions) without asserting its scalar type, container kind,
+    or item shape. Template and resource constraints, and the defaults Helm
+    coalesces, are unchanged.
+
+Both settings are recorded in the output's `x-helm-schema-policy`
+annotation (`authoring`) and in its `policy-fingerprint`.
+
+Helm's `global` namespace is reserved at the chart values root and at every
+dependency instance root (under its alias, however deeply nested), because
+Helm accepts a root `global` of any shape and injects a `global` table into
+every dependency before validating it against that dependency's schema.
+Where no template reads it, the property is unconstrained; where templates
+read members, those members keep their contracts and the namespace stays
+open to the members other charts share.
+
+One schema serves every values transport. Helm hands `--set` integers to
+templates as integers but values-file numbers as floats, and a template can
+accept one and abort on the other (for example `range` over an integer
+count). The schema accepts every value some transport renders, so such a
+values-file number can pass validation and still fail `helm template -f`.
+Validate CI values files with a real `helm template -f` as well.
+
 ### Default-value type inference
 
 When a template uses `default <literal> .Values.X` (or the pipeline form
@@ -405,7 +451,7 @@ Overrides are applied as a recursive merge (with special handling to union `requ
 For every value, `helm-schema` combines three signals, and the schema is recovered from what the chart *does* — not from what its defaults happen to be:
 
 - **How your templates use it** — which resource field the value renders into, and the control flow around it. A value used only behind `{{ if .Values.x.enabled }}` is only constrained when that guard is on; a value with no default still appears if the chart reads it.
-- **Your composed defaults** — the root `values.yaml` merged with each subchart's defaults and `global`, the same way Helm composes them.
+- **Your composed defaults** — the root `values.yaml` merged with each subchart's defaults and `global`, the same way Helm composes them. A declared default's type is an authoring assertion rather than a recovered constraint; `--declared-types=annotate` keeps it as documentation only (see [Authoring assertions and recovered constraints](#authoring-assertions-and-recovered-constraints)).
 - **What Kubernetes expects** — once a value is traced to a resource field, its type (and description) comes from the upstream Kubernetes or CRD schema for that field. A port that happens to be `80` is an integer because the Service field *is* one, not because `80` looks numeric.
 
 When a value is genuinely ambiguous it stays a union rather than a wrong guess, and anything that can't be resolved is reported as a diagnostic instead of being invented. See the [documentation](https://romnn.github.io/helm-schema/docs/how-it-works/) for the details.

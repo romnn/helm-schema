@@ -9,9 +9,7 @@ pub(crate) struct ValuesRoots {
     ///
     /// These keys are structural evidence that the chart accepts the root
     /// value path, but they do not imply that any nested key should exist.
-    pub(crate) top_level_paths: BTreeSet<String>,
-    /// The subset of top-level keys whose default value is a mapping.
-    pub(crate) top_level_mapping_paths: BTreeSet<String>,
+    pub(crate) top_level_paths: BTreeSet<helm_schema_core::ValuesPath>,
     /// Every explicit mapping-backed values path present in the composed
     /// values.yaml.
     ///
@@ -33,7 +31,7 @@ impl ValuesRoots {
         let mut roots = Self::default();
 
         if let YamlValue::Mapping(mapping) = doc {
-            for (key, value) in mapping {
+            for key in mapping.keys() {
                 let Some(key) = key.as_str() else {
                     continue;
                 };
@@ -41,11 +39,11 @@ impl ValuesRoots {
                 if key.is_empty() {
                     continue;
                 }
-                let path = helm_schema_core::join_value_path([key]);
-                roots.top_level_paths.insert(path.clone());
-                if matches!(value, YamlValue::Mapping(_)) {
-                    roots.top_level_mapping_paths.insert(path);
-                }
+                roots
+                    .top_level_paths
+                    .insert(helm_schema_core::ValuesPath::from_segments([
+                        helm_schema_core::Segment::from(key),
+                    ]));
             }
         }
 

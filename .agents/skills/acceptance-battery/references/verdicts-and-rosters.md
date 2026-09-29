@@ -3,7 +3,8 @@
 Source of truth: `adjudicate_flip`, `HelmAdjudicationCoverage`,
 `validate_helm_adjudication_coverage` and `validate_probe_coverage` in
 `crates/helm-schema/tests/schema_emission_profiles.rs`; the rosters in
-`crates/helm-schema/tests/common/known_false_acceptances.rs`; the probe
+`crates/helm-schema/tests/common/known_false_acceptances.rs` and
+`crates/helm-schema/tests/common/known_undecided_acceptances.rs`; the probe
 generator in `crates/helm-schema/tests/common/emission_profile_harness.rs`.
 
 In the harness, `full` or `before` always means the **baseline** schema and

@@ -53,6 +53,7 @@ fn lean_profile_keeps_local_conditionals_and_omits_document_level_conditionals()
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
             "properties": {
+                "global": {},
                 "enabled": {},
                 "forbidden": {},
                 "message": {},
@@ -350,8 +351,8 @@ fn completion_schemas(
         "values-default-backfill",
         finish_projected(projected.clone()),
     ));
-    let projected = LoweredEmissionPlan::open_global_namespace(projected);
-    schemas.push(("open-global", finish_projected(projected.clone())));
+    let projected = plan.reserve_helm_global_namespaces(projected);
+    schemas.push(("reserve-global", finish_projected(projected.clone())));
     let materialized = plan.preserve_declared_defaults(projected);
     schemas.push((
         "declared-defaults",
@@ -382,6 +383,7 @@ fn finish_projected(projected: crate::emission_plan::ProjectedTree) -> serde_jso
         projected.document.into_value(),
         projected.emission_report,
         std::collections::BTreeMap::new(),
+        crate::RootPolicy::Closed,
     )
     .schema
 }
@@ -391,6 +393,7 @@ fn finish_materialized(materialized: crate::emission_plan::MaterializedTree) -> 
         materialized.schema,
         materialized.emission_report,
         std::collections::BTreeMap::new(),
+        crate::RootPolicy::Closed,
     )
     .schema
 }

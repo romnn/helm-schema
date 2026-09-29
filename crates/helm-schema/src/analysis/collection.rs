@@ -1,12 +1,15 @@
 use std::collections::BTreeSet;
 
 use helm_schema_ast::DefineIndex;
-use helm_schema_ir::{ContractIr, ParsedDefines, SymbolicIrContext, SymbolicPolicy};
+use helm_schema_ir::{
+    ContractIr, DependencyValuesRoot, ParsedDefines, SymbolicIrContext, SymbolicPolicy,
+};
 use helm_schema_k8s::LocalSchemaUniverse;
 
 use super::local_crd_projection::collect_static_crd_universe;
 use super::manifest_contract::{
-    DefineCorpus, ManifestContractAnalysis, collect_manifest_contract_for_chart,
+    DefineCorpus, ManifestContractAnalysis, activation_predicate,
+    collect_manifest_contract_for_chart, helm_enabled_guard_sets,
     optional_dependency_helpers_for_chart,
 };
 use super::values_seed::seed_top_level_values_yaml_keys;
@@ -31,13 +34,6 @@ pub(crate) fn analyze_charts(
 ) -> EngineResult<ChartAnalysis> {
     let parsed_defines = ParsedDefines::new(defines);
     let mut contract = ContractIr::default();
-    if charts.iter().any(|chart| !chart.values_prefix.is_empty()) {
-        // Helm accepts a root `global` value for dependency propagation even
-        // when the root chart does not declare or read it. Keep the namespace
-        // visible without assigning it a shape: a non-map source is valid and
-        // simply skips injection into every child.
-        contract.push_pathless_scalar("global");
-    }
     let mut local_schema_universe = collect_static_crd_universe(charts, corpus)?;
     for chart in charts {
         for path in chart
@@ -84,15 +80,85 @@ pub(crate) fn analyze_charts(
         }
     }
 
-    let dependency_root_paths = charts
-        .iter()
-        .filter_map(|chart| chart.values_prefix.first().cloned())
-        .collect::<BTreeSet<_>>();
-    seed_top_level_values_yaml_keys(&mut contract, values_roots, &dependency_root_paths);
+    // Helm coalesces a values table for EVERY loaded dependency instance,
+    // however deeply nested, aliased, or empty its defaults, and validates it
+    // against that dependency's own schema.
+    let dependency_roots = dependency_values_roots(charts, &mut contract)?;
+    seed_top_level_values_yaml_keys(&mut contract, values_roots, &dependency_roots);
+    for root in dependency_roots {
+        contract.push_dependency_values_root(root);
+    }
 
     Ok(ChartAnalysis {
         contract,
         local_schema_universe,
         shadowed_input_paths: dependency_global_ownership.shadowed_input_paths,
     })
+}
+
+/// Every dependency chart instance's values root, with the chart-tree facts
+/// Helm's `type mismatch` assertions depend on.
+///
+/// A parent whose own defaults declare a non-table at an active listed
+/// dependency's key aborts every render: Helm merges each active chart's
+/// defaults with its dependencies' tables after pruning. That is recorded as
+/// a terminal clause under the dependency's Helm enablement.
+fn dependency_values_roots(
+    charts: &[chart::ChartContext],
+    contract: &mut ContractIr,
+) -> EngineResult<Vec<DependencyValuesRoot>> {
+    let own_values = charts
+        .iter()
+        .map(|chart| {
+            Ok((
+                chart.values_prefix.as_slice(),
+                chart::chart_own_values(chart)?,
+            ))
+        })
+        .collect::<EngineResult<std::collections::BTreeMap<_, _>>>()?;
+    let by_prefix = charts
+        .iter()
+        .map(|chart| (chart.values_prefix.as_slice(), chart))
+        .collect::<std::collections::BTreeMap<_, _>>();
+    let mut roots = Vec::new();
+    for chart in charts {
+        let Some((key, parent_prefix)) = chart.values_prefix.split_last() else {
+            continue;
+        };
+        let active = helm_enabled_guard_sets(&chart.dependency_activation_chain);
+        let declared = own_values
+            .get(parent_prefix)
+            .and_then(serde_yaml::Value::as_mapping)
+            .and_then(|mapping| mapping.get(key.as_str()));
+        // Only a LISTED dependency keeps the parent's dependency metadata
+        // non-nil, which is what makes Helm merge the parent's defaults with
+        // its dependencies' tables.
+        if chart.listed_dependency && declared.is_some_and(|value| !value.is_mapping()) {
+            contract.add_terminal_fail_condition(activation_predicate(active.clone()));
+        }
+        // The pre-pruning pass keys nested dependencies by chart name; only
+        // the analyzed chart's own dependencies carry their aliases there.
+        let asserted_before_pruning = (2..=chart.values_prefix.len()).all(|depth| {
+            chart.values_prefix.get(..depth).is_some_and(|prefix| {
+                by_prefix.get(prefix).is_some_and(|edge| {
+                    edge.static_root_strings
+                        .get(&["Chart".to_string(), "Name".to_string()][..])
+                        == prefix.last()
+                })
+            })
+        });
+        roots.push(DependencyValuesRoot {
+            path: helm_schema_core::ValuesPath::from_segments(
+                chart
+                    .values_prefix
+                    .iter()
+                    .cloned()
+                    .map(helm_schema_core::Segment::from),
+            ),
+            active,
+            asserted_before_pruning,
+            declared_by_parent: declared.is_some(),
+        });
+    }
+    Ok(roots)
 }

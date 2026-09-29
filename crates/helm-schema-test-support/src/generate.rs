@@ -59,6 +59,7 @@ pub fn generate_options_at(chart_dir: &Path, recipe: &ChartRecipe) -> GenerateOp
             .collect(),
         infer_required: recipe.infer_required,
         emission: recipe.profile.into(),
+        authoring: recipe.authoring,
         provider: ProviderOptions {
             k8s_versions: vec![recipe.k8s_version.to_string()],
             // Provider availability is a deterministic test INPUT: the

@@ -20,7 +20,10 @@ fn extracts_sorted_top_level_mapping_keys_only() {
 
     sim_assert_eq!(
         have: roots.top_level_paths,
-        want: BTreeSet::from(["a".to_string(), "quoted".to_string(), "z".to_string()])
+        want: ["a", "quoted", "z"]
+            .into_iter()
+            .map(helm_schema_core::ValuesPath::parse)
+            .collect::<BTreeSet<_>>()
     );
 }
 
@@ -37,23 +40,6 @@ fn ignores_non_mapping_documents_and_empty_keys() {
             .is_empty()
     );
     assert!(values_roots_from_yaml(None).top_level_paths.is_empty());
-}
-
-#[test]
-fn mapping_root_paths_distinguish_structured_values_roots() {
-    let roots = values_roots_from_yaml(Some(indoc! {r"
-        object:
-          nested: true
-        empty: {}
-        scalar: value
-        list:
-          - item
-    "}));
-
-    sim_assert_eq!(
-        have: roots.top_level_mapping_paths,
-        want: BTreeSet::from(["empty".to_string(), "object".to_string()])
-    );
 }
 
 #[test]

@@ -22,7 +22,9 @@ pub enum BaseOwner {
     ResolvedUnclosed,
     /// Guarded-only target: an unconstrained schema.
     Empty,
-    /// Pathless dependency root with guarded-only descendants.
+    /// Pathless dependency root with guarded-only descendants: an open,
+    /// untyped carrier. Helm's table assertion on the root is its own
+    /// requirement, which below a pruned ancestor admits a surviving null.
     UnknownObject,
     /// The path's independent contract conjoined beneath a
     /// serialization-owned ancestor.
@@ -41,7 +43,7 @@ impl BaseOwner {
                 resolved_path.schema.clone(),
             ))),
             Self::Empty => Some(SchemaNode::foreign(crate::schema_model::empty_schema())),
-            Self::UnknownObject => Some(SchemaNode::unknown_object()),
+            Self::UnknownObject => Some(SchemaNode::untyped_member_host()),
             Self::IndependentContract => resolved_path
                 .independent_base_contract
                 .as_ref()

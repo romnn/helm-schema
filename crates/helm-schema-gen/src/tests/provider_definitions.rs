@@ -618,7 +618,8 @@ fn repeated_large_structural_payloads_keep_local_annotations() {
 
 #[test]
 fn unreachable_provider_definitions_are_pruned_transitively() {
-    let mut document = crate::schema_tree::SchemaDocument::new_root_object();
+    let mut document =
+        crate::schema_tree::SchemaDocument::new_root_object(crate::RootPolicy::Closed);
     document.insert_path_schema(
         &["selected".to_string()],
         crate::schema_node::SchemaNode::foreign(json!({

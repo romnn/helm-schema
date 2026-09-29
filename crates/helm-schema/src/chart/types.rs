@@ -21,6 +21,10 @@ pub struct ChartContext {
     /// a doubly-nested chart like signoz's clickhouse→zookeeper is gated on
     /// `clickhouse.enabled` AND `clickhouse.zookeeper.enabled`.
     pub dependency_activation_chain: Vec<ChartDependencyActivation>,
+    /// The parent's `Chart.yaml` (or `requirements.yaml`) lists this chart as
+    /// a dependency; false for the root and for a vendored chart no entry
+    /// names.
+    pub listed_dependency: bool,
 }
 
 #[derive(Debug, Clone, Default)]

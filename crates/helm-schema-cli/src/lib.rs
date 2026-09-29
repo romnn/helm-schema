@@ -149,6 +149,7 @@ fn run_inner(cli: Cli) -> EngineResult<()> {
             values_files: cli.chart.values_files.clone(),
             infer_required: cli.chart.infer_required,
             emission: effective_config.selection,
+            authoring: cli.chart.authoring_policy(),
             provider: provider_options,
         };
         let session = AnalysisSession::with_diagnostics(opts, diagnostics.clone());

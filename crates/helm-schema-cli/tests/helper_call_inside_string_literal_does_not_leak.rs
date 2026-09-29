@@ -98,6 +98,7 @@ fn quoted_string_payload_does_not_create_phantom_helper_edge() -> eyre::Result<(
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,

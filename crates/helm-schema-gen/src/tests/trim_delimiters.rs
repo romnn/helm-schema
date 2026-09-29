@@ -55,6 +55,7 @@ fn negative_literal_output_does_not_trim_the_preceding_text() {
             ],
             "properties": {
                 "flag": {},
+                "global": {},
                 "x": {},
             },
             "type": "object",

@@ -41,7 +41,7 @@ mod chart_instances;
 mod values_validation;
 
 use color_eyre::eyre::{self, WrapErr as _};
-use helm_schema_test_support::registry::{ArtifactId, ArtifactTarget, ChartId};
+use helm_schema_test_support::registry::{ArtifactId, ArtifactTarget, AuthoringId, ChartId};
 use serde_json::Value;
 
 /// Charts whose shipped `values.yaml` fails validation against the schema
@@ -286,6 +286,42 @@ fn assert_chart_schema_fixture(chart_id: ChartId) -> eyre::Result<()> {
     .wrap_err("parse fixture JSON")?;
     sim_assert_eq!(have: schema, want: expected, "{chart}: schema fixture mismatch");
     Ok(())
+}
+
+/// Fixtures generated through the production final-output path with one
+/// caller authoring option, under
+/// `testdata/chart-corpus-policy-schemas/{chart}.{option}.schema.json`.
+///
+/// Each backs a frozen witness row whose default rejection is a decided
+/// authoring-policy exception (`PolicyException` in
+/// `crates/helm-schema/tests/common/family_witnesses.rs`): the gate requires
+/// the default fixture to reject the witness and this one to accept it. The
+/// policy annotation proves which option produced the file.
+fn assert_authoring_schema_fixture(id: AuthoringId) -> eyre::Result<()> {
+    let spec = ArtifactId::Authoring(id).spec();
+    let ArtifactTarget::Fixture(fixture) = &spec.target else {
+        eyre::bail!("{id:?}: registered without a fixture");
+    };
+    let schema = helm_schema_test_support::consume(spec.id)?;
+    let fixture_path = test_util::workspace_root().join(fixture);
+    let expected: Value = serde_json::from_str(
+        &std::fs::read_to_string(&fixture_path)
+            .wrap_err_with(|| format!("read fixture {}", fixture_path.display()))?,
+    )
+    .wrap_err("parse fixture JSON")?;
+    let name = id.name();
+    sim_assert_eq!(have: schema, want: expected, "{name}: policy schema fixture mismatch");
+    Ok(())
+}
+
+#[test]
+fn policy_datadog_open_root() -> eyre::Result<()> {
+    assert_authoring_schema_fixture(AuthoringId::DatadogOpenRoot)
+}
+
+#[test]
+fn policy_redis_ha_declared_types_annotate() -> eyre::Result<()> {
+    assert_authoring_schema_fixture(AuthoringId::RedisHaDeclaredTypesAnnotate)
 }
 
 macro_rules! chart_schema_case {

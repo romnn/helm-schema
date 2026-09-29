@@ -244,6 +244,7 @@ fn helper_range_keeps_omitted_members_out_of_provider_projection() {
             },
         ],
         "properties": {
+            "global": {},
             "params": {
                 "additionalProperties": {},
                 "allOf": [{
@@ -428,6 +429,7 @@ fn always_omitted_provider_member_yields_declared_typing_to_its_leaf() {
             },
         ],
         "properties": {
+            "global": {},
             "securityContext": {
                 "additionalProperties": {},
                 "allOf": [{
@@ -2645,7 +2647,7 @@ fn pathless_dependency_fragment_root_keeps_values_mapping_open_with_descendants(
         digest: false,
         merge_operand: false,
     }]);
-    contract.push_pathless_dependency_fragment("webhook");
+    contract.push_dependency_values_root(undeclared_dependency_root("webhook"));
 
     let schema = schema_for_values_yaml(
         contract,
@@ -2769,6 +2771,8 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() -> eyre::Result<()>
         &schema_signals,
         &values_yaml,
         &serde_yaml::Value::Null,
+        &BTreeSet::new(),
+        crate::DeclaredTypes::Assert,
         &provider_resolutions,
     )
     .resolve_all(&mut crate::generation_decisions::GenerationDecisions::default());
@@ -2898,6 +2902,8 @@ fn zalando_extra_envs_keeps_podspec_envvar_shape() -> eyre::Result<()> {
         &schema_signals,
         &values_yaml,
         &serde_yaml::Value::Null,
+        &BTreeSet::new(),
+        crate::DeclaredTypes::Assert,
         &provider_resolutions,
     )
     .resolve_all(&mut crate::generation_decisions::GenerationDecisions::default());
@@ -4514,6 +4520,7 @@ fn expected_nested_fragment_control_schema() -> serde_json::Value {
             },
         }],
         "properties": {
+            "global": {},
             "extraContainers": {},
             "sidecar": {},
         },

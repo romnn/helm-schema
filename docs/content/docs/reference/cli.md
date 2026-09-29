@@ -115,6 +115,8 @@ See [apiVersion inference]({{< relref "/docs/guide/kubernetes-schemas.md" >}}#ap
 | `--no-subchart-values` | Omit vendored subchart defaults under `charts/` from the composed values. |
 | `-f`, `--values <FILE>` | Additional values files whose *comments* layer into schema descriptions. Documentation metadata only — no type hints or accepted paths. Repeatable. |
 | `--infer-required` | Mark unconditionally-guarded paths as `required` on their parent. Paths with a `default <expr>` fallback are excluded. |
+| `--open-root` | Omit the generated `additionalProperties: false` at the chart values root, so unknown top-level keys pass. Nested structural and Kubernetes closures stay. An authoring assertion, recorded in `x-helm-schema-policy.authoring`. |
+| `--declared-types <assert\|annotate>` | `assert` (default): a declared default asserts its type where no other evidence governs the path. `annotate`: declared defaults document names and values only; template and Kubernetes constraints remain. |
 
 ## Overrides
 

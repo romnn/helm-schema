@@ -27,7 +27,9 @@ mod symbolic_local_state;
 mod value_path_context;
 
 pub use analysis_db::ParsedDefines;
-pub use contract::{ContractDocument, ContractIr, ContractUse, FinalizedContract};
+pub use contract::{
+    ContractDocument, ContractIr, ContractUse, DependencyValuesRoot, FinalizedContract,
+};
 #[doc(hidden)]
 pub use helm_schema_core::escape_regex_literal;
 pub use helm_schema_core::{

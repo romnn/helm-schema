@@ -7,8 +7,10 @@ use serde_yaml::Value as YamlValue;
 use crate::merge::merge_two_schemas;
 use crate::schema_node::{JsonSchemaType, SchemaNode, SchemaTypeKeyword, TypedSchemaNode};
 use crate::values_yaml::{
-    child_value_path, schema_node_from_yaml_value_with_skips, yaml_value_at_segments,
+    child_value_path, property_slots, schema_node_from_yaml_value_with_skips,
+    yaml_value_at_segments,
 };
+use crate::{DeclaredTypes, RootPolicy};
 
 #[derive(Clone)]
 pub(crate) struct SchemaDocument {
@@ -29,9 +31,15 @@ pub(crate) enum CanonicalConstraintApplication {
 }
 
 impl SchemaDocument {
-    pub(crate) fn new_root_object() -> Self {
+    /// The chart values root. Its closure is an authoring assertion: a
+    /// closed root reports keys no template reads.
+    pub(crate) fn new_root_object(root_policy: RootPolicy) -> Self {
+        let root = match root_policy {
+            RootPolicy::Closed => SchemaNode::closed_object(),
+            RootPolicy::Open => SchemaNode::object().with_empty_properties(),
+        };
         Self {
-            root: SchemaNode::closed_object(),
+            root,
             parsed_after_declared_materialization: false,
         }
     }
@@ -64,21 +72,21 @@ impl SchemaDocument {
         conjoin_literal_path_schema(&mut self.root, path, schema);
     }
 
-    /// Opens the root `global` property. Helm shares `global` values across
-    /// the whole chart tree, so parent and sibling charts consume keys the
-    /// analyzed chart never reads; closing the namespace to this chart's
-    /// observed members would reject valid umbrella configurations.
-    pub(crate) fn open_helm_global_namespace(&mut self) {
-        let global = match &mut self.root {
-            SchemaNode::Object { properties, .. } => properties.get_mut("global"),
-            SchemaNode::Typed(TypedSchemaNode::Keywords(keywords)) => keywords
-                .properties
-                .as_mut()
-                .and_then(|properties| properties.get_mut("global")),
-            _ => None,
+    /// Reserves Helm's `global` namespace beneath one chart values root.
+    ///
+    /// Helm accepts a `global` value of any shape at a chart root and
+    /// injects a `global` table into every dependency instance, so the
+    /// property exists under every root without a type or requirement of
+    /// its own. An unconsumed namespace is unconstrained. A consumed one
+    /// keeps its member contracts, but other charts in the tree share it,
+    /// so it stays open to members this chart never reads.
+    pub(crate) fn reserve_helm_global_namespace(&mut self, chart_root: &[String], consumed: bool) {
+        let Some(root) = object_node_at_mut(&mut self.root, chart_root) else {
+            return;
         };
-        if let Some(global) = global {
-            global.open_object();
+        match root.property_mut("global") {
+            Some(global) if consumed => global.open_object(),
+            _ => root.put_property("global".to_string(), SchemaNode::empty()),
         }
     }
 
@@ -163,6 +171,7 @@ impl SchemaDocument {
         values_yaml_doc: &YamlValue,
         root_paths: &[Vec<String>],
         skip_paths: &BTreeSet<Vec<String>>,
+        declared_types: DeclaredTypes,
     ) -> usize {
         let mut insertions = Vec::new();
         for root_path in root_paths {
@@ -174,6 +183,7 @@ impl SchemaDocument {
                 root_path,
                 yaml,
                 skip_paths,
+                declared_types,
                 &mut insertions,
             );
         }
@@ -339,6 +349,15 @@ fn canonicalize_object_constraint(node: &mut SchemaNode) -> Option<CanonicalCons
                     CanonicalConstraintApplication::Redundant,
                 ));
             }
+            // An untyped keyword node conjoined with `type: object` is the
+            // same node with that type. A `$ref` node is not: draft-07
+            // ignores the siblings of `$ref`.
+            if keywords.schema_type.is_none() && keywords.reference.is_none() {
+                keywords.schema_type = Some(SchemaTypeKeyword::Single(JsonSchemaType::Object));
+                return Some(CanonicalConstraintOutcome::Applied(
+                    CanonicalConstraintApplication::Emitted,
+                ));
+            }
             None
         }
         SchemaNode::Typed(TypedSchemaNode::Boolean(false)) => Some(
@@ -472,7 +491,15 @@ fn relax_host_object_type(node: &mut SchemaNode, path_segments: &[String]) {
     }
 }
 
-pub(crate) fn draft07_root_document(root_schema: Value) -> Value {
+/// The node reached from `node` through literal property names alone.
+fn object_node_at_mut<'a>(node: &'a mut SchemaNode, path: &[String]) -> Option<&'a mut SchemaNode> {
+    let Some((head, tail)) = path.split_first() else {
+        return Some(node);
+    };
+    object_node_at_mut(node.property_mut(head)?, tail)
+}
+
+pub(crate) fn draft07_root_document(root_schema: Value, root_policy: RootPolicy) -> Value {
     let mut out = Map::new();
     out.insert(
         "$schema".to_string(),
@@ -484,9 +511,15 @@ pub(crate) fn draft07_root_document(root_schema: Value) -> Value {
             out.insert(k, v);
         }
     } else {
+        // The fallback values root still reserves Helm's `global` namespace.
         out.insert("type".to_string(), Value::String("object".to_string()));
-        out.insert("properties".to_string(), Value::Object(Map::new()));
-        out.insert("additionalProperties".to_string(), Value::Bool(false));
+        out.insert(
+            "properties".to_string(),
+            serde_json::json!({ "global": {} }),
+        );
+        if root_policy == RootPolicy::Closed {
+            out.insert("additionalProperties".to_string(), Value::Bool(false));
+        }
     }
     Value::Object(out)
 }
@@ -903,6 +936,7 @@ fn collect_missing_yaml_default_insertions(
     current_path: &[String],
     yaml: &YamlValue,
     skip_paths: &BTreeSet<Vec<String>>,
+    declared_types: DeclaredTypes,
     insertions: &mut Vec<(Vec<String>, SchemaNode)>,
 ) {
     if skip_paths.iter().any(|skip_path| {
@@ -931,6 +965,7 @@ fn collect_missing_yaml_default_insertions(
                 &child_path,
                 value_yaml,
                 skip_paths,
+                declared_types,
                 insertions,
             );
         }
@@ -940,6 +975,10 @@ fn collect_missing_yaml_default_insertions(
     if !root_schema.path_exists(current_path)
         && let Some(schema) = schema_node_from_yaml_value_with_skips(yaml, current_path, skip_paths)
     {
+        let schema = match declared_types {
+            DeclaredTypes::Assert => schema,
+            DeclaredTypes::Annotate => SchemaNode::foreign(property_slots(&schema.into_value())),
+        };
         insertions.push((current_path.to_vec(), schema));
     }
 }

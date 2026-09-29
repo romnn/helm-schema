@@ -19,12 +19,16 @@ mod helm_pool;
 #[path = "common/known_false_acceptances.rs"]
 mod known_false_acceptances;
 
+#[path = "common/known_undecided_acceptances.rs"]
+mod known_undecided_acceptances;
+
 use helm_adjudication::{KubernetesVerdict, OfflineKubernetesValidator, PinnedHelmChart};
 use helm_pool::{PoolLimits, PoolPeaks, run_ordered};
 use known_false_acceptances::{
-    Baseline, Family, KNOWN_FALSE_ACCEPTANCES, KNOWN_UNDECIDED_ACCEPTANCES, KnownFalseAcceptances,
-    KnownUndecidedAcceptances, Probe, ROSTER_BASELINE, Rejection,
+    Baseline, Family, KNOWN_FALSE_ACCEPTANCES, KnownFalseAcceptances, Probe, ROSTER_BASELINE,
+    Rejection,
 };
+use known_undecided_acceptances::{KNOWN_UNDECIDED_ACCEPTANCES, KnownUndecidedAcceptances};
 
 use harness::{
     ContractVerdict, ControlCategory, GuardSamplingStrategy, HelmChartDir, ProbeCoverage,
@@ -33,6 +37,47 @@ use harness::{
     read_coalesced_defaults, rejects_for_a_new_reason, round_robin_base_probes, sparse_override,
     sparse_override_for_composed, structural_probe_battery, structural_probe_battery_with_coverage,
 };
+
+// The roster's case matcher is this battery's own naming rule: the witness
+// gate shares the roster data, not the battery's case spelling.
+
+/// Whether the battery case `case` (`{chart}: {probe}`) is `probe` of
+/// `chart`, plain or as the payload of a targeted guard probe.
+pub(crate) fn names(chart: &str, probe: &Probe, case: &str) -> bool {
+    let Some(name) = case
+        .strip_prefix(chart)
+        .and_then(|rest| rest.strip_prefix(": "))
+    else {
+        return false;
+    };
+    let assignment = format!("{} <- {}", probe.path, probe.value);
+    name == assignment || name.ends_with(&format!("[targeted: {assignment}]"))
+}
+
+impl KnownFalseAcceptances {
+    /// Whether this group lists `case`, failing by `rejection` behind a
+    /// `baseline` rejection.
+    pub(crate) fn lists(&self, case: &str, rejection: Rejection, baseline: Baseline) -> bool {
+        self.rejection == rejection
+            && self.baseline == baseline
+            && self
+                .probes
+                .iter()
+                .any(|probe| names(self.chart, probe, case))
+    }
+}
+
+impl KnownUndecidedAcceptances {
+    /// Whether this group lists `case`, left undecided for exactly
+    /// `uncertain`.
+    pub(crate) fn lists(&self, case: &str, uncertain: &[String]) -> bool {
+        self.uncertain == uncertain
+            && self
+                .probes
+                .iter()
+                .any(|probe| names(self.chart, probe, case))
+    }
+}
 
 #[derive(Debug, Serialize)]
 struct ProbeCoverageReport {
@@ -223,12 +268,12 @@ fn false_acceptance_rows_not_observed(
             let observed = coverage.false_acceptances.iter().any(|observed| {
                 observed.rejection == group.rejection
                     && observed.baseline == group.baseline
-                    && known_false_acceptances::names(group.chart, probe, &observed.case)
+                    && names(group.chart, probe, &observed.case)
             });
             let unreachable = coverage
                 .unreachable_cases
                 .iter()
-                .any(|case| known_false_acceptances::names(group.chart, probe, case));
+                .any(|case| names(group.chart, probe, case));
             if unreachable {
                 eprintln!(
                     "UNOBSERVABLE roster row (its probe is unreachable): {}: {} <- {}",
@@ -335,7 +380,7 @@ fn validate_helm_adjudication_coverage(
                 .iter()
                 .any(|observed| {
                     group.uncertain == observed.uncertain.as_slice()
-                        && known_false_acceptances::names(group.chart, probe, &observed.case)
+                        && names(group.chart, probe, &observed.case)
                 });
             if !observed {
                 fixed.push(format!(

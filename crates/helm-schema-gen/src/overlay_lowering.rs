@@ -177,6 +177,7 @@ pub(crate) fn collect_conditional_schemas(
     values_yaml_doc: &YamlValue,
     runtime_defaults_doc: &YamlValue,
     provider_resolutions: &ProviderSchemaResolutions,
+    declared_types: crate::DeclaredTypes,
     decisions: &mut GenerationDecisions,
 ) -> (Vec<LoweredConjunct>, InsertionAbstentionCounts) {
     let mut insertion_abstentions = InsertionAbstentionCounts::default();
@@ -642,6 +643,7 @@ pub(crate) fn collect_conditional_schemas(
             let mut context = ConditionalTargetContext {
                 values_yaml_doc,
                 acceptance_memo: &mut acceptance_memo,
+                declared_types,
             };
             let target_schema = conditional_target_schema(
                 target_value_path,

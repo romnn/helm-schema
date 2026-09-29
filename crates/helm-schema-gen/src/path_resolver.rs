@@ -7,6 +7,7 @@ use serde_yaml::Value as YamlValue;
 
 use helm_schema_core::{ContractPathSchemaEvidence, ContractSchemaSignals, MetadataFieldKind};
 
+use crate::DeclaredTypes;
 use crate::generation_decisions::{
     GenerationDecisions, IndependentChannels, IndependentQualification, PathResolution,
 };
@@ -60,6 +61,7 @@ impl IndependentBaseContract {
 pub(crate) struct PathSchemaResolver<'a> {
     schema_evidence_by_value_path: &'a BTreeMap<ValuesPath, ContractPathSchemaEvidence>,
     values_yaml_info: BTreeMap<ValuesPath, ValuesYamlPathInfo>,
+    declared_types: DeclaredTypes,
     runtime_default_paths: BTreeSet<ValuesPath>,
     provider_resolutions: &'a ProviderSchemaResolutions,
 }
@@ -69,6 +71,8 @@ impl<'a> PathSchemaResolver<'a> {
         contract_signals: &'a ContractSchemaSignals,
         values_yaml_doc: &YamlValue,
         runtime_defaults_doc: &YamlValue,
+        helm_global_namespaces: &BTreeSet<ValuesPath>,
+        declared_types: DeclaredTypes,
         provider_resolutions: &'a ProviderSchemaResolutions,
     ) -> Self {
         let values_yaml_info = build_values_yaml_path_info(
@@ -77,10 +81,12 @@ impl<'a> PathSchemaResolver<'a> {
             contract_signals.pruned_parent_value_paths(),
             contract_signals.unconditionally_omitted_value_paths(),
             contract_signals.direct_ranged_value_paths(),
+            helm_global_namespaces,
         );
         Self {
             schema_evidence_by_value_path: contract_signals.schema_evidence_by_value_path(),
             values_yaml_info,
+            declared_types,
             runtime_default_paths: contract_signals
                 .referenced_value_paths()
                 .iter()
@@ -101,7 +107,14 @@ impl<'a> PathSchemaResolver<'a> {
         evidence: &ContractPathSchemaEvidence,
         provider_resolutions: &ProviderSchemaResolutions,
     ) -> (ResolvedPathSchema, PathResolution) {
-        resolve_path_evidence(value_path, evidence, None, false, provider_resolutions)
+        resolve_path_evidence(
+            value_path,
+            evidence,
+            None,
+            DeclaredTypes::Assert,
+            false,
+            provider_resolutions,
+        )
     }
 
     /// Resolve every referenced path, recording each resolution's policy
@@ -114,6 +127,7 @@ impl<'a> PathSchemaResolver<'a> {
         let Self {
             schema_evidence_by_value_path,
             values_yaml_info,
+            declared_types,
             runtime_default_paths,
             provider_resolutions,
         } = self;
@@ -127,6 +141,7 @@ impl<'a> PathSchemaResolver<'a> {
                     value_path,
                     evidence,
                     values_yaml_info.get(value_path),
+                    declared_types,
                     runtime_default_paths.contains(value_path),
                     provider_resolutions,
                 );
@@ -141,6 +156,7 @@ fn resolve_path_evidence(
     value_path: &ValuesPath,
     evidence: &ContractPathSchemaEvidence,
     values_yaml_info: Option<&ValuesYamlPathInfo>,
+    declared_types: DeclaredTypes,
     has_runtime_default: bool,
     provider_resolutions: &ProviderSchemaResolutions,
 ) -> (ResolvedPathSchema, PathResolution) {
@@ -156,11 +172,18 @@ fn resolve_path_evidence(
         value_path,
         evidence,
         values_yaml_info,
+        declared_types,
         has_runtime_default,
         provider_resolutions,
     );
-    let (structural_policy_inputs, _) =
-        build_path_schema_inputs(value_path, evidence, None, false, provider_resolutions);
+    let (structural_policy_inputs, _) = build_path_schema_inputs(
+        value_path,
+        evidence,
+        None,
+        declared_types,
+        false,
+        provider_resolutions,
+    );
     let (independent_base_contract, independent_contract) =
         independent_base_contract(value_path, &structural_policy_inputs);
     let structural = ResolvePolicy::resolve_schema_for_value_path(structural_policy_inputs);
@@ -294,6 +317,7 @@ fn build_path_schema_inputs(
     value_path: &ValuesPath,
     evidence: &ContractPathSchemaEvidence,
     values_yaml_info: Option<&ValuesYamlPathInfo>,
+    declared_types: DeclaredTypes,
     has_runtime_default: bool,
     provider_resolutions: &ProviderSchemaResolutions,
 ) -> (ValuePathSchemaInputs, Option<ProviderSchemaCandidate>) {
@@ -307,6 +331,7 @@ fn build_path_schema_inputs(
         super::values_yaml::ValuesYamlPathInfo::facts,
     );
     values_yaml_facts.has_runtime_default = has_runtime_default;
+    values_yaml_facts.declared_types = declared_types;
     let facts = ValuePathSchemaFacts::new(evidence.facts, values_yaml_facts);
     let values_yaml_schema = values_yaml_info
         .map(|path_info| path_info.schema.clone())

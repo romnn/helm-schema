@@ -30,7 +30,11 @@
 # genuinely stuck.
 
 [profile.default]
-default-filter = "not kind(test)"
+# The frozen-witness gate (`tests/family_witnesses.rs`) is the one `tests/`
+# binary in the default profile: it reads adopted fixtures and runs no Helm,
+# so it is as cheap and hermetic as a unit test. Any live Helm variant of it
+# belongs in a binary of its own and stays integration-only.
+default-filter = "not kind(test) or binary_id(=helm-schema::family_witnesses)"
 fail-fast = { max-fail = "all" }
 retries = 0
 slow-timeout = { period = "120s", terminate-after = 15, grace-period = "10s" }
