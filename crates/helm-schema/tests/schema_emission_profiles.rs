@@ -3972,7 +3972,7 @@ fn nacos_witness(isolate_ports: bool) -> eyre::Result<NacosWitness> {
 /// the Helm-coalesced document directly.
 fn nacos_cell(
     witness: &NacosWitness,
-    value: serde_json::Value,
+    value: &serde_json::Value,
 ) -> eyre::Result<(Result<HelmFlipVerdict, bool>, Result<(), String>)> {
     let overlay = json!({"ingress": {"apiVersion": value}});
     let verdict = adjudicate_flip(
@@ -4029,7 +4029,7 @@ fn nacos_ingress_api_version_rejection_is_attributed_to_declared_types() -> eyre
         json!({}),
         json!({"unknown": "member"}),
     ] {
-        cells.push(nacos_cell(&witness, value)?);
+        cells.push(nacos_cell(&witness, &value)?);
     }
     sim_assert_eq!(
         have: cells,
@@ -4059,7 +4059,7 @@ fn nacos_ingress_api_version_rejection_is_declined_while_an_unrelated_rejection_
         want: ((false, false), false, false)
     );
     sim_assert_eq!(
-        have: nacos_cell(&witness, json!(7))?,
+        have: nacos_cell(&witness, &json!(7))?,
         want: (Err(true), Err("the annotate regeneration rejects it".to_string()))
     );
     Ok(())
