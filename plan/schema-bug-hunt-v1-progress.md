@@ -6569,6 +6569,21 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   moves before hand-back") exists to produce earlier: from now on the battery runs before the review, not beside
   it. Orchestrator.
 
+- 06:35 (Sep 29) — **explain C1 rework 1 handed back; re-checks dispatched.** HEAD 8f8fcff0 (+3 commits: fa3ae055
+  test-only battery harness, 7211078f session re-entrancy, 8f8fcff0 report + example); `final-v2.patch` sha256
+  f08a506a…; handoff.md with the battery command (v2/battery/command.sh) and its environment printed in the log.
+  E1 example = thin main over `run(args, options, stdout, stderr)`, one JSON document on stdout, diagnostics to
+  stderr, tests include the example via `#[path]`; E2 `[{index, guards}]` references, fixtures re-pinned; E3 quoted/
+  escaped strings in text; E4 `CliError::ReentrantSessionQuery{phase}` with a Drop-guarded initializing-thread
+  record (red: hung, 10 s timeout); E5 skipped-overlay private test at the signal boundary + determinism test; E6
+  doc; **E7 process fix: the round-74 battery now REQUIRES `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP` in every mode**
+  (fails in 0.03 s without it; test `preservation_battery_requires_candidate_dump`) — the vacuous-battery pitfall
+  from the perf-v1 A3 round is closed at the harness. Gates on 8f8fcff0: fmt/lint/lint:fc(55)/ast-grep 0, unit
+  1621, integration 883/24 skipped, dump-v2 --verify 0 (0 of 202 fixtures differ), schema-only battery flips=0
+  (160 charts, 270,470 probes). LOC +805 total. TODO at landing: CLAUDE.md ("schema-only mode falls back to the
+  on-disk fixture") and the acceptance-battery skill's fallback wording become stale → update in the landing.
+  Re-checks: sol e48030f1 turn 6 / astra 11bf8beb turn 4. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
