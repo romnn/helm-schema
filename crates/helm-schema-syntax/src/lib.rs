@@ -44,6 +44,7 @@ mod dump;
 mod lines;
 mod literal;
 mod parse;
+mod yaml;
 mod yaml_scan;
 
 pub use actions::{ActionId, ActionKind, TemplateAction, parse_go_template};
@@ -52,4 +53,5 @@ pub use cst::{
     OpaqueKind, OpaqueNode, OutputAction, ScalarLine, ScalarPart, ScalarParts, SequenceItem, Span,
     TemplatedDocument,
 };
+pub use yaml::parse_yaml;
 pub use yaml_scan::{parse_yaml_key, structural_mapping_colon, unquote_yaml_scalar};
