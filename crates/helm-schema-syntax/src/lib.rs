@@ -44,6 +44,9 @@ mod dump;
 mod lines;
 mod literal;
 mod parse;
+mod rendered;
+mod yaml;
+mod yaml_dialect;
 mod yaml_scan;
 
 pub use actions::{ActionId, ActionKind, TemplateAction, parse_go_template};
@@ -52,4 +55,14 @@ pub use cst::{
     OpaqueKind, OpaqueNode, OutputAction, ScalarLine, ScalarPart, ScalarParts, SequenceItem, Span,
     TemplatedDocument,
 };
+pub use rendered::{
+    BodyLayout, BranchChoice, HoleShape, HoleShapes, LayoutUncertainty, MAX_LAYOUT_STATES,
+    Occurrence, PieceId, RenderedArm, RenderedBody, RenderedPiece, UnknownShapes, render_body,
+};
+pub use yaml::{
+    ArmLayout, BlockHeader, BlockScalarOwnership, Chomping, MAX_SKELETON_BYTES, ScalarStyle,
+    Skeleton, SkeletonSegment, Undecoded, YamlNode, YamlNodeKind, YamlOwnership, arm_layout,
+    arm_skeleton, parse_yaml,
+};
+pub use yaml_dialect::{DialectDivergence, YAML_1_1_BOOLEANS, plain_scalar_divergence};
 pub use yaml_scan::{parse_yaml_key, structural_mapping_colon, unquote_yaml_scalar};
