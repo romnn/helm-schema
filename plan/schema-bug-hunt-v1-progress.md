@@ -6727,7 +6727,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Disk: six more dormant targets removed (explain-red, frontend-f10, f6, f5, d5, the old frontend; ~23 GB; no
   process on any); 95 GB free before. Orchestrator.
 
-- 15:50 (Sep 29) — **Twelve re-check answers: REWORK across the board (cell_matrix commit 1 stays LAND).** Landing 7
+- 15:45 (Sep 29) — **Twelve re-check answers: REWORK across the board (cell_matrix commit 1 stays LAND).** Landing 7
   chain: dump/unit/lint/battery/integration OK, sweep running. (1) F1 (`review-f1-rework1-{sol,astra}.md`): a
   disabled aliased dependency still required to be an object (Datadog renders, v2 rejects); the non-table-default
   terminal fires for a vendored `charts/kid` with no dependency metadata (Helm skips processImportValues) and the
