@@ -66,7 +66,7 @@ No gate task runs the ignored battery. `task test:integration` and
 
 | Situation | Mode | Baseline | Candidate | Allow matched flips |
 |---|---|---|---|---|
-| Refactor or performance work that must not change acceptance | schema-only (no `ADJUDICATE_WITH_HELM`) | the commit your work started from, whose fixtures are the pre-change output | the one clean dump of the final build | no. Pass means zero screened flips. |
+| Refactor or performance work that must not change acceptance | schema-only (no `ADJUDICATE_WITH_HELM`) | the commit your work started from, whose fixtures are the pre-change output | the one clean dump of the final build (required) | no. Pass means zero screened flips. |
 | Any change that moves fixture bytes and may change acceptance (correctness work, landings) | live (`ADJUDICATE_WITH_HELM=1`) | `ROSTER_BASELINE`, required: other baselines are refused | the one clean dump of the final build (required) | **yes**. Roster rows are flips against the roster baseline, so the count gate (`PREREGISTERED_ACCEPTANCE_FLIP_ALLOWANCE = 0`) cannot hold. |
 | A schema-only run found flips | switch to live | `ROSTER_BASELINE` | same dump | yes |
 
@@ -87,7 +87,10 @@ live run it covers.
 
 ## Prerequisites
 
-- **Candidate dump.** Run one clean producer run of the final build:
+- **Candidate dump (every mode).** `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP` is
+  required whether or not Helm adjudicates; without it the battery fails
+  immediately, before reading any schema. The committed fixtures are never a
+  candidate. Run one clean producer run of the final build:
   `cargo run -p helm-schema-test-support --bin corpus_generation -- --out <dump>`
   (`--jobs <n>` overrides the host-sized default).
   It writes `helm-schema.cli.chart-corpus.<chart>.schema.json` and
@@ -237,9 +240,9 @@ A green battery proves nothing when the baseline and candidate are the same
 bytes. Suspect a vacuous run when:
 
 - `flips_adjudicated: 0` or `flips=0` on a round that changed fixture bytes. The
-  usual cause is that `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP` was unset in schema-only
-  mode, so the candidate was the unregenerated on-disk fixture, or that the
-  baseline ref already holds the new fixtures.
+  usual causes are that `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP` names a dump of an
+  older build, or that the baseline ref already holds the new fixtures. (An
+  unset variable no longer falls back to the on-disk fixtures: the run fails.)
 - A chart's `guards_discovered` equals what one schema alone yields. Guard arms
   are deduplicated across both schemas, so a real pair usually discovers more.
 - `charts_checked=0`: `SCHEMA_ACCEPTANCE_CHART` matched no fixture stem.
@@ -260,7 +263,7 @@ naming it.
 | "the false-acceptance rosters are adjudicated against …" | live run with a baseline other than `ROSTER_BASELINE` | use `$ROSTER` |
 | "fixture acceptance flips differ from the pre-registered count" | live run against the roster baseline without allowing matched flips | set `SCHEMA_ACCEPTANCE_ALLOW_MATCHED_FLIPS=1` |
 | "fixture flips were not all live-adjudicated" | schema-only run found flips | rerun live to adjudicate them |
-| "live adjudication requires SCHEMA_ACCEPTANCE_CANDIDATE_DUMP" | live without a dump | point it at the clean dump |
+| "SCHEMA_ACCEPTANCE_CANDIDATE_DUMP must name the producer dump of the candidate build" | any mode without a dump | point it at the one clean dump of the final build |
 | `read <dump>/helm-schema.cli.chart-corpus.<chart>.schema.json` fails | dump incomplete or from a different registry; the chart list comes from the on-disk `testdata/chart-corpus-schemas/` | regenerate the full dump |
 | `git show failed for <ref>:testdata/…` | the baseline predates that chart's fixture | there is no skip: filter to other charts, or treat it as a baseline-adoption question |
 | `no helmsweep at …` | helmsweep not built into this target dir | `task build:helmsweep`, `HELM_SCHEMA_HELMSWEEP`, or `SCHEMA_HELM_ENGINE=cli` |
