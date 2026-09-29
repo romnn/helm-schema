@@ -2726,6 +2726,7 @@ struct DeclaredTypesAnnotation {
 /// The annotate-policy session of a chart and its schema.
 struct AnnotatedChart {
     session: helm_schema::AnalysisSession,
+    schema: serde_json::Value,
     validator: jsonschema::Validator,
 }
 
@@ -2752,7 +2753,11 @@ impl DeclaredTypesAnnotation {
                     .map_err(|error| format!("generate the annotate schema: {error:#}"))?;
                 let validator = jsonschema::validator_for(&schema)
                     .map_err(|error| format!("compile the annotate schema: {error}"))?;
-                Ok(AnnotatedChart { session, validator })
+                Ok(AnnotatedChart {
+                    session,
+                    schema,
+                    validator,
+                })
             })
             .as_ref()
             .map_err(Clone::clone)
@@ -2777,26 +2782,31 @@ fn attribute_to_declared_types(
 
 /// Whether the candidate's rejection of the Helm-coalesced `document` is
 /// exactly the `assert` authoring policy's declared-default type assertion
-/// on paths no template reads: the annotate schema rejects `document` for no
-/// reason the baseline does not share (a chart whose own defaults the
+/// on paths no template reads: the annotate schema violates no assertion on
+/// `document` the baseline does not (a chart whose own defaults the
 /// baseline rejects, like nacos' `service.ports`, admits no document), and
-/// every violation the baseline does not share is a `type` assertion at an
-/// object member whose allowed types are exactly the chart default's type,
-/// on a path explain C1 reports unread (no use of it, its descendants or an
-/// ancestor besides the seeded top-level claim, and no generation decision). The error names the first
-/// condition that fails.
+/// every assertion the candidate violates that the baseline does not is a
+/// `type` assertion at an object member allowing exactly the chart
+/// default's type, on a path explain C1 reports unread (no use of it, its
+/// descendants or an ancestor besides the seeded top-level claim, and no
+/// generation decision). An assertion is shared only when the baseline
+/// violates the same keyword with the same argument at the same value. The
+/// error names the first condition that fails.
 fn declared_types_attribution(
     annotation: &DeclaredTypesAnnotation,
     profiles: &ProfileSchemas,
     document: &serde_json::Value,
 ) -> Result<(), String> {
     let annotated = annotation.prepared()?;
-    if profiles.rejects_unlike_the_baseline(&annotated.validator, document) {
+    if !profiles
+        .assertions_unlike_the_baseline(&annotated.validator, &annotated.schema, document)
+        .is_empty()
+    {
         return Err(
             "the annotate schema rejects it for a reason the baseline does not".to_string(),
         );
     }
-    let violations = profiles.new_candidate_violations(document);
+    let violations = profiles.new_candidate_assertions(document);
     if violations.is_empty() {
         return Err("the candidate rejects it for no new reason".to_string());
     }
@@ -2833,10 +2843,12 @@ fn declared_types_attribution(
             serde_json::Value::Array(_) => "array",
             serde_json::Value::Object(_) => "object",
         };
-        if violation.allowed_types != [default_type] {
+        if violation.assertion != json!(default_type)
+            && violation.assertion != json!([default_type])
+        {
             return Err(format!(
-                "{path}: allows {:?}, the default is {default_type}",
-                violation.allowed_types
+                "{path}: asserts `type: {}`, the default is {default_type}",
+                violation.assertion
             ));
         }
         let mut reached = helm_schema_core::ValuesPath::parse("");
@@ -3905,7 +3917,10 @@ fn nacos_ingress_api_version_rejection_is_attributed_to_declared_types() -> eyre
 
 /// Controls of the declared-types attribution: a rejection is the policy's
 /// only when the path is unread, every new violation is the default's
-/// `type`, and the annotate schema accepts the document.
+/// `type`, and the annotate schema accepts the document. A violation counts
+/// as shared with the baseline only when the baseline violates the same
+/// assertion: a baseline `boolean` and a candidate `integer` at one value
+/// are two assertions, so the changed one is not hidden behind the policy.
 #[test]
 fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::Result<()> {
     let source = ScratchDir::new("schema_emission_profiles")?;
@@ -3965,7 +3980,10 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
         assert_schema,
         {"properties": {"settings": {"properties": {"unread": {"not": {"const": 7}}}}}},
     ]});
-    let not_only_type = ProfileSchemas::compile(&json!({}), &excluding_seven, defaults)?;
+    let not_only_type = ProfileSchemas::compile(&json!({}), &excluding_seven, defaults.clone())?;
+    let boolean_size =
+        json!({"properties": {"settings": {"properties": {"size": {"type": "boolean"}}}}});
+    let changed_assertion = ProfileSchemas::compile(&boolean_size, &assert_schema, defaults)?;
     let rendered = [
         json!({"settings": {"unread": 7}}),
         json!({"settings": {"size": "x"}}),
@@ -3985,6 +4003,15 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
         have: rendered,
         want: vec![Ok(HelmFlipVerdict::TighteningMatchedDeclaredTypesPolicy), Err(true)]
     );
+    // Helm renders it; the baseline rejects `size` as non-boolean, the
+    // candidate as non-integer beside the unread `unread` default type.
+    let mixed = json!({"settings": {"enabled": false, "size": "x", "unread": 7}});
+    sim_assert_eq!(
+        have: adjudicate_flip(&chart, &mixed, &changed_assertion, &kubernetes, Some(&annotation))
+            .map(|(verdict, _)| verdict)
+            .map_err(|error| error.to_string().starts_with("tightening rejects a document")),
+        want: Err(true)
+    );
     let settings = |unread: serde_json::Value, size: serde_json::Value| json!({"settings": {"enabled": false, "unread": unread, "size": size}});
     let mut undeclared = settings(json!(7), json!(3));
     undeclared["undeclared"] = json!(1);
@@ -3993,6 +4020,7 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
         (settings(json!(""), json!("x")), &profiles),
         (undeclared, &profiles),
         (settings(json!(7), json!(3)), &not_only_type),
+        (mixed, &changed_assertion),
     ];
     let attributions = cells
         .iter()
@@ -4005,6 +4033,7 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
             Err("/settings/size: a template reads `settings.size`".to_string()),
             Err("the annotate schema rejects it for a reason the baseline does not".to_string()),
             Err("/settings/unread: violates `not`".to_string()),
+            Err("/settings/size: a template reads `settings.size`".to_string()),
         ]
     );
     Ok(())

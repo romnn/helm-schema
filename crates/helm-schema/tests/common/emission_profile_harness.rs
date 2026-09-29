@@ -9,7 +9,7 @@ use helm_schema::generation::{GenerateOptions, GeneratedSchema, SchemaProfile};
 use helm_schema::provider::ProviderOptions;
 use jsonschema::Validator;
 use serde::{Deserialize, Serialize};
-use serde_json::{Map, Value};
+use serde_json::{Map, Value, json};
 use test_util::helm_values::ValuesError;
 use test_util::scratch::ScratchDir;
 use vfs::VfsPath;
@@ -178,20 +178,34 @@ pub(crate) struct SemanticControl {
     pub(crate) rationale: &'static str,
 }
 
-/// A candidate violation the baseline does not share.
+/// One violated assertion: the value it rejects and what it asserts.
 #[derive(Debug)]
-pub(crate) struct NewViolation {
+pub(crate) struct ViolatedAssertion {
     /// The violating value.
     pub(crate) instance_path: jsonschema::paths::Location,
     /// The violated keyword.
     pub(crate) keyword: String,
-    /// The types a violated `type` assertion allows; empty for any other keyword.
-    pub(crate) allowed_types: Vec<&'static str>,
+    /// The keyword's argument with every local `$ref` replaced by its
+    /// target. Two schemas place one assertion at different locations and
+    /// name its definitions differently, so the argument, not where it
+    /// sits, identifies the assertion: `type: boolean` and `type: integer`
+    /// at one value are two assertions.
+    pub(crate) assertion: Value,
+}
+
+impl ViolatedAssertion {
+    fn is_the_same_as(&self, other: &Self) -> bool {
+        self.instance_path.as_str() == other.instance_path.as_str()
+            && self.keyword == other.keyword
+            && self.assertion == other.assertion
+    }
 }
 
 pub(crate) struct ProfileSchemas {
     full: Validator,
     lean: Validator,
+    full_schema: Value,
+    lean_schema: Value,
     defaults: Value,
 }
 
@@ -208,21 +222,25 @@ impl ProfileSchemas {
         Ok(Self {
             full,
             lean,
+            full_schema: full_schema.clone(),
+            lean_schema: lean_schema.clone(),
             defaults,
         })
     }
 
-    /// Whether `validator` rejects `instance` for an assertion the baseline
-    /// does not violate.
-    pub(crate) fn rejects_unlike_the_baseline(
+    /// The assertions `validator`, compiled from `schema`, violates on
+    /// `instance` that the baseline does not violate there.
+    pub(crate) fn assertions_unlike_the_baseline(
         &self,
         validator: &Validator,
+        schema: &Value,
         instance: &Value,
-    ) -> bool {
-        rejects_for_a_new_reason(
-            &violations(&self.full, instance),
-            &violations(validator, instance),
-        )
+    ) -> Vec<ViolatedAssertion> {
+        let baseline = violated_assertions(&self.full, &self.full_schema, instance);
+        violated_assertions(validator, schema, instance)
+            .into_iter()
+            .filter(|violation| !baseline.iter().any(|known| known.is_the_same_as(violation)))
+            .collect()
     }
 
     /// The chart's coalesced defaults.
@@ -292,31 +310,10 @@ impl ProfileSchemas {
         judged.into_iter().collect::<BTreeSet<_>>() == defaults.into_iter().collect()
     }
 
-    /// The candidate's violations of `instance` that the baseline does not
-    /// share, as [`rejects_for_a_new_reason`] tells them apart.
-    pub(crate) fn new_candidate_violations(&self, instance: &Value) -> Vec<NewViolation> {
-        let baseline = violations(&self.full, instance);
-        let mut found = Vec::new();
-        for error in self.lean.iter_errors(instance) {
-            let key = ViolationKey::new("", "", &error);
-            if rejects_for_a_new_reason(&baseline, std::slice::from_ref(&key)) {
-                let allowed_types = match error.kind() {
-                    jsonschema::error::ValidationErrorKind::Type {
-                        kind: jsonschema::error::TypeKind::Single(allowed),
-                    } => vec![allowed.as_str()],
-                    jsonschema::error::ValidationErrorKind::Type {
-                        kind: jsonschema::error::TypeKind::Multiple(allowed),
-                    } => allowed.iter().map(jsonschema::JsonType::as_str).collect(),
-                    _ => Vec::new(),
-                };
-                found.push(NewViolation {
-                    instance_path: error.instance_path().clone(),
-                    keyword: key.keyword,
-                    allowed_types,
-                });
-            }
-        }
-        found
+    /// The candidate's violated assertions on `instance` that the baseline
+    /// does not violate there.
+    pub(crate) fn new_candidate_assertions(&self, instance: &Value) -> Vec<ViolatedAssertion> {
+        self.assertions_unlike_the_baseline(&self.lean, &self.lean_schema, instance)
     }
 
     fn errors(&self, instance: &Value) -> (Vec<ViolationKey>, Vec<ViolationKey>) {
@@ -834,6 +831,66 @@ fn synthesized_guard_witness_candidates(
 }
 
 /// The violations `validator` reports on a values document.
+fn violated_assertions(
+    validator: &Validator,
+    schema: &Value,
+    instance: &Value,
+) -> Vec<ViolatedAssertion> {
+    validator
+        .iter_errors(instance)
+        .map(|error| {
+            let location = error.schema_path().as_str();
+            let assertion = match schema.pointer(location) {
+                Some(argument) => inline_local_refs(argument, schema, &mut Vec::new()),
+                None => json!({ "unresolved keyword location": location }),
+            };
+            ViolatedAssertion {
+                instance_path: error.instance_path().clone(),
+                keyword: error.kind().keyword().to_string(),
+                assertion,
+            }
+        })
+        .collect()
+}
+
+/// `value` with every local `$ref` replaced by its target in `root`; a
+/// reference already being expanded (`open`) stays a reference.
+fn inline_local_refs(value: &Value, root: &Value, open: &mut Vec<String>) -> Value {
+    match value {
+        Value::Object(members) => {
+            let mut inlined = Map::new();
+            for (key, member) in members {
+                let target = match (key.as_str(), member.as_str()) {
+                    ("$ref", Some(reference)) if !open.iter().any(|seen| seen == reference) => {
+                        reference
+                            .strip_prefix('#')
+                            .and_then(|pointer| root.pointer(pointer))
+                    }
+                    _ => None,
+                };
+                let member = match (target, member.as_str()) {
+                    (Some(target), Some(reference)) => {
+                        open.push(reference.to_string());
+                        let target = inline_local_refs(target, root, open);
+                        open.pop();
+                        target
+                    }
+                    _ => inline_local_refs(member, root, open),
+                };
+                inlined.insert(key.clone(), member);
+            }
+            Value::Object(inlined)
+        }
+        Value::Array(items) => Value::Array(
+            items
+                .iter()
+                .map(|item| inline_local_refs(item, root, open))
+                .collect(),
+        ),
+        _ => value.clone(),
+    }
+}
+
 fn violations(validator: &Validator, instance: &Value) -> Vec<ViolationKey> {
     validator
         .iter_errors(instance)
