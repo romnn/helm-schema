@@ -187,10 +187,6 @@ fn expected_minimal_umbrella_schema() -> serde_json::Value {
                 },
             },
             {
-                "additionalProperties": {},
-                "properties": { "kid": { "type": ["null", "object"] } },
-            },
-            {
                 // Root-scope control: this scope already carried both
                 // spellings, and the change leaves it alone.
                 "if": key_deleted_fragment("rootGrp"),
@@ -207,7 +203,7 @@ fn expected_minimal_umbrella_schema() -> serde_json::Value {
                 "additionalProperties": {},
                 "properties": {
                     "flag": { "type": "boolean" },
-                    "global": { "additionalProperties": {}, "type": "object" },
+                    "global": {},
                     "grp": {
                         "additionalProperties": {},
                         "properties": { "enabled": {} },

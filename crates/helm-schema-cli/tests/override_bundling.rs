@@ -62,11 +62,16 @@ fn multiple_override_external_refs_use_distinct_bundled_definitions() -> eyre::R
         "properties": {
             "alpha": { "$ref": "#/$defs/schema1" },
             "beta": { "$ref": "#/$defs/schema2" },
+            "global": {},
         },
         "type": "object",
         "x-helm-schema-generated": true,
         "x-helm-schema-policy": {
             "annotation-format-version": 1,
+            "authoring": {
+                "declared-types": "assert",
+                "root": "closed",
+            },
             "modifiers": {
                 "overrides": {
                     "count": 2,
@@ -75,8 +80,8 @@ fn multiple_override_external_refs_use_distinct_bundled_definitions() -> eyre::R
                 "reference-mode": "bundled",
             },
             "narrowing": [],
-            "policy-fingerprint": "7fca3b4bb01f00fc18128195e45cb8ef77cb0ec58b1d2de7ecbb2bf86fd3c1d8",
-            "policy-vocabulary-version": 1,
+            "policy-fingerprint": "4dbd0682820514b61456fab9a96349dd23c295fb1a9525a1cc2f8d6e6d4b9fd7",
+            "policy-vocabulary-version": 2,
             "requested-profile": "full",
             "resolved": {
                 "kind-partitions": true,

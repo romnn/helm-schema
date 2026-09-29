@@ -140,10 +140,6 @@ fn expected_lint_root_schema() -> serde_json::Value {
                     },
                 },
             },
-            {
-                "additionalProperties": {},
-                "properties": { "kid": { "type": ["null", "object"] } },
-            },
         ],
         "properties": {
             "global": {},
@@ -151,7 +147,7 @@ fn expected_lint_root_schema() -> serde_json::Value {
                 "additionalProperties": {},
                 "properties": {
                     "flag": { "type": "boolean" },
-                    "global": { "additionalProperties": {}, "type": "object" },
+                    "global": {},
                     "grp": {
                         "additionalProperties": {},
                         "properties": { "enabled": {} },
@@ -287,10 +283,6 @@ fn expected_empty_root_schema() -> serde_json::Value {
         "additionalProperties": false,
         "allOf": [
             {
-                "additionalProperties": {},
-                "properties": { "kid": { "type": ["null", "object"] } },
-            },
-            {
                 "if": {
                     "allOf": [
                         {
@@ -346,7 +338,7 @@ fn expected_empty_root_schema() -> serde_json::Value {
             "kid": {
                 "additionalProperties": {},
                 "properties": {
-                    "global": { "additionalProperties": {}, "type": "object" },
+                    "global": {},
                     "grp": {
                         "additionalProperties": {},
                         "properties": { "enabled": {} },
@@ -572,7 +564,7 @@ fn mode_kid_schema() -> serde_json::Value {
                 },
             },
         ],
-        "properties": { "global": { "additionalProperties": {}, "type": "object" }, "mode": {} },
+        "properties": { "global": {}, "mode": {} },
         "type": "object",
     })
 }
@@ -591,10 +583,6 @@ fn expected_mode_schema() -> serde_json::Value {
                         "properties": { "mode": { "type": ["null", "string"] } },
                     },
                 },
-            },
-            {
-                "additionalProperties": {},
-                "properties": { "kid": { "type": ["null", "object"] } },
             },
             mode_root_clause(),
         ],

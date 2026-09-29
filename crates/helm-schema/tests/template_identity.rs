@@ -135,10 +135,6 @@ fn a_shared_helper_resolves_each_charts_own_template() -> eyre::Result<()> {
             "additionalProperties": false,
             "allOf": [
                 {
-                    "additionalProperties": {},
-                    "properties": { "kid": { "type": ["null", "object"] } }
-                },
-                {
                     "if": {
                         "anyOf": [
                             {
@@ -164,7 +160,7 @@ fn a_shared_helper_resolves_each_charts_own_template() -> eyre::Result<()> {
                     "additionalProperties": {},
                     "properties": {
                         "childToken": {},
-                        "global": { "additionalProperties": {}, "type": "object" }
+                        "global": {}
                     },
                     "type": "object"
                 },

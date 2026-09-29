@@ -149,6 +149,7 @@ fn facade_generates_schema_for_memory_chart() -> eyre::Result<()> {
                 }
             }],
             "properties": {
+                "global": {},
                 "enabled": {
                     "description": "Whether the config map is enabled"
                 }
@@ -314,6 +315,7 @@ fn split_call_and_pipeline_emit_the_same_nil_strict_schema() -> eyre::Result<()>
                 },
             ],
             "properties": {
+                "global": {},
                 "call": { "type": "string" },
                 "pipeline": { "type": "string" },
             },
@@ -789,6 +791,7 @@ fn analysis_session_exposes_resolved_contract_before_required_inference() -> eyr
                 }
             ],
             "properties": {
+                "global": {},
                 "mode": {},
                 "serviceAccount": {
                     "additionalProperties": {},
@@ -1328,6 +1331,7 @@ fn sibling_values_schema_file_is_not_inference_evidence() -> eyre::Result<()> {
                 }
             }],
             "properties": {
+                "global": {},
                 "mode": {}
             },
             "type": "object"

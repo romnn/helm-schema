@@ -211,14 +211,6 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> eyre::Result<
                         }
                     }
                 }
-            },
-            {
-                "additionalProperties": {},
-                "properties": {
-                    "subchart": {
-                        "type": ["null", "object"]
-                    }
-                }
             }
         ],
         "properties": {
@@ -227,7 +219,7 @@ fn wrapper_chart_with_subchart_tarball_containing_dir_entries() -> eyre::Result<
                 "additionalProperties": {},
                 "properties": {
                     "enabled": {},
-                    "global": { "additionalProperties": {}, "type": "object" }
+                    "global": {}
                 },
                 "type": "object"
             }
