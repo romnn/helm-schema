@@ -6879,6 +6879,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (`post-merge-main.log`). landing-8.env retired (2b578b3); landing-8 target removed. Builders told main moved.
   Next: landing 9 = F1 (re-checks of rework 3 running); staging the clone now. Orchestrator.
 
+- 21:29 (Sep 29) — **Post-merge gates green on main 2f9e60d4 (fmt/lint/unit 0). F1 rework 3: REWORK from both** on
+  the attribution identity (`review-f1-rework3-{sol,astra}.md`): equal keyword arguments still conflate different
+  failures (`additionalProperties: false` rejecting different keys under different `properties`), `$ref` inlining
+  touches `const`/`enum` data, and the declared-type check reads the coalesced document (pruning/import-values
+  break it) instead of the generation's declaration inputs → `brief-f1-rework4.md` (R12–R14, test-only; use the
+  landed GenerationDecisions and the schema-aware walker). Landing 9 stays staged (`round8-landing9`); the
+  promotions patch is still outstanding from the builder. Disk 108 GB (frontend target freed); load 17;
+  W1 alive in its final pipeline. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
