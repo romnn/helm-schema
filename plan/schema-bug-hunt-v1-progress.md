@@ -6584,6 +6584,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   on-disk fixture") and the acceptance-battery skill's fallback wording become stale → update in the landing.
   Re-checks: sol e48030f1 turn 6 / astra 11bf8beb turn 4. Orchestrator.
 
+- 06:50 (Sep 29) — **Guard rework 2 + runner v6.10 rework 1 handed back; re-checks dispatched; cell_matrix commit 1
+  byte-identical.** Guard HEAD 6d4cbb26 (`target-guard-v3.patch`, 1941 lines, sha256 8ba7d5b4…): G1 cargo-style
+  subcommand finder (three prefix layouts × 4 override forms through the real cargo-fc); G2 `cargo metadata
+  --no-deps --offline` walk of all cargo-fc metadata keys refusing protected `env` add/remove/set; G3
+  case-insensitive names on Windows; G4 policy "every landing-owner on Windows is malformed" with a conformance
+  test. Gates 0 (test:guard 48, lint, lint:fc, test 1616); red vs 231bef9a 30F+1E. Runner v6.10 HEAD f25b8525
+  (`v610-v2.patch`, 638 lines, sha256 a2bc0f30…): R1 no creation before the claim check (lock without O_CREAT
+  outside the dump), R2 explicit UTF-8/LF with an ISO-8859-1 interop test in both orders; two timing-dependent lock
+  tests now wait for the attempt; builder flags an UNFIXED pre-existing window (TERM between `receipt begin` and the
+  attempt-id read-back leaves "running" with no rc) → queued as runner v6.11 unless a reviewer blocks. run-all exit 0
+  with GUARD_SRC (710 zsh, py 88); red 7 FAIL on 001a202f. cell_matrix commit 1 (379de2aa on 0de46c35): fmt/lint/
+  lint:fc/unit 0, test:integration 869/24 skipped, zero fixtures moved, schema-only battery with the candidate dump
+  flips=0. Re-checks: sol fb75bd55 / astra 46a7c5d4 turn 3. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
