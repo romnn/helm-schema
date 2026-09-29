@@ -6476,6 +6476,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   hand-port, decision (b) Unavailable handling. DECISION: `k8s-rebase` (on cb42c017) is now the only branch; rework
   5 there → `brief-k8s-rework5.md` (K8–K13); the running battery on e81c1074 is kept as evidence. Orchestrator.
 
+- 03:50 (Sep 29) — **Target guard: REWORK from both** (`review-target-guard-{sol,astra}.md`). astra P1: pinned
+  cargo-fc forwards `--env CARGO_BUILD_BUILD_DIR=…`/`--unset-env` to its child cargo, escaping the claimed target;
+  both P1: the Windows CI job cannot pass (fixtures written with `Path.write_text` → CRLF vs the LF-only reader);
+  both P2: landing-marker grammar drift vs the runner (`xreceipt.json`, relative/unnormalized receipt paths accepted
+  by the guard, refused by landing.py:733), locale-encoded publication vs UTF-8 reader and unvalidated R before
+  publication (tab-named checkout), Windows lock retries every OSError forever, cross-drive `commonpath` ValueError
+  → exit 1; astra: a RUNNER defect (landing.py:829 lets a non-dump step create gotmp/tmp in an unclaimed target) and
+  `clean:build` unguarded; both: add a shared conformance corpus (both repos), the real runner-vs-guard race, the
+  nested test:all test; document the out-of-guarantee list. Confirmed good: coexistence in both orders, env
+  precedence, Task `--print` caching, cargo precedence, token publication, small architecture. →
+  `brief-target-guard-rework1.md` (T1–T8, incl. runner v6.10 for T2's corpus and T7); runner builder messaged.
+  Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
