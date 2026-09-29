@@ -6838,6 +6838,27 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   builds during gates; all gates re-run alone. Re-checks: sol 1117faa9 / astra 7422b55d turn 2. The two agentmux
   `start` calls for k8s took ~40 min to return (agentmux queueing); timestamps use the clock. Orchestrator.
 
+- 20:14 (Sep 29) — **Eight re-check answers: REWORK everywhere; four briefs.** (1) F1 rework 2
+  (`review-f1-rework2-{sol,astra}.md`): one shared P1 — R10's "shared reason" comparison ignores allowed types and
+  schema location, so a changed assertion (`boolean` → `integer`) counts as shared and a mixed rejection is
+  attributed to the policy; everything else confirmed → `brief-f1-rework3.md` (R11, test-only). (2) k8s rework 6
+  (`review-k8s-rework6-{sol,astra}.md`): move 0d089cb2 to W4 (its comment arm admits `"foo # c\ninvalid: ["` in
+  three charts — candidate-introduced; the formatted-map subset is not YAML-safe; the union sits outside the
+  provider schema), keep the spinnaker roster row but fix its observation gap (test-only), nacos waits for F1;
+  K14/K15/kind pairing/roster rows/rebase all confirmed → `brief-k8s-rework7.md` (drop the commit, K17, wait for
+  F1 → W4). (3) Guard rework 4 + v6.11 rework 1 (`review-target-guard-rework4-{sol,astra}.md`): cargo's `[env]`
+  table with `force = true` bypasses the guard for clippy-wrapper's nested cargo; the recursive scan over-refuses
+  (`fc check -p safe`, root-vs-package aliases); unset-`CARGO_HOME` conformance; `receipt started` matches pid +
+  whole-second timestamp (pid reuse, backward clock) → per-invocation token; the process-group test never
+  interrupts save() → `brief-target-guard-rework5.md` (G15–G17, V10–V11). (4) W4 rework 7
+  (`review-w4-rework7-{sol,astra}.md`): r3 must be FIXED — it is an `include → helper → tpl` recursion Helm aborts
+  on (both spellings), main's rejection was a lexical approximation; `{{` and a missing helper also abort; plus
+  resolve nonrecursive plain-scalar helpers; R31's DNS-1123 rule assumes Helm's root context (`tpl x (dict
+  "Release" (dict "Name" "# c"))` renders); the Go-regex translation keeps `\w` but Rust's regex is Unicode-aware
+  (`^[\w-\.]+$` vs `é`: Go false, Rust true → wrong exact truth) → `brief-w4-rework8.md` (R36–R39, R39 = the kps
+  namespaceOverride rule moved from k8s). Landing order stays F1 → W4 → k8s → W1. Landing 8 in its sweep. Disk 79 GB,
+  load 13. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
