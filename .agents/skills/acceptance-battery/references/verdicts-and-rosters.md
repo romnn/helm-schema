@@ -83,6 +83,7 @@ something Helm renders cleanly is a false rejection, which is a regression.
 | `Collapsed` | on Helm's exact document both profiles agree, with no new reason | dropped: not a flip (`screened_flips_collapsed`) |
 | `TighteningMatchedHelmAbort` | candidate rejects, Helm aborts | matched |
 | `TighteningMatchedKubernetesRejection` | candidate rejects, render adds a new Kubernetes violation beyond the defaults render | matched |
+| `TighteningMatchedDeclaredTypesPolicy` | candidate rejects, Helm renders with no proved Kubernetes violation, and the rejection is exactly a declared default's `type` on a path explain C1 reports unread, which the `--declared-types=annotate` regeneration does not reject beyond the baseline | matched, listed in `tightenings_attributed_to_declared_types`; never rostered |
 | `LooseningMatchedKubernetesValidation` | candidate accepts, render valid, every changed resource decided | matched |
 | `LooseningMatchedDefaultsViolations` | candidate accepts, and every violation is one the defaults render already carries (counted with multiplicity) | matched |
 | `LooseningWithUncertainKubernetes` | candidate accepts, Helm renders, some new or changed resource has no decidable schema | must be listed **exactly** (same uncertainty strings, in order) in `KNOWN_UNDECIDED_ACCEPTANCES` |
