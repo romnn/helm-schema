@@ -6822,7 +6822,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   rows observed; stale spinnaker row noted. Reviews: fresh sol/astra runs (the rework-5 runs expired at 15:35).
   Orchestrator.
 
-- 20:35 (Sep 29) — **W4 rework 7 handed back with a clean battery; re-checks dispatched.** `round8-w4-rebase` HEAD
+- 19:50 (Sep 29) — **W4 rework 7 handed back with a clean battery; re-checks dispatched.** `round8-w4-rebase` HEAD
   3329fa27 on cb42c017 (`final-v8.patch` sha256 0e7dff3b…; `rebase/r7/handoff.md`). One commit per item: R26
   masterGroupName (the chart's Go regex `^[\w-\.]+$` never compiled in Rust so the `""` arm never classified — Go
   regex literals now evaluated through their Rust spelling, `ecma_compatible_pattern` moved to core), R26 annotations
