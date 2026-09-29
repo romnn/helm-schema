@@ -3922,6 +3922,10 @@ fn nacos_ingress_api_version_rejection_is_attributed_to_declared_types() -> eyre
 /// assertion: a baseline `boolean` and a candidate `integer` at one value
 /// are two assertions, so the changed one is not hidden behind the policy.
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
 fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::Result<()> {
     let source = ScratchDir::new("schema_emission_profiles")?;
     std::fs::create_dir(source.path().join("templates"))?;
