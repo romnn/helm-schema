@@ -6948,6 +6948,36 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   run 20260929T205202-7bc50b66 pointed at the fb75bd55 transcript. The runner builder moved on to cell_matrix
   rework 3 (`brief-cell-matrix-rework3.md`). W4 builder paused on its own gate run. Orchestrator.
 
+- 23:48 (Sep 29) — **F1 rework 4: REWORK ×2 (rework 5 briefed). Runner v6.11: LAND ×2, merged (f5bc5b9). Guard
+  rework 5: REWORK ×2 → last round, deletion-style. cell_matrix rework 3 and W1 rework 6 handed back and sent to
+  review.** F1 (`review-f1-rework4-{sol,astra}.md`): R13/R14 accepted; R15 the R12 identity is still
+  keyword-special-cased — sol's propertyNames cell (`ViolationKey::new` drops the inner error, records "object") and
+  astra's additionalItems cell (harness :862/:871 reduce array failures to "array") each let a non-policy tightening
+  vanish and the mixed rejection be attributed to the policy; R16 (sol) the `common` row says RENDERS but it is a
+  library chart whose standalone Helm command aborts (astra verified it through the umbrella context) → explicit
+  witness or drop from promotions-f1.patch; R17 both: nginx-ingress row → KnownFalseRejection now, cause filed with
+  the nginx defaults family. 13–14 of 14 promotions verified. `brief-f1-rework5.md` (test-only, no dump); builder
+  resumed. Landing 9 waits. Runner (`review-target-guard-rework5-{sol,astra}.md`): 1d2b214 LAND ×2 (fresh 128-bit
+  token per invocation, recovery by token only, both sides of the atomic replacement interrupted); merged into
+  runner main `--no-ff` f5bc5b9; run-all with guard-src-v6 exit 0 (green/v611-merged-f5bc5b9-run-all.log). Guard
+  06d2e6e9: five P1s each, all corners of the re-implemented cargo/cargo-fc discovery (child-env alias changes,
+  `cargo fc cargo inner`, unclassifiable `+nightly -qZ…`, Python vs Rust shlex, USERPROFILE, `-m`, unselected
+  members) → `brief-target-guard-rework6.md`: delete the cargo-fc port; refuse any discovery-changing argument and
+  any untracked alias/[env]; LOC down; if not LAND, parked (orchestrator decision: the guard exists for
+  misconfigured clones, not adversaries — W1's unset worktree building into round7-f9/target this round is the
+  hazard it prevents). cell_matrix rework 3 (74d22474, `cell-matrix-v4.patch` sha256 12526d2d…; process-group
+  kill with one deadline over wait + output, replay store under `--scratch`, docs; 8-case timeout table; gates 0):
+  astra follow_up ad9b3c05 turn 4, sol fresh `gpt-6.1-sol` e9acd420 (last cell_matrix round). W1 rework 6
+  (dc9281c0, `final-v7.patch` sha256 ea734556…; R11–R15 fixed, R16 partly; 13 new tests red→green; corpus 60/157
+  mismatch; `wrong-rows.txt`: 25 NEW false rejections — 23 `resourcesPreset` via hasKey→string-equality typed
+  schema-wide, 2 `additionalRelabeling` via a widened undecodable range guard — and 21 new false acceptances,
+  traefik 15): unlandable as is; fresh reviews astra bde21128 + sol(6.1) b7fd0b5d, and the builder started rework 7
+  on the two mechanisms in parallel (scope the comparison typing to its guard; abstain instead of widening), then
+  dump + schema-only + live battery with the Rust prober. W1 process notes: the builder's per-file jv probe step
+  took ~6 h (banned next time); its `pkill -f '^sleep 60$'` cleanup may have hit other sessions (none observed);
+  its unset worktree had built into round7-f9/target (purged, 50 GiB, every gate re-run). Disk 110 GB (targets:
+  helm-schema 49, target-guard 46, f78 35). W4 still in gates. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
