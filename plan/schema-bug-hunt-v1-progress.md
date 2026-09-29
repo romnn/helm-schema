@@ -6936,6 +6936,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   20260929T200831-34eb74f4 started, pointed at the old transcript for context (memory `codex-model-pins`). W1's
   final pipeline is still in its jv probe step (chart 40/60, openebs 22 510 probes; CPU only). Orchestrator.
 
+- 22:52 (Sep 29) — **Guard rework 5 (06d2e6e9, rebased on main 16cd0d2a) + runner v6.11 rework 2 (1d2b214) handed
+  back; re-checks dispatched; cell_matrix rework 3 started.** G15 `[env]` entries naming a protected variable refuse
+  (forced or not, every layer, every cwd the check visits); G16 cargo-fc's grammar and alias dialect ported from
+  v0.6.0 (`fc_arguments`/`fc_expand`, expansion from the workspace root, then cargo's rules over every member);
+  G17 unset-CARGO_HOME conformance; red on v5 12 failures + 6 errors → 61 OK; lint/lint:fc/test 1661 green;
+  `target-guard-v6.patch` sha256 9ce70c86…, snapshot `guard-src-v6-target-guard.py`. V10 `receipt begin` records
+  the invocation's lock token and `receipt started` matches only that token (no pid/clock, SINCE gone); V11
+  deterministic INT/TERM/HUP before and after save's atomic replacement; `v611-v3.patch` sha256 a9b74bac…; run-all
+  with the v6 guard exit 0 (11 suites, 89 unit). Reviews: astra follow_up 46a7c5d4 turn 6; sol fresh `gpt-6.1-sol`
+  run 20260929T205202-7bc50b66 pointed at the fb75bd55 transcript. The runner builder moved on to cell_matrix
+  rework 3 (`brief-cell-matrix-rework3.md`). W4 builder paused on its own gate run. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
