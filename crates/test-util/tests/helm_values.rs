@@ -10,12 +10,14 @@ use std::collections::BTreeSet;
 use std::path::PathBuf;
 
 use color_eyre::eyre;
+use indoc::indoc;
 use serde_json::{Value, json};
 use test_util::helm_values::{
     AcceptanceDocument, DependencyValues, ValuesError, ValuesOptions, Warning, acceptance_values,
     coalesce_chart_values, coalesce_tables,
 };
 use test_util::prelude::sim_assert_eq;
+use test_util::scratch::ScratchDir;
 
 fn chart(name: &str) -> PathBuf {
     test_util::workspace_testdata()
@@ -412,5 +414,37 @@ fn global_writes_among_unordered_dependencies_are_refused() -> eyre::Result<()> 
         have: coalesce_chart_values(&chart("ordered-globals"), json!({}))?,
         want: json!({"a": {"global": global}, "b": {"global": global}, "global": global})
     );
+    Ok(())
+}
+
+/// Helm's YAML 1.1 decoding drops underscores anywhere in a number
+/// (`phase2/helm/numeric.log`, Helm v4.2.3: `1_0e2` is 1000, `1e1_0` 1e10,
+/// `.1_0` 0.1, `-.1_0` -0.1, and the key `1_0e2` is `"1000"`), while
+/// `serde_yaml` reads those spellings as strings, so the reader refuses them.
+#[test]
+fn underscored_number_spellings_are_refused() -> eyre::Result<()> {
+    for values in [
+        "a: 1_0e2\n",
+        "a: 1e1_0\n",
+        "a: .1_0\n",
+        "a: -.1_0\n",
+        "1_0e2: x\n",
+    ] {
+        let dir = ScratchDir::new("underscored-numbers")?;
+        std::fs::write(
+            dir.path().join("Chart.yaml"),
+            indoc! {"
+                apiVersion: v2
+                name: numbers
+                version: 0.1.0
+            "},
+        )?;
+        std::fs::write(dir.path().join("values.yaml"), values)?;
+        let refused = matches!(
+            coalesce_chart_values(dir.path(), json!({})),
+            Err(ValuesError::Unmodelled(_))
+        );
+        sim_assert_eq!(have: (values, refused), want: (values, true));
+    }
     Ok(())
 }

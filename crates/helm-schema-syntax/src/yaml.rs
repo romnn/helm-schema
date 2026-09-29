@@ -272,8 +272,12 @@ fn build_skeleton(
             }
             Some(RenderedPiece::Hole { .. }) => {
                 if !empty {
+                    let number = index.to_string();
+                    if start + 1 + number.len() > MAX_SKELETON_BYTES {
+                        return Err(LayoutUncertainty::Overflow);
+                    }
                     text.push('h');
-                    text.push_str(&index.to_string());
+                    text.push_str(&number);
                 }
                 true
             }
@@ -284,9 +288,6 @@ fn build_skeleton(
             piece: index,
             placeholder,
         });
-    }
-    if text.len() > MAX_SKELETON_BYTES {
-        return Err(LayoutUncertainty::Overflow);
     }
     Ok(Skeleton { text, segments })
 }

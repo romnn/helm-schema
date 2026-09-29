@@ -1156,9 +1156,10 @@ fn merge_keys_over_collections_are_uncertain() -> eyre::Result<()> {
     Ok(())
 }
 
-/// P2 (`helm/dialect-agree.log`): where no plain scalar diverges between
-/// YAML 1.1 and 1.2, a literal arm's decoded documents equal Helm's
-/// `fromYaml` values.
+/// P2 (`helm/{dialect-agree,numeric}.log`): where no plain scalar diverges
+/// between YAML 1.1 and 1.2, a literal arm's decoded documents equal Helm's
+/// `fromYaml` values. Every Helm number is a float64, so `1e2` agrees with
+/// Helm's `100` by value.
 #[test]
 fn literal_decoding_matches_helm_where_the_dialects_agree() -> eyre::Result<()> {
     let agree = indoc! {r#"
@@ -1212,6 +1213,41 @@ fn literal_decoding_matches_helm_where_the_dialects_agree() -> eyre::Result<()> 
                   Scalar(Plain)[0..0]
           block n25 BlockHeader { folded: false, chomping: Clip, indentation: None }
           decoded {"b":true,"block":"x\n","f":1.5,"i":10,"nul":null,"qo":"on","qy":"yes","s":"abc","seq":["a",1],"y":1}
+    "#});
+    let numbers = ["a: 1e2\n", "a: -.5\n", "a: 1e400\n", "a: _1\n"];
+    sim_assert_eq!(have: cell_layouts(&numbers, &UnknownShapes)?, want: indoc! {r#"
+        # "a: 1e2\n"
+        arm [p0] "a: 1e2\n"
+          Document[0..0]
+            Mapping[0..0]
+              Pair[0..0]
+                Scalar(Plain) key[0..0]
+                Scalar(Plain)[0..0]
+          decoded {"a":100.0}
+        # "a: -.5\n"
+        arm [p0] "a: -.5\n"
+          Document[0..0]
+            Mapping[0..0]
+              Pair[0..0]
+                Scalar(Plain) key[0..0]
+                Scalar(Plain)[0..0]
+          decoded {"a":-0.5}
+        # "a: 1e400\n"
+        arm [p0] "a: 1e400\n"
+          Document[0..0]
+            Mapping[0..0]
+              Pair[0..0]
+                Scalar(Plain) key[0..0]
+                Scalar(Plain)[0..0]
+          decoded {"a":"1e400"}
+        # "a: _1\n"
+        arm [p0] "a: _1\n"
+          Document[0..0]
+            Mapping[0..0]
+              Pair[0..0]
+                Scalar(Plain) key[0..0]
+                Scalar(Plain)[0..0]
+          decoded {"a":"_1"}
     "#});
     Ok(())
 }
@@ -1307,6 +1343,83 @@ fn dialect_sensitive_literals_are_withheld() -> eyre::Result<()> {
     Ok(())
 }
 
+/// P8 (`helm/numeric.log`): Helm's decoder drops underscores anywhere in a
+/// number before resolving it (`1_0e2` is 1000 as a value and `"1000"` as a
+/// key, `1e1_0` is 1e10, `.1_0` is 0.1, `-.1_0` is -0.1), while the literal
+/// decoder reads those spellings as strings, so the arms withhold their
+/// decoded values.
+#[test]
+fn underscored_numbers_are_withheld() -> eyre::Result<()> {
+    let cells = [
+        "a: 1_0e2\n",
+        "a: 1e1_0\n",
+        "a: .1_0\n",
+        "a: -.1_0\n",
+        "a: 0.1e1_0\n",
+        "1_0e2: x\n",
+        "a: 0x_1f\n",
+    ];
+    sim_assert_eq!(have: cell_layouts(&cells, &UnknownShapes)?, want: indoc! {r#"
+        # "a: 1_0e2\n"
+        arm [p0] "a: 1_0e2\n"
+          Document[0..0]
+            Mapping[0..0]
+              Pair[0..0]
+                Scalar(Plain) key[0..0]
+                Scalar(Plain)[0..0]
+          withheld Dialect(Number)
+        # "a: 1e1_0\n"
+        arm [p0] "a: 1e1_0\n"
+          Document[0..0]
+            Mapping[0..0]
+              Pair[0..0]
+                Scalar(Plain) key[0..0]
+                Scalar(Plain)[0..0]
+          withheld Dialect(Number)
+        # "a: .1_0\n"
+        arm [p0] "a: .1_0\n"
+          Document[0..0]
+            Mapping[0..0]
+              Pair[0..0]
+                Scalar(Plain) key[0..0]
+                Scalar(Plain)[0..0]
+          withheld Dialect(Number)
+        # "a: -.1_0\n"
+        arm [p0] "a: -.1_0\n"
+          Document[0..0]
+            Mapping[0..0]
+              Pair[0..0]
+                Scalar(Plain) key[0..0]
+                Scalar(Plain)[0..0]
+          withheld Dialect(Number)
+        # "a: 0.1e1_0\n"
+        arm [p0] "a: 0.1e1_0\n"
+          Document[0..0]
+            Mapping[0..0]
+              Pair[0..0]
+                Scalar(Plain) key[0..0]
+                Scalar(Plain)[0..0]
+          withheld Dialect(Number)
+        # "1_0e2: x\n"
+        arm [p0] "1_0e2: x\n"
+          Document[0..0]
+            Mapping[0..0]
+              Pair[0..0]
+                Scalar(Plain) key[0..0]
+                Scalar(Plain)[0..0]
+          withheld Dialect(Number)
+        # "a: 0x_1f\n"
+        arm [p0] "a: 0x_1f\n"
+          Document[0..0]
+            Mapping[0..0]
+              Pair[0..0]
+                Scalar(Plain) key[0..0]
+                Scalar(Plain)[0..0]
+          withheld Dialect(Number)
+    "#});
+    Ok(())
+}
+
 /// P3 (`cells-rework1.log`, `block-*`): a competing definition of the name
 /// wins over a `block`'s written body, in the same file or another, so the
 /// block renders an unresolved call.
@@ -1371,4 +1484,36 @@ fn skeleton_bytes_are_bounded() -> eyre::Result<()> {
         }
     }
     Ok(())
+}
+
+/// P9: every placeholder is checked against [`MAX_SKELETON_BYTES`] before it
+/// is appended, so a hole-heavy arm stops at the bound: the last placeholder
+/// that fits builds, and one more is an overflow.
+#[test]
+fn placeholder_bytes_count_toward_the_skeleton_bound() {
+    let mut holes = 0;
+    let mut bytes = 0;
+    while bytes + 1 + holes.to_string().len() <= MAX_SKELETON_BYTES {
+        bytes += 1 + holes.to_string().len();
+        holes += 1;
+    }
+    let body = RenderedBody {
+        source: "",
+        pieces: vec![crate::RenderedPiece::Hole {
+            action: ActionId(0),
+            shape: HoleShape::ScalarText { nonempty: true },
+            occurrence: crate::Occurrence::default(),
+        }],
+        layout: BodyLayout::Arms(Vec::new()),
+    };
+    let arm = |count: usize| crate::RenderedArm {
+        paths: vec![Vec::new()],
+        pieces: vec![crate::PieceId(0); count],
+    };
+    let at_bound = arm_skeleton(&body, &arm(holes)).map(|skeleton| skeleton.text.len());
+    sim_assert_eq!(have: at_bound, want: Ok(bytes));
+    sim_assert_eq!(
+        have: arm_skeleton(&body, &arm(holes + 1)).map(|skeleton| skeleton.text.len()),
+        want: Err(LayoutUncertainty::Overflow)
+    );
 }
