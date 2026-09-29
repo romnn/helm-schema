@@ -6598,6 +6598,24 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   lint:fc/unit 0, test:integration 869/24 skipped, zero fixtures moved, schema-only battery with the candidate dump
   flips=0. Re-checks: sol fb75bd55 / astra 46a7c5d4 turn 3. Orchestrator.
 
+- 07:05 (Sep 29) — **cell_matrix and frontend 2.1 handed back, both byte-identical; four fresh reviews dispatched.**
+  cell_matrix (clone `round8-target-guard`, branch cell-matrix on 0de46c35): 379de2aa harness move (Helm harness →
+  `helm-schema-test-support/src/helm/`, runner injected through prepare/coalesce/render/decode, exact values bytes +
+  kube version, opaque `PreparedTree`/`Cacheability`, release parameter) with the byte-identity gate green (unit
+  1616, integration 869, zero fixtures moved, schema-only battery flips=0 with the candidate dump) and 45bdf9e0 the
+  tool (`src/cell_matrix.rs`, binary, 5 integration tests: pinned bundle digests, null deletion, anchor bytes,
+  prerelease kube version, shipped schema/tests/helm-schema.yaml ignored, path-free outputs, `--check` never
+  writes, `unavailable`, every refusal, exit 3 classes, nondeterministic chart refused); `cell-matrix.patch` 3781
+  lines sha256 b35cb63a…; prod LOC 0 (test-support excluded). Classifier fact: Helm's "type mismatch on child"
+  classifies as `unresolved:unknown-template-failure`. Frontend 2.1 (worktree `round8-frontend-phase2`, HEAD
+  29e9f468 on ecea37a5): tree-sitter-yaml 0.7.2, `render_body` pieces/arms (rendered.rs:147), `arm_layout`
+  skeletons with `h<n>` placeholders and node→piece ownership (yaml.rs:167/:235), uncertain classes RawHole/
+  Substitution/Parse/TagOrAlias, 64-state Overflow bound; 35 goldens checked against Helm 4.2.3 (cells.log,
+  dialect.log); zero callers outside the syntax crate; gates 0 (unit 1647, integration 869), three checkpoint dumps
+  0/203 changed, schema-only battery flips=0; `phase2/final.patch` sha256 a5b41084…; LOC +696, 0 removed
+  (plan v3: 2.1 deletes nothing). Reviews: fresh sol+astra runs for each (ids in codex-runs.tsv). Runner builder →
+  v6.11 (TERM window) light work; frontend builder paused. Load 16; T7 131 GB. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
