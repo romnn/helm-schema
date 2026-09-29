@@ -6542,6 +6542,22 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Re-checks: sol fb75bd55 / astra 46a7c5d4 follow-ups. Runner builder proceeds to cell_matrix commit 1 (379de2aa,
   fmt/lint/lint:fc/unit green; integration + dump + schema-only battery next). Orchestrator.
 
+- 05:20 (Sep 29) — **Four answers: explain C1 REWORK from both; guard rework 1 and runner v6.10 REWORK from both.**
+  explain (`review-explain-c1-{sol,astra}.md`): byte identity independently verified by both (all 202 fixtures equal
+  91ff7e76, manifest digests match), invariants hold, lock order acyclic, pinned decisions correct. Remaining: the
+  example's JSON stdout is not one document (terminal/RAW_CONTRACT debug on stdout), `GuardReferences` numeric map
+  keys serialize as `0,1,10,11,2…`, text output does not quote strings (`"false"` vs `false`), no reentrancy guard on
+  the single-flight lock, empty-overlay pinned reports and no determinism test, session.rs:64 doc, and the hand-off
+  records no battery command/env (both flagged; sol asks for a harness test that schema-only mode FAILS without
+  SCHEMA_ACCEPTANCE_CANDIDATE_DUMP — adopted as a process fix). → `brief-explain-c1-rework1.md` (E1–E7).
+  guard (`review-target-guard-rework1-{sol,astra}.md`): corpus byte-identical and asserted on both sides; remaining
+  P1s: cargo global options before `fc` bypass detection (`cargo --color always fc …`), cargo-fc manifest metadata
+  `env.add/remove` patches child environments, Windows case-insensitive variable names, Windows landing-owner
+  fixtures can never be accepted (POSIX grammar) → DECISION: the landing runner is POSIX-only, a landing-owner on
+  Windows is a malformed claim; runner v6.10: check mode creates `lock` in an unclaimed owner dir, claims written
+  without explicit UTF-8. → `brief-target-guard-rework2.md` (G1–G4, R1–R2); runner builder to do it before
+  continuing cell_matrix. Disk 173 GB; load 53 (five heavy). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
