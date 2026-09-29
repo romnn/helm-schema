@@ -3979,6 +3979,16 @@ fn nacos_ingress_api_version_rejection_is_declined_while_its_defaults_are_reject
     Ok(())
 }
 
+/// One attribution control: the baseline, the constraint the chart's
+/// generation carries under both policies (`None`: the chart as generated),
+/// the judged document, and the expected attribution.
+type AttributionCell = (
+    serde_json::Value,
+    Option<serde_json::Value>,
+    serde_json::Value,
+    Result<(), &'static str>,
+);
+
 /// Controls of the declared-types attribution. A rejection is the policy's
 /// only when the baseline accepts the document, the candidate is the assert
 /// regeneration, the annotate regeneration accepts outright, and every
@@ -4079,12 +4089,7 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
     // generated. Every document renders (rework6/helm-r20.log).
     let (renamed_baseline, renamed_baseline_defs) = not_integer("a");
     let (renamed_chart, renamed_chart_defs) = not_integer("b");
-    let cells: Vec<(
-        serde_json::Value,
-        Option<serde_json::Value>,
-        serde_json::Value,
-        Result<(), &str>,
-    )> = vec![
+    let cells: Vec<AttributionCell> = vec![
         // The policy alone rejects the unread declared default.
         (json!({}), None, unread(json!(7)), Ok(())),
         // `size` is read by the Widget sink and typed only by its default.
