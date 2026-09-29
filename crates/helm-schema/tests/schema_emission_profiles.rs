@@ -4035,7 +4035,28 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
     // `settings`, while the candidate and annotate schemas reject
     // `undeclared`. One keyword and argument, two failures.
     let other_closure = json!({"properties": {"undeclared": {}}, "additionalProperties": false});
-    let changed_closure = ProfileSchemas::compile(&other_closure, &assert_schema, defaults)?;
+    let changed_closure =
+        ProfileSchemas::compile(&other_closure, &assert_schema, defaults.clone())?;
+    // Two more one-keyword pairs that reject different things beside the
+    // unread `unread` type: a baseline naming `a` as a forbidden member name
+    // against a candidate naming `b` (`propertyNames` wraps the inner
+    // `false`), and a baseline admitting two tuple items against a candidate
+    // admitting one (`additionalItems` rejects from a different limit).
+    let at_settings = |member: &str, schema: serde_json::Value| json!({"properties": {"settings": {"properties": {member: schema}}}});
+    let forbidden_name =
+        |name: &str| json!({"propertyNames": {"if": {"const": name}, "then": false}});
+    let draft7 = |schema: serde_json::Value| json!({"$schema": "http://json-schema.org/draft-07/schema#", "allOf": [schema]});
+    let changed_names = ProfileSchemas::compile(
+        &draft7(at_settings("members", forbidden_name("a"))),
+        &draft7(json!({"allOf": [assert_schema, at_settings("members", forbidden_name("b"))]})),
+        defaults.clone(),
+    )?;
+    let tuple = |items: usize| json!({"items": vec![json!({}); items], "additionalItems": false});
+    let changed_items = ProfileSchemas::compile(
+        &draft7(at_settings("extra", tuple(2))),
+        &draft7(json!({"allOf": [assert_schema, at_settings("extra", tuple(1))]})),
+        defaults,
+    )?;
     let rendered = [
         json!({"settings": {"unread": 7}}),
         json!({"settings": {"size": "x"}}),
@@ -4072,6 +4093,18 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
             .map_err(|error| error.to_string().starts_with("tightening rejects a document")),
         want: Err(true)
     );
+    // Helm renders both: no template reads `members` or `extra`
+    // (rework5/helm-r15.log).
+    let names = json!({"settings": {"enabled": false, "size": 3, "unread": 7, "members": {"a": 1, "b": 1}}});
+    let items = json!({"settings": {"enabled": false, "size": 3, "unread": 7, "extra": [1, 2, 3]}});
+    for (document, profiles) in [(&names, &changed_names), (&items, &changed_items)] {
+        sim_assert_eq!(
+            have: adjudicate_flip(&chart, document, profiles, &kubernetes, Some(&annotation))
+                .map(|(verdict, _)| verdict)
+                .map_err(|error| error.to_string().starts_with("tightening rejects a document")),
+            want: Err(true)
+        );
+    }
     let settings = |unread: serde_json::Value, size: serde_json::Value| json!({"settings": {"enabled": false, "unread": unread, "size": size}});
     let mut undeclared = settings(json!(7), json!(3));
     undeclared["undeclared"] = json!(1);
@@ -4082,6 +4115,8 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
         (settings(json!(7), json!(3)), &not_only_type),
         (mixed, &changed_assertion),
         (closed, &changed_closure),
+        (names, &changed_names),
+        (items, &changed_items),
     ];
     let attributions = cells
         .iter()
@@ -4096,14 +4131,16 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
             Err("/settings/unread: violates `not`".to_string()),
             Err("/settings/size: a template reads `settings.size`".to_string()),
             Err("the annotate schema rejects it for a reason the baseline does not".to_string()),
+            Err("/settings/members: violates `propertyNames`".to_string()),
+            Err("/settings/extra: violates `additionalItems`".to_string()),
         ]
     );
     Ok(())
 }
 
-/// A violated assertion is one failure: the keyword with its argument, what
-/// the validator reports (for `additionalProperties`, the keys it rejects,
-/// beside the properties it admits), and literal data kept as data. Equal
+/// A violated assertion is one failure: the keyword with its argument, the
+/// validator's complete report (for `additionalProperties`, the keys it
+/// rejects), and literal data kept as data. Equal
 /// `additionalProperties: false` arguments that reject different keys, and
 /// `const` values that differ only in which `$ref`-shaped data they hold,
 /// are different failures.

@@ -181,12 +181,14 @@ pub(crate) struct SemanticControl {
     pub(crate) rationale: &'static str,
 }
 
-/// One violated assertion: the value it rejects, what it asserts and how it
-/// fails. Two schemas place one assertion at different locations and name
-/// its definitions differently, so the location is no part of it; the
-/// argument, the reported failure and the siblings the keyword reads are:
-/// `type: boolean` and `type: integer` at one value are two assertions, and
-/// so are two `additionalProperties: false` that reject different keys.
+/// One violated assertion: the value it rejects, what it asserts and the
+/// validator's complete report of how it fails. Two schemas place one
+/// assertion at different locations and name its definitions differently,
+/// so no schema location is part of it; everything the validator reports
+/// is: `type: boolean` and `type: integer` at one value are two assertions,
+/// and so are two `additionalProperties: false` rejecting different keys,
+/// two `propertyNames` rejecting different names and two `additionalItems`
+/// counting from different limits.
 #[derive(Debug)]
 pub(crate) struct ViolatedAssertion {
     /// The violating value.
@@ -196,12 +198,8 @@ pub(crate) struct ViolatedAssertion {
     /// The keyword's argument, every local `$ref` in a schema position
     /// replaced by its target; `const` and `enum` values stay data.
     pub(crate) assertion: Value,
-    /// What the validator reports: the property `required` misses, the
-    /// keys `additionalProperties` rejects, else the offending value.
-    detail: String,
-    /// The sibling keywords the violated keyword reads: for
-    /// `additionalProperties`, the admitted property names and patterns.
-    siblings: Value,
+    /// The validator's report, from [`reported_failure`].
+    failure: Value,
 }
 
 impl ViolatedAssertion {
@@ -209,8 +207,7 @@ impl ViolatedAssertion {
         self.instance_path.as_str() == other.instance_path.as_str()
             && self.keyword == other.keyword
             && self.assertion == other.assertion
-            && self.detail == other.detail
-            && self.siblings == other.siblings
+            && self.failure == other.failure
     }
 }
 
@@ -848,7 +845,7 @@ pub(crate) fn violated_assertions(
         .iter_errors(instance)
         .map(|error| {
             let location = error.schema_path().as_str();
-            let (parent, keyword_name) = location.rsplit_once('/').unwrap_or(("", location));
+            let keyword_name = location.rsplit('/').next().unwrap_or(location);
             let assertion = match schema.pointer(location) {
                 Some(argument) => inline_local_refs(
                     argument,
@@ -858,30 +855,44 @@ pub(crate) fn violated_assertions(
                 ),
                 None => json!({ "unresolved keyword location": location }),
             };
-            let keyword = error.kind().keyword().to_string();
-            let siblings = match (keyword.as_str(), schema.pointer(parent)) {
-                ("additionalProperties", Some(parent)) => json!({
-                    "properties": member_names(parent.get("properties")),
-                    "patternProperties": member_names(parent.get("patternProperties")),
-                }),
-                _ => Value::Null,
-            };
             ViolatedAssertion {
                 instance_path: error.instance_path().clone(),
-                detail: ViolationKey::new("", "", &error).detail,
-                keyword,
+                keyword: error.kind().keyword().to_string(),
                 assertion,
-                siblings,
+                failure: reported_failure(&error),
             }
         })
         .collect()
 }
 
-fn member_names(members: Option<&Value>) -> Vec<&str> {
-    members
-        .and_then(Value::as_object)
-        .map(|members| members.keys().map(String::as_str).collect())
-        .unwrap_or_default()
+/// Everything the validator reports about `error` except schema locations:
+/// the instance it names, and its kind with every payload (the rejected
+/// keys, the missing property, the limit, the expected value, ...). The
+/// failures a kind wraps (`anyOf`/`oneOf` branches, the rejected
+/// `propertyNames` name) are rendered the same way, since their own
+/// reports carry locations.
+fn reported_failure(error: &jsonschema::ValidationError<'_>) -> Value {
+    use jsonschema::error::ValidationErrorKind as Kind;
+    let kind = match error.kind() {
+        Kind::AnyOf { context }
+        | Kind::OneOfNotValid { context }
+        | Kind::OneOfMultipleValid { context } => {
+            let branches: Vec<Vec<Value>> = context
+                .iter()
+                .map(|branch| branch.iter().map(reported_failure).collect())
+                .collect();
+            json!({ "keyword": error.kind().keyword(), "branches": branches })
+        }
+        Kind::PropertyNames { error: name } => {
+            json!({ "keyword": "propertyNames", "name": reported_failure(name) })
+        }
+        other => json!(format!("{other:?}")),
+    };
+    json!({
+        "instance_path": error.instance_path().as_str(),
+        "instance": error.instance().as_ref(),
+        "kind": kind,
+    })
 }
 
 /// `value`, read in `context`, with every local `$ref` in a schema position
