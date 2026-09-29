@@ -1,17 +1,13 @@
 use std::fmt::Write as _;
 use std::path::PathBuf;
 
+use helm_schema_syntax::YAML_1_1_BOOLEANS;
 use vfs::VfsPath;
 use yaml_rust::parser::{Event, MarkedEventReceiver, Parser};
 use yaml_rust::scanner::{Marker, TScalarStyle, TokenType};
 
 use super::ChartContext;
 use crate::error::{CliError, EngineResult};
-
-const LEGACY_BOOLEAN_ALIASES: &[&str] = &[
-    "y", "Y", "yes", "Yes", "YES", "n", "N", "no", "No", "NO", "on", "On", "ON", "off", "Off",
-    "OFF",
-];
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 struct AliasKey {
@@ -56,7 +52,7 @@ impl MarkedEventReceiver for AliasCollector<'_> {
                 if self.mapping_expects_key()
                     && style == TScalarStyle::Plain
                     && !is_explicit_string_tag(tag.as_ref())
-                    && LEGACY_BOOLEAN_ALIASES.contains(&spelling.as_str())
+                    && YAML_1_1_BOOLEANS.contains(&spelling.as_str())
                 {
                     self.keys.push(AliasKey {
                         path: self.path.to_string(),

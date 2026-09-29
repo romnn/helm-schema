@@ -14,6 +14,12 @@
 
 use crate::Span;
 use crate::rendered::{HoleShape, LayoutUncertainty, RenderedArm, RenderedBody, RenderedPiece};
+use crate::yaml_dialect::{DialectDivergence, plain_scalar_divergence};
+
+/// Upper bound on one arm's skeleton, in bytes. It is well above the largest
+/// template of the chart corpus (a 1.4 MB CRD); a larger skeleton is
+/// [`LayoutUncertainty::Overflow`] and is never parsed.
+pub const MAX_SKELETON_BYTES: usize = 4 << 20;
 
 thread_local! {
     /// A `Parser` is far more expensive to build than to reuse.
@@ -68,13 +74,27 @@ pub enum ArmLayout {
 /// The YAML nodes of an arm's skeleton and the pieces each one owns.
 #[derive(Clone, Debug, PartialEq)]
 pub struct YamlOwnership {
+    /// The skeleton the node spans index.
+    pub skeleton: Skeleton,
     /// Structural nodes in document order; parents precede children.
     pub nodes: Vec<YamlNode>,
     /// The block scalars among `nodes`, with their decoded headers.
     pub blocks: Vec<BlockScalarOwnership>,
-    /// The documents' values from the literal decoder, when the arm renders
-    /// literal text only (never from placeholder text).
-    pub decoded: Option<Vec<serde_yaml::Value>>,
+    /// The documents' values as Helm decodes them, or why they are withheld.
+    pub decoded: Result<Vec<serde_json::Value>, Undecoded>,
+}
+
+/// Why an arm's decoded values are withheld while its structure is known.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum Undecoded {
+    /// The arm renders hole output, whose text is not known.
+    Placeholders,
+    /// A plain scalar Helm's YAML 1.1 reading decodes differently.
+    Dialect(DialectDivergence),
+    /// A collection as a mapping key.
+    CollectionKey,
+    /// The literal decoder refuses the text.
+    Refused,
 }
 
 /// One structural YAML node.
@@ -84,6 +104,8 @@ pub struct YamlNode {
     pub parent: Option<usize>,
     /// What the node is.
     pub kind: YamlNodeKind,
+    /// The node is the key of its mapping entry.
+    pub key: bool,
     /// The node's bytes in the skeleton.
     pub span: Span,
     /// The arm-local piece indices `[first, last]` whose bytes the node
@@ -116,6 +138,15 @@ pub enum YamlNodeKind {
     BlockScalar,
     /// A `#` comment.
     Comment,
+}
+
+impl YamlNodeKind {
+    fn is_collection(self) -> bool {
+        matches!(
+            self,
+            Self::Mapping | Self::Sequence | Self::FlowMapping | Self::FlowSequence
+        )
+    }
 }
 
 /// The style of a flow scalar.
@@ -160,19 +191,41 @@ pub enum Chomping {
     Keep,
 }
 
-/// The skeleton of `arm` and the layout it proves. A hole becomes a
-/// placeholder only when its shape proves it stays inside one scalar token;
-/// any other hole makes the arm uncertain.
+/// The layout `arm` proves. A hole becomes a placeholder only when its
+/// shape proves it stays inside one scalar token; any other hole makes the
+/// arm uncertain.
 #[must_use]
-pub fn arm_layout(body: &RenderedBody, arm: &RenderedArm, source: &str) -> (Skeleton, ArmLayout) {
-    let skeleton = build_skeleton(body, arm, source, false);
+pub fn arm_layout(body: &RenderedBody<'_>, arm: &RenderedArm) -> ArmLayout {
+    match layout(body, arm) {
+        Ok(owned) => ArmLayout::Known(owned),
+        Err(uncertainty) => ArmLayout::Uncertain(uncertainty),
+    }
+}
+
+/// The skeleton of `arm`: literals verbatim and a placeholder token `h<i>`
+/// for the arm's `i`-th piece when it is a hole.
+///
+/// # Errors
+///
+/// [`LayoutUncertainty::Provenance`] when a piece does not resolve in the
+/// body's source, and [`LayoutUncertainty::Overflow`] beyond
+/// [`MAX_SKELETON_BYTES`].
+pub fn arm_skeleton(
+    body: &RenderedBody<'_>,
+    arm: &RenderedArm,
+) -> Result<Skeleton, LayoutUncertainty> {
+    build_skeleton(body, arm, false)
+}
+
+fn layout(body: &RenderedBody<'_>, arm: &RenderedArm) -> Result<YamlOwnership, LayoutUncertainty> {
+    let skeleton = build_skeleton(body, arm, false)?;
     let mut may_be_empty = false;
     for piece in &arm.pieces {
         match body.pieces.get(piece.0) {
             Some(RenderedPiece::Hole {
                 shape: HoleShape::Unknown,
                 ..
-            }) => return (skeleton, ArmLayout::Uncertain(LayoutUncertainty::RawHole)),
+            }) => return Err(LayoutUncertainty::RawHole),
             Some(RenderedPiece::Hole {
                 shape: HoleShape::ScalarText { nonempty: false },
                 ..
@@ -180,37 +233,41 @@ pub fn arm_layout(body: &RenderedBody, arm: &RenderedArm, source: &str) -> (Skel
             _ => {}
         }
     }
-    let layout = match ownership(&skeleton) {
-        Err(uncertainty) => ArmLayout::Uncertain(uncertainty),
-        // An empty output is a permitted substitution too: it must leave the
-        // same structure (a placeholder-only scalar may vanish with it).
-        Ok(owned) if may_be_empty => {
-            let empty = build_skeleton(body, arm, source, true);
-            match ownership(&empty) {
-                Ok(empty_owned)
-                    if structure(&owned, &skeleton) == structure(&empty_owned, &empty) =>
-                {
-                    ArmLayout::Known(owned)
-                }
-                Ok(_) => ArmLayout::Uncertain(LayoutUncertainty::Substitution),
-                Err(uncertainty) => ArmLayout::Uncertain(uncertainty),
-            }
+    let owned = ownership(skeleton)?;
+    if may_be_empty {
+        // An empty output is a permitted substitution too. It must keep every
+        // node and its place; only a placeholder-only mapping value or block
+        // item may vanish, leaving its entry with a null value.
+        let empty = ownership(build_skeleton(body, arm, true)?)
+            .map_err(|_| LayoutUncertainty::Substitution)?;
+        if structure(&owned) != structure(&empty) {
+            return Err(LayoutUncertainty::Substitution);
         }
-        Ok(owned) => ArmLayout::Known(owned),
-    };
-    (skeleton, layout)
+    }
+    Ok(owned)
 }
 
 /// Concatenate the arm's pieces: literals verbatim, holes as a placeholder
 /// token (or nothing, for the empty substitution).
-fn build_skeleton(body: &RenderedBody, arm: &RenderedArm, source: &str, empty: bool) -> Skeleton {
+fn build_skeleton(
+    body: &RenderedBody<'_>,
+    arm: &RenderedArm,
+    empty: bool,
+) -> Result<Skeleton, LayoutUncertainty> {
     let mut text = String::new();
     let mut segments = Vec::new();
     for (index, piece) in arm.pieces.iter().enumerate() {
         let start = text.len();
         let placeholder = match body.pieces.get(piece.0) {
             Some(RenderedPiece::Text { span, .. }) => {
-                text.push_str(source.get(span.start..span.end).unwrap_or_default());
+                let literal = body
+                    .source
+                    .get(span.start..span.end)
+                    .ok_or(LayoutUncertainty::Provenance)?;
+                if start + literal.len() > MAX_SKELETON_BYTES {
+                    return Err(LayoutUncertainty::Overflow);
+                }
+                text.push_str(literal);
                 false
             }
             Some(RenderedPiece::Hole { .. }) => {
@@ -220,7 +277,7 @@ fn build_skeleton(body: &RenderedBody, arm: &RenderedArm, source: &str, empty: b
                 }
                 true
             }
-            None => false,
+            None => return Err(LayoutUncertainty::Provenance),
         };
         segments.push(SkeletonSegment {
             range: Span::new(start, text.len()),
@@ -228,33 +285,45 @@ fn build_skeleton(body: &RenderedBody, arm: &RenderedArm, source: &str, empty: b
             placeholder,
         });
     }
-    Skeleton { text, segments }
+    if text.len() > MAX_SKELETON_BYTES {
+        return Err(LayoutUncertainty::Overflow);
+    }
+    Ok(Skeleton { text, segments })
 }
 
 /// Parse the skeleton and map its structural nodes to pieces.
-fn ownership(skeleton: &Skeleton) -> Result<YamlOwnership, LayoutUncertainty> {
+fn ownership(skeleton: Skeleton) -> Result<YamlOwnership, LayoutUncertainty> {
     let tree = parse_yaml(&skeleton.text).ok_or(LayoutUncertainty::Parse)?;
     let root = tree.root_node();
     if root.has_error() {
         return Err(LayoutUncertainty::Parse);
     }
-    let mut owned = YamlOwnership {
-        nodes: Vec::new(),
-        blocks: Vec::new(),
-        decoded: None,
-    };
-    collect_nodes(root, None, skeleton, &mut owned)?;
-    if skeleton.segments.iter().all(|segment| !segment.placeholder) {
-        owned.decoded = decode_documents(&skeleton.text);
+    let mut nodes = Vec::new();
+    let mut blocks = Vec::new();
+    collect_nodes(root, None, false, &skeleton, &mut nodes, &mut blocks)?;
+    if may_form_merge_key(&nodes, &skeleton) {
+        return Err(LayoutUncertainty::MergeKey);
     }
-    Ok(owned)
+    let decoded = if skeleton.segments.iter().any(|segment| segment.placeholder) {
+        Err(Undecoded::Placeholders)
+    } else {
+        decode_documents(&nodes, &skeleton.text)
+    };
+    Ok(YamlOwnership {
+        skeleton,
+        nodes,
+        blocks,
+        decoded,
+    })
 }
 
 fn collect_nodes(
     node: tree_sitter::Node<'_>,
     parent: Option<usize>,
+    key: bool,
     skeleton: &Skeleton,
-    owned: &mut YamlOwnership,
+    nodes: &mut Vec<YamlNode>,
+    blocks: &mut Vec<BlockScalarOwnership>,
 ) -> Result<(), LayoutUncertainty> {
     let kind = match node.kind() {
         "tag" | "alias" => return Err(LayoutUncertainty::TagOrAlias),
@@ -274,18 +343,21 @@ fn collect_nodes(
         _ => None,
     };
     let mut own_parent = parent;
+    // A key reaches only the first structural node below the entry's key.
+    let mut child_key = key;
     if let Some(kind) = kind {
         let span = Span::new(node.start_byte(), node.end_byte());
-        let index = owned.nodes.len();
-        owned.nodes.push(YamlNode {
+        let index = nodes.len();
+        nodes.push(YamlNode {
             parent,
             kind,
+            key,
             span,
             pieces: covered_pieces(skeleton, span),
         });
         if kind == YamlNodeKind::BlockScalar {
             let text = skeleton.text.get(span.start..span.end).unwrap_or_default();
-            owned.blocks.push(BlockScalarOwnership {
+            blocks.push(BlockScalarOwnership {
                 node: index,
                 header: block_header(text).ok_or(LayoutUncertainty::Parse)?,
             });
@@ -295,14 +367,26 @@ fn collect_nodes(
             return Ok(());
         }
         own_parent = Some(index);
+        child_key = false;
     }
+    let entry_key = node.child_by_field_name("key");
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
-        collect_nodes(child, own_parent, skeleton, owned)?;
+        // The key of a mapping entry, or a bare flow-mapping entry (`{a}`),
+        // which is a key with a null value.
+        let is_key = entry_key.is_some_and(|entry| entry.id() == child.id())
+            || (node.kind() == "flow_mapping" && child.kind() == "flow_node");
+        collect_nodes(
+            child,
+            own_parent,
+            child_key || is_key,
+            skeleton,
+            nodes,
+            blocks,
+        )?;
     }
     Ok(())
 }
-
 /// The first and last arm-local pieces whose bytes intersect `span`.
 fn covered_pieces(skeleton: &Skeleton, span: Span) -> Option<(usize, usize)> {
     let mut covered = skeleton
@@ -347,42 +431,111 @@ fn block_header(text: &str) -> Option<BlockHeader> {
     })
 }
 
-/// Every document of a literal-only skeleton, from the literal decoder.
-fn decode_documents(text: &str) -> Option<Vec<serde_yaml::Value>> {
+/// Every document of a literal-only skeleton as Helm decodes it, or why
+/// that is withheld: the literal decoder reads YAML 1.2 and agrees with
+/// Helm only where no plain scalar diverges.
+fn decode_documents(nodes: &[YamlNode], text: &str) -> Result<Vec<serde_json::Value>, Undecoded> {
     use serde::Deserialize as _;
+    for (index, node) in nodes.iter().enumerate() {
+        match node.kind {
+            YamlNodeKind::Scalar(ScalarStyle::Plain) => {
+                let spelling = text.get(node.span.start..node.span.end).unwrap_or_default();
+                if let Some(divergence) = plain_scalar_divergence(spelling, node.key) {
+                    return Err(Undecoded::Dialect(divergence));
+                }
+            }
+            YamlNodeKind::Pair | YamlNodeKind::FlowPair
+                if !nodes
+                    .iter()
+                    .any(|child| child.parent == Some(index) && child.key) =>
+            {
+                return Err(Undecoded::Dialect(DialectDivergence::NonStringKey));
+            }
+            kind if node.key && kind.is_collection() => return Err(Undecoded::CollectionKey),
+            _ => {}
+        }
+    }
     serde_yaml::Deserializer::from_str(text)
-        .map(serde_yaml::Value::deserialize)
+        .map(serde_json::Value::deserialize)
         .collect::<Result<Vec<_>, _>>()
-        .ok()
+        .map_err(|_| Undecoded::Refused)
 }
 
-/// The structure a substitution must preserve: every node's kind and parent
-/// kind, except a scalar made only of placeholder bytes (an empty output may
-/// remove it without moving anything else).
-fn structure(
-    owned: &YamlOwnership,
-    skeleton: &Skeleton,
-) -> Vec<(YamlNodeKind, Option<YamlNodeKind>)> {
-    let placeholder_only = |node: &YamlNode| {
+/// Whether a plain mapping key is, or a hole output can make it, the merge
+/// key `<<` over a collection. Helm then merges the collection's entries
+/// into the enclosing mapping; over a scalar or null it refuses the
+/// document, so such a key cannot change a rendered layout.
+fn may_form_merge_key(nodes: &[YamlNode], skeleton: &Skeleton) -> bool {
+    nodes.iter().any(|key| {
+        key.key
+            && key.kind == YamlNodeKind::Scalar(ScalarStyle::Plain)
+            && can_spell_merge_key(skeleton, key.span)
+            && nodes
+                .iter()
+                .any(|value| value.parent == key.parent && !value.key && value.kind.is_collection())
+    })
+}
+
+/// Whether the key at `span` is `<<`, or can become it when its holes
+/// render: its literal bytes are at most two `<` and nothing else.
+fn can_spell_merge_key(skeleton: &Skeleton, span: Span) -> bool {
+    let mut literal = String::new();
+    for segment in &skeleton.segments {
+        let start = segment.range.start.max(span.start);
+        let end = segment.range.end.min(span.end);
+        if start < end && !segment.placeholder {
+            literal.push_str(skeleton.text.get(start..end).unwrap_or_default());
+        }
+    }
+    literal.len() <= 2
+        && literal.chars().all(|c| c == '<')
+        && (literal == "<<"
+            || skeleton.segments.iter().any(|segment| {
+                segment.placeholder
+                    && segment.range.start < span.end
+                    && span.start <= segment.range.start
+            }))
+}
+
+/// The structure a substitution must preserve: every node's kind, key role
+/// and parent, except a placeholder-only scalar that is a mapping value or
+/// a block sequence item (an empty output leaves its entry with a null
+/// value). A flow sequence element or a key made of placeholder bytes only
+/// is kept, so its disappearance changes the structure.
+fn structure(owned: &YamlOwnership) -> Vec<(YamlNodeKind, bool, Option<usize>)> {
+    let skeleton = &owned.skeleton;
+    let may_vanish = |node: &YamlNode| {
+        let parent = node
+            .parent
+            .and_then(|parent| owned.nodes.get(parent))
+            .map(|parent| parent.kind);
         matches!(node.kind, YamlNodeKind::Scalar(_))
+            && !node.key
+            && matches!(
+                parent,
+                Some(YamlNodeKind::Pair | YamlNodeKind::FlowPair | YamlNodeKind::Item)
+            )
             && skeleton.segments.iter().all(|segment| {
                 segment.placeholder
                     || segment.range.end <= node.span.start
                     || node.span.end <= segment.range.start
             })
     };
-    owned
-        .nodes
-        .iter()
-        .filter(|node| !placeholder_only(node))
-        .map(|node| {
-            let parent = node
-                .parent
-                .and_then(|parent| owned.nodes.get(parent))
-                .map(|parent| parent.kind);
-            (node.kind, parent)
-        })
-        .collect()
+    // Kept nodes renumbered, so a vanished leaf shifts no parent reference.
+    let mut kept_index = Vec::with_capacity(owned.nodes.len());
+    let mut kept = Vec::new();
+    for node in &owned.nodes {
+        if may_vanish(node) {
+            kept_index.push(None);
+            continue;
+        }
+        kept_index.push(Some(kept.len()));
+        let parent = node
+            .parent
+            .and_then(|parent| kept_index.get(parent).copied().flatten());
+        kept.push((node.kind, node.key, parent));
+    }
+    kept
 }
 
 #[cfg(test)]

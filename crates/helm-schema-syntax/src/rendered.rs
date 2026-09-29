@@ -65,8 +65,8 @@ impl HoleShapes for UnknownShapes {
 /// its action and no source text.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub enum RenderedPiece {
-    /// Template literal text after delimiter trims; `span` indexes the source
-    /// of the body that holds it.
+    /// Template literal text after delimiter trims; `span` indexes
+    /// [`RenderedBody::source`].
     Text {
         /// The trimmed literal's byte range.
         span: Span,
@@ -122,6 +122,10 @@ pub enum LayoutUncertainty {
     Substitution,
     /// A tag or alias whose interpretation the parse does not resolve.
     TagOrAlias,
+    /// A substitution can form the merge key `<<` over a collection.
+    MergeKey,
+    /// A piece does not resolve in the body's source.
+    Provenance,
 }
 
 /// A body's rendered alternatives.
@@ -135,7 +139,9 @@ pub enum BodyLayout {
 
 /// The rendered pieces of a template body and its arms.
 #[derive(Clone, Debug, PartialEq, Eq)]
-pub struct RenderedBody {
+pub struct RenderedBody<'src> {
+    /// The source every [`RenderedPiece::Text`] span indexes.
+    pub source: &'src str,
     /// Every literal and action of the body, indexed once in source order.
     pub pieces: Vec<RenderedPiece>,
     /// The body's arms over those pieces.
@@ -144,11 +150,11 @@ pub struct RenderedBody {
 
 /// Render the top-level body of `document`, whose Go-template tree is `root`.
 #[must_use]
-pub fn render_body(
-    document: &TemplatedDocument<'_>,
+pub fn render_body<'src>(
+    document: &TemplatedDocument<'src>,
     root: tree_sitter::Node<'_>,
     shapes: &dyn HoleShapes,
-) -> RenderedBody {
+) -> RenderedBody<'src> {
     let builder = Builder::new(document.source(), document.actions(), root, shapes);
     let mut next = 0;
     let layout = match builder.body(&mut next) {
@@ -157,6 +163,7 @@ pub fn render_body(
         Err(uncertainty) => BodyLayout::Uncertain(uncertainty),
     };
     RenderedBody {
+        source: document.source(),
         pieces: builder.pieces,
         layout,
     }
@@ -172,7 +179,7 @@ struct Builder<'a, 'tree> {
     /// The piece of the literal before token `i` (index `tokens.len()` is the
     /// trailing literal); `None` when the trimmed literal is empty.
     gaps: Vec<Option<PieceId>>,
-    /// The hole piece of each output token.
+    /// The hole piece of each output token and `block` call.
     holes: Vec<Option<PieceId>>,
 }
 
@@ -199,7 +206,15 @@ impl<'a, 'tree> Builder<'a, 'tree> {
                 token.trim_left,
                 &mut pieces,
             ));
-            holes.push(matches!(token.kind, ActionKind::Output { .. }).then(|| {
+            let renders = matches!(
+                token.kind,
+                ActionKind::Output { .. }
+                    | ActionKind::RegionOpen {
+                        kind: ControlKind::Block,
+                        ..
+                    }
+            );
+            holes.push(renders.then(|| {
                 let action = ActionId(index);
                 pieces.push(RenderedPiece::Hole {
                     action,
@@ -278,22 +293,24 @@ impl<'a, 'tree> Builder<'a, 'tree> {
         next: &mut usize,
     ) -> Result<Alternatives, LayoutUncertainty> {
         match kind {
-            // A definition renders nothing where it is written.
-            ControlKind::Define => {
-                while self
-                    .tokens
-                    .get(*next)
-                    .is_some_and(|token| token.span.start < region_end)
-                {
-                    *next += 1;
-                }
+            // A definition renders nothing where it is written. `block` also
+            // calls the template it defines, and another definition of the
+            // name can win, so the call's output is the opener's hole until
+            // named-template resolution proves the target.
+            ControlKind::Define | ControlKind::Block => {
+                let call = next
+                    .checked_sub(1)
+                    .and_then(|opener| self.holes.get(opener))
+                    .copied()
+                    .flatten();
+                self.skip_definition(region_end, next);
                 return Ok(vec![RenderedArm {
                     paths: vec![Vec::new()],
-                    pieces: Vec::new(),
+                    pieces: call.into_iter().collect(),
                 }]);
             }
             ControlKind::Range => return Err(LayoutUncertainty::Range),
-            ControlKind::If | ControlKind::With | ControlKind::Block => {}
+            ControlKind::If | ControlKind::With => {}
         }
         let mut branches = Vec::new();
         let mut bare_else = false;
@@ -308,13 +325,6 @@ impl<'a, 'tree> Builder<'a, 'tree> {
                 ActionKind::RegionEnd { region: owner } if owner == region => break,
                 _ => return Err(LayoutUncertainty::Recovery),
             }
-        }
-        if kind == ControlKind::Block {
-            // `block` is `define` plus an immediate call: its body renders.
-            return match <[Alternatives; 1]>::try_from(branches) {
-                Ok([body]) => Ok(body),
-                Err(_) => Err(LayoutUncertainty::Recovery),
-            };
         }
         if !bare_else {
             branches.push(vec![RenderedArm {
@@ -349,6 +359,18 @@ impl<'a, 'tree> Builder<'a, 'tree> {
         }
         check_bound(&alternatives)?;
         Ok(alternatives)
+    }
+
+    /// Move `next` past the definition tokens that start before byte
+    /// `region_end`.
+    fn skip_definition(&self, region_end: usize, next: &mut usize) {
+        while self
+            .tokens
+            .get(*next)
+            .is_some_and(|token| token.span.start < region_end)
+        {
+            *next += 1;
+        }
     }
 
     /// Whether the branch boundary at `span` carries a condition

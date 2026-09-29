@@ -9,7 +9,7 @@ use crate::{
     UnknownShapes, parse_go_template, render_body,
 };
 
-pub(super) fn render(source: &str, shapes: &dyn HoleShapes) -> eyre::Result<RenderedBody> {
+fn render<'src>(source: &'src str, shapes: &dyn HoleShapes) -> eyre::Result<RenderedBody<'src>> {
     let tree = parse_go_template(source).ok_or_eyre("go-template parse")?;
     let document = TemplatedDocument::parse_with_root(source, tree.root_node());
     Ok(render_body(&document, tree.root_node(), shapes))
@@ -17,12 +17,12 @@ pub(super) fn render(source: &str, shapes: &dyn HoleShapes) -> eyre::Result<Rend
 
 /// The body's pieces and arms, one per line: `p<i> text "…"` / `p<i> hole
 /// a<action> <shape>`, then each arm's pieces and choice paths.
-pub(super) fn dump_body(body: &RenderedBody, source: &str) -> String {
+fn dump_body(body: &RenderedBody<'_>) -> String {
     let mut out = String::new();
     for (index, piece) in body.pieces.iter().enumerate() {
         match piece {
             RenderedPiece::Text { span, .. } => {
-                let text = source.get(span.start..span.end).unwrap_or_default();
+                let text = body.source.get(span.start..span.end).unwrap_or_default();
                 let _ = writeln!(out, "p{index} text {text:?}");
             }
             RenderedPiece::Hole { action, shape, .. } => {
@@ -61,7 +61,7 @@ pub(super) fn dump_body(body: &RenderedBody, source: &str) -> String {
 }
 
 fn dump(source: &str) -> eyre::Result<String> {
-    Ok(dump_body(&render(source, &UnknownShapes)?, source))
+    Ok(dump_body(&render(source, &UnknownShapes)?))
 }
 
 /// An `if` / `else if` / `else` chain: one arm per branch, each with its own
@@ -94,7 +94,8 @@ fn if_chain_renders_one_arm_per_branch_with_trimmed_literals() -> eyre::Result<(
 }
 
 /// `if`/`with` without a bare `else` also render nothing; `define` renders
-/// nothing where it is written and `block` renders its body.
+/// nothing where it is written, and `block` renders the output of its call
+/// (a hole), never its written body.
 #[test]
 fn optional_regions_define_and_block_render_structurally() -> eyre::Result<()> {
     let source = indoc! {r#"
@@ -111,12 +112,13 @@ fn optional_regions_define_and_block_render_structurally() -> eyre::Result<()> {
         p4 text "b: "
         p5 hole a5 Unknown
         p6 text "\n"
-        p7 text "c: 3"
-        p8 text "\n"
-        arm [p1 p2 p3 p4 p5 p6 p7 p8] paths {r1=0 r2=0}
-        arm [p1 p2 p3 p6 p7 p8] paths {r1=0 r2=1}
-        arm [p1 p3 p4 p5 p6 p7 p8] paths {r1=1 r2=0}
-        arm [p1 p3 p6 p7 p8] paths {r1=1 r2=1}
+        p7 hole a7 Unknown
+        p8 text "c: 3"
+        p9 text "\n"
+        arm [p1 p2 p3 p4 p5 p6 p7 p9] paths {r1=0 r2=0}
+        arm [p1 p2 p3 p6 p7 p9] paths {r1=0 r2=1}
+        arm [p1 p3 p4 p5 p6 p7 p9] paths {r1=1 r2=0}
+        arm [p1 p3 p6 p7 p9] paths {r1=1 r2=1}
     "#});
     Ok(())
 }
@@ -143,11 +145,11 @@ fn range_and_recovery_bodies_are_uncertain() -> eyre::Result<()> {
     sim_assert_eq!(
         have: dump("{{ range .Values.l }}- {{ . }}\n{{ end }}")?,
         want: indoc! {r#"
-        p0 text "- "
-        p1 hole a1 Unknown
-        p2 text "\n"
-        uncertain Range
-    "#}
+            p0 text "- "
+            p1 hole a1 Unknown
+            p2 text "\n"
+            uncertain Range
+        "#}
     );
     sim_assert_eq!(have: dump("a: {{ .Values.x \nb: 1\n")?, want: indoc! {r#"
         p0 text "a: "
@@ -175,13 +177,15 @@ fn chain(branches: usize) -> String {
 /// loss of certainty for the whole body, never a truncated arm list.
 #[test]
 fn layout_states_widen_to_uncertain_past_the_bound() -> eyre::Result<()> {
-    let at_bound = render(&chain(MAX_LAYOUT_STATES), &UnknownShapes)?;
+    let at_bound_source = chain(MAX_LAYOUT_STATES);
+    let at_bound = render(&at_bound_source, &UnknownShapes)?;
     let BodyLayout::Arms(arms) = &at_bound.layout else {
         eyre::bail!("{MAX_LAYOUT_STATES} branches must stay enumerable");
     };
     sim_assert_eq!(have: arms.len(), want: MAX_LAYOUT_STATES);
 
-    let past_bound = render(&chain(MAX_LAYOUT_STATES + 1), &UnknownShapes)?;
+    let past_bound_source = chain(MAX_LAYOUT_STATES + 1);
+    let past_bound = render(&past_bound_source, &UnknownShapes)?;
     sim_assert_eq!(
         have: past_bound.layout,
         want: BodyLayout::Uncertain(crate::LayoutUncertainty::Overflow)

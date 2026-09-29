@@ -46,6 +46,7 @@ mod literal;
 mod parse;
 mod rendered;
 mod yaml;
+mod yaml_dialect;
 mod yaml_scan;
 
 pub use actions::{ActionId, ActionKind, TemplateAction, parse_go_template};
@@ -59,7 +60,9 @@ pub use rendered::{
     Occurrence, PieceId, RenderedArm, RenderedBody, RenderedPiece, UnknownShapes, render_body,
 };
 pub use yaml::{
-    ArmLayout, BlockHeader, BlockScalarOwnership, Chomping, ScalarStyle, Skeleton, SkeletonSegment,
-    YamlNode, YamlNodeKind, YamlOwnership, arm_layout, parse_yaml,
+    ArmLayout, BlockHeader, BlockScalarOwnership, Chomping, MAX_SKELETON_BYTES, ScalarStyle,
+    Skeleton, SkeletonSegment, Undecoded, YamlNode, YamlNodeKind, YamlOwnership, arm_layout,
+    arm_skeleton, parse_yaml,
 };
+pub use yaml_dialect::{DialectDivergence, YAML_1_1_BOOLEANS, plain_scalar_divergence};
 pub use yaml_scan::{parse_yaml_key, structural_mapping_colon, unquote_yaml_scalar};
