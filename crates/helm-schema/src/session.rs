@@ -1,4 +1,4 @@
-use std::collections::{BTreeMap, BTreeSet};
+use std::collections::{BTreeMap, BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
@@ -143,66 +143,117 @@ pub struct AnalysisSession {
     resolved_contract: SessionCache<ResolvedContract>,
     generated_schema: SessionCache<GeneratedSchema>,
     resolved_emission_policy: SessionCache<helm_schema_gen::ResolvedEmissionPolicy>,
+    initializing: InitializingPhases,
+}
+
+/// A session phase, ordered so that initializing a phase only ever queries
+/// phases below it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub(crate) enum SessionPhase {
+    EmissionPolicy,
+    Prepared,
+    FinalizedContract,
+    ResolvedContract,
+    GeneratedSchema,
+}
+
+impl SessionPhase {
+    const fn name(self) -> &'static str {
+        match self {
+            Self::EmissionPolicy => "emission policy",
+            Self::Prepared => "prepared",
+            Self::FinalizedContract => "finalized contract",
+            Self::ResolvedContract => "resolved contract",
+            Self::GeneratedSchema => "generated schema",
+        }
+    }
+}
+
+/// The phases each thread of one session is initializing, innermost last.
+///
+/// A thread may only query phases below the one it is initializing. Every
+/// thread therefore takes the cache locks in descending phase order, and a
+/// query that would break the order (a callback from inside initialization
+/// reaching back up) fails before it blocks.
+#[derive(Default)]
+pub(crate) struct InitializingPhases(Mutex<HashMap<std::thread::ThreadId, Vec<SessionPhase>>>);
+
+impl InitializingPhases {
+    fn check(&self, requested: SessionPhase) -> EngineResult<()> {
+        let initializing = lock(&self.0)
+            .get(&std::thread::current().id())
+            .and_then(|phases| phases.last().copied());
+        match initializing {
+            Some(initializing) if requested >= initializing => {
+                Err(CliError::ReentrantSessionQuery {
+                    requested: requested.name(),
+                    initializing: initializing.name(),
+                })
+            }
+            _ => Ok(()),
+        }
+    }
+
+    fn enter(&self, phase: SessionPhase) -> InitializingPhase<'_> {
+        lock(&self.0)
+            .entry(std::thread::current().id())
+            .or_default()
+            .push(phase);
+        InitializingPhase(self)
+    }
+}
+
+/// Marks one phase as initializing on the current thread until its
+/// initialization returns or unwinds.
+struct InitializingPhase<'a>(&'a InitializingPhases);
+
+impl Drop for InitializingPhase<'_> {
+    fn drop(&mut self) {
+        let mut phases = lock(&self.0.0);
+        let thread = std::thread::current().id();
+        if let Some(stack) = phases.get_mut(&thread) {
+            stack.pop();
+            if stack.is_empty() {
+                phases.remove(&thread);
+            }
+        }
+    }
 }
 
 /// A single-flight memo: concurrent first callers wait for one computation.
 ///
-/// The lock is held while `init` runs. Initializers only query caches of
-/// earlier phases, so the locks are always taken in one phase order. A query
-/// that re-enters the phase it is initializing on the same thread (from code
-/// the initializer calls back into) fails with
-/// [`CliError::ReentrantSessionQuery`] instead of waiting on itself.
+/// The lock is held while `init` runs; [`InitializingPhases`] keeps every
+/// thread's lock acquisitions in descending phase order.
 pub(crate) struct SessionCache<T> {
-    phase: &'static str,
+    phase: SessionPhase,
     value: Mutex<Option<Arc<T>>>,
-    initializing_thread: Mutex<Option<std::thread::ThreadId>>,
 }
 
 impl<T> SessionCache<T> {
-    pub(crate) fn new(phase: &'static str) -> Self {
+    pub(crate) fn new(phase: SessionPhase) -> Self {
         Self {
             phase,
             value: Mutex::new(None),
-            initializing_thread: Mutex::new(None),
         }
     }
 
     pub(crate) fn get_or_try_init(
         &self,
+        initializing: &InitializingPhases,
         init: impl FnOnce() -> EngineResult<T>,
     ) -> EngineResult<Arc<T>> {
-        let current_thread = std::thread::current().id();
-        if *lock(&self.initializing_thread) == Some(current_thread) {
-            return Err(CliError::ReentrantSessionQuery { phase: self.phase });
-        }
+        initializing.check(self.phase)?;
         let mut guard = lock(&self.value);
         if let Some(value) = guard.as_ref() {
             return Ok(Arc::clone(value));
         }
         let value = {
-            let _initializing = InitializingThread::mark(&self.initializing_thread, current_thread);
+            let _initializing = initializing.enter(self.phase);
             init()?
         };
         let value = Arc::new(value);
         *guard = Some(Arc::clone(&value));
         Ok(value)
-    }
-}
-
-/// Marks the thread initializing a cache until initialization returns or
-/// unwinds.
-struct InitializingThread<'a>(&'a Mutex<Option<std::thread::ThreadId>>);
-
-impl<'a> InitializingThread<'a> {
-    fn mark(slot: &'a Mutex<Option<std::thread::ThreadId>>, thread: std::thread::ThreadId) -> Self {
-        *lock(slot) = Some(thread);
-        Self(slot)
-    }
-}
-
-impl Drop for InitializingThread<'_> {
-    fn drop(&mut self) {
-        *lock(self.0) = None;
     }
 }
 
@@ -225,11 +276,12 @@ impl AnalysisSession {
         Self {
             opts,
             diagnostics,
-            prepared: SessionCache::new("prepared"),
-            finalized_contract: SessionCache::new("finalized contract"),
-            resolved_contract: SessionCache::new("resolved contract"),
-            generated_schema: SessionCache::new("generated schema"),
-            resolved_emission_policy: SessionCache::new("emission policy"),
+            prepared: SessionCache::new(SessionPhase::Prepared),
+            finalized_contract: SessionCache::new(SessionPhase::FinalizedContract),
+            resolved_contract: SessionCache::new(SessionPhase::ResolvedContract),
+            generated_schema: SessionCache::new(SessionPhase::GeneratedSchema),
+            resolved_emission_policy: SessionCache::new(SessionPhase::EmissionPolicy),
+            initializing: InitializingPhases::default(),
         }
     }
 
@@ -284,24 +336,26 @@ impl AnalysisSession {
     ///
     /// Returns an error when resolving the contract or preparing chart values fails.
     pub fn generated_schema(&self) -> EngineResult<GeneratedSchema> {
-        Ok((*self.generated_schema.get_or_try_init(|| {
-            let resolved = self.resolved()?;
-            let mut schema = resolved.schema.clone();
-            if self.opts.infer_required {
-                helm_schema_gen::required_inference::apply_required_inference(
-                    &mut schema,
-                    self.finalized_contract()?
-                        .schema_signals()
-                        .schema_evidence_by_value_path(),
-                    &self.prepared()?.explicit_value_paths,
-                );
-            }
-            Ok(GeneratedSchema {
-                schema,
-                emission_report: resolved.emission_report.clone(),
-                definition_origins: resolved.definition_origins.clone(),
-            })
-        })?)
+        Ok((*self
+            .generated_schema
+            .get_or_try_init(&self.initializing, || {
+                let resolved = self.resolved()?;
+                let mut schema = resolved.schema.clone();
+                if self.opts.infer_required {
+                    helm_schema_gen::required_inference::apply_required_inference(
+                        &mut schema,
+                        self.finalized_contract()?
+                            .schema_signals()
+                            .schema_evidence_by_value_path(),
+                        &self.prepared()?.explicit_value_paths,
+                    );
+                }
+                Ok(GeneratedSchema {
+                    schema,
+                    emission_report: resolved.emission_report.clone(),
+                    definition_origins: resolved.definition_origins.clone(),
+                })
+            })?)
         .clone())
     }
 
@@ -436,8 +490,9 @@ impl AnalysisSession {
     }
 
     fn prepared(&self) -> EngineResult<Arc<PreparedSession>> {
-        self.prepared
-            .get_or_try_init(|| PreparedSession::from_generate_options(&self.opts))
+        self.prepared.get_or_try_init(&self.initializing, || {
+            PreparedSession::from_generate_options(&self.opts)
+        })
     }
 
     fn chart_base_dir(&self) -> &Path {
@@ -445,44 +500,46 @@ impl AnalysisSession {
     }
 
     fn finalized_contract(&self) -> EngineResult<Arc<FinalizedContract>> {
-        self.finalized_contract.get_or_try_init(|| {
-            let prepared = self.prepared()?;
-            let finalized = prepared.analysis.contract.clone().finalize();
-            emit_input_channel_diagnostics(finalized.schema_signals(), &self.diagnostics);
-            Ok(finalized)
-        })
+        self.finalized_contract
+            .get_or_try_init(&self.initializing, || {
+                let prepared = self.prepared()?;
+                let finalized = prepared.analysis.contract.clone().finalize();
+                emit_input_channel_diagnostics(finalized.schema_signals(), &self.diagnostics);
+                Ok(finalized)
+            })
     }
 
     fn resolved(&self) -> EngineResult<Arc<ResolvedContract>> {
-        self.resolved_contract.get_or_try_init(|| {
-            let prepared = self.prepared()?;
-            let finalized_contract = self.finalized_contract()?;
-            let mut provider_options = self.opts.provider.clone();
-            provider_options.local_schema_universe = prepared.analysis.local_schemas.clone();
-            let provider =
-                provider_builder::build_provider(&provider_options, Some(&self.diagnostics));
+        self.resolved_contract
+            .get_or_try_init(&self.initializing, || {
+                let prepared = self.prepared()?;
+                let finalized_contract = self.finalized_contract()?;
+                let mut provider_options = self.opts.provider.clone();
+                provider_options.local_schema_universe = prepared.analysis.local_schemas.clone();
+                let provider =
+                    provider_builder::build_provider(&provider_options, Some(&self.diagnostics));
 
-            let generated = generate_values_schema_with_report(
-                ValuesSchemaInput::new(finalized_contract.schema_signals(), &provider)
-                    .with_values_documents(&prepared.values_documents)
-                    .with_shadowed_input_paths(&prepared.shadowed_input_paths)
-                    .with_values_descriptions(&prepared.values_descriptions)
-                    .with_emission_policy(self.resolved_emission_policy()?.policy()),
-            );
+                let generated = generate_values_schema_with_report(
+                    ValuesSchemaInput::new(finalized_contract.schema_signals(), &provider)
+                        .with_values_documents(&prepared.values_documents)
+                        .with_shadowed_input_paths(&prepared.shadowed_input_paths)
+                        .with_values_descriptions(&prepared.values_descriptions)
+                        .with_emission_policy(self.resolved_emission_policy()?.policy()),
+                );
 
-            Ok(ResolvedContract {
-                schema: generated.schema,
-                emission_report: generated.emission_report,
-                definition_origins: generated.definition_origins,
-                generation_decisions: generated.generation_decisions,
+                Ok(ResolvedContract {
+                    schema: generated.schema,
+                    emission_report: generated.emission_report,
+                    definition_origins: generated.definition_origins,
+                    generation_decisions: generated.generation_decisions,
+                })
             })
-        })
     }
 
     fn resolved_emission_policy(&self) -> EngineResult<helm_schema_gen::ResolvedEmissionPolicy> {
         Ok(*self
             .resolved_emission_policy
-            .get_or_try_init(|| Ok(self.opts.emission.resolve()?))?)
+            .get_or_try_init(&self.initializing, || Ok(self.opts.emission.resolve()?))?)
     }
 
     #[cfg(all(feature = "bench-support", test))]

@@ -2,8 +2,10 @@
 
 use std::collections::BTreeSet;
 use std::path::PathBuf;
-use std::sync::Barrier;
 use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::mpsc;
+use std::sync::{Barrier, Mutex};
+use std::time::Duration;
 
 use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use helm_schema::AnalysisSession;
@@ -758,5 +760,108 @@ fn explain_values_json_stdout_is_parseable_for_terminal_and_multiple_paths() -> 
             .and_then(serde_json::Value::as_str),
         want: Some("service.port")
     );
+    Ok(())
+}
+
+/// On the first generation span of its thread, waits until another thread
+/// has entered `generated_schema` (and so waits on the resolved contract this
+/// thread is initializing), then queries `generated_schema` itself.
+struct ReenteringCallback {
+    session: std::sync::Arc<AnalysisSession>,
+    initializing: Mutex<mpsc::Sender<()>>,
+    other_entered: Mutex<mpsc::Receiver<()>>,
+    fired: std::sync::atomic::AtomicBool,
+    outcome: Mutex<Option<Result<(), helm_schema::CliError>>>,
+}
+
+impl tracing::Subscriber for ReenteringCallback {
+    fn enabled(&self, metadata: &tracing::Metadata<'_>) -> bool {
+        metadata.name() == GENERATION_SPAN
+    }
+
+    fn new_span(&self, span: &tracing::span::Attributes<'_>) -> tracing::span::Id {
+        if span.metadata().name() == GENERATION_SPAN && !self.fired.swap(true, Ordering::SeqCst) {
+            let _ = lock(&self.initializing).send(());
+            let entered = lock(&self.other_entered).recv_timeout(Duration::from_secs(30));
+            // The other thread now holds the generated-schema cache and is
+            // about to wait on the resolved contract this thread holds.
+            std::thread::sleep(Duration::from_millis(500));
+            let outcome = entered
+                .map_err(|_| helm_schema::CliError::NoChartsDiscovered)
+                .and_then(|()| self.session.generated_schema().map(|_| ()));
+            *lock(&self.outcome) = Some(outcome);
+        }
+        tracing::span::Id::from_u64(1)
+    }
+
+    fn record(&self, _span: &tracing::span::Id, _values: &tracing::span::Record<'_>) {}
+
+    fn record_follows_from(&self, _span: &tracing::span::Id, _follows: &tracing::span::Id) {}
+
+    fn event(&self, _event: &tracing::Event<'_>) {}
+
+    fn enter(&self, _span: &tracing::span::Id) {}
+
+    fn exit(&self, _span: &tracing::span::Id) {}
+}
+
+fn lock<T>(mutex: &Mutex<T>) -> std::sync::MutexGuard<'_, T> {
+    mutex
+        .lock()
+        .unwrap_or_else(std::sync::PoisonError::into_inner)
+}
+
+#[test]
+fn session_callback_reentry_across_phases_fails_without_deadlock() -> eyre::Result<()> {
+    let session = std::sync::Arc::new(literal_chart_session(false)?);
+    let (initializing_sender, initializing) = mpsc::channel();
+    let (entered, other_entered) = mpsc::channel();
+    let callback = std::sync::Arc::new(ReenteringCallback {
+        session: std::sync::Arc::clone(&session),
+        initializing: Mutex::new(initializing_sender),
+        other_entered: Mutex::new(other_entered),
+        fired: std::sync::atomic::AtomicBool::new(false),
+        outcome: Mutex::new(None),
+    });
+    let dispatch = tracing::Dispatch::new(std::sync::Arc::clone(&callback));
+    let (resolved_sender, resolved) = mpsc::channel();
+    let resolving_session = std::sync::Arc::clone(&session);
+    std::thread::spawn(move || {
+        let outcome = tracing::dispatcher::with_default(&dispatch, || {
+            resolving_session.resolved_contract().map(|_| ())
+        });
+        let _ = resolved_sender.send(outcome.map_err(|error| error.to_string()));
+    });
+    initializing
+        .recv_timeout(Duration::from_secs(60))
+        .wrap_err("resolving thread never entered generation")?;
+    let (generated_sender, generated) = mpsc::channel();
+    let generating_session = std::sync::Arc::clone(&session);
+    std::thread::spawn(move || {
+        let _ = entered.send(());
+        let outcome = generating_session.generated_schema().map(|_| ());
+        let _ = generated_sender.send(outcome.map_err(|error| error.to_string()));
+    });
+
+    let resolved = resolved
+        .recv_timeout(Duration::from_secs(60))
+        .wrap_err("the resolving query deadlocked")?;
+    let generated = generated
+        .recv_timeout(Duration::from_secs(60))
+        .wrap_err("the generating query deadlocked")?;
+    let reentry = lock(&callback.outcome).take();
+
+    assert!(
+        matches!(
+            reentry,
+            Some(Err(helm_schema::CliError::ReentrantSessionQuery {
+                requested: "generated schema",
+                initializing: "resolved contract",
+            }))
+        ),
+        "the callback query must fail before blocking: {reentry:?}"
+    );
+    sim_assert_eq!(have: resolved, want: Ok(()));
+    sim_assert_eq!(have: generated, want: Ok(()));
     Ok(())
 }
