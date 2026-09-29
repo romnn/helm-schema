@@ -2842,26 +2842,22 @@ fn attribute_to_declared_types(
 }
 
 /// Whether the candidate's rejection of the Helm-coalesced `document` is the
-/// `assert` authoring policy's alone. It is when the baseline accepts the
-/// document and the candidate rejects it (a document the baseline rejects
-/// too is never attributed), the candidate is the chart's assert
-/// regeneration, the annotate regeneration accepts the document outright,
-/// and every value the assert regeneration rejects is an object member
-/// explain C1 reports unread (no use of it, its descendants or an ancestor
-/// besides the seeded top-level and dependency-root claims, and no
-/// generation decision). The two regenerations differ only in the
-/// declared-types policy, so when the annotate one accepts, the whole
-/// rejection is the policy's; no failure is compared with another. The
-/// error names the first condition that fails.
+/// `assert` authoring policy's alone. It is when the candidate, which rejects
+/// it, is the chart's assert regeneration, the annotate regeneration accepts
+/// the document outright, and every value the assert regeneration rejects is
+/// an object member explain C1 reports unread (no use of it, its descendants
+/// or an ancestor besides the seeded top-level and dependency-root claims,
+/// and no generation decision). The two regenerations differ only in the
+/// declared-types policy, so when the annotate one accepts, every reason the
+/// candidate rejects for is the policy's, whatever the baseline rejects; no
+/// failure is compared with another. The error names the first condition
+/// that fails.
 fn declared_types_attribution(
     annotation: &DeclaredTypesAnnotation,
     profiles: &ProfileSchemas,
     document: &serde_json::Value,
 ) -> Result<(), String> {
-    let (baseline_accepts, candidate_accepts) = profiles.document_verdicts(document);
-    if !baseline_accepts {
-        return Err("the baseline rejects it too".to_string());
-    }
+    let (_, candidate_accepts) = profiles.document_verdicts(document);
     if candidate_accepts {
         return Err("the candidate accepts it".to_string());
     }
@@ -3861,24 +3857,28 @@ fn adjudicate_transition_tightening(
     Ok(())
 }
 
-/// The nacos `ingress.apiVersion` witness of the declared-types policy.
-/// Helm's define precedence selects nacos' own
+/// The nacos `ingress.apiVersion` witness chart and everything the
+/// adjudication reads for it.
+struct NacosWitness {
+    _scratch: ScratchDir,
+    defaults: serde_json::Value,
+    profiles: ProfileSchemas,
+    annotation: DeclaredTypesAnnotation,
+    chart: PinnedHelmChart,
+    kubernetes: OfflineKubernetesValidator,
+}
+
+/// A scratch copy of nacos in which the key is typed only by its declared
+/// default. Helm's define precedence selects nacos' own
 /// `common.capabilities.ingress.apiVersion`, a literal, so no template reads
-/// the key; the vendored mysql copy of that define is the one Helm discards.
-/// The witness chart deletes exactly that discarded define, which leaves
-/// every Helm render unchanged and lets this tree resolve the winning
-/// helper, so the key is typed `string` only by its declared `""` default,
-/// and every probe renders while the candidate rejects it.
-///
-/// The attribution still declines all eight cells: the baseline, and both
-/// regenerations, reject the chart's own defaults at `service.ports`, so
-/// every document is one the baseline rejects too and the annotate
-/// regeneration never accepts one outright. With no comparison of failures,
-/// nothing separates the policy's rejection from that one; the cells stay
-/// false rejections.
-#[test]
-fn nacos_ingress_api_version_rejection_is_declined_while_its_defaults_are_rejected()
--> eyre::Result<()> {
+/// `ingress.apiVersion`; the vendored mysql copy of that define is the one
+/// Helm discards. The copy deletes exactly that discarded define, which
+/// leaves every Helm render unchanged and lets this tree resolve the winning
+/// helper. With `isolate_ports`, the copy also declares `service.ports` as
+/// `{http: {port: 8080}}` instead of the two ports with `protocol: TCP`,
+/// which every schema here rejects (a defect unrelated to the policy); Helm
+/// renders every probe either way (rework7/helm-nacos.log).
+fn nacos_witness(isolate_ports: bool) -> eyre::Result<NacosWitness> {
     let scratch = ScratchDir::new("schema_emission_profiles")?;
     let chart_dir = scratch.path().join("nacos");
     test_util::scratch::copy_tree(
@@ -3908,8 +3908,36 @@ fn nacos_ingress_api_version_rejection_is_declined_while_its_defaults_are_reject
         {{- end -}}
     "#};
     let source = std::fs::read_to_string(&helpers)?;
-    sim_assert_eq!(have: source.matches(discarded).count(), want: 1);
+    eyre::ensure!(
+        source.matches(discarded).count() == 1,
+        "the discarded define is not in {}",
+        helpers.display()
+    );
     std::fs::write(&helpers, source.replace(discarded, ""))?;
+    if isolate_ports {
+        let values = chart_dir.join("values.yaml");
+        let mut lines: Vec<String> = std::fs::read_to_string(&values)?
+            .lines()
+            .map(str::to_string)
+            .collect();
+        // The `http` port's protocol, then the whole `server` port.
+        let mut from = 0;
+        for removed in [
+            "      protocol: TCP  # Service port protocol for client-a port.",
+            "    server:",
+            "      port: 8848",
+            "      protocol: TCP",
+        ] {
+            let index = lines
+                .iter()
+                .skip(from)
+                .position(|line| line == removed)
+                .ok_or_else(|| eyre::eyre!("nacos values.yaml has no line {removed:?}"))?;
+            lines.remove(from + index);
+            from += index;
+        }
+        std::fs::write(&values, lines.join("\n") + "\n")?;
+    }
 
     let recipe = chart_recipe("helm-schema.cli.chart-corpus.nacos.schema.json")
         .ok_or_eyre("the registry has no nacos corpus recipe")?;
@@ -3930,7 +3958,68 @@ fn nacos_ingress_api_version_rejection_is_declined_while_its_defaults_are_reject
         &test_util::workspace_testdata().join("provider-bundle/crds-catalog-cache"),
         helm_adjudication::KUBERNETES_RELEASE,
     )?;
-    let probes = [
+    Ok(NacosWitness {
+        _scratch: scratch,
+        defaults,
+        profiles,
+        annotation,
+        chart,
+        kubernetes,
+    })
+}
+
+/// Adjudicates `ingress.apiVersion <- value` on `witness`, and attributes
+/// the Helm-coalesced document directly.
+fn nacos_cell(
+    witness: &NacosWitness,
+    value: serde_json::Value,
+) -> eyre::Result<(Result<HelmFlipVerdict, bool>, Result<(), String>)> {
+    let overlay = json!({"ingress": {"apiVersion": value}});
+    let verdict = adjudicate_flip(
+        &witness.chart,
+        &overlay,
+        &witness.profiles,
+        &witness.kubernetes,
+        Some(&witness.annotation),
+    )
+    .map(|(verdict, _)| verdict)
+    .map_err(|error| {
+        error
+            .to_string()
+            .starts_with("tightening rejects a document")
+    });
+    let probe = witness.chart.adjudicate(&overlay)?;
+    let attribution = attribute_to_declared_types(
+        Some(&witness.annotation),
+        probe.values.as_ref(),
+        &witness.profiles,
+    );
+    Ok((verdict, attribution))
+}
+
+/// The nacos `ingress.apiVersion` witness of the declared-types policy: the
+/// key is typed `string` only by its declared `""` default, no template
+/// reads it, and every probe renders. With the unrelated `service.ports`
+/// defect isolated, every schema accepts the chart's defaults, the
+/// candidate rejects each probe, the annotate regeneration accepts it, and
+/// all eight cells are the policy's.
+#[test]
+fn nacos_ingress_api_version_rejection_is_attributed_to_declared_types() -> eyre::Result<()> {
+    let witness = nacos_witness(true)?;
+    let regenerated = witness
+        .annotation
+        .prepared()
+        .map_err(|error| eyre::eyre!(error))?;
+    sim_assert_eq!(
+        have: (
+            witness.profiles.document_verdicts(&witness.defaults),
+            regenerated.asserted.validator.is_valid(&witness.defaults),
+            regenerated.annotated.is_valid(&witness.defaults),
+        ),
+        want: ((true, true), true, true)
+    );
+    let mut cells = Vec::new();
+    for value in [
         json!(false),
         json!(true),
         json!(7),
@@ -3939,42 +4028,39 @@ fn nacos_ingress_api_version_rejection_is_declined_while_its_defaults_are_reject
         json!([{}]),
         json!({}),
         json!({"unknown": "member"}),
-    ];
-    // Every schema rejects the chart's own defaults at `service.ports`: the
-    // baseline, and both regenerations.
-    let regenerated = annotation.prepared().map_err(|error| eyre::eyre!(error))?;
+    ] {
+        cells.push(nacos_cell(&witness, value)?);
+    }
+    sim_assert_eq!(
+        have: cells,
+        want: vec![(Ok(HelmFlipVerdict::TighteningMatchedDeclaredTypesPolicy), Ok(())); 8]
+    );
+    Ok(())
+}
+
+/// The same cell on nacos as shipped: every schema, the annotate
+/// regeneration included, rejects the chart's own `service.ports` defaults,
+/// so the annotate regeneration never accepts a document and the cell stays
+/// a false rejection, whatever the baseline rejects.
+#[test]
+fn nacos_ingress_api_version_rejection_is_declined_while_an_unrelated_rejection_remains()
+-> eyre::Result<()> {
+    let witness = nacos_witness(false)?;
+    let regenerated = witness
+        .annotation
+        .prepared()
+        .map_err(|error| eyre::eyre!(error))?;
     sim_assert_eq!(
         have: (
-            profiles.document_verdicts(&defaults),
-            regenerated.asserted.validator.is_valid(&defaults),
-            regenerated.annotated.is_valid(&defaults),
+            witness.profiles.document_verdicts(&witness.defaults),
+            regenerated.asserted.validator.is_valid(&witness.defaults),
+            regenerated.annotated.is_valid(&witness.defaults),
         ),
         want: ((false, false), false, false)
     );
-    let mut verdicts = Vec::new();
-    let mut attributions = Vec::new();
-    for value in probes {
-        let overlay = json!({"ingress": {"apiVersion": value}});
-        verdicts.push(
-            adjudicate_flip(&chart, &overlay, &profiles, &kubernetes, Some(&annotation))
-                .map(|(verdict, _)| verdict)
-                .map_err(|error| {
-                    error
-                        .to_string()
-                        .contains("tightening rejects a document whose render adds no")
-                }),
-        );
-        let probe = chart.adjudicate(&overlay)?;
-        attributions.push(attribute_to_declared_types(
-            Some(&annotation),
-            probe.values.as_ref(),
-            &profiles,
-        ));
-    }
-    sim_assert_eq!(have: verdicts, want: vec![Err(true); 8]);
     sim_assert_eq!(
-        have: attributions,
-        want: vec![Err("the baseline rejects it too".to_string()); 8]
+        have: nacos_cell(&witness, json!(7))?,
+        want: (Err(true), Err("the annotate regeneration rejects it".to_string()))
     );
     Ok(())
 }
@@ -3990,14 +4076,14 @@ type AttributionCell = (
 );
 
 /// Controls of the declared-types attribution. A rejection is the policy's
-/// only when the baseline accepts the document, the candidate is the assert
-/// regeneration, the annotate regeneration accepts outright, and every
-/// rejected value is unread. A document the baseline rejects too, or one the
-/// annotate regeneration rejects for any reason, stays a false rejection,
-/// however the two rejections relate: a changed `propertyNames`, closed
-/// object, tuple limit or `minContains` predicate beside the policy's
-/// failure, or an unrelated closed-root rejection. Renaming a definition
-/// changes nothing, since no failure is compared with another.
+/// only when the candidate is the assert regeneration, the annotate
+/// regeneration accepts the document outright, and every rejected value is
+/// unread; what the baseline rejects does not matter. A document the
+/// annotate regeneration rejects for any reason stays a false rejection: a
+/// changed `propertyNames`, closed object, tuple limit or `minContains`
+/// predicate beside the policy's failure, or an unrelated closed-root
+/// rejection. Renaming a definition changes nothing, since no failure is
+/// compared with another.
 #[test]
 #[expect(
     clippy::too_many_lines,
@@ -4111,14 +4197,24 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
             },
             Err("the annotate regeneration rejects it"),
         ),
-        // Both reject: the baseline's changed assertion at `size`.
+        // The baseline rejects too, for its own `size: boolean`; the
+        // candidate's rejection is still the policy's alone.
+        (
+            json!({"properties": {"settings": {"properties": {"size": {"type": "boolean"}}}}}),
+            None,
+            unread(json!(7)),
+            Ok(()),
+        ),
+        // Both reject at `size`; the policy's `size` failure is on a read
+        // value.
         (
             json!({"properties": {"settings": {"properties": {"size": {"type": "boolean"}}}}}),
             None,
             settings("size", json!("x")),
-            Err("the baseline rejects it too"),
+            Err("/settings/size: a template reads `settings.size`"),
         ),
-        // Both reject: the baseline's closed root admits only `undeclared`.
+        // Both reject: the baseline's closed root admits only `undeclared`,
+        // the annotate regeneration's rejects it.
         (
             json!({"properties": {"undeclared": {}}, "additionalProperties": false}),
             None,
@@ -4127,7 +4223,7 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
                 document["undeclared"] = json!(1);
                 document
             },
-            Err("the baseline rejects it too"),
+            Err("the annotate regeneration rejects it"),
         ),
         // Sol's names: the baseline forbids `a`, the chart `b`.
         (
@@ -4139,7 +4235,7 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
                 json!({}),
             )),
             settings("members", json!({"a": 1, "b": 1})),
-            Err("the baseline rejects it too"),
+            Err("the annotate regeneration rejects it"),
         ),
         (
             at_settings(draft7, "members", forbidden_name("a"), json!({})),
@@ -4158,7 +4254,7 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
             at_settings(draft7, "members", only_member("a"), json!({})),
             Some(at_settings(draft7, "members", only_member("b"), json!({}))),
             settings("members", json!({"a": 1, "b": 1})),
-            Err("the baseline rejects it too"),
+            Err("the annotate regeneration rejects it"),
         ),
         (
             at_settings(draft7, "members", only_member("a"), json!({})),
@@ -4171,7 +4267,7 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
             at_settings(draft7, "extra", tuple(2), json!({})),
             Some(at_settings(draft7, "extra", tuple(1), json!({}))),
             settings("extra", json!([1, 2, 3])),
-            Err("the baseline rejects it too"),
+            Err("the annotate regeneration rejects it"),
         ),
         (
             at_settings(draft7, "extra", tuple(2), json!({})),
@@ -4189,7 +4285,7 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
                 json!({}),
             )),
             settings("extra", json!([1, "x"])),
-            Err("the baseline rejects it too"),
+            Err("the annotate regeneration rejects it"),
         ),
         (
             at_settings(draft2020, "extra", at_least_two("integer"), json!({})),
@@ -4229,7 +4325,7 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
                 renamed_chart_defs,
             )),
             settings("extra", json!(1)),
-            Err("the baseline rejects it too"),
+            Err("the annotate regeneration rejects it"),
         ),
     ];
     let mut attributions = Vec::new();
