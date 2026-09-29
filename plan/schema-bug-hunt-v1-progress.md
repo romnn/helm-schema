@@ -6558,6 +6558,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   without explicit UTF-8. → `brief-target-guard-rework2.md` (G1–G4, R1–R2); runner builder to do it before
   continuing cell_matrix. Disk 173 GB; load 53 (five heavy). Orchestrator.
 
+- 05:35 (Sep 29) — **k8s battery on e81c1074 confirms the K9 class at corpus scale.** `round8-k8s-evidence/battery-v5/`
+  (rebase target only; dump corpus-e81c1074, 204 files; lint:fc and ast-grep on e81c1074 green): schema-only vs
+  cb42c017 screened flips (exit 100 as expected); LIVE vs the roster baseline: **470 false acceptances not on the
+  roster** — sealed-secrets 270, nacos 190, cluster-autoscaler 9, kube-prometheus-stack 1 — the bitnami values-driven
+  KubeVersion charts losing their workload contract (= astra's K9). Not rostered. The grafana PDB cells do not
+  surface (PDB off in defaults) and stay covered by the reviewers' Helm cells (K10) as pinned tests. Rework-5
+  acceptance criterion sent to the builder: zero new false acceptances on the final HEAD, K9/K10 cells pinned,
+  before/after lists attached. This is exactly the evidence the 46bdf9e5 skill rule ("adjudicate your own fixture
+  moves before hand-back") exists to produce earlier: from now on the battery runs before the review, not beside
+  it. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
