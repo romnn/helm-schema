@@ -6978,6 +6978,21 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   its unset worktree had built into round7-f9/target (purged, 50 GiB, every gate re-run). Disk 110 GB (targets:
   helm-schema 49, target-guard 46, f78 35). W4 still in gates. Orchestrator.
 
+- 00:14 (Sep 30) — **F1 rework 5 handed back (ba4919cc, test-only); re-checks running; landing 9 pre-staged.** R15: the
+  assertion identity is (instance path, keyword, argument inlined in schema positions only, `reported_failure` =
+  the instance the error names + the kind with every payload, wrapped errors rendered recursively, schema locations
+  excluded); the R12 per-keyword special cases are deleted; red on f46480d0 (the propertyNames cell attributed to
+  the policy) → green (both mixed cells false rejections; `rework5/`). R16: `common` NOT promoted (library chart, no
+  umbrella witness); `repin-common.patch` only moves its PolicyUnresolved `current` to Accepts with a comment —
+  accepted by the orchestrator (it records the adopted fixture's truth without claiming Fixed). R17: nginx-ingress
+  → KnownFalseRejection naming the D1 defect (`/properties/controller/allOf/10`, lost `hasKey … "usageReport"` guard,
+  report-batch-03.md:527). Assembled check: `family_witnesses` 17/17 with all fixtures adopted
+  (promotions-check/gate-assembled.log). `final-v6.patch` sha256 04db8917…; gates-v6-final as before. Re-checks:
+  astra follow_up e0604b5e turn 6, sol follow_up 34eb74f4 turn 2. Landing-9 clone re-staged: main d9cf8c65 + 10 F1
+  commits (tip c5592b08 = ba4919cc) + K17 (4203e41c) + catalog commit 2af0f8a3 (three patches, clean); testdata
+  diff vs main = the two policy fixtures only; env header updated (uncommitted until launch). Load 36 (W4 gates,
+  W1 rework 7, guard rework 6). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
