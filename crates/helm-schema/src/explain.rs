@@ -71,12 +71,27 @@ struct Coverage {
 }
 
 /// Guards of the overlays and requirement implications the decisions
-/// reference by position. Backprojected implications are synthesized during
-/// lowering and keep no guard record to reference.
+/// reference by position, in position order. Backprojected implications are
+/// synthesized during lowering and keep no guard record to reference.
 #[derive(Serialize)]
 struct GuardReferences<'a> {
-    overlays: BTreeMap<usize, &'a [ConditionalGuard]>,
-    requirement_implications: BTreeMap<usize, &'a [ConditionalGuard]>,
+    overlays: Vec<GuardReference<'a>>,
+    requirement_implications: Vec<GuardReference<'a>>,
+}
+
+/// The guards of one referenced record, by its position in the owning signal
+/// vector.
+#[derive(Serialize)]
+struct GuardReference<'a> {
+    index: usize,
+    guards: &'a [ConditionalGuard],
+}
+
+fn guard_references(references: BTreeMap<usize, &[ConditionalGuard]>) -> Vec<GuardReference<'_>> {
+    references
+        .into_iter()
+        .map(|(index, guards)| GuardReference { index, guards })
+        .collect()
 }
 
 pub(crate) fn generation_report(
@@ -85,16 +100,12 @@ pub(crate) fn generation_report(
     evidence: Option<&ContractPathSchemaEvidence>,
     format: ExplainFormat,
 ) -> Result<String, serde_json::Error> {
-    let mut references = GuardReferences {
-        overlays: BTreeMap::new(),
-        requirement_implications: BTreeMap::new(),
-    };
+    let mut overlays = BTreeMap::new();
+    let mut requirement_implications = BTreeMap::new();
     if let (Some(decision), Some(evidence)) = (decision, evidence) {
         for overlay in &decision.overlays {
             if let Some(source) = evidence.conditional_overlays.get(overlay.overlay) {
-                references
-                    .overlays
-                    .insert(overlay.overlay, source.guards.as_slice());
+                overlays.insert(overlay.overlay, source.guards.as_slice());
             }
         }
         for containment in &decision.containment_checks {
@@ -102,9 +113,7 @@ pub(crate) fn generation_report(
             if implication.origin == EmissionOrigin::RequirementImplication
                 && let Some(source) = evidence.requirement_implications.get(implication.index)
             {
-                references
-                    .requirement_implications
-                    .insert(implication.index, source.outer_guards.as_slice());
+                requirement_implications.insert(implication.index, source.outer_guards.as_slice());
             }
         }
     }
@@ -127,7 +136,10 @@ pub(crate) fn generation_report(
             emission: PhaseCoverage::NotRecorded,
         },
         generation: decision,
-        references,
+        references: GuardReferences {
+            overlays: guard_references(overlays),
+            requirement_implications: guard_references(requirement_implications),
+        },
     };
     // Serializing through `Value` sorts every object's keys.
     let report = serde_json::to_value(&report)?;
@@ -197,12 +209,24 @@ fn scalar_list_text(value: &Value) -> Option<String> {
     }
 }
 
+/// A scalar as text. A string stays bare only when it is a plain word that
+/// no other scalar prints as; any other string is a quoted, escaped JSON
+/// string, so `"false"` never reads as `false` and data cannot break the
+/// tree's lines.
 fn scalar_text(value: &Value) -> Option<String> {
     match value {
-        Value::Null => Some("null".to_string()),
-        Value::Bool(value) => Some(value.to_string()),
-        Value::Number(value) => Some(value.to_string()),
-        Value::String(value) => Some(value.clone()),
+        Value::String(text) if is_bare_word(text) => Some(text.clone()),
+        Value::Null | Value::Bool(_) | Value::Number(_) | Value::String(_) => {
+            Some(value.to_string())
+        }
         Value::Array(_) | Value::Object(_) => None,
     }
+}
+
+fn is_bare_word(text: &str) -> bool {
+    !text.is_empty()
+        && text
+            .chars()
+            .all(|character| character.is_ascii_alphanumeric() || "_.-/*".contains(character))
+        && serde_json::from_str::<Value>(text).is_err()
 }

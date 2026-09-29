@@ -38,27 +38,31 @@ generation:
   containment_checks:
     [0]:
       base_effect: none
-      check: check=evaluated contains=true requirement_types=[null, string] structural_types=[null, object, string]
+      check: check=evaluated contains=true requirement_types=["null", string] structural_types=["null", object, string]
       implication: index=0 origin=requirement_implication
     [1]:
       base_effect: none
-      check: check=evaluated contains=true requirement_types=[null, string] structural_types=[null, object, string]
+      check: check=evaluated contains=true requirement_types=["null", string] structural_types=["null", object, string]
       implication: index=1 origin=requirement_implication
   overlays: []
 path: service.type
 references:
-  overlays: {}
+  overlays: []
   requirement_implications:
-    0:
-      [0]:
-        not:
-          matches_pattern: path=service.type pattern=LoadBalancer
-      [1]:
-        not:
-          matches_pattern: path=service.type pattern=NodePort
-    1:
-      [0]:
-        not:
-          matches_pattern: path=service.type pattern=NodePort
+    [0]:
+      guards:
+        [0]:
+          not:
+            matches_pattern: path=service.type pattern=LoadBalancer
+        [1]:
+          not:
+            matches_pattern: path=service.type pattern=NodePort
+      index: 0
+    [1]:
+      guards:
+        [0]:
+          not:
+            matches_pattern: path=service.type pattern=NodePort
+      index: 1
 scope: generation_decisions
 status: observed

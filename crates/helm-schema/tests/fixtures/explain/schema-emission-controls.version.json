@@ -25,16 +25,11 @@
         "guarded_type_hints": {
           "disposition": "absent"
         },
-        "merge_base": "provider_admits_declared_scalar",
+        "merge_base": "declared_default",
         "provider": {
-          "adjustments": [],
-          "disposition": "applied"
+          "disposition": "absent"
         },
-        "rules": [
-          {
-            "rule": "plain_string_preserved"
-          }
-        ],
+        "rules": [],
         "type_hints": {
           "adjustments": [],
           "disposition": "applied"
@@ -42,7 +37,7 @@
       },
       "independent_contract": {
         "channels": {
-          "provider": true,
+          "provider": false,
           "strict_string": true
         },
         "evaluation": {
@@ -58,10 +53,9 @@
           "guarded_type_hints": {
             "disposition": "absent"
           },
-          "merge_base": "provider",
+          "merge_base": "no_evidence",
           "provider": {
-            "adjustments": [],
-            "disposition": "applied"
+            "disposition": "absent"
           },
           "rules": [],
           "type_hints": {
@@ -83,16 +77,11 @@
         "guarded_type_hints": {
           "disposition": "absent"
         },
-        "merge_base": "provider",
+        "merge_base": "no_evidence",
         "provider": {
-          "adjustments": [],
-          "disposition": "applied"
+          "disposition": "absent"
         },
-        "rules": [
-          {
-            "rule": "plain_string_preserved"
-          }
-        ],
+        "rules": [],
         "type_hints": {
           "adjustments": [],
           "disposition": "applied"
@@ -108,83 +97,24 @@
       {
         "base_effect": "none",
         "check": {
-          "check": "evaluated",
-          "contains": true,
-          "requirement_types": [
-            "null",
-            "string"
-          ],
-          "structural_types": [
-            "null",
-            "object",
-            "string"
-          ]
+          "check": "not_evaluated",
+          "short_circuit_reason": "unguarded_requirement"
         },
         "implication": {
           "index": 0,
-          "origin": "requirement_implication"
-        }
-      },
-      {
-        "base_effect": "none",
-        "check": {
-          "check": "evaluated",
-          "contains": true,
-          "requirement_types": [
-            "null",
-            "string"
-          ],
-          "structural_types": [
-            "null",
-            "object",
-            "string"
-          ]
-        },
-        "implication": {
-          "index": 1,
           "origin": "requirement_implication"
         }
       }
     ],
     "overlays": []
   },
-  "path": "service.type",
+  "path": "version",
   "references": {
     "overlays": [],
     "requirement_implications": [
       {
-        "guards": [
-          {
-            "not": {
-              "matches_pattern": {
-                "path": "service.type",
-                "pattern": "LoadBalancer"
-              }
-            }
-          },
-          {
-            "not": {
-              "matches_pattern": {
-                "path": "service.type",
-                "pattern": "NodePort"
-              }
-            }
-          }
-        ],
+        "guards": [],
         "index": 0
-      },
-      {
-        "guards": [
-          {
-            "not": {
-              "matches_pattern": {
-                "path": "service.type",
-                "pattern": "NodePort"
-              }
-            }
-          }
-        ],
-        "index": 1
       }
     ]
   },

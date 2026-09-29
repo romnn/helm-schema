@@ -16,12 +16,31 @@ use helm_schema::generation::{GenerateOptions, SchemaProfile};
 use helm_schema::provider::ProviderOptions;
 use helm_schema_test_support::generate::generate_options;
 use helm_schema_test_support::registry::ChartRecipe;
-use indoc::indoc;
+use indoc::{formatdoc, indoc};
 use test_util::prelude::sim_assert_eq;
 use vfs::VfsPath;
 
 /// The span `helm_schema_gen` opens once per emitter run.
 const GENERATION_SPAN: &str = "generate_values_schema_with_report";
+
+#[path = "../examples/explain_values.rs"]
+#[allow(
+    dead_code,
+    reason = "the example's `main` is its process entry; tests call `run`"
+)]
+mod explain_values_example;
+
+/// Templates of the literal-guard chart: each branch guards `name` with a
+/// literal whose type or spelling a text rendering could lose.
+const LITERAL_TEMPLATES: [(&str, &str); 4] = [
+    ("mode", r#"eq .Values.mode "false""#),
+    ("flag", "eq .Values.flag false"),
+    ("level", r#"eq .Values.level "1""#),
+    ("separator", r#"eq .Values.separator "a\"b\nc""#),
+];
+
+/// The paths the literal-guard chart reads.
+const LITERAL_PATHS: [&str; 5] = ["name", "mode", "flag", "level", "separator"];
 
 fn corpus_session(chart: &'static str) -> AnalysisSession {
     AnalysisSession::new(generate_options(&ChartRecipe::corpus(
@@ -104,6 +123,104 @@ fn dependency_root_session() -> eyre::Result<AnalysisSession> {
             ..Default::default()
         },
     }))
+}
+
+/// The literal-guard chart, with its templates created in declaration
+/// order or reversed.
+fn literal_chart_session(reversed: bool) -> eyre::Result<AnalysisSession> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+    test_util::write(
+        &chart_dir.join("Chart.yaml")?,
+        indoc! {"
+            apiVersion: v2
+            name: literals
+            version: 0.1.0
+        "},
+    )?;
+    test_util::write(
+        &chart_dir.join("values.yaml")?,
+        indoc! {r#"
+            name: demo
+            mode: "off"
+            flag: true
+            level: "2"
+            separator: plain
+        "#},
+    )?;
+    let mut templates = LITERAL_TEMPLATES.to_vec();
+    if reversed {
+        templates.reverse();
+    }
+    for (name, condition) in templates {
+        test_util::write(
+            &chart_dir.join(format!("templates/{name}.yaml"))?,
+            formatdoc! {"
+                {{{{- if {condition} }}}}
+                apiVersion: v1
+                kind: ConfigMap
+                metadata:
+                  name: {name}
+                data:
+                  value: {{{{ .Values.name | quote }}}}
+                {{{{- end }}}}
+            "},
+        )?;
+    }
+    Ok(AnalysisSession::new(GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        emission: SchemaProfile::default().into(),
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            allow_net: false,
+            k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")?),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")?),
+            disable_k8s_schemas: true,
+            ..Default::default()
+        },
+    }))
+}
+
+/// Every JSON and text report of the literal-guard chart, in `paths` order.
+fn literal_reports(session: &AnalysisSession, paths: &[&str]) -> eyre::Result<Vec<String>> {
+    let mut reports = Vec::new();
+    for path in paths {
+        reports.push(session.explain_generation(path, ExplainFormat::Json)?);
+        reports.push(session.explain_generation(path, ExplainFormat::Text)?);
+    }
+    Ok(reports)
+}
+
+/// Runs the `explain_values` example in JSON mode over the provider bundle.
+struct ExampleOutput {
+    stdout: String,
+    stderr: String,
+}
+
+fn run_explain_values_example(
+    chart: &str,
+    paths: &[&str],
+    raw_contract: bool,
+) -> eyre::Result<ExampleOutput> {
+    let args = std::iter::once(test_util::workspace_testdata().join("charts").join(chart))
+        .map(|chart| chart.to_string_lossy().into_owned())
+        .chain(paths.iter().map(|path| (*path).to_string()))
+        .collect::<Vec<_>>();
+    let options = explain_values_example::ExplainOptions {
+        json: true,
+        raw_contract,
+        provider_bundle: test_util::workspace_testdata().join("provider-bundle"),
+    };
+    let (mut stdout, mut stderr) = (Vec::new(), Vec::new());
+    explain_values_example::run(&args, &options, &mut stdout, &mut stderr)
+        .map_err(|error| eyre::eyre!("explain_values failed: {error}"))?;
+    Ok(ExampleOutput {
+        stdout: String::from_utf8(stdout)?,
+        stderr: String::from_utf8(stderr)?,
+    })
 }
 
 fn expected_report(name: &str) -> eyre::Result<String> {
@@ -189,8 +306,8 @@ fn unobserved_path_reports_its_status() -> eyre::Result<()> {
               "generation": null,
               "path": "absent.path",
               "references": {
-                "overlays": {},
-                "requirement_implications": {}
+                "overlays": [],
+                "requirement_implications": []
               },
               "scope": "generation_decisions",
               "status": "not_observed"
@@ -480,5 +597,166 @@ fn concurrent_and_repeated_queries_run_generation_once() -> eyre::Result<()> {
     })?;
 
     sim_assert_eq!(have: runs.0.load(Ordering::SeqCst), want: 1);
+    Ok(())
+}
+
+#[test]
+fn text_report_preserves_guard_literal_types_and_escaping() -> eyre::Result<()> {
+    let session = literal_chart_session(false)?;
+
+    sim_assert_eq!(
+        have: session.explain_generation("name", ExplainFormat::Json)?,
+        want: expected_report("literals.name.json")?
+    );
+    sim_assert_eq!(
+        have: session.explain_generation("name", ExplainFormat::Text)?,
+        want: expected_report("literals.name.txt")?
+    );
+    Ok(())
+}
+
+#[test]
+fn jaeger_guard_references_follow_implication_index_order() -> eyre::Result<()> {
+    let session = corpus_session("jaeger");
+    let json: serde_json::Value = serde_json::from_str(
+        &session.explain_generation("commonAnnotations", ExplainFormat::Json)?,
+    )?;
+    let json_indices = json
+        .pointer("/references/requirement_implications")
+        .and_then(serde_json::Value::as_array)
+        .ok_or_eyre("requirement implication references")?
+        .iter()
+        .map(|reference| reference.get("index").and_then(serde_json::Value::as_u64))
+        .collect::<Option<Vec<_>>>()
+        .ok_or_eyre("reference index")?;
+    let text = session.explain_generation("commonAnnotations", ExplainFormat::Text)?;
+    let text_indices = text
+        .split_once("references:")
+        .ok_or_eyre("text references section")?
+        .1
+        .lines()
+        .filter_map(|line| line.trim().strip_prefix("index: "))
+        .map(str::parse::<u64>)
+        .collect::<Result<Vec<_>, _>>()?;
+
+    sim_assert_eq!(have: json_indices, want: (0..12).collect::<Vec<u64>>());
+    sim_assert_eq!(have: text_indices, want: (0..12).collect::<Vec<u64>>());
+    Ok(())
+}
+
+#[test]
+fn reports_are_deterministic_across_sessions_discovery_and_concurrent_queries() -> eyre::Result<()>
+{
+    const THREADS: usize = 4;
+    let baseline = literal_reports(&literal_chart_session(false)?, &LITERAL_PATHS)?;
+    let mut reversed_paths = LITERAL_PATHS;
+    reversed_paths.reverse();
+    let mut reversed = literal_reports(&literal_chart_session(true)?, &reversed_paths)?;
+    // Undo the query order: reports come in (JSON, text) pairs per path.
+    let mut pairs = reversed
+        .chunks(2)
+        .map(<[String]>::to_vec)
+        .collect::<Vec<_>>();
+    pairs.reverse();
+    reversed = pairs.concat();
+
+    let runs = std::sync::Arc::new(GenerationRuns(AtomicUsize::new(0)));
+    let dispatch = tracing::Dispatch::new(std::sync::Arc::clone(&runs));
+    let session = literal_chart_session(false)?;
+    let start = Barrier::new(THREADS);
+    let (session, dispatch, start) = (&session, &dispatch, &start);
+    let (json, text) = std::thread::scope(|scope| -> eyre::Result<(String, String)> {
+        let query = |format| {
+            scope.spawn(move || {
+                tracing::dispatcher::with_default(dispatch, || {
+                    start.wait();
+                    session.explain_generation("name", format)
+                })
+            })
+        };
+        let json = query(ExplainFormat::Json);
+        let text = query(ExplainFormat::Text);
+        let resolved = scope.spawn(|| {
+            tracing::dispatcher::with_default(dispatch, || {
+                start.wait();
+                session.resolved_contract().map(|_| ())
+            })
+        });
+        let generated = scope.spawn(|| {
+            tracing::dispatcher::with_default(dispatch, || {
+                start.wait();
+                session.generated_schema().map(|_| ())
+            })
+        });
+        let panicked = |_| eyre::eyre!("query worker panicked");
+        resolved.join().map_err(panicked)??;
+        generated.join().map_err(panicked)??;
+        Ok((
+            json.join().map_err(panicked)??,
+            text.join().map_err(panicked)??,
+        ))
+    })?;
+
+    sim_assert_eq!(have: reversed, want: baseline.clone());
+    sim_assert_eq!(
+        have: vec![json, text],
+        want: baseline.get(..2).map(<[String]>::to_vec).unwrap_or_default()
+    );
+    sim_assert_eq!(have: runs.0.load(Ordering::SeqCst), want: 1);
+    Ok(())
+}
+
+#[test]
+fn explain_values_json_stdout_is_one_report() -> eyre::Result<()> {
+    let expected = expected_report("schema-emission-controls.version.json")?;
+    for raw_contract in [false, true] {
+        let output =
+            run_explain_values_example("schema-emission-controls", &["version"], raw_contract)?;
+        let document: serde_json::Value = serde_json::from_str(&output.stdout)
+            .wrap_err_with(|| format!("stdout is one JSON document: {}", output.stdout))?;
+
+        sim_assert_eq!(have: output.stdout, want: expected.clone());
+        sim_assert_eq!(
+            have: document.get("path").and_then(serde_json::Value::as_str),
+            want: Some("version")
+        );
+        assert!(
+            output.stderr.contains("terminal: "),
+            "terminal clauses go to stderr: {}",
+            output.stderr
+        );
+        sim_assert_eq!(
+            have: output.stderr.contains("contract: "),
+            want: raw_contract
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn explain_values_json_stdout_is_parseable_for_terminal_and_multiple_paths() -> eyre::Result<()> {
+    let pinned = expected_report("prometheus-redis-exporter.service.type.json")?;
+    let single = run_explain_values_example("prometheus-redis-exporter", &["service.type"], false)?;
+    let several = run_explain_values_example(
+        "prometheus-redis-exporter",
+        &["service.type", "service.port"],
+        false,
+    )?;
+    let reports: Vec<serde_json::Value> = serde_json::from_str(&several.stdout)
+        .wrap_err_with(|| format!("stdout is one JSON array: {}", several.stdout))?;
+
+    sim_assert_eq!(have: single.stdout, want: pinned.clone());
+    sim_assert_eq!(have: reports.len(), want: 2);
+    sim_assert_eq!(
+        have: reports.first().cloned(),
+        want: Some(serde_json::from_str::<serde_json::Value>(&pinned)?)
+    );
+    sim_assert_eq!(
+        have: reports
+            .get(1)
+            .and_then(|report| report.get("path"))
+            .and_then(serde_json::Value::as_str),
+        want: Some("service.port")
+    );
     Ok(())
 }
