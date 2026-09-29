@@ -6993,6 +6993,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   diff vs main = the two policy fixtures only; env header updated (uncommitted until launch). Load 36 (W4 gates,
   W1 rework 7, guard rework 6). Orchestrator.
 
+- 00:16 (Sep 30) — **Guard rework 6 handed back (163bd01a on main d9cf8c65): the cargo/cargo-fc discovery ports are
+  deleted, the guard fails closed; target-guard.py 724 → 541 lines.** G18 argument policy (`check_words`: refuses
+  --target-dir/--config/--env/--unset-env, `-C`/`-Z` anywhere in a clap-style group, manifests outside the checkout;
+  applied to the user's words and to the clippy-wrapper's words after expanding only committed aliases; leading
+  `cargo`/`fc` words to cargo-fc refuse; cargo-fc metadata env patches naming CARGO* refuse); G19 only committed
+  configuration (`tracked_config` from HEAD: plain-string aliases without quotes/backslash/#; `check_reachable_config`
+  over home incl. USERPROFILE, cwd ancestors and every member: any include, any differing alias, any differing
+  CARGO* [env], any CARGO_ALIAS_* env not byte-equal → refuse, naming file and key); G20 corpus trimmed. Red on v6 66
+  failures + 6 errors → 60 OK; test:guard/lint/lint:fc/test 1661 green. Builder decisions accepted by the
+  orchestrator: non-CARGO* [env] entries allowed (the user's home config sets SCCACHE_*); unselected members' config
+  still refuses (fail closed). `target-guard-v7.patch` sha256 463fe1db…, snapshot `guard-src-v7-target-guard.py`.
+  Reviews: astra follow_up 46a7c5d4 turn 7, sol(6.1) follow_up 7bc50b66 turn 2; if not LAND ×2 the guard is parked.
+  Runner builder idle after this (no tooling queued). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
