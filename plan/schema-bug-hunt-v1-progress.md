@@ -6922,6 +6922,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   okteto → `Fixed(Accepts)`, promtail F54 → `Fixed(Rejects)`; fixed by landed F23-4f) plus `promotions-f1.patch`
   (9 F1 rows) for landing 9's assembly. Disk 133 GB; load 20. Orchestrator.
 
+- 22:09 (Sep 29) — **F1 rework 4 handed back (f46480d0, test-only); re-checks dispatched. User model pin: sol is
+  now `gpt-6.1-sol`.** R12 identity carries the validator detail (+ sibling `properties`/patterns for
+  additionalProperties); R13 inlines `$ref` only in schema positions (`try_map_schema_context`); R14 drops the
+  coalesced-defaults lookup and proves the declaration by regenerating under `assert` and `annotate` (the builder
+  argues GenerationDecisions has no record for an unread path). Red on 389c6d0c 3 fail → green
+  (`round8-f1-evidence/rework4/`); gates-v5-final fmt/lint/lint:fc/ast-grep 0, nextest 1658/1659 (only the 5
+  promotion rows), integration the same 145 adoptable failures; `final-v5.patch` sha256 5b004782…. Promotions:
+  `promotions.patch` (5) + `promotions-f1.patch` (9 F1 `*-global-image-registry` rows → Fixed(Accepts)); the
+  tenth, nginx-ingress, stays PolicyUnresolved (pre-existing `controller` false-schema) — reviewers asked.
+  Re-checks: astra follow_up e0604b5e turn 5; sol: the user said at 22:0x "from now on … use astra and gpt 6.1
+  sol", so the running `gpt-6-sol` follow-up (84f4a917 turn 5) was cancelled and a fresh `gpt-6.1-sol` run
+  20260929T200831-34eb74f4 started, pointed at the old transcript for context (memory `codex-model-pins`). W1's
+  final pipeline is still in its jv probe step (chart 40/60, openebs 22 510 probes; CPU only). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
