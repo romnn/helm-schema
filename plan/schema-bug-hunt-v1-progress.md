@@ -6647,6 +6647,50 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `--check` preflight, scratch-path diagnostics and comment-only `valid`, scratch root, timeouts, claimed coverage
   absent → `brief-cell-matrix-rework1.md` (C1–C10). Disk 124 GB; load 28. Orchestrator.
 
+- 08:40 (Sep 29) — **Seven hand-backs in one hour; ten Codex re-checks dispatched; landing 7 staged.** (1) explain C1
+  rework 2 HEAD b43d00c0 (`final-v3.patch` sha256 d6b304d0…): a total `SessionPhase` order with per-thread
+  `InitializingPhases`; a query for a phase ≥ the innermost phase the thread is initializing fails with
+  `ReentrantSessionQuery{requested, initializing}` before taking the lock (red: deadlock after 60 s); skill docs
+  updated; the builder left CLAUDE.md to me (its own rule) → I applied the wording in the landing clone as a docs
+  commit; gates fmt/lint/lint:fc/ast-grep 0, unit 1621, integration 884, clean dump-v3 0/202 differ; re-checks sol
+  e48030f1 turn 7 / astra 11bf8beb turn 5. Landing 7 staged in `round8-landing7` (branch landing-7 = main +
+  explain-c1 cherry-picks + cell_matrix commit 1 379de2aa + the CLAUDE.md docs commit); chain launches on LAND ×2.
+  (2) F1 rework 1 HEAD 3947d56c (`final-v2.patch` sha256 c39bb298…): Helm two-pass dependency-root model
+  (71 Helm cells; first pass before pruning under chart names, second over active charts; a null below a pruned
+  ancestor renders, scalars abort except across an aliased nested edge; R4 `kid: null` aborts while active — astra
+  was right); typed `DependencyValuesRoot` replaces the string round trip, `ChartValuesRoot` deleted; openebs/oncall
+  cells fixed; matrix v2 50 cells 0 violations; live battery PASS (8007 matched; probes never reach the R1 cells);
+  158 moved (12 differ from v1); LOC +395 (v1 +315); re-checks sol 84f4a917 / astra e0604b5e turn 2. (3) k8s
+  rework 5 HEAD 2faf23be (`final-v6.patch` sha256 e1050e71…): K8/K12 one comparator model (duplicate semver parser
+  deleted), K9 Jenkins/Argo + DEFINE PRECEDENCE (Helm's: shallowest path, then alphabetical — nacos' nested
+  `mysql/common` had shadowed the root helper), K10 grafana arm-by-arm helper lowering + `capability_chain`, K11
+  kind_selector scoping, sealed-secrets default-only hints dropped in undecided slots; gates 0, unit 1637, 34 fixture
+  moves (+4 new); LIVE battery exit 100: **new false acceptances 470 → 3, false rejections 8 (nacos
+  `ingress.apiVersion`, an unread key now typed from its `""` default under main's standing policy)**; four open
+  items sent to both reviewers for adjudication (nacos policy flip; cluster-autoscaler `--nodes=::` needs a
+  colon-terminated-scalar contract; kube-prometheus-stack `alertmanager.apiVersion` sink typing vs the unavailable
+  CRD; signoz F5 roster row); re-checks sol 3677d240 / astra e1cee4f7 turn 4. Builder's process slip repaired
+  (untracked values.schema.json copies in testdata, never committed). (4) runner v6.11 HEAD d136455 (`v611.patch`
+  68 lines sha256 0fb3bb3d…): INT/TERM/HUP held across `receipt begin` until the attempt id is read back; timing-free
+  TERM injection test; red on f25b8525; green run-all with GUARD_SRC. (5) guard rework 3 HEAD c4fb9ad8
+  (`target-guard-v4.patch` 2080 lines sha256 a74448b1…): `env.override` scanned, cargo alias expansion (env, config
+  chain, built-ins never), clap-style global-option parsing (`-vC`, `-vZ`), manifest-path only before the first `--`,
+  Windows controls; gates 0 (test:guard 50); red 14 on 6d4cbb26; a test leaks `\Volumes\...\landing-owner` files
+  into the checkout root (found by the same builder later; 5 removed by me; fix queued). (6) cell_matrix rework 1
+  0a19d170 on 379de2aa (`cell-matrix-v2.patch` 2439 lines sha256 af632cef…): C1–C10 done; a second real-CLI blocker
+  found by the new smoke test (`helm-schema` has no `--version` → bin identity = sha256 + labelled commit);
+  `--timeout`, `valid@1.29` marking, manifest fields, `--check` preflight, `empty` after decoding, scratch-root
+  contract, 13 tests (8 new incl. a real-CLI smoke test), gates 0 (integration 882), prod LOC 0; sample matrix +
+  reviewer `--check --require-expected` command in `round8-runner-evidence/cell-matrix-sample/`. Re-checks: guard +
+  v6.11 sol fb75bd55 / astra 46a7c5d4 turn 4; cell_matrix sol eb2a31d3 / astra ad9b3c05 turn 2. (7) frontend 2.1
+  rework 1 HEAD 5628f608 (`phase2/final-v2.patch` sha256 436f9087…): P1 membership-preserving substitution check,
+  P2 Helm-compatible literal decoding with dialect-sensitive values withheld (`Undecoded::Dialect`), the YAML 1.1
+  divergence rules moved to ONE copy in `yaml_dialect.rs` used by test-util and the values loader (two duplicates
+  deleted), P3 `block` = unresolved call hole, P4 merge keys over collections uncertain, P5 source-bound pieces,
+  P6 4 MiB skeleton bound, P7 2.2 consumer rules in plan.md; 42/42 syntax tests, byte-identical (0/203, digest
+  59b9b368…), battery flips=0; LOC +901 vs base; re-checks sol f1fd34af / astra 803dbdb3 turn 2. Runner suite after
+  the v6.10 merge: 12/12 exit 0. Disk 97 GB (survey running); load 9. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
