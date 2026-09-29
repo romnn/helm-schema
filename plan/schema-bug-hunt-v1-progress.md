@@ -6758,6 +6758,21 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   constraints main also rejects); nacos 75 rosterable only as masked pre-existing debt with the counterfactual
   evidence (all fail only at `service/ports/anyOf`) → `brief-w4-rework7.md` (R26–R35). Orchestrator.
 
+- 16:52 (Sep 29) — **LANDING 7 MERGED (58bf21a3): explain C1 + cell_matrix commit 1 + CLAUDE.md docs.** Chain in
+  `round8-landing7-run1` (runner v6.10, own TARGET with the `<TARGET>.owner/` layout): dump (adopted 0 of 202) →
+  unit → lint → battery → integration → sweep → finalize all OK, "chain green" at 16:48; receipt
+  `/Volumes/T7/dev/round8-landing7-run1/receipt.json` sha256
+  bfd92a60c76d5469d6e8772d81c499c6d84333bbe814e2bfff3c7ea04db7743e. Merged `--no-ff` from branch landing-7
+  (HEAD f532bab1) into main; zero fixture bytes moved. Now on main: `GenerationDecisions` +
+  `AnalysisSession::explain_generation` (format_version 1), the single-flight session cache with phase-ordered
+  re-entry refusal, the battery's hard requirement for `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP` in every mode
+  (`preservation_battery_requires_candidate_dump`), the Helm harness shared from
+  `crates/helm-schema-test-support/src/helm/`, and the corrected CLAUDE.md/skill wording. Post-merge sanity
+  (fmt, `task lint`, nextest workspace) running on main's own target (`post-merge-main.log`). landing-7.env retired
+  (7318d17). k8s and runner builders told to rebase onto main (K15 and cell_matrix rework 2 depend on the moved
+  harness). Closures: still 3/83 strict (this landing is process/tooling, not a family). Next landing: frontend 2.1
+  rework 2 (re-checks running) as landing 8, byte-identity. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
