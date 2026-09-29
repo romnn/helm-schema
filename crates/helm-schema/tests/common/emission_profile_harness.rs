@@ -178,6 +178,17 @@ pub(crate) struct SemanticControl {
     pub(crate) rationale: &'static str,
 }
 
+/// A candidate violation the baseline does not share.
+#[derive(Debug)]
+pub(crate) struct NewViolation {
+    /// The violating value.
+    pub(crate) instance_path: jsonschema::paths::Location,
+    /// The violated keyword.
+    pub(crate) keyword: String,
+    /// The types a violated `type` assertion allows; empty for any other keyword.
+    pub(crate) allowed_types: Vec<&'static str>,
+}
+
 pub(crate) struct ProfileSchemas {
     full: Validator,
     lean: Validator,
@@ -199,6 +210,24 @@ impl ProfileSchemas {
             lean,
             defaults,
         })
+    }
+
+    /// Whether `validator` rejects `instance` for an assertion the baseline
+    /// does not violate.
+    pub(crate) fn rejects_unlike_the_baseline(
+        &self,
+        validator: &Validator,
+        instance: &Value,
+    ) -> bool {
+        rejects_for_a_new_reason(
+            &violations(&self.full, instance),
+            &violations(validator, instance),
+        )
+    }
+
+    /// The chart's coalesced defaults.
+    pub(crate) fn defaults(&self) -> &Value {
+        &self.defaults
     }
 
     pub(crate) fn verdicts(&self, probe: &ProbeInstance) -> (bool, bool) {
@@ -261,6 +290,33 @@ impl ProfileSchemas {
             ),
         };
         judged.into_iter().collect::<BTreeSet<_>>() == defaults.into_iter().collect()
+    }
+
+    /// The candidate's violations of `instance` that the baseline does not
+    /// share, as [`rejects_for_a_new_reason`] tells them apart.
+    pub(crate) fn new_candidate_violations(&self, instance: &Value) -> Vec<NewViolation> {
+        let baseline = violations(&self.full, instance);
+        let mut found = Vec::new();
+        for error in self.lean.iter_errors(instance) {
+            let key = ViolationKey::new("", "", &error);
+            if rejects_for_a_new_reason(&baseline, std::slice::from_ref(&key)) {
+                let allowed_types = match error.kind() {
+                    jsonschema::error::ValidationErrorKind::Type {
+                        kind: jsonschema::error::TypeKind::Single(allowed),
+                    } => vec![allowed.as_str()],
+                    jsonschema::error::ValidationErrorKind::Type {
+                        kind: jsonschema::error::TypeKind::Multiple(allowed),
+                    } => allowed.iter().map(jsonschema::JsonType::as_str).collect(),
+                    _ => Vec::new(),
+                };
+                found.push(NewViolation {
+                    instance_path: error.instance_path().clone(),
+                    keyword: key.keyword,
+                    allowed_types,
+                });
+            }
+        }
+        found
     }
 
     fn errors(&self, instance: &Value) -> (Vec<ViolationKey>, Vec<ViolationKey>) {
