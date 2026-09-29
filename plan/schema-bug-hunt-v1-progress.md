@@ -6696,6 +6696,24 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   the session had been idle from about 07:35 to 14:00 (the six hand-backs and the reviewers' answers accumulated
   meanwhile; nothing was lost). Each is now set to its `chore(plan)` commit time. Orchestrator.
 
+- 14:50 (Sep 29) — **W4 rework 6 handed back; battery found three more classes; reviews dispatched; decisions.**
+  w4-main HEAD 8ca759d6 on c816e318 (`final-v7.patch` sha256 3d464c74…; +11074/−663); rebased candidate
+  `round8-w4-rebase` 8f0af114 on cb42c017. R18/19/20/22: one composition anchor + pinned payload + optional comment
+  (provider patterns judge only the payload; one comment rule stopping at CR/LF; `\b`/`\B` after an indicator
+  abstains; owned token grammars — the `$` reconstruction and `^` role recovery deleted); R21 cells rostered as tests.
+  Battery-found on the way: R23 (R5's owned contract only with an unguarded runtime string contract; 26 v6 false
+  rejections), R24 (only `tpl` marks its input rendered; reloader nameOverride false/0/[] — an F75 bug since
+  598bd3c0), R25 (57 candidate-introduced false acceptances: merge.rs no longer folds two string alternatives
+  unless one admits every string or both carry the same validation; an admitted bare type adds nothing). Gates 0,
+  unit 1627, corpus 153 mismatches, LOC +789 vs main. FINAL live battery on 8f0af114 (`rebase/battery-v8/`): 0
+  unmatched flips; 81 false acceptances not on the roster — 75 nacos cells pre-existing on main but masked by
+  main's `service.ports` defaults false rejection (which R25 fixes; the same masking hides the k8s track's nacos
+  cells — cross-track note), 6 redis-ha cells candidate-introduced (F75); graylog `terminationGracePeriodSeconds`
+  roster row no longer fails alike (candidate correct). DECISIONS: redis-ha must be fixed (R26); graylog row removed
+  (R27); nacos rows only after the reviewers confirm the class as pre-existing (R28); the rebased worktree is now
+  THE branch (w4-main retired), patch vs cb42c017. Reviews: fresh sol/astra runs (the rework-5 runs expired).
+  Process note: one gate run overlapped bisect builds; all gates re-run alone afterwards. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
