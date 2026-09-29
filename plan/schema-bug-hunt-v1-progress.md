@@ -6773,6 +6773,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   harness). Closures: still 3/83 strict (this landing is process/tooling, not a family). Next landing: frontend 2.1
   rework 2 (re-checks running) as landing 8, byte-identity. Orchestrator.
 
+- 17:00 (Sep 29) — **Guard rework 4 + runner v6.11 rework 1 handed back; re-checks dispatched.** Guard rebased onto
+  main 58bf21a3 (c964afaf..718830e7; `target-guard-v5.patch` = `git diff main HEAD`, 2324 lines, sha256 ad2c2a64…;
+  snapshot guard-src-v5): G10 cargo-exact alias reading (layers, `config` masks `config.toml`, recursive `include`,
+  array concatenation, `CARGO_ALIAS_*`; probed against cargo 1.98 with a `cargo-echoargs` conformance test); G11/G12
+  one recursive `check_cargo` before any claim (aliases first; `fc` = `feature-combinations`; inner commands checked
+  from the cwd and every workspace package dir; clippy-wrapper's `lint`/`fixit` arguments checked as `cargo clippy`);
+  the metadata check now runs before the claim; G13 fixtures byte-asserted before/after the platform patch, no stray
+  entries; G14 out-of-guarantee list. Red 59 subtests; gates test:guard 56, fmt, lint, lint:fc (51), test 1621 all 0.
+  v6.11 rework 1 HEAD 560fb0f (`v611-v2.patch` 149 lines sha256 e4068ad8…): `receipt started` recovers the running
+  attempt by runner pid + since-timestamp when `receipt begin` exits nonzero, then delivers the pending signal
+  (130/143/129) or begin's rc; refusal 4 only when nothing was recorded; process-group INT/TERM/HUP test; run-all with
+  guard-src-v5 exit 0. Re-checks: sol fb75bd55 / astra 46a7c5d4 turn 5. Runner builder → cell_matrix rework 2 (rebased
+  onto main). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
