@@ -7248,6 +7248,22 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   target; battery expected to fail only on the 8 nacos cells until W4 lands) so landing 11 is ready when landing 10
   merges. Landing-10 clone stays staged at 1c3601cb (to be re-staged on the rework-10 tip). Orchestrator.
 
+- 16:51 (Sep 30) — **k8s K16 prep handed back (round8-k8s-r8, k8s-rebase c3788c6f on b51c8589, 56 commits; K17 dropped
+  by git as already upstream; one K15 conflict resolved); two PRE-EXISTING semantic integration failures surfaced by
+  the FULL profile (earlier rounds ran schema_emission_profiles alone) → K18/K19 briefed.** Gates: fmt/lint/lint:fc
+  0, nextest 1721/1721, test:integration 100 = 37 adoptable fixture moves + 2 semantic:
+  `signoz_zookeeper_statefulset_behavior` (template recipes carry no Kubernetes version, so the KubeVersion branch of
+  bitnami's apiVersion helper is undecided and D1 abstains; main took the first cached branch — the removed
+  heuristic) and `signoz_signoz_schema_semantics_hold` (R1's per-branch kubeVersion conditions push signoz's readable
+  pretty schema to 6.63 MB > 5.24 MB; the shortened forms fit). Live battery: 8 068 screened / 8 059 adjudicated, 84
+  Helm-abort + 11 K8s tightenings, 7 725 loosenings, 233 false acceptances = roster exactly, 6 undecided; the only
+  failures are the 9 expected W4-dependent cells (nacos ingress.apiVersion ×8, kps namespaceOverride). Decisions
+  (`brief-k8s-rework9.md`): K18 template recipes pin v1.29.0-standalone-strict like the corpus; the zalando ingress
+  `service.port` string typing that pinning exposes is a real false rejection to fix structurally (verify integer 80
+  with Helm + kubeconform); K19 share the kubeVersion conditions via `$defs` (or fold version cuts) and make the
+  sample test lint the CLI's DEFAULT output form. `final-v8.patch` sha256 88c68c4a…. Landing 11 still waits for W4.
+  Process rule restated for every builder: the FULL `task test:integration`, never a single binary. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
