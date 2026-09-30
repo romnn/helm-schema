@@ -7382,6 +7382,30 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   declared-default typing (re-broke podSecurityContext, +582 A→R). Disclosure: the clone and its red worktree shared
   `/Volumes/T7/dev/round7-f9/target` and mixed artifacts; the builder ran `cargo clean -p` on the workspace crates (14.7
   GiB freed) and gave the worktree its own target — the checkpoint gates above were run after that. Orchestrator.
+- 20:41 (Sep 30) — **W4 rework 12 CHECKPOINT: R58–R61 done in code and tests; clone `round8-w4-r9` clean at a5a1f33a
+  (`fix(ir): tpl abort claims are positive patterns over recognised forms (R58-R61)` on top of the wip 778ee263, 53
+  commits on b51c8589); resume file `round8-w4-evidence/rebase/r12/handoff.md`.** Mechanism (tpl_programs.rs): the
+  missing-callable claim is a POSITIVE pattern (missing_call_program :330 — a lexed program with an action where
+  `include`/`template` + blanks + a literal naming no callable starts a word; unrecognised operands are never matched,
+  no complement; known_callable_program, parenthesized and the unknown-operand language deleted); the undefined-function
+  claim likewise positive (:235); program_abort_capture :417 = undefined_function OR (eager AND not control AND
+  missing_call). R59: the literal-named missing include is found anywhere in an action, operands included. R60:
+  `(not <truth>)` composes 3 deep (:347/:352). R61: STRING_LITERAL :32 / CHARACTER_LITERAL :36 admit CR (only LF
+  ends them); interpreted literals holding `\a\b\f\n\r\t\v` claim by the decoded char, octal/hex/unicode
+  escapes stay unknown. Tests: tpl_plain_slot.rs tpl_program_claims_are_positive_patterns (:724, 13 cells) RED on
+  the pre-fix file (r12/red-r58-r61.log, 10 wrong verdicts), GREEN with the fix; the `x{{ include(print "foo") . }}`
+  cell now expects ACCEPT (retained, as on main; Helm aborts); 18 gen fixtures + the R51 CLI fixture regenerated
+  (claim patterns only), helm-schema-gen 814/814, 1 346 patterns Go-compile. Helm cells (r12/{tpl,grafana,
+  spinnaker}-r13.cases, Helm 4.2.3): d1–d5, g11/g12, s15–s18 render (rework 11 rejected them = the R58 bug); i1,
+  t1, q1–q3 abort; t2, q4, q5 render. Gates on a5a1f33a: fmt 0, task lint 0 (r12/lint-1.log); the full battery-v17
+  chain (v16 retargeted: lint:fc, nextest, FULL integration, clean dump, verify, Go-regexp, helmsweep, live battery,
+  release CLI, matrix v13, fixture diff + moves + size table, final-v13.patch + sha256 into battery-v17/status.txt)
+  started 20:31 and is ALIVE at 20:41 (it may outlive the session). Next command (only if status.txt lacks `done` and no chain process is alive, load
+  < 40): `bash /Volumes/T7/dev/round8-w4-evidence/rebase/battery-v17/run.sh b51c8589 >
+  /Volumes/T7/dev/round8-w4-evidence/rebase/battery-v17/run.out 2>&1`; then classify (integration = fixture-equality
+  only, battery 1 passed / 0 unmatched, matrix r12→r13 changes = the r13 cells), rewrite the handoff as final, hand
+  back. The builder a4a462316266893c4 dies with session 3; the replacement resumes from
+  `round8/brief-w4-rework12-resume.md`. Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and

@@ -159,26 +159,27 @@ resume prompt for session 4 is at the end of this section.
   filed against D1). Not run on main for landing 9: `task test:all`, luup2 — owed.
 - **Landing order: W4/F75 = landing 10 → k8s D1–D3 = landing 11 → W1 = landing 12 → frontend 2.2.** One
   fixture-moving landing at a time; every candidate rebases onto the current main before its final dump + battery.
-- **Landing 10 (W4/F75) — NOT launched; rework 12 pending.** Clone `/Volumes/T7/dev/round8-landing10`, branch
-  landing-10 at c6f9f663 = main + 51 W4 commits cherry-picked (tip 4fc19662 of `round8-w4-r9`); env
-  `/Volumes/T7/dev/round8/runner/landing-10.env` committed (staged, header names 4fc19662; update tip/commit count
-  after rework 12; E=round8-landing10-run1, TARGET=round8-landing10-target, 182 fixture moves expected). W4 rework 11
-  (0376512a + test-only 4fc19662; battery 0 unmatched; `final-v12.patch` sha256 d3539ea9…) got REWORK ×2
-  (`review-w4-rework11-{astra,sol}.md`): R58 the operand depth bound turns unrecognised programs into
-  missing-callable claims (grafana/spinnaker `include (((((print "x"))))) .` render, main accepts, r12 rejects) — the
-  negative claim must be a positive pattern over recognised forms, everything else UNKNOWN; R59 a literal-named
-  missing include inside a computed operand must still reject; R60 nested `not`; R61 actual CR / spelled `\r` in
-  double-quoted literals. Brief `brief-w4-rework12.md`; builder a4a462316266893c4 (replacement, clone
-  `round8-w4-r9`, target `round8-w4-r9-target`, evidence `round8-w4-evidence/rebase/r12/`, `final-v13.patch`) was
-  resumed on it at 20:17 and told to commit a `W4 rework 12 (wip)` checkpoint + r12/handoff.md at 20:22; it lives in
-  session 3's process — in a new process spawn a replacement from `round8/brief-w4-rework12-resume.md` (same clone, same
-  target). Re-check reviewers: astra follow_up
-  20260929T124542-7422b55d / sol(6.1) follow_up 20260930T001709-419cfbc0 (24 h expiry — likely expired by the
-  time you resume: start FRESH runs pointed at review-w4-rework{8,9,10,11}-*.md and the r12 hand-off). On LAND ×2:
-  re-stage the clone, update the env header, commit, launch the chain (command below), merge `--no-ff`, post-merge
-  gates, hand-off. R53 residual: n16/n18 pinned as known false acceptances; the `RenderedToken(YamlKind)`
-  provider-schema-use mechanism (rendered token kind vs sink schema; corpus sinks redis-ha hostPath.path,
-  open-webui storageClass, external-dns mountPath, main-too) is queued as its own track after landing 10.
+- **Landing 10 (W4/F75) — NOT launched; rework 12 CHECKPOINTED, its battery chain was alive at hand-off.** Clone
+  `/Volumes/T7/dev/round8-landing10`, branch landing-10 at c6f9f663 = main + the 51 rework-11 commits (tip 4fc19662) —
+  STALE: re-stage on the rework-12 tip once it is reviewed LAND ×2. Env `/Volumes/T7/dev/round8/runner/landing-10.env`
+  committed (bd9a486; header names 4fc19662 and 51 commits — update tip, count and move count; E=round8-landing10-run1,
+  TARGET=round8-landing10-target). Rework 11 got REWORK ×2 (`review-w4-rework11-{astra,sol}.md`: R58 the depth bound
+  claimed unrecognised programs missing — grafana/spinnaker `include (((((print "x"))))) .` renders, main accepts, r11
+  rejects; R59 literal-named missing include inside a computed operand must still reject; R60 nested `not`; R61 CR /
+  `\r` in double-quoted literals). Rework 12 (brief `brief-w4-rework12.md`) is CHECKPOINTED in `round8-w4-r9` at
+  a5a1f33a (clean; 53 commits on b51c8589): R58–R61 done in code (tpl_programs.rs, positive claim patterns, no
+  complement) with the 13-cell red→green test, 18 gen fixtures + the R51 CLI fixture regenerated, fmt/lint 0; the
+  battery-v17 chain (lint:fc → nextest → FULL integration → clean dump → verify → Go-regexp → helmsweep → live battery →
+  release CLI → matrix v13 → fixture diff/moves/size table → final-v13.patch + sha256 into
+  `round8-w4-evidence/rebase/battery-v17/status.txt`) started 20:31. Resume file
+  `round8-w4-evidence/rebase/r12/handoff.md` (exact next commands). The builder a4a462316266893c4 dies with session 3:
+  spawn the replacement from `round8/brief-w4-rework12-resume.md` (same clone/target) unless status.txt already says
+  `done` with a green battery — then only the final handoff rewrite is missing. Re-check reviewers with FRESH runs on
+  both models pointed at review-w4-rework{8,9,10,11}-*.md and the r12 hand-off. On LAND ×2: re-stage the landing clone,
+  update the env header, commit, launch the chain (command in the resume prompt), merge `--no-ff`, post-merge gates,
+  hand-off. R53 residual: n16/n18 pinned as known false acceptances; the `RenderedToken(YamlKind)` provider-schema-use
+  mechanism (corpus sinks redis-ha hostPath.path, open-webui storageClass, external-dns mountPath, main-too) is queued as
+  its own track after landing 10.
 - **k8s D1–D3 (landing 11)** — clone `/Volumes/T7/dev/round8-k8s-r8`, branch k8s-rebase fcdcd54f (61 commits on
   b51c8589), target `round8-k8s-r8-target`, builder a21b0ee7640a3112b (idle after its K18/K19 hand-back), evidence
   `/Volumes/T7/dev/round8-k8s-evidence/rework9/handoff.md` (60 lines, self-sufficient), `final-v9.patch` sha256
