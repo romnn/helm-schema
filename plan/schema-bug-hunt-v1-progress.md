@@ -7088,6 +7088,21 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   regex can match an include inside a quoted Go string literal — carried into R44). Disk 145 GB, load 15.
   Orchestrator.
 
+- 03:37 (Sep 30) — **F1 rework 8 (a274a68d, R21 fixed): sol LAND stands; astra re-check running. W4: sol's re-run
+  adds R46–R49.** F1: the unread walk now decides object-vs-array from the document with the literal pointer
+  tokens (`~1` before `~0`, keys containing `/` kept); astra's numeric-key probe attributed, `list: [7]` still an
+  array element; red 1 fail → green 5/5; Helm renders all 13 controls; gates-v9-final as before;
+  `final-v9.patch` sha256 78e0571f…. Landing-9 clone re-staged on a274a68d (16 F1 commits + K17 + cell_matrix +
+  catalog bb272c35, 19 commits on main d196406c; env header updated). W4 (`review-w4-rework8-sol.md`): the R36
+  recognizer is a substring scan of the tpl program (CLAUDE.md "parsers over string heuristics" violation) —
+  `{{ print "foo{{ include " "" }}` rejected though it renders (spinnaker `halyard.additionalInitScript`, a NEW
+  corpus false rejection), trimming after `: ` ignored, while parenthesised/nested/undefined-function failures
+  are accepted → R46 rebuild the claims on the parsed program (helm_schema_ast) and delete the scan; R47 `$`
+  rebinding in the cycle claim; R48 regex dialect (`[a&&b]`, `[a[b]]`, `(?x)`) promoted to exact truth → abstain;
+  R49 U+2028/2029/0085/0001 line breaks admitted by the mapping/comment rules; sol's growth cut: aggregate equal
+  claims at the capture→signals boundary with GuardDnf::union_absorbing. Builder messaged. agentmux follow_up
+  calls blocked ~1 h this round (02:20 → 03:36). Load 29, disk 131 GB. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
