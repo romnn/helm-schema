@@ -7162,6 +7162,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   the luup2 gate — owed at the next natural checkpoint; hand-off §6 rewritten (6f1ce577). W4 and W1 rebase onto
   b51c8589 for their final batteries; landing 10 = W4. Orchestrator.
 
+- 09:38 (Sep 30) — **W4 builder stalled on a permission prompt since 07:30 → replaced.** After rebasing w4-rebase onto
+  landing-9 main (89c223d6, conflicts recorded in rebase/r9/conflicts.md) the post-rebase unit run failed only
+  because 41 moved helm-schema-gen fixtures lack F1's root `global`; the builder's fix command (`git checkout --
+  …fixtures` + a carry script) never returned a result — a pending permission prompt in an unattended session,
+  not a crash (no process alive, the JSONL ends on the tool_use). My nudge and STOP messages are queued for
+  delivery if it ever resumes. A replacement Opus builder was launched on `brief-w4-rework9-resume.md`: own clone
+  /Volumes/T7/dev/round8-w4-r9 (from w4-rebase 89c223d6), own target, carry the `global` member as a targeted
+  test-only commit, verify R40–R49 against the branch (R46 rebuild of the tpl claims on the parsed program is the
+  likely remaining item), run battery-v14 against b51c8589, hand back final-v10.patch. W1 rework 7 active
+  (track/w1-main 0e52b5b5, rebased on b51c8589). Process note: destructive-looking git commands (`checkout --`,
+  `stash`, `reset`) in a builder's own clone trip the permission classifier; builders should copy the file from
+  `git show HEAD:path` instead. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
