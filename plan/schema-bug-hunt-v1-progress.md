@@ -7264,6 +7264,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   sample test lint the CLI's DEFAULT output form. `final-v8.patch` sha256 88c68c4a…. Landing 11 still waits for W4.
   Process rule restated for every builder: the FULL `task test:integration`, never a single binary. Orchestrator.
 
+- 16:56 (Sep 30) — **W4 rework 10 handed back (w4-rebase 2a64a2bb, 48 commits on b51c8589): R50–R52, R54 done; R53
+  decided as roster-and-queue; reviews dispatched; landing-10 clone re-staged on 2a64a2bb (24e20f05).** R50: a
+  non-literal include/template operand is unknown, raw literals resolve (14 reviewer cells accepted; Helm renders,
+  main accepts); R52: the blanket and/or exemption deleted, claims only through `or` of a falsy literal / `and` of a
+  truthy literal with at most one more argument (the four include-of-missing cells rejected; Helm aborts); R51: test
+  templates stay in the callable index under --exclude-tests (grafana/fluent-bit cells accepted); R54: moves
+  relabelled by mechanism. Matrix v11 172 rows: the only disagreements with Helm that differ from main are n16/n18.
+  Gates on 2a64a2bb: fmt/lint/lint:fc/ast-grep/tokei 0, nextest 1758/1758, integration 201 = 160 fixture-equality
+  only, dump/verify/Go-regexp/helmsweep 0, live battery 0 (9 687 flips, all false-acceptance flips rostered). 182
+  moves; Traefik mountPath presence restored. Sizes: Helm-ready all fit (openebs 4.56 MB). R53 (n16 `define`+include
+  of a constant body, n18 `toYamlPretty | len`: Helm renders, kubeconform rejects the ConfigMap.data kinds): the
+  codebase never checks a rendered token's kind against the provider schema (HEAD and main accept
+  `{{ ternary "true" "abc" .Values.flag }}` alike; main rejected n16/n18 only via its blanket `{{` heuristic) —
+  orchestrator decision: pin both as documented known false acceptances (test-only) and queue the builder's
+  `ProviderSchemaUse::RenderedToken(YamlKind)` mechanism as its own track. `final-v11.patch` sha256 fccd4824….
+  Reviews: astra follow_up 7422b55d turn 5, sol(6.1) follow_up 419cfbc0 turn 3. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
