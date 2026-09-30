@@ -7453,6 +7453,29 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   integration diffs, pin the three late-regression groups with red→green tests, gates, final-v9). Both builders run
   with TMPDIR/GOTMPDIR under their target dirs (nothing on the internal disk). Load 6.7, internal disk 55 GB free, T7
   107 GB free, lock free, no stray helm/cargo processes. Orchestrator.
+- 21:56 (Sep 30) — **W1 rework 8 BLOCKED on a pre-existing interpreter defect (blocker A) that R29 exposed; orchestrator
+  decision: fix it on W1 as R36 after a cross-vendor design review (both models running); W4 rework-12 chain running.**
+  The replacement W1 builder adjudicated all 1455 false acceptances of the dump10 live battery
+  (`round8-w1-evidence/rework8/blocker-seqarms/`: classes.tsv, fa.txt, v8.tsv, ex.tsv, why3.tsv; every row is main
+  R → rework-7 R → dump10 A): A 979 rows NOT rosterable — bitnami `renderSecurityContext` family (20 charts): two
+  sequential structural `if` regions in a helper reassigning the same local under the same/overlapping atom lose the
+  fall-through alternative of the helper's output splice, so the guarded provider arm (`allOf/0/then`) vanishes;
+  reproduces on main b51c8589 (repro.sh/repro.out: variants s, w, k untyped on main AND HEAD; t, d = bitnami verbatim
+  typed on main only because main treated the OpenShift capability arm as dead, which R29 correctly keeps live);
+  suspected in fragment_eval/control.rs:100-260 + branch_join.rs:174 + eval_env.rs:272, exact line not isolated.
+  B 111 rows in rework-8 scope (prometheus scrapeConfigs 90, traefik service.labels/spec 10, filebeat hostPathRoot 2,
+  vpa 9), cause untraced; C 36 synapse rows = pre-existing gaps surfaced by R30 (rosterable as Unfiled); D 329 rows =
+  the R29 abstention, confirmed for alloy/jenkins/clickhouse, unconfirmed for 12 charts. No commits, no code change,
+  final-v9.patch unchanged (9e440e47…). Decision (orchestrator): A is a defect, never a roster row; fix on W1 as R36
+  (W1's battery is the evidence; one red→green test per variant s/t/d + a bitnami whole-chart test), subject to the
+  design review `brief-w1-blockerA-design.md` dispatched to astra 20260930T195558-067be839 and sol(6.1)
+  20260930T195605-f24edf1e (`design-w1-blockerA-{astra,sol}.md`; questions: exact defect, sound join semantics,
+  boundary cases, the A/B/C/D classification, W1-vs-separate landing). Meanwhile the builder isolates the exact
+  defect, writes the R36 red tests, traces B and confirms D per chart (a row without a named approximate construct is
+  not confirmed). Reported to the user: the builder's `explain` runs fetched an untracked
+  `testdata/provider-bundle/kubernetes-json-schema-cache/default/v1.35.0/endpoints-v1.json` into round8-w1; its
+  removal was denied to the builder and it stays untracked (never to be committed). W4: the replacement builder
+  re-launched battery-v17 on 1e3c2bdf (in progress). Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
