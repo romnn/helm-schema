@@ -381,10 +381,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     "F1/aws-load-balancer-controller-global-image-registry.yaml",
                 ),
                 oracle: RENDERS,
-                schema: SchemaExpectation::PolicyUnresolved {
-                    current: SchemaVerdict::Rejects,
-                    question: F1_POLICY,
-                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "16d664313cce2082",
             },
             Witness {
@@ -395,10 +392,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     "F1/cluster-autoscaler-global-image-registry.yaml",
                 ),
                 oracle: RENDERS,
-                schema: SchemaExpectation::PolicyUnresolved {
-                    current: SchemaVerdict::Rejects,
-                    question: F1_POLICY,
-                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "a0720c89b9f16e81",
             },
             Witness {
@@ -407,8 +401,14 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 kubernetes_version: "1.29.0",
                 overrides: Overrides::ValuesFile("F1/common-global-image-registry.yaml"),
                 oracle: RENDERS,
+                // Not promoted: `common` is a library chart, so the standalone
+                // render this row's RENDERS oracle names aborts ("library charts
+                // are not installable"); the witness cannot express the umbrella
+                // context Helm renders it in. The adopted fixture accepts, so the
+                // pinned verdict moves; the policy question stays open for this row
+                // until an umbrella witness is frozen and re-adjudicated.
                 schema: SchemaExpectation::PolicyUnresolved {
-                    current: SchemaVerdict::Rejects,
+                    current: SchemaVerdict::Accepts,
                     question: F1_POLICY,
                 },
                 adjudicated: "697459542595eb30",
@@ -419,10 +419,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 kubernetes_version: "1.29.0",
                 overrides: Overrides::ValuesFile("F1/dex-global-image-registry.yaml"),
                 oracle: RENDERS,
-                schema: SchemaExpectation::PolicyUnresolved {
-                    current: SchemaVerdict::Rejects,
-                    question: F1_POLICY,
-                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "3b2430a5e8490fc1",
             },
             Witness {
@@ -431,10 +428,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 kubernetes_version: "1.29.0",
                 overrides: Overrides::ValuesFile("F1/harbor-global-image-registry.yaml"),
                 oracle: RENDERS,
-                schema: SchemaExpectation::PolicyUnresolved {
-                    current: SchemaVerdict::Rejects,
-                    question: F1_POLICY,
-                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "32943d998bfbe134",
             },
             Witness {
@@ -443,10 +437,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 kubernetes_version: "1.29.0",
                 overrides: Overrides::ValuesFile("F1/karpenter-global-image-registry.yaml"),
                 oracle: RENDERS,
-                schema: SchemaExpectation::PolicyUnresolved {
-                    current: SchemaVerdict::Rejects,
-                    question: F1_POLICY,
-                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "2369164374809812",
             },
             Witness {
@@ -455,10 +446,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 kubernetes_version: "1.29.0",
                 overrides: Overrides::ValuesFile("F1/kubeview-global-image-registry.yaml"),
                 oracle: RENDERS,
-                schema: SchemaExpectation::PolicyUnresolved {
-                    current: SchemaVerdict::Rejects,
-                    question: F1_POLICY,
-                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "2209cc3b511c5b9b",
             },
             Witness {
@@ -467,10 +455,11 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 kubernetes_version: "1.29.0",
                 overrides: Overrides::ValuesFile("F1/nginx-ingress-global-image-registry.yaml"),
                 oracle: RENDERS,
-                schema: SchemaExpectation::PolicyUnresolved {
-                    current: SchemaVerdict::Rejects,
-                    question: F1_POLICY,
-                },
+                // F1's `global` is admitted; the row still rejects through the
+                // pre-existing D1 defaults defect `/properties/controller/allOf/10`
+                // (the lost `hasKey .Values.controller.mgmt "usageReport"` guard,
+                // plan/schema-bug-hunt-reports/report-batch-03.md:527), filed there.
+                schema: SchemaExpectation::KnownFalseRejection,
                 adjudicated: "89239c69074123a2",
             },
             Witness {
@@ -481,10 +470,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     "F1/zalando-postgres-operator-global-image-registry.yaml",
                 ),
                 oracle: RENDERS,
-                schema: SchemaExpectation::PolicyUnresolved {
-                    current: SchemaVerdict::Rejects,
-                    question: F1_POLICY,
-                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "a9e67ffa5bc8d1bb",
             },
             Witness {
@@ -495,10 +481,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     "F1/zalando-postgres-operator-ui-global-image-registry.yaml",
                 ),
                 oracle: RENDERS,
-                schema: SchemaExpectation::PolicyUnresolved {
-                    current: SchemaVerdict::Rejects,
-                    question: F1_POLICY,
-                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "b1ff9fbe794fa818",
             },
         ],
@@ -967,7 +950,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 oracle: OracleExpectation::Aborts {
                     diagnostic: "Error: promtail/templates/networkpolicy.yaml:61:34 — range can't iterate over xyz",
                 },
-                schema: SchemaExpectation::KnownFalseAcceptance,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
                 adjudicated: "5c9ee05e01c955ef",
             },
             Witness {
@@ -1005,7 +988,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 kubernetes_version: "1.29.0",
                 overrides: Overrides::ValuesFile("F69/cilium-clusters-empty-list.yaml"),
                 oracle: RENDERS,
-                schema: SchemaExpectation::KnownFalseRejection,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "932c2cb785661ca5",
             },
             Witness {
@@ -1014,7 +997,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 kubernetes_version: "1.29.0",
                 overrides: Overrides::ValuesFile("F69/cilium-clusters-empty-map.yaml"),
                 oracle: RENDERS,
-                schema: SchemaExpectation::KnownFalseRejection,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "af54049216a4bceb",
             },
             Witness {
@@ -1023,7 +1006,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 kubernetes_version: "1.29.0",
                 overrides: Overrides::ValuesFile("F69/cilium-clustermesh-enabled.yaml"),
                 oracle: RENDERS,
-                schema: SchemaExpectation::KnownFalseRejection,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "664ee9c5f6284236",
             },
         ],
@@ -2029,7 +2012,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 kubernetes_version: "1.33.0",
                 overrides: Overrides::Set(&[]),
                 oracle: RENDERS,
-                schema: SchemaExpectation::KnownFalseRejection,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
                 adjudicated: "a4dc4c439352d91a",
             },
             Witness {
