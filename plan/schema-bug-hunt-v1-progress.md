@@ -7498,6 +7498,35 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   20260930T200617-bf9d7d63 → `review-w4-rework12-{astra,sol}.md`; asked to adjudicate the totality list, the exactness of
   the positive pattern, the zero-arg form, R59–R61 adversarially, and to answer LAND / LAND-after-rework-13 / REWORK.
   Landing 10 stays staged (clone at c6f9f663) until the verdicts. Orchestrator.
+- 22:30 (Sep 30) — **W4 rework 12 = REWORK ×2 (`review-w4-rework12-{astra,sol}.md`), rework 13 amended to R62–R66; W1 blocker A
+  design review (astra) locates the loss in the output-metadata join, not the binding decisions; sol's still running.**
+  W4: both reviewers verified the patch sha and that only tpl_programs.rs, its tests and 19 claim-only fixtures changed
+  since rework 11 (R40–R57, size gate, nacos F1 rows, n16/n18 waiver intact; 182 moves consistent; openebs 4 608 728 B);
+  R59–R61 passed their adversarial cells; both confirm the totality holes (2)–(5) are complete relative to the lexer's
+  alphabet but establish no totality (astra: `hello` returns "Hello!", so a chart defining that name permits `include
+  hello .` too; bare `template` fails at parse). R62's positive shape is right. New: R65 (both, blocking) `define_name()`
+  (analysis_db.rs:1522-1544) trims quoted define names and keeps escape spellings, so ` foo `, `b\u0061r`, `\146oo2`,
+  raw-CR and empty names are missing from the registry → Helm renders, main accepts, r13 rejects (chart-level false
+  rejections); R66 (astra, blocking) `{{ -missing }}`, `{{ print "foo"missing }}`, `{{ print ("foo")missing }}` (parse
+  errors; main and rework 11 reject) are ACCEPTED at 1e3c2bdf → positive malformed-token claims from Go's lexer;
+  zero-arg `include` is an execution error (claim only under the eager guard: `x{{ and false (include) }}` renders),
+  `{{ template }}` a parse error. Retained UNKNOWN limits to document: `include ("missing") .`, `include true .`, `and
+  true (include (include "missing" .) .)`, `include "missing" . | or true`, `{{ (include) }}`, glued known-name calls;
+  unprefixed `include(print "foo")` is rejected by main, prefixed o12 accepted by main. The builder (already on rework 13)
+  was sent the addendum; hand-back = battery-v18 + matrix v14 + final-v14.patch + rebase/r13/handoff.md. W1 (astra,
+  `design-w1-blockerA-astra.md`): the trigger is the SAME OMITTED KEY, not an overlapping atom (flag/x; flag2/x fails,
+  flag/x; flag/y succeeds); the binding decision tree keeps `!flag` (control.rs:488, branch_join.rs:179, eval_env.rs:272)
+  but the parallel output-metadata join loses it: a previously omitted key skips `apply_omission_exclusions`
+  (control.rs:2993) and empty additions skip predicate clearing (:3015/:3027), then `join_meta_by_path` →
+  `HelperOutputMeta::merge` (helper_meta.rs:264) treats the fall-through's empty predicate set as identity while lowering
+  (lower.rs:163) reads it as unconditional, so `True ∨ flag2` becomes `flag2`; pre-existing on main (control.rs:2843).
+  Fix shape: keep the binding decision tree, give the metadata typed states (no alternative / unconditional / unknown), no
+  global "empty absorbs" merge change, preserve every reachable combination (c∧d, c∧¬d, ¬c∧d, ¬c∧¬d; d=c and d=¬c exact).
+  Classification: A not rosterable; B prometheus/traefik plausible R32 may-alias regressions, filebeat unexplained, VPA is
+  an R29 boundary question (its webhook helper uses `lookup`, why3.tsv labels the rows APPROX); C rosterable as exposed
+  pre-existing gaps; D needs per-row proof. Landing shape: R36 on W1, order W4 → k8s → W1 kept. The W1 builder was sent
+  the review to verify the exact-loss claim with a fragment dump and to widen the R36 red tests to astra's boundary
+  matrix; no fix before sol's review is merged into the R36 brief. Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
