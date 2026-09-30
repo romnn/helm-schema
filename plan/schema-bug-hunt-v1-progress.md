@@ -7325,8 +7325,32 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   20260930T174500-e7223302 (`review-k8s-rework9-{astra,sol}.md`, to be collected by the next session if this one
   has ended). Landing order stays W4 (10) → k8s (11) → W1 (12). Orchestrator.
 
-Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
-review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
-roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
-rules: the schema must pass `helm lint` on the raw root values.yaml as well as `helm template`;
-every fix lands with a minimal red-then-green regression test.
+- 20:21 (Sep 30) — **W4 rework 11 = REWORK ×2; rework 12 (R58–R61) dispatched; session 3 ends with the
+  hand-off rewritten and landing 10 STAGED BUT NOT LAUNCHED (user decision, 19:55).** Re-checks of 0376512a/4fc19662
+  saved as `round8/review-w4-rework11-{astra,sol}.md` (astra follow_up 7422b55d turn 6, sol(6.1) follow_up
+  419cfbc0 turn 4): astra P1 R58 the operand depth bound in tpl_programs.rs:244/:348 turns an unrecognised program
+  into a missing-callable claim — grafana/spinnaker-style `include (((((print "x"))))) .` renders under Helm, main
+  accepts, rework 11 rejects (a corpus false rejection, not the "no corpus cell" residual the hand-off claimed);
+  R59 `{ include (include "missing" .) . }` must still reject (the literal-named missing include is inside the
+  computed operand); R60 `and (not (not true)) …` nested `not`; R61 an actual CR and a spelled `\r` inside a
+  double-quoted literal (tpl_programs.rs:31). Sol P2 = the same depth bound. Brief `round8/brief-w4-rework12.md`:
+  the negative claim becomes a positive pattern over recognised forms, everything else UNKNOWN (never a claim from
+  a complement); builder a4a462316266893c4 resumed at 20:17 and keeps working after this session ends; hand-back in
+  `round8-w4-evidence/rebase/r12/handoff.md` + `final-v13.patch`. Landing 10: clone `round8-landing10` branch
+  landing-10 c6f9f663 = main + 51 W4 commits (tip 4fc19662; superseded by the verdict, re-stage on the r12 tip);
+  `runner/landing-10.env` committed as bd9a486 in the runner repo (staged, header names 4fc19662; NOT launched — the
+  user asked that the chain be the first step of the next session, not a 3-hour run started at hand-off time).
+  Hand-off §6 of `plan/schema-bug-hunt-v1-round8-handoff.md` rewritten with the full map (main 87423444 / code
+  b51c8589; landing order W4 → k8s → W1 → frontend 2.2; builders, clones, tips, evidence, review ids, queued items,
+  hazards) and the verbatim resume prompt for session 4. Strict closures unchanged: 4/83 (F17, F30, F54, F77).
+  Still running at hand-off: W4 rework 12 (a4a462316266893c4), W1 rework 8 (ae88c76cb6bda5467, 5246c574 wip), the
+  k8s rework-9 reviews d3cb7d38/e7223302. Orchestrator.
+
+Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
+d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
+re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
+commit `landing-10.env`, then launch the chain; first run
+`LANDING_ENV=/Volumes/T7/dev/round8/runner/landing-10.env ./run-landing.sh dump` inside the
+`for s in dump unit lint battery integration sweep finalize` loop from the hand-off. Then k8s (landing 11) rebases
+onto the new main, then W1 (landing 12). Standing rules: the schema must pass `helm lint` on the raw root
+values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
