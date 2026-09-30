@@ -7205,6 +7205,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   battery-v14 status battery=100, fixture_diff=1, size_table=1, moves_vs_main=0 — to be explained in its
   hand-back; W1 on R29–R31). The two W1 reviews (Codex account) were unaffected and are running. Orchestrator.
 
+- 14:16 (Sep 30) — **Correction to the 13:55 entry: the builders never stalled.** Subagent transcript timestamps are
+  UTC; the "11:54:5x last events" were 13:54 local, i.e. the moment of the check. Only the orchestrator session
+  idled (11:10 → ~13:50, the 11:44 wakeup fired late); the two nudges were harmless ("resume" on active agents).
+  Now: W4 replacement at 482f42f8 (nacos promoted out of QUARANTINED_FALSE_REJECTIONS) running its second
+  battery under round8-w4-r9-target; W1 at dac71faa on R29–R31; both W1 reviews in turn 2. Memory updated:
+  JSONL timestamps are UTC like agentmux run ids. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
