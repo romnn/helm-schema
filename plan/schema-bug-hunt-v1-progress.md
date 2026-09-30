@@ -7133,6 +7133,28 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   corpus dump and W1's rework-7 battery + Rust prober all run at once; CPU contention only, nothing restarted.
   Disk 107 GB. Orchestrator.
 
+- 07:11 (Sep 30) — **LANDING 9 LANDED: main = b51c8589** (`git merge --no-ff landing-9`; components F1 global values
+  root + authoring policy v2 + Helm two-pass dependency-root model + policy-attributed battery verdict (F1 tip
+  a274a68d, 16 commits), K17 composed-probe reachability (k8s 2a9a6bf8), cell_matrix rework 3 (74d22474), the
+  catalog commit (F69 ×3, okteto, promtail F54 → Fixed; 8 F1 `*-global-image-registry` rows → Fixed(Accepts);
+  nginx-ingress → KnownFalseRejection (D1); common repinned Accepts, still PolicyUnresolved), and the fixture
+  commit da9d1dbc adopting exactly the 156 rows of `$E/adopted.tsv` (156 files, +373 294/−358 684). Receipt
+  /Volumes/T7/dev/round8-landing9-run2/receipt.json sha256
+  f86cce7f50956d695e4710ca4098d7c9be5528599cbc4147ed55e12f31a3573f. Chain run2 on runner v6.12 (c78845e; clone
+  bb272c35; own TARGET): dump 04:56–05:03 (7 min, 205 artifacts, 156 adopted of 204), unit 05:03–05:12 (9),
+  lint 05:13–05:21 (9), battery 05:22–05:47 (26; 8 013 flips screened = 8 013 adjudicated, 77 tightenings
+  matched by Helm abort, 1 by K8s rejection, 7 673 loosenings matched by K8s validation, 25 by defaults
+  violations, 0 policy attributions, rosters exact), integration 05:48–05:57 (9), sweep 05:57–~07:05 (~68 min,
+  156 charts), finalize 07:07; "chain green". Env landing-9.env retired (runner 3b28e13); landing target removed
+  (disk 142 GB). Post-merge gates on main (one at a time, own target): fmt 0, lint 0, lint:fc/unit/integration
+  running (`round8-landing9-run2/postmerge/gates.txt`). **Strict verified closures re-tallied from the catalog by
+  the scorecard rule (every frozen witness Fixed, no unfrozen witness, ≥ 1 verdict row): 4/83 = F17, F30, F54,
+  F77.** F54 is newly closed by this landing (promtail `set-cidrs-string` → Fixed(Rejects)); F30 (1 Fixed row)
+  had been closed since the F23-4f landing but never re-tallied; F74 is size-only (18 obligations, 0 verdict
+  witnesses — not counted, per sol's gate-round-2 objection, though the old "3/83" scorecard had counted it);
+  F73/F80 CLOSED-BY-POLICY (separate); L1/L2 closed but outside the 83; F1 itself stays open (common umbrella
+  witness, nginx D1); F23 and F79 keep an unfrozen witness each; F69 keeps one KnownFalseAcceptance. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
