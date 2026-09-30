@@ -7355,6 +7355,33 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   name first). Hand-off §6 and its resume prompt patched accordingly (steps 2–4 spawn replacements instead of
   addressing ids; k8s gets a resume brief from the `brief-k8s-rework8-resume.md` pattern at landing-11 time).
   `landing-10.env` committed in the runner repo as bd9a486. Orchestrator.
+- 20:40 (Sep 30) — **W1 rework 8 CHECKPOINT (not finished): all of R29–R35 implemented per the builder; clone
+  `round8-w1` clean at 5246c574 (every step committed as `W1 rework 8 (wip): …`, zz_debug.rs deleted);
+  `rework8/handoff.md` (60 lines) is the resume file; `rework8/final-v9.patch` = diff 6f1ce577..5246c574, sha256
+  9e440e47a5ca1d8ba5f6c6e3b26faac346983f71d8feee86452eaf33b8f33d61 (checkpoint, to be regenerated).** R29: approximate
+  liveness types nothing through the declared default or a fallback literal (brief cells accepted and rendered: schema-
+  registry `kafka.sasl.existingSecret` `[]`/`false`, x509 `migration.*`, schema-registry podSecurityContext, KPS
+  admissionWebhooks); the x509 `fullnameOverride: []` collateral was a main-too bug (token claims ignored arm coverage,
+  holes.rs); 232 late regressions (bitnami metrics/pdb carriers, minecraft `rcon.enabled`, qdrant `additionalLabels`)
+  fixed before dump10 but NOT yet pinned by named tests. R30 `MetadataFieldKind::RangedEntryMap` (synapse accepted, qdrant
+  kept); R31 `merge` skips nil source members — the rework-7 claim is corrected, okteto `probe=null` WAS a genuine false
+  rejection; R32 `dig` default = may-alias without typing, computed-key `pluck` over mixed maps; R33 pinned main rebuilt
+  from b51c8589 (matrix9 360 cells; the only main-ok/final-wrong rows mg-json srcint/dstnull — cell_matrix with the K8s
+  bundle: srcint Kubernetes-invalid so the rejection is right, dstnull accepted by both); R34 harness keeps combinator
+  branches (red-r34.log); R35 roster notes. Tests: 8 gen + 2 helper-flag + whole-chart sasl red at dac71faa, green now;
+  hook and security-context-omit whole-chart tests red at 9c9ae05d; the gen harness now composes with K17 coalescing.
+  Gates on 5246c574: fmt/lint/lint:fc/ast-grep 0, nextest 1826 0, tokei 78278 (rework 7: 77908), dump10 0 (158
+  artifacts); prober dump10 vs main: 67 A→R all Helm-adjudicated correct, 0 new false rejections, 9 745 R→A;
+  test:integration 100 = 145 fixture adoptions + **4 OPEN real diffs from R29 needing review** (explain
+  redis_exporter_service_type_report_is_pinned, explain_values_json_stdout_is_parseable_for_terminal_and_multiple_paths,
+  nacos_ingress_api_version_rejection_is_attributed_to_declared_types, …_is_declined_while_an_unrelated_rejection_remains);
+  schema-only battery on dump9 100 (expected); LIVE battery on dump10 RUNNING at checkpoint (`rework8/battery10-live/
+  battery.log`, one nextest process alive at 20:39 — it may outlive the session; the replacement re-runs `bash
+  /Volumes/T7/dev/round8-w1-evidence/rework8/battery9.sh live` only if it died). Open: roster the R29 false acceptances
+  from the live battery, review the 4 diffs, wrong-rows-v8.txt, final patch. Tried and reverted: exact references keeping
+  declared-default typing (re-broke podSecurityContext, +582 A→R). Disclosure: the clone and its red worktree shared
+  `/Volumes/T7/dev/round7-f9/target` and mixed artifacts; the builder ran `cargo clean -p` on the workspace crates (14.7
+  GiB freed) and gave the worktree its own target — the checkpoint gates above were run after that. Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and

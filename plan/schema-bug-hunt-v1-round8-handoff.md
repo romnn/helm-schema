@@ -190,15 +190,18 @@ resume prompt for session 4 is at the end of this section.
   (collect with `python3 /Volumes/T7/dev/round8/collect-codex.py` or agentmux `result`). Battery on fcdcd54f fails
   exactly on the 9 W4-dependent cells (nacos `ingress.apiVersion` ×8, kps namespaceOverride); after landing 10
   merges: rebase, one clean dump, battery (zero unmatched), final-v10 → landing 11.
-- **W1 (landing 12)** — clone `/Volumes/T7/dev/round8-w1`, branch track/w1-main, rework 8 IN PROGRESS at 5246c574
-  (wip commits: okteto nil-member preimage, x509 token claims, doc backticks; gates running in
-  `round8-w1-evidence/rework8/`), target `round7-f9/target`, builder ae88c76cb6bda5467 (told at 20:22 to commit a
-  `W1 rework 8 (wip)` checkpoint + rework8/handoff.md with the exact next command; in a new process spawn a replacement
-  from `round8/brief-w1-rework8-resume.md`, same clone, same target). Brief `brief-w1-rework8.md` (R29 approximate-liveness
-  abstention with the reviewers' boundary, R30 synapse quoted annotations, R31 okteto nil source members, R32
-  `dig`/`pluck` aliases, R33 pinned main binary for the matrix, R34 battery new-reason normalisation, R35 roster
-  descriptions). Reviews on hand-back: astra follow_up 20260929T214659-bde21128 / sol(6.1) follow_up
-  20260929T214704-b7fd0b5d (fresh runs if expired; point at review-w1-rework{5,6,7}-*.md).
+- **W1 (landing 12)** — clone `/Volumes/T7/dev/round8-w1`, branch track/w1-main, rework 8 CHECKPOINTED at 5246c574
+  (clean tree, every step a `W1 rework 8 (wip)` commit), target `round7-f9/target` (the red worktree now has its own).
+  Resume file `/Volumes/T7/dev/round8-w1-evidence/rework8/handoff.md` (60 lines); checkpoint `rework8/final-v9.patch`
+  (6f1ce577..5246c574, sha256 9e440e47…). Per the builder all of R29–R35 are implemented (brief `brief-w1-rework8.md`;
+  R31 corrected: okteto `probe=null` was a genuine false rejection) and the checkpoint gates are green except FULL
+  integration: 145 fixture adoptions + 4 OPEN real diffs caused by R29 (explain redis_exporter…, explain_values_json…,
+  nacos_ingress_api_version… ×2) that need review; 232 late R29 regressions were fixed but are not yet pinned by named
+  tests; the LIVE battery on dump10 was running at hand-off (`rework8/battery10-live/battery.log`; re-run
+  `bash /Volumes/T7/dev/round8-w1-evidence/rework8/battery9.sh live` only if it died). Open: roster the R29 false
+  acceptances, review the 4 diffs, wrong-rows-v8.txt, regenerate final-v9. The builder (ae88c76cb6bda5467) is dead with
+  session 3: spawn the replacement from `round8/brief-w1-rework8-resume.md`. Reviews on the real hand-back: fresh runs on
+  both models pointed at review-w1-rework{5,6,7}-*.md and rework8/handoff.md (the old sessions bde21128/b7fd0b5d expire).
 - **Runner = v6.12** (`/Volumes/T7/dev/round8/runner`, branch runner-v3-fail-closed; c78845e adds the `authoring`
   artifact kind after landing-9 run1 refused it; v6.11 f5bc5b9 signals/lock token). `tests/run-all.sh` REQUIRES
   `GUARD_SRC` (snapshots `round8-runner-evidence/guard-src-v3..v7-target-guard.py`). Every landing: own TARGET, strict
