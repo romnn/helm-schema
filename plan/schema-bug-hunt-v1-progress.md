@@ -7103,6 +7103,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   claims at the capture→signals boundary with GuardDnf::union_absorbing. Builder messaged. agentmux follow_up
   calls blocked ~1 h this round (02:20 → 03:36). Load 29, disk 131 GB. Orchestrator.
 
+- 03:54 (Sep 30) — **F1 rework 8: LAND ×2 (astra `review-f1-rework8-astra.md`: R21 fixed, unescaping order and `/`,
+  `~1`, `""` keys verified with Helm; one pre-existing non-blocking C1 empty-key limitation noted). Landing 9
+  LAUNCHED.** Clone /Volumes/T7/dev/round8-landing9 at bb272c35 = main d196406c + 16 F1 commits (tip a274a68d) +
+  K17 (2a9a6bf8) + cell_matrix (74d22474) + catalog (three patches); env landing-9.env committed in the runner
+  repo as f452d8d (runner main f5bc5b9, v6.11); E=/Volumes/T7/dev/round8-landing9-run1, TARGET
+  round8-landing9-target; chain dump→unit→lint→battery→integration→sweep→finalize started 03:53 (lock owner pid
+  29337, step dump, token e2367f55…); load 10, disk 128 GB. Expected: 156 fixture moves adopted by the dump step,
+  every flip live-adjudicated by the battery (ALLOW_MATCHED_FLIPS=1, roster baseline f7be7ba5). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
