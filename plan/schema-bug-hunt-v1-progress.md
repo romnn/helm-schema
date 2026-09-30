@@ -7124,6 +7124,10 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   run-all. Process note: the runner should learn artifact kinds from the producer (a registry listing or a
   harness_version bump) instead of a hand-kept set — queued as a small runner item. Orchestrator.
 
+- 04:56 (Sep 30) — **Runner v6.12 committed (c78845e; run-all with guard-src-v6 exit 0: 11 suites, 90 unit) and
+  landing 9 RELAUNCHED as run2** (E=/Volumes/T7/dev/round8-landing9-run2, same clone bb272c35, same TARGET; the
+  env's run1 note records the refusal). Load 12. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
