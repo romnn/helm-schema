@@ -7291,6 +7291,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   inputs change, so a fresh dump + battery + matrix v12 follow. Landing-10 clone stays staged (re-staged on 9bdeabda
   as 4ae980a4; will be re-staged again). W1 rework 8 and k8s K18/K19 continue. Orchestrator.
 
+- 18:16 (Sep 30) — **User instruction (18:10): finish landing the work in progress, then stop with a hand-off and a
+  resume prompt.** Plan: landing 10 (W4) goes through rework 11's re-check, the chain and the merge; W1 (rework 8)
+  and k8s (K18/K19) builders were told to hand back complete or as a checkpoint with the exact next command; no new
+  tracks or review rounds beyond recording hand-backs. W4 rework 11 is already committed (0376512a: each callable
+  operand bounded, CR-bearing raw literals unknown, nested forced and/or) and its battery-v16 pipeline is running
+  (lint:fc/ast-grep/tokei/unit/dialect green so far). Load 22, disk 128 GB. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
