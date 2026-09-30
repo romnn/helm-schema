@@ -7476,6 +7476,28 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `testdata/provider-bundle/kubernetes-json-schema-cache/default/v1.35.0/endpoints-v1.json` into round8-w1; its
   removal was denied to the builder and it stays untracked (never to be committed). W4: the replacement builder
   re-launched battery-v17 on 1e3c2bdf (in progress). Orchestrator.
+- 22:06 (Sep 30) — **W4 rework 12 handed back on 1e3c2bdf: battery-v17 chain GREEN, but the builder itself shows the totality
+  claim behind the complement is NOT exact (one contrived false rejection); fresh re-checks dispatched on both
+  models and rework 13 (positive pattern) started in parallel.** Hand-off `round8-w4-evidence/rebase/r12/handoff.md`
+  (FINAL, 59 lines), `final-v13.patch` sha256 35c7f3d7b0ee1249a807332b20efc36ece33772689f422da8de5ffef557219cf. Gates
+  on 1e3c2bdf: fmt/lint/lint:fc/ast-grep/tokei (78 786, +2 094 for the track) 0, nextest 1761/1761, dialect 2/2, FULL
+  integration 201 = 160 fixture-equality only (a stale 0-byte `.cache/corpus-generation` producer lock from the killed
+  run caused a first 201 and was removed), dump 205 artifacts / verify / Go-regexp (9 984 patterns) / helmsweep 0, live
+  battery `1 test run: 1 passed`, 0 unmatched (28 false-acceptance candidates all already in the roster), matrix v13
+  exactly the r13 cells (d1–d5, g11/g12, s15–s18 ACCEPT and render; i1, t1, q1–q3 REJECT and abort; o12
+  `x{{ include(print "foo") . }}` REJECT → ACCEPT = main, a missed parse abort). 182 moves; openebs Helm-ready 4 608 728 B
+  largest. Totality (hand-off section): a lexed program IS claimed missing without any non-callable literal when
+  include/template is followed by a character literal, an identifier/keyword/number, `}}` or a glued literal; Helm aborts
+  on all of those except a zero-arg call naming a template "" or "\n" (print/println …) — witness chart with `{{ define
+  "" }}`: `x{{ include print . }}` renders, r13 REJECTS, main accepts (`witness-empty-name.txt`); `include "" .` also
+  rejected because `callable_names()` misses the empty-named define (registry gap). Orchestrator decision: the complement
+  goes; rework 13 (`brief-w4-rework13.md`) = R62 the claim is the POSITIVE pattern (include/template + blanks + a string
+  literal naming no callable; everything else UNKNOWN; zero-arg form only with a proving Helm cell), R63 the empty-name
+  registry gap fixed structurally or recorded, R64 o12 documented residual; fresh dump + battery-v18 + matrix v14, separate
+  commits. Re-checks (fresh runs, told about rework 13): astra 20260930T200559-1f7d98ff, sol(6.1)
+  20260930T200617-bf9d7d63 → `review-w4-rework12-{astra,sol}.md`; asked to adjudicate the totality list, the exactness of
+  the positive pattern, the zero-arg form, R59–R61 adversarially, and to answer LAND / LAND-after-rework-13 / REWORK.
+  Landing 10 stays staged (clone at c6f9f663) until the verdicts. Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
