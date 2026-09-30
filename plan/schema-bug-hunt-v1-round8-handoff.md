@@ -170,7 +170,9 @@ resume prompt for session 4 is at the end of this section.
   missing include inside a computed operand must still reject; R60 nested `not`; R61 actual CR / spelled `\r` in
   double-quoted literals. Brief `brief-w4-rework12.md`; builder a4a462316266893c4 (replacement, clone
   `round8-w4-r9`, target `round8-w4-r9-target`, evidence `round8-w4-evidence/rebase/r12/`, `final-v13.patch`) was
-  resumed on it at 20:17 and keeps working after this session ends. Re-check reviewers: astra follow_up
+  resumed on it at 20:17 and told to commit a `W4 rework 12 (wip)` checkpoint + r12/handoff.md at 20:22; it lives in
+  session 3's process — in a new process spawn a replacement from `round8/brief-w4-rework12-resume.md` (same clone, same
+  target). Re-check reviewers: astra follow_up
   20260929T124542-7422b55d / sol(6.1) follow_up 20260930T001709-419cfbc0 (24 h expiry — likely expired by the
   time you resume: start FRESH runs pointed at review-w4-rework{8,9,10,11}-*.md and the r12 hand-off). On LAND ×2:
   re-stage the clone, update the env header, commit, launch the chain (command below), merge `--no-ff`, post-merge
@@ -190,8 +192,9 @@ resume prompt for session 4 is at the end of this section.
   merges: rebase, one clean dump, battery (zero unmatched), final-v10 → landing 11.
 - **W1 (landing 12)** — clone `/Volumes/T7/dev/round8-w1`, branch track/w1-main, rework 8 IN PROGRESS at 5246c574
   (wip commits: okteto nil-member preimage, x509 token claims, doc backticks; gates running in
-  `round8-w1-evidence/rework8/`), target `round7-f9/target`, builder ae88c76cb6bda5467 (told to hand back complete
-  or as a checkpoint with the exact next command). Brief `brief-w1-rework8.md` (R29 approximate-liveness
+  `round8-w1-evidence/rework8/`), target `round7-f9/target`, builder ae88c76cb6bda5467 (told at 20:22 to commit a
+  `W1 rework 8 (wip)` checkpoint + rework8/handoff.md with the exact next command; in a new process spawn a replacement
+  from `round8/brief-w1-rework8-resume.md`, same clone, same target). Brief `brief-w1-rework8.md` (R29 approximate-liveness
   abstention with the reviewers' boundary, R30 synapse quoted annotations, R31 okteto nil source members, R32
   `dig`/`pluck` aliases, R33 pinned main binary for the matrix, R34 battery new-reason normalisation, R35 roster
   descriptions). Reviews on hand-back: astra follow_up 20260929T214659-bde21128 / sol(6.1) follow_up
@@ -210,7 +213,10 @@ resume prompt for session 4 is at the end of this section.
   pointed at the old transcript). Runs expire 24 h. Registry `round8/codex-runs.tsv`. A content filter once stopped a
   run (89e63fe7): rephrase neutrally ("render-failure claims"), never escalate. agentmux calls can block up to an
   hour. Subagent JSONL timestamps and agentmux run ids are UTC (local −2 h).
-- **Builders (native Opus subagents, resumed by SendMessage):** W4 a4a462316266893c4 (active), W1 ae88c76cb6bda5467
+- **Builders (native Opus subagents; an agent id is addressable ONLY inside the session process that spawned it — all
+  ids below belong to session 3 and are dead in a new process; spawn replacements from the resume briefs
+  `round8/brief-w4-rework12-resume.md`, `round8/brief-w1-rework8-resume.md`, and write one for k8s from the
+  `brief-k8s-rework8-resume.md` pattern when landing 11 starts; a dead builder's clone and target are reused as-is):** W4 a4a462316266893c4 (active), W1 ae88c76cb6bda5467
   (active), k8s a21b0ee7640a3112b (idle), runner/guard a67c3c0781e99d708 (idle), F1 a1fb0ea167e8d1a85 (done), old W4
   a8dd06d301e7c2760 (retired; its clone `round8-w4-rebase` holds 43 uncommitted fixture edits, ignore). A builder
   whose transcript ends on a `tool_use` with no result and no live process is blocked on a permission prompt:
@@ -244,8 +250,9 @@ Resume as the ORCHESTRATOR (Fable) of the helm-schema `schema-bug-hunt-v1` campa
 plan/schema-bug-hunt-v1-round8-handoff.md §6 (rewritten at the end of session 3 — the map, incl. this prompt); the
 last ~40 entries of plan/schema-bug-hunt-v1-progress.md; /Volumes/T7/dev/round8/PROTOCOL.md; CLAUDE.md; the skills
 landing-workflow, acceptance-battery, corpus-fixtures, verification-gates; the memory index. Rules: Claude builders
-only as native Opus subagents (resume the agent ids in §6 with SendMessage; a builder blocked on a permission prompt
-gets a replacement from a resume brief); every review and design to BOTH Codex reviewers via agentmux (astra =
+only as native Opus subagents (the agent ids in §6 belong to session 3's process and are dead in a new one: spawn
+replacement builders from round8/brief-w4-rework12-resume.md and round8/brief-w1-rework8-resume.md, reusing their clones
+and targets; write a k8s resume brief from the brief-k8s-rework8-resume.md pattern when landing 11 starts); every review and design to BOTH Codex reviewers via agentmux (astra =
 gpt-6-astra, sol = gpt-6.1-sol, never gpt-6-sol; effort xhigh, sandbox read_only, cwd /Volumes/T7/dev; a follow_up
 cannot change models; runs expire after 24 h); merge findings into a brief before the builder resumes; landings run
 the runner chain (dump→unit→lint→battery→integration→sweep→finalize) in the staged clone with its own env and target
@@ -255,9 +262,10 @@ ledger entry (compose entries with datetime.now() in python, insert before the t
 (4/83 = F17, F30, F54, F77). Do this first: (1) collect pending Codex results (`python3
 /Volumes/T7/dev/round8/collect-codex.py` or agentmux `result`): k8s reviews 20260930T174441-d3cb7d38 (astra) and
 20260930T174500-e7223302 (sol) → save as round8/review-k8s-rework9-{astra,sol}.md, record in the ledger. (2) W4
-(landing 10): check builder a4a462316266893c4 for its rework-12 hand-back (brief round8/brief-w4-rework12.md
-R58–R61; evidence /Volumes/T7/dev/round8-w4-evidence/rebase/r12/handoff.md, final-v13.patch + sha256); if not yet
-back, SendMessage it for status; on hand-back re-check with FRESH Codex runs (both models) pointed at
+(landing 10): read /Volumes/T7/dev/round8-w4-evidence/rebase/r12/handoff.md and `git -C /Volumes/T7/dev/round8-w4-r9
+log --oneline 4fc19662..HEAD` (brief round8/brief-w4-rework12.md R58–R61); unless a complete hand-back with
+final-v13.patch + sha256 and a green battery-v17 exists, spawn the replacement builder from
+round8/brief-w4-rework12-resume.md and wait for its hand-back; on hand-back re-check with FRESH Codex runs (both models) pointed at
 review-w4-rework{8,9,10,11}-*.md and the r12 hand-off; on LAND ×2: re-stage the clone
 (`git -C /Volumes/T7/dev/round8-landing10 fetch /Volumes/T7/dev/helm-schema +main:main && git reset --hard main
 && git fetch /Volumes/T7/dev/round8-w4-r9 +w4-rebase:w4-rebase && git cherry-pick main..w4-rebase`), update the
@@ -272,9 +280,11 @@ dir), on "chain green" adopt exactly `$E/adopted.tsv` (column 1 = paths) in the 
 with components + receipt sha256 from finalize, run the post-merge gates on main one at a time (fmt, task lint,
 lint:fc, nextest workspace, test:integration; CARGO_TARGET_DIR=/Volumes/T7/dev/helm-schema/target), retire the env,
 remove the landing target, rewrite §6, re-tally closures from the catalog. (3) k8s (landing 11): after landing 10
-merges, SendMessage a21b0ee7640a3112b to rebase k8s-rebase onto the new main, one clean dump, live battery (zero
-unmatched), final-v10, then the reviews' verdict on the parked zalando fix. (4) W1 (landing 12): builder
-ae88c76cb6bda5467 on rework 8 (round8/brief-w1-rework8.md); on hand-back reviews with fresh runs pointed at
+merges, spawn a k8s builder (resume brief from the brief-k8s-rework8-resume.md pattern; clone round8-k8s-r8, target
+round8-k8s-r8-target, read rework9/handoff.md) to rebase k8s-rebase onto the new main, one clean dump, live battery (zero
+unmatched), final-v10, then the reviews' verdict on the parked zalando fix. (4) W1 (landing 12): read
+/Volumes/T7/dev/round8-w1-evidence/rework8/handoff.md and the clone's log; unless rework 8 is complete, spawn the
+replacement from round8/brief-w1-rework8-resume.md (brief round8/brief-w1-rework8.md); on hand-back reviews with fresh runs pointed at
 review-w1-rework{5,6,7}-*.md. (5) Keep disk > 80 GB (prune idle targets), load < ~40, and record every decision in
 the ledger. Schedule wakeups (ScheduleWakeup, 20–45 min) while things run; never launch new tracks without the
 hand-off's queue.

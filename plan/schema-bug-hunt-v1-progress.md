@@ -7346,6 +7346,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Still running at hand-off: W4 rework 12 (a4a462316266893c4), W1 rework 8 (ae88c76cb6bda5467, 5246c574 wip), the
   k8s rework-9 reviews d3cb7d38/e7223302. Orchestrator.
 
+- 20:23 (Sep 30) — **Correction to the hand-off: builder agent ids do not survive the session process.** The
+  W4 (a4a462316266893c4) and W1 (ae88c76cb6bda5467) builders are native subagents of session 3; a new session cannot
+  SendMessage them. Both were told at 20:22 to commit a `… (wip)` checkpoint and rewrite their track handoff.md with
+  the exact next command, then continue until the process ends. Resume briefs for replacement builders written:
+  `round8/brief-w4-rework12-resume.md` and `round8/brief-w1-rework8-resume.md` (reuse the same clone and target; a
+  dead builder is not a blocked one; uncommitted edits are the interrupted step and get committed under the wip
+  name first). Hand-off §6 and its resume prompt patched accordingly (steps 2–4 spawn replacements instead of
+  addressing ids; k8s gets a resume brief from the `brief-k8s-rework8-resume.md` pattern at landing-11 time).
+  `landing-10.env` committed in the runner repo as bd9a486. Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
