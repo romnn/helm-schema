@@ -146,93 +146,65 @@ gates only, drop the stray mongodbcommunity hunk), regexp (`round8-regexp-eviden
   from different binaries; the Claude work account weekly limit (reset Oct 2, 01:00) kills agents
   mid-turn — resume them with SendMessage, their context survives.
 
-## 6. Status (rewritten 2026-09-28 23:45 local, session 3 — resume here)
+## 6. Status (rewritten 2026-09-30 07:12 local, session 3 — resume here)
 
 Read the ledger entries from "22:15 (Sep 27) — Session 2" onward for the detail; this section is the map.
 
-- **main code = cb42c017** (landing 6 = frontend phase 1 merged 22:52; before it landing 5 d42a1f33, landing 4
-  4b5db9c3, `fix(test)` 9716e080; lint + unit green on cb42c017; plan-only commits since). Nothing pushed. Strict
-  verified closures 3/83 (landing 6 closes none of the 83; W1 → 6, W4/F75 → 9 are the next movers).
-- **Landing 6 LANDED** as cb42c017 (receipt `/Volumes/T7/dev/round8-landing6-run1/receipt.json` sha256 68285d51…,
-  v6.6, own target, 0 fixtures). Hazards learned today: `mise trust` every fresh clone; one cargo target per clone
-  AND per worktree (cargo aliases artifacts between checkouts with the same relative layout).
-- **Concurrency (user 22:50/22:55: optimise landings per token):** keep ~3 compile-heavy builders; heavy set now =
-  W1 rework 6, W4 rework 5, k8s rework 3. PAUSED with checkpoints: F1 (`round8-f1` 0b443ab0 rebased onto 9716e080,
-  `rebase/state.md` has the exact next command) and frontend phase 2 (plan `round8-frontend-evidence/phase2/plan.md`
-  under Codex cross-check; worktree `round8-frontend-phase2` exists, no code). Resume them when a heavy slot frees.
-- **F10** (`frontend-main-f10` 987bb4f6, one fixture) and **partial-kind** (98cf9a8b, superseded by phase 2/3.2 if the
-  plan lands) are parked side branches.
-- **Landing 4 LANDED** as 4b5db9c3 (receipt `/Volumes/T7/dev/round8-landing4-run1/receipt.json` sha256
-  76f4a5aa…, v6.6, 0 fixtures adopted) after a `cargo clean -p` of all workspace crates: landing-4.env and
-  landing-5.env shared `TARGET=/Volumes/T7/dev/round7-integrate/target` and cargo had aliased landing 5's
-  artifacts (ledger 14:13). Rule from now on: every landing gets its own `TARGET=/Volumes/T7/dev/round8-landing<N>-target`;
-  runner v6.7 (rework 1 in progress) enforces it. Lock busy = exit 75: wait, never touch `round8/heavy.lock`.
-- **Landing 5 (wrappers) LANDED** as d42a1f33 (receipt `/Volumes/T7/dev/round8-landing5-run1/receipt.json`
-  sha256 7b379a7e…; 0 fixtures adopted).
-- **Runner = v6.7 checked out** (`/Volumes/T7/dev/round8/runner` 9e3f47b: merge 2309bc3 of runner-v6.7 423a6148, LAND
-  from both after 3 rework rounds; landing-4/5/6 env files `LANDING_FINISHED`). Every new landing: own
-  `TARGET=/Volumes/T7/dev/round8-landing<N>-target`, owner marker, receipt /9, env grammar (`NAME=VALUE`, quoted
-  values, ASCII only). **v6.8** (readable `helm-schema lint` diagnostics; branch runner-v6.8 rework 2 = 2e968a72)
-  under review; merge between chains on LAND. Disk: 163 GB free
-  at 16:11 after removing the dormant build caches round7-f13/target and round7-d3f23/target (finished tracks).
-- **Candidates and their state** (evidence dirs hold `handoff.md` + `final*.patch`; reviews in
-  `/Volumes/T7/dev/round8/review-<track>-<round>-{sol,astra}.md`; briefs `brief-<track>-rework<n>.md`):
-  - W1 (`round8-w1` `track/w1-main`, rework 6 in progress off fdb4f8c3, `brief-w1-rework6.md`: argo-workflows
-    guard loss, pluck/dig/root-constructed mutation escapes, helper-argument mutations, stale empty dict in
-    merge, concat nonemptiness, merge operand requirement, rebuilt corpus probe; R1 abstention accepted, R7
-    withdrawn); side branch `track/w1-unset` parked (worktree `round8-w1-unset`); 51 corpus charts drift
-    (battery adjudicates); first fixture-moving landing → needs the roster-baseline confirmation
-    (recommendation: keep f7be7ba5) and a rebase onto main.
-  - Frontend phase 1: LAND from both on e584c2d3 (rework 4) → landing 6 on the chain (above). Side work in
-    worktrees: `round8-frontend-f10` (F10) and `round8-frontend-else` (inline `{{else}}` false rejection, WIP).
-  - W4/F75 (`round8-w4` `w4-main`, rework 4 in progress off f493bb14, `brief-w4-rework4.md`: anchor token and
-    payload modelled separately, provider patterns applied to the payload via parsed regex structure, empty
-    intersection kept after guard union); R5/R7 confirmed; the 153-chart blast radius is endorsed by both as the
-    right scope (+2–4 % schema size); BASE still c816e318 — rebase needed (worktree `round8-w4-rebase`, stale).
-  - k8s D1–D3 (`round8-k8s` `k8s-main`, rework 2 in progress off c42bfa6a, `brief-k8s-rework2.md`: DECISION (b)
-    conditional provider contracts for values-driven KubeVersion guards, whole-condition `Has` decoding,
-    Masterminds `||` semantics, prerelease-preserving version, K4 missing-else, comparator red evidence);
-    BASE c816e318 — rebase needed (`k8s-rebase` in a separate worktree). D2/D3 endorsed by both.
-- **Builder agents** (native subagents of this session; resume with SendMessage): W1 `ae88c76cb6bda5467`,
-  frontend `a69f98e6d3af1e500`, W4 `a8dd06d301e7c2760`, k8s `a1ff77c400aeaa4df`, runner `a67c3c0781e99d708`
-  (v6.7/v6.8), F1 `a1fb0ea167e8d1a85` (started 22:25 from the checkpoint, `brief-f1-resume.md`); done: wrappers
-  `ac59ade2d4da19ac0`, scratch `a159f489c3a3fd5c0`. If the session itself is gone, start fresh builders from each track's `handoff.md` +
-  brief.
-- **Codex runs** (follow_up keeps context; runs expire after ~24 h — the first k8s astra run did): W1
-  92580cac/416b8635, frontend 7660883f/5d5c270b, scratch be7d3a37/908ce142, runner 73d3081f/6b442c0c,
-  wrappers 7a44129c/b7481bb6, W4/F75 20260928T034515-68054652/-aeb245af, k8s 20260928T133519-3677d240 (sol) /
-  20260928T133601-e1cee4f7 (astra). Answers are read from `turns/<latest>/last-message.md` (the transcript
-  file grows only after a `result` call); `collect-codex.py` saves and registers them (`codex-runs.tsv`).
-- **User decisions**: personal Claude account only, Claude via native subagents, agentmux for Codex only;
-  keep ~3 compile-heavy implementors running (cap, 22:50 Sep 28: more compete for the machine; queue new heavy
-  work on hand-back when ≥3 are active; reviews/plans are free); spend the weekly quota by its reset and resume after
-  (reset happened 10:00 local Sep 28); roster baseline: DECIDED 22:40 Sep 28 (orchestrator under the user's delegation): keep f7be7ba5 for the
-  whole campaign; fixture-moving landings may proceed.
-- **Process improvements (user mandate 23:50 Sep 28: chase these as first-class work; owner in brackets):**
-  1. Shared cell-matrix tool in `helm-schema-test-support`: a TSV of (chart, override JSON, kube-version) → one row per
-     cell with verdicts from N CLI binaries + Helm 4.2.3 render + kubeconform strict, emitted as the `matrix-*.txt`
-     files builders and reviewers hand-write today [runner builder: proposal; then a builder slot].
-  2. Builders run the schema-only round-74 battery (baseline = their base commit) over their moved fixtures before
-     hand-back instead of ad-hoc Python probes (W1's probe2.py coalesced wrongly) [document in corpus-fixtures skill].
-  3. Adjacent-spelling cell bank per feature class (anchors, comments, flow indicators, quoting, trims, mid-line
-     boundaries) as reusable test fixtures, run before hand-back — most REWORK rounds today found one adjacent cell
-     [W4/frontend builders after their tracks land].
-  4. Target-dir owner guard for builders: generalise the runner's `.landing-owner` marker into a `task` pre-check that
-     refuses to build when the target was last built from another checkout path [runner builder: proposal].
-  5. Family-witness gate: size checks must apply main's `$defs` shortening (F1 builder found 5 spurious F74 rows)
-     [F1 builder, in its track].
-  6. Codex re-checks of a single item at `high` effort instead of `xhigh` [orchestrator, immediate].
-  7. Every fresh clone: `mise trust`; every worktree: own target — both now in memory and the runner [done].
-  8. helm-schema feature: `helm-schema explain <chart> <values-path>` — print the evidence behind a path's emitted
-     schema (source rows with file:line, guards/arm predicates, provider documents and pointers, overlay ownership,
-     abstention reasons). Reviewers and builders currently trace this by reading source; a typed provenance dump
-     from the IR/gen phases (no new heuristics, just exposing the facts the compiler already has) would shorten
-     every adjudication round [design cross-check first; builder slot after W1/W4].
-  User rule (23:55 Sep 28): do not accept a bad process, bad output, or a genuinely useful missing feature that
-  slows us down when it could just be implemented.
-- **Follow-ups queued**: sol's scratch P2 (nested `request` paths in copied records); wrappers P3s (scratch
-  path in Helm messages, raw error formatting, Windows runtime test); the airflow/oncall `\u` URL pattern
-  emitter defect; `if $d`/`empty $d` after `unset` (pre-existing); `required (dict)`/`(list)` false
-  rejection on main (hole_effects.rs:150); k8s items outside the spec (forward-incompatible layout,
-  cache-write failure, inference trusting a partial inventory, CRD online probe repeats without the memo);
-  the runner's readable-log step should call `helm-schema lint` now that expand-defs is gone.
+- **main code = b51c8589** (landing 9 merged 2026-09-30 07:08; before it landing 8 2f9e60d4 = frontend phase 2.1,
+  landing 7 58bf21a3 = explain C1 + cell_matrix harness + docs, landing 6 cb42c017 = frontend phase 1; plan-only
+  commits between). Nothing pushed. **Strict verified closures 4/83 = F17, F30, F54, F77** (scorecard rule: every
+  frozen witness `Fixed`, no unfrozen witness, ≥ 1 verdict row); F74 is size-only (not counted); F73/F80
+  CLOSED-BY-POLICY (reported separately); L1/L2 closed but outside the 83. F1 stays open (`common` needs an umbrella
+  witness; nginx-ingress is a KnownFalseRejection filed against D1).
+- **Landing 9 LANDED** (receipt `/Volumes/T7/dev/round8-landing9-run2/receipt.json` sha256 f86cce7f…, runner v6.12,
+  own target, 156 fixtures adopted, 8 013 flips all matched): F1 global root + authoring policy v2 + Helm two-pass
+  dependency-root model + policy-attributed battery verdict (attribution = the candidate IS the assert regeneration
+  AND the annotate regeneration accepts the document outright AND explain reports the rejected members unread; the
+  baseline is not consulted; no violation identity), K17, cell_matrix rework 3, catalog promotions. Run1 failed at
+  dump because the runner did not know F1's sixth artifact kind `authoring` — fixed in v6.12; rule: a producer
+  registry change needs a runner check before the chain.
+- **Runner = v6.12** (`/Volumes/T7/dev/round8/runner` 3b28e13; v6.11 f5bc5b9 LAND ×2: signals held until the attempt
+  id is known, recovery by the invocation's lock token; v6.12 c78845e: `authoring` kind). `tests/run-all.sh`
+  REQUIRES `GUARD_SRC` (snapshots `round8-runner-evidence/guard-src-v3..v7-target-guard.py`). Every landing: own
+  `TARGET=/Volumes/T7/dev/round8-landing<N>-target`, strict env grammar, retired envs quote
+  `LANDING_FINISHED='… (landed; target retired)'`, a runner change → fresh evidence dir.
+- **Tooling:** target guard PARKED at 163bd01a (branch target-guard in `round8-target-guard`, deletion-style rework 6
+  still REWORK ×2 — `-F` masking, relative CARGO_HOME, `HOME` env patches, `[target.*].runner`; no further rounds
+  unless the user reopens it); cell_matrix landed (reviewer command in `round8-runner-evidence/cell-matrix-sample`,
+  `--scratch` takes a pre-existing writable dir); explain C1 landed; frontend 2.1 landed, **2.2 starts only after
+  W1/W4/k8s land** (builder paused).
+- **Landing order (unchanged): W4/F75 = landing 10 → k8s D1–D3 = landing 11 → W1 = landing 12 → frontend 2.2.**
+  One fixture-moving landing at a time; each candidate rebases onto the new main before its final dump + battery.
+- **W4/F75** (`round8-w4-rebase`, branch w4-rebase, target `round8-w4-rebase-target`; builder a8dd06d301e7c2760):
+  rework 9 in progress on `brief-w4-rework9.md` R40–R49 (Traefik sound-subset lowering with "never negate S";
+  synapse pretty schema over Helm's 5 MiB limit — the size gate checks the Helm-ready form the sweep ships, the
+  pretty sizes are tabled; R46 rebuild the `tpl` failure claims on the parsed program, no regex scan; `$` rebinding;
+  regex-dialect abstentions; Unicode line breaks; `\u` → `\x` in the urlParse pattern). It is rebasing onto
+  b51c8589, then `rebase/battery-v14/run.sh`. Reviews on hand-back: astra follow_up 7422b55d, sol(6.1) follow_up
+  419cfbc0 (`review-w4-rework8-{astra,sol}.md`).
+- **k8s D1–D3** (`round8-k8s-rebase`, branch k8s-rebase 2a9a6bf8, K17 already landed): waits for W4; then rebase +
+  K16 → fresh reviews → landing 11. Its 8 nacos cells become attributable once W4's R25 lands (annotate accepts).
+- **W1** (`round8-w1`, track/w1-main, target `round7-f9/target`; builder ae88c76cb6bda5467): rework 7 in progress on
+  `brief-w1-rework7.md` R21–R28 (26 measured false rejections vs main; the two AST shortcuts; 11 false acceptances
+  to fix, 10 to roster); rebase onto b51c8589, one clean dump, schema-only + live battery, Rust prober only
+  (K17 coalescing). Reviews on hand-back: astra follow_up bde21128, sol(6.1) follow_up b7fd0b5d.
+- **Codex models (user, 2026-09-29 22:0x): astra = `gpt-6-astra`, sol = `gpt-6.1-sol`, never `gpt-6-sol`.** A
+  follow_up cannot switch models: a re-check on an old sol session becomes a fresh run pointed at the old
+  transcript. Registry `round8/codex-runs.tsv`. One run was stopped by a content filter (89e63fe7): rephrase
+  ("render-failure claims", not "abort claims"), never escalate. agentmux calls can block up to an hour.
+- **Builders (native Opus subagents, resumed by SendMessage):** F1 a1fb0ea167e8d1a85 (done, F1 landed), W4
+  a8dd06d301e7c2760, W1 ae88c76cb6bda5467, runner/guard a67c3c0781e99d708 (idle; guard parked). Keep ~3 cargo-heavy
+  builders; one build at a time per builder, `uptime`-gated (load < ~40); every hand-back runs the FULL
+  `task test:integration` (chart_corpus alone hid the Traefik regression for two rounds) and the batteries.
+- **Standing decisions:** keep `assert` as the default authoring policy with policy-attributed adjudication (user
+  informed, may override); TIGHTEN is a direction, not a verdict; `values.schema.json` is output, not evidence;
+  landings per token, not per hour; the catalog states above (nginx D1, common repin) are the reviewers' accepted
+  landing-9 state.
+- **Queued items (owners to assign):** CLI default output vs Helm's 5 MiB schema-file limit (synapse, airflow, gitea,
+  kube-prometheus-stack, milvus, oncall, openebs pretty forms exceed it; Helm-ready forms do not) — product item;
+  the runner should learn artifact kinds from the producer; an umbrella witness for `common`; D1 nginx
+  `controller.mgmt usageReport` guard (report-batch-03.md:527); main's `eq`-form resourcesPreset false rejection;
+  F23/F79 unfrozen witnesses; F69's remaining KnownFalseAcceptance.
+- **Hazards:** `mise trust` every fresh clone; one cargo target per clone AND per worktree; `date` before every
+  ledger entry; concurrent Bash calls share one shell (absolute paths, no leading `cd`); `du` over T7 times out
+  under load (background it); disk sits at 90–140 GB — prune builder targets between rounds.
