@@ -7128,6 +7128,11 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   landing 9 RELAUNCHED as run2** (E=/Volumes/T7/dev/round8-landing9-run2, same clone bb272c35, same TARGET; the
   env's run1 note records the refusal). Load 12. Orchestrator.
 
+- 05:42 (Sep 30) — **Landing 9 run2: dump OK (205 artifacts, adopted 156 of 204 = exactly the expected moves), unit
+  OK, lint OK; battery running since 05:21** (lock owner pid 56727). Load 73: the landing battery, W4's rework-9
+  corpus dump and W1's rework-7 battery + Rust prober all run at once; CPU contention only, nothing restarted.
+  Disk 107 GB. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
