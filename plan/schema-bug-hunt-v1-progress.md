@@ -7281,6 +7281,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `ProviderSchemaUse::RenderedToken(YamlKind)` mechanism as its own track. `final-v11.patch` sha256 fccd4824….
   Reviews: astra follow_up 7422b55d turn 5, sol(6.1) follow_up 419cfbc0 turn 3. Orchestrator.
 
+- 17:55 (Sep 30) — **W4 rework 10: REWORK ×2 (`review-w4-rework10-{astra,sol}.md`); both ACCEPT the n16/n18 waiver
+  (pinned test-only in 9bdeabda, `final-v11b.patch` sha256 7212c3b3…) and confirm the RenderedToken debt is main's too
+  (redis-ha hostPath.path, open-webui storageClass, external-dns mountPath accepted by both).** Remaining: R55 raw
+  backtick literals judged by spelling although Go strips carriage returns (7 cells render, main accepts: CR inside a
+  helper name resolves; a CR-only literal is falsy); R56 an unknown operand consumes the rest of the action and hides
+  a later `| include "missing"` stage (Helm aborts, main rejects); R57 nested forced lazy forms (`or false (and true
+  X)`, `and true (or false X)`, `or (not true) X`) escape the bounded R52 grammar → `brief-w4-rework11.md`; generation
+  inputs change, so a fresh dump + battery + matrix v12 follow. Landing-10 clone stays staged (re-staged on 9bdeabda
+  as 4ae980a4; will be re-staged again). W1 rework 8 and k8s K18/K19 continue. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
