@@ -3199,20 +3199,6 @@
       },
       "type": "object"
     },
-    "constrains/claims@items.name+limits+requests@2": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
-    },
     "constrains/clientIP.timeoutSeconds": {
       "additionalProperties": false,
       "description": "SessionAffinityConfig represents the configurations of session affinity.",
@@ -5808,15 +5794,10 @@
       "additionalProperties": {},
       "properties": {
         "mysql": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/constrains~1args+command+env@items.name+env@items.value+87more~1integer:int32;number-of-port-to"
-            },
-            {
-              "$ref": "#/$defs/constrains~1mysql~1string;pattern-0-1-9"
-            }
-          ],
-          "description": "Container port for mysql"
+          "description": "Container port for mysql",
+          "not": {
+            "type": "null"
+          }
         }
       }
     },
@@ -6045,17 +6026,6 @@
       "type": "object"
     },
     "constrains/mysql@2": {
-      "additionalProperties": {},
-      "properties": {
-        "mysql": {
-          "description": "Container port for mysql",
-          "not": {
-            "type": "null"
-          }
-        }
-      }
-    },
-    "constrains/mysql@3": {
       "additionalProperties": {},
       "properties": {
         "mysql": {
@@ -7699,7 +7669,7 @@
       "additionalProperties": {},
       "properties": {
         "resources": {
-          "$ref": "#/$defs/constrains~1claims@items.name+limits+requests@2"
+          "$ref": "#/$defs/values~1primary.resources"
         }
       }
     },
@@ -8462,67 +8432,7 @@
       "description": "Enable persistence using Persistent Volume Claims\nref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
       "properties": {
         "subPath": {
-          "anyOf": [
-            {
-              "description": "Path within the volume from which the container's volume should be mounted. Defaults to \"\" (volume's root).",
-              "type": "null"
-            },
-            {
-              "$ref": "#/$defs/constrains~1mysql~1string@3"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern@10"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern@4"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern@9"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern@2"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern@5"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern@7"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern@8"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern@3"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern@6"
-                }
-              ],
-              "description": "Path within the volume from which the container's volume should be mounted. Defaults to \"\" (volume's root).",
-              "type": "string"
-            },
-            {
-              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-            },
-            {
-              "$ref": "#/$defs/constrains~1mysql~1string;pattern-a-za-z0-9-t"
-            },
-            {
-              "$ref": "#/$defs/constrains~1mysql~1object"
-            },
-            {
-              "$ref": "#/$defs/constrains~1mysql~1string;pattern-t"
-            },
-            {
-              "$ref": "#/$defs/constrains~1mysql~1string;pattern-null-null-null"
-            }
-          ],
-          "description": "Subdirectory of the volume to mount at"
+          "$ref": "#/$defs/values~1primary.persistence.subPath"
         }
       }
     },
@@ -9189,58 +9099,6 @@
       ],
       "description": "Override default container command on MariaDB Primary container(s) (useful when using custom images)"
     },
-    "values/anyOf/boolean;automountserviceaccounttoken-indicates-whether-a+5more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1string;pattern-true-true-true-fal"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "description": "AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.",
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql~1string;pattern-null-null-null"
-        },
-        {
-          "description": "AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.",
-          "type": "boolean"
-        }
-      ],
-      "description": "Mount Service Account token in pod"
-    },
-    "values/anyOf/integer:int32;revisionhistorylimit-is-the-maximum+5more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1mysql~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "description": "revisionHistoryLimit is the maximum number of revisions that will be maintained in the StatefulSet's revision history. The revision history consists of all revisions not represented by a currently applied StatefulSetSpec version. The default value is 10.",
-          "format": "int32",
-          "type": "integer"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql~1string;pattern-0-1-9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1mysql~1string;pattern-null-null-null"
-        },
-        {
-          "description": "revisionHistoryLimit is the maximum number of revisions that will be maintained in the StatefulSet's revision history. The revision history consists of all revisions not represented by a currently applied StatefulSetSpec version. The default value is 10.",
-          "format": "int32",
-          "type": "null"
-        }
-      ],
-      "description": "Maximum number of revisions that will be maintained in the StatefulSet"
-    },
     "values/anyOf/integer:int32;the-port-on-each+not/:t+null:int32;the-port-on-each+4more": {
       "anyOf": [
         {
@@ -9416,6 +9274,10 @@
       "format": "int64",
       "type": "integer"
     },
+    "values/metrics/string;pattern-true-true-true-fal": {
+      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
+      "type": "string"
+    },
     "values/nameOverride": {
       "anyOf": [
         {
@@ -9492,10 +9354,6 @@
       "properties": {},
       "type": "object"
     },
-    "values/object;enable-persistence-using-persistent": {
-      "description": "Enable persistence using Persistent Volume Claims\nref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
-      "type": "object"
-    },
     "values/object;map-of-string-keys": {
       "additionalProperties": {
         "anyOf": [
@@ -9560,6 +9418,146 @@
     },
     "values/passwordUpdateJob.podSecurityContext.enabled": {
       "description": "Enabled credential init job pods' Security Context"
+    },
+    "values/primary.automountServiceAccountToken": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1metrics~1string;pattern-true-true-true-fal"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mysql~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "description": "AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mysql~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mysql~1string;pattern-null-null-null"
+        },
+        {
+          "description": "AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.",
+          "type": "boolean"
+        }
+      ],
+      "description": "Mount Service Account token in pod"
+    },
+    "values/primary.containerPorts.mysql": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1args+command+env@items.name+env@items.value+87more~1integer:int32;number-of-port-to"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mysql~1string;pattern-0-1-9"
+        }
+      ],
+      "description": "Container port for mysql"
+    },
+    "values/primary.persistence.subPath": {
+      "anyOf": [
+        {
+          "description": "Path within the volume from which the container's volume should be mounted. Defaults to \"\" (volume's root).",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mysql~1string@3"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern@10"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern@4"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern@9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern@5"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern@7"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern@8"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern@3"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1not~1keywords~1pattern@6"
+            }
+          ],
+          "description": "Path within the volume from which the container's volume should be mounted. Defaults to \"\" (volume's root).",
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mysql~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mysql~1object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mysql~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mysql~1string;pattern-null-null-null"
+        }
+      ],
+      "description": "Subdirectory of the volume to mount at"
+    },
+    "values/primary.resources": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
+    },
+    "values/primary.revisionHistoryLimit": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1mysql~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "description": "revisionHistoryLimit is the maximum number of revisions that will be maintained in the StatefulSet's revision history. The revision history consists of all revisions not represented by a currently applied StatefulSetSpec version. The default value is 10.",
+          "format": "int32",
+          "type": "integer"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mysql~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mysql~1string;pattern-0-1-9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1mysql~1string;pattern-null-null-null"
+        },
+        {
+          "description": "revisionHistoryLimit is the maximum number of revisions that will be maintained in the StatefulSet's revision history. The revision history consists of all revisions not represented by a currently applied StatefulSetSpec version. The default value is 10.",
+          "format": "int32",
+          "type": "null"
+        }
+      ],
+      "description": "Maximum number of revisions that will be maintained in the StatefulSet"
     },
     "values/string": {
       "allOf": [
@@ -9734,10 +9732,6 @@
     },
     "values/string;pattern-a-za-z0-9": {
       "pattern": "^&[A-Za-z0-9_-]+$",
-      "type": "string"
-    },
-    "values/string;pattern-true-true-true-fal": {
-      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
       "type": "string"
     },
     "values/string;podmanagementpolicy-controls-how-pods": {
@@ -11161,20 +11155,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "primary": {
-          "additionalProperties": {},
-          "description": "Mariadb Primary parameters",
-          "properties": {
-            "containerPorts": {
-              "$ref": "#/$defs/constrains~1mysql@2"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -11325,71 +11305,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1networkPolicy.enabled:t"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "commonLabels": {
-                "additionalProperties": {},
-                "description": "Common labels to add to all MariaDB resources (sub-charts are not considered)",
-                "properties": {
-                  "app.kubernetes.io/instance": {
-                    "$ref": "#/$defs/values~1commonLabels.'app.kubernetes.io~1instance'"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "commonLabels": {
-                "additionalProperties": {},
-                "description": "Common labels to add to all MariaDB resources (sub-charts are not considered)",
-                "properties": {
-                  "app.kubernetes.io/name": {
-                    "$ref": "#/$defs/values~1commonLabels.'app.kubernetes.io~1instance'"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "secondary": {
-                "additionalProperties": {},
-                "description": "Mariadb Secondary parameters",
-                "properties": {
-                  "containerPorts": {
-                    "$ref": "#/$defs/constrains~1mysql@3"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "primary": {
-                "additionalProperties": {},
-                "description": "Mariadb Primary parameters",
-                "properties": {
-                  "containerPorts": {
-                    "$ref": "#/$defs/constrains~1mysql@3"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
     },
     {
       "if": {
@@ -11822,7 +11737,7 @@
                 "description": "Mariadb Secondary parameters",
                 "properties": {
                   "containerPorts": {
-                    "$ref": "#/$defs/constrains~1mysql@2"
+                    "$ref": "#/$defs/constrains~1mysql"
                   }
                 }
               }
@@ -14313,20 +14228,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "primary": {
-          "additionalProperties": {},
-          "description": "Mariadb Primary parameters",
-          "properties": {
-            "persistence": {
-              "$ref": "#/$defs/values~1object;enable-persistence-using-persistent"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -14387,6 +14288,102 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1networkPolicy.enabled:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "commonLabels": {
+                "additionalProperties": {},
+                "description": "Common labels to add to all MariaDB resources (sub-charts are not considered)",
+                "properties": {
+                  "app.kubernetes.io/instance": {
+                    "$ref": "#/$defs/values~1commonLabels.'app.kubernetes.io~1instance'"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "primary": {
+                "additionalProperties": {},
+                "description": "Mariadb Primary parameters",
+                "properties": {
+                  "containerPorts": {
+                    "$ref": "#/$defs/constrains~1mysql"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "commonLabels": {
+                "additionalProperties": {},
+                "description": "Common labels to add to all MariaDB resources (sub-charts are not considered)",
+                "properties": {
+                  "app.kubernetes.io/name": {
+                    "$ref": "#/$defs/values~1commonLabels.'app.kubernetes.io~1instance'"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "primary": {
+                "additionalProperties": {},
+                "description": "Mariadb Primary parameters",
+                "properties": {
+                  "containerPorts": {
+                    "required": [
+                      "mysql"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "secondary": {
+                "additionalProperties": {},
+                "description": "Mariadb Secondary parameters",
+                "properties": {
+                  "containerPorts": {
+                    "$ref": "#/$defs/constrains~1mysql@2"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "primary": {
+                "additionalProperties": {},
+                "description": "Mariadb Primary parameters",
+                "properties": {
+                  "containerPorts": {
+                    "$ref": "#/$defs/constrains~1mysql@2"
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -15051,23 +15048,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "primary": {
-          "additionalProperties": {},
-          "description": "Mariadb Primary parameters",
-          "properties": {
-            "containerPorts": {
-              "required": [
-                "mysql"
-              ],
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -15233,17 +15213,6 @@
               }
             }
           }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
         }
       }
     },
@@ -18191,26 +18160,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "primary": {
-          "additionalProperties": {},
-          "description": "Mariadb Primary parameters",
-          "properties": {
-            "service": {
-              "additionalProperties": {},
-              "description": "MariaDB Primary Service parameters",
-              "properties": {
-                "ports": {
-                  "type": "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -19980,7 +19929,7 @@
                 "description": "Mariadb Secondary parameters",
                 "properties": {
                   "revisionHistoryLimit": {
-                    "$ref": "#/$defs/values~1anyOf~1integer:int32;revisionhistorylimit-is-the-maximum+5more"
+                    "$ref": "#/$defs/values~1primary.revisionHistoryLimit"
                   }
                 }
               }
@@ -20072,7 +20021,8 @@
                 "description": "Mariadb Secondary parameters",
                 "properties": {
                   "persistence": {
-                    "$ref": "#/$defs/values~1object;enable-persistence-using-persistent"
+                    "description": "Enable persistence using Persistent Volume Claims\nref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+                    "type": "object"
                   }
                 }
               }
@@ -20196,7 +20146,7 @@
                 "description": "Mariadb Secondary parameters",
                 "properties": {
                   "automountServiceAccountToken": {
-                    "$ref": "#/$defs/values~1anyOf~1boolean;automountserviceaccounttoken-indicates-whether-a+5more"
+                    "$ref": "#/$defs/values~1primary.automountServiceAccountToken"
                   }
                 }
               }
@@ -20629,7 +20579,12 @@
                 "description": "Mariadb Secondary parameters",
                 "properties": {
                   "containerPorts": {
-                    "$ref": "#/$defs/constrains~1mysql"
+                    "additionalProperties": {},
+                    "properties": {
+                      "mysql": {
+                        "$ref": "#/$defs/values~1primary.containerPorts.mysql"
+                      }
+                    }
                   }
                 }
               }
@@ -21058,20 +21013,6 @@
         "$ref": "#/$defs/constrains~1secondary+secondary=null"
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "primary": {
-          "additionalProperties": {},
-          "description": "Mariadb Primary parameters",
-          "properties": {
-            "containerPorts": {
-              "type": "object"
-            }
-          }
-        }
-      }
     },
     {
       "if": {
@@ -22534,21 +22475,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "primary": {
-          "additionalProperties": {},
-          "description": "Mariadb Primary parameters",
-          "properties": {
-            "service": {
-              "description": "MariaDB Primary Service parameters",
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "$ref": "#/$defs/constrains~1architecture=replication+networkPolicy.enabled:t+tls+tls.autoGenerated+3more"
       },
@@ -22634,7 +22560,7 @@
                 "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume mountpoint to runAsUser:fsGroup values from the securityContext section.",
                 "properties": {
                   "resources": {
-                    "$ref": "#/$defs/constrains~1claims@items.name+limits+requests@2"
+                    "$ref": "#/$defs/values~1primary.resources"
                   }
                 }
               }
@@ -23012,26 +22938,7 @@
           "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
           "type": "string"
         },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "compatibility": {
-              "additionalProperties": {},
-              "properties": {
-                "openshift": {
-                  "additionalProperties": {},
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            },
-            "security": {
-              "additionalProperties": {},
-              "type": "object"
-            }
-          },
-          "type": "object"
-        }
+        "global": {}
       },
       "type": "object"
     },
@@ -23223,18 +23130,11 @@
           "type": "object"
         },
         "storageClass": {}
-      },
-      "type": "object"
+      }
     },
     "image": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "additionalProperties": {}
-        }
-      ]
+      "additionalProperties": {},
+      "type": "object"
     },
     "initdbScripts": {
       "description": "Dictionary of initdb scripts\nSpecify dictionary of scripts to be run at first boot\nExample:\ninitdbScripts:\nmy_init_script.sh: |\n!/bin/bash\necho \"Do something.\""
@@ -23261,6 +23161,7 @@
       "type": "object"
     },
     "metrics": {
+      "additionalProperties": {},
       "allOf": [
         {
           "$ref": "#/$defs/when~1containerSecurityContext+containerSecurityContext=null+enabled:t~1then~1fail"
@@ -23549,9 +23450,6 @@
           "then": false
         },
         {
-          "type": "object"
-        },
-        {
           "$ref": "#/$defs/when~1image+image=null~1then~1fail"
         },
         {
@@ -23780,7 +23678,7 @@
                             "type": "boolean"
                           },
                           {
-                            "$ref": "#/$defs/values~1string;pattern-true-true-true-fal"
+                            "$ref": "#/$defs/values~1metrics~1string;pattern-true-true-true-fal"
                           },
                           {
                             "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
@@ -23845,9 +23743,6 @@
             ]
           },
           "then": false
-        },
-        {
-          "additionalProperties": {}
         },
         {
           "if": {
@@ -23952,7 +23847,8 @@
           "$ref": "#/$defs/when~1enabled:t+fips+fips=null~1then~1fail"
         }
       ],
-      "description": "Mysqld Prometheus exporter parameters"
+      "description": "Mysqld Prometheus exporter parameters",
+      "type": "object"
     },
     "nameOverride": {
       "$ref": "#/$defs/values~1nameOverride"
@@ -24755,7 +24651,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "automountServiceAccountToken": {
-                    "$ref": "#/$defs/values~1anyOf~1boolean;automountserviceaccounttoken-indicates-whether-a+5more"
+                    "$ref": "#/$defs/values~1primary.automountServiceAccountToken"
                   }
                 }
               },
@@ -24913,6 +24809,7 @@
       "type": "object"
     },
     "primary": {
+      "additionalProperties": {},
       "allOf": [
         {
           "additionalProperties": {},
@@ -25111,411 +25008,6 @@
               }
             }
           }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "affinity": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+24more@2"
-                }
-              ],
-              "description": "Affinity for MariaDB primary pods assignment\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nNote: podAffinityPreset, podAntiAffinityPreset, and  nodeAffinityPreset will be ignored when it's set"
-            },
-            "automountServiceAccountToken": {
-              "$ref": "#/$defs/values~1anyOf~1boolean;automountserviceaccounttoken-indicates-whether-a+5more"
-            },
-            "containerPorts": {
-              "$ref": "#/$defs/constrains~1mysql"
-            },
-            "extraEnvVars": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.name+@items.value+@items.valueFrom.configMapKeyRef.key+10more"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Extra environment variables to be set on MariaDB primary containers\nE.g.\nextraEnvVars:\n- name: TZ\nvalue: \"Europe/Paris\""
-            },
-            "extraEnvVarsCM": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string@3"
-                },
-                {
-                  "$ref": "#/$defs/values~1null;name-of-the-referent"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string;pattern-a-za-z0-9-t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1object"
-                },
-                {
-                  "$ref": "#/$defs/values~1string;name-of-the-referent"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string;pattern-t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string;pattern-null-null-null"
-                }
-              ],
-              "description": "Name of existing ConfigMap containing extra env vars for MariaDB primary containers"
-            },
-            "extraEnvVarsSecret": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string@3"
-                },
-                {
-                  "$ref": "#/$defs/values~1null;name-of-the-referent"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string;pattern-a-za-z0-9-t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1object"
-                },
-                {
-                  "$ref": "#/$defs/values~1string;name-of-the-referent"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string;pattern-t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string;pattern-null-null-null"
-                }
-              ],
-              "description": "Name of existing Secret containing extra env vars for MariaDB primary containers"
-            },
-            "extraVolumeMounts": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.mountPath+@items.mountPropagation+@items.name+@items.readOnly+2more@2"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Optionally specify extra list of additional volumeMounts for the MariaDB Primary container(s)"
-            },
-            "extraVolumes": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more"
-                    }
-                  ],
-                  "description": "List of volumes that can be mounted by containers belonging to the pod. More info: https://kubernetes.io/docs/concepts/storage/volumes",
-                  "x-kubernetes-patch-merge-key": "name",
-                  "x-kubernetes-patch-strategy": "merge,retainKeys"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Optionally specify extra list of additional volumes to the MariaDB Primary pod(s)"
-            },
-            "hostAliases": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip@2"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Add deployment host aliases\nhttps://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/"
-            },
-            "initContainers": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more@2"
-                    }
-                  ],
-                  "description": "List of initialization containers belonging to the pod. Init containers are executed in order prior to containers being started. If any init container fails, the pod is considered to have failed and is handled according to its restartPolicy. The name for an init container or normal container must be unique among all containers. Init containers may not have Lifecycle actions, Readiness probes, Liveness probes, or Startup probes. The resourceRequirements of an init container are taken into account during scheduling by finding the highest request/limit for each resource type, and then using the max of of that value or the sum of the normal containers. Limits are applied to init containers in a similar fashion. Init containers cannot currently be added or removed. Cannot be updated. More info: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/",
-                  "x-kubernetes-patch-merge-key": "name",
-                  "x-kubernetes-patch-strategy": "merge"
-                }
-              ],
-              "description": "Add additional init containers for the MariaDB Primary pod(s)"
-            },
-            "lifecycleHooks": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1postStart.exec.command+postStart.httpGet.host+9more"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "for the MariaDB Primary container(s) to automate configuration before or after startup"
-            },
-            "nodeSelector": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/values~1object;nodeselector-is-a-selector"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Node labels for MariaDB primary pods assignment\nRef: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/"
-            },
-            "persistence": {
-              "$ref": "#/$defs/constrains~1subPath:t"
-            },
-            "podAnnotations": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/values~1allOf~1object+object,null;annotations-is-an-unstructured"
-                }
-              ],
-              "description": "Additional pod annotations for MariaDB primary pods\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/"
-            },
-            "podManagementPolicy": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string@3"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string;pattern-a-za-z0-9-t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1object"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string;pattern-t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string;pattern-null-null-null"
-                },
-                {
-                  "$ref": "#/$defs/values~1null;podmanagementpolicy-controls-how-pods"
-                },
-                {
-                  "$ref": "#/$defs/values~1string;podmanagementpolicy-controls-how-pods"
-                }
-              ],
-              "description": "podManagementPolicy to manage scaling operation of MariaDB primary pods\nref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#pod-management-policies"
-            },
-            "resources": {
-              "$ref": "#/$defs/constrains~1claims@items.name+limits+requests@2"
-            },
-            "revisionHistoryLimit": {
-              "$ref": "#/$defs/values~1anyOf~1integer:int32;revisionhistorylimit-is-the-maximum+5more"
-            },
-            "service": {
-              "additionalProperties": {},
-              "description": "MariaDB Primary Service parameters",
-              "properties": {
-                "extraPorts": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "description": "Extra ports to expose (normally used with the `sidecar` value)"
-                },
-                "ports": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "mysql": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1mysql~1string;pattern-0-1-9"
-                        }
-                      ],
-                      "description": "MariaDB Primary Kubernetes service port for MariaDB"
-                    }
-                  }
-                },
-                "type": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/values~1null;type-determines-how-the"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1string;type-determines-how-the"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1mysql~1string@3"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1mysql~1string;pattern-a-za-z0-9-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1mysql~1object"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1mysql~1string;pattern-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1mysql~1string;pattern-null-null-null"
-                    }
-                  ],
-                  "description": "MariaDB Primary Kubernetes service type"
-                }
-              }
-            },
-            "sidecars": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more"
-                }
-              ],
-              "description": "Add additional sidecar containers for the MariaDB Primary pod(s)"
-            },
-            "terminationGracePeriodSeconds": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string;pattern-a-za-z0-9-t"
-                },
-                {
-                  "$ref": "#/$defs/values~1integer:int64;optional-duration-in-seconds"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string;pattern-t"
-                },
-                {
-                  "$ref": "#/$defs/values~1null:int64;optional-duration-in-seconds"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string;pattern-0-1-9"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string;pattern-null-null-null"
-                }
-              ],
-              "description": "In seconds, time the given to the MySQL primary pod needs to terminate gracefully\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods"
-            },
-            "tolerations": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Tolerations for MariaDB primary pods assignment\nRef: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/"
-            },
-            "topologySpreadConstraints": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.labelSelector.matchExpressions@items.key+10more"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Topology Spread Constraints for MariaDB primary pods assignment\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/\nE.g.\ntopologySpreadConstraints:\n- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule"
-            },
-            "updateStrategy": {
-              "anyOf": [
-                {
-                  "additionalProperties": false,
-                  "description": "StatefulSetUpdateStrategy indicates the strategy that the StatefulSet controller will use to perform updates. It includes any additional parameters necessary to perform the update for the indicated strategy.",
-                  "properties": {
-                    "rollingUpdate": {
-                      "$ref": "#/$defs/constrains~1maxUnavailable+partition"
-                    },
-                    "type": {
-                      "description": "MariaDB primary statefulset strategy type\nStrategyType\nCan be set to RollingUpdate or OnDelete",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    }
-                  },
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies"
-            }
-          }
-        },
-        {
-          "type": "object"
         },
         {
           "additionalProperties": {},
@@ -26340,7 +25832,425 @@
           }
         }
       ],
-      "description": "Mariadb Primary parameters"
+      "description": "Mariadb Primary parameters",
+      "properties": {
+        "affinity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/constrains~1nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+24more@2"
+            }
+          ],
+          "description": "Affinity for MariaDB primary pods assignment\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nNote: podAffinityPreset, podAntiAffinityPreset, and  nodeAffinityPreset will be ignored when it's set"
+        },
+        "automountServiceAccountToken": {
+          "$ref": "#/$defs/values~1primary.automountServiceAccountToken"
+        },
+        "containerPorts": {
+          "additionalProperties": {},
+          "properties": {
+            "mysql": {
+              "$ref": "#/$defs/values~1primary.containerPorts.mysql"
+            }
+          },
+          "required": [
+            "mysql"
+          ],
+          "type": "object"
+        },
+        "extraEnvVars": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.name+@items.value+@items.valueFrom.configMapKeyRef.key+10more"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Extra environment variables to be set on MariaDB primary containers\nE.g.\nextraEnvVars:\n- name: TZ\nvalue: \"Europe/Paris\""
+        },
+        "extraEnvVarsCM": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string@3"
+            },
+            {
+              "$ref": "#/$defs/values~1null;name-of-the-referent"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string;pattern-a-za-z0-9-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1object"
+            },
+            {
+              "$ref": "#/$defs/values~1string;name-of-the-referent"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string;pattern-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string;pattern-null-null-null"
+            }
+          ],
+          "description": "Name of existing ConfigMap containing extra env vars for MariaDB primary containers"
+        },
+        "extraEnvVarsSecret": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string@3"
+            },
+            {
+              "$ref": "#/$defs/values~1null;name-of-the-referent"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string;pattern-a-za-z0-9-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1object"
+            },
+            {
+              "$ref": "#/$defs/values~1string;name-of-the-referent"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string;pattern-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string;pattern-null-null-null"
+            }
+          ],
+          "description": "Name of existing Secret containing extra env vars for MariaDB primary containers"
+        },
+        "extraVolumeMounts": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.mountPath+@items.mountPropagation+@items.name+@items.readOnly+2more@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optionally specify extra list of additional volumeMounts for the MariaDB Primary container(s)"
+        },
+        "extraVolumes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more"
+                }
+              ],
+              "description": "List of volumes that can be mounted by containers belonging to the pod. More info: https://kubernetes.io/docs/concepts/storage/volumes",
+              "x-kubernetes-patch-merge-key": "name",
+              "x-kubernetes-patch-strategy": "merge,retainKeys"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optionally specify extra list of additional volumes to the MariaDB Primary pod(s)"
+        },
+        "hostAliases": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Add deployment host aliases\nhttps://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/"
+        },
+        "initContainers": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more@2"
+                }
+              ],
+              "description": "List of initialization containers belonging to the pod. Init containers are executed in order prior to containers being started. If any init container fails, the pod is considered to have failed and is handled according to its restartPolicy. The name for an init container or normal container must be unique among all containers. Init containers may not have Lifecycle actions, Readiness probes, Liveness probes, or Startup probes. The resourceRequirements of an init container are taken into account during scheduling by finding the highest request/limit for each resource type, and then using the max of of that value or the sum of the normal containers. Limits are applied to init containers in a similar fashion. Init containers cannot currently be added or removed. Cannot be updated. More info: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/",
+              "x-kubernetes-patch-merge-key": "name",
+              "x-kubernetes-patch-strategy": "merge"
+            }
+          ],
+          "description": "Add additional init containers for the MariaDB Primary pod(s)"
+        },
+        "lifecycleHooks": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1postStart.exec.command+postStart.httpGet.host+9more"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "for the MariaDB Primary container(s) to automate configuration before or after startup"
+        },
+        "nodeSelector": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/values~1object;nodeselector-is-a-selector"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Node labels for MariaDB primary pods assignment\nRef: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/"
+        },
+        "persistence": {
+          "additionalProperties": {},
+          "description": "Enable persistence using Persistent Volume Claims\nref: https://kubernetes.io/docs/concepts/storage/persistent-volumes/",
+          "properties": {
+            "subPath": {
+              "$ref": "#/$defs/values~1primary.persistence.subPath"
+            }
+          },
+          "type": "object"
+        },
+        "podAnnotations": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/values~1allOf~1object+object,null;annotations-is-an-unstructured"
+            }
+          ],
+          "description": "Additional pod annotations for MariaDB primary pods\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/"
+        },
+        "podManagementPolicy": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string@3"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string;pattern-a-za-z0-9-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1object"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string;pattern-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string;pattern-null-null-null"
+            },
+            {
+              "$ref": "#/$defs/values~1null;podmanagementpolicy-controls-how-pods"
+            },
+            {
+              "$ref": "#/$defs/values~1string;podmanagementpolicy-controls-how-pods"
+            }
+          ],
+          "description": "podManagementPolicy to manage scaling operation of MariaDB primary pods\nref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#pod-management-policies"
+        },
+        "resources": {
+          "$ref": "#/$defs/values~1primary.resources"
+        },
+        "revisionHistoryLimit": {
+          "$ref": "#/$defs/values~1primary.revisionHistoryLimit"
+        },
+        "service": {
+          "additionalProperties": {},
+          "description": "MariaDB Primary Service parameters",
+          "properties": {
+            "extraPorts": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Extra ports to expose (normally used with the `sidecar` value)"
+            },
+            "ports": {
+              "additionalProperties": {},
+              "properties": {
+                "mysql": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1mysql~1string;pattern-0-1-9"
+                    }
+                  ],
+                  "description": "MariaDB Primary Kubernetes service port for MariaDB"
+                }
+              },
+              "type": "object"
+            },
+            "type": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/values~1null;type-determines-how-the"
+                },
+                {
+                  "$ref": "#/$defs/values~1string;type-determines-how-the"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1mysql~1string@3"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1mysql~1string;pattern-a-za-z0-9-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1mysql~1object"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1mysql~1string;pattern-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1mysql~1string;pattern-null-null-null"
+                }
+              ],
+              "description": "MariaDB Primary Kubernetes service type"
+            }
+          },
+          "type": "object"
+        },
+        "sidecars": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more"
+            }
+          ],
+          "description": "Add additional sidecar containers for the MariaDB Primary pod(s)"
+        },
+        "terminationGracePeriodSeconds": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string;pattern-a-za-z0-9-t"
+            },
+            {
+              "$ref": "#/$defs/values~1integer:int64;optional-duration-in-seconds"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string;pattern-t"
+            },
+            {
+              "$ref": "#/$defs/values~1null:int64;optional-duration-in-seconds"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string;pattern-0-1-9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string;pattern-null-null-null"
+            }
+          ],
+          "description": "In seconds, time the given to the MySQL primary pod needs to terminate gracefully\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods"
+        },
+        "tolerations": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Tolerations for MariaDB primary pods assignment\nRef: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/"
+        },
+        "topologySpreadConstraints": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.labelSelector.matchExpressions@items.key+10more"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Topology Spread Constraints for MariaDB primary pods assignment\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/\nE.g.\ntopologySpreadConstraints:\n- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule"
+        },
+        "updateStrategy": {
+          "anyOf": [
+            {
+              "additionalProperties": false,
+              "description": "StatefulSetUpdateStrategy indicates the strategy that the StatefulSet controller will use to perform updates. It includes any additional parameters necessary to perform the update for the indicated strategy.",
+              "properties": {
+                "rollingUpdate": {
+                  "$ref": "#/$defs/constrains~1maxUnavailable+partition"
+                },
+                "type": {
+                  "description": "MariaDB primary statefulset strategy type\nStrategyType\nCan be set to RollingUpdate or OnDelete",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "type": "object"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies"
+        }
+      },
+      "type": "object"
     },
     "priorityClassName": {},
     "rbac": {
@@ -26377,7 +26287,7 @@
                   "automountServiceAccountToken": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1string;pattern-true-true-true-fal"
+                        "$ref": "#/$defs/values~1metrics~1string;pattern-true-true-true-fal"
                       },
                       {
                         "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
@@ -27921,18 +27831,14 @@
       "type": "object"
     },
     "volumePermissions": {
+      "additionalProperties": {},
       "allOf": [
         {
-          "type": "object"
-        },
-        {
           "$ref": "#/$defs/when~1image+image=null~1then~1fail"
-        },
-        {
-          "additionalProperties": {}
         }
       ],
-      "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume mountpoint to runAsUser:fsGroup values from the securityContext section."
+      "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume mountpoint to runAsUser:fsGroup values from the securityContext section.",
+      "type": "object"
     }
   },
   "type": "object"

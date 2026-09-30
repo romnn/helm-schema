@@ -4928,7 +4928,7 @@
     "constrains/image.repository": {
       "properties": {
         "image": {
-          "$ref": "#/$defs/constrains~1repository@3"
+          "$ref": "#/$defs/constrains~1repository"
         }
       },
       "required": [
@@ -6361,13 +6361,13 @@
       "type": "object"
     },
     "constrains/repository": {
-      "additionalProperties": {},
       "properties": {
-        "repository": {
-          "description": "[default: REPOSITORY_NAME/etcd] etcd image name",
-          "type": "string"
-        }
-      }
+        "repository": {}
+      },
+      "required": [
+        "repository"
+      ],
+      "type": "object"
     },
     "constrains/repository=null": {
       "properties": {
@@ -6376,24 +6376,6 @@
             null
           ]
         }
-      },
-      "required": [
-        "repository"
-      ],
-      "type": "object"
-    },
-    "constrains/repository@2": {
-      "additionalProperties": {},
-      "properties": {
-        "repository": {
-          "description": "[default: REPOSITORY_NAME/os-shell] Init container volume-permissions image name",
-          "type": "string"
-        }
-      }
-    },
-    "constrains/repository@3": {
-      "properties": {
-        "repository": {}
       },
       "required": [
         "repository"
@@ -7186,10 +7168,6 @@
       "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
       "type": "string"
     },
-    "values/common.global.compatibility.openshift": {
-      "additionalProperties": {},
-      "type": "object"
-    },
     "values/commonLabels": {
       "anyOf": [
         {
@@ -7302,6 +7280,10 @@
         }
       ],
       "description": "[array] Optionally specify extra list of additional volumes for etcd pods"
+    },
+    "values/image.repository": {
+      "description": "[default: REPOSITORY_NAME/etcd] etcd image name",
+      "type": "string"
     },
     "values/integer,null:int64;set-etcd-containers-security": {
       "description": "Set etcd containers' Security Context runAsUser",
@@ -7898,6 +7880,10 @@
       ],
       "description": "Topology Spread Constraints for pod assignment\nhttps://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/\nThe value is evaluated as a template\npersistentVolumeClaimRetentionPolicy\nref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#persistentvolumeclaim-retention"
     },
+    "values/volumePermissions.image.repository": {
+      "description": "[default: REPOSITORY_NAME/os-shell] Init container volume-permissions image name",
+      "type": "string"
+    },
     "when/cronjob+cronjob=null+enabled:t/then/fail": {
       "if": {
         "allOf": [
@@ -8108,7 +8094,7 @@
         "anyOf": [
           {
             "not": {
-              "$ref": "#/$defs/constrains~1repository@3"
+              "$ref": "#/$defs/constrains~1repository"
             }
           },
           {
@@ -9164,7 +9150,12 @@
         "additionalProperties": {},
         "properties": {
           "image": {
-            "$ref": "#/$defs/constrains~1repository"
+            "additionalProperties": {},
+            "properties": {
+              "repository": {
+                "$ref": "#/$defs/values~1image.repository"
+              }
+            }
           }
         }
       }
@@ -10319,7 +10310,12 @@
                 "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume mountpoint to runAsUser:fsGroup values from the securityContext section.",
                 "properties": {
                   "image": {
-                    "$ref": "#/$defs/constrains~1repository@2"
+                    "additionalProperties": {},
+                    "properties": {
+                      "repository": {
+                        "$ref": "#/$defs/values~1volumePermissions.image.repository"
+                      }
+                    }
                   }
                 }
               }
@@ -13347,17 +13343,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
       "if": {
         "not": {
           "$ref": "#/$defs/constrains~1resources:t"
@@ -14053,7 +14038,8 @@
               "commonLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+                    "additionalProperties": {},
+                    "type": "object"
                   },
                   {
                     "type": "string"
@@ -16130,20 +16116,6 @@
     {
       "additionalProperties": {},
       "properties": {
-        "volumePermissions": {
-          "additionalProperties": {},
-          "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume mountpoint to runAsUser:fsGroup values from the securityContext section.",
-          "properties": {
-            "image": {
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
         "containerPorts": {
           "additionalProperties": {},
           "properties": {
@@ -17814,24 +17786,7 @@
           "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
           "type": "string"
         },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "compatibility": {
-              "additionalProperties": {},
-              "properties": {
-                "openshift": {
-                  "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-                }
-              },
-              "type": "object"
-            },
-            "security": {
-              "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-            }
-          },
-          "type": "object"
-        }
+        "global": {}
       },
       "type": "object"
     },
@@ -19353,7 +19308,8 @@
     "extraDeploy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+          "additionalProperties": {},
+          "type": "object"
         },
         {
           "items": {},
@@ -19482,8 +19438,7 @@
           "type": "object"
         },
         "storageClass": {}
-      },
-      "type": "object"
+      }
     },
     "hostAliases": {
       "anyOf": [
@@ -19533,6 +19488,7 @@
       "description": "[array] etcd pod host aliases\nref: https://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/"
     },
     "image": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -19557,14 +19513,14 @@
         },
         {
           "$ref": "#/$defs/when~1repository+repository=null~1then~1fail"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1repository"
         }
-      ]
+      ],
+      "properties": {
+        "repository": {
+          "$ref": "#/$defs/values~1image.repository"
+        }
+      },
+      "type": "object"
     },
     "initContainers": {
       "anyOf": [
@@ -21116,6 +21072,7 @@
       "type": "object"
     },
     "preUpgradeJob": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -21138,9 +21095,6 @@
             ]
           },
           "then": false
-        },
-        {
-          "type": "object"
         },
         {
           "if": {
@@ -21246,9 +21200,6 @@
           }
         },
         {
-          "additionalProperties": {}
-        },
-        {
           "if": {
             "$ref": "#/$defs/constrains~1enabled:t"
           },
@@ -21298,7 +21249,8 @@
             ]
           }
         }
-      ]
+      ],
+      "type": "object"
     },
     "priorityClassName": {
       "$ref": "#/$defs/values~1priorityClassName"
@@ -22658,18 +22610,8 @@
       "description": "Mount credentials as files instead of using environment variables"
     },
     "volumePermissions": {
+      "additionalProperties": {},
       "allOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "image": {
-              "$ref": "#/$defs/constrains~1repository@2"
-            }
-          }
-        },
-        {
-          "type": "object"
-        },
         {
           "if": {
             "$ref": "#/$defs/constrains~1image+image=null"
@@ -22689,7 +22631,19 @@
           }
         }
       ],
-      "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume mountpoint to runAsUser:fsGroup values from the securityContext section."
+      "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume mountpoint to runAsUser:fsGroup values from the securityContext section.",
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "$ref": "#/$defs/values~1volumePermissions.image.repository"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     }
   },
   "type": "object"

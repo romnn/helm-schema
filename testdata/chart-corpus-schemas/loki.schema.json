@@ -5319,6 +5319,36 @@
       ],
       "type": "object"
     },
+    "constrains/enabled!=false": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              false
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=true": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              true
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled+enabled:t+enabled=null": {
       "anyOf": [
         {
@@ -12713,6 +12743,19 @@
       ],
       "type": "object"
     },
+    "constrains/minio.enabled": {
+      "not": {
+        "properties": {
+          "minio": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "minio"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/minio.enabled+minio.enabled=null": {
       "properties": {
         "minio": {
@@ -17264,6 +17307,19 @@
           "$ref": "#/$defs/constrains~1rollout_operator"
         }
       ]
+    },
+    "constrains/rollout_operator.enabled": {
+      "not": {
+        "properties": {
+          "rollout_operator": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "rollout_operator"
+        ],
+        "type": "object"
+      }
     },
     "constrains/rollout_operator.enabled+rollout_operator.enabled=null": {
       "properties": {
@@ -30002,70 +30058,6 @@
                 "description": "The name of the PriorityClass for overrides-exporter pods"
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1enterprise.enabled:t+enterprise.gelGateway:t+gateway"
-          },
-          {
-            "not": {
-              "$ref": "#/$defs/constrains~1deploymentMode='SingleBinary(3c)-(3e)Simpl...'+deploymentMode=SingleBinary"
-            }
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1loki.commonConfig:t@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1loki.config='(7b)(7b)-(20)if(20).Values.enter...'"
-              },
-              {
-                "$ref": "#/$defs/constrains~1loki.storage.use_thanos_objstore:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1loki.generatedConfigObjectName:t"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1deploymentMode='SimpleScalable(3c)-(3e)Dis...'+deploymentMode=Distributed+9more@2"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1enterprise.enabled:t@2"
-              },
-              {
-                "$ref": "#/$defs/constrains~1loki.config='(7b)(7b)-(20)if(20).Values.enter...'"
-              },
-              {
-                "$ref": "#/$defs/constrains~1loki.storage.use_thanos_objstore:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1enterprise.adminApi.enabled:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1loki.generatedConfigObjectName:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1enterprise.config='(7b)(7b)-(20)if(20).Values.enter...'"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "minio": {
-            "description": "Configuration for the minio subchart",
-            "type": "object"
           }
         }
       }
@@ -69104,6 +69096,72 @@
       "if": {
         "anyOf": [
           {
+            "properties": {
+              "rollout_operator": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "rollout_operator"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "rollout_operator": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "rollout_operator"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1rollout_operator.enabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1rollout_operator.enabled"
+                  },
+                  {
+                    "properties": {
+                      "rollout_operator": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "rollout_operator"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "rollout_operator": {
+            "description": "Setting for the Grafana Rollout Operator https://github.com/grafana/helm-charts/tree/main/charts/rollout-operator",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1loki.storage.object_store:t@2"
@@ -79074,6 +79132,121 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1enterprise.enabled:t+enterprise.gelGateway:t+gateway"
+          },
+          {
+            "not": {
+              "$ref": "#/$defs/constrains~1deploymentMode='SingleBinary(3c)-(3e)Simpl...'+deploymentMode=SingleBinary"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1loki.commonConfig:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1loki.config='(7b)(7b)-(20)if(20).Values.enter...'"
+              },
+              {
+                "$ref": "#/$defs/constrains~1loki.storage.use_thanos_objstore:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1loki.generatedConfigObjectName:t"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "minio": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "minio"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1minio.enabled"
+                  },
+                  {
+                    "properties": {
+                      "minio": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "minio"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "minio": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "minio"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1minio.enabled"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1deploymentMode='SimpleScalable(3c)-(3e)Dis...'+deploymentMode=Distributed+9more@2"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1enterprise.enabled:t@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1loki.config='(7b)(7b)-(20)if(20).Values.enter...'"
+              },
+              {
+                "$ref": "#/$defs/constrains~1loki.storage.use_thanos_objstore:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1enterprise.adminApi.enabled:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1loki.generatedConfigObjectName:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1enterprise.config='(7b)(7b)-(20)if(20).Values.enter...'"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "minio": {
+            "description": "Configuration for the minio subchart",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/constrains~1deploymentMode='SimpleScalable(3c)-(3e)Dis...'+2more"
@@ -80049,14 +80222,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "grafana-agent-operator": {
-          "$ref": "#/$defs/values~1null,object"
-        }
-      }
     },
     {
       "if": {
@@ -87109,34 +87274,28 @@
           "description": "Annotations for gateway deployment"
         },
         "autoscaling": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "behavior": {
+              "$ref": "#/$defs/values~1backend.autoscaling.behavior"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "behavior": {
-                  "$ref": "#/$defs/values~1backend.autoscaling.behavior"
-                },
-                "enabled": {
-                  "description": "Enable autoscaling for the gateway"
-                },
-                "maxReplicas": {
-                  "description": "Maximum autoscaling replicas for the gateway"
-                },
-                "minReplicas": {
-                  "description": "Minimum autoscaling replicas for the gateway"
-                },
-                "targetCPUUtilizationPercentage": {
-                  "description": "Target CPU utilisation percentage for the gateway"
-                },
-                "targetMemoryUtilizationPercentage": {
-                  "description": "Target memory utilisation percentage for the gateway"
-                }
-              }
+            "enabled": {
+              "description": "Enable autoscaling for the gateway"
+            },
+            "maxReplicas": {
+              "description": "Maximum autoscaling replicas for the gateway"
+            },
+            "minReplicas": {
+              "description": "Minimum autoscaling replicas for the gateway"
+            },
+            "targetCPUUtilizationPercentage": {
+              "description": "Target CPU utilisation percentage for the gateway"
+            },
+            "targetMemoryUtilizationPercentage": {
+              "description": "Target memory utilisation percentage for the gateway"
             }
-          ]
+          },
+          "type": "object"
         },
         "basicAuth": {
           "additionalProperties": {},
@@ -87385,14 +87544,6 @@
           "description": "configures cluster domain (\"cluster.local\" by default)"
         },
         "commonLabels": {},
-        "dnsNamespace": {
-          "description": "configures DNS service namespace",
-          "type": "string"
-        },
-        "dnsService": {
-          "description": "configures DNS service name",
-          "type": "string"
-        },
         "extraArgs": {
           "description": "Common additional CLI arguments for all jobs (that is, -log.level debug, -config.expand-env=true or -log-config-reverse-order)\nscope: admin-api, backend, bloom-builder, bloom-gateway, bloom-planner, compactor, distributor, index-gateway, ingester, overrides-exporter, pattern-ingester, querier, query-frontend, query-scheduler, read, ruler, write."
         },
@@ -87414,8 +87565,7 @@
             "registry": {
               "description": "Overrides the Docker registry globally for all images (deprecated, use global.imageRegistry)"
             }
-          },
-          "type": "object"
+          }
         },
         "imagePullSecrets": {},
         "imageRegistry": {
@@ -87426,8 +87576,7 @@
           "description": "Overrides the priorityClassName for all pods"
         },
         "registry": {}
-      },
-      "type": "object"
+      }
     },
     "grafana-agent-operator": {
       "additionalProperties": {},
@@ -94952,8 +95101,7 @@
         "users": {
           "description": "The first user in the list below is used for Loki/GEL authentication.\nYou can add additional users if desired; they will not impact Loki/GEL.\n`accessKey` = username, `secretKey` = password"
         }
-      },
-      "type": "object"
+      }
     },
     "monitoring": {
       "additionalProperties": {},
@@ -99311,8 +99459,7 @@
             }
           }
         }
-      },
-      "type": "object"
+      }
     },
     "ruler": {
       "additionalProperties": {},

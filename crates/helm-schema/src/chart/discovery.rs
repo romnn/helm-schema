@@ -81,18 +81,24 @@ pub(crate) fn discover_chart_contexts_with_budget(
         &namespace,
         &[],
         &[],
+        false,
         load_budget,
         &mut out,
     )?;
     Ok(out)
 }
 
+#[expect(
+    clippy::too_many_arguments,
+    reason = "the recursion threads one chart's placement: namespace, values prefix, activation chain and listing"
+)]
 fn discover_chart_contexts_inner(
     chart_dir: &VfsPath,
     chart_yaml: &ChartYaml,
     template_namespace: &str,
     parent_prefix: &[String],
     dependency_activation_chain: &[ChartDependencyActivation],
+    listed_dependency: bool,
     load_budget: LoadBudget,
     out: &mut Vec<ChartContext>,
 ) -> EngineResult<()> {
@@ -118,6 +124,7 @@ fn discover_chart_contexts_inner(
         is_library,
         static_root_strings,
         dependency_activation_chain: dependency_activation_chain.to_vec(),
+        listed_dependency,
     });
 
     let dependency_metadata_by_name = dependency_metadata_map(chart_yaml, parent_prefix);
@@ -170,15 +177,13 @@ fn discover_chart_contexts_inner(
     reject_duplicate_installed_dependency_names(&installed_charts, &vendor_charts_dir)?;
 
     for (sub_dir, sub_name, sub_chart_yaml) in installed_charts {
-        let dependency_metadata = dependency_metadata_by_name
-            .get(&sub_name)
-            .cloned()
-            .unwrap_or_else(|| {
-                vec![DependencyMetadata {
-                    values_key: sub_name.clone(),
-                    activation: ChartDependencyActivation::default(),
-                }]
-            });
+        let listed = dependency_metadata_by_name.get(&sub_name);
+        let dependency_metadata = listed.cloned().unwrap_or_else(|| {
+            vec![DependencyMetadata {
+                values_key: sub_name.clone(),
+                activation: ChartDependencyActivation::default(),
+            }]
+        });
 
         for dependency_metadata in dependency_metadata {
             let child_namespace = format!(
@@ -203,6 +208,7 @@ fn discover_chart_contexts_inner(
                 &child_namespace,
                 &prefix,
                 &chain,
+                listed.is_some(),
                 load_budget,
                 out,
             )?;

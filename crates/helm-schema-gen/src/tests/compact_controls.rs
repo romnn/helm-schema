@@ -31,6 +31,7 @@ fn compact_control_actions_in_a_block_scalar_stay_block_text() {
             "additionalProperties": false,
             "properties": {
                 "flag": {},
+                "global": {},
                 "x": {},
             },
             "type": "object",

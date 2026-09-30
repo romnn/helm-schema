@@ -7452,12 +7452,13 @@
       }
     },
     "constrains/serviceMonitor": {
-      "additionalProperties": {},
       "properties": {
-        "serviceMonitor": {
-          "$ref": "#/$defs/constrains~1serviceMonitor~1object;app-protocol-for-service"
-        }
-      }
+        "serviceMonitor": {}
+      },
+      "required": [
+        "serviceMonitor"
+      ],
+      "type": "object"
     },
     "constrains/serviceMonitor.additionalLabels": {
       "additionalProperties": {},
@@ -7673,10 +7674,6 @@
         }
       }
     },
-    "constrains/serviceMonitor/object;app-protocol-for-service": {
-      "description": "App Protocol for service when scraping metrics endpoint\nappProtocol: http",
-      "type": "object"
-    },
     "constrains/serviceMonitor=null": {
       "properties": {
         "serviceMonitor": {
@@ -7684,15 +7681,6 @@
             null
           ]
         }
-      },
-      "required": [
-        "serviceMonitor"
-      ],
-      "type": "object"
-    },
-    "constrains/serviceMonitor@2": {
-      "properties": {
-        "serviceMonitor": {}
       },
       "required": [
         "serviceMonitor"
@@ -8633,55 +8621,55 @@
     "values/profiling.metricsServer.port": {
       "description": "Expose profiling on a specific port"
     },
-    "values/prometheus.metricServer/keywords/description": {
-      "description": "Additional labels to add for metric server using ServiceMonitor crd (prometheus operator)"
-    },
-    "values/prometheus.metricServer/keywords/description@10": {
-      "description": "List of expressions that define custom relabeling rules for metric server ServiceMonitor crd (prometheus operator). [RelabelConfig Spec]"
-    },
-    "values/prometheus.metricServer/keywords/description@11": {
-      "description": "Name or number of the target port of the Pod behind the Service, the port must be specified with container port property. Mutually exclusive with port"
-    },
-    "values/prometheus.metricServer/keywords/description@12": {
-      "description": "PodTargetLabels transfers labels on the Kubernetes `Pod` onto the created metrics"
-    },
-    "values/prometheus.metricServer/keywords/description@13": {
-      "description": "TLS configuration for scraping metrics"
-    },
-    "values/prometheus.metricServer/keywords/description@14": {
-      "description": "TargetLabels transfers labels from the Kubernetes `Service` onto the created metrics"
-    },
-    "values/prometheus.metricServer/keywords/description@15": {
-      "description": "Timeout after which the scrape is ended If not specified, the Prometheus global scrape timeout is used unless it is less than Interval in which the latter is used"
-    },
-    "values/prometheus.metricServer/keywords/description@2": {
-      "description": "DEPRECATED. List of expressions that define custom relabeling rules for metric server ServiceMonitor crd (prometheus operator). [RelabelConfig Spec]"
-    },
-    "values/prometheus.metricServer/keywords/description@3": {
+    "values/prometheus.metricServer.podMonitor.enabled": {
       "description": "Enables PodMonitor creation for the Prometheus Operator"
     },
-    "values/prometheus.metricServer/keywords/description@4": {
-      "description": "Enables ServiceMonitor creation for the Prometheus Operator"
-    },
-    "values/prometheus.metricServer/keywords/description@5": {
-      "description": "HTTP scheme used for scraping. Defaults to `http`"
-    },
-    "values/prometheus.metricServer/keywords/description@6": {
-      "description": "Interval at which metrics should be scraped If not specified Prometheus’ global scrape interval is used."
-    },
-    "values/prometheus.metricServer/keywords/description@7": {
-      "description": "JobLabel selects the label from the associated Kubernetes service which will be used as the job label for all metrics. [ServiceMonitor Spec]"
-    },
-    "values/prometheus.metricServer/keywords/description@8": {
+    "values/prometheus.metricServer.podMonitor.metricRelabelings": {
       "description": "List of expressions that define custom  metric relabeling rules for metric server PodMonitor crd after scrape has happened (prometheus operator). [RelabelConfig Spec]"
     },
-    "values/prometheus.metricServer/keywords/description@9": {
+    "values/prometheus.metricServer.serviceMonitor.additionalLabels": {
+      "description": "Additional labels to add for metric server using ServiceMonitor crd (prometheus operator)"
+    },
+    "values/prometheus.metricServer.serviceMonitor.enabled": {
+      "description": "Enables ServiceMonitor creation for the Prometheus Operator"
+    },
+    "values/prometheus.metricServer.serviceMonitor.interval": {
+      "description": "Interval at which metrics should be scraped If not specified Prometheus’ global scrape interval is used."
+    },
+    "values/prometheus.metricServer.serviceMonitor.jobLabel": {
+      "description": "JobLabel selects the label from the associated Kubernetes service which will be used as the job label for all metrics. [ServiceMonitor Spec]"
+    },
+    "values/prometheus.metricServer.serviceMonitor.metricRelabelings": {
       "description": "List of expressions that define custom  metric relabeling rules for metric server ServiceMonitor crd after scrape has happened (prometheus operator). [RelabelConfig Spec]"
     },
-    "values/prometheus.operator/keywords/description": {
+    "values/prometheus.metricServer.serviceMonitor.podTargetLabels": {
+      "description": "PodTargetLabels transfers labels on the Kubernetes `Pod` onto the created metrics"
+    },
+    "values/prometheus.metricServer.serviceMonitor.relabelings": {
+      "description": "List of expressions that define custom relabeling rules for metric server ServiceMonitor crd (prometheus operator). [RelabelConfig Spec]"
+    },
+    "values/prometheus.metricServer.serviceMonitor.relabellings": {
+      "description": "DEPRECATED. List of expressions that define custom relabeling rules for metric server ServiceMonitor crd (prometheus operator). [RelabelConfig Spec]"
+    },
+    "values/prometheus.metricServer.serviceMonitor.scheme": {
+      "description": "HTTP scheme used for scraping. Defaults to `http`"
+    },
+    "values/prometheus.metricServer.serviceMonitor.scrapeTimeout": {
+      "description": "Timeout after which the scrape is ended If not specified, the Prometheus global scrape timeout is used unless it is less than Interval in which the latter is used"
+    },
+    "values/prometheus.metricServer.serviceMonitor.targetLabels": {
+      "description": "TargetLabels transfers labels from the Kubernetes `Service` onto the created metrics"
+    },
+    "values/prometheus.metricServer.serviceMonitor.targetPort": {
+      "description": "Name or number of the target port of the Pod behind the Service, the port must be specified with container port property. Mutually exclusive with port"
+    },
+    "values/prometheus.metricServer.serviceMonitor.tlsConfig": {
+      "description": "TLS configuration for scraping metrics"
+    },
+    "values/prometheus.operator.prometheusRules.enabled": {
       "description": "Enables PrometheusRules creation for the Prometheus Operator"
     },
-    "values/prometheus.operator/keywords/description@2": {
+    "values/prometheus.operator.serviceMonitor.port": {
       "description": "Name of the service port this endpoint refers to. Mutually exclusive with targetPort"
     },
     "values/resources.metricServer": {
@@ -8852,7 +8840,7 @@
         "anyOf": [
           {
             "not": {
-              "$ref": "#/$defs/constrains~1serviceMonitor@2"
+              "$ref": "#/$defs/constrains~1serviceMonitor"
             }
           },
           {
@@ -11129,7 +11117,7 @@
                     "prometheus": {
                       "properties": {
                         "metricServer": {
-                          "$ref": "#/$defs/constrains~1serviceMonitor@2"
+                          "$ref": "#/$defs/constrains~1serviceMonitor"
                         }
                       },
                       "required": [
@@ -11217,25 +11205,6 @@
               }
             ],
             "description": "Custom annotations to add into metadata"
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "prometheus": {
-          "additionalProperties": {},
-          "properties": {
-            "webhooks": {
-              "additionalProperties": {},
-              "description": "- alert: KedaScalerErrors\nannotations:\ndescription: Keda scaledObject {{ $labels.scaledObject }} is experiencing errors with {{ $labels.scaler }} scaler\nsummary: Keda Scaler {{ $labels.scaler }} Errors\nexpr: sum by ( scaledObject , scaler) (rate(keda_metrics_adapter_scaler_errors[2m]))  > 0\nfor: 2m\nlabels:",
-              "properties": {
-                "serviceMonitor": {
-                  "$ref": "#/$defs/constrains~1serviceMonitor~1object;app-protocol-for-service"
-                }
-              }
-            }
           }
         }
       }
@@ -12215,19 +12184,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "prometheus": {
-          "additionalProperties": {},
-          "properties": {
-            "metricServer": {
-              "$ref": "#/$defs/constrains~1serviceMonitor"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "anyOf": [
           {
@@ -12405,19 +12361,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "prometheus": {
-          "additionalProperties": {},
-          "properties": {
-            "operator": {
-              "$ref": "#/$defs/constrains~1serviceMonitor"
-            }
-          }
-        }
-      }
     },
     {
       "additionalProperties": {},
@@ -14692,7 +14635,7 @@
                     "prometheus": {
                       "properties": {
                         "operator": {
-                          "$ref": "#/$defs/constrains~1serviceMonitor@2"
+                          "$ref": "#/$defs/constrains~1serviceMonitor"
                         }
                       },
                       "required": [
@@ -15992,7 +15935,7 @@
                     "prometheus": {
                       "properties": {
                         "webhooks": {
-                          "$ref": "#/$defs/constrains~1serviceMonitor@2"
+                          "$ref": "#/$defs/constrains~1serviceMonitor"
                         }
                       },
                       "required": [
@@ -21083,22 +21026,16 @@
           }
         },
         "operator": {
-          "allOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "description": "Enable profiling for KEDA operator"
-                },
-                "port": {
-                  "$ref": "#/$defs/values~1profiling.metricsServer.port"
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "description": "Enable profiling for KEDA operator"
             },
-            {
-              "type": "object"
+            "port": {
+              "$ref": "#/$defs/values~1profiling.metricsServer.port"
             }
-          ]
+          },
+          "type": "object"
         },
         "webhooks": {
           "additionalProperties": {},
@@ -21646,298 +21583,283 @@
       ],
       "properties": {
         "metricServer": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "appProtocol": {},
+            "enabled": {
+              "description": "Enable metric server Prometheus metrics expose"
             },
-            {
+            "podMonitor": {
               "additionalProperties": {},
+              "description": "caFile: /etc/prom-certs/root-cert.pem\ncertFile: /etc/prom-certs/cert-chain.pem\ninsecureSkipVerify: true\nkeyFile: /etc/prom-certs/key.pem",
               "properties": {
-                "appProtocol": {},
+                "additionalLabels": {
+                  "description": "Additional labels to add for metric server using podMonitor crd (prometheus operator)"
+                },
                 "enabled": {
-                  "description": "Enable metric server Prometheus metrics expose"
+                  "$ref": "#/$defs/values~1prometheus.metricServer.podMonitor.enabled"
                 },
-                "podMonitor": {
-                  "additionalProperties": {},
-                  "description": "caFile: /etc/prom-certs/root-cert.pem\ncertFile: /etc/prom-certs/cert-chain.pem\ninsecureSkipVerify: true\nkeyFile: /etc/prom-certs/key.pem",
-                  "properties": {
-                    "additionalLabels": {
-                      "description": "Additional labels to add for metric server using podMonitor crd (prometheus operator)"
-                    },
-                    "enabled": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@3"
-                    },
-                    "interval": {
-                      "description": "Scraping interval for metric server using podMonitor crd (prometheus operator)"
-                    },
-                    "metricRelabelings": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@8"
-                    },
-                    "namespace": {
-                      "description": "Scraping namespace for metric server using podMonitor crd (prometheus operator)"
-                    },
-                    "relabelings": {
-                      "description": "List of expressions that define custom relabeling rules for metric server podMonitor crd (prometheus operator)"
-                    },
-                    "scrapeTimeout": {
-                      "description": "Scraping timeout for metric server using podMonitor crd (prometheus operator)"
-                    }
-                  }
+                "interval": {
+                  "description": "Scraping interval for metric server using podMonitor crd (prometheus operator)"
                 },
-                "port": {
-                  "description": "HTTP port used for exposing metrics server prometheus metrics"
+                "metricRelabelings": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.podMonitor.metricRelabelings"
                 },
-                "portName": {
-                  "description": "HTTP port name for exposing metrics server prometheus metrics"
+                "namespace": {
+                  "description": "Scraping namespace for metric server using podMonitor crd (prometheus operator)"
                 },
-                "serviceMonitor": {
-                  "additionalProperties": {},
-                  "description": "App Protocol for service when scraping metrics endpoint\nappProtocol: http",
-                  "properties": {
-                    "additionalLabels": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description"
-                    },
-                    "enabled": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@4"
-                    },
-                    "interval": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@6"
-                    },
-                    "jobLabel": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@7"
-                    },
-                    "metricRelabelings": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@9"
-                    },
-                    "namespace": {},
-                    "podTargetLabels": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@12"
-                    },
-                    "relabelings": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@10"
-                    },
-                    "relabellings": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@2"
-                    },
-                    "scheme": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@5"
-                    },
-                    "scrapeTimeout": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@15"
-                    },
-                    "targetLabels": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@14"
-                    },
-                    "targetPort": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@11"
-                    },
-                    "tlsConfig": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@13"
-                    }
-                  }
+                "relabelings": {
+                  "description": "List of expressions that define custom relabeling rules for metric server podMonitor crd (prometheus operator)"
+                },
+                "scrapeTimeout": {
+                  "description": "Scraping timeout for metric server using podMonitor crd (prometheus operator)"
                 }
               }
+            },
+            "port": {
+              "description": "HTTP port used for exposing metrics server prometheus metrics"
+            },
+            "portName": {
+              "description": "HTTP port name for exposing metrics server prometheus metrics"
+            },
+            "serviceMonitor": {
+              "additionalProperties": {},
+              "description": "App Protocol for service when scraping metrics endpoint\nappProtocol: http",
+              "properties": {
+                "additionalLabels": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.additionalLabels"
+                },
+                "enabled": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.enabled"
+                },
+                "interval": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.interval"
+                },
+                "jobLabel": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.jobLabel"
+                },
+                "metricRelabelings": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.metricRelabelings"
+                },
+                "namespace": {},
+                "podTargetLabels": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.podTargetLabels"
+                },
+                "relabelings": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.relabelings"
+                },
+                "relabellings": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.relabellings"
+                },
+                "scheme": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.scheme"
+                },
+                "scrapeTimeout": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.scrapeTimeout"
+                },
+                "targetLabels": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.targetLabels"
+                },
+                "targetPort": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.targetPort"
+                },
+                "tlsConfig": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.tlsConfig"
+                }
+              },
+              "type": "object"
             }
-          ]
+          },
+          "type": "object"
         },
         "operator": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "appProtocol": {},
+            "enabled": {
+              "description": "Enable KEDA Operator prometheus metrics expose"
             },
-            {
+            "podMonitor": {
               "additionalProperties": {},
+              "description": "caFile: /etc/prom-certs/root-cert.pem\ncertFile: /etc/prom-certs/cert-chain.pem\ninsecureSkipVerify: true\nkeyFile: /etc/prom-certs/key.pem",
               "properties": {
-                "appProtocol": {},
+                "additionalLabels": {
+                  "description": "Additional labels to add for KEDA Operator using podMonitor crd (prometheus operator)"
+                },
                 "enabled": {
-                  "description": "Enable KEDA Operator prometheus metrics expose"
+                  "$ref": "#/$defs/values~1prometheus.metricServer.podMonitor.enabled"
                 },
-                "podMonitor": {
-                  "additionalProperties": {},
-                  "description": "caFile: /etc/prom-certs/root-cert.pem\ncertFile: /etc/prom-certs/cert-chain.pem\ninsecureSkipVerify: true\nkeyFile: /etc/prom-certs/key.pem",
-                  "properties": {
-                    "additionalLabels": {
-                      "description": "Additional labels to add for KEDA Operator using podMonitor crd (prometheus operator)"
-                    },
-                    "enabled": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@3"
-                    },
-                    "interval": {
-                      "description": "Scraping interval for KEDA Operator using podMonitor crd (prometheus operator)"
-                    },
-                    "metricRelabelings": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@8"
-                    },
-                    "namespace": {
-                      "description": "Scraping namespace for KEDA Operator using podMonitor crd (prometheus operator)"
-                    },
-                    "relabelings": {
-                      "description": "List of expressions that define custom relabeling rules for KEDA Operator podMonitor crd (prometheus operator)"
-                    },
-                    "scrapeTimeout": {
-                      "description": "Scraping timeout for KEDA Operator using podMonitor crd (prometheus operator)"
-                    }
-                  }
+                "interval": {
+                  "description": "Scraping interval for KEDA Operator using podMonitor crd (prometheus operator)"
                 },
-                "port": {
-                  "description": "Port used for exposing KEDA Operator prometheus metrics"
+                "metricRelabelings": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.podMonitor.metricRelabelings"
                 },
-                "prometheusRules": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "additionalLabels": {
-                      "description": "Additional labels to add for KEDA Operator using prometheusRules crd (prometheus operator)"
-                    },
-                    "alerts": {
-                      "description": "Additional alerts to add for KEDA Operator using prometheusRules crd (prometheus operator)"
-                    },
-                    "enabled": {
-                      "$ref": "#/$defs/values~1prometheus.operator~1keywords~1description"
-                    },
-                    "namespace": {
-                      "description": "Scraping namespace for KEDA Operator using prometheusRules crd (prometheus operator)"
-                    }
-                  }
+                "namespace": {
+                  "description": "Scraping namespace for KEDA Operator using podMonitor crd (prometheus operator)"
                 },
-                "serviceMonitor": {
-                  "additionalProperties": {},
-                  "description": "App Protocol for service when scraping metrics endpoint\nappProtocol: http",
-                  "properties": {
-                    "additionalLabels": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description"
-                    },
-                    "enabled": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@4"
-                    },
-                    "interval": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@6"
-                    },
-                    "jobLabel": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@7"
-                    },
-                    "metricRelabelings": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@9"
-                    },
-                    "namespace": {},
-                    "podTargetLabels": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@12"
-                    },
-                    "port": {
-                      "$ref": "#/$defs/values~1prometheus.operator~1keywords~1description@2"
-                    },
-                    "relabelings": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@10"
-                    },
-                    "relabellings": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@2"
-                    },
-                    "scheme": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@5"
-                    },
-                    "scrapeTimeout": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@15"
-                    },
-                    "targetLabels": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@14"
-                    },
-                    "targetPort": {
-                      "description": "Name or number of the target port of the Pod behind the Service,\nthe port must be specified with container port property. Mutually exclusive with port"
-                    },
-                    "tlsConfig": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@13"
-                    }
-                  }
+                "relabelings": {
+                  "description": "List of expressions that define custom relabeling rules for KEDA Operator podMonitor crd (prometheus operator)"
+                },
+                "scrapeTimeout": {
+                  "description": "Scraping timeout for KEDA Operator using podMonitor crd (prometheus operator)"
                 }
               }
+            },
+            "port": {
+              "description": "Port used for exposing KEDA Operator prometheus metrics"
+            },
+            "prometheusRules": {
+              "additionalProperties": {},
+              "properties": {
+                "additionalLabels": {
+                  "description": "Additional labels to add for KEDA Operator using prometheusRules crd (prometheus operator)"
+                },
+                "alerts": {
+                  "description": "Additional alerts to add for KEDA Operator using prometheusRules crd (prometheus operator)"
+                },
+                "enabled": {
+                  "$ref": "#/$defs/values~1prometheus.operator.prometheusRules.enabled"
+                },
+                "namespace": {
+                  "description": "Scraping namespace for KEDA Operator using prometheusRules crd (prometheus operator)"
+                }
+              }
+            },
+            "serviceMonitor": {
+              "additionalProperties": {},
+              "description": "App Protocol for service when scraping metrics endpoint\nappProtocol: http",
+              "properties": {
+                "additionalLabels": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.additionalLabels"
+                },
+                "enabled": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.enabled"
+                },
+                "interval": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.interval"
+                },
+                "jobLabel": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.jobLabel"
+                },
+                "metricRelabelings": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.metricRelabelings"
+                },
+                "namespace": {},
+                "podTargetLabels": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.podTargetLabels"
+                },
+                "port": {
+                  "$ref": "#/$defs/values~1prometheus.operator.serviceMonitor.port"
+                },
+                "relabelings": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.relabelings"
+                },
+                "relabellings": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.relabellings"
+                },
+                "scheme": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.scheme"
+                },
+                "scrapeTimeout": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.scrapeTimeout"
+                },
+                "targetLabels": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.targetLabels"
+                },
+                "targetPort": {
+                  "description": "Name or number of the target port of the Pod behind the Service,\nthe port must be specified with container port property. Mutually exclusive with port"
+                },
+                "tlsConfig": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.tlsConfig"
+                }
+              },
+              "type": "object"
             }
-          ]
+          },
+          "type": "object"
         },
         "webhooks": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "- alert: KedaScalerErrors\nannotations:\ndescription: Keda scaledObject {{ $labels.scaledObject }} is experiencing errors with {{ $labels.scaler }} scaler\nsummary: Keda Scaler {{ $labels.scaler }} Errors\nexpr: sum by ( scaledObject , scaler) (rate(keda_metrics_adapter_scaler_errors[2m]))  > 0\nfor: 2m\nlabels:",
+          "properties": {
+            "appProtocol": {},
+            "enabled": {
+              "description": "Enable KEDA admission webhooks prometheus metrics expose"
             },
-            {
+            "port": {
+              "description": "Port used for exposing KEDA admission webhooks prometheus metrics"
+            },
+            "prometheusRules": {
               "additionalProperties": {},
+              "description": "caFile: /etc/prom-certs/root-cert.pem\ncertFile: /etc/prom-certs/cert-chain.pem\ninsecureSkipVerify: true\nkeyFile: /etc/prom-certs/key.pem",
               "properties": {
-                "appProtocol": {},
+                "additionalLabels": {
+                  "description": "Additional labels to add for KEDA admission webhooks using prometheusRules crd (prometheus operator)"
+                },
+                "alerts": {
+                  "description": "Additional alerts to add for KEDA admission webhooks using prometheusRules crd (prometheus operator)"
+                },
                 "enabled": {
-                  "description": "Enable KEDA admission webhooks prometheus metrics expose"
+                  "$ref": "#/$defs/values~1prometheus.operator.prometheusRules.enabled"
                 },
-                "port": {
-                  "description": "Port used for exposing KEDA admission webhooks prometheus metrics"
-                },
-                "prometheusRules": {
-                  "additionalProperties": {},
-                  "description": "caFile: /etc/prom-certs/root-cert.pem\ncertFile: /etc/prom-certs/cert-chain.pem\ninsecureSkipVerify: true\nkeyFile: /etc/prom-certs/key.pem",
-                  "properties": {
-                    "additionalLabels": {
-                      "description": "Additional labels to add for KEDA admission webhooks using prometheusRules crd (prometheus operator)"
-                    },
-                    "alerts": {
-                      "description": "Additional alerts to add for KEDA admission webhooks using prometheusRules crd (prometheus operator)"
-                    },
-                    "enabled": {
-                      "$ref": "#/$defs/values~1prometheus.operator~1keywords~1description"
-                    },
-                    "namespace": {
-                      "description": "Scraping namespace for KEDA admission webhooks using prometheusRules crd (prometheus operator)"
-                    }
-                  }
-                },
-                "serviceMonitor": {
-                  "additionalProperties": {},
-                  "description": "App Protocol for service when scraping metrics endpoint\nappProtocol: http",
-                  "properties": {
-                    "additionalLabels": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description"
-                    },
-                    "enabled": {
-                      "description": "Enables ServiceMonitor creation for the Prometheus webhooks"
-                    },
-                    "interval": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@6"
-                    },
-                    "jobLabel": {
-                      "description": "jobLabel selects the label from the associated Kubernetes service which will be used as the job label for all metrics. [ServiceMonitor Spec]"
-                    },
-                    "metricRelabelings": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@9"
-                    },
-                    "namespace": {},
-                    "podTargetLabels": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@12"
-                    },
-                    "port": {
-                      "$ref": "#/$defs/values~1prometheus.operator~1keywords~1description@2"
-                    },
-                    "relabelings": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@10"
-                    },
-                    "relabellings": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@2"
-                    },
-                    "scheme": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@5"
-                    },
-                    "scrapeTimeout": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@15"
-                    },
-                    "targetLabels": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@14"
-                    },
-                    "targetPort": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@11"
-                    },
-                    "tlsConfig": {
-                      "$ref": "#/$defs/values~1prometheus.metricServer~1keywords~1description@13"
-                    }
-                  }
+                "namespace": {
+                  "description": "Scraping namespace for KEDA admission webhooks using prometheusRules crd (prometheus operator)"
                 }
               }
+            },
+            "serviceMonitor": {
+              "additionalProperties": {},
+              "description": "App Protocol for service when scraping metrics endpoint\nappProtocol: http",
+              "properties": {
+                "additionalLabels": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.additionalLabels"
+                },
+                "enabled": {
+                  "description": "Enables ServiceMonitor creation for the Prometheus webhooks"
+                },
+                "interval": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.interval"
+                },
+                "jobLabel": {
+                  "description": "jobLabel selects the label from the associated Kubernetes service which will be used as the job label for all metrics. [ServiceMonitor Spec]"
+                },
+                "metricRelabelings": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.metricRelabelings"
+                },
+                "namespace": {},
+                "podTargetLabels": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.podTargetLabels"
+                },
+                "port": {
+                  "$ref": "#/$defs/values~1prometheus.operator.serviceMonitor.port"
+                },
+                "relabelings": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.relabelings"
+                },
+                "relabellings": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.relabellings"
+                },
+                "scheme": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.scheme"
+                },
+                "scrapeTimeout": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.scrapeTimeout"
+                },
+                "targetLabels": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.targetLabels"
+                },
+                "targetPort": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.targetPort"
+                },
+                "tlsConfig": {
+                  "$ref": "#/$defs/values~1prometheus.metricServer.serviceMonitor.tlsConfig"
+                }
+              },
+              "type": "object"
             }
-          ],
-          "description": "- alert: KedaScalerErrors\nannotations:\ndescription: Keda scaledObject {{ $labels.scaledObject }} is experiencing errors with {{ $labels.scaler }} scaler\nsummary: Keda Scaler {{ $labels.scaler }} Errors\nexpr: sum by ( scaledObject , scaler) (rate(keda_metrics_adapter_scaler_errors[2m]))  > 0\nfor: 2m\nlabels:"
+          },
+          "type": "object"
         }
       },
       "type": "object"

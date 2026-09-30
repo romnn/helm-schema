@@ -100,6 +100,7 @@ fn generate(chart_dir: VfsPath) -> eyre::Result<serde_json::Value> {
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.29.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -134,10 +135,6 @@ fn a_shared_helper_resolves_each_charts_own_template() -> eyre::Result<()> {
             "additionalProperties": false,
             "allOf": [
                 {
-                    "additionalProperties": {},
-                    "properties": { "kid": { "type": ["null", "object"] } }
-                },
-                {
                     "if": {
                         "anyOf": [
                             {
@@ -163,7 +160,7 @@ fn a_shared_helper_resolves_each_charts_own_template() -> eyre::Result<()> {
                     "additionalProperties": {},
                     "properties": {
                         "childToken": {},
-                        "global": { "additionalProperties": {}, "type": "object" }
+                        "global": {}
                     },
                     "type": "object"
                 },

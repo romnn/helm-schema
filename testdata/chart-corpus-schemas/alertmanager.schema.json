@@ -10601,33 +10601,27 @@
       ]
     },
     "extraArgs": {
-      "allOf": [
+      "anyOf": [
         {
+          "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
+          "items": {},
+          "type": "array"
+        },
+        {
+          "$ref": "#/$defs/values~1affinity~1object"
+        },
+        {
+          "additionalProperties": {},
+          "properties": {
+            "config.file": {}
+          },
           "type": "object"
         },
         {
-          "anyOf": [
-            {
-              "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
-              "items": {},
-              "type": "array"
-            },
-            {
-              "$ref": "#/$defs/values~1affinity~1object"
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "config.file": {}
-              },
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "type": "null"
         }
-      ]
+      ],
+      "type": "object"
     },
     "extraContainers": {
       "anyOf": [
@@ -11354,6 +11348,7 @@
       "description": "Optionally specify extra list of additional volumes\n- name: extras\nemptyDir: {}"
     },
     "fullnameOverride": {},
+    "global": {},
     "hostAliases": {
       "anyOf": [
         {

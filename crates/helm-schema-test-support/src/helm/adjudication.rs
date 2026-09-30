@@ -61,8 +61,9 @@ pub struct PinnedHelmChart {
     evidence_dir: PathBuf,
     render_chart: PreparedTree,
     coalesce_chart: PreparedTree,
-    /// The `--kube-version` both executions run under.
-    kubernetes_version: &'static str,
+    /// The `--kube-version` both executions run under by default: the corpus policy's choice for the
+    /// chart, or none for a chart prepared for explicit versions only.
+    kubernetes_version: Option<&'static str>,
     /// Whether renders of this chart may be replayed.
     render_cacheability: Cacheability,
     /// The defaults render's documents with their violations, computed once
@@ -85,6 +86,28 @@ impl PinnedHelmChart {
     /// Returns an error when the chart cannot be copied, has no manifest, or
     /// no pinned Kubernetes version satisfies it.
     pub fn prepare(runner: &'static HelmRunner, chart_path: &Path) -> eyre::Result<Self> {
+        Self::prepare_with(runner, chart_path, true)
+    }
+
+    /// Like [`PinnedHelmChart::prepare`], without choosing a default Kubernetes version: every
+    /// execution names its own ([`PinnedHelmChart::adjudicate_file`]), and whether the chart's
+    /// `kubeVersion` admits it is Helm's decision.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the chart cannot be copied or has no manifest.
+    pub fn prepare_for_explicit_versions(
+        runner: &'static HelmRunner,
+        chart_path: &Path,
+    ) -> eyre::Result<Self> {
+        Self::prepare_with(runner, chart_path, false)
+    }
+
+    fn prepare_with(
+        runner: &'static HelmRunner,
+        chart_path: &Path,
+        select_version: bool,
+    ) -> eyre::Result<Self> {
         // Retain successful and failed cases so a verdict remains reproducible.
         let evidence_dir = ScratchDir::new("adjudication")?.keep();
         eprintln!("Helm adjudication evidence: {}", evidence_dir.display());
@@ -112,7 +135,11 @@ impl PinnedHelmChart {
             render_chart.join("Chart.yaml").is_file(),
             "chart has no manifest"
         );
-        let kubernetes_version = chart_kubernetes_version(&render_chart)?;
+        let kubernetes_version = if select_version {
+            Some(chart_kubernetes_version(&render_chart)?)
+        } else {
+            None
+        };
         fs::create_dir_all(coalesce_chart.join("templates"))?;
         fs::write(
             coalesce_chart.join("templates/adjudication-values.yaml"),
@@ -163,6 +190,12 @@ impl PinnedHelmChart {
         &self.coalesce_chart
     }
 
+    /// Whether renders of this chart may be replayed.
+    #[must_use]
+    pub const fn render_cacheability(&self) -> &Cacheability {
+        &self.render_cacheability
+    }
+
     /// The Helm children run so far, in execution order.
     pub fn invocations(&self) -> Vec<InvocationRecord> {
         self.invocations
@@ -185,10 +218,15 @@ impl PinnedHelmChart {
             .push(record.clone());
     }
 
-    /// The Kubernetes version the chart renders under by default.
+    /// The Kubernetes version the chart renders under by default, if it has one.
     #[must_use]
-    pub const fn kubernetes_version(&self) -> &'static str {
+    pub const fn kubernetes_version(&self) -> Option<&'static str> {
         self.kubernetes_version
+    }
+
+    fn default_version(&self) -> eyre::Result<&'static str> {
+        self.kubernetes_version
+            .ok_or_eyre("the chart was prepared for explicit Kubernetes versions only")
     }
 
     /// Both executions read the same saved overlay, including when rendering aborts.
@@ -200,7 +238,7 @@ impl PinnedHelmChart {
         self.adjudicate_as(
             &serde_json::to_vec_pretty(overlay)?,
             "render",
-            self.kubernetes_version,
+            self.default_version()?,
         )
     }
 
@@ -819,19 +857,25 @@ impl OfflineKubernetesValidator {
         let documents = decode(runner, rendered, &case)?
             .documents
             .map_err(|rejection| eyre::eyre!("{rejection}"))?;
+        Ok(self.validate_documents(&documents))
+    }
+
+    /// Judges documents Helm's `fromYaml` decoded ([`decode`]).
+    #[must_use]
+    pub fn validate_documents(&self, documents: &[Value]) -> KubernetesVerdict {
         let mut evidence = ResourceEvidence::default();
         for (index, document) in documents.iter().enumerate() {
             if !document.is_null() {
                 self.validate_document(document, &format!("document {index}"), &mut evidence);
             }
         }
-        Ok(if !evidence.invalid.is_empty() {
+        if !evidence.invalid.is_empty() {
             KubernetesVerdict::Invalid(evidence.invalid)
         } else if !evidence.uncertain.is_empty() {
             KubernetesVerdict::Uncertain(evidence.uncertain)
         } else {
             KubernetesVerdict::Valid
-        })
+        }
     }
 
     /// Judges `rendered` against the chart's defaults render, which a schema
@@ -925,7 +969,7 @@ impl OfflineKubernetesValidator {
         let probe = chart.adjudicate_as(
             &serde_json::to_vec_pretty(&serde_json::json!({}))?,
             "control",
-            chart.kubernetes_version,
+            chart.default_version()?,
         )?;
         if !probe.rendered.success() {
             return Ok(Vec::new());

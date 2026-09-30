@@ -4168,35 +4168,29 @@
       ],
       "properties": {
         "config": {
-          "allOf": [
+          "anyOf": [
             {
+              "$ref": "#/$defs/values~1affinity~1not~1:t"
+            },
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/constrains~1command~1string,null"
+              },
+              "description": "Data contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field. The keys stored in Data must not overlap with the keys in the BinaryData field, this is enforced during validation process.",
+              "properties": {
+                "SERVER_SERVLET_CONTEXT_PATH": {}
+              },
               "type": "object"
             },
             {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/values~1affinity~1not~1:t"
-                },
-                {
-                  "additionalProperties": {
-                    "$ref": "#/$defs/constrains~1command~1string,null"
-                  },
-                  "description": "Data contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field. The keys stored in Data must not overlap with the keys in the BinaryData field, this is enforced during validation process.",
-                  "properties": {
-                    "SERVER_SERVLET_CONTEXT_PATH": {}
-                  },
-                  "type": "object"
-                },
-                {
-                  "$ref": "#/$defs/values~1affinity~1object"
-                },
-                {
-                  "type": "null"
-                }
-              ]
+              "$ref": "#/$defs/values~1affinity~1object"
+            },
+            {
+              "type": "null"
             }
           ],
-          "description": "Set of the environment variables to pass to Kafbat-UI"
+          "description": "Set of the environment variables to pass to Kafbat-UI",
+          "type": "object"
         },
         "configMappings": {
           "description": "The mapping of configmap and keyName to get env variable.\nENV_NAME:\nname: kubernetes-configmap-name\nkeyName: kubernetes-configmap-key"

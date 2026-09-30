@@ -111,7 +111,7 @@ fn one_entry_manifest_is_incomplete() -> eyre::Result<()> {
     let ProvenanceError::Incomplete { missing } = error else {
         eyre::bail!("expected an incomplete manifest, got {error}");
     };
-    sim_assert_eq!(have: missing.len(), want: 202);
+    sim_assert_eq!(have: missing.len(), want: 204);
     Ok(())
 }
 

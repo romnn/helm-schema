@@ -51,33 +51,10 @@
         "nodePort": {},
         "port": {},
         "type": {
-          "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1anyOf~1=LoadBalancer+not~1:t+null+string"
+          "$ref": "#/$defs/values~1minecraftServer.rcon.serviceType"
         }
       },
       "type": "object"
-    },
-    "constrains/annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more/anyOf/=LoadBalancer+not/:t+null+string": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "string"
-        },
-        {
-          "enum": [
-            "LoadBalancer"
-          ]
-        }
-      ]
-    },
-    "constrains/annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more/not/:t": {
-      "not": {
-        "$ref": "#/$defs/t"
-      }
     },
     "constrains/annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more": {
       "additionalProperties": {},
@@ -86,7 +63,7 @@
         "enabled": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
             },
             {
               "type": "string"
@@ -116,6 +93,11 @@
       },
       "type": "object"
     },
+    "constrains/annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more/not/:t": {
+      "not": {
+        "$ref": "#/$defs/t"
+      }
+    },
     "constrains/annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more@2": {
       "additionalProperties": {},
       "properties": {
@@ -123,7 +105,7 @@
         "enabled": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
             },
             {
               "type": "string"
@@ -159,7 +141,7 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
             },
             {
               "$ref": "#/$defs/values~1serviceAnnotations"
@@ -394,7 +376,7 @@
         "hosts": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
             },
             {
               "type": "object"
@@ -571,7 +553,7 @@
               "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
             },
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
             },
             {
               "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
@@ -765,7 +747,7 @@
               "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
             },
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
             },
             {
               "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
@@ -835,7 +817,7 @@
         "loadBalancerSourceRanges": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
             },
             {
               "type": "null"
@@ -1196,7 +1178,7 @@
         "path": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
             },
             {
               "description": "path is matched against the path of an incoming request. Currently it can contain characters disallowed from the conventional \"path\" part of a URL as defined by RFC 3986. Paths must begin with a '/' and must be present when using PathType with value \"Exact\" or \"Prefix\".",
@@ -1545,7 +1527,7 @@
         "service": {
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
             }
           }
         }
@@ -1788,7 +1770,7 @@
           "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
         },
         {
-          "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+          "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
         },
         {
           "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
@@ -1844,6 +1826,24 @@
         }
       ]
     },
+    "values/minecraftServer.rcon.serviceType": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "string"
+        },
+        {
+          "enum": [
+            "LoadBalancer"
+          ]
+        }
+      ]
+    },
     "values/minecraftServer/anyOf/not/:t+null;type-determines-how-the+object+string+string;pattern-a-za-z0-9-t+3more": {
       "anyOf": [
         {
@@ -1890,7 +1890,7 @@
           "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
         },
         {
-          "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+          "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
         },
         {
           "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
@@ -2103,7 +2103,7 @@
                     "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                    "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
                   },
                   {
                     "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
@@ -2419,7 +2419,7 @@
                 "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
               },
               {
-                "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
               },
               {
                 "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
@@ -2493,7 +2493,7 @@
                     "$ref": "#/$defs/values~1minecraftServer~1null:int32;the-port-on-each"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                    "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
                   },
                   {
                     "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
@@ -2602,7 +2602,7 @@
                   "labels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                        "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
                       },
                       {
                         "allOf": [
@@ -3169,7 +3169,7 @@
               "rconServiceLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                    "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
                   },
                   {
                     "type": "object"
@@ -3874,6 +3874,7 @@
       "description": "extraVolumes:\n- volumeMounts:\n- name: nfs\nmountPath: /mnt/volume\nreadOnly: true\nvolumes:\n- name: nfs\nnfs:\nserver: some.nfs.server.com\npath: /\nmountOptions:\n- port=2049\n- hard\n- vers=4"
     },
     "fullnameOverride": {},
+    "global": {},
     "image": {
       "additionalProperties": {},
       "description": "ref: https://hub.docker.com/r/itzg/minecraft-server/",
@@ -4196,7 +4197,7 @@
                     "x-kubernetes-map-type": "atomic"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                    "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
                   },
                   {
                     "type": "null"
@@ -4234,7 +4235,7 @@
               "extraServiceSpec": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                    "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
                   },
                   {
                     "description": "externalIPs is a list of IP addresses for which nodes in the cluster will also accept traffic for this service.  These IPs are not managed by Kubernetes.  The user is responsible for ensuring that traffic arrives at a node with this IP.  A common example is external load-balancers that are not part of the Kubernetes system.",
@@ -4291,7 +4292,7 @@
                                 "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                                "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
                               },
                               {
                                 "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
@@ -4524,7 +4525,7 @@
                                 "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                                "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
                               },
                               {
                                 "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
@@ -4563,7 +4564,7 @@
                                 "$ref": "#/$defs/values~1minecraftServer~1null:int32;the-port-on-each"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+                                "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
                               },
                               {
                                 "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
@@ -4788,7 +4789,7 @@
               "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
             },
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
             },
             {
               "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
@@ -4924,7 +4925,7 @@
         "ipFamilies": {
           "anyOf": [
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
             },
             {
               "description": "IPFamilies is a list of IP families (e.g. IPv4, IPv6) assigned to this service. This field is usually assigned automatically based on cluster configuration and the ipFamilyPolicy field. If this field is specified manually, the requested family is available in the cluster, and ipFamilyPolicy allows it, it will be used; otherwise creation of the service will fail. This field is conditionally mutable: it allows for adding or removing a secondary IP family, but it does not allow changing the primary IP family of the Service. Valid values are \"IPv4\" and \"IPv6\".  This field only applies to Services of types ClusterIP, NodePort, and LoadBalancer, and does apply to \"headless\" services. This field will be wiped when updating a Service to type ExternalName.\n\nThis field may hold a maximum of two entries (dual-stack families, in either order).  These families must correspond to the values of the clusterIPs field, if specified. Both clusterIPs and ipFamilies are governed by the ipFamilyPolicy field.",
@@ -4948,7 +4949,7 @@
               "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string@2"
             },
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
             },
             {
               "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
@@ -5066,7 +5067,7 @@
               "$ref": "#/$defs/values~1minecraftServer~1null:int32;the-port-on-each"
             },
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
             },
             {
               "$ref": "#/$defs/constrains~1loadBalancerClass:t~1string;pattern-a-za-z0-9-t"
@@ -5111,52 +5112,46 @@
           "type": "object"
         },
         "rcon": {
-          "allOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "clusterIP": {},
-                "enabled": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
-                    },
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "type": "boolean"
-                    }
-                  ],
-                  "description": "If you enable this, make SURE to change your password below."
+          "additionalProperties": {},
+          "properties": {
+            "clusterIP": {},
+            "enabled": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
                 },
-                "existingSecret": {},
-                "externalTrafficPolicy": {},
-                "loadBalancerClass": {},
-                "loadBalancerIP": {
-                  "$ref": "#/$defs/values~1minecraftServer.externalIPs"
-                },
-                "loadBalancerSourceRanges": {},
-                "nodePort": {
-                  "description": "Set the external port if the rcon serviceType is NodePort"
-                },
-                "password": {},
-                "port": {},
-                "secretKey": {
+                {
                   "type": "string"
                 },
-                "serviceType": {
-                  "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1anyOf~1=LoadBalancer+not~1:t+null+string"
-                },
-                "withGeneratedPassword": {
-                  "description": "By default, the container will generate a random password at startup\nto ensure internal RCON tooling, including a backup container,\ncan be used, but the password is secure."
+                {
+                  "type": "boolean"
                 }
-              }
+              ],
+              "description": "If you enable this, make SURE to change your password below."
             },
-            {
-              "type": "object"
+            "existingSecret": {},
+            "externalTrafficPolicy": {},
+            "loadBalancerClass": {},
+            "loadBalancerIP": {
+              "$ref": "#/$defs/values~1minecraftServer.externalIPs"
+            },
+            "loadBalancerSourceRanges": {},
+            "nodePort": {
+              "description": "Set the external port if the rcon serviceType is NodePort"
+            },
+            "password": {},
+            "port": {},
+            "secretKey": {
+              "type": "string"
+            },
+            "serviceType": {
+              "$ref": "#/$defs/values~1minecraftServer.rcon.serviceType"
+            },
+            "withGeneratedPassword": {
+              "description": "By default, the container will generate a random password at startup\nto ensure internal RCON tooling, including a backup container,\ncan be used, but the password is secure."
             }
-          ]
+          },
+          "type": "object"
         },
         "removeOldMods": {
           "description": "If true, old versions of downloaded mods will be replaced with new ones from downloadModpackUrl",
@@ -5183,7 +5178,7 @@
               "$ref": "#/$defs/constrains~1port~1integer:int32;the-port-that-will"
             },
             {
-              "$ref": "#/$defs/constrains~1annotations+embedded+enabled+externalTrafficPolicy+loadBalancerIP+5more~1not~1:t"
+              "$ref": "#/$defs/constrains~1annotations+enabled:t+hosts@*.name+hosts@*.path+hosts@items.name+4more~1not~1:t"
             },
             {
               "type": "integer"

@@ -19257,6 +19257,9 @@
       "description": "Extra DNS names added to certificate when it's auto generated",
       "type": "array"
     },
+    "values/authentication.mutual.spire.install.initImage.override": {
+      "description": "type: [null, string]"
+    },
     "values/authentication/anyOf/null;namespace-defines-the-space+object+string+4more": {
       "anyOf": [
         {
@@ -19321,9 +19324,6 @@
       ],
       "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
       "type": "string"
-    },
-    "values/certgen.image.override": {
-      "description": "type: [null, string]"
     },
     "values/certgen.tolerations": {
       "description": "Node tolerations for pod assignment on nodes with taints\nref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/"
@@ -19652,10 +19652,13 @@
     "values/hubble.export.dynamic.config.createConfigMap": {
       "description": "---- True if helm installer should create config map.\nSwitch to false if you want to self maintain the file content."
     },
-    "values/hubble.metrics/keywords/description": {
+    "values/hubble.metrics.tls.server.existingSecret": {
       "description": "Name of the Secret containing the certificate and key for the Hubble metrics server.\nIf specified, cert and key are ignored."
     },
-    "values/hubble.ui.service.nodePort": {
+    "values/hubble.relay.prometheus.serviceMonitor.enabled": {
+      "description": "Enable service monitors.\nThis requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)"
+    },
+    "values/hubble.relay.service.nodePort": {
       "description": "--- The port to use when the service type is set to NodePort."
     },
     "values/hubble/anyOf/array+array;requested-ip-address-subject+not/:t+null+object": {
@@ -19861,9 +19864,6 @@
           "$ref": "#/$defs/constrains~1podDisruptionBudget.maxUnavailable:t~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
         }
       ]
-    },
-    "values/operator.prometheus.serviceMonitor.enabled": {
-      "description": "Enable service monitors.\nThis requires the prometheus CRDs to be available (see https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)"
     },
     "values/serviceAccounts.cilium": {
       "additionalProperties": {},
@@ -29991,26 +29991,6 @@
               "metricsSamplingInterval": {
                 "$ref": "#/$defs/helm-double-quoted-safe",
                 "description": "Set the agent-internal metrics sampling frequency. This sets the\nfrequency of the internal sampling of the agent metrics. These are\navailable via the \"cilium-dbg shell -- metrics -s\" command and are\npart of the metrics HTML page included in the sysdump.\ntype: [null, string]"
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "hubble": {
-          "additionalProperties": {},
-          "properties": {
-            "metrics": {
-              "additionalProperties": {},
-              "description": "Hubble metrics configuration.\nSee https://docs.cilium.io/en/stable/observability/metrics/#hubble-metrics\nfor more comprehensive documentation about Hubble metrics.\ntype: [null, array]",
-              "properties": {
-                "dashboards": {
-                  "description": "Grafana dashboards for hubble\ngrafana can import dashboards based on the label and value\nref: https://github.com/grafana/helm-charts/tree/main/charts/grafana#sidecar-for-dashboards",
-                  "type": "object"
-                }
               }
             }
           }
@@ -53177,26 +53157,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "hubble": {
-          "additionalProperties": {},
-          "properties": {
-            "metrics": {
-              "additionalProperties": {},
-              "description": "Hubble metrics configuration.\nSee https://docs.cilium.io/en/stable/observability/metrics/#hubble-metrics\nfor more comprehensive documentation about Hubble metrics.\ntype: [null, array]",
-              "properties": {
-                "dynamic": {
-                  "description": "Dynamic metrics  may be reconfigured without a need of agent restarts.",
-                  "type": "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -56858,211 +56818,205 @@
               "description": "Port on the agent where mutual authentication handshakes between agents will be performed"
             },
             "spire": {
-              "allOf": [
-                {
-                  "type": "object"
+              "additionalProperties": {},
+              "description": "Settings for SPIRE",
+              "properties": {
+                "adminSocketPath": {
+                  "description": "SPIRE socket path where the SPIRE delegated api agent is listening"
                 },
-                {
+                "agentSocketPath": {
+                  "description": "SPIRE socket path where the SPIRE workload agent is listening.\nApplies to both the Cilium Agent and Operator"
+                },
+                "annotations": {
+                  "description": "Annotations to be added to all top-level spire objects (resources under templates/spire)"
+                },
+                "connectionTimeout": {
+                  "description": "SPIRE connection timeout"
+                },
+                "enabled": {
+                  "description": "Enable SPIRE integration (beta)"
+                },
+                "install": {
                   "additionalProperties": {},
+                  "description": "Settings to control the SPIRE installation and configuration",
                   "properties": {
-                    "adminSocketPath": {
-                      "description": "SPIRE socket path where the SPIRE delegated api agent is listening"
-                    },
-                    "agentSocketPath": {
-                      "description": "SPIRE socket path where the SPIRE workload agent is listening.\nApplies to both the Cilium Agent and Operator"
-                    },
-                    "annotations": {
-                      "description": "Annotations to be added to all top-level spire objects (resources under templates/spire)"
-                    },
-                    "connectionTimeout": {
-                      "description": "SPIRE connection timeout"
-                    },
-                    "enabled": {
-                      "description": "Enable SPIRE integration (beta)"
-                    },
-                    "install": {
+                    "agent": {
                       "additionalProperties": {},
-                      "description": "Settings to control the SPIRE installation and configuration",
+                      "description": "SPIRE agent configuration",
                       "properties": {
-                        "agent": {
+                        "affinity": {
+                          "description": "SPIRE agent affinity configuration"
+                        },
+                        "image": {
                           "additionalProperties": {},
-                          "description": "SPIRE agent configuration",
+                          "description": "SPIRE agent image"
+                        },
+                        "labels": {
+                          "description": "SPIRE agent labels"
+                        },
+                        "nodeSelector": {
+                          "description": "SPIRE agent nodeSelector configuration\nref: ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector"
+                        },
+                        "podSecurityContext": {
+                          "description": "Security context to be added to spire agent pods.\nSecurityContext holds pod-level security attributes and common container settings.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod"
+                        },
+                        "priorityClassName": {
+                          "description": "The priority class to use for the spire agent"
+                        },
+                        "resources": {
+                          "description": "container resource limits & requests"
+                        },
+                        "securityContext": {
+                          "description": "Security context to be added to spire agent containers.\nSecurityContext holds pod-level security attributes and common container settings.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container"
+                        },
+                        "serviceAccount": {
+                          "additionalProperties": {},
+                          "description": "SPIRE agent service account",
                           "properties": {
-                            "affinity": {
-                              "description": "SPIRE agent affinity configuration"
-                            },
-                            "image": {
-                              "additionalProperties": {},
-                              "description": "SPIRE agent image"
-                            },
-                            "labels": {
-                              "description": "SPIRE agent labels"
-                            },
-                            "nodeSelector": {
-                              "description": "SPIRE agent nodeSelector configuration\nref: ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector"
-                            },
-                            "podSecurityContext": {
-                              "description": "Security context to be added to spire agent pods.\nSecurityContext holds pod-level security attributes and common container settings.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod"
-                            },
-                            "priorityClassName": {
-                              "description": "The priority class to use for the spire agent"
-                            },
-                            "resources": {
-                              "description": "container resource limits & requests"
-                            },
-                            "securityContext": {
-                              "description": "Security context to be added to spire agent containers.\nSecurityContext holds pod-level security attributes and common container settings.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container"
-                            },
-                            "serviceAccount": {
-                              "additionalProperties": {},
-                              "description": "SPIRE agent service account",
-                              "properties": {
-                                "create": {},
-                                "name": {}
-                              }
-                            },
-                            "skipKubeletVerification": {
-                              "description": "SPIRE Workload Attestor kubelet verification."
-                            },
-                            "tolerations": {
-                              "description": "SPIRE agent tolerations configuration\nBy default it follows the same tolerations as the agent itself\nto allow the Cilium agent on this node to connect to SPIRE.\nref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/"
-                            }
+                            "create": {},
+                            "name": {}
                           }
                         },
-                        "enabled": {
-                          "description": "Enable SPIRE installation.\nThis will only take effect only if authentication.mutual.spire.enabled is true"
+                        "skipKubeletVerification": {
+                          "description": "SPIRE Workload Attestor kubelet verification."
                         },
-                        "existingNamespace": {
-                          "description": "SPIRE namespace already exists. Set to true if Helm should not create, manage, and import the SPIRE namespace."
-                        },
-                        "initImage": {
-                          "additionalProperties": {},
-                          "description": "init container image of SPIRE agent and server",
-                          "properties": {
-                            "digest": {},
-                            "override": {
-                              "$ref": "#/$defs/values~1certgen.image.override"
-                            },
-                            "pullPolicy": {},
-                            "repository": {},
-                            "tag": {},
-                            "useDigest": {}
-                          }
-                        },
-                        "namespace": {
-                          "description": "SPIRE namespace to install into"
-                        },
-                        "server": {
-                          "additionalProperties": {},
-                          "properties": {
-                            "affinity": {
-                              "description": "SPIRE server affinity configuration"
-                            },
-                            "annotations": {
-                              "description": "SPIRE server annotations"
-                            },
-                            "ca": {
-                              "additionalProperties": {},
-                              "description": "SPIRE CA configuration",
-                              "properties": {
-                                "keyType": {
-                                  "description": "SPIRE CA key type\nAWS requires the use of RSA. EC cryptography is not supported"
-                                },
-                                "subject": {
-                                  "additionalProperties": {},
-                                  "description": "SPIRE CA Subject",
-                                  "properties": {
-                                    "commonName": {
-                                      "$ref": "#/$defs/values~1certgen.image.override"
-                                    },
-                                    "country": {},
-                                    "organization": {}
-                                  }
-                                }
-                              }
-                            },
-                            "dataStorage": {
-                              "additionalProperties": {},
-                              "description": "SPIRE server datastorage configuration",
-                              "properties": {
-                                "accessMode": {
-                                  "description": "Access mode of the SPIRE server data storage\ntype: [null, string]"
-                                },
-                                "enabled": {
-                                  "description": "Enable SPIRE server data storage"
-                                },
-                                "size": {
-                                  "description": "Size of the SPIRE server data storage"
-                                },
-                                "storageClass": {
-                                  "description": "StorageClass of the SPIRE server data storage"
-                                }
-                              }
-                            },
-                            "image": {
-                              "additionalProperties": {},
-                              "description": "SPIRE server image"
-                            },
-                            "initContainers": {
-                              "description": "SPIRE server init containers"
-                            },
-                            "labels": {
-                              "description": "SPIRE server labels\nSPIRE server service configuration"
-                            },
-                            "nodeSelector": {
-                              "description": "SPIRE server nodeSelector configuration\nref: ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector"
-                            },
-                            "podSecurityContext": {
-                              "description": "Security context to be added to spire server pods.\nSecurityContext holds pod-level security attributes and common container settings.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod"
-                            },
-                            "priorityClassName": {
-                              "description": "The priority class to use for the spire server"
-                            },
-                            "resources": {
-                              "description": "container resource limits & requests"
-                            },
-                            "securityContext": {
-                              "description": "Security context to be added to spire server containers.\nSecurityContext holds pod-level security attributes and common container settings.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container"
-                            },
-                            "service": {
-                              "additionalProperties": {},
-                              "properties": {
-                                "annotations": {
-                                  "description": "Annotations to be added to the SPIRE server service"
-                                },
-                                "labels": {
-                                  "description": "Labels to be added to the SPIRE server service"
-                                },
-                                "type": {
-                                  "description": "Service type for the SPIRE server service"
-                                }
-                              }
-                            },
-                            "serviceAccount": {
-                              "additionalProperties": {},
-                              "description": "SPIRE server service account",
-                              "properties": {
-                                "create": {},
-                                "name": {}
-                              }
-                            },
-                            "tolerations": {
-                              "description": "SPIRE server tolerations configuration\nref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/"
-                            }
-                          }
+                        "tolerations": {
+                          "description": "SPIRE agent tolerations configuration\nBy default it follows the same tolerations as the agent itself\nto allow the Cilium agent on this node to connect to SPIRE.\nref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/"
                         }
                       }
                     },
-                    "serverAddress": {
-                      "description": "SPIRE server address used by Cilium Operator\nIf k8s Service DNS along with port number is used (e.g. <service-name>.<namespace>.svc(.*):<port-number> format),\nCilium Operator will resolve its address by looking up the clusterIP from Service resource.\nExample values: 10.0.0.1:8081, spire-server.cilium-spire.svc:8081"
+                    "enabled": {
+                      "description": "Enable SPIRE installation.\nThis will only take effect only if authentication.mutual.spire.enabled is true"
                     },
-                    "trustDomain": {
-                      "description": "SPIFFE trust domain to use for fetching certificates"
+                    "existingNamespace": {
+                      "description": "SPIRE namespace already exists. Set to true if Helm should not create, manage, and import the SPIRE namespace."
+                    },
+                    "initImage": {
+                      "additionalProperties": {},
+                      "description": "init container image of SPIRE agent and server",
+                      "properties": {
+                        "digest": {},
+                        "override": {
+                          "$ref": "#/$defs/values~1authentication.mutual.spire.install.initImage.override"
+                        },
+                        "pullPolicy": {},
+                        "repository": {},
+                        "tag": {},
+                        "useDigest": {}
+                      }
+                    },
+                    "namespace": {
+                      "description": "SPIRE namespace to install into"
+                    },
+                    "server": {
+                      "additionalProperties": {},
+                      "properties": {
+                        "affinity": {
+                          "description": "SPIRE server affinity configuration"
+                        },
+                        "annotations": {
+                          "description": "SPIRE server annotations"
+                        },
+                        "ca": {
+                          "additionalProperties": {},
+                          "description": "SPIRE CA configuration",
+                          "properties": {
+                            "keyType": {
+                              "description": "SPIRE CA key type\nAWS requires the use of RSA. EC cryptography is not supported"
+                            },
+                            "subject": {
+                              "additionalProperties": {},
+                              "description": "SPIRE CA Subject",
+                              "properties": {
+                                "commonName": {
+                                  "$ref": "#/$defs/values~1authentication.mutual.spire.install.initImage.override"
+                                },
+                                "country": {},
+                                "organization": {}
+                              }
+                            }
+                          }
+                        },
+                        "dataStorage": {
+                          "additionalProperties": {},
+                          "description": "SPIRE server datastorage configuration",
+                          "properties": {
+                            "accessMode": {
+                              "description": "Access mode of the SPIRE server data storage\ntype: [null, string]"
+                            },
+                            "enabled": {
+                              "description": "Enable SPIRE server data storage"
+                            },
+                            "size": {
+                              "description": "Size of the SPIRE server data storage"
+                            },
+                            "storageClass": {
+                              "description": "StorageClass of the SPIRE server data storage"
+                            }
+                          }
+                        },
+                        "image": {
+                          "additionalProperties": {},
+                          "description": "SPIRE server image"
+                        },
+                        "initContainers": {
+                          "description": "SPIRE server init containers"
+                        },
+                        "labels": {
+                          "description": "SPIRE server labels\nSPIRE server service configuration"
+                        },
+                        "nodeSelector": {
+                          "description": "SPIRE server nodeSelector configuration\nref: ref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#nodeselector"
+                        },
+                        "podSecurityContext": {
+                          "description": "Security context to be added to spire server pods.\nSecurityContext holds pod-level security attributes and common container settings.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-pod"
+                        },
+                        "priorityClassName": {
+                          "description": "The priority class to use for the spire server"
+                        },
+                        "resources": {
+                          "description": "container resource limits & requests"
+                        },
+                        "securityContext": {
+                          "description": "Security context to be added to spire server containers.\nSecurityContext holds pod-level security attributes and common container settings.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container"
+                        },
+                        "service": {
+                          "additionalProperties": {},
+                          "properties": {
+                            "annotations": {
+                              "description": "Annotations to be added to the SPIRE server service"
+                            },
+                            "labels": {
+                              "description": "Labels to be added to the SPIRE server service"
+                            },
+                            "type": {
+                              "description": "Service type for the SPIRE server service"
+                            }
+                          }
+                        },
+                        "serviceAccount": {
+                          "additionalProperties": {},
+                          "description": "SPIRE server service account",
+                          "properties": {
+                            "create": {},
+                            "name": {}
+                          }
+                        },
+                        "tolerations": {
+                          "description": "SPIRE server tolerations configuration\nref: https://kubernetes.io/docs/concepts/scheduling-eviction/taint-and-toleration/"
+                        }
+                      }
                     }
                   }
+                },
+                "serverAddress": {
+                  "description": "SPIRE server address used by Cilium Operator\nIf k8s Service DNS along with port number is used (e.g. <service-name>.<namespace>.svc(.*):<port-number> format),\nCilium Operator will resolve its address by looking up the clusterIP from Service resource.\nExample values: 10.0.0.1:8081, spire-server.cilium-spire.svc:8081"
+                },
+                "trustDomain": {
+                  "description": "SPIFFE trust domain to use for fetching certificates"
                 }
-              ],
-              "description": "Settings for SPIRE"
+              },
+              "type": "object"
             }
           },
           "type": "object"
@@ -57368,7 +57322,7 @@
           "properties": {
             "digest": {},
             "override": {
-              "$ref": "#/$defs/values~1certgen.image.override"
+              "$ref": "#/$defs/values~1authentication.mutual.spire.install.initImage.override"
             },
             "pullPolicy": {
               "description": "type: [null, integer]"
@@ -62491,7 +62445,7 @@
                   "description": "clustermesh-apiserver-digest"
                 },
                 "override": {
-                  "$ref": "#/$defs/values~1certgen.image.override"
+                  "$ref": "#/$defs/values~1authentication.mutual.spire.install.initImage.override"
                 },
                 "pullPolicy": {},
                 "repository": {},
@@ -62501,64 +62455,58 @@
               "type": "object"
             },
             "kvstoremesh": {
-              "allOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "description": "Enable KVStoreMesh. KVStoreMesh caches the information retrieved\nfrom the remote clusters in the local etcd instance (deprecated - KVStoreMesh will always be enabled once the option is removed)."
-                    },
-                    "extraArgs": {
-                      "description": "Additional KVStoreMesh arguments."
-                    },
-                    "extraEnv": {
-                      "description": "Additional KVStoreMesh environment variables."
-                    },
-                    "extraVolumeMounts": {
-                      "description": "Additional KVStoreMesh volumeMounts."
-                    },
-                    "healthPort": {
-                      "description": "TCP port for the KVStoreMesh health API."
-                    },
-                    "kvstoreMode": {
-                      "anyOf": [
-                        {
-                          "enum": [
-                            "external"
-                          ]
-                        },
-                        {
-                          "enum": [
-                            "internal"
-                          ]
-                        },
-                        {
-                          "type": "null"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "description": "Specify the KVStore mode when running KVStoreMesh\nSupported values:\n- \"internal\": remote cluster identities are cached in etcd that runs as a sidecar within ``clustermesh-apiserver`` pod.\n- \"external\": ``clustermesh-apiserver`` will sync remote cluster information to the etcd used as kvstore. This can't be enabled with crd identity allocation mode."
-                    },
-                    "lifecycle": {
-                      "description": "lifecycle setting for the KVStoreMesh container"
-                    },
-                    "readinessProbe": {
-                      "description": "Configuration for the KVStoreMesh readiness probe."
-                    },
-                    "resources": {
-                      "description": "Resource requests and limits for the KVStoreMesh container\nrequests:\ncpu: 100m\nmemory: 64Mi\nlimits:\ncpu: 1000m\nmemory: 1024M"
-                    },
-                    "securityContext": {
-                      "description": "KVStoreMesh Security context"
-                    }
-                  }
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "description": "Enable KVStoreMesh. KVStoreMesh caches the information retrieved\nfrom the remote clusters in the local etcd instance (deprecated - KVStoreMesh will always be enabled once the option is removed)."
                 },
-                {
-                  "type": "object"
+                "extraArgs": {
+                  "description": "Additional KVStoreMesh arguments."
+                },
+                "extraEnv": {
+                  "description": "Additional KVStoreMesh environment variables."
+                },
+                "extraVolumeMounts": {
+                  "description": "Additional KVStoreMesh volumeMounts."
+                },
+                "healthPort": {
+                  "description": "TCP port for the KVStoreMesh health API."
+                },
+                "kvstoreMode": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "external"
+                      ]
+                    },
+                    {
+                      "enum": [
+                        "internal"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ],
+                  "description": "Specify the KVStore mode when running KVStoreMesh\nSupported values:\n- \"internal\": remote cluster identities are cached in etcd that runs as a sidecar within ``clustermesh-apiserver`` pod.\n- \"external\": ``clustermesh-apiserver`` will sync remote cluster information to the etcd used as kvstore. This can't be enabled with crd identity allocation mode."
+                },
+                "lifecycle": {
+                  "description": "lifecycle setting for the KVStoreMesh container"
+                },
+                "readinessProbe": {
+                  "description": "Configuration for the KVStoreMesh readiness probe."
+                },
+                "resources": {
+                  "description": "Resource requests and limits for the KVStoreMesh container\nrequests:\ncpu: 100m\nmemory: 64Mi\nlimits:\ncpu: 1000m\nmemory: 1024M"
+                },
+                "securityContext": {
+                  "description": "KVStoreMesh Security context"
                 }
-              ]
+              },
+              "type": "object"
             },
             "lifecycle": {
               "additionalProperties": {},
@@ -63155,7 +63103,7 @@
         },
         "labelValue": {},
         "namespace": {
-          "$ref": "#/$defs/values~1certgen.image.override"
+          "$ref": "#/$defs/values~1authentication.mutual.spire.install.initImage.override"
         }
       },
       "type": "object"
@@ -64085,10 +64033,10 @@
               "description": "ztunnel container image.",
               "properties": {
                 "digest": {
-                  "$ref": "#/$defs/values~1certgen.image.override"
+                  "$ref": "#/$defs/values~1authentication.mutual.spire.install.initImage.override"
                 },
                 "override": {
-                  "$ref": "#/$defs/values~1certgen.image.override"
+                  "$ref": "#/$defs/values~1authentication.mutual.spire.install.initImage.override"
                 },
                 "pullPolicy": {},
                 "repository": {},
@@ -64362,7 +64310,7 @@
           "properties": {
             "digest": {},
             "override": {
-              "$ref": "#/$defs/values~1certgen.image.override"
+              "$ref": "#/$defs/values~1authentication.mutual.spire.install.initImage.override"
             },
             "pullPolicy": {},
             "repository": {},
@@ -64789,6 +64737,7 @@
       },
       "type": "object"
     },
+    "global": {},
     "healthCheckICMPFailureThreshold": {
       "description": "Number of ICMP requests sent for each health check before marking a node or endpoint unreachable."
     },
@@ -70947,142 +70896,138 @@
         },
         "lostEventSendInterval": {},
         "metrics": {
-          "allOf": [
-            {
+          "additionalProperties": {},
+          "description": "Hubble metrics configuration.\nSee https://docs.cilium.io/en/stable/observability/metrics/#hubble-metrics\nfor more comprehensive documentation about Hubble metrics.\ntype: [null, array]",
+          "properties": {
+            "dashboards": {
+              "additionalProperties": {},
+              "description": "Grafana dashboards for hubble\ngrafana can import dashboards based on the label and value\nref: https://github.com/grafana/helm-charts/tree/main/charts/grafana#sidecar-for-dashboards",
+              "properties": {
+                "annotations": {},
+                "enabled": {},
+                "label": {
+                  "$ref": "#/$defs/values~1dashboards.label"
+                },
+                "labelValue": {},
+                "namespace": {
+                  "$ref": "#/$defs/values~1authentication.mutual.spire.install.initImage.override"
+                }
+              },
               "type": "object"
             },
-            {
+            "dynamic": {
+              "additionalProperties": {},
+              "description": "Dynamic metrics  may be reconfigured without a need of agent restarts.",
+              "properties": {
+                "config": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "configMapName": {
+                      "description": "---- Name of configmap with configuration that may be altered to reconfigure metric handlers within a running agent."
+                    },
+                    "content": {
+                      "description": "---- Exporters configuration in YAML format.\n- name: dns\ncontextOptions: []\nincludeFilters: []\nexcludeFilters: []"
+                    },
+                    "createConfigMap": {
+                      "$ref": "#/$defs/values~1hubble.export.dynamic.config.createConfigMap"
+                    }
+                  }
+                },
+                "enabled": {}
+              },
+              "type": "object"
+            },
+            "enableOpenMetrics": {
+              "description": "Enables exporting hubble metrics in OpenMetrics format."
+            },
+            "enabled": {
+              "description": "Configures the list of metrics to collect. If empty or null, metrics\nare disabled.\nExample:\nenabled:\n- dns:query;ignoreAAAA\n- drop\n- tcp\n- flow\n- icmp\n- http\nYou can specify the list of metrics from the helm CLI:\n--set hubble.metrics.enabled=\"{dns:query;ignoreAAAA,drop,tcp,flow,icmp,http}\""
+            },
+            "port": {
+              "description": "Configure the port the hubble metric server listens on."
+            },
+            "serviceAnnotations": {
+              "description": "Annotations to be added to hubble-metrics service."
+            },
+            "serviceMonitor": {
               "additionalProperties": {},
               "properties": {
-                "dashboards": {
-                  "additionalProperties": {},
-                  "description": "Grafana dashboards for hubble\ngrafana can import dashboards based on the label and value\nref: https://github.com/grafana/helm-charts/tree/main/charts/grafana#sidecar-for-dashboards",
-                  "properties": {
-                    "annotations": {},
-                    "enabled": {},
-                    "label": {
-                      "$ref": "#/$defs/values~1dashboards.label"
-                    },
-                    "labelValue": {},
-                    "namespace": {
-                      "$ref": "#/$defs/values~1certgen.image.override"
-                    }
-                  }
-                },
-                "dynamic": {
-                  "additionalProperties": {},
-                  "description": "Dynamic metrics  may be reconfigured without a need of agent restarts.",
-                  "properties": {
-                    "config": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "configMapName": {
-                          "description": "---- Name of configmap with configuration that may be altered to reconfigure metric handlers within a running agent."
-                        },
-                        "content": {
-                          "description": "---- Exporters configuration in YAML format.\n- name: dns\ncontextOptions: []\nincludeFilters: []\nexcludeFilters: []"
-                        },
-                        "createConfigMap": {
-                          "$ref": "#/$defs/values~1hubble.export.dynamic.config.createConfigMap"
-                        }
-                      }
-                    },
-                    "enabled": {}
-                  }
-                },
-                "enableOpenMetrics": {
-                  "description": "Enables exporting hubble metrics in OpenMetrics format."
+                "annotations": {
+                  "description": "Annotations to add to ServiceMonitor hubble"
                 },
                 "enabled": {
-                  "description": "Configures the list of metrics to collect. If empty or null, metrics\nare disabled.\nExample:\nenabled:\n- dns:query;ignoreAAAA\n- drop\n- tcp\n- flow\n- icmp\n- http\nYou can specify the list of metrics from the helm CLI:\n--set hubble.metrics.enabled=\"{dns:query;ignoreAAAA,drop,tcp,flow,icmp,http}\""
+                  "description": "Create ServiceMonitor resources for Prometheus Operator.\nThis requires the prometheus CRDs to be available.\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)"
                 },
-                "port": {
-                  "description": "Configure the port the hubble metric server listens on."
+                "interval": {
+                  "$ref": "#/$defs/values~1envoy.prometheus.serviceMonitor.interval"
                 },
-                "serviceAnnotations": {
-                  "description": "Annotations to be added to hubble-metrics service."
+                "jobLabel": {
+                  "description": "jobLabel to add for ServiceMonitor hubble"
                 },
-                "serviceMonitor": {
+                "labels": {
+                  "description": "Labels to add to ServiceMonitor hubble"
+                },
+                "metricRelabelings": {
+                  "description": "Metrics relabeling configs for the ServiceMonitor hubble"
+                },
+                "relabelings": {
+                  "description": "Relabeling configs for the ServiceMonitor hubble"
+                },
+                "scrapeTimeout": {
+                  "$ref": "#/$defs/values~1envoy.prometheus.serviceMonitor.scrapeTimeout"
+                },
+                "tlsConfig": {
+                  "description": "Configure TLS for the ServiceMonitor.\nNote, when using TLS you will either need to specify\ntlsConfig.insecureSkipVerify or specify a CA to use."
+                }
+              }
+            },
+            "tls": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "description": "Enable hubble metrics server TLS."
+                },
+                "server": {
                   "additionalProperties": {},
+                  "description": "Configure hubble metrics server TLS.",
                   "properties": {
-                    "annotations": {
-                      "description": "Annotations to add to ServiceMonitor hubble"
+                    "cert": {
+                      "description": "base64 encoded PEM values for the Hubble metrics server certificate (deprecated).\nUse existingSecret instead."
                     },
-                    "enabled": {
-                      "description": "Create ServiceMonitor resources for Prometheus Operator.\nThis requires the prometheus CRDs to be available.\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/example/prometheus-operator-crd/monitoring.coreos.com_servicemonitors.yaml)"
+                    "existingSecret": {
+                      "$ref": "#/$defs/values~1hubble.metrics.tls.server.existingSecret"
                     },
-                    "interval": {
-                      "$ref": "#/$defs/values~1envoy.prometheus.serviceMonitor.interval"
+                    "extraDnsNames": {
+                      "$ref": "#/$defs/values~1clustermesh.apiserver.tls.server.extraDnsNames"
                     },
-                    "jobLabel": {
-                      "description": "jobLabel to add for ServiceMonitor hubble"
+                    "extraIpAddresses": {
+                      "$ref": "#/$defs/values~1clustermesh.apiserver.tls.server.extraIpAddresses"
                     },
-                    "labels": {
-                      "description": "Labels to add to ServiceMonitor hubble"
+                    "key": {
+                      "description": "base64 encoded PEM values for the Hubble metrics server key (deprecated).\nUse existingSecret instead."
                     },
-                    "metricRelabelings": {
-                      "description": "Metrics relabeling configs for the ServiceMonitor hubble"
-                    },
-                    "relabelings": {
-                      "description": "Relabeling configs for the ServiceMonitor hubble"
-                    },
-                    "scrapeTimeout": {
-                      "$ref": "#/$defs/values~1envoy.prometheus.serviceMonitor.scrapeTimeout"
-                    },
-                    "tlsConfig": {
-                      "description": "Configure TLS for the ServiceMonitor.\nNote, when using TLS you will either need to specify\ntlsConfig.insecureSkipVerify or specify a CA to use."
-                    }
-                  }
-                },
-                "tls": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "description": "Enable hubble metrics server TLS."
-                    },
-                    "server": {
+                    "mtls": {
                       "additionalProperties": {},
-                      "description": "Configure hubble metrics server TLS.",
+                      "description": "Configure mTLS for the Hubble metrics server.",
                       "properties": {
-                        "cert": {
-                          "description": "base64 encoded PEM values for the Hubble metrics server certificate (deprecated).\nUse existingSecret instead."
-                        },
-                        "existingSecret": {
-                          "$ref": "#/$defs/values~1hubble.metrics~1keywords~1description"
-                        },
-                        "extraDnsNames": {
-                          "$ref": "#/$defs/values~1clustermesh.apiserver.tls.server.extraDnsNames"
-                        },
-                        "extraIpAddresses": {
-                          "$ref": "#/$defs/values~1clustermesh.apiserver.tls.server.extraIpAddresses"
+                        "enabled": {
+                          "description": "When set to true enforces mutual TLS between Hubble Metrics server and its clients.\nFalse allow non-mutual TLS connections.\nThis option has no effect when TLS is disabled."
                         },
                         "key": {
-                          "description": "base64 encoded PEM values for the Hubble metrics server key (deprecated).\nUse existingSecret instead."
+                          "description": "Entry of the ConfigMap containing the CA."
                         },
-                        "mtls": {
-                          "additionalProperties": {},
-                          "description": "Configure mTLS for the Hubble metrics server.",
-                          "properties": {
-                            "enabled": {
-                              "description": "When set to true enforces mutual TLS between Hubble Metrics server and its clients.\nFalse allow non-mutual TLS connections.\nThis option has no effect when TLS is disabled."
-                            },
-                            "key": {
-                              "description": "Entry of the ConfigMap containing the CA."
-                            },
-                            "name": {
-                              "description": "Name of the ConfigMap containing the CA to validate client certificates against.\nIf mTLS is enabled and this is unspecified, it will default to the\nsame CA used for Hubble metrics server certificates."
-                            },
-                            "useSecret": {}
-                          }
-                        }
+                        "name": {
+                          "description": "Name of the ConfigMap containing the CA to validate client certificates against.\nIf mTLS is enabled and this is unspecified, it will default to the\nsame CA used for Hubble metrics server certificates."
+                        },
+                        "useSecret": {}
                       }
                     }
                   }
                 }
               }
             }
-          ],
-          "description": "Hubble metrics configuration.\nSee https://docs.cilium.io/en/stable/observability/metrics/#hubble-metrics\nfor more comprehensive documentation about Hubble metrics.\ntype: [null, array]"
+          },
+          "type": "object"
         },
         "networkPolicyCorrelation": {
           "additionalProperties": {},
@@ -71161,255 +71106,249 @@
           "type": "object"
         },
         "relay": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "affinity": {
+              "description": "Affinity for hubble-replay"
             },
-            {
+            "annotations": {
+              "description": "Annotations to be added to all top-level hubble-relay objects (resources under templates/hubble-relay)"
+            },
+            "enabled": {
+              "description": "Enable Hubble Relay (requires hubble.enabled=true)"
+            },
+            "extraEnv": {
+              "description": "Additional hubble-relay environment variables."
+            },
+            "extraVolumeMounts": {
+              "description": "Additional hubble-relay volumeMounts."
+            },
+            "extraVolumes": {
+              "description": "Additional hubble-relay volumes."
+            },
+            "gops": {
               "additionalProperties": {},
               "properties": {
-                "affinity": {
-                  "description": "Affinity for hubble-replay"
-                },
-                "annotations": {
-                  "description": "Annotations to be added to all top-level hubble-relay objects (resources under templates/hubble-relay)"
-                },
                 "enabled": {
-                  "description": "Enable Hubble Relay (requires hubble.enabled=true)"
+                  "description": "Enable gops for hubble-relay"
                 },
-                "extraEnv": {
-                  "description": "Additional hubble-relay environment variables."
-                },
-                "extraVolumeMounts": {
-                  "description": "Additional hubble-relay volumeMounts."
-                },
-                "extraVolumes": {
-                  "description": "Additional hubble-relay volumes."
-                },
-                "gops": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "description": "Enable gops for hubble-relay"
-                    },
-                    "port": {
-                      "description": "Configure gops listen port for hubble-relay"
-                    }
-                  }
-                },
-                "image": {
-                  "additionalProperties": {},
-                  "description": "Hubble-relay container image.",
-                  "properties": {
-                    "digest": {
-                      "description": "hubble-relay-digest"
-                    },
-                    "override": {
-                      "$ref": "#/$defs/values~1certgen.image.override"
-                    },
-                    "pullPolicy": {},
-                    "repository": {},
-                    "tag": {},
-                    "useDigest": {}
-                  }
-                },
-                "listenHost": {
-                  "description": "Host to listen to. Specify an empty string to bind to all the interfaces.",
-                  "type": [
-                    "boolean",
-                    "integer",
-                    "number",
-                    "string"
-                  ]
-                },
-                "listenPort": {
-                  "description": "Port to listen to."
-                },
-                "logOptions": {
-                  "additionalProperties": {},
-                  "description": "Logging configuration for hubble-relay.\ntype: [null, string]",
-                  "properties": {
-                    "format": {
-                      "description": "Log format for hubble-relay. Valid values are: text, text-ts, json, json-ts.\ntype: [null, string]"
-                    },
-                    "level": {
-                      "description": "Log level for hubble-relay. Valid values are: debug, info, warn, error."
-                    }
-                  }
-                },
-                "nodeSelector": {
-                  "$ref": "#/$defs/values~1clustermesh.apiserver.nodeSelector"
-                },
-                "podAnnotations": {
-                  "description": "Annotations to be added to hubble-relay pods"
-                },
-                "podDisruptionBudget": {
-                  "$ref": "#/$defs/values~1clustermesh.apiserver.podDisruptionBudget"
-                },
-                "podLabels": {
-                  "description": "Labels to be added to hubble-relay pods"
-                },
-                "podSecurityContext": {
-                  "description": "hubble-relay pod security context"
-                },
-                "pprof": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "address": {
-                      "description": "Configure pprof listen address for hubble-relay"
-                    },
-                    "blockProfileRate": {
-                      "description": "Enable goroutine blocking profiling for hubble-relay and set the rate of sampled events in nanoseconds (set to 1 to sample all events [warning: performance overhead])"
-                    },
-                    "enabled": {
-                      "description": "Enable pprof for hubble-relay"
-                    },
-                    "mutexProfileFraction": {
-                      "description": "Enable mutex contention profiling for hubble-relay and set the fraction of sampled events (set to 1 to sample all events)"
-                    },
-                    "port": {
-                      "description": "Configure pprof listen port for hubble-relay"
-                    }
-                  }
-                },
-                "priorityClassName": {
-                  "description": "The priority class to use for hubble-relay"
-                },
-                "prometheus": {
-                  "additionalProperties": {},
-                  "description": "Enable prometheus metrics for hubble-relay on the configured port at\n/metrics",
-                  "properties": {
-                    "enabled": {},
-                    "port": {},
-                    "serviceMonitor": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "annotations": {
-                          "description": "Annotations to add to ServiceMonitor hubble-relay"
-                        },
-                        "enabled": {
-                          "$ref": "#/$defs/values~1operator.prometheus.serviceMonitor.enabled"
-                        },
-                        "interval": {
-                          "$ref": "#/$defs/values~1envoy.prometheus.serviceMonitor.interval"
-                        },
-                        "labels": {
-                          "description": "Labels to add to ServiceMonitor hubble-relay"
-                        },
-                        "metricRelabelings": {
-                          "description": "Metrics relabeling configs for the ServiceMonitor hubble-relay"
-                        },
-                        "namespace": {},
-                        "relabelings": {
-                          "description": "Relabeling configs for the ServiceMonitor hubble-relay\ntype: [null, array]"
-                        },
-                        "scrapeTimeout": {
-                          "$ref": "#/$defs/values~1envoy.prometheus.serviceMonitor.scrapeTimeout"
-                        }
-                      }
-                    }
-                  }
-                },
-                "replicas": {
-                  "description": "Number of replicas run for the hubble-relay deployment."
-                },
-                "resources": {
-                  "description": "Specifies the resources for the hubble-relay pods"
-                },
-                "retryTimeout": {
-                  "description": "Backoff duration to retry connecting to the local hubble instance in case of failure (e.g. \"30s\").\ntype: [null, integer]"
-                },
-                "rollOutPods": {
-                  "description": "Roll out Hubble Relay pods automatically when configmap is updated."
-                },
-                "securityContext": {
-                  "description": "hubble-relay container security context"
-                },
-                "service": {
-                  "additionalProperties": {},
-                  "description": "hubble-relay service configuration.",
-                  "properties": {
-                    "nodePort": {
-                      "$ref": "#/$defs/values~1hubble.ui.service.nodePort"
-                    },
-                    "type": {
-                      "description": "--- The type of service used for Hubble Relay access, either ClusterIP, NodePort or LoadBalancer."
-                    }
-                  }
-                },
-                "servicePort": {},
-                "sortBufferDrainTimeout": {
-                  "description": "When the per-request flows sort buffer is not full, a flow is drained every\ntime this timeout is reached (only affects requests in follow-mode) (e.g. \"1s\")."
-                },
-                "sortBufferLenMax": {
-                  "description": "(int) Max number of flows that can be buffered for sorting before being sent to the\nclient (per request) (e.g. 100).\ntype: [null, string]"
-                },
-                "terminationGracePeriodSeconds": {
-                  "description": "Configure termination grace period for hubble relay Deployment."
-                },
-                "tls": {
-                  "additionalProperties": {},
-                  "description": "TLS configuration for Hubble Relay",
-                  "properties": {
-                    "client": {
-                      "additionalProperties": {},
-                      "description": "The hubble-relay client certificate and private key.\nThis keypair is presented to Hubble server instances for mTLS\nauthentication and is required when hubble.tls.enabled is true.\nThese values need to be set manually if hubble.tls.auto.enabled is false.",
-                      "properties": {
-                        "cert": {
-                          "description": "base64 encoded PEM values for the Hubble relay client certificate (deprecated).\nUse existingSecret instead."
-                        },
-                        "existingSecret": {
-                          "$ref": "#/$defs/values~1hubble.metrics~1keywords~1description"
-                        },
-                        "key": {
-                          "description": "base64 encoded PEM values for the Hubble relay client key (deprecated).\nUse existingSecret instead."
-                        }
-                      }
-                    },
-                    "server": {
-                      "additionalProperties": {},
-                      "description": "The hubble-relay server certificate and private key",
-                      "properties": {
-                        "cert": {
-                          "description": "base64 encoded PEM values for the Hubble relay server certificate (deprecated).\nUse existingSecret instead."
-                        },
-                        "enabled": {
-                          "description": "When set to true, enable TLS on for Hubble Relay server\n(ie: for clients connecting to the Hubble Relay API)."
-                        },
-                        "existingSecret": {
-                          "description": "Name of the Secret containing the certificate and key for the Hubble relay server.\nIf specified, cert and key are ignored."
-                        },
-                        "extraDnsNames": {
-                          "description": "extra DNS names added to certificate when its auto gen"
-                        },
-                        "extraIpAddresses": {
-                          "description": "extra IP addresses added to certificate when its auto gen"
-                        },
-                        "key": {
-                          "description": "base64 encoded PEM values for the Hubble relay server key (deprecated).\nUse existingSecret instead."
-                        },
-                        "mtls": {
-                          "description": "When set to true enforces mutual TLS between Hubble Relay server and its clients.\nFalse allow non-mutual TLS connections.\nThis option has no effect when TLS is disabled."
-                        },
-                        "relayName": {
-                          "description": "DNS name used by the backend to connect to the relay\nThis is a simple workaround as the relay certificates are currently hardcoded to\n*.hubble-relay.cilium.io\nSee https://github.com/cilium/cilium/pull/28709#discussion_r1371792546\nFor GKE Dataplane V2 this should be set to relay.kube-system.svc.cluster.local\ntype: [null, string]"
-                        }
-                      }
-                    }
-                  }
-                },
-                "tolerations": {
-                  "$ref": "#/$defs/values~1certgen.tolerations"
-                },
-                "topologySpreadConstraints": {
-                  "description": "Pod topology spread constraints for hubble-relay\n- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule"
-                },
-                "updateStrategy": {
-                  "description": "hubble-relay update strategy"
+                "port": {
+                  "description": "Configure gops listen port for hubble-relay"
                 }
               }
+            },
+            "image": {
+              "additionalProperties": {},
+              "description": "Hubble-relay container image.",
+              "properties": {
+                "digest": {
+                  "description": "hubble-relay-digest"
+                },
+                "override": {
+                  "$ref": "#/$defs/values~1authentication.mutual.spire.install.initImage.override"
+                },
+                "pullPolicy": {},
+                "repository": {},
+                "tag": {},
+                "useDigest": {}
+              }
+            },
+            "listenHost": {
+              "description": "Host to listen to. Specify an empty string to bind to all the interfaces.",
+              "type": [
+                "boolean",
+                "integer",
+                "number",
+                "string"
+              ]
+            },
+            "listenPort": {
+              "description": "Port to listen to."
+            },
+            "logOptions": {
+              "additionalProperties": {},
+              "description": "Logging configuration for hubble-relay.\ntype: [null, string]",
+              "properties": {
+                "format": {
+                  "description": "Log format for hubble-relay. Valid values are: text, text-ts, json, json-ts.\ntype: [null, string]"
+                },
+                "level": {
+                  "description": "Log level for hubble-relay. Valid values are: debug, info, warn, error."
+                }
+              }
+            },
+            "nodeSelector": {
+              "$ref": "#/$defs/values~1clustermesh.apiserver.nodeSelector"
+            },
+            "podAnnotations": {
+              "description": "Annotations to be added to hubble-relay pods"
+            },
+            "podDisruptionBudget": {
+              "$ref": "#/$defs/values~1clustermesh.apiserver.podDisruptionBudget"
+            },
+            "podLabels": {
+              "description": "Labels to be added to hubble-relay pods"
+            },
+            "podSecurityContext": {
+              "description": "hubble-relay pod security context"
+            },
+            "pprof": {
+              "additionalProperties": {},
+              "properties": {
+                "address": {
+                  "description": "Configure pprof listen address for hubble-relay"
+                },
+                "blockProfileRate": {
+                  "description": "Enable goroutine blocking profiling for hubble-relay and set the rate of sampled events in nanoseconds (set to 1 to sample all events [warning: performance overhead])"
+                },
+                "enabled": {
+                  "description": "Enable pprof for hubble-relay"
+                },
+                "mutexProfileFraction": {
+                  "description": "Enable mutex contention profiling for hubble-relay and set the fraction of sampled events (set to 1 to sample all events)"
+                },
+                "port": {
+                  "description": "Configure pprof listen port for hubble-relay"
+                }
+              }
+            },
+            "priorityClassName": {
+              "description": "The priority class to use for hubble-relay"
+            },
+            "prometheus": {
+              "additionalProperties": {},
+              "description": "Enable prometheus metrics for hubble-relay on the configured port at\n/metrics",
+              "properties": {
+                "enabled": {},
+                "port": {},
+                "serviceMonitor": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "annotations": {
+                      "description": "Annotations to add to ServiceMonitor hubble-relay"
+                    },
+                    "enabled": {
+                      "$ref": "#/$defs/values~1hubble.relay.prometheus.serviceMonitor.enabled"
+                    },
+                    "interval": {
+                      "$ref": "#/$defs/values~1envoy.prometheus.serviceMonitor.interval"
+                    },
+                    "labels": {
+                      "description": "Labels to add to ServiceMonitor hubble-relay"
+                    },
+                    "metricRelabelings": {
+                      "description": "Metrics relabeling configs for the ServiceMonitor hubble-relay"
+                    },
+                    "namespace": {},
+                    "relabelings": {
+                      "description": "Relabeling configs for the ServiceMonitor hubble-relay\ntype: [null, array]"
+                    },
+                    "scrapeTimeout": {
+                      "$ref": "#/$defs/values~1envoy.prometheus.serviceMonitor.scrapeTimeout"
+                    }
+                  }
+                }
+              }
+            },
+            "replicas": {
+              "description": "Number of replicas run for the hubble-relay deployment."
+            },
+            "resources": {
+              "description": "Specifies the resources for the hubble-relay pods"
+            },
+            "retryTimeout": {
+              "description": "Backoff duration to retry connecting to the local hubble instance in case of failure (e.g. \"30s\").\ntype: [null, integer]"
+            },
+            "rollOutPods": {
+              "description": "Roll out Hubble Relay pods automatically when configmap is updated."
+            },
+            "securityContext": {
+              "description": "hubble-relay container security context"
+            },
+            "service": {
+              "additionalProperties": {},
+              "description": "hubble-relay service configuration.",
+              "properties": {
+                "nodePort": {
+                  "$ref": "#/$defs/values~1hubble.relay.service.nodePort"
+                },
+                "type": {
+                  "description": "--- The type of service used for Hubble Relay access, either ClusterIP, NodePort or LoadBalancer."
+                }
+              }
+            },
+            "servicePort": {},
+            "sortBufferDrainTimeout": {
+              "description": "When the per-request flows sort buffer is not full, a flow is drained every\ntime this timeout is reached (only affects requests in follow-mode) (e.g. \"1s\")."
+            },
+            "sortBufferLenMax": {
+              "description": "(int) Max number of flows that can be buffered for sorting before being sent to the\nclient (per request) (e.g. 100).\ntype: [null, string]"
+            },
+            "terminationGracePeriodSeconds": {
+              "description": "Configure termination grace period for hubble relay Deployment."
+            },
+            "tls": {
+              "additionalProperties": {},
+              "description": "TLS configuration for Hubble Relay",
+              "properties": {
+                "client": {
+                  "additionalProperties": {},
+                  "description": "The hubble-relay client certificate and private key.\nThis keypair is presented to Hubble server instances for mTLS\nauthentication and is required when hubble.tls.enabled is true.\nThese values need to be set manually if hubble.tls.auto.enabled is false.",
+                  "properties": {
+                    "cert": {
+                      "description": "base64 encoded PEM values for the Hubble relay client certificate (deprecated).\nUse existingSecret instead."
+                    },
+                    "existingSecret": {
+                      "$ref": "#/$defs/values~1hubble.metrics.tls.server.existingSecret"
+                    },
+                    "key": {
+                      "description": "base64 encoded PEM values for the Hubble relay client key (deprecated).\nUse existingSecret instead."
+                    }
+                  }
+                },
+                "server": {
+                  "additionalProperties": {},
+                  "description": "The hubble-relay server certificate and private key",
+                  "properties": {
+                    "cert": {
+                      "description": "base64 encoded PEM values for the Hubble relay server certificate (deprecated).\nUse existingSecret instead."
+                    },
+                    "enabled": {
+                      "description": "When set to true, enable TLS on for Hubble Relay server\n(ie: for clients connecting to the Hubble Relay API)."
+                    },
+                    "existingSecret": {
+                      "description": "Name of the Secret containing the certificate and key for the Hubble relay server.\nIf specified, cert and key are ignored."
+                    },
+                    "extraDnsNames": {
+                      "description": "extra DNS names added to certificate when its auto gen"
+                    },
+                    "extraIpAddresses": {
+                      "description": "extra IP addresses added to certificate when its auto gen"
+                    },
+                    "key": {
+                      "description": "base64 encoded PEM values for the Hubble relay server key (deprecated).\nUse existingSecret instead."
+                    },
+                    "mtls": {
+                      "description": "When set to true enforces mutual TLS between Hubble Relay server and its clients.\nFalse allow non-mutual TLS connections.\nThis option has no effect when TLS is disabled."
+                    },
+                    "relayName": {
+                      "description": "DNS name used by the backend to connect to the relay\nThis is a simple workaround as the relay certificates are currently hardcoded to\n*.hubble-relay.cilium.io\nSee https://github.com/cilium/cilium/pull/28709#discussion_r1371792546\nFor GKE Dataplane V2 this should be set to relay.kube-system.svc.cluster.local\ntype: [null, string]"
+                    }
+                  }
+                }
+              }
+            },
+            "tolerations": {
+              "$ref": "#/$defs/values~1certgen.tolerations"
+            },
+            "topologySpreadConstraints": {
+              "description": "Pod topology spread constraints for hubble-relay\n- maxSkew: 1\ntopologyKey: topology.kubernetes.io/zone\nwhenUnsatisfiable: DoNotSchedule"
+            },
+            "updateStrategy": {
+              "description": "hubble-relay update strategy"
             }
-          ]
+          },
+          "type": "object"
         },
         "skipUnknownCGroupIDs": {
           "description": "(bool) Skip Hubble events with unknown cgroup ids"
@@ -71518,7 +71457,7 @@
                   "properties": {
                     "digest": {},
                     "override": {
-                      "$ref": "#/$defs/values~1certgen.image.override"
+                      "$ref": "#/$defs/values~1authentication.mutual.spire.install.initImage.override"
                     },
                     "pullPolicy": {},
                     "repository": {},
@@ -71575,7 +71514,7 @@
                   "properties": {
                     "digest": {},
                     "override": {
-                      "$ref": "#/$defs/values~1certgen.image.override"
+                      "$ref": "#/$defs/values~1authentication.mutual.spire.install.initImage.override"
                     },
                     "pullPolicy": {},
                     "repository": {},
@@ -71658,7 +71597,7 @@
                   "description": "Labels to be added for the Hubble UI service"
                 },
                 "nodePort": {
-                  "$ref": "#/$defs/values~1hubble.ui.service.nodePort"
+                  "$ref": "#/$defs/values~1hubble.relay.service.nodePort"
                 },
                 "type": {
                   "description": "--- The type of service used for Hubble UI access, either ClusterIP or NodePort."
@@ -71735,7 +71674,7 @@
           "description": "cilium-digest"
         },
         "override": {
-          "$ref": "#/$defs/values~1certgen.image.override"
+          "$ref": "#/$defs/values~1authentication.mutual.spire.install.initImage.override"
         },
         "pullPolicy": {},
         "repository": {},
@@ -73263,7 +73202,7 @@
           "properties": {
             "digest": {},
             "override": {
-              "$ref": "#/$defs/values~1certgen.image.override"
+              "$ref": "#/$defs/values~1authentication.mutual.spire.install.initImage.override"
             },
             "pullPolicy": {},
             "repository": {},
@@ -74320,7 +74259,7 @@
             },
             "labelValue": {},
             "namespace": {
-              "$ref": "#/$defs/values~1certgen.image.override"
+              "$ref": "#/$defs/values~1authentication.mutual.spire.install.initImage.override"
             }
           },
           "type": "object"
@@ -74375,7 +74314,7 @@
               "description": "operator-generic-digest"
             },
             "override": {
-              "$ref": "#/$defs/values~1certgen.image.override"
+              "$ref": "#/$defs/values~1authentication.mutual.spire.install.initImage.override"
             },
             "pullPolicy": {},
             "repository": {},
@@ -74439,7 +74378,7 @@
                   "description": "Annotations to add to ServiceMonitor cilium-operator"
                 },
                 "enabled": {
-                  "$ref": "#/$defs/values~1operator.prometheus.serviceMonitor.enabled"
+                  "$ref": "#/$defs/values~1hubble.relay.prometheus.serviceMonitor.enabled"
                 },
                 "interval": {
                   "$ref": "#/$defs/values~1envoy.prometheus.serviceMonitor.interval"
@@ -75145,7 +75084,7 @@
               "properties": {
                 "digest": {},
                 "override": {
-                  "$ref": "#/$defs/values~1certgen.image.override"
+                  "$ref": "#/$defs/values~1authentication.mutual.spire.install.initImage.override"
                 },
                 "repository": {},
                 "tag": {},
@@ -75171,7 +75110,7 @@
               "description": "cilium-digest"
             },
             "override": {
-              "$ref": "#/$defs/values~1certgen.image.override"
+              "$ref": "#/$defs/values~1authentication.mutual.spire.install.initImage.override"
             },
             "pullPolicy": {},
             "repository": {},
@@ -75262,7 +75201,7 @@
               "description": "Annotations to add to ServiceMonitor cilium-agent"
             },
             "enabled": {
-              "$ref": "#/$defs/values~1operator.prometheus.serviceMonitor.enabled"
+              "$ref": "#/$defs/values~1hubble.relay.prometheus.serviceMonitor.enabled"
             },
             "interval": {
               "$ref": "#/$defs/values~1envoy.prometheus.serviceMonitor.interval"
@@ -75781,7 +75720,7 @@
           "properties": {
             "digest": {},
             "override": {
-              "$ref": "#/$defs/values~1certgen.image.override"
+              "$ref": "#/$defs/values~1authentication.mutual.spire.install.initImage.override"
             },
             "pullPolicy": {},
             "repository": {},

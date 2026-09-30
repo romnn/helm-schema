@@ -12,6 +12,7 @@ mod harness;
 
 use helm_schema_test_support::helm::adjudication as helm_adjudication;
 use helm_schema_test_support::helm::invocation as helm_invocation;
+use helm_schema_test_support::{generate, registry};
 
 #[path = "common/helm_pool.rs"]
 mod helm_pool;
@@ -19,12 +20,16 @@ mod helm_pool;
 #[path = "common/known_false_acceptances.rs"]
 mod known_false_acceptances;
 
+#[path = "common/known_undecided_acceptances.rs"]
+mod known_undecided_acceptances;
+
 use helm_adjudication::{KubernetesVerdict, OfflineKubernetesValidator, PinnedHelmChart};
 use helm_pool::{PoolLimits, PoolPeaks, run_ordered};
 use known_false_acceptances::{
-    Baseline, Family, KNOWN_FALSE_ACCEPTANCES, KNOWN_UNDECIDED_ACCEPTANCES, KnownFalseAcceptances,
-    KnownUndecidedAcceptances, Probe, ROSTER_BASELINE, Rejection,
+    Baseline, Family, KNOWN_FALSE_ACCEPTANCES, KnownFalseAcceptances, Probe, ROSTER_BASELINE,
+    Rejection,
 };
+use known_undecided_acceptances::{KNOWN_UNDECIDED_ACCEPTANCES, KnownUndecidedAcceptances};
 
 use harness::{
     ContractVerdict, ControlCategory, GuardSamplingStrategy, HelmChartDir, ProbeCoverage,
@@ -33,6 +38,47 @@ use harness::{
     read_coalesced_defaults, rejects_for_a_new_reason, round_robin_base_probes, sparse_override,
     sparse_override_for_composed, structural_probe_battery, structural_probe_battery_with_coverage,
 };
+
+// The roster's case matcher is this battery's own naming rule: the witness
+// gate shares the roster data, not the battery's case spelling.
+
+/// Whether the battery case `case` (`{chart}: {probe}`) is `probe` of
+/// `chart`, plain or as the payload of a targeted guard probe.
+pub(crate) fn names(chart: &str, probe: &Probe, case: &str) -> bool {
+    let Some(name) = case
+        .strip_prefix(chart)
+        .and_then(|rest| rest.strip_prefix(": "))
+    else {
+        return false;
+    };
+    let assignment = format!("{} <- {}", probe.path, probe.value);
+    name == assignment || name.ends_with(&format!("[targeted: {assignment}]"))
+}
+
+impl KnownFalseAcceptances {
+    /// Whether this group lists `case`, failing by `rejection` behind a
+    /// `baseline` rejection.
+    pub(crate) fn lists(&self, case: &str, rejection: Rejection, baseline: Baseline) -> bool {
+        self.rejection == rejection
+            && self.baseline == baseline
+            && self
+                .probes
+                .iter()
+                .any(|probe| names(self.chart, probe, case))
+    }
+}
+
+impl KnownUndecidedAcceptances {
+    /// Whether this group lists `case`, left undecided for exactly
+    /// `uncertain`.
+    pub(crate) fn lists(&self, case: &str, uncertain: &[String]) -> bool {
+        self.uncertain == uncertain
+            && self
+                .probes
+                .iter()
+                .any(|probe| names(self.chart, probe, case))
+    }
+}
 
 #[derive(Debug, Serialize)]
 struct ProbeCoverageReport {
@@ -99,6 +145,10 @@ struct HelmAdjudicationCoverage {
     tightenings_matched_kubernetes_rejection: usize,
     loosenings_matched_kubernetes_validation: usize,
     loosenings_matched_defaults_violations: usize,
+    /// `chart: probe` of every rejected cell Helm renders whose rejection is
+    /// exactly a declared default's type assertion on a path no template
+    /// reads, which the `annotate` authoring policy accepts.
+    tightenings_attributed_to_declared_types: Vec<String>,
     /// Accepted cells Helm renders whose changed resources Kubernetes cannot
     /// decide.
     loosenings_with_uncertain_kubernetes: Vec<ObservedUndecidedAcceptance>,
@@ -154,6 +204,10 @@ impl HelmAdjudicationCoverage {
             }
             HelmFlipVerdict::TighteningMatchedKubernetesRejection => {
                 self.tightenings_matched_kubernetes_rejection += 1;
+                false
+            }
+            HelmFlipVerdict::TighteningMatchedDeclaredTypesPolicy => {
+                self.tightenings_attributed_to_declared_types.push(case);
                 false
             }
             HelmFlipVerdict::LooseningMatchedKubernetesValidation => {
@@ -223,12 +277,12 @@ fn false_acceptance_rows_not_observed(
             let observed = coverage.false_acceptances.iter().any(|observed| {
                 observed.rejection == group.rejection
                     && observed.baseline == group.baseline
-                    && known_false_acceptances::names(group.chart, probe, &observed.case)
+                    && names(group.chart, probe, &observed.case)
             });
             let unreachable = coverage
                 .unreachable_cases
                 .iter()
-                .any(|case| known_false_acceptances::names(group.chart, probe, case));
+                .any(|case| names(group.chart, probe, case));
             if unreachable {
                 eprintln!(
                     "UNOBSERVABLE roster row (its probe is unreachable): {}: {} <- {}",
@@ -275,6 +329,7 @@ fn validate_helm_adjudication_coverage(
     if coverage.flips_adjudicated
         != coverage.tightenings_matched_helm_abort
             + coverage.tightenings_matched_kubernetes_rejection
+            + coverage.tightenings_attributed_to_declared_types.len()
             + coverage.loosenings_matched_kubernetes_validation
             + coverage.loosenings_matched_defaults_violations
             + coverage.loosenings_with_uncertain_kubernetes.len()
@@ -335,7 +390,7 @@ fn validate_helm_adjudication_coverage(
                 .iter()
                 .any(|observed| {
                     group.uncertain == observed.uncertain.as_slice()
-                        && known_false_acceptances::names(group.chart, probe, &observed.case)
+                        && names(group.chart, probe, &observed.case)
                 });
             if !observed {
                 fixed.push(format!(
@@ -360,6 +415,7 @@ fn matched_flip_validation_accepts_confirmed_outcomes() -> eyre::Result<()> {
     for verdict in [
         HelmFlipVerdict::TighteningMatchedHelmAbort,
         HelmFlipVerdict::TighteningMatchedKubernetesRejection,
+        HelmFlipVerdict::TighteningMatchedDeclaredTypesPolicy,
         HelmFlipVerdict::LooseningMatchedKubernetesValidation,
         HelmFlipVerdict::LooseningMatchedDefaultsViolations,
     ] {
@@ -623,6 +679,10 @@ fn helm_adjudication_records_each_outcome_once() {
             Some(false),
         ),
         (
+            HelmFlipVerdict::TighteningMatchedDeclaredTypesPolicy,
+            Some(false),
+        ),
+        (
             HelmFlipVerdict::LooseningMatchedKubernetesValidation,
             Some(true),
         ),
@@ -648,10 +708,11 @@ fn helm_adjudication_records_each_outcome_once() {
     }
     sim_assert_eq!(have: json!(coverage), want: json!({
         "enabled": false, "screening_is_exact": false, "screened_flips": 0,
-        "screened_flips_collapsed": 1, "flips_adjudicated": 8,
+        "screened_flips_collapsed": 1, "flips_adjudicated": 9,
         "tightenings_matched_helm_abort": 1, "tightenings_matched_kubernetes_rejection": 1,
         "loosenings_matched_kubernetes_validation": 1,
         "loosenings_matched_defaults_violations": 1,
+        "tightenings_attributed_to_declared_types": ["case"],
         "loosenings_with_uncertain_kubernetes": [{ "case": "case", "uncertain": ["reason"] }],
         "charts_adjudicated": [],
         "unreachable_cases": [],
@@ -897,6 +958,33 @@ fn a_composed_probe_helm_cannot_reach_is_unreachable() -> eyre::Result<()> {
         ProbeInstance::Coalesced(nulled).helm_values_file(&chart, &defaults)?,
         ProbeValuesFile::Unreachable(_)
     ));
+    Ok(())
+}
+
+/// Once an override reaches a subchart, Helm keeps that subchart's null
+/// defaults (spinnaker's `minio.makeBucketJob.annotations`), which its
+/// defaults document drops. A probe that differs from the document Helm
+/// composes only by those nulls reaches Helm as that document, so the
+/// roster's spinnaker `minio.ingress.enabled <- true` witness is observed
+/// instead of labelled unreachable.
+#[test]
+fn a_composed_probe_reaches_helm_with_the_null_defaults_it_keeps() -> eyre::Result<()> {
+    let chart = test_util::workspace_testdata().join("charts/spinnaker");
+    let defaults = test_util::helm_values::coalesce_chart_values(&chart, json!({}))?;
+    let mut composed = defaults.clone();
+    *composed
+        .pointer_mut("/minio/ingress/enabled")
+        .ok_or_eyre("minio declares ingress.enabled")? = json!(true);
+    let values = json!({"minio": {"ingress": {"enabled": true}}});
+    let document = test_util::helm_values::coalesce_chart_values(&chart, values.clone())?;
+    sim_assert_eq!(
+        have: document.pointer("/minio/makeBucketJob/annotations"),
+        want: Some(&serde_json::Value::Null)
+    );
+    sim_assert_eq!(
+        have: ProbeInstance::Coalesced(composed).helm_values_file(&chart, &defaults)?,
+        want: ProbeValuesFile::ReachableAs { values, document }
+    );
     Ok(())
 }
 
@@ -2183,7 +2271,32 @@ enum ChartInputs {
     },
 }
 
+/// The whole-chart recipe the registry generates `dump_name` from.
+fn chart_recipe(dump_name: &str) -> Option<registry::ChartRecipe> {
+    registry::registry()
+        .into_iter()
+        .find_map(|spec| match spec.recipe {
+            registry::GenerationRecipe::Chart(recipe) if spec.dump_name == dump_name => {
+                Some(recipe)
+            }
+            _ => None,
+        })
+}
+
 impl ChartInputs {
+    /// The candidate's registry recipe under `--declared-types=annotate`;
+    /// `None` for a schema pair no recipe generates.
+    fn declared_types_annotation(&self) -> Option<DeclaredTypesAnnotation> {
+        let Self::Fixture { candidate_path, .. } = self else {
+            return None;
+        };
+        let recipe = chart_recipe(candidate_path.file_name()?.to_str()?)?;
+        Some(DeclaredTypesAnnotation::new(
+            generate::chart_dir(recipe.chart),
+            recipe,
+        ))
+    }
+
     /// The baseline schema, the candidate schema and the chart's defaults.
     fn load(
         self,
@@ -2218,6 +2331,9 @@ struct LiveChart {
     /// Each screened probe's name and Helm values file, in probe order.
     flips: Vec<(String, serde_json::Value)>,
     helm: std::sync::Arc<ChartHelm>,
+    /// The chart under `--declared-types=annotate`, when a registry recipe
+    /// generates the candidate.
+    annotation: Option<DeclaredTypesAnnotation>,
 }
 
 /// A chart's pinned Helm copies, prepared by the first probe job that needs
@@ -2453,6 +2569,7 @@ fn screen_chart(
         chart_relative_path,
         inputs,
     } = chart;
+    let annotation = inputs.declared_types_annotation();
     let (baseline, current, defaults) = inputs.load(&chart_relative_path)?;
     let profiles = ProfileSchemas::compile(&baseline, &current, defaults.clone())?;
     let (probes, mut coverage) = structural_probe_battery_with_coverage(
@@ -2480,8 +2597,11 @@ fn screen_chart(
         if matches!(probe, ProbeInstance::Coalesced(_)) {
             coverage.composed_probes += 1;
         }
-        let overlay = match probe.helm_values_file(chart_dir.path(), &defaults) {
-            Ok(ProbeValuesFile::Reachable(overlay)) => overlay,
+        let (overlay, probe) = match probe.helm_values_file(chart_dir.path(), &defaults) {
+            Ok(ProbeValuesFile::Reachable(overlay)) => (overlay, probe),
+            Ok(ProbeValuesFile::ReachableAs { values, document }) => {
+                (values, ProbeInstance::Coalesced(document))
+            }
             Ok(ProbeValuesFile::Unreachable(reason)) => {
                 coverage.unreachable_probes.push(UnreachableProbe {
                     probe: probe_name,
@@ -2516,6 +2636,7 @@ fn screen_chart(
         profiles,
         flips: screened,
         helm: std::sync::Arc::default(),
+        annotation,
     });
     let screened = ScreenedChart {
         label,
@@ -2548,10 +2669,14 @@ fn adjudicate_probe(
     let outcome = match (live.helm.chart(&live.path), kubernetes) {
         (Err(error), _) => Err(format!("{case}: {error}")),
         (Ok(_), None) => Err(format!("{case}: no Kubernetes validator")),
-        (Ok(chart), Some(kubernetes)) => {
-            adjudicate_flip(chart, overlay, &live.profiles, kubernetes)
-                .map_err(|error| format!("{case}: {error}"))
-        }
+        (Ok(chart), Some(kubernetes)) => adjudicate_flip(
+            chart,
+            overlay,
+            &live.profiles,
+            kubernetes,
+            live.annotation.as_ref(),
+        )
+        .map_err(|error| format!("{case}: {error}")),
     };
     AdjudicatedProbe {
         case,
@@ -2569,6 +2694,12 @@ enum HelmFlipVerdict {
     Collapsed,
     TighteningMatchedHelmAbort,
     TighteningMatchedKubernetesRejection,
+    /// Helm renders and Kubernetes proves no new violation, but the
+    /// rejection is exactly a declared default's type assertion on a path no
+    /// template reads, and the schema generated under
+    /// `--declared-types=annotate` accepts the document: the rejection is the
+    /// `assert` authoring policy, not a recovered constraint.
+    TighteningMatchedDeclaredTypesPolicy,
     LooseningMatchedKubernetesValidation,
     /// Helm renders, and every Kubernetes violation is one the defaults render already carries.
     LooseningMatchedDefaultsViolations,
@@ -2611,16 +2742,240 @@ fn adjudicate_round74_flip(
     profiles: &ProfileSchemas,
     kubernetes: &OfflineKubernetesValidator,
 ) -> eyre::Result<HelmFlipVerdict> {
-    Ok(adjudicate_flip(chart, overlay, profiles, kubernetes)?.0)
+    Ok(adjudicate_flip(chart, overlay, profiles, kubernetes, None)?.0)
+}
+
+/// A chart regenerated by its candidate's recipe under both declared-types
+/// policies, prepared by the first flip that needs it. The two generations
+/// differ only in whether declared defaults assert their types.
+struct DeclaredTypesAnnotation {
+    chart_dir: PathBuf,
+    recipe: registry::ChartRecipe,
+    /// A schema conjoined to both regenerations: a control's stand-in for a
+    /// constraint the chart's own generation carries under either policy.
+    /// The battery passes none.
+    constraint: Option<serde_json::Value>,
+    prepared: std::sync::OnceLock<Result<RegeneratedChart, String>>,
+}
+
+/// The chart's schemas under both policies, and the annotate session that
+/// explains its paths.
+struct RegeneratedChart {
+    asserted: PolicySchema,
+    annotated: jsonschema::Validator,
+    session: helm_schema::AnalysisSession,
+}
+
+/// One policy's generated schema and its compiled validator.
+struct PolicySchema {
+    schema: serde_json::Value,
+    validator: jsonschema::Validator,
+}
+
+impl PolicySchema {
+    fn generate(
+        session: &helm_schema::AnalysisSession,
+        recipe: &registry::ChartRecipe,
+        constraint: Option<&serde_json::Value>,
+    ) -> Result<Self, String> {
+        let policy = recipe.authoring.declared_types;
+        let mut schema = generate::session_schema(session, recipe)
+            .map_err(|error| format!("generate the {policy:?} schema: {error:#}"))?;
+        if let Some(constraint) = constraint {
+            schema = conjoin(schema, constraint);
+        }
+        let validator = jsonschema::validator_for(&schema)
+            .map_err(|error| format!("compile the {policy:?} schema: {error}"))?;
+        Ok(Self { schema, validator })
+    }
+}
+
+/// `schema` and `constraint` as one schema: both under `allOf`, their
+/// definitions merged at the root so every `#/$defs/...` still resolves,
+/// under the constraint's dialect when it names one.
+fn conjoin(mut schema: serde_json::Value, constraint: &serde_json::Value) -> serde_json::Value {
+    let mut constraint = constraint.clone();
+    let mut root = serde_json::Map::new();
+    let mut definitions = serde_json::Map::new();
+    for part in [&mut schema, &mut constraint] {
+        let Some(members) = part.as_object_mut() else {
+            continue;
+        };
+        if let Some(dialect) = members.remove("$schema") {
+            root.insert("$schema".to_string(), dialect);
+        }
+        if let Some(serde_json::Value::Object(defined)) = members.remove("$defs") {
+            definitions.extend(defined);
+        }
+    }
+    root.insert("$defs".to_string(), serde_json::Value::Object(definitions));
+    root.insert("allOf".to_string(), json!([schema, constraint]));
+    serde_json::Value::Object(root)
+}
+
+impl DeclaredTypesAnnotation {
+    /// The chart at `chart_dir`, generated by `recipe` under each
+    /// declared-types policy.
+    fn new(chart_dir: PathBuf, recipe: registry::ChartRecipe) -> Self {
+        Self {
+            chart_dir,
+            recipe,
+            constraint: None,
+            prepared: std::sync::OnceLock::new(),
+        }
+    }
+
+    fn prepared(&self) -> Result<&RegeneratedChart, String> {
+        self.prepared
+            .get_or_init(|| {
+                let mut asserting = self.recipe;
+                asserting.authoring.declared_types = helm_schema::generation::DeclaredTypes::Assert;
+                let mut annotating = self.recipe;
+                annotating.authoring.declared_types =
+                    helm_schema::generation::DeclaredTypes::Annotate;
+                let session = |recipe: &registry::ChartRecipe| {
+                    helm_schema::AnalysisSession::new(generate::generate_options_at(
+                        &self.chart_dir,
+                        recipe,
+                    ))
+                };
+                let constraint = self.constraint.as_ref();
+                let asserted =
+                    PolicySchema::generate(&session(&asserting), &asserting, constraint)?;
+                let annotate_session = session(&annotating);
+                let annotated = PolicySchema::generate(&annotate_session, &annotating, constraint)?;
+                Ok(RegeneratedChart {
+                    asserted,
+                    annotated: annotated.validator,
+                    session: annotate_session,
+                })
+            })
+            .as_ref()
+            .map_err(Clone::clone)
+    }
+}
+
+/// [`declared_types_attribution`] of a Helm-rendered rejection, when the
+/// chart has an annotate regeneration and Helm coalesced the document.
+fn attribute_to_declared_types(
+    annotation: Option<&DeclaredTypesAnnotation>,
+    values: Option<&helm_adjudication::CoalescedValues>,
+    profiles: &ProfileSchemas,
+) -> Result<(), String> {
+    match (annotation, values) {
+        (None, _) => Err("the chart has no registry recipe to regenerate".to_string()),
+        (Some(_), None) => Err("Helm produced no coalesced document".to_string()),
+        (Some(annotation), Some(values)) => {
+            declared_types_attribution(annotation, profiles, values.as_json())
+        }
+    }
+}
+
+/// Whether the candidate's rejection of the Helm-coalesced `document` is the
+/// `assert` authoring policy's alone. It is when the candidate, which rejects
+/// it, is the chart's assert regeneration, the annotate regeneration accepts
+/// the document outright, and every value the assert regeneration rejects is
+/// an object member explain C1 reports unread (no use of it, its descendants
+/// or an ancestor besides the seeded top-level and dependency-root claims,
+/// and no generation decision). The two regenerations differ only in the
+/// declared-types policy, so when the annotate one accepts, every reason the
+/// candidate rejects for is the policy's, whatever the baseline rejects; no
+/// failure is compared with another. The error names the first condition
+/// that fails.
+fn declared_types_attribution(
+    annotation: &DeclaredTypesAnnotation,
+    profiles: &ProfileSchemas,
+    document: &serde_json::Value,
+) -> Result<(), String> {
+    let (_, candidate_accepts) = profiles.document_verdicts(document);
+    if candidate_accepts {
+        return Err("the candidate accepts it".to_string());
+    }
+    let regenerated = annotation.prepared()?;
+    if profiles.candidate_schema() != &regenerated.asserted.schema {
+        return Err("the candidate is not the assert regeneration".to_string());
+    }
+    if !regenerated.annotated.is_valid(document) {
+        return Err("the annotate regeneration rejects it".to_string());
+    }
+    for error in regenerated.asserted.validator.iter_errors(document) {
+        let path = error.instance_path().as_str().to_string();
+        // Whether a JSON-pointer token names an object member or an array
+        // element is the document's to say: `Location::segments` reads every
+        // numeric token as an index, even an object key such as `"1"`.
+        let mut keys = Vec::new();
+        let mut instance = document;
+        for token in path.split('/').skip(1) {
+            let key = token.replace("~1", "/").replace("~0", "~");
+            instance = match instance {
+                serde_json::Value::Object(members) => match members.get(&key) {
+                    Some(member) => member,
+                    None => return Err(format!("{path}: `{key}` is not in the document")),
+                },
+                serde_json::Value::Array(_) => {
+                    return Err(format!("{path}: steps into an array"));
+                }
+                _ => return Err(format!("{path}: steps into a scalar")),
+            };
+            keys.push(key);
+        }
+        let mut reached = helm_schema_core::ValuesPath::parse("");
+        let mut ancestry = vec![reached.clone()];
+        for key in &keys {
+            reached.push(key.clone());
+            ancestry.push(reached.clone());
+        }
+        for (depth, values_path) in ancestry.iter().enumerate() {
+            let values_path = values_path.encode();
+            let explanation = regenerated
+                .session
+                .explain(&values_path)
+                .map_err(|error| format!("explain `{values_path}`: {error}"))?;
+            // Two claims are no template read: values seeding's claim on
+            // every declared top-level key (a pathless scalar) and the
+            // dependency-root claim `ContractIr::finalize` adds for every
+            // dependency values root (a pathless fragment). Neither has a
+            // YAML path or template provenance.
+            let dependency_root = explanation
+                .value_path_facts
+                .as_ref()
+                .is_some_and(|facts| facts.accepted_dependency_values_root_fragment);
+            let template_reads = explanation.exact_uses.iter().any(|use_| {
+                let claim = use_.path.0.is_empty()
+                    && use_.provenance.is_empty()
+                    && (use_.kind == helm_schema_core::ValueKind::Scalar
+                        || (dependency_root && use_.kind == helm_schema_core::ValueKind::Fragment));
+                !claim
+            });
+            if template_reads {
+                return Err(format!("{path}: a template reads `{values_path}`"));
+            }
+            if depth < keys.len() {
+                continue;
+            }
+            if !explanation.descendant_uses.is_empty() {
+                return Err(format!("{path}: a template reads beneath `{values_path}`"));
+            }
+            if explanation.generation.is_some() {
+                return Err(format!("{path}: generation decided `{values_path}`"));
+            }
+        }
+    }
+    Ok(())
 }
 
 /// Adjudicates `overlay` with Helm and Kubernetes, returning the verdict and
 /// the probe's evidence directory.
+#[expect(
+    clippy::too_many_lines,
+    reason = "the verdict chain reads as one decision over Helm, Kubernetes and the authoring policy"
+)]
 fn adjudicate_flip(
     chart: &PinnedHelmChart,
     overlay: &serde_json::Value,
     profiles: &ProfileSchemas,
     kubernetes: &OfflineKubernetesValidator,
+    annotation: Option<&DeclaredTypesAnnotation>,
 ) -> eyre::Result<(HelmFlipVerdict, std::path::PathBuf)> {
     let probe = chart.adjudicate(overlay)?;
     // Without a Helm-coalesced document, the screened composition is the judged instance.
@@ -2697,20 +3052,26 @@ fn adjudicate_flip(
             } else {
                 Ok(HelmFlipVerdict::TighteningMatchedKubernetesRejection)
             }
-        } else if !comparison.uncertain.is_empty() {
-            if after {
-                Ok(HelmFlipVerdict::LooseningWithUncertainKubernetes(
-                    comparison.uncertain.clone(),
-                ))
-            } else {
-                Err(
-                    "tightening rejects a document Helm renders without a proved Kubernetes violation",
-                )
-            }
         } else if !after {
-            Err(
-                "tightening rejects a document whose render adds no Kubernetes violation to the defaults render",
-            )
+            let attribution =
+                attribute_to_declared_types(annotation, probe.values.as_ref(), profiles);
+            object.insert(
+                "declared_types_attribution".to_string(),
+                json!(attribution.as_ref().err()),
+            );
+            match (attribution, comparison.uncertain.is_empty()) {
+                (Ok(()), _) => Ok(HelmFlipVerdict::TighteningMatchedDeclaredTypesPolicy),
+                (Err(_), true) => Err(
+                    "tightening rejects a document whose render adds no Kubernetes violation to the defaults render",
+                ),
+                (Err(_), false) => Err(
+                    "tightening rejects a document Helm renders without a proved Kubernetes violation",
+                ),
+            }
+        } else if !comparison.uncertain.is_empty() {
+            Ok(HelmFlipVerdict::LooseningWithUncertainKubernetes(
+                comparison.uncertain.clone(),
+            ))
         } else if comparison.inherited_violations.is_empty() {
             Ok(HelmFlipVerdict::LooseningMatchedKubernetesValidation)
         } else {
@@ -2861,8 +3222,13 @@ fn an_unlisted_false_acceptance_reports_a_bundle_that_reproduces_it() -> eyre::R
         OfflineKubernetesValidator::new(&cache, helm_adjudication::KUBERNETES_RELEASE)?;
     let string_name = json!({"properties": {"name": {"type": "string"}}});
     let loosening = ProfileSchemas::compile(&string_name, &json!({}), json!({}))?;
-    let (verdict, evidence) =
-        adjudicate_flip(&chart, &json!({"name": true}), &loosening, &kubernetes)?;
+    let (verdict, evidence) = adjudicate_flip(
+        &chart,
+        &json!({"name": true}),
+        &loosening,
+        &kubernetes,
+        None,
+    )?;
     sim_assert_eq!(have: verdict.clone(), want: HelmFlipVerdict::CandidateAcceptsKubernetesRejects);
 
     let mut coverage = HelmAdjudicationCoverage::default();
@@ -3490,7 +3856,7 @@ fn adjudicate_transition_tightening(
     defaults: &serde_json::Value,
 ) -> eyre::Result<()> {
     let values = match probe.helm_values_file(HelmChartDir::stage(chart)?.path(), defaults)? {
-        ProbeValuesFile::Reachable(values) => values,
+        ProbeValuesFile::Reachable(values) | ProbeValuesFile::ReachableAs { values, .. } => values,
         ProbeValuesFile::Unreachable(reason) => {
             eprintln!("UNREACHABLE {chart}: {probe_name}: {reason}");
             return Ok(());
@@ -3528,5 +3894,710 @@ fn adjudicate_transition_tightening(
         "{chart}: {probe_name} renders and passes the provider; the middle-lean tightening is a false rejection"
     );
     eprintln!("PROVIDER_REJECT {chart}: {probe_name}");
+    Ok(())
+}
+
+/// The nacos `ingress.apiVersion` witness chart and everything the
+/// adjudication reads for it.
+struct NacosWitness {
+    _scratch: ScratchDir,
+    defaults: serde_json::Value,
+    profiles: ProfileSchemas,
+    annotation: DeclaredTypesAnnotation,
+    chart: PinnedHelmChart,
+    kubernetes: OfflineKubernetesValidator,
+}
+
+/// A scratch copy of nacos in which the key is typed only by its declared
+/// default. Helm's define precedence selects nacos' own
+/// `common.capabilities.ingress.apiVersion`, a literal, so no template reads
+/// `ingress.apiVersion`; the vendored mysql copy of that define is the one
+/// Helm discards. The copy deletes exactly that discarded define, which
+/// leaves every Helm render unchanged and lets this tree resolve the winning
+/// helper. With `isolate_ports`, the copy also declares `service.ports` as
+/// `{http: {port: 8080}}` instead of the two ports with `protocol: TCP`,
+/// which every schema here rejects (a defect unrelated to the policy); Helm
+/// renders every probe either way (rework7/helm-nacos.log).
+fn nacos_witness(isolate_ports: bool) -> eyre::Result<NacosWitness> {
+    let scratch = ScratchDir::new("schema_emission_profiles")?;
+    let chart_dir = scratch.path().join("nacos");
+    test_util::scratch::copy_tree(
+        &test_util::workspace_testdata().join("charts/nacos"),
+        &chart_dir,
+    )?;
+    let helpers = chart_dir.join("charts/mysql/charts/common/templates/_capabilities.tpl");
+    let discarded = indoc::indoc! {r#"
+        {{- define "common.capabilities.ingress.apiVersion" -}}
+        {{- if .Values.ingress -}}
+        {{- if .Values.ingress.apiVersion -}}
+        {{- .Values.ingress.apiVersion -}}
+        {{- else if semverCompare "<1.14-0" (include "common.capabilities.kubeVersion" .) -}}
+        {{- print "extensions/v1beta1" -}}
+        {{- else if semverCompare "<1.19-0" (include "common.capabilities.kubeVersion" .) -}}
+        {{- print "networking.k8s.io/v1beta1" -}}
+        {{- else -}}
+        {{- print "networking.k8s.io/v1" -}}
+        {{- end }}
+        {{- else if semverCompare "<1.14-0" (include "common.capabilities.kubeVersion" .) -}}
+        {{- print "extensions/v1beta1" -}}
+        {{- else if semverCompare "<1.19-0" (include "common.capabilities.kubeVersion" .) -}}
+        {{- print "networking.k8s.io/v1beta1" -}}
+        {{- else -}}
+        {{- print "networking.k8s.io/v1" -}}
+        {{- end -}}
+        {{- end -}}
+    "#};
+    let source = std::fs::read_to_string(&helpers)?;
+    eyre::ensure!(
+        source.matches(discarded).count() == 1,
+        "the discarded define is not in {}",
+        helpers.display()
+    );
+    std::fs::write(&helpers, source.replace(discarded, ""))?;
+    if isolate_ports {
+        let values = chart_dir.join("values.yaml");
+        let mut lines: Vec<String> = std::fs::read_to_string(&values)?
+            .lines()
+            .map(str::to_string)
+            .collect();
+        // The `http` port's protocol, then the whole `server` port.
+        let mut from = 0;
+        for removed in [
+            "      protocol: TCP  # Service port protocol for client-a port.",
+            "    server:",
+            "      port: 8848",
+            "      protocol: TCP",
+        ] {
+            let index = lines
+                .iter()
+                .skip(from)
+                .position(|line| line == removed)
+                .ok_or_else(|| eyre::eyre!("nacos values.yaml has no line {removed:?}"))?;
+            lines.remove(from + index);
+            from += index;
+        }
+        std::fs::write(&values, lines.join("\n") + "\n")?;
+    }
+
+    let recipe = chart_recipe("helm-schema.cli.chart-corpus.nacos.schema.json")
+        .ok_or_eyre("the registry has no nacos corpus recipe")?;
+    let candidate = generate::session_schema(
+        &helm_schema::AnalysisSession::new(generate::generate_options_at(&chart_dir, &recipe)),
+        &recipe,
+    )?;
+    let defaults = test_util::helm_values::coalesce_chart_values(&chart_dir, json!({}))?;
+    let profiles = ProfileSchemas::compile(
+        &read_chart_schema_fixture("nacos")?,
+        &candidate,
+        defaults.clone(),
+    )?;
+    let annotation = DeclaredTypesAnnotation::new(chart_dir.clone(), recipe);
+    let chart = PinnedHelmChart::prepare(helm_invocation::HelmRunner::shared()?, &chart_dir)?;
+    let kubernetes = OfflineKubernetesValidator::with_crd_catalog(
+        &test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+        &test_util::workspace_testdata().join("provider-bundle/crds-catalog-cache"),
+        helm_adjudication::KUBERNETES_RELEASE,
+    )?;
+    Ok(NacosWitness {
+        _scratch: scratch,
+        defaults,
+        profiles,
+        annotation,
+        chart,
+        kubernetes,
+    })
+}
+
+/// Adjudicates `ingress.apiVersion <- value` on `witness`, and attributes
+/// the Helm-coalesced document directly.
+fn nacos_cell(
+    witness: &NacosWitness,
+    value: &serde_json::Value,
+) -> eyre::Result<(Result<HelmFlipVerdict, bool>, Result<(), String>)> {
+    let overlay = json!({"ingress": {"apiVersion": value}});
+    let verdict = adjudicate_flip(
+        &witness.chart,
+        &overlay,
+        &witness.profiles,
+        &witness.kubernetes,
+        Some(&witness.annotation),
+    )
+    .map(|(verdict, _)| verdict)
+    .map_err(|error| {
+        error
+            .to_string()
+            .starts_with("tightening rejects a document")
+    });
+    let probe = witness.chart.adjudicate(&overlay)?;
+    let attribution = attribute_to_declared_types(
+        Some(&witness.annotation),
+        probe.values.as_ref(),
+        &witness.profiles,
+    );
+    Ok((verdict, attribution))
+}
+
+/// The nacos `ingress.apiVersion` witness of the declared-types policy: the
+/// key is typed `string` only by its declared `""` default, no template
+/// reads it, and every probe renders. With the unrelated `service.ports`
+/// defect isolated, every schema accepts the chart's defaults, the
+/// candidate rejects each probe, the annotate regeneration accepts it, and
+/// all eight cells are the policy's.
+#[test]
+fn nacos_ingress_api_version_rejection_is_attributed_to_declared_types() -> eyre::Result<()> {
+    let witness = nacos_witness(true)?;
+    let regenerated = witness
+        .annotation
+        .prepared()
+        .map_err(|error| eyre::eyre!(error))?;
+    sim_assert_eq!(
+        have: (
+            witness.profiles.document_verdicts(&witness.defaults),
+            regenerated.asserted.validator.is_valid(&witness.defaults),
+            regenerated.annotated.is_valid(&witness.defaults),
+        ),
+        want: ((true, true), true, true)
+    );
+    let mut cells = Vec::new();
+    for value in [
+        json!(false),
+        json!(true),
+        json!(7),
+        json!(1.5),
+        json!([]),
+        json!([{}]),
+        json!({}),
+        json!({"unknown": "member"}),
+    ] {
+        cells.push(nacos_cell(&witness, &value)?);
+    }
+    sim_assert_eq!(
+        have: cells,
+        want: vec![(Ok(HelmFlipVerdict::TighteningMatchedDeclaredTypesPolicy), Ok(())); 8]
+    );
+    Ok(())
+}
+
+/// The same cell on nacos as shipped: every schema, the annotate
+/// regeneration included, rejects the chart's own `service.ports` defaults,
+/// so the annotate regeneration never accepts a document and the cell stays
+/// a false rejection, whatever the baseline rejects.
+#[test]
+fn nacos_ingress_api_version_rejection_is_declined_while_an_unrelated_rejection_remains()
+-> eyre::Result<()> {
+    let witness = nacos_witness(false)?;
+    let regenerated = witness
+        .annotation
+        .prepared()
+        .map_err(|error| eyre::eyre!(error))?;
+    sim_assert_eq!(
+        have: (
+            witness.profiles.document_verdicts(&witness.defaults),
+            regenerated.asserted.validator.is_valid(&witness.defaults),
+            regenerated.annotated.is_valid(&witness.defaults),
+        ),
+        want: ((false, false), false, false)
+    );
+    sim_assert_eq!(
+        have: nacos_cell(&witness, &json!(7))?,
+        want: (Err(true), Err("the annotate regeneration rejects it".to_string()))
+    );
+    Ok(())
+}
+
+/// One attribution control: the baseline, the constraint the chart's
+/// generation carries under both policies (`None`: the chart as generated),
+/// the judged document, and the expected attribution.
+type AttributionCell = (
+    serde_json::Value,
+    Option<serde_json::Value>,
+    serde_json::Value,
+    Result<(), &'static str>,
+);
+
+/// Controls of the declared-types attribution. A rejection is the policy's
+/// only when the candidate is the assert regeneration, the annotate
+/// regeneration accepts the document outright, and every rejected value is
+/// unread; what the baseline rejects does not matter. A document the
+/// annotate regeneration rejects for any reason stays a false rejection: a
+/// changed `propertyNames`, closed object, tuple limit or `minContains`
+/// predicate beside the policy's failure, or an unrelated closed-root
+/// rejection. Renaming a definition changes nothing, since no failure is
+/// compared with another. The document, not the JSON-pointer token, says
+/// whether a rejected value is an object member (`settings."1"`) or an array
+/// element (`settings.list[0]`, never attributed).
+#[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
+fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::Result<()> {
+    let source = ScratchDir::new("schema_emission_profiles")?;
+    std::fs::create_dir(source.path().join("templates"))?;
+    std::fs::write(
+        source.path().join("Chart.yaml"),
+        indoc::indoc! {"
+            apiVersion: v2
+            name: declared-types
+            version: 0.1.0
+        "},
+    )?;
+    std::fs::write(
+        source.path().join("values.yaml"),
+        indoc::indoc! {r#"
+            settings:
+              enabled: false
+              unread: ""
+              size: 3
+              "1": ""
+              list: [""]
+        "#},
+    )?;
+    std::fs::write(
+        source.path().join("templates/configmap.yaml"),
+        indoc::indoc! {"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: declared-types
+            data:
+              enabled: {{ .Values.settings.enabled | quote }}
+            ---
+            apiVersion: example.com/v1
+            kind: Widget
+            metadata:
+              name: declared-types
+            spec:
+              size: {{ .Values.settings.size }}
+        "},
+    )?;
+    let recipe = registry::ChartRecipe::corpus(
+        "declared-types",
+        helm_schema::generation::SchemaProfile::Full,
+    );
+    let assert_schema = generate::session_schema(
+        &helm_schema::AnalysisSession::new(generate::generate_options_at(source.path(), &recipe)),
+        &recipe,
+    )?;
+    let defaults = test_util::helm_values::coalesce_chart_values(source.path(), json!({}))?;
+    let chart = PinnedHelmChart::prepare(helm_invocation::HelmRunner::shared()?, source.path())?;
+    let kubernetes = OfflineKubernetesValidator::new(
+        &test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+        helm_adjudication::KUBERNETES_RELEASE,
+    )?;
+    let draft7 = "http://json-schema.org/draft-07/schema#";
+    let draft2020 = "https://json-schema.org/draft/2020-12/schema";
+    // `schema` at `settings.<member>`, with its definitions at the root.
+    let at_settings =
+        |dialect: &str, member: &str, schema: serde_json::Value, defs: serde_json::Value| {
+            json!({
+                "$schema": dialect,
+                "$defs": defs,
+                "properties": {"settings": {"properties": {member: schema}}},
+            })
+        };
+    let forbidden_name =
+        |name: &str| json!({"propertyNames": {"if": {"const": name}, "then": false}});
+    let only_member = |name: &str| json!({"properties": {name: {}}, "additionalProperties": false});
+    let tuple = |items: usize| json!({"items": vec![json!({}); items], "additionalItems": false});
+    let at_least_two = |kind: &str| json!({"contains": {"type": kind}, "minContains": 2});
+    let not_integer = |name: &str| {
+        (
+            json!({"not": {"$ref": format!("#/$defs/{name}")}}),
+            json!({name: {"type": "integer"}}),
+        )
+    };
+    let settings = |member: &str, value: serde_json::Value| {
+        let mut document = json!({
+            "settings": {"enabled": false, "size": 3, "unread": 7, "1": "", "list": [""]},
+        });
+        document["settings"][member] = value;
+        document
+    };
+    let unread = |value: serde_json::Value| settings("unread", value);
+
+    // (baseline, constraint the chart's generation carries under both
+    // policies, document, attribution). A `None` constraint is the chart as
+    // generated. Every document renders (rework8/helm-cells.log).
+    let (renamed_baseline, renamed_baseline_defs) = not_integer("a");
+    let (renamed_chart, renamed_chart_defs) = not_integer("b");
+    let cells: Vec<AttributionCell> = vec![
+        // The policy alone rejects the unread declared default.
+        (json!({}), None, unread(json!(7)), Ok(())),
+        // The unread declared default `"1"` is an object member although its
+        // JSON-pointer token is numeric.
+        (
+            json!({}),
+            None,
+            {
+                let mut document = settings("1", json!(7));
+                document["settings"]["unread"] = json!("");
+                document
+            },
+            Ok(()),
+        ),
+        // The unread declared default `list` is rejected at an array element.
+        (
+            json!({}),
+            None,
+            {
+                let mut document = settings("list", json!([7]));
+                document["settings"]["unread"] = json!("");
+                document
+            },
+            Err("/settings/list/0: steps into an array"),
+        ),
+        // `size` is read by the Widget sink and typed only by its default.
+        (
+            json!({}),
+            None,
+            settings("size", json!("x")),
+            Err("/settings/size: a template reads `settings.size`"),
+        ),
+        // The annotate regeneration rejects an unrelated value: the closed
+        // root rejects `undeclared`.
+        (
+            json!({}),
+            None,
+            {
+                let mut document = unread(json!(7));
+                document["undeclared"] = json!(1);
+                document
+            },
+            Err("the annotate regeneration rejects it"),
+        ),
+        // The baseline rejects too, for its own `size: boolean`; the
+        // candidate's rejection is still the policy's alone.
+        (
+            json!({"properties": {"settings": {"properties": {"size": {"type": "boolean"}}}}}),
+            None,
+            unread(json!(7)),
+            Ok(()),
+        ),
+        // Both reject at `size`; the policy's `size` failure is on a read
+        // value.
+        (
+            json!({"properties": {"settings": {"properties": {"size": {"type": "boolean"}}}}}),
+            None,
+            settings("size", json!("x")),
+            Err("/settings/size: a template reads `settings.size`"),
+        ),
+        // Both reject: the baseline's closed root admits only `undeclared`,
+        // the annotate regeneration's rejects it.
+        (
+            json!({"properties": {"undeclared": {}}, "additionalProperties": false}),
+            None,
+            {
+                let mut document = unread(json!(7));
+                document["undeclared"] = json!(1);
+                document
+            },
+            Err("the annotate regeneration rejects it"),
+        ),
+        // Sol's names: the baseline forbids `a`, the chart `b`.
+        (
+            at_settings(draft7, "members", forbidden_name("a"), json!({})),
+            Some(at_settings(
+                draft7,
+                "members",
+                forbidden_name("b"),
+                json!({}),
+            )),
+            settings("members", json!({"a": 1, "b": 1})),
+            Err("the annotate regeneration rejects it"),
+        ),
+        (
+            at_settings(draft7, "members", forbidden_name("a"), json!({})),
+            Some(at_settings(
+                draft7,
+                "members",
+                forbidden_name("b"),
+                json!({}),
+            )),
+            settings("members", json!({"b": 1})),
+            Err("the annotate regeneration rejects it"),
+        ),
+        // The two closed objects: the baseline admits only `a`, the chart
+        // only `b`.
+        (
+            at_settings(draft7, "members", only_member("a"), json!({})),
+            Some(at_settings(draft7, "members", only_member("b"), json!({}))),
+            settings("members", json!({"a": 1, "b": 1})),
+            Err("the annotate regeneration rejects it"),
+        ),
+        (
+            at_settings(draft7, "members", only_member("a"), json!({})),
+            Some(at_settings(draft7, "members", only_member("b"), json!({}))),
+            settings("members", json!({"a": 1})),
+            Err("the annotate regeneration rejects it"),
+        ),
+        // Astra's items: the baseline admits two tuple items, the chart one.
+        (
+            at_settings(draft7, "extra", tuple(2), json!({})),
+            Some(at_settings(draft7, "extra", tuple(1), json!({}))),
+            settings("extra", json!([1, 2, 3])),
+            Err("the annotate regeneration rejects it"),
+        ),
+        (
+            at_settings(draft7, "extra", tuple(2), json!({})),
+            Some(at_settings(draft7, "extra", tuple(1), json!({}))),
+            settings("extra", json!([1, 2])),
+            Err("the annotate regeneration rejects it"),
+        ),
+        // `minContains` (2020-12): two integers against two strings.
+        (
+            at_settings(draft2020, "extra", at_least_two("integer"), json!({})),
+            Some(at_settings(
+                draft2020,
+                "extra",
+                at_least_two("string"),
+                json!({}),
+            )),
+            settings("extra", json!([1, "x"])),
+            Err("the annotate regeneration rejects it"),
+        ),
+        (
+            at_settings(draft2020, "extra", at_least_two("integer"), json!({})),
+            Some(at_settings(
+                draft2020,
+                "extra",
+                at_least_two("string"),
+                json!({}),
+            )),
+            settings("extra", json!([1, 2])),
+            Err("the annotate regeneration rejects it"),
+        ),
+        // One `not` through renamed definitions: nothing is compared, so the
+        // rename changes nothing.
+        (
+            at_settings(
+                draft7,
+                "extra",
+                renamed_baseline.clone(),
+                renamed_baseline_defs.clone(),
+            ),
+            Some(at_settings(
+                draft7,
+                "extra",
+                renamed_chart.clone(),
+                renamed_chart_defs.clone(),
+            )),
+            settings("extra", json!("s")),
+            Ok(()),
+        ),
+        (
+            at_settings(draft7, "extra", renamed_baseline, renamed_baseline_defs),
+            Some(at_settings(
+                draft7,
+                "extra",
+                renamed_chart,
+                renamed_chart_defs,
+            )),
+            settings("extra", json!(1)),
+            Err("the annotate regeneration rejects it"),
+        ),
+    ];
+    let mut attributions = Vec::new();
+    let mut adjudications = Vec::new();
+    for (baseline, constraint, document, _) in &cells {
+        let candidate = match constraint {
+            Some(constraint) => conjoin(assert_schema.clone(), constraint),
+            None => assert_schema.clone(),
+        };
+        let profiles = ProfileSchemas::compile(baseline, &candidate, defaults.clone())?;
+        let mut annotation = DeclaredTypesAnnotation::new(source.path().to_path_buf(), recipe);
+        annotation.constraint.clone_from(constraint);
+        attributions.push(declared_types_attribution(&annotation, &profiles, document));
+        adjudications.push(
+            adjudicate_flip(&chart, document, &profiles, &kubernetes, Some(&annotation))
+                .map(|(verdict, _)| verdict)
+                .map_err(|error| {
+                    error
+                        .to_string()
+                        .starts_with("tightening rejects a document")
+                }),
+        );
+    }
+    sim_assert_eq!(
+        have: attributions,
+        want: cells
+            .iter()
+            .map(|(_, _, _, attribution)| attribution.map_err(str::to_string))
+            .collect::<Vec<_>>()
+    );
+    sim_assert_eq!(
+        have: adjudications,
+        want: cells
+            .iter()
+            .map(|(_, _, _, attribution)| match attribution {
+                Ok(()) => Ok(HelmFlipVerdict::TighteningMatchedDeclaredTypesPolicy),
+                Err(_) => Err(true),
+            })
+            .collect::<Vec<_>>()
+    );
+    Ok(())
+}
+
+/// Whether a rejection is a declaration's is read from the generation, not
+/// from the Helm-coalesced defaults. The attribution regenerates the chart
+/// under both policies and requires the candidate to be the assert
+/// regeneration. A value `import-values` supplies (`settings.unread: 7`, the
+/// parent declares `settings: {enabled: false}`) is no declaration, so a
+/// candidate typing it `integer` is not the chart's generation; a
+/// declaration below a pruned dependency (`kid.unread: ""`, absent from the
+/// coalesced defaults) is the policy's.
+#[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the complete fixture scenario is clearest as one contiguous test"
+)]
+fn declared_types_attribution_reads_declarations_from_the_generation() -> eyre::Result<()> {
+    let write = |path: std::path::PathBuf, contents: &str| -> eyre::Result<()> {
+        if let Some(parent) = path.parent() {
+            std::fs::create_dir_all(parent)?;
+        }
+        std::fs::write(path, contents)?;
+        Ok(())
+    };
+    let config_map = |name: &str, data: &str| {
+        indoc::formatdoc! {"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: {name}
+            data:
+              {data}
+        "}
+    };
+    let scratch = ScratchDir::new("schema_emission_profiles")?;
+    let imported = scratch.path().join("imported");
+    write(
+        imported.join("Chart.yaml"),
+        indoc::indoc! {"
+            apiVersion: v2
+            name: parent
+            version: 0.1.0
+            dependencies:
+              - name: child
+                version: 0.1.0
+                import-values:
+                  - child: exported
+                    parent: settings
+        "},
+    )?;
+    write(
+        imported.join("values.yaml"),
+        indoc::indoc! {"
+            settings:
+              enabled: false
+        "},
+    )?;
+    write(
+        imported.join("templates/cm.yaml"),
+        &config_map("parent", "enabled: {{ .Values.settings.enabled | quote }}"),
+    )?;
+    write(
+        imported.join("charts/child/Chart.yaml"),
+        indoc::indoc! {"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+        "},
+    )?;
+    write(
+        imported.join("charts/child/values.yaml"),
+        indoc::indoc! {"
+            exported:
+              unread: 7
+        "},
+    )?;
+    write(
+        imported.join("charts/child/templates/cm.yaml"),
+        &config_map("child", "k: v"),
+    )?;
+    let pruned = scratch.path().join("pruned");
+    write(
+        pruned.join("Chart.yaml"),
+        indoc::indoc! {"
+            apiVersion: v2
+            name: parent
+            version: 0.1.0
+            dependencies:
+              - name: child
+                version: 0.1.0
+                alias: kid
+                condition: kidEnabled
+        "},
+    )?;
+    write(pruned.join("values.yaml"), "kidEnabled: false\n")?;
+    write(
+        pruned.join("templates/cm.yaml"),
+        &config_map("parent", "on: {{ .Values.kidEnabled | quote }}"),
+    )?;
+    write(
+        pruned.join("charts/child/Chart.yaml"),
+        indoc::indoc! {"
+            apiVersion: v2
+            name: child
+            version: 0.1.0
+        "},
+    )?;
+    write(
+        pruned.join("charts/child/values.yaml"),
+        indoc::indoc! {r#"
+            enabled: false
+            unread: ""
+        "#},
+    )?;
+    write(
+        pruned.join("charts/child/templates/cm.yaml"),
+        &config_map("child", "enabled: {{ .Values.enabled | quote }}"),
+    )?;
+    let recipe = |chart: &'static str| {
+        registry::ChartRecipe::corpus(chart, helm_schema::generation::SchemaProfile::Full)
+    };
+
+    // Helm coalesces `import-values` into the parent's settings and prunes
+    // the disabled `kid` together with its declared defaults.
+    let imported_defaults = test_util::helm_values::coalesce_chart_values(&imported, json!({}))?;
+    let pruned_defaults = test_util::helm_values::coalesce_chart_values(&pruned, json!({}))?;
+    sim_assert_eq!(
+        have: (&imported_defaults["settings"], pruned_defaults.get("kid")),
+        want: (&json!({"enabled": false, "unread": 7}), None)
+    );
+
+    // A candidate typing the imported value as its coalesced type.
+    let integer_unread =
+        json!({"properties": {"settings": {"properties": {"unread": {"type": "integer"}}}}});
+    let imported_profiles =
+        ProfileSchemas::compile(&json!({}), &integer_unread, imported_defaults)?;
+    let imported_annotation = DeclaredTypesAnnotation::new(imported.clone(), recipe("imported"));
+    // Helm renders both documents (rework4/helm-r14.log).
+    let imported_document = json!({
+        "child": {"exported": {"unread": 7}, "global": {}},
+        "settings": {"enabled": false, "unread": "x"},
+    });
+
+    let pruned_candidate = generate::session_schema(
+        &helm_schema::AnalysisSession::new(generate::generate_options_at(
+            &pruned,
+            &recipe("pruned"),
+        )),
+        &recipe("pruned"),
+    )?;
+    let pruned_profiles = ProfileSchemas::compile(&json!({}), &pruned_candidate, pruned_defaults)?;
+    let pruned_annotation = DeclaredTypesAnnotation::new(pruned.clone(), recipe("pruned"));
+    let pruned_document = json!({"kid": {"unread": 7}, "kidEnabled": false});
+
+    sim_assert_eq!(
+        have: vec![
+            declared_types_attribution(&imported_annotation, &imported_profiles, &imported_document),
+            declared_types_attribution(&pruned_annotation, &pruned_profiles, &pruned_document),
+        ],
+        want: vec![
+            Err("the candidate is not the assert regeneration".to_string()),
+            Ok(()),
+        ]
+    );
     Ok(())
 }

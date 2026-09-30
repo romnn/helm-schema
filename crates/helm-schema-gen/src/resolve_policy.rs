@@ -28,8 +28,8 @@ use crate::schema_model::{
 };
 use crate::schema_node::SchemaNode;
 use crate::schema_node::is_placeholder_fragment_object_schema;
-use crate::values_yaml::ValuesYamlPathFacts;
 use crate::values_yaml::yaml_value_at_values_path;
+use crate::values_yaml::{ValuesYamlPathFacts, declared_shape_alone};
 
 /// Strings spelling an implicit YAML NULL token (including the empty
 /// string) in a bare plain-scalar position.
@@ -774,7 +774,7 @@ impl ResolvePolicy {
                 // In these cases the *input* type in values.yaml is the scalar, not the output
                 // object type, so prefer the values.yaml scalar schema.
                 (
-                    values_yaml_schema,
+                    declared_shape_alone(facts.values_yaml.declared_types, values_yaml_schema),
                     MergeBase::DeclaredObjectOverScalarProvider,
                 )
             } else if facts.contract.used_as_fragment
@@ -790,7 +790,7 @@ impl ResolvePolicy {
                 && is_object_or_array_schema(&provider_schema)
             {
                 (
-                    values_yaml_schema,
+                    declared_shape_alone(facts.values_yaml.declared_types, values_yaml_schema),
                     MergeBase::DeclaredScalarOverStructuredProvider,
                 )
             } else if let Some(values_yaml_ty) = schema_type(&values_yaml_schema)
@@ -826,7 +826,10 @@ impl ResolvePolicy {
             // guarded lanes.
             (empty_schema(), MergeBase::UnconstrainedFragment)
         } else if !is_empty_schema(&values_yaml_schema) {
-            (values_yaml_schema, MergeBase::DeclaredDefault)
+            (
+                declared_shape_alone(facts.values_yaml.declared_types, values_yaml_schema),
+                MergeBase::DeclaredDefault,
+            )
         } else {
             (empty_schema(), MergeBase::NoEvidence)
         };
@@ -942,6 +945,7 @@ pub(crate) use scalar_preimage::{
 pub(crate) struct ConditionalTargetContext<'a> {
     pub(crate) values_yaml_doc: &'a YamlValue,
     pub(crate) acceptance_memo: &'a mut ConditionalSchemaAcceptanceMemo,
+    pub(crate) declared_types: crate::DeclaredTypes,
 }
 
 pub(crate) fn conditional_target_schema(
@@ -1033,7 +1037,13 @@ fn conditional_target_schema_inner(
             && is_placeholder_fragment_object_schema(values_yaml_schema))
         && should_merge_values_yaml_into_conditional_branch(&branch_schema, values_yaml_schema)
     {
-        merge_schema_list(vec![branch_schema, values_yaml_schema.clone()])
+        // Into an untyped branch the declared shape would stand alone.
+        let declared = if crate::schema_model::is_empty_schema(&branch_schema) {
+            declared_shape_alone(context.declared_types, values_yaml_schema.clone())
+        } else {
+            values_yaml_schema.clone()
+        };
+        merge_schema_list(vec![branch_schema, declared])
     } else {
         branch_schema
     };

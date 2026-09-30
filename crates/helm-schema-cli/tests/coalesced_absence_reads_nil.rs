@@ -81,6 +81,7 @@ fn schema_for(files: &[(&str, &str)]) -> eyre::Result<serde_json::Value> {
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -186,10 +187,6 @@ fn expected_minimal_umbrella_schema() -> serde_json::Value {
                 },
             },
             {
-                "additionalProperties": {},
-                "properties": { "kid": { "type": ["null", "object"] } },
-            },
-            {
                 // Root-scope control: this scope already carried both
                 // spellings, and the change leaves it alone.
                 "if": key_deleted_fragment("rootGrp"),
@@ -206,7 +203,7 @@ fn expected_minimal_umbrella_schema() -> serde_json::Value {
                 "additionalProperties": {},
                 "properties": {
                     "flag": { "type": "boolean" },
-                    "global": { "additionalProperties": {}, "type": "object" },
+                    "global": {},
                     "grp": {
                         "additionalProperties": {},
                         "properties": { "enabled": {} },

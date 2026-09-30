@@ -3074,11 +3074,9 @@ fn live_unset_requires_a_present_object_operand() {
                 }
             ],
             "properties": {
+                "global": {},
                 "context": {
-                    "allOf": [
-                        {},
-                        { "type": "object" },
-                    ]
+                    "type": "object"
                 }
             },
             "type": "object"

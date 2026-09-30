@@ -569,6 +569,17 @@ impl SchemaNode {
         }
     }
 
+    pub(crate) fn property_mut(&mut self, key: &str) -> Option<&mut SchemaNode> {
+        match self {
+            Self::Object { properties, .. } => properties.get_mut(key),
+            Self::Typed(TypedSchemaNode::Keywords(keywords)) => keywords
+                .properties
+                .as_mut()
+                .and_then(|properties| properties.get_mut(key)),
+            _ => None,
+        }
+    }
+
     pub(crate) fn take_property(&mut self, key: &str) -> Option<SchemaNode> {
         match self {
             Self::Object { properties, .. } => properties.remove(key),

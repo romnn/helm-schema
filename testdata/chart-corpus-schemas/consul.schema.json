@@ -36347,54 +36347,48 @@
           }
         },
         "cni": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "Configures consul-cni plugin for Consul Service mesh services",
+          "properties": {
+            "autorotateToken": {
+              "description": "If true, then use projected service account tokens for the CNI plugin and\nUses auto-rotated projected token everytime when interacting with Kubernetes API."
             },
-            {
+            "cniBinDir": {
+              "description": "Location on the kubernetes node where the CNI plugin is installed. Shoud be the absolute path and start with a '/'\nExample on GKE:\n```yaml\ncniBinDir: \"/home/kubernetes/bin\"\n```"
+            },
+            "cniNetDir": {
+              "description": "Location on the kubernetes node of all CNI configuration. Should be the absolute path and start with a '/'"
+            },
+            "enabled": {
+              "description": "If true, then all traffic redirection setup uses the consul-cni plugin.\nRequires connectInject.enabled to also be true."
+            },
+            "logLevel": {
+              "description": "Log level for the installer and plugin. Overrides global.logLevel. One of \"trace\", \"debug\", \"info\", \"warn\", or \"error\"."
+            },
+            "multus": {
+              "description": "If multus CNI plugin is enabled with consul-cni. When enabled, consul-cni will not be installed as a chained\nCNI plugin. Instead, a NetworkAttachementDefinition CustomResourceDefinition (CRD) will be created in the helm\nrelease namespace. Following multus plugin standards, an annotation is required in order for the consul-cni plugin\nto be executed and for your service to be added to the Consul Service Mesh.\nAdd the annotation `'k8s.v1.cni.cncf.io/networks': '[{ \"name\":\"consul-cni\",\"namespace\": \"consul\" }]'` to your pod\nto use the default installed NetworkAttachementDefinition CRD.\nPlease refer to the [Multus Quickstart Guide](https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/quickstart.md)\nfor more information about using multus."
+            },
+            "namespace": {
+              "description": "Set the namespace to install the CNI plugin into. Overrides global namespace settings for CNI resources.\nEx: \"kube-system\""
+            },
+            "resourceQuota": {
               "additionalProperties": {},
+              "description": "Resource quotas for running the daemonset as system critical pods",
               "properties": {
-                "autorotateToken": {
-                  "description": "If true, then use projected service account tokens for the CNI plugin and\nUses auto-rotated projected token everytime when interacting with Kubernetes API."
-                },
-                "cniBinDir": {
-                  "description": "Location on the kubernetes node where the CNI plugin is installed. Shoud be the absolute path and start with a '/'\nExample on GKE:\n```yaml\ncniBinDir: \"/home/kubernetes/bin\"\n```"
-                },
-                "cniNetDir": {
-                  "description": "Location on the kubernetes node of all CNI configuration. Should be the absolute path and start with a '/'"
-                },
-                "enabled": {
-                  "description": "If true, then all traffic redirection setup uses the consul-cni plugin.\nRequires connectInject.enabled to also be true."
-                },
-                "logLevel": {
-                  "description": "Log level for the installer and plugin. Overrides global.logLevel. One of \"trace\", \"debug\", \"info\", \"warn\", or \"error\"."
-                },
-                "multus": {
-                  "description": "If multus CNI plugin is enabled with consul-cni. When enabled, consul-cni will not be installed as a chained\nCNI plugin. Instead, a NetworkAttachementDefinition CustomResourceDefinition (CRD) will be created in the helm\nrelease namespace. Following multus plugin standards, an annotation is required in order for the consul-cni plugin\nto be executed and for your service to be added to the Consul Service Mesh.\nAdd the annotation `'k8s.v1.cni.cncf.io/networks': '[{ \"name\":\"consul-cni\",\"namespace\": \"consul\" }]'` to your pod\nto use the default installed NetworkAttachementDefinition CRD.\nPlease refer to the [Multus Quickstart Guide](https://github.com/k8snetworkplumbingwg/multus-cni/blob/master/docs/quickstart.md)\nfor more information about using multus."
-                },
-                "namespace": {
-                  "description": "Set the namespace to install the CNI plugin into. Overrides global namespace settings for CNI resources.\nEx: \"kube-system\""
-                },
-                "resourceQuota": {
-                  "additionalProperties": {},
-                  "description": "Resource quotas for running the daemonset as system critical pods",
-                  "properties": {
-                    "pods": {}
-                  }
-                },
-                "resources": {
-                  "description": "The resource settings for CNI installer daemonset."
-                },
-                "securityContext": {
-                  "description": "The security context for the CNI installer daemonset. This should be a YAML map corresponding to a\nKubernetes [SecurityContext](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) object.\nBy default, servers will run as root, with user ID `0` and group ID `0`.\nNote: if running on OpenShift, this setting is ignored because the user and group are set automatically\nby the OpenShift platform."
-                },
-                "tokenExpiration": {
-                  "description": "Set the CNI plugin ServiceAccount token validity period. Applicable only when autorotateToken is true.\nIn some environments this may not work(eg. azure 1.30+ with oidc enabled)  as providers may have native expiration limits.\nOptional and setup to 1 hour by default. Value is in seconds."
-                }
+                "pods": {}
               }
+            },
+            "resources": {
+              "description": "The resource settings for CNI installer daemonset."
+            },
+            "securityContext": {
+              "description": "The security context for the CNI installer daemonset. This should be a YAML map corresponding to a\nKubernetes [SecurityContext](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/) object.\nBy default, servers will run as root, with user ID `0` and group ID `0`.\nNote: if running on OpenShift, this setting is ignored because the user and group are set automatically\nby the OpenShift platform."
+            },
+            "tokenExpiration": {
+              "description": "Set the CNI plugin ServiceAccount token validity period. Applicable only when autorotateToken is true.\nIn some environments this may not work(eg. azure 1.30+ with oidc enabled)  as providers may have native expiration limits.\nOptional and setup to 1 hour by default. Value is in seconds."
             }
-          ],
-          "description": "Configures consul-cni plugin for Consul Service mesh services"
+          },
+          "type": "object"
         },
         "consulNamespaces": {
           "additionalProperties": {},
@@ -36629,37 +36623,31 @@
         },
         "enabled": {},
         "proxy": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
+          "additionalProperties": {},
+          "description": "Configures dns-proxy deployment.",
+          "properties": {
+            "aclToken": {
               "additionalProperties": {},
+              "description": "Refers to an existing Kubernetes secret that contains an ACL token\nfor your Consul cluster. This token provides permissions for the DNS\nproxy. This field is required when `global.acls.manageSystemACLs`\nis set to `false` to enable manual ACL management in a Consul cluster.\nnode_prefix \"\" {\npolicy = \"read\"\n}\nservice_prefix \"\" {\npolicy = \"read\"\n}",
               "properties": {
-                "aclToken": {
-                  "additionalProperties": {},
-                  "description": "Refers to an existing Kubernetes secret that contains an ACL token\nfor your Consul cluster. This token provides permissions for the DNS\nproxy. This field is required when `global.acls.manageSystemACLs`\nis set to `false` to enable manual ACL management in a Consul cluster.\nnode_prefix \"\" {\npolicy = \"read\"\n}\nservice_prefix \"\" {\npolicy = \"read\"\n}",
-                  "properties": {
-                    "secretKey": {
-                      "description": "The key within the Kubernetes secret that holds the ACL token."
-                    },
-                    "secretName": {
-                      "description": "The name of the Kubernetes secret that holds the ACL token."
-                    }
-                  }
+                "secretKey": {
+                  "description": "The key within the Kubernetes secret that holds the ACL token."
                 },
-                "enabled": {
-                  "description": "True if you want to enable dns-proxy"
-                },
-                "logLevel": {},
-                "port": {},
-                "replicas": {
-                  "description": "The number of deployment replicas."
+                "secretName": {
+                  "description": "The name of the Kubernetes secret that holds the ACL token."
                 }
               }
+            },
+            "enabled": {
+              "description": "True if you want to enable dns-proxy"
+            },
+            "logLevel": {},
+            "port": {},
+            "replicas": {
+              "description": "The number of deployment replicas."
             }
-          ],
-          "description": "Configures dns-proxy deployment."
+          },
+          "type": "object"
         },
         "type": {
           "description": "Used to control the type of service created. For\nexample, setting this to \"LoadBalancer\" will create an external load\nbalancer (for supported K8S installations)"
@@ -36787,56 +36775,6 @@
           "then": false
         },
         {
-          "additionalProperties": {},
-          "properties": {
-            "metrics": {
-              "allOf": [
-                {
-                  "if": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1datadog=null"
-                      },
-                      {
-                        "not": {
-                          "$ref": "#/$defs/constrains~1datadog"
-                        }
-                      }
-                    ]
-                  },
-                  "then": false
-                }
-              ],
-              "description": "Configures metrics for Consul service mesh"
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "federation": {
-              "allOf": [
-                {
-                  "if": {
-                    "allOf": [
-                      {
-                        "not": {
-                          "$ref": "#/$defs/constrains~1enabled:t"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1createFederationSecret:t"
-                      }
-                    ]
-                  },
-                  "then": false
-                }
-              ],
-              "description": "Configure federation."
-            }
-          }
-        },
-        {
           "if": {
             "anyOf": [
               {
@@ -36947,35 +36885,6 @@
           "then": false
         },
         {
-          "additionalProperties": {},
-          "properties": {
-            "gossipEncryption": {
-              "allOf": [
-                {
-                  "if": {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1autoGenerate:t"
-                      },
-                      {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1secretKey:t@2"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1secretName:t@2"
-                          }
-                        ]
-                      }
-                    ]
-                  },
-                  "then": false
-                }
-              ]
-            }
-          }
-        },
-        {
           "if": {
             "allOf": [
               {
@@ -37020,37 +36929,6 @@
             "type": "object"
           },
           "then": false
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "secretsBackend": {
-              "allOf": [
-                {
-                  "if": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1vault=null"
-                      },
-                      {
-                        "not": {
-                          "properties": {
-                            "vault": {}
-                          },
-                          "required": [
-                            "vault"
-                          ],
-                          "type": "object"
-                        }
-                      }
-                    ]
-                  },
-                  "then": false
-                }
-              ],
-              "description": "secretsBackend is used to configure Vault as the secrets backend for the Consul on Kubernetes installation.\nThe Vault cluster needs to have the Kubernetes Auth Method, KV2 and PKI secrets engines enabled\nand have necessary secrets, policies and roles created prior to installing Consul.\nRefer to [Vault as the Secrets Backend](https://developer.hashicorp.com/consul/docs/deploy/server/k8s/vault)\ndocumentation for full instructions.\nThe Vault cluster _must_ not have the Consul cluster installed by this Helm chart as its storage backend\nas that would cause a circular dependency.\nVault can have Consul as its storage backend as long as that Consul cluster is not running on this Kubernetes cluster\nand is being managed separately from this Helm installation.\nNote: When using Vault KV2 secrets engines the \"data\" field is implicitly required for Vault API calls,\nsecretName should be in the form of  \"vault-kv2-mount-path/data/secret-name\".\nsecretKey should be in the form of \"key\"."
-            }
-          }
         },
         {
           "if": {
@@ -37166,14 +37044,7 @@
           "type": "object"
         },
         "argocd": {
-          "additionalProperties": {},
-          "description": "If argocd.enabled is set to true, following annotations are added to\njob - server-acl-init-job\nannotations -\nargocd.argoproj.io/hook: Sync\nargocd.argoproj.io/hook-delete-policy: HookSucceeded",
-          "properties": {
-            "enabled": {
-              "type": "boolean"
-            }
-          },
-          "type": "object"
+          "description": "If argocd.enabled is set to true, following annotations are added to\njob - server-acl-init-job\nannotations -\nargocd.argoproj.io/hook: Sync\nargocd.argoproj.io/hook-delete-policy: HookSucceeded"
         },
         "bootstrapACLs": {},
         "consulAPITimeout": {
@@ -37201,8 +37072,7 @@
           "additionalProperties": {},
           "properties": {
             "enabled": {}
-          },
-          "type": "object"
+          }
         },
         "enableConsulNamespaces": {
           "description": "[Enterprise Only] `enableConsulNamespaces` indicates that you are running\nConsul Enterprise v1.7+ with a valid Consul Enterprise license and would\nlike to make use of configuration beyond registering everything into\nthe `default` Consul namespace. Additional configuration\noptions are found in the `consulNamespaces` section of both the catalog sync\nand connect injector.",
@@ -37239,6 +37109,23 @@
         },
         "federation": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/constrains~1enabled:t"
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1createFederationSecret:t"
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
           "description": "Configure federation.",
           "properties": {
             "createFederationSecret": {
@@ -37246,9 +37133,6 @@
             },
             "enabled": {
               "description": "If enabled, this datacenter will be federation-capable. Only federation\nvia mesh gateways is supported.\nMesh gateways and servers will be configured to allow federation.\nRequires `global.tls.enabled`, `connectInject.enabled`, and one of\n`meshGateway.enabled` or `externalServers.enabled` to be true.\nRequires Consul 1.8+."
-            },
-            "k8sAuthMethodHost": {
-              "description": "If you are setting `global.federation.enabled` to true and are in a secondary datacenter,\nset `k8sAuthMethodHost` to the address of the Kubernetes API server of the secondary datacenter.\nThis address must be reachable from the Consul servers in the primary datacenter.\nThis auth method will be used to provision ACL tokens for Consul components and is different\nfrom the one used by the Consul Service Mesh.\nPlease refer to the [Kubernetes Auth Method documentation](https://developer.hashicorp.com/consul/docs/secure/acl/auth-method/k8s).\nIf `externalServers.enabled` is set to true, `global.federation.k8sAuthMethodHost` and\n`externalServers.k8sAuthMethodHost` should be set to the same value.\nYou can retrieve this value from your `kubeconfig` by running:\n```shell-session\n$ kubectl config view \\\n-o jsonpath=\"{.clusters[?(@.name=='<your cluster name>')].cluster.server}\"\n```"
             },
             "logLevel": {
               "description": "Override global log verbosity level for the create-federation-secret-job pods. One of \"trace\", \"debug\", \"info\", \"warn\", or \"error\"."
@@ -37271,6 +37155,28 @@
         },
         "gossipEncryption": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "allOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1autoGenerate:t"
+                  },
+                  {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1secretKey:t@2"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1secretName:t@2"
+                      }
+                    ]
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
           "properties": {
             "autoGenerate": {
               "description": "Automatically generate a gossip encryption key and save it to a Kubernetes or Vault secret."
@@ -37314,6 +37220,23 @@
         },
         "metrics": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1datadog=null"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/constrains~1datadog"
+                    }
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
           "description": "Configures metrics for Consul service mesh",
           "properties": {
             "agentMetricsRetentionTime": {
@@ -37485,6 +37408,29 @@
         },
         "secretsBackend": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "if": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1vault=null"
+                  },
+                  {
+                    "not": {
+                      "properties": {
+                        "vault": {}
+                      },
+                      "required": [
+                        "vault"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                ]
+              },
+              "then": false
+            }
+          ],
           "description": "secretsBackend is used to configure Vault as the secrets backend for the Consul on Kubernetes installation.\nThe Vault cluster needs to have the Kubernetes Auth Method, KV2 and PKI secrets engines enabled\nand have necessary secrets, policies and roles created prior to installing Consul.\nRefer to [Vault as the Secrets Backend](https://developer.hashicorp.com/consul/docs/deploy/server/k8s/vault)\ndocumentation for full instructions.\nThe Vault cluster _must_ not have the Consul cluster installed by this Helm chart as its storage backend\nas that would cause a circular dependency.\nVault can have Consul as its storage backend as long as that Consul cluster is not running on this Kubernetes cluster\nand is being managed separately from this Helm installation.\nNote: When using Vault KV2 secrets engines the \"data\" field is implicitly required for Vault API calls,\nsecretName should be in the form of  \"vault-kv2-mount-path/data/secret-name\".\nsecretKey should be in the form of \"key\".",
           "properties": {
             "vault": {

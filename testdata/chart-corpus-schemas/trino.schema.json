@@ -22080,6 +22080,7 @@
       },
       "type": "object"
     },
+    "global": {},
     "headerAuthenticator": {
       "additionalProperties": {},
       "description": "headerAuthenticator -- [Header authenticator](https://trino.io/docs/current/develop/header-authenticator.html)\nconfiguration. Required when `server.config.authenticationType` contains `HEADER`.\nProvide the plugin configuration properties. The `header-authenticator.name` value must\nmatch the name of the installed authenticator plugin.\n```yaml\nheaderAuthenticator:\nproperties: |\nheader-authenticator.name=my-header-authenticator\nheader-authenticator.username-header=X-Authenticated-User\n```",
@@ -23776,28 +23777,22 @@
       ],
       "properties": {
         "autoscaling": {
-          "allOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "behavior": {
-                  "description": "server.autoscaling.behavior -- Configuration for scaling up and down.\nExample:\n```yaml\nscaleDown:\nstabilizationWindowSeconds: 300\npolicies:\n- type: Percent\nvalue: 100\nperiodSeconds: 15\nscaleUp:\nstabilizationWindowSeconds: 0\npolicies:\n- type: Percent\nvalue: 100\nperiodSeconds: 15\n- type: Pods\nvalue: 4\nperiodSeconds: 15\nselectPolicy: Max\n```"
-                },
-                "enabled": {},
-                "maxReplicas": {},
-                "targetCPUUtilizationPercentage": {
-                  "description": "Target average CPU utilization, represented as a percentage of requested CPU. To disable scaling based on CPU,\nset to an empty string."
-                },
-                "targetMemoryUtilizationPercentage": {
-                  "description": "Target average memory utilization, represented as a percentage of requested memory. To disable scaling\nbased on memory, set to an empty string."
-                }
-              }
+          "additionalProperties": {},
+          "description": "server.autoscaling -- Configure [Horizontal Pod Autoscaling](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)\nfor workers (`server.keda.enabled` must be `false`).",
+          "properties": {
+            "behavior": {
+              "description": "server.autoscaling.behavior -- Configuration for scaling up and down.\nExample:\n```yaml\nscaleDown:\nstabilizationWindowSeconds: 300\npolicies:\n- type: Percent\nvalue: 100\nperiodSeconds: 15\nscaleUp:\nstabilizationWindowSeconds: 0\npolicies:\n- type: Percent\nvalue: 100\nperiodSeconds: 15\n- type: Pods\nvalue: 4\nperiodSeconds: 15\nselectPolicy: Max\n```"
             },
-            {
-              "type": "object"
+            "enabled": {},
+            "maxReplicas": {},
+            "targetCPUUtilizationPercentage": {
+              "description": "Target average CPU utilization, represented as a percentage of requested CPU. To disable scaling based on CPU,\nset to an empty string."
+            },
+            "targetMemoryUtilizationPercentage": {
+              "description": "Target average memory utilization, represented as a percentage of requested memory. To disable scaling\nbased on memory, set to an empty string."
             }
-          ],
-          "description": "server.autoscaling -- Configure [Horizontal Pod Autoscaling](https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/)\nfor workers (`server.keda.enabled` must be `false`)."
+          },
+          "type": "object"
         },
         "config": {
           "additionalProperties": {},
@@ -23807,24 +23802,18 @@
               "type": "string"
             },
             "https": {
-              "allOf": [
-                {
-                  "type": "object"
-                },
-                {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {},
+                "keystore": {
                   "additionalProperties": {},
                   "properties": {
-                    "enabled": {},
-                    "keystore": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "path": {}
-                      }
-                    },
-                    "port": {}
+                    "path": {}
                   }
-                }
-              ]
+                },
+                "port": {}
+              },
+              "type": "object"
             },
             "path": {
               "anyOf": [
@@ -23869,41 +23858,35 @@
           "type": "object"
         },
         "keda": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "server.keda -- Configure [Kubernetes Event-driven Autoscaling](https://keda.sh/) for workers\n(`server.autoscaling.enabled` must be `false`).",
+          "properties": {
+            "advanced": {
+              "description": "server.keda.fallback -- Defines a number of replicas to fall back to if a scaler is in an error state.\nExample:\n```yaml\nfallback:             # Optional. Section to specify fallback options\nfailureThreshold: 3 # Mandatory if fallback section is included\nreplicas: 6         # Mandatory if fallback section is included\n```"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "advanced": {
-                  "description": "server.keda.fallback -- Defines a number of replicas to fall back to if a scaler is in an error state.\nExample:\n```yaml\nfallback:             # Optional. Section to specify fallback options\nfailureThreshold: 3 # Mandatory if fallback section is included\nreplicas: 6         # Mandatory if fallback section is included\n```"
-                },
-                "annotations": {
-                  "description": "server.keda.triggers -- List of triggers to activate scaling of the target resource\nExample:\n```yaml\ntriggers:\n- type: prometheus\nmetricType: Value\nmetadata:\nserverAddress: \"http://prometheus.example.com\"\nthreshold: \"1\"\nmetricName: required_workers\nquery: >-\nsum by (service)\n(avg_over_time(trino_execution_ClusterSizeMonitor_RequiredWorkers{service={{ include \"trino.fullname\" . | quote }}}[5s]))\n```\nserver.keda.annotations -- Annotations to apply to the ScaledObject CRD.\nExample:\n```yaml\nannotations:\nautoscaling.keda.sh/paused-replicas: \"0\"\nautoscaling.keda.sh/paused: \"true\"\n```"
-                },
-                "cooldownPeriod": {
-                  "description": "Period (in seconds) to wait after the last trigger reported active before scaling the resource back to 0"
-                },
-                "enabled": {},
-                "fallback": {},
-                "initialCooldownPeriod": {
-                  "description": "The delay (in seconds) before the `cooldownPeriod` starts after the initial creation of the `ScaledObject`."
-                },
-                "maxReplicaCount": {
-                  "description": "This setting is passed to the HPA definition that KEDA will create for a given resource and\nholds the maximum number of replicas of the target resource."
-                },
-                "minReplicaCount": {
-                  "description": "Minimum number of replicas KEDA will scale the resource down to.\nBy default, it’s scale to zero, but you can use it with some other value as well."
-                },
-                "pollingInterval": {},
-                "triggers": {
-                  "description": "server.keda.advanced -- Specifies HPA related options\nExample:\n```yaml\nadvanced:\nhorizontalPodAutoscalerConfig:\nbehavior:\nscaleDown:\nstabilizationWindowSeconds: 300\npolicies:\n- type: Percent\nvalue: 100\nperiodSeconds: 15\n```"
-                }
-              }
+            "annotations": {
+              "description": "server.keda.triggers -- List of triggers to activate scaling of the target resource\nExample:\n```yaml\ntriggers:\n- type: prometheus\nmetricType: Value\nmetadata:\nserverAddress: \"http://prometheus.example.com\"\nthreshold: \"1\"\nmetricName: required_workers\nquery: >-\nsum by (service)\n(avg_over_time(trino_execution_ClusterSizeMonitor_RequiredWorkers{service={{ include \"trino.fullname\" . | quote }}}[5s]))\n```\nserver.keda.annotations -- Annotations to apply to the ScaledObject CRD.\nExample:\n```yaml\nannotations:\nautoscaling.keda.sh/paused-replicas: \"0\"\nautoscaling.keda.sh/paused: \"true\"\n```"
+            },
+            "cooldownPeriod": {
+              "description": "Period (in seconds) to wait after the last trigger reported active before scaling the resource back to 0"
+            },
+            "enabled": {},
+            "fallback": {},
+            "initialCooldownPeriod": {
+              "description": "The delay (in seconds) before the `cooldownPeriod` starts after the initial creation of the `ScaledObject`."
+            },
+            "maxReplicaCount": {
+              "description": "This setting is passed to the HPA definition that KEDA will create for a given resource and\nholds the maximum number of replicas of the target resource."
+            },
+            "minReplicaCount": {
+              "description": "Minimum number of replicas KEDA will scale the resource down to.\nBy default, it’s scale to zero, but you can use it with some other value as well."
+            },
+            "pollingInterval": {},
+            "triggers": {
+              "description": "server.keda.advanced -- Specifies HPA related options\nExample:\n```yaml\nadvanced:\nhorizontalPodAutoscalerConfig:\nbehavior:\nscaleDown:\nstabilizationWindowSeconds: 300\npolicies:\n- type: Percent\nvalue: 100\nperiodSeconds: 15\n```"
             }
-          ],
-          "description": "server.keda -- Configure [Kubernetes Event-driven Autoscaling](https://keda.sh/) for workers\n(`server.autoscaling.enabled` must be `false`)."
+          },
+          "type": "object"
         },
         "log": {
           "additionalProperties": {},

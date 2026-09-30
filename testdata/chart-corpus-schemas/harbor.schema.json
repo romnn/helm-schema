@@ -8267,12 +8267,13 @@
       "description": "debug, info, warning, error or fatal",
       "type": "string"
     },
-    "values/metrics.core": {
+    "values/metrics.jobservice": {
       "additionalProperties": {},
       "properties": {
         "path": {},
         "port": {}
-      }
+      },
+      "type": "object"
     },
     "values/metrics/integer:int64;modulus-to-take-of": {
       "description": "modulus to take of the hash of the source label values.\n\nOnly applicable when the action is `HashMod`.",
@@ -23109,6 +23110,7 @@
       "description": "The external URL for Harbor core service. It is used to\n1) populate the docker/helm commands showed on portal\n2) populate the token service URL returned to docker client\nFormat: protocol://domain[:port]. Usually:\n1) if \"expose.type\" is \"ingress\", the \"domain\" should be\nthe value of \"expose.ingress.hosts.core\"\n2) if \"expose.type\" is \"clusterIP\", the \"domain\" should be\nthe value of \"expose.clusterIP.name\"\n3) if \"expose.type\" is \"nodePort\", the \"domain\" should be\nthe IP address of k8s node\nIf Harbor is deployed behind the proxy, set it as the URL of proxy"
     },
     "fullnameOverride": {},
+    "global": {},
     "harborAdminPassword": {},
     "imagePullPolicy": {
       "anyOf": [
@@ -24968,31 +24970,25 @@
       ],
       "properties": {
         "core": {
-          "$ref": "#/$defs/values~1metrics.core"
+          "additionalProperties": {},
+          "properties": {
+            "path": {},
+            "port": {}
+          }
         },
         "enabled": {},
         "exporter": {
-          "$ref": "#/$defs/values~1metrics.core"
+          "additionalProperties": {},
+          "properties": {
+            "path": {},
+            "port": {}
+          }
         },
         "jobservice": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/values~1metrics.core"
-            },
-            {
-              "type": "object"
-            }
-          ]
+          "$ref": "#/$defs/values~1metrics.jobservice"
         },
         "registry": {
-          "allOf": [
-            {
-              "$ref": "#/$defs/values~1metrics.core"
-            },
-            {
-              "type": "object"
-            }
-          ]
+          "$ref": "#/$defs/values~1metrics.jobservice"
         },
         "serviceMonitor": {
           "additionalProperties": {},
@@ -26266,24 +26262,25 @@
               "additionalProperties": {},
               "properties": {
                 "jobLog": {
-                  "allOf": [
-                    {
-                      "type": "object"
-                    },
-                    {
-                      "additionalProperties": {},
-                      "properties": {
-                        "accessMode": {},
-                        "annotations": {},
-                        "existingClaim": {},
-                        "size": {},
-                        "storageClass": {},
-                        "subPath": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "accessMode": {},
+                    "annotations": {},
+                    "existingClaim": {},
+                    "size": {},
+                    "storageClass": {},
+                    "subPath": {
+                      "anyOf": [
+                        {
+                          "const": ""
+                        },
+                        {
                           "$ref": "#/$defs/values~1anyOf~1null;path-within-the-volume+object+string+string;path-within-the-volume+3more"
                         }
-                      }
+                      ]
                     }
-                  ]
+                  },
+                  "type": "object"
                 }
               },
               "type": "object"
@@ -26301,28 +26298,29 @@
               }
             },
             "registry": {
-              "allOf": [
-                {
-                  "type": "object"
+              "additionalProperties": {},
+              "properties": {
+                "accessMode": {},
+                "annotations": {},
+                "existingClaim": {
+                  "description": "Use the existing PVC which must be created manually before bound,\nand specify the \"subPath\" if the PVC is shared with other components"
                 },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "accessMode": {},
-                    "annotations": {},
-                    "existingClaim": {
-                      "description": "Use the existing PVC which must be created manually before bound,\nand specify the \"subPath\" if the PVC is shared with other components"
+                "size": {},
+                "storageClass": {
+                  "description": "Specify the \"storageClass\" used to provision the volume. Or the default\nStorageClass will be used (the default).\nSet it to \"-\" to disable dynamic provisioning"
+                },
+                "subPath": {
+                  "anyOf": [
+                    {
+                      "const": ""
                     },
-                    "size": {},
-                    "storageClass": {
-                      "description": "Specify the \"storageClass\" used to provision the volume. Or the default\nStorageClass will be used (the default).\nSet it to \"-\" to disable dynamic provisioning"
-                    },
-                    "subPath": {
+                    {
                       "$ref": "#/$defs/values~1anyOf~1null;path-within-the-volume+object+string+string;path-within-the-volume+3more"
                     }
-                  }
+                  ]
                 }
-              ]
+              },
+              "type": "object"
             },
             "trivy": {
               "additionalProperties": {},

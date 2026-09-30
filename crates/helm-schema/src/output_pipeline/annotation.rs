@@ -1,6 +1,8 @@
 use std::fmt::Write as _;
 
-use helm_schema_gen::{POLICY_VOCABULARY_VERSION, ResolvedEmissionPolicy, SchemaProfile};
+use helm_schema_gen::{
+    AuthoringPolicy, POLICY_VOCABULARY_VERSION, ResolvedEmissionPolicy, SchemaProfile,
+};
 use serde_json::{Map, Value};
 use sha2::{Digest, Sha256};
 
@@ -18,20 +20,33 @@ pub(crate) struct FinalOutputPolicy {
     requested_profile: Option<SchemaProfile>,
     resolved: ResolvedEmissionPolicy,
     infer_required: bool,
+    authoring: AuthoringPolicy,
 }
 
 impl FinalOutputPolicy {
-    pub(crate) const fn new(resolved: ResolvedEmissionPolicy, infer_required: bool) -> Self {
+    pub(crate) const fn new(
+        resolved: ResolvedEmissionPolicy,
+        infer_required: bool,
+        authoring: AuthoringPolicy,
+    ) -> Self {
         Self {
             requested_profile: resolved.requested_profile(),
             resolved,
             infer_required,
+            authoring,
         }
     }
 
     #[cfg(test)]
     pub(crate) const fn for_profile(profile: SchemaProfile, infer_required: bool) -> Self {
-        Self::new(profile.resolved_policy(), infer_required)
+        Self::new(
+            profile.resolved_policy(),
+            infer_required,
+            AuthoringPolicy {
+                root: helm_schema_gen::RootPolicy::Closed,
+                declared_types: helm_schema_gen::DeclaredTypes::Assert,
+            },
+        )
     }
 }
 
@@ -42,6 +57,7 @@ pub(crate) fn annotate_final_schema(
     reference_policy: ReferencePolicy,
 ) -> EngineResult<Value> {
     let resolved = serde_json::to_value(policy.resolved.policy())?;
+    let authoring = serde_json::to_value(policy.authoring)?;
     let narrowing = if policy.infer_required {
         vec![Value::String("infer-required".to_string())]
     } else {
@@ -57,6 +73,7 @@ pub(crate) fn annotate_final_schema(
     let fingerprint_input = serde_json::json!({
         "policy-vocabulary-version": POLICY_VOCABULARY_VERSION,
         "resolved": resolved.clone(),
+        "authoring": authoring.clone(),
         "narrowing": narrowing.clone(),
         "modifiers": modifiers.clone(),
     });
@@ -72,6 +89,7 @@ pub(crate) fn annotate_final_schema(
         "policy-vocabulary-version": POLICY_VOCABULARY_VERSION,
         "requested-profile": policy.requested_profile.map(SchemaProfile::as_str),
         "resolved": resolved,
+        "authoring": authoring,
         "narrowing": narrowing,
         "modifiers": modifiers,
         "policy-fingerprint": fingerprint,

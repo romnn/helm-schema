@@ -96,6 +96,7 @@ fn library_helper_non_literal_default_suppresses_required() -> eyre::Result<()> 
         values_files: Vec::new(),
         infer_required: true,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,

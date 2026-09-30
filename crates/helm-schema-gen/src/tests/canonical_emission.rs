@@ -59,7 +59,7 @@ fn canonical_property_slot_rewrites_are_exhaustively_equivalent() -> eyre::Resul
 
 #[test]
 fn canonical_presence_rewrites_required_and_not_null_shapes_equivalently() -> eyre::Result<()> {
-    let mut base = SchemaDocument::new_root_object();
+    let mut base = SchemaDocument::new_root_object(crate::RootPolicy::Closed);
     base.insert_path_schema(&["value".to_string()], SchemaNode::unknown_object());
     base.insert_path_schema(
         &["value".to_string(), "member".to_string()],
@@ -105,7 +105,7 @@ fn canonical_presence_rewrites_required_and_not_null_shapes_equivalently() -> ey
 
 #[test]
 fn canonical_required_entries_type_an_untyped_object_host() -> eyre::Result<()> {
-    let mut base = SchemaDocument::new_root_object();
+    let mut base = SchemaDocument::new_root_object(crate::RootPolicy::Closed);
     base.insert_path_schema(&["value".to_string()], SchemaNode::unknown_object());
     base.insert_path_schema(
         &["value".to_string(), "member".to_string()],
@@ -148,7 +148,7 @@ fn canonical_required_entries_type_an_untyped_object_host() -> eyre::Result<()> 
 
 #[test]
 fn canonical_empty_required_entries_still_type_an_untyped_object_host() -> eyre::Result<()> {
-    let mut base = SchemaDocument::new_root_object();
+    let mut base = SchemaDocument::new_root_object(crate::RootPolicy::Closed);
     base.insert_path_schema(&["value".to_string()], SchemaNode::untyped_member_host());
     let mut canonical = base.clone();
     let constraint = json!({ "type": "object", "required": [] });
@@ -188,7 +188,7 @@ fn canonical_empty_required_entries_still_type_an_untyped_object_host() -> eyre:
 
 #[test]
 fn canonical_empty_required_entries_leave_a_typed_foreign_host_untouched() {
-    let mut schema = SchemaDocument::new_root_object();
+    let mut schema = SchemaDocument::new_root_object(crate::RootPolicy::Closed);
     schema.insert_path_schema(
         &["value".to_string()],
         SchemaNode::foreign(json!({
@@ -213,7 +213,7 @@ fn canonical_empty_required_entries_leave_a_typed_foreign_host_untouched() {
 
 #[test]
 fn canonicalization_falls_back_without_mutating_a_missing_closed_root_slot() {
-    let mut schema = SchemaDocument::new_root_object();
+    let mut schema = SchemaDocument::new_root_object(crate::RootPolicy::Closed);
     schema.insert_path_schema(&["known".to_string()], SchemaNode::type_named("string"));
     let before = schema.clone().into_value();
 
@@ -228,7 +228,7 @@ fn canonicalization_falls_back_without_mutating_a_missing_closed_root_slot() {
 
 #[test]
 fn canonicalization_proves_redundant_not_null_constraints() {
-    let mut schema = SchemaDocument::new_root_object();
+    let mut schema = SchemaDocument::new_root_object(crate::RootPolicy::Closed);
     schema.insert_path_schema(&["value".to_string()], SchemaNode::type_named("string"));
     let before = schema.clone().into_value();
 
@@ -296,7 +296,7 @@ fn canonical_object_conjunction_survives_missing_default_backfill() -> eyre::Res
         "description": "provider-owned",
         "type": ["null", "object"],
     });
-    let mut schema = SchemaDocument::new_root_object();
+    let mut schema = SchemaDocument::new_root_object(crate::RootPolicy::Closed);
     schema.insert_path_schema(
         &["value".to_string()],
         SchemaNode::foreign(provider_payload.clone()),
@@ -316,6 +316,7 @@ fn canonical_object_conjunction_survives_missing_default_backfill() -> eyre::Res
         &defaults,
         &[Vec::new()],
         &std::collections::BTreeSet::new(),
+        crate::DeclaredTypes::Assert,
     );
     let schema = schema.into_value();
 
@@ -340,7 +341,7 @@ fn canonical_not_null_conjunction_survives_completion_default_backfill() -> eyre
         "description": "provider-owned",
         "type": ["null", "object"],
     });
-    let mut schema = SchemaDocument::new_root_object();
+    let mut schema = SchemaDocument::new_root_object(crate::RootPolicy::Closed);
     schema.insert_path_schema(
         &["value".to_string()],
         SchemaNode::foreign(provider_payload.clone()),
@@ -360,6 +361,7 @@ fn canonical_not_null_conjunction_survives_completion_default_backfill() -> eyre
         &defaults,
         &[Vec::new()],
         &std::collections::BTreeSet::new(),
+        crate::DeclaredTypes::Assert,
     );
     let schema = schema.into_value();
 
@@ -405,7 +407,7 @@ fn multi_arm_object_union_abstains_from_ambiguous_default_backfill() -> eyre::Re
             },
         ],
     });
-    let mut schema = SchemaDocument::new_root_object();
+    let mut schema = SchemaDocument::new_root_object(crate::RootPolicy::Closed);
     schema.insert_path_schema(
         &["value".to_string()],
         SchemaNode::foreign(json!({ "type": "string" })),
@@ -474,7 +476,7 @@ fn multi_arm_object_union_abstains_when_a_wildcard_hides_descendants() -> eyre::
             },
         ],
     });
-    let mut schema = SchemaDocument::new_root_object();
+    let mut schema = SchemaDocument::new_root_object(crate::RootPolicy::Closed);
     schema.insert_path_schema(
         &["value".to_string()],
         SchemaNode::foreign(provider_payload),
@@ -527,7 +529,7 @@ fn multi_arm_object_union_abstains_when_all_of_hides_descendants() -> eyre::Resu
             },
         ],
     });
-    let mut schema = SchemaDocument::new_root_object();
+    let mut schema = SchemaDocument::new_root_object(crate::RootPolicy::Closed);
     schema.insert_path_schema(
         &["value".to_string()],
         SchemaNode::foreign(provider_payload),
@@ -564,7 +566,7 @@ fn all_of_union_equivalence_abstains_when_conjunct_verdicts_conflict() -> eyre::
             { "anyOf": [object_arm("integer"), object_arm("boolean")] },
         ],
     });
-    let mut schema = SchemaDocument::new_root_object();
+    let mut schema = SchemaDocument::new_root_object(crate::RootPolicy::Closed);
     schema.insert_path_schema(
         &["value".to_string()],
         SchemaNode::foreign(provider_payload),
@@ -589,7 +591,7 @@ fn all_of_union_equivalence_abstains_when_conjunct_verdicts_conflict() -> eyre::
 #[test]
 fn mixed_type_not_null_conjunction_survives_default_backfill() -> eyre::Result<()> {
     let provider_payload = json!({ "type": ["null", "object", "string"] });
-    let mut schema = SchemaDocument::new_root_object();
+    let mut schema = SchemaDocument::new_root_object(crate::RootPolicy::Closed);
     schema.insert_path_schema(
         &["value".to_string()],
         SchemaNode::foreign(provider_payload),
@@ -609,6 +611,7 @@ fn mixed_type_not_null_conjunction_survives_default_backfill() -> eyre::Result<(
         &defaults,
         &[Vec::new()],
         &std::collections::BTreeSet::new(),
+        crate::DeclaredTypes::Assert,
     );
     let schema = schema.into_value();
     let validator = jsonschema::validator_for(&schema)
@@ -661,7 +664,7 @@ fn generator_type_union_constructor_is_exhaustively_equivalent() -> eyre::Result
 
 #[test]
 fn declared_range_members_materialize_across_typed_schema_branches() -> eyre::Result<()> {
-    let mut document = SchemaDocument::new_root_object();
+    let mut document = SchemaDocument::new_root_object(crate::RootPolicy::Closed);
     document.insert_path_schema(
         &["container".to_string()],
         SchemaNode::foreign(json!({
@@ -734,7 +737,7 @@ fn declared_range_members_materialize_across_typed_schema_branches() -> eyre::Re
 
 #[test]
 fn declared_range_members_leave_typeless_empty_lanes_untouched() -> eyre::Result<()> {
-    let mut document = SchemaDocument::new_root_object();
+    let mut document = SchemaDocument::new_root_object(crate::RootPolicy::Closed);
     document.insert_path_schema(&["container".to_string()], SchemaNode::object());
     document.relax_host_object_type(&["container".to_string()]);
     let declared: YamlValue = serde_yaml::from_str("first: one\n")?;
@@ -841,7 +844,7 @@ fn rewrite_pair(
         .iter()
         .map(|segment| (*segment).to_string())
         .collect::<Vec<_>>();
-    let mut base = SchemaDocument::new_root_object();
+    let mut base = SchemaDocument::new_root_object(crate::RootPolicy::Closed);
     base.insert_path_schema(&path, base_slot);
     let mut canonical = base.clone();
     let outcome = canonical

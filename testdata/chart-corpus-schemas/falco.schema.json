@@ -6130,12 +6130,42 @@
       ],
       "type": "object"
     },
+    "constrains/enabled!=false": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              false
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled!=null": {
       "properties": {
         "enabled": {
           "not": {
             "enum": [
               null
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=true": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              true
             ]
           }
         }
@@ -6202,6 +6232,19 @@
         "enabled": {
           "enum": [
             null
+          ]
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled=true": {
+      "properties": {
+        "enabled": {
+          "enum": [
+            true
           ]
         }
       },
@@ -8108,6 +8151,19 @@
       ],
       "type": "object"
     },
+    "constrains/falcosidekick.enabled": {
+      "not": {
+        "properties": {
+          "falcosidekick": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "falcosidekick"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/falcosidekick.enabled+falcosidekick.enabled=null": {
       "properties": {
         "falcosidekick": {
@@ -8973,7 +9029,8 @@
         "hosts": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1falco-talon.global"
+              "additionalProperties": {},
+              "type": "object"
             },
             {
               "items": {},
@@ -12134,10 +12191,6 @@
     "values/driver.loader.initContainer.image.registry": {
       "description": "The image registry to pull from."
     },
-    "values/falco-talon.global": {
-      "additionalProperties": {},
-      "type": "object"
-    },
     "values/falco-talon.grafana.dashboards.configMaps.talon.folder": {
       "description": "folder where the dashboard is stored by grafana."
     },
@@ -12149,6 +12202,9 @@
     },
     "values/falco-talon.grafana.dashboards.enabled": {
       "description": "enabled specifies whether the dashboards should be deployed."
+    },
+    "values/falco-talon.serviceMonitor.enabled": {
+      "description": "enable the deployment of a Service Monitor for the Prometheus Operator."
     },
     "values/falco-talon.serviceMonitor.interval": {
       "description": "interval specifies the time interval at which Prometheus should scrape metrics from the service."
@@ -14510,6 +14566,72 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "falcosidekick": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "falcosidekick"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1falcosidekick.enabled"
+                  },
+                  {
+                    "properties": {
+                      "falcosidekick": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "falcosidekick"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1falcosidekick.enabled"
+                  },
+                  {
+                    "properties": {
+                      "falcosidekick": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "falcosidekick"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "falcosidekick": {
+            "description": "For configuration values, see https://github.com/falcosecurity/charts/blob/master/charts/falcosidekick/values.yaml",
+            "type": "object"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -29130,6 +29252,72 @@
           {
             "allOf": [
               {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1responseActions.enabled"
+                  },
+                  {
+                    "properties": {
+                      "responseActions": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "responseActions"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1responseActions.enabled"
+                  },
+                  {
+                    "properties": {
+                      "responseActions": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "responseActions"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "responseActions": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "responseActions"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "falco-talon": {
+            "description": "It must be used in conjunction with the response_actions.enabled option.",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
                 "$ref": "#/$defs/constrains~1driver.enabled:t"
               },
               {
@@ -32118,17 +32306,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "k8s-metacollector": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
     },
     {
       "if": {
@@ -41067,15 +41244,9 @@
       "type": "object"
     },
     "falco": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "additionalProperties": {}
-        }
-      ],
-      "description": "Directly set values in the falco.yaml configuration file.\nPlease, note that some values may be overridden by other chart settings,\nfor specific features are managed by the chart itself. This includes:\n- drivers configuration\n- collectors configuration (this affects container and k8smeta plugins configurations)\n- metrics configuration\nFalco config files settings #"
+      "additionalProperties": {},
+      "description": "Directly set values in the falco.yaml configuration file.\nPlease, note that some values may be overridden by other chart settings,\nfor specific features are managed by the chart itself. This includes:\n- drivers configuration\n- collectors configuration (this affects container and k8smeta plugins configurations)\n- metrics configuration\nFalco config files settings #",
+      "type": "object"
     },
     "falco-talon": {
       "additionalProperties": {},
@@ -41297,9 +41468,7 @@
         "extraEnv": {
           "description": "extra env"
         },
-        "global": {
-          "$ref": "#/$defs/values~1falco-talon.global"
-        },
+        "global": {},
         "grafana": {
           "additionalProperties": {},
           "description": "grafana contains the configuration related to grafana.",
@@ -41474,7 +41643,7 @@
               "description": "additionalLabels specifies labels to be added on the Service Monitor."
             },
             "enabled": {
-              "description": "enable the deployment of a Service Monitor for the Prometheus Operator."
+              "$ref": "#/$defs/values~1falco-talon.serviceMonitor.enabled"
             },
             "interval": {
               "$ref": "#/$defs/values~1falco-talon.serviceMonitor.interval"
@@ -41505,8 +41674,7 @@
         "tolerations": {
           "description": "tolerations"
         }
-      },
-      "type": "object"
+      }
     },
     "falcoHostnameEnv": {
       "description": "Inject the chart-default `FALCO_HOSTNAME` env var.\nIf `extra.env` contains `FALCO_HOSTNAME`, the user-provided value wins."
@@ -41645,15 +41813,9 @@
           "type": "object"
         },
         "config": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
-              "additionalProperties": {}
-            }
-          ],
-          "description": "Configuration file of the falcoctl tool. It is saved in a configmap and mounted on the falcotl containers."
+          "additionalProperties": {},
+          "description": "Configuration file of the falcoctl tool. It is saved in a configmap and mounted on the falcotl containers.",
+          "type": "object"
         },
         "image": {
           "additionalProperties": {},
@@ -46520,15 +46682,12 @@
           "description": "Extra volumes for sidekick deployment\n- name: optional-mtls-volume\nconfigMap:\nname: falco-certs-optional\noptional: true\nitems:\n- key: mtlscert.optional.tls\npath: mtlscert.optional.tls"
         },
         "fullfqdn": {
-          "description": "Enable usage of full FQDN of falcosidekick service (useful when a Proxy is used).",
-          "type": "boolean"
+          "description": "Enable usage of full FQDN of falcosidekick service (useful when a Proxy is used)."
         },
         "fullnameOverride": {
           "description": "Override the name"
         },
-        "global": {
-          "$ref": "#/$defs/values~1falco-talon.global"
-        },
+        "global": {},
         "grafana": {
           "additionalProperties": {},
           "description": "grafana contains the configuration related to grafana.",
@@ -46608,10 +46767,6 @@
               "description": "Ingress TLS configuration\n- secretName: chart-example-tls\nhosts:\n- chart-example.local"
             }
           }
-        },
-        "listenPort": {
-          "description": "Listen port. Default value: 2801",
-          "type": "string"
         },
         "listenport": {},
         "nameOverride": {
@@ -46769,50 +46924,10 @@
         "serviceMonitor": {
           "additionalProperties": {},
           "properties": {
-            "additionalLabels": {
-              "additionalProperties": {},
-              "description": "specify Additional labels to be added on the Service Monitor.",
-              "type": "object"
-            },
-            "additionalProperties": {
-              "additionalProperties": {},
-              "description": "allows setting additional properties on the endpoint such as relabelings, metricRelabelings etc.",
-              "type": "object"
-            },
             "enabled": {
-              "description": "enable the deployment of a Service Monitor for the Prometheus Operator.",
-              "type": "boolean"
-            },
-            "interval": {
-              "description": "specify a user defined interval. When not specified Prometheus default interval is used.",
-              "type": "string"
-            },
-            "scrapeTimeout": {
-              "description": "specify a user defined scrape timeout. When not specified Prometheus default scrape timeout is used.",
-              "type": "string"
+              "$ref": "#/$defs/values~1falco-talon.serviceMonitor.enabled"
             }
           }
-        },
-        "testConnection": {
-          "additionalProperties": {},
-          "properties": {
-            "affinity": {
-              "additionalProperties": {},
-              "description": "Affinity for the test connection pod",
-              "type": "object"
-            },
-            "nodeSelector": {
-              "additionalProperties": {},
-              "description": "test connection nodeSelector field",
-              "type": "object"
-            },
-            "tolerations": {
-              "description": "Tolerations for pod assignment",
-              "items": {},
-              "type": "array"
-            }
-          },
-          "type": "object"
         },
         "tolerations": {
           "$ref": "#/$defs/values~1falcosidekick.tolerations"
@@ -46824,14 +46939,12 @@
               "description": "Affinity for the Web UI pods"
             },
             "allowcors": {
-              "description": "Allow CORS",
-              "type": "boolean"
+              "description": "Allow CORS"
             },
             "customAnnotations": {},
             "customLabels": {},
             "disableauth": {
-              "description": "Disable the basic auth",
-              "type": "boolean"
+              "description": "Disable the basic auth"
             },
             "enabled": {
               "description": "enable Falcosidekick-UI"
@@ -47467,9 +47580,7 @@
         "fullnameOverride": {
           "description": "fullNameOverride same as nameOverride but for the full name."
         },
-        "global": {
-          "$ref": "#/$defs/values~1falco-talon.global"
-        },
+        "global": {},
         "grafana": {
           "additionalProperties": {},
           "description": "grafana contains the configuration related to grafana.",

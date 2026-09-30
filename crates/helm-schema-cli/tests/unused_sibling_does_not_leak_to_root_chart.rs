@@ -82,6 +82,7 @@ fn unused_sibling_does_not_leak_when_consumer_is_root_chart() -> eyre::Result<()
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,

@@ -26,6 +26,7 @@ fn guard_only_path_does_not_treat_the_declared_default_as_input_typing() {
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
             "properties": {
+                "global": {},
                 "existingSecret": {},
             },
             "type": "object",
@@ -60,6 +61,7 @@ fn block_scalar_parts_do_not_project_input_shapes() {
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
             "properties": {
+                "global": {},
                 "enabled": {},
                 "items": {},
             },
@@ -161,6 +163,7 @@ fn helper_yaml_rendered_inside_block_scalar_does_not_project_payload_shape() {
             navigated_host_missing_ancestor_clause(&["presets", "clusterMetrics"]),
         ],
         "properties": {
+            "global": {},
             "presets": {
                 "type": "object",
                 "additionalProperties": {},
@@ -220,6 +223,7 @@ fn shallow_helper_output_inside_block_scalar_stays_pathless() {
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
             "properties": {
+                "global": {},
                 "enabled": {},
                 "payload": {},
             },
@@ -279,6 +283,7 @@ fn shallow_control_after_block_scalar_remains_a_mapping_sibling() {
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
             "properties": {
+                "global": {},
                 "notifiers": {
                     "anyOf": [
                         {
@@ -376,6 +381,7 @@ fn helper_local_yaml_merge_inside_block_scalar_does_not_project_payload_shape() 
             navigated_host_missing_ancestor_clause(&["presets", "clusterMetrics"]),
         ],
         "properties": {
+            "global": {},
             "presets": {
                 "type": "object",
                 "additionalProperties": {},
@@ -506,6 +512,7 @@ fn unconstrained_object_fragment_keeps_nested_maps_open() {
         "type": "object",
         "additionalProperties": false,
         "properties": {
+            "global": {},
             "resources": {
                 "type": "object",
                 "additionalProperties": {},

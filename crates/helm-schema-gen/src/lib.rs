@@ -1,5 +1,6 @@
 //! JSON Schema lowering from normalized Helm contract signals.
 
+mod authoring_policy;
 mod base_schema;
 #[cfg(feature = "bench-support")]
 pub mod bench_support;
@@ -34,6 +35,7 @@ use helm_schema_core::{ContractSchemaSignals, ResourceSchemaOracle};
 use serde_json::Value;
 use serde_yaml::Value as YamlValue;
 
+pub use authoring_policy::{AuthoringPolicy, DeclaredTypes, RootPolicy};
 pub use base_schema::BaseOwner;
 use emission_plan::LoweredEmissionPlan;
 pub use emission_policy::{
@@ -119,6 +121,8 @@ pub struct ValuesSchemaInput<'a> {
     pub values_descriptions: Option<&'a BTreeMap<String, String>>,
     /// Complete valid policy selecting analyzed contract evidence.
     pub emission_policy: EmissionPolicy,
+    /// Caller-selected authoring assertions.
+    pub authoring_policy: AuthoringPolicy,
 }
 
 impl<'a> ValuesSchemaInput<'a> {
@@ -134,6 +138,7 @@ impl<'a> ValuesSchemaInput<'a> {
             shadowed_input_paths: None,
             values_descriptions: None,
             emission_policy: SchemaProfile::Full.resolved_policy().policy(),
+            authoring_policy: AuthoringPolicy::default(),
         }
     }
 
@@ -165,6 +170,13 @@ impl<'a> ValuesSchemaInput<'a> {
     #[must_use]
     pub fn with_profile(mut self, profile: SchemaProfile) -> Self {
         self.emission_policy = profile.resolved_policy().policy();
+        self
+    }
+
+    /// Selects the authoring assertions the schema makes.
+    #[must_use]
+    pub fn with_authoring_policy(mut self, policy: AuthoringPolicy) -> Self {
+        self.authoring_policy = policy;
         self
     }
 

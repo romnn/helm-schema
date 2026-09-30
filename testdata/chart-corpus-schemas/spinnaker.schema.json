@@ -808,14 +808,6 @@
       ],
       "type": "object"
     },
-    "constrains/create+data+name": {
-      "additionalProperties": {},
-      "properties": {
-        "create": {},
-        "data": {},
-        "name": {}
-      }
-    },
     "constrains/create:t": {
       "properties": {
         "create": {
@@ -1023,12 +1015,51 @@
         "username": {}
       }
     },
+    "constrains/enabled": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=false": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              false
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled!=null": {
       "properties": {
         "enabled": {
           "not": {
             "enum": [
               null
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=true": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              true
             ]
           }
         }
@@ -1192,13 +1223,7 @@
       "anyOf": [
         {
           "not": {
-            "properties": {
-              "enabled": {}
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/constrains~1enabled"
           }
         },
         {
@@ -1246,6 +1271,19 @@
           "$ref": "#/$defs/constrains~1enabled:t"
         }
       ]
+    },
+    "constrains/enabled=true": {
+      "properties": {
+        "enabled": {
+          "enum": [
+            true
+          ]
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
     },
     "constrains/etcd.endpoints:t": {
       "properties": {
@@ -3382,6 +3420,19 @@
       ],
       "type": "object"
     },
+    "constrains/minio.enabled": {
+      "not": {
+        "properties": {
+          "minio": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "minio"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/minio.enabled+minio.enabled=null": {
       "properties": {
         "minio": {
@@ -4644,6 +4695,19 @@
         "redis"
       ],
       "type": "object"
+    },
+    "constrains/redis.enabled": {
+      "not": {
+        "properties": {
+          "redis": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "redis"
+        ],
+        "type": "object"
+      }
     },
     "constrains/redis.enabled+redis.enabled=null": {
       "properties": {
@@ -13520,6 +13584,72 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1redis.enabled"
+                  },
+                  {
+                    "properties": {
+                      "redis": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "redis"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "redis": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "redis"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1redis.enabled"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "redis": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "redis"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis": {
+            "description": "Redis password to use for the in-cluster redis service\nEnable redis to use in-cluster redis",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "$ref": "#/$defs/constrains~1minio+minio.enabled+minio.enabled:t+minio.enabled=null"
       },
       "then": {
@@ -16554,6 +16684,72 @@
       "if": {
         "anyOf": [
           {
+            "properties": {
+              "minio": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "minio"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1minio.enabled"
+                  },
+                  {
+                    "properties": {
+                      "minio": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "minio"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "minio": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "minio"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1minio.enabled"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "minio": {
+            "description": "Minio access/secret keys for the in-cluster S3 usage\nMinio is not exposed publically",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled=null"
@@ -18110,15 +18306,14 @@
       ],
       "properties": {
         "additionalConfigMaps": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
-              "$ref": "#/$defs/constrains~1create+data+name"
-            }
-          ],
-          "description": "Uncomment if you want to use a pre-created secret rather than feeding data in via helm.\nname:"
+          "additionalProperties": {},
+          "description": "Uncomment if you want to use a pre-created secret rather than feeding data in via helm.\nname:",
+          "properties": {
+            "create": {},
+            "data": {},
+            "name": {}
+          },
+          "type": "object"
         },
         "additionalInitScript": {},
         "additionalInstallParameters": {
@@ -18159,14 +18354,13 @@
           "type": "object"
         },
         "additionalSecrets": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
-              "$ref": "#/$defs/constrains~1create+data+name"
-            }
-          ]
+          "additionalProperties": {},
+          "properties": {
+            "create": {},
+            "data": {},
+            "name": {}
+          },
+          "type": "object"
         },
         "additionalServiceSettings": {
           "description": "Define custom settings for Spinnaker services. Read more for details:\nhttps://www.spinnaker.io/reference/halyard/custom/#custom-service-settings\nYou can use it to add annotations for pods, override the image, etc.\ndeck.yml:\nartifactId: gcr.io/spinnaker-marketplace/deck:2.9.0-20190412012808\nkubernetes:\npodAnnotations:\niam.amazonaws.com/role: <role_arn>\nclouddriver.yml:\nkubernetes:\npodAnnotations:\niam.amazonaws.com/role: <role_arn>"

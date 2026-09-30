@@ -2696,6 +2696,45 @@
       ],
       "type": "object"
     },
+    "constrains/enabled": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=false": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              false
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=true": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              true
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled+enabled:t+enabled=null": {
       "anyOf": [
         {
@@ -2783,13 +2822,7 @@
       "anyOf": [
         {
           "not": {
-            "properties": {
-              "enabled": {}
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/constrains~1enabled"
           }
         },
         {
@@ -2811,6 +2844,19 @@
       "properties": {
         "enabled": {
           "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled=true": {
+      "properties": {
+        "enabled": {
+          "enum": [
+            true
+          ]
         }
       },
       "required": [
@@ -6118,6 +6164,19 @@
         }
       ]
     },
+    "constrains/ltb-passwd.enabled": {
+      "not": {
+        "properties": {
+          "ltb-passwd": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "ltb-passwd"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/ltb-passwd.enabled+ltb-passwd.enabled=null": {
       "properties": {
         "ltb-passwd": {
@@ -6776,6 +6835,19 @@
           }
         }
       ]
+    },
+    "constrains/phpldapadmin.enabled": {
+      "not": {
+        "properties": {
+          "phpldapadmin": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "phpldapadmin"
+        ],
+        "type": "object"
+      }
     },
     "constrains/phpldapadmin.enabled+phpldapadmin.enabled=null": {
       "properties": {
@@ -11110,17 +11182,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
       "if": {
         "anyOf": [
           {
@@ -11757,6 +11818,72 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "phpldapadmin": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "phpldapadmin"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "phpldapadmin": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "phpldapadmin"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1phpldapadmin.enabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "phpldapadmin": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "phpldapadmin"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1phpldapadmin.enabled"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "phpldapadmin": {
+            "description": "phpldapadmin\nFor more parameters check following file: ./charts/phpldapadmin/values.yaml",
+            "type": "object"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -14164,6 +14291,72 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1ltb-passwd.enabled"
+                  },
+                  {
+                    "properties": {
+                      "ltb-passwd": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "ltb-passwd"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1ltb-passwd.enabled"
+                  },
+                  {
+                    "properties": {
+                      "ltb-passwd": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "ltb-passwd"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "ltb-passwd": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "ltb-passwd"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ltb-passwd": {
+            "description": "ltb-passwd\nFor more parameters check following file: ./charts/ltb-passwd/values.yaml",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/constrains~1global+global=null"
@@ -14474,10 +14667,7 @@
           "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
           "type": "string"
         },
-        "global": {
-          "additionalProperties": {},
-          "type": "object"
-        }
+        "global": {}
       },
       "type": "object"
     },
@@ -15583,8 +15773,7 @@
             "kubeVersion": {},
             "ldapDomain": {},
             "sslLdapPort": {}
-          },
-          "type": "object"
+          }
         },
         "image": {
           "additionalProperties": {},
@@ -15656,8 +15845,7 @@
         "volumes": {
           "description": "Additional volumes to the application pod"
         }
-      },
-      "type": "object"
+      }
     },
     "nameOverride": {
       "description": "String to partially override common.names.fullname"
@@ -16472,8 +16660,7 @@
             "kubeVersion": {},
             "ldapDomain": {},
             "ldapPort": {}
-          },
-          "type": "object"
+          }
         },
         "image": {
           "additionalProperties": {},

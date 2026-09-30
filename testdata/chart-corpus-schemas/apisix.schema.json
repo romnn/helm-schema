@@ -2179,17 +2179,7 @@
         "auth": {
           "properties": {
             "token": {
-              "properties": {
-                "enabled": {
-                  "enum": [
-                    true
-                  ]
-                }
-              },
-              "required": [
-                "enabled"
-              ],
-              "type": "object"
+              "$ref": "#/$defs/constrains~1enabled=true"
             }
           },
           "required": [
@@ -3497,10 +3487,49 @@
       ],
       "type": "object"
     },
+    "constrains/enabled": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=false": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              false
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled!=null": {
       "properties": {
         "enabled": {
           "$ref": "#/$defs/constrains~1client!=null~1not~1=null"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=true": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              true
+            ]
+          }
         }
       },
       "required": [
@@ -3577,13 +3606,7 @@
       "anyOf": [
         {
           "not": {
-            "properties": {
-              "enabled": {}
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/constrains~1enabled"
           }
         },
         {
@@ -3605,6 +3628,19 @@
       "properties": {
         "enabled": {
           "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled=true": {
+      "properties": {
+        "enabled": {
+          "enum": [
+            true
+          ]
         }
       },
       "required": [
@@ -4988,6 +5024,19 @@
         "etcd"
       ],
       "type": "object"
+    },
+    "constrains/etcd.enabled": {
+      "not": {
+        "properties": {
+          "etcd": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "etcd"
+        ],
+        "type": "object"
+      }
     },
     "constrains/etcd.enabled+etcd.enabled=null": {
       "properties": {
@@ -7987,17 +8036,21 @@
       "properties": {
         "host": {},
         "paths": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/values~1etcd.common.global.compatibility.openshift"
-            },
-            {
-              "$ref": "#/$defs/constrains~1host+paths~1array"
-            }
-          ]
+          "$ref": "#/$defs/constrains~1host+paths~1anyOf~1array+object"
         }
       },
       "type": "object"
+    },
+    "constrains/host+paths/anyOf/array+object": {
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1host+paths~1array"
+        }
+      ]
     },
     "constrains/host+paths/array": {
       "items": {},
@@ -8056,14 +8109,7 @@
       "additionalProperties": {},
       "properties": {
         "hosts": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/values~1etcd.common.global.compatibility.openshift"
-            },
-            {
-              "$ref": "#/$defs/constrains~1host+paths~1array"
-            }
-          ]
+          "$ref": "#/$defs/constrains~1host+paths~1anyOf~1array+object"
         },
         "secretName": {}
       },
@@ -8448,6 +8494,19 @@
         "ingress-controller"
       ],
       "type": "object"
+    },
+    "constrains/ingress-controller.enabled": {
+      "not": {
+        "properties": {
+          "ingress-controller": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "ingress-controller"
+        ],
+        "type": "object"
+      }
     },
     "constrains/ingress-controller.enabled+ingress-controller.enabled=null": {
       "properties": {
@@ -12209,6 +12268,12 @@
         }
       ]
     },
+    "values/apisix.admin.externalIPs": {
+      "description": "IPs for which nodes in the cluster will also accept traffic for the servic"
+    },
+    "values/apisix.admin.ingress.tls": {
+      "description": "Ingress TLS settings\n- secretName: apisix-tls\nhosts:\n- chart-example.local"
+    },
     "values/apisix/allOf/object+object,null;annotations-is-an-unstructured": {
       "allOf": [
         {
@@ -12320,21 +12385,11 @@
         "object"
       ]
     },
-    "values/control.ingress.tls": {
-      "description": "Ingress TLS settings\n- secretName: apisix-tls\nhosts:\n- chart-example.local"
-    },
-    "values/control.service.externalIPs": {
-      "description": "IPs for which nodes in the cluster will also accept traffic for the servic"
-    },
     "values/etcd.auth.client.enableAuthentication": {
       "description": "Switch to enable host authentication using TLS certificates. Requires existing secret"
     },
     "values/etcd.auth.client.useAutoTLS": {
       "description": "Switch to automatically create the TLS certificates"
-    },
-    "values/etcd.common.global.compatibility.openshift": {
-      "additionalProperties": {},
-      "type": "object"
     },
     "values/etcd.containerSecurityContext.runAsUser": {
       "description": "Set etcd containers' Security Context runAsUser"
@@ -12709,6 +12764,9 @@
       "description": "WhenUnsatisfiable indicates how to deal with a pod if it doesn't satisfy the spread constraint. - DoNotSchedule (default) tells the scheduler not to schedule it. - ScheduleAnyway tells the scheduler to schedule the pod in any location,\n  but giving higher precedence to topologies that would help reduce the\n  skew.\nA constraint is considered \"Unsatisfiable\" for an incoming pod if and only if every possible node assignment for that pod would violate \"MaxSkew\" on some topology. For example, in a 3-zone cluster, MaxSkew is set to 1, and pods with the same labelSelector spread as 3/1/1: | zone1 | zone2 | zone3 | | P P P |   P   |   P   | If WhenUnsatisfiable is set to DoNotSchedule, incoming pod can only be scheduled to zone2(zone3) to become 3/2/1(3/1/2) as ActualSkew(2-1) on zone2(zone3) satisfies MaxSkew(1). In other words, the cluster can still be imbalanced, but scheduler won't make it *more* imbalanced. It's a required field.",
       "type": "string"
     },
+    "values/ingress-controller.podDisruptionBudget.minAvailable": {
+      "description": "Set the `minAvailable` of podDisruptionBudget. You can specify only one of `maxUnavailable` and `minAvailable` in a single PodDisruptionBudget.\nSee [Specifying a Disruption Budget for your Application](https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget)\nfor more details"
+    },
     "values/ingress-controller/allOf/object+object,null;map-of-string-keys+object,null;route-service-traffic-to": {
       "allOf": [
         {
@@ -12868,10 +12926,6 @@
         "null"
       ]
     },
-    "values/integer;container-port-apisix-listens": {
-      "description": "Container port APISIX listens on for HTTP traffic",
-      "type": "integer"
-    },
     "values/null,string;pod-affinity-preset-ignored": {
       "description": "Pod affinity preset. Ignored if `affinity` is set. Allowed values: `soft` or `hard`\nref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/#inter-pod-affinity-and-anti-affinity",
       "type": [
@@ -12955,6 +13009,10 @@
       "maxProperties": 0,
       "properties": {},
       "type": "object"
+    },
+    "values/service.http.containerPort": {
+      "description": "Container port APISIX listens on for HTTP traffic",
+      "type": "integer"
     },
     "values/string": {
       "allOf": [
@@ -16141,6 +16199,72 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1etcd.enabled"
+                  },
+                  {
+                    "properties": {
+                      "etcd": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "etcd"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1etcd.enabled"
+                  },
+                  {
+                    "properties": {
+                      "etcd": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "etcd"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "etcd": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "etcd"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "etcd": {
+            "description": "etcd configuration\nuse the FQDN address or the IP of the etcd",
+            "type": "object"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -21797,25 +21921,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "apisix": {
-          "additionalProperties": {},
-          "properties": {
-            "admin": {
-              "additionalProperties": {},
-              "properties": {
-                "credentials": {
-                  "description": "Admin API credentials",
-                  "type": "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "anyOf": [
           {
@@ -22674,7 +22779,7 @@
                 "description": "Apache APISIX service settings for http",
                 "properties": {
                   "containerPort": {
-                    "$ref": "#/$defs/values~1integer;container-port-apisix-listens"
+                    "$ref": "#/$defs/values~1service.http.containerPort"
                   }
                 }
               }
@@ -28940,6 +29045,72 @@
           {
             "allOf": [
               {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "ingress-controller": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "ingress-controller"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1ingress-controller.enabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1ingress-controller.enabled"
+                  },
+                  {
+                    "properties": {
+                      "ingress-controller": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "ingress-controller"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "ingress-controller": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "ingress-controller"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress-controller": {
+            "description": "Ingress controller configuration",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
                 "$ref": "#/$defs/constrains~1etcd.disasterRecovery.cronjob.resources:t"
               },
               {
@@ -33447,104 +33618,99 @@
       ],
       "properties": {
         "admin": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
+          "additionalProperties": {},
+          "properties": {
+            "allow": {
               "additionalProperties": {},
               "properties": {
-                "allow": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "ipList": {
-                      "description": "The client IP CIDR allowed to access Apache APISIX Admin API service."
-                    }
-                  }
+                "ipList": {
+                  "description": "The client IP CIDR allowed to access Apache APISIX Admin API service."
+                }
+              }
+            },
+            "annotations": {},
+            "credentials": {
+              "additionalProperties": {},
+              "description": "Admin API credentials",
+              "properties": {
+                "secretAdminKey": {
+                  "description": "Name of the admin role key in the secret, overrides the default key name \"admin\""
                 },
-                "annotations": {},
-                "credentials": {
-                  "additionalProperties": {},
-                  "description": "Admin API credentials",
-                  "properties": {
-                    "secretAdminKey": {
-                      "description": "Name of the admin role key in the secret, overrides the default key name \"admin\""
-                    },
-                    "secretName": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/constrains~1annotations:t~1not~1:t"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "description": "The APISIX Helm chart supports storing user credentials in a secret.\nThe secret needs to contain two keys, admin and viewer, with their respective values set."
-                    },
-                    "secretViewerKey": {
-                      "description": "Name of the viewer role key in the secret, overrides the default key name \"viewer\""
-                    }
-                  }
-                },
-                "enabled": {
-                  "description": "Enable Admin API"
-                },
-                "externalIPs": {
-                  "$ref": "#/$defs/values~1control.service.externalIPs"
-                },
-                "ingress": {
-                  "additionalProperties": {},
-                  "description": "Using ingress access Apache APISIX admin service",
-                  "properties": {
-                    "annotations": {
-                      "description": "Ingress annotations"
-                    },
-                    "className": {},
-                    "enabled": {
-                      "description": "Enable an Ingress resource in front of the Admin API service"
-                    },
-                    "hosts": {
-                      "description": "Ingress host and path rules"
-                    },
-                    "tls": {
-                      "$ref": "#/$defs/values~1control.ingress.tls"
-                    }
-                  }
-                },
-                "loadBalancerIP": {},
-                "loadBalancerSourceRanges": {},
-                "nodePort": {},
-                "port": {
-                  "description": "which port to use for Apache APISIX admin API"
-                },
-                "servicePort": {
-                  "description": "Service port to use for Apache APISIX admin API",
-                  "type": "integer"
-                },
-                "type": {
+                "secretName": {
                   "anyOf": [
                     {
-                      "enum": [
-                        "NodePort"
-                      ]
-                    },
-                    {
-                      "type": "null"
+                      "$ref": "#/$defs/constrains~1annotations:t~1not~1:t"
                     },
                     {
                       "type": "string"
-                    },
-                    {
-                      "enum": [
-                        "LoadBalancer"
-                      ]
                     }
                   ],
-                  "description": "admin service type\nloadBalancerIP: a.b.c.d\nloadBalancerSourceRanges:\n- \"143.231.0.0/16\""
+                  "description": "The APISIX Helm chart supports storing user credentials in a secret.\nThe secret needs to contain two keys, admin and viewer, with their respective values set."
+                },
+                "secretViewerKey": {
+                  "description": "Name of the viewer role key in the secret, overrides the default key name \"viewer\""
+                }
+              },
+              "type": "object"
+            },
+            "enabled": {
+              "description": "Enable Admin API"
+            },
+            "externalIPs": {
+              "$ref": "#/$defs/values~1apisix.admin.externalIPs"
+            },
+            "ingress": {
+              "additionalProperties": {},
+              "description": "Using ingress access Apache APISIX admin service",
+              "properties": {
+                "annotations": {
+                  "description": "Ingress annotations"
+                },
+                "className": {},
+                "enabled": {
+                  "description": "Enable an Ingress resource in front of the Admin API service"
+                },
+                "hosts": {
+                  "description": "Ingress host and path rules"
+                },
+                "tls": {
+                  "$ref": "#/$defs/values~1apisix.admin.ingress.tls"
                 }
               }
+            },
+            "loadBalancerIP": {},
+            "loadBalancerSourceRanges": {},
+            "nodePort": {},
+            "port": {
+              "description": "which port to use for Apache APISIX admin API"
+            },
+            "servicePort": {
+              "description": "Service port to use for Apache APISIX admin API",
+              "type": "integer"
+            },
+            "type": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "NodePort"
+                  ]
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "enum": [
+                    "LoadBalancer"
+                  ]
+                }
+              ],
+              "description": "admin service type\nloadBalancerIP: a.b.c.d\nloadBalancerSourceRanges:\n- \"143.231.0.0/16\""
             }
-          ]
+          },
+          "type": "object"
         },
         "customPlugins": {
           "additionalProperties": {},
@@ -33890,28 +34056,22 @@
           "description": "Customize the list of APISIX plugins to enable. By default, APISIX's [default plugins](https://github.com/apache/apisix/blob/master/apisix/cli/config.lua#L196) are automatically used."
         },
         "prometheus": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "containerPort": {
+              "description": "container port where the metrics are exposed"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "containerPort": {
-                  "description": "container port where the metrics are exposed"
-                },
-                "enabled": {
-                  "description": "Enable Prometheus metrics. ref: https://apisix.apache.org/docs/apisix/plugins/prometheus/"
-                },
-                "metricPrefix": {
-                  "description": "prefix of the metrics"
-                },
-                "path": {
-                  "description": "path of the metrics endpoint"
-                }
-              }
+            "enabled": {
+              "description": "Enable Prometheus metrics. ref: https://apisix.apache.org/docs/apisix/plugins/prometheus/"
+            },
+            "metricPrefix": {
+              "description": "prefix of the metrics"
+            },
+            "path": {
+              "description": "path of the metrics endpoint"
             }
-          ]
+          },
+          "type": "object"
         },
         "proxyCache": {
           "description": "Proxy caching configuration used by the proxy-cache plugin."
@@ -33972,61 +34132,55 @@
           "type": "boolean"
         },
         "ssl": {
-          "allOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "additionalContainerPorts": {
-                  "anyOf": [
-                    {
-                      "items": {
-                        "$ref": "#/$defs/constrains~1port@2"
-                      },
-                      "type": "array"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1@items.port"
-                    },
-                    {
-                      "type": "integer"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1@*.port"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "description": "Support multiple https ports, See [Configuration](https://github.com/apache/apisix/blob/0bc65ea9acd726f79f80ae0abd8f50b7eb172e3d/conf/config-default.yaml#L99)\n- ip: 127.0.0.3           # Specific IP, If not set, the default value is `0.0.0.0`.\nport: 9445\nenable_http3: true"
+          "additionalProperties": {},
+          "properties": {
+            "additionalContainerPorts": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/$defs/constrains~1port@2"
+                  },
+                  "type": "array"
                 },
-                "certCAFilename": {
-                  "description": "Filename be used in the apisix.ssl.existingCASecret"
+                {
+                  "$ref": "#/$defs/constrains~1@items.port"
                 },
-                "containerPort": {
-                  "description": "Container port APISIX listens on for HTTPS traffic",
+                {
                   "type": "integer"
                 },
-                "enabled": {
-                  "description": "Enable HTTPS listeners"
+                {
+                  "$ref": "#/$defs/constrains~1@*.port"
                 },
-                "existingCASecret": {
-                  "description": "Specifies the name of Secret contains trusted CA certificates in the PEM format used to verify the certificate when APISIX needs to do SSL/TLS handshaking with external services (e.g. etcd)"
-                },
-                "fallbackSNI": {
-                  "description": "Define SNI to fallback if none is presented by client"
-                },
-                "sslCiphers": {
-                  "description": "TLS ciphers allowed to use."
-                },
-                "sslProtocols": {
-                  "description": "TLS protocols allowed to use."
+                {
+                  "type": "null"
                 }
-              }
+              ],
+              "description": "Support multiple https ports, See [Configuration](https://github.com/apache/apisix/blob/0bc65ea9acd726f79f80ae0abd8f50b7eb172e3d/conf/config-default.yaml#L99)\n- ip: 127.0.0.3           # Specific IP, If not set, the default value is `0.0.0.0`.\nport: 9445\nenable_http3: true"
             },
-            {
-              "type": "object"
+            "certCAFilename": {
+              "description": "Filename be used in the apisix.ssl.existingCASecret"
+            },
+            "containerPort": {
+              "description": "Container port APISIX listens on for HTTPS traffic",
+              "type": "integer"
+            },
+            "enabled": {
+              "description": "Enable HTTPS listeners"
+            },
+            "existingCASecret": {
+              "description": "Specifies the name of Secret contains trusted CA certificates in the PEM format used to verify the certificate when APISIX needs to do SSL/TLS handshaking with external services (e.g. etcd)"
+            },
+            "fallbackSNI": {
+              "description": "Define SNI to fallback if none is presented by client"
+            },
+            "sslCiphers": {
+              "description": "TLS ciphers allowed to use."
+            },
+            "sslProtocols": {
+              "description": "TLS protocols allowed to use."
             }
-          ]
+          },
+          "type": "object"
         },
         "status": {
           "additionalProperties": {},
@@ -34259,7 +34413,7 @@
               "description": "Ingress host and path rules"
             },
             "tls": {
-              "$ref": "#/$defs/values~1control.ingress.tls"
+              "$ref": "#/$defs/values~1apisix.admin.ingress.tls"
             }
           }
         },
@@ -34270,7 +34424,7 @@
               "description": "Control annotations"
             },
             "externalIPs": {
-              "$ref": "#/$defs/values~1control.service.externalIPs"
+              "$ref": "#/$defs/values~1apisix.admin.externalIPs"
             },
             "ip": {
               "anyOf": [
@@ -40551,7 +40705,8 @@
                   "commonLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1etcd.common.global.compatibility.openshift"
+                        "additionalProperties": {},
+                        "type": "object"
                       },
                       {
                         "type": "string"
@@ -44565,8 +44720,7 @@
                   "type": "string"
                 },
                 "enabled": {
-                  "description": "enable etcd client certificate",
-                  "type": "boolean"
+                  "description": "enable etcd client certificate"
                 },
                 "existingSecret": {
                   "description": "name of the secret contains etcd client cert"
@@ -44663,24 +44817,7 @@
               "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
               "type": "string"
             },
-            "global": {
-              "additionalProperties": {},
-              "properties": {
-                "compatibility": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "openshift": {
-                      "$ref": "#/$defs/values~1etcd.common.global.compatibility.openshift"
-                    }
-                  },
-                  "type": "object"
-                },
-                "security": {
-                  "$ref": "#/$defs/values~1etcd.common.global.compatibility.openshift"
-                }
-              },
-              "type": "object"
-            }
+            "global": {}
           },
           "type": "object"
         },
@@ -44993,10 +45130,6 @@
         },
         "initialClusterToken": {
           "description": "Initial cluster token. Can be used to protect etcd from cross-cluster-interaction, which might corrupt the clusters.\nIf spinning up multiple clusters (or creating and destroying a single cluster)\nwith same configuration for testing purpose, it is highly recommended that each cluster is given a unique initial-cluster-token.\nBy doing this, etcd can generate unique cluster IDs and member IDs for the clusters even if they otherwise have the exact same configuration."
-        },
-        "kubeVersion": {
-          "description": "Force target Kubernetes version (using Helm capabilities if not set)",
-          "type": "string"
         },
         "lifecycleHooks": {
           "description": "[object] Override default etcd container hooks\netcd container ports to open"
@@ -45512,16 +45645,8 @@
             }
           }
         },
-        "startupRetry": {
-          "description": "The number of retries to etcd during startup",
-          "type": "integer"
-        },
         "terminationGracePeriodSeconds": {
           "description": "Seconds the pod needs to gracefully terminate\nref: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/#hook-handler-execution"
-        },
-        "timeout": {
-          "description": "Set the timeout value in seconds for subsequent socket operations from apisix to etcd cluster",
-          "type": "integer"
         },
         "tolerations": {
           "description": "[array] Tolerations for pod assignment\nRef: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/"
@@ -45547,16 +45672,11 @@
           ]
         },
         "usePasswordFiles": {
-          "description": "Mount credentials as files instead of using environment variables",
-          "type": "boolean"
+          "description": "Mount credentials as files instead of using environment variables"
         },
         "volumePermissions": {
           "additionalProperties": {},
           "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume mountpoint to runAsUser:fsGroup values from the securityContext section."
-        },
-        "watchTimeout": {
-          "description": "Set the timeout value in seconds for watching etcd",
-          "type": "integer"
         }
       },
       "type": "object"
@@ -45701,26 +45821,6 @@
     },
     "global": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "imagePullSecrets": {
-              "allOf": [
-                {
-                  "if": {
-                    "$ref": "#/$defs/t"
-                  },
-                  "then": {
-                    "$ref": "#/$defs/constrains~1configMap.mounts~1array,integer,null,object"
-                  }
-                }
-              ],
-              "description": "Global Docker registry secret names as an array"
-            }
-          }
-        }
-      ],
       "description": "e.g.\nimagePullSecrets:\n- my-registry-secrets\n- other-registry-secrets",
       "properties": {
         "compatibility": {
@@ -45751,6 +45851,16 @@
         },
         "defaultStorageClass": {},
         "imagePullSecrets": {
+          "allOf": [
+            {
+              "if": {
+                "$ref": "#/$defs/t"
+              },
+              "then": {
+                "$ref": "#/$defs/constrains~1configMap.mounts~1array,integer,null,object"
+              }
+            }
+          ],
           "description": "Global Docker registry secret names as an array"
         },
         "imageRegistry": {},
@@ -47888,9 +47998,7 @@
         "autoscaling": {
           "additionalProperties": {},
           "properties": {
-            "enabled": {
-              "type": "boolean"
-            },
+            "enabled": {},
             "minReplicas": {}
           }
         },
@@ -48067,16 +48175,10 @@
           "description": "See https://kubernetes.io/docs/tasks/run-application/configure-pdb/ for more details",
           "properties": {
             "enabled": {
-              "description": "Enable or disable podDisruptionBudget",
-              "type": "boolean"
-            },
-            "maxUnavailable": {
-              "description": "Set the maxUnavailable of podDisruptionBudget",
-              "type": "integer"
+              "description": "Enable or disable podDisruptionBudget"
             },
             "minAvailable": {
-              "description": "Set the `minAvailable` of podDisruptionBudget. You can specify only one of `maxUnavailable` and `minAvailable` in a single PodDisruptionBudget.\nSee [Specifying a Disruption Budget for your Application](https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget)\nfor more details",
-              "type": "string"
+              "$ref": "#/$defs/values~1ingress-controller.podDisruptionBudget.minAvailable"
             }
           }
         },
@@ -48122,8 +48224,7 @@
             }
           }
         }
-      },
-      "type": "object"
+      }
     },
     "initContainer": {
       "additionalProperties": {},
@@ -48256,30 +48357,24 @@
       "description": "Observability configuration.",
       "properties": {
         "serviceMonitor": {
-          "allOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {},
-                "enabled": {
-                  "description": "Enable or disable Apache APISIX serviceMonitor"
-                },
-                "interval": {
-                  "description": "interval at which metrics should be scraped"
-                },
-                "labels": {},
-                "name": {
-                  "description": "name of the serviceMonitor, by default, it is the same as the apisix fullname"
-                },
-                "namespace": {
-                  "description": "namespace where the serviceMonitor is deployed, by default, it is the same as the namespace of the apisix"
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {},
+            "enabled": {
+              "description": "Enable or disable Apache APISIX serviceMonitor"
             },
-            {
-              "type": "object"
+            "interval": {
+              "description": "interval at which metrics should be scraped"
+            },
+            "labels": {},
+            "name": {
+              "description": "name of the serviceMonitor, by default, it is the same as the apisix fullname"
+            },
+            "namespace": {
+              "description": "namespace where the serviceMonitor is deployed, by default, it is the same as the namespace of the apisix"
             }
-          ]
+          },
+          "type": "object"
         }
       },
       "type": "object"
@@ -48368,7 +48463,7 @@
           "description": "Set the maxUnavailable of podDisruptionBudget"
         },
         "minAvailable": {
-          "description": "Set the `minAvailable` of podDisruptionBudget. You can specify only one of `maxUnavailable` and `minAvailable` in a single PodDisruptionBudget.\nSee [Specifying a Disruption Budget for your Application](https://kubernetes.io/docs/tasks/run-application/configure-pdb/#specifying-a-poddisruptionbudget)\nfor more details"
+          "$ref": "#/$defs/values~1ingress-controller.podDisruptionBudget.minAvailable"
         }
       },
       "type": "object"
@@ -48814,7 +48909,8 @@
         "annotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1etcd.common.global.compatibility.openshift"
+              "additionalProperties": {},
+              "type": "object"
             },
             {
               "$ref": "#/$defs/constrains~1host+paths~1array"
@@ -48891,50 +48987,44 @@
           "description": "Setting how the Service route external traffic.\nIf you want to keep the client source IP, you can set this to Local,\nref: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip\ntype: LoadBalancer\nannotations:\nservice.beta.kubernetes.io/aws-load-balancer-type: nlb"
         },
         "http": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "additionalContainerPorts": {
-                  "anyOf": [
-                    {
-                      "items": {
-                        "$ref": "#/$defs/constrains~1port@2"
-                      },
-                      "type": "array"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1@items.port"
-                    },
-                    {
-                      "type": "integer"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1@*.port"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "description": "Support multiple http ports, See [Configuration](https://github.com/apache/apisix/blob/0bc65ea9acd726f79f80ae0abd8f50b7eb172e3d/conf/config-default.yaml#L24)\n- port: 9081\nenable_http2: true          # If not set, the default value is `false`.\n- ip: 127.0.0.2               # Specific IP, If not set, the default value is `0.0.0.0`.\nport: 9082\nenable_http2: true"
+          "additionalProperties": {},
+          "description": "Apache APISIX service settings for http",
+          "properties": {
+            "additionalContainerPorts": {
+              "anyOf": [
+                {
+                  "items": {
+                    "$ref": "#/$defs/constrains~1port@2"
+                  },
+                  "type": "array"
                 },
-                "containerPort": {
-                  "$ref": "#/$defs/values~1integer;container-port-apisix-listens"
+                {
+                  "$ref": "#/$defs/constrains~1@items.port"
                 },
-                "enabled": {
-                  "description": "Enable plain HTTP listeners"
+                {
+                  "type": "integer"
                 },
-                "nodePort": {},
-                "servicePort": {
-                  "description": "Kubernetes service port for HTTP traffic"
+                {
+                  "$ref": "#/$defs/constrains~1@*.port"
+                },
+                {
+                  "type": "null"
                 }
-              }
+              ],
+              "description": "Support multiple http ports, See [Configuration](https://github.com/apache/apisix/blob/0bc65ea9acd726f79f80ae0abd8f50b7eb172e3d/conf/config-default.yaml#L24)\n- port: 9081\nenable_http2: true          # If not set, the default value is `false`.\n- ip: 127.0.0.2               # Specific IP, If not set, the default value is `0.0.0.0`.\nport: 9082\nenable_http2: true"
+            },
+            "containerPort": {
+              "$ref": "#/$defs/values~1service.http.containerPort"
+            },
+            "enabled": {
+              "description": "Enable plain HTTP listeners"
+            },
+            "nodePort": {},
+            "servicePort": {
+              "description": "Kubernetes service port for HTTP traffic"
             }
-          ],
-          "description": "Apache APISIX service settings for http"
+          },
+          "type": "object"
         },
         "labelsOverride": {
           "anyOf": [

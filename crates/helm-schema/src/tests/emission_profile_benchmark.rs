@@ -64,7 +64,11 @@ fn emission_profile_release_benchmark() -> eyre::Result<()> {
         &BTreeMap::new(),
         PreparedEmitRequest::empty(emit_request),
         &chart_dir,
-        FinalOutputPolicy::new(SchemaProfile::Full.resolved_policy(), false),
+        FinalOutputPolicy::new(
+            SchemaProfile::Full.resolved_policy(),
+            false,
+            crate::generation::AuthoringPolicy::default(),
+        ),
     )?;
     let scalar_plain_metrics =
         write_schema_file(&output_dir, "scalar-plain", &scalar_plain_schema)?;
@@ -142,7 +146,11 @@ fn finalize_policy_outputs(
             &BTreeMap::new(),
             PreparedEmitRequest::empty(emit_request),
             chart_dir,
-            FinalOutputPolicy::new(resolved, false),
+            FinalOutputPolicy::new(
+                resolved,
+                false,
+                crate::generation::AuthoringPolicy::default(),
+            ),
         )?;
         let metrics = write_schema_file(output_dir, policy.name, &final_schema)?;
         reports.insert(
@@ -208,6 +216,7 @@ fn temporal_session() -> AnalysisSession {
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::Full.into(),
+        authoring: crate::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],
             k8s_schema_cache_dir: Some(

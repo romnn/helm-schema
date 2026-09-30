@@ -8624,6 +8624,9 @@
     "values/controller.logging.level": {
       "description": "Set the logging level (one of: `debug`, `info`, `warn`, `error`)"
     },
+    "values/controller.metricsConfig.metricsTTL": {
+      "description": "How often custom metrics are cleared from memory"
+    },
     "values/controller.name": {
       "anyOf": [
         {
@@ -8836,9 +8839,6 @@
       ],
       "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
       "type": "string"
-    },
-    "values/controller.telemetryConfig.metricsTTL": {
-      "description": "How often custom metrics are cleared from memory"
     },
     "values/controller.tolerations": {
       "anyOf": [
@@ -11704,28 +11704,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "controller": {
-          "additionalProperties": {},
-          "properties": {
-            "metricsConfig": {
-              "additionalProperties": {},
-              "description": "podPortName: http",
-              "properties": {
-                "port": {
-                  "description": "Port is the port where metrics are emitted",
-                  "not": {
-                    "type": "null"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "anyOf": [
           {
@@ -11792,23 +11770,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "controller": {
-          "additionalProperties": {},
-          "properties": {
-            "metricsConfig": {
-              "description": "podPortName: http",
-              "required": [
-                "port"
-              ],
-              "type": "object"
-            }
-          }
-        }
       }
     },
     {
@@ -12466,54 +12427,6 @@
                     "description": "Argo Server Horizontal Pod Autoscaler",
                     "required": [
                       "maxReplicas"
-                    ],
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1controller.metricsConfig.enabled:t"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "controller": {
-                "additionalProperties": {},
-                "properties": {
-                  "metricsConfig": {
-                    "additionalProperties": {},
-                    "description": "podPortName: http",
-                    "properties": {
-                      "servicePort": {
-                        "description": "Service metrics port",
-                        "not": {
-                          "type": "null"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "controller": {
-                "additionalProperties": {},
-                "properties": {
-                  "metricsConfig": {
-                    "description": "podPortName: http",
-                    "required": [
-                      "servicePort"
                     ],
                     "type": "object"
                   }
@@ -13299,6 +13212,93 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1controller.metricsConfig.enabled:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "properties": {
+                  "metricsConfig": {
+                    "additionalProperties": {},
+                    "description": "podPortName: http",
+                    "properties": {
+                      "port": {
+                        "description": "Port is the port where metrics are emitted",
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "properties": {
+                  "metricsConfig": {
+                    "description": "podPortName: http",
+                    "required": [
+                      "port"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "properties": {
+                  "metricsConfig": {
+                    "additionalProperties": {},
+                    "description": "podPortName: http",
+                    "properties": {
+                      "servicePort": {
+                        "description": "Service metrics port",
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "controller": {
+                "additionalProperties": {},
+                "properties": {
+                  "metricsConfig": {
+                    "description": "podPortName: http",
+                    "required": [
+                      "servicePort"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
     },
     {
       "if": {
@@ -17073,106 +17073,103 @@
           "type": "object"
         },
         "metricsConfig": {
-          "allOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "description": "Enables prometheus metrics server"
-                },
-                "headlessService": {
-                  "description": "Flag to enable headless service"
-                },
-                "metricsTTL": {
-                  "$ref": "#/$defs/values~1controller.telemetryConfig.metricsTTL"
-                },
-                "modifiers": {
-                  "description": "Manipulate the metrics created by the workflow controller\nRef: https://argo-workflows.readthedocs.io/en/latest/metrics/#modifiers"
-                },
-                "port": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1integer:int32;number-of-port-to"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1controller~1string;pattern-0-1-9"
-                    }
-                  ],
-                  "description": "Port is the port where metrics are emitted"
-                },
-                "portName": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1string@2"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1string;pattern-a-za-z0-9-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1object"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1string;pattern-t"
-                    },
-                    {
-                      "allOf": [
-                        {
-                          "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern@10"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern@4"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern@9"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern@2"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern@5"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern@7"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern@8"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern@3"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern@6"
-                        }
-                      ],
-                      "description": "If specified, this must be an IANA_SVC_NAME and unique within the pod. Each named port in a pod must have a unique name. Name for the port that can be referred to by services.",
-                      "type": "string"
-                    },
-                    {
-                      "description": "If specified, this must be an IANA_SVC_NAME and unique within the pod. Each named port in a pod must have a unique name. Name for the port that can be referred to by services.",
-                      "type": "null"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1string;pattern-null-null-null"
-                    }
-                  ],
-                  "description": "Container metrics port name"
-                },
-                "servicePort": {
-                  "description": "Service metrics port"
-                },
-                "servicePortName": {
-                  "description": "Service metrics port name"
-                }
-              }
+          "additionalProperties": {},
+          "description": "podPortName: http",
+          "properties": {
+            "enabled": {
+              "description": "Enables prometheus metrics server"
             },
-            {
-              "type": "object"
+            "headlessService": {
+              "description": "Flag to enable headless service"
+            },
+            "metricsTTL": {
+              "$ref": "#/$defs/values~1controller.metricsConfig.metricsTTL"
+            },
+            "modifiers": {
+              "description": "Manipulate the metrics created by the workflow controller\nRef: https://argo-workflows.readthedocs.io/en/latest/metrics/#modifiers"
+            },
+            "port": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1integer:int32;number-of-port-to"
+                },
+                {
+                  "$ref": "#/$defs/values~1controller~1string;pattern-0-1-9"
+                }
+              ],
+              "description": "Port is the port where metrics are emitted"
+            },
+            "portName": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1string@2"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1string;pattern-a-za-z0-9-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1object"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1string;pattern-t"
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern@10"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern@4"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern@9"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern@2"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern@5"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern@7"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern@8"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern@3"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1not~1keywords~1pattern@6"
+                    }
+                  ],
+                  "description": "If specified, this must be an IANA_SVC_NAME and unique within the pod. Each named port in a pod must have a unique name. Name for the port that can be referred to by services.",
+                  "type": "string"
+                },
+                {
+                  "description": "If specified, this must be an IANA_SVC_NAME and unique within the pod. Each named port in a pod must have a unique name. Name for the port that can be referred to by services.",
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1loadBalancerClass+loadBalancerSourceRanges:t~1string;pattern-null-null-null"
+                }
+              ],
+              "description": "Container metrics port name"
+            },
+            "servicePort": {
+              "description": "Service metrics port"
+            },
+            "servicePortName": {
+              "description": "Service metrics port name"
             }
+          },
+          "required": [
+            "port"
           ],
-          "description": "podPortName: http"
+          "type": "object"
         },
         "name": {
           "$ref": "#/$defs/values~1controller.name"
@@ -17587,7 +17584,7 @@
               "description": "Enables prometheus telemetry server"
             },
             "metricsTTL": {
-              "$ref": "#/$defs/values~1controller.telemetryConfig.metricsTTL"
+              "$ref": "#/$defs/values~1controller.metricsConfig.metricsTTL"
             },
             "port": {
               "description": "telemetry container port"
@@ -18140,6 +18137,7 @@
     "fullnameOverride": {
       "description": "String to fully override \"argo-workflows.fullname\" template"
     },
+    "global": {},
     "images": {
       "additionalProperties": {},
       "properties": {
@@ -22301,34 +22299,28 @@
           "type": "object"
         },
         "serviceAccount": {
-          "allOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {
-                  "$ref": "#/$defs/values~1controller.serviceAccount.annotations"
-                },
-                "create": {
-                  "description": "Specifies whether a service account should be created"
-                },
-                "createSecret": {
-                  "description": "Specifies whether a secret for each service account should be created"
-                },
-                "labels": {
-                  "$ref": "#/$defs/values~1controller.serviceAccount.labels"
-                },
-                "name": {
-                  "description": "Service account which is used to run workflows"
-                },
-                "pullSecrets": {
-                  "description": "Secrets with credentials to pull images from a private registry. Same format as `.Values.images.pullSecrets`"
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {
+              "$ref": "#/$defs/values~1controller.serviceAccount.annotations"
             },
-            {
-              "type": "object"
+            "create": {
+              "description": "Specifies whether a service account should be created"
+            },
+            "createSecret": {
+              "description": "Specifies whether a secret for each service account should be created"
+            },
+            "labels": {
+              "$ref": "#/$defs/values~1controller.serviceAccount.labels"
+            },
+            "name": {
+              "description": "Service account which is used to run workflows"
+            },
+            "pullSecrets": {
+              "description": "Secrets with credentials to pull images from a private registry. Same format as `.Values.images.pullSecrets`"
             }
-          ]
+          },
+          "type": "object"
         }
       },
       "type": "object"

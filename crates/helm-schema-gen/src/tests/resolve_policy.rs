@@ -614,6 +614,7 @@ fn plain_probe_port_expected_schema() -> Value {
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
             "properties": {
+                "global": {},
                 "port": {
                     "oneOf": [
                         {
@@ -932,7 +933,7 @@ fn pathless_conditional_target_does_not_own_descendant_defaults() {
         digest: false,
         merge_operand: false,
     }]);
-    contract.push_pathless_dependency_fragment("dependency");
+    contract.push_dependency_values_root(undeclared_dependency_root("dependency"));
     let values_yaml = indoc! {"
         enabled: false
         dependency:

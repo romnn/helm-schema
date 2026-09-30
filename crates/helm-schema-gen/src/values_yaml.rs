@@ -1,10 +1,11 @@
 use std::collections::{BTreeMap, BTreeSet};
 
-use serde_json::Value;
+use serde_json::{Map, Value};
 use serde_yaml::Value as YamlValue;
 
 use helm_schema_core::ValuesPath;
 
+use crate::DeclaredTypes;
 use crate::merge::merge_schema_list;
 use crate::schema_model::{empty_schema, is_empty_schema};
 use crate::schema_node::SchemaNode;
@@ -119,6 +120,37 @@ fn merge_missing_yaml_values(target: &mut YamlValue, defaults: YamlValue) {
     }
 }
 
+/// The declared default shape standing alone as a path's typing, where no
+/// template, resource, or guard channel supplies one.
+///
+/// A declared default's shape is an authoring assertion, not a recovered
+/// constraint: Helm renders values of another type wherever no other
+/// evidence forbids them. It always remains resolution context (it tells a
+/// preset's input type from its rendered output type), and it widens other
+/// channels to keep the shipped value acceptable. Only where it would be the
+/// sole source of a restriction does [`DeclaredTypes::Annotate`] reduce it
+/// to the property names it documents.
+pub(crate) fn declared_shape_alone(declared_types: DeclaredTypes, schema: Value) -> Value {
+    match declared_types {
+        DeclaredTypes::Assert => schema,
+        DeclaredTypes::Annotate => property_slots(&schema),
+    }
+}
+
+/// The property names a declared shape documents, without any assertion:
+/// no type, container kind, item shape, or closure. The slots keep
+/// descriptions and defaults attached to the members a chart documents.
+pub(crate) fn property_slots(schema: &Value) -> Value {
+    let Some(properties) = schema.get("properties").and_then(Value::as_object) else {
+        return empty_schema();
+    };
+    let slots = properties
+        .iter()
+        .map(|(key, member)| (key.clone(), property_slots(member)))
+        .collect::<Map<_, _>>();
+    serde_json::json!({ "properties": slots })
+}
+
 pub(crate) struct ValuesYamlPathInfo {
     pub(crate) schema: Value,
     pub(crate) declared_defaults: Vec<Value>,
@@ -136,6 +168,8 @@ pub(crate) struct ValuesYamlPathFacts {
     pub(crate) is_empty_map: bool,
     pub(crate) is_mapping: bool,
     pub(crate) has_runtime_default: bool,
+    /// Whether the declared shape asserts where it stands alone.
+    pub(crate) declared_types: DeclaredTypes,
 }
 
 impl ValuesYamlPathFacts {
@@ -156,6 +190,7 @@ impl ValuesYamlPathInfo {
             is_empty_map: self.is_empty_map,
             is_mapping: self.is_mapping,
             has_runtime_default: false,
+            declared_types: DeclaredTypes::Assert,
         }
     }
 }
@@ -167,9 +202,15 @@ pub(crate) fn build_values_yaml_path_info(
     pruned_parent_value_paths: &BTreeSet<ValuesPath>,
     unconditionally_omitted_value_paths: &BTreeSet<ValuesPath>,
     direct_ranged_value_paths: &BTreeSet<ValuesPath>,
+    helm_global_namespaces: &BTreeSet<ValuesPath>,
 ) -> BTreeMap<ValuesPath, ValuesYamlPathInfo> {
     referenced_value_paths
         .iter()
+        // A chart's declaration inside Helm's shared `global` namespace is
+        // its own default, not a bound on what the rest of the chart tree
+        // shares there: the namespace itself takes no declared shape, and
+        // only members with their own evidence keep theirs.
+        .filter(|path| !helm_global_namespaces.contains(path))
         .filter_map(|path| {
             let segments = path
                 .segments()
@@ -177,6 +218,11 @@ pub(crate) fn build_values_yaml_path_info(
                 .collect::<Vec<_>>();
             lookup_values_yaml_path_info(values_yaml_doc, &segments)
                 .map(|mut path_info| {
+                    prune_referenced_descendant_schemas(
+                        &mut path_info.schema,
+                        path,
+                        helm_global_namespaces,
+                    );
                     if pruned_parent_value_paths.contains(path) {
                         prune_referenced_descendant_schemas(
                             &mut path_info.schema,

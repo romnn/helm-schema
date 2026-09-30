@@ -10348,6 +10348,21 @@
       ],
       "type": "object"
     },
+    "constrains/enabled!=false": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              false
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled!=true": {
       "properties": {
         "enabled": {
@@ -13580,7 +13595,7 @@
       "additionalProperties": {},
       "properties": {
         "image": {
-          "$ref": "#/$defs/constrains~1image~1anyOf~1keywords~1additionalProperties+string"
+          "$ref": "#/$defs/constrains~1image~1anyOf~1null,object+null,string"
         }
       }
     },
@@ -13588,7 +13603,7 @@
       "additionalProperties": {},
       "properties": {
         "image": {
-          "$ref": "#/$defs/constrains~1image~1anyOf~1null,object+null,string"
+          "$ref": "#/$defs/constrains~1image~1anyOf~1keywords~1additionalProperties+string"
         }
       }
     },
@@ -14541,6 +14556,19 @@
         "ingress-nginx"
       ],
       "type": "object"
+    },
+    "constrains/ingress-nginx.enabled": {
+      "not": {
+        "properties": {
+          "ingress-nginx": {
+            "$ref": "#/$defs/constrains~1enabled@2"
+          }
+        },
+        "required": [
+          "ingress-nginx"
+        ],
+        "type": "object"
+      }
     },
     "constrains/ingress-nginx.enabled+ingress-nginx.enabled=null": {
       "properties": {
@@ -18910,6 +18938,19 @@
       ],
       "type": "object"
     },
+    "constrains/okteto-nginx.enabled": {
+      "not": {
+        "properties": {
+          "okteto-nginx": {
+            "$ref": "#/$defs/constrains~1enabled@2"
+          }
+        },
+        "required": [
+          "okteto-nginx"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/okteto-nginx.enabled+okteto-nginx.enabled=null": {
       "properties": {
         "okteto-nginx": {
@@ -20691,16 +20732,11 @@
       "type": "object"
     },
     "constrains/reloader": {
-      "not": {
-        "properties": {
-          "reloader": {
-            "type": "object"
-          }
-        },
-        "required": [
-          "reloader"
-        ],
-        "type": "object"
+      "additionalProperties": {},
+      "properties": {
+        "reloader": {
+          "type": "object"
+        }
       }
     },
     "constrains/reloader+reloader.enabled+reloader.enabled:t+reloader.enabled=null": {
@@ -20709,7 +20745,7 @@
           "$ref": "#/$defs/constrains~1reloader.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1reloader"
+          "$ref": "#/$defs/constrains~1reloader@2"
         },
         {
           "$ref": "#/$defs/constrains~1reloader.enabled+reloader.enabled=null"
@@ -20719,7 +20755,7 @@
     "constrains/reloader+reloader.enabled+reloader.enabled=null": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1reloader"
+          "$ref": "#/$defs/constrains~1reloader@2"
         },
         {
           "$ref": "#/$defs/constrains~1reloader.enabled+reloader.enabled=null"
@@ -20983,6 +21019,19 @@
         "reloader"
       ],
       "type": "object"
+    },
+    "constrains/reloader.enabled": {
+      "not": {
+        "properties": {
+          "reloader": {
+            "$ref": "#/$defs/constrains~1enabled@2"
+          }
+        },
+        "required": [
+          "reloader"
+        ],
+        "type": "object"
+      }
     },
     "constrains/reloader.enabled+reloader.enabled=null": {
       "properties": {
@@ -22701,6 +22750,19 @@
         "reloader"
       ],
       "type": "object"
+    },
+    "constrains/reloader@2": {
+      "not": {
+        "properties": {
+          "reloader": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "reloader"
+        ],
+        "type": "object"
+      }
     },
     "constrains/replicaCount": {
       "additionalProperties": {},
@@ -40709,7 +40771,7 @@
       "additionalProperties": {},
       "properties": {
         "backend": {
-          "$ref": "#/$defs/constrains~1image@3"
+          "$ref": "#/$defs/constrains~1image@2"
         }
       }
     },
@@ -42845,7 +42907,7 @@
         "additionalProperties": {},
         "properties": {
           "daemonset": {
-            "$ref": "#/$defs/constrains~1image@2"
+            "$ref": "#/$defs/constrains~1image@3"
           }
         }
       }
@@ -43914,7 +43976,7 @@
         "additionalProperties": {},
         "properties": {
           "buildkit": {
-            "$ref": "#/$defs/constrains~1image@3"
+            "$ref": "#/$defs/constrains~1image@2"
           }
         }
       }
@@ -45189,6 +45251,105 @@
       "if": {
         "anyOf": [
           {
+            "$ref": "#/$defs/constrains~1endpoints.okteto.gatewayAPI.enabled=true"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/constrains~1okteto-nginx.enabled:t"
+                }
+              },
+              {
+                "not": {
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/constrains~1okteto-nginx.enabled:t"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1ingress-nginx.enabled:t"
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1defaultBackend.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1okteto-nginx.enabled:t"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1ingress-nginx.enabled"
+                  },
+                  {
+                    "properties": {
+                      "ingress-nginx": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "ingress-nginx"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "ingress-nginx": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "ingress-nginx"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1ingress-nginx.enabled"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "ingress-nginx": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "ingress-nginx"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1endpoints.okteto.gatewayAPI.enabled"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ingress-nginx": {
+            "description": "Dependencies",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1volumes.validate.enabled:t"
@@ -46108,54 +46269,6 @@
     },
     {
       "$ref": "#/$defs/when~1internalCertificate+internalCertificate=null~1then~1fail"
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1endpoints.okteto.gatewayAPI.enabled=true"
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/constrains~1okteto-nginx.enabled:t"
-                }
-              },
-              {
-                "not": {
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1okteto-nginx.enabled:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1ingress-nginx.enabled:t"
-                    }
-                  ]
-                }
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1defaultBackend.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1okteto-nginx.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1endpoints.okteto.gatewayAPI.enabled"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ingress-nginx": {
-            "description": "Dependencies",
-            "type": "object"
-          }
-        }
-      }
     },
     {
       "if": {
@@ -47445,7 +47558,7 @@
             "additionalProperties": {},
             "properties": {
               "registry": {
-                "$ref": "#/$defs/constrains~1image@3"
+                "$ref": "#/$defs/constrains~1image@2"
               }
             }
           },
@@ -51425,7 +51538,7 @@
             "additionalProperties": {},
             "properties": {
               "daemonset": {
-                "$ref": "#/$defs/constrains~1image@3"
+                "$ref": "#/$defs/constrains~1image@2"
               }
             }
           },
@@ -52014,6 +52127,66 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "reloader": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "reloader"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1reloader.enabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "reloader": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "reloader"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1reloader.enabled"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "reloader": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "reloader"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1reloader"
+      }
     },
     {
       "additionalProperties": {},
@@ -56860,7 +57033,7 @@
             "additionalProperties": {},
             "properties": {
               "autoscaler": {
-                "$ref": "#/$defs/constrains~1image@3"
+                "$ref": "#/$defs/constrains~1image@2"
               }
             }
           }
@@ -57118,7 +57291,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1reloader"
+            "$ref": "#/$defs/constrains~1reloader@2"
           },
           {
             "$ref": "#/$defs/constrains~1reloader.enabled+reloader.enabled=null"
@@ -58702,7 +58875,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1reloader"
+            "$ref": "#/$defs/constrains~1reloader@2"
           },
           {
             "allOf": [
@@ -58783,12 +58956,7 @@
         "additionalProperties": {},
         "properties": {
           "reloader": {
-            "additionalProperties": {},
-            "properties": {
-              "reloader": {
-                "type": "object"
-              }
-            }
+            "$ref": "#/$defs/constrains~1reloader"
           }
         }
       }
@@ -62299,6 +62467,71 @@
       "if": {
         "anyOf": [
           {
+            "properties": {
+              "okteto-nginx": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "okteto-nginx"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1okteto-nginx.enabled"
+                  },
+                  {
+                    "properties": {
+                      "okteto-nginx": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "okteto-nginx"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1okteto-nginx.enabled"
+                  },
+                  {
+                    "properties": {
+                      "okteto-nginx": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "okteto-nginx"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "okteto-nginx": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1reloader.reloader.webhookUrl:t"
@@ -64497,7 +64730,7 @@
             "additionalProperties": {},
             "properties": {
               "rootless": {
-                "$ref": "#/$defs/constrains~1image@3"
+                "$ref": "#/$defs/constrains~1image@2"
               }
             }
           }
@@ -72991,7 +73224,7 @@
             "additionalProperties": {},
             "properties": {
               "defaultBackend": {
-                "$ref": "#/$defs/constrains~1image@3"
+                "$ref": "#/$defs/constrains~1image@2"
               }
             }
           }
@@ -73151,7 +73384,7 @@
       "additionalProperties": {},
       "properties": {
         "frontend": {
-          "$ref": "#/$defs/constrains~1image@3"
+          "$ref": "#/$defs/constrains~1image@2"
         }
       }
     },
@@ -74957,7 +75190,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/constrains~1image@2"
+            "$ref": "#/$defs/constrains~1image@3"
           }
         },
         {
@@ -75355,7 +75588,7 @@
             "additionalProperties": {},
             "properties": {
               "rootless": {
-                "$ref": "#/$defs/constrains~1image@2"
+                "$ref": "#/$defs/constrains~1image@3"
               }
             }
           }
@@ -77001,7 +77234,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/constrains~1image@2"
+            "$ref": "#/$defs/constrains~1image@3"
           }
         },
         {
@@ -78081,13 +78314,8 @@
               "description": "Ingress configuration for dev namespaces",
               "properties": {
                 "annotations": {
-                  "allOf": [
-                    {},
-                    {
-                      "type": "object"
-                    }
-                  ],
-                  "description": "Custom annotations added to all ingresses in dev namespaces.\nTakes precedence over namespace.ingress.annotations (legacy); merged with legacy values when both are set."
+                  "description": "Custom annotations added to all ingresses in dev namespaces.\nTakes precedence over namespace.ingress.annotations (legacy); merged with legacy values when both are set.",
+                  "type": "object"
                 },
                 "class": {
                   "description": "Ingress class for dev namespace ingresses. Leave empty to use the cluster's default ingress class.\nTakes precedence over ingress.class (legacy). If both are empty, falls back to built-in defaults."
@@ -78102,13 +78330,8 @@
                   "description": "If enabled, all ingresses in dev namespaces must match the okteto wildcard subdomain.\nAlso enabled when ingress.forceIngressSubdomain (legacy) is true."
                 },
                 "labels": {
-                  "allOf": [
-                    {},
-                    {
-                      "type": "object"
-                    }
-                  ],
-                  "description": "Custom labels added to all ingresses in dev namespaces.\nTakes precedence over namespace.ingress.labels (legacy); merged with legacy values when both are set."
+                  "description": "Custom labels added to all ingresses in dev namespaces.\nTakes precedence over namespace.ingress.labels (legacy); merged with legacy values when both are set.",
+                  "type": "object"
                 },
                 "subdomain": {
                   "description": "Subdomain for generating hosts. If empty, inherits from top-level subdomain value."
@@ -78124,49 +78347,43 @@
           "description": "Okteto control plane exposure configuration.\nExactly one of ingress or gatewayAPI must be enabled.",
           "properties": {
             "gatewayAPI": {
-              "allOf": [
-                {
+              "additionalProperties": {},
+              "properties": {
+                "annotations": {
+                  "additionalProperties": {},
+                  "description": "Custom annotations added to all HTTPRoute resources for the control plane",
                   "type": "object"
                 },
-                {
+                "controller": {
                   "additionalProperties": {},
+                  "description": "IP of the gateway controller for internal DNS resolution.\nREQUIRED when gatewayAPI.enabled is true (no nginx fallback in Gateway API mode).",
                   "properties": {
-                    "annotations": {
-                      "additionalProperties": {},
-                      "description": "Custom annotations added to all HTTPRoute resources for the control plane",
-                      "type": "object"
+                    "ip": {}
+                  }
+                },
+                "enabled": {
+                  "description": "Enable Gateway API HTTPRoute-based exposure for the Okteto control plane.\nRequires ingress-nginx.enabled: false.\nThe chart creates HTTPRoute objects; operators must provide an existing Gateway."
+                },
+                "gateway": {
+                  "additionalProperties": {},
+                  "description": "Reference to the operator-managed Gateway to attach HTTPRoutes to.",
+                  "properties": {
+                    "name": {
+                      "description": "Name of the Gateway (REQUIRED when gatewayAPI.enabled is true)"
                     },
-                    "controller": {
-                      "additionalProperties": {},
-                      "description": "IP of the gateway controller for internal DNS resolution.\nREQUIRED when gatewayAPI.enabled is true (no nginx fallback in Gateway API mode).",
-                      "properties": {
-                        "ip": {}
-                      }
+                    "namespace": {
+                      "$ref": "#/$defs/values~1endpoints.dev.gatewayAPI.gateway.namespace"
                     },
-                    "enabled": {
-                      "description": "Enable Gateway API HTTPRoute-based exposure for the Okteto control plane.\nRequires ingress-nginx.enabled: false.\nThe chart creates HTTPRoute objects; operators must provide an existing Gateway."
-                    },
-                    "gateway": {
-                      "additionalProperties": {},
-                      "description": "Reference to the operator-managed Gateway to attach HTTPRoutes to.",
-                      "properties": {
-                        "name": {
-                          "description": "Name of the Gateway (REQUIRED when gatewayAPI.enabled is true)"
-                        },
-                        "namespace": {
-                          "$ref": "#/$defs/values~1endpoints.dev.gatewayAPI.gateway.namespace"
-                        },
-                        "section": {
-                          "description": "Optional: section name within the Gateway (e.g., \"https\")"
-                        }
-                      }
-                    },
-                    "labels": {
-                      "description": "Custom labels added to all HTTPRoute resources for the control plane"
+                    "section": {
+                      "description": "Optional: section name within the Gateway (e.g., \"https\")"
                     }
                   }
+                },
+                "labels": {
+                  "description": "Custom labels added to all HTTPRoute resources for the control plane"
                 }
-              ]
+              },
+              "type": "object"
             },
             "ingress": {
               "additionalProperties": {},
@@ -78373,14 +78590,7 @@
           "type": "object"
         },
         "nodeSelectors": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
-              "$ref": "#/$defs/values~1autoscaler.image"
-            }
-          ]
+          "$ref": "#/$defs/values~1daemonset.annotations"
         },
         "priorityClassName": {},
         "registry": {},
@@ -78983,8 +79193,7 @@
         "udp": {
           "$ref": "#/$defs/values~1ingress-nginx.udp"
         }
-      },
-      "type": "object"
+      }
     },
     "ingressLimits": {
       "additionalProperties": {},
@@ -79469,22 +79678,12 @@
           "additionalProperties": {},
           "properties": {
             "annotations": {
-              "allOf": [
-                {},
-                {
-                  "type": "object"
-                }
-              ],
-              "description": "Custom annotations added to ingresses created in okteto managed namespaces"
+              "description": "Custom annotations added to ingresses created in okteto managed namespaces",
+              "type": "object"
             },
             "labels": {
-              "allOf": [
-                {},
-                {
-                  "type": "object"
-                }
-              ],
-              "description": "Custom labels added to ingresses created in okteto managed namespaces."
+              "description": "Custom labels added to ingresses created in okteto managed namespaces.",
+              "type": "object"
             }
           },
           "type": "object"
@@ -80906,7 +81105,7 @@
             ]
           },
           "then": {
-            "$ref": "#/$defs/constrains~1image@2"
+            "$ref": "#/$defs/constrains~1image@3"
           }
         },
         {
@@ -83342,15 +83541,6 @@
             "tag": {}
           }
         },
-        "kubernetes": {
-          "additionalProperties": {},
-          "properties": {
-            "host": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
         "nameOverride": {},
         "namespace": {},
         "reloader": {
@@ -83467,54 +83657,28 @@
               },
               "type": "object"
             },
-            "enableCSIIntegration": {
-              "type": "boolean"
-            },
+            "enableCSIIntegration": {},
             "enableHA": {
-              "description": "Set to true to enable leadership election allowing you to run multiple replicas",
-              "type": "boolean"
+              "description": "Set to true to enable leadership election allowing you to run multiple replicas"
             },
             "enableMetricsByNamespace": {
-              "description": "Set to true to expose a prometheus counter of reloads by namespace (this metric may have high cardinality in clusters with many namespaces)",
-              "type": "boolean"
+              "description": "Set to true to expose a prometheus counter of reloads by namespace (this metric may have high cardinality in clusters with many namespaces)"
             },
             "enablePProf": {
-              "description": "Set to true to enable pprof for profiling",
-              "type": "boolean"
+              "description": "Set to true to enable pprof for profiling"
             },
-            "enabled": {
-              "type": "boolean"
-            },
-            "ignoreConfigMaps": {
-              "type": "boolean"
-            },
+            "ignoreConfigMaps": {},
             "ignoreCronJobs": {
-              "description": "Set to true to exclude CronJob workloads from automatic reload monitoring\nUseful when you don't want CronJobs to be restarted when their referenced ConfigMaps/Secrets change",
-              "type": "boolean"
+              "description": "Set to true to exclude CronJob workloads from automatic reload monitoring\nUseful when you don't want CronJobs to be restarted when their referenced ConfigMaps/Secrets change"
             },
             "ignoreJobs": {
-              "description": "Set to true to exclude Job workloads from automatic reload monitoring\nUseful when you don't want Jobs to be restarted when their referenced ConfigMaps/Secrets change",
-              "type": "boolean"
+              "description": "Set to true to exclude Job workloads from automatic reload monitoring\nUseful when you don't want Jobs to be restarted when their referenced ConfigMaps/Secrets change"
             },
             "ignoreNamespaces": {
               "description": "Comma separated list of namespaces to ignore"
             },
-            "ignoreSecrets": {
-              "type": "boolean"
-            },
+            "ignoreSecrets": {},
             "isArgoRollouts": {},
-            "isOpenshift": {
-              "type": "boolean"
-            },
-            "legacy": {
-              "additionalProperties": {},
-              "properties": {
-                "rbac": {
-                  "type": "boolean"
-                }
-              },
-              "type": "object"
-            },
             "logFormat": {
               "description": "json"
             },
@@ -83635,39 +83799,10 @@
             "serviceMonitor": {
               "additionalProperties": {},
               "properties": {
-                "annotations": {
-                  "additionalProperties": {},
-                  "description": "Used to pass annotations that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec",
-                  "type": "object"
-                },
                 "enabled": {
-                  "description": "Deprecated: Service monitor will be removed in future releases of reloader in favour of Pod monitor\nEnabling this requires service to be enabled as well, or no endpoints will be found\nSet the namespace the ServiceMonitor should be deployed\nnamespace: monitoring",
-                  "type": "boolean"
+                  "description": "Deprecated: Service monitor will be removed in future releases of reloader in favour of Pod monitor\nEnabling this requires service to be enabled as well, or no endpoints will be found\nSet the namespace the ServiceMonitor should be deployed\nnamespace: monitoring"
                 },
-                "honorLabels": {
-                  "description": "Retain the job and instance labels of the metrics pushed to the Pushgateway\n[Scraping Pushgateway](https://github.com/prometheus/pushgateway#configure-the-pushgateway-as-a-target-to-scrape)",
-                  "type": "boolean"
-                },
-                "labels": {
-                  "additionalProperties": {},
-                  "description": "Used to pass Labels that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec",
-                  "type": "object"
-                },
-                "metricRelabelings": {
-                  "description": "Metric relabel configs to apply to samples before ingestion.\n[Metric Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs)\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]",
-                  "items": {},
-                  "type": "array"
-                },
-                "namespace": {},
-                "relabelings": {
-                  "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace",
-                  "items": {},
-                  "type": "array"
-                },
-                "targetLabels": {
-                  "items": {},
-                  "type": "array"
-                }
+                "namespace": {}
               },
               "type": "object"
             },
@@ -83676,34 +83811,7 @@
               "additionalProperties": {},
               "description": "Enable vertical pod autoscaler",
               "properties": {
-                "controlledResources": {
-                  "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory\nSpecifies which resource values should be controlled: RequestsOnly or RequestsAndLimits.\ncontrolledValues: RequestsAndLimits",
-                  "items": {},
-                  "type": "array"
-                },
-                "enabled": {
-                  "type": "boolean"
-                },
-                "maxAllowed": {
-                  "additionalProperties": {},
-                  "description": "Define the max allowed resources for the pod",
-                  "type": "object"
-                },
-                "minAllowed": {
-                  "additionalProperties": {},
-                  "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi",
-                  "type": "object"
-                },
-                "updatePolicy": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "updateMode": {
-                      "description": "Specifies minimal number of replicas which need to be alive for VPA Updater to attempt pod eviction\nminReplicas: 1\nSpecifies whether recommended updates are applied when a Pod is started and whether recommended updates\nare applied during the life of a Pod. Possible values are \"Off\", \"Initial\", \"Recreate\", and \"Auto\".",
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                }
+                "enabled": {}
               },
               "type": "object"
             },
@@ -83711,8 +83819,7 @@
             "webhookUrl": {}
           }
         }
-      },
-      "type": "object"
+      }
     },
     "resourceManager": {
       "additionalProperties": {},

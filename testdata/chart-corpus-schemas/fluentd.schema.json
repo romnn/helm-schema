@@ -982,7 +982,7 @@
     "constrains/aggregator.initScripts:t": {
       "properties": {
         "aggregator": {
-          "$ref": "#/$defs/constrains~1initScripts:t@2"
+          "$ref": "#/$defs/constrains~1initScripts:t"
         }
       },
       "required": [
@@ -5347,7 +5347,7 @@
     "constrains/forwarder.initScripts:t": {
       "properties": {
         "forwarder": {
-          "$ref": "#/$defs/constrains~1initScripts:t@2"
+          "$ref": "#/$defs/constrains~1initScripts:t"
         }
       },
       "required": [
@@ -6447,7 +6447,7 @@
           "not": {
             "properties": {
               "image": {
-                "$ref": "#/$defs/constrains~1repository@2"
+                "$ref": "#/$defs/constrains~1repository"
               }
             },
             "required": [
@@ -6690,29 +6690,6 @@
       "type": "object"
     },
     "constrains/initScripts:t": {
-      "additionalProperties": {},
-      "properties": {
-        "initScripts": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/constrains~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more~1not~1:t"
-            },
-            {
-              "additionalProperties": {
-                "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1string,null"
-              },
-              "description": "Data contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field. The keys stored in Data must not overlap with the keys in the BinaryData field, this is enforced during validation process.",
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ],
-          "description": "Dictionary of init scripts. Evaluated as a template.\nSpecify dictionary of scripts to be run at first boot\nAlternatively, you can put your scripts under the files/docker-entrypoint-initdb.d directory\nFor example:\ninitScripts:\nmy_init_script.sh: |\n!/bin/sh\necho \"Do something.\""
-        }
-      }
-    },
-    "constrains/initScripts:t@2": {
       "properties": {
         "initScripts": {
           "$ref": "#/$defs/t"
@@ -8453,13 +8430,13 @@
       "type": "object"
     },
     "constrains/repository": {
-      "additionalProperties": {},
       "properties": {
-        "repository": {
-          "description": "[default: REPOSITORY_NAME/fluentd] Fluentd image repository",
-          "type": "string"
-        }
-      }
+        "repository": {}
+      },
+      "required": [
+        "repository"
+      ],
+      "type": "object"
     },
     "constrains/repository=null": {
       "properties": {
@@ -8468,15 +8445,6 @@
             null
           ]
         }
-      },
-      "required": [
-        "repository"
-      ],
-      "type": "object"
-    },
-    "constrains/repository@2": {
-      "properties": {
-        "repository": {}
       },
       "required": [
         "repository"
@@ -9718,6 +9686,24 @@
         }
       ]
     },
+    "values/aggregator.initScripts": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more~1not~1:t"
+        },
+        {
+          "additionalProperties": {
+            "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1string,null"
+          },
+          "description": "Data contains the configuration data. Each key must consist of alphanumeric characters, '-', '_' or '.'. Values with non-UTF-8 byte sequences must use the BinaryData field. The keys stored in Data must not overlap with the keys in the BinaryData field, this is enforced during validation process.",
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Dictionary of init scripts. Evaluated as a template.\nSpecify dictionary of scripts to be run at first boot\nAlternatively, you can put your scripts under the files/docker-entrypoint-initdb.d directory\nFor example:\ninitScripts:\nmy_init_script.sh: |\n!/bin/sh\necho \"Do something.\""
+    },
     "values/aggregator/array,null;set-filesystem-extra-groups": {
       "description": "Set filesystem extra groups",
       "items": {
@@ -9961,6 +9947,10 @@
         "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1string,null"
       },
       "type": "array"
+    },
+    "values/image.repository": {
+      "description": "[default: REPOSITORY_NAME/fluentd] Fluentd image repository",
+      "type": "string"
     },
     "values/integer": {
       "maximum": 0,
@@ -14599,7 +14589,12 @@
             "additionalProperties": {},
             "properties": {
               "image": {
-                "$ref": "#/$defs/constrains~1repository"
+                "additionalProperties": {},
+                "properties": {
+                  "repository": {
+                    "$ref": "#/$defs/values~1image.repository"
+                  }
+                }
               }
             }
           },
@@ -14894,17 +14889,6 @@
               "object"
             ]
           }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
         }
       }
     },
@@ -19685,6 +19669,7 @@
   ],
   "properties": {
     "aggregator": {
+      "additionalProperties": {},
       "allOf": [
         {
           "$ref": "#/$defs/when~1containerSecurityContext+containerSecurityContext=null+enabled:t~1then~1fail"
@@ -20021,9 +20006,6 @@
           }
         },
         {
-          "$ref": "#/$defs/constrains~1initScripts:t"
-        },
-        {
           "if": {
             "anyOf": [
               {
@@ -20089,9 +20071,6 @@
         },
         {
           "$ref": "#/$defs/when~1networkPolicy.allowExternal:t+networkPolicy.enabled:t~1then~1networkPolicy.ingressNSMatchLabels:t"
-        },
-        {
-          "type": "object"
         },
         {
           "if": {
@@ -22168,7 +22147,13 @@
           }
         }
       ],
-      "description": "Aggregator parameters"
+      "description": "Aggregator parameters",
+      "properties": {
+        "initScripts": {
+          "$ref": "#/$defs/values~1aggregator.initScripts"
+        }
+      },
+      "type": "object"
     },
     "clusterDomain": {
       "description": "Cluster Domain"
@@ -22180,26 +22165,7 @@
           "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
           "type": "string"
         },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "compatibility": {
-              "additionalProperties": {},
-              "properties": {
-                "openshift": {
-                  "additionalProperties": {},
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            },
-            "security": {
-              "additionalProperties": {},
-              "type": "object"
-            }
-          },
-          "type": "object"
-        }
+        "global": {}
       },
       "type": "object"
     },
@@ -22295,6 +22261,7 @@
       "description": "Array of extra objects to deploy with the release"
     },
     "forwarder": {
+      "additionalProperties": {},
       "allOf": [
         {
           "$ref": "#/$defs/when~1containerSecurityContext+containerSecurityContext=null+enabled:t~1then~1fail"
@@ -22670,9 +22637,6 @@
           }
         },
         {
-          "$ref": "#/$defs/constrains~1initScripts:t"
-        },
-        {
           "if": {
             "allOf": [
               {
@@ -22713,9 +22677,6 @@
         },
         {
           "$ref": "#/$defs/when~1networkPolicy.allowExternal:t+networkPolicy.enabled:t~1then~1networkPolicy.ingressNSMatchLabels:t"
-        },
-        {
-          "type": "object"
         },
         {
           "if": {
@@ -23473,7 +23434,13 @@
           "then": false
         }
       ],
-      "description": "Forwarder parameters"
+      "description": "Forwarder parameters",
+      "properties": {
+        "initScripts": {
+          "$ref": "#/$defs/values~1aggregator.initScripts"
+        }
+      },
+      "type": "object"
     },
     "fullnameOverride": {
       "description": "String to fully override common.names.fullname template"
@@ -23535,17 +23502,17 @@
         "storageClass": {
           "description": "DEPRECATED: use global.defaultStorageClass instead"
         }
-      },
-      "type": "object"
+      }
     },
     "image": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1repository@2"
+                  "$ref": "#/$defs/constrains~1repository"
                 }
               },
               {
@@ -23554,14 +23521,14 @@
             ]
           },
           "then": false
-        },
-        {
-          "$ref": "#/$defs/constrains~1repository"
-        },
-        {
-          "type": "object"
         }
-      ]
+      ],
+      "properties": {
+        "repository": {
+          "$ref": "#/$defs/values~1image.repository"
+        }
+      },
+      "type": "object"
     },
     "kubeVersion": {
       "description": "Force target Kubernetes version (using Helm capabilities if not set)"

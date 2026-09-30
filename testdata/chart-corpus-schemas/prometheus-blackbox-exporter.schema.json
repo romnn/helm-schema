@@ -14516,23 +14516,17 @@
           "type": "string"
         },
         "selfMonitor": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "additionalMetricsRelabels": {},
-                "enabled": {},
-                "interval": {},
-                "labels": {},
-                "path": {},
-                "scrapeTimeout": {}
-              }
-            }
-          ],
-          "description": "If true, a PodMonitoring CR is created for google managed prometheus\nhttps://cloud.google.com/stackdriver/docs/managed-prometheus/setup-managed#gmp-pod-monitoring for blackbox-exporter itself"
+          "additionalProperties": {},
+          "description": "If true, a PodMonitoring CR is created for google managed prometheus\nhttps://cloud.google.com/stackdriver/docs/managed-prometheus/setup-managed#gmp-pod-monitoring for blackbox-exporter itself",
+          "properties": {
+            "additionalMetricsRelabels": {},
+            "enabled": {},
+            "interval": {},
+            "labels": {},
+            "path": {},
+            "scrapeTimeout": {}
+          },
+          "type": "object"
         },
         "targets": {
           "description": "- name: example                    # Human readable URL that will appear in Google Managed Prometheus / AlertManager\nurl: http://example.com/healthz  # The URL that blackbox will scrape\nhostname: example.com            # HTTP probes can accept an additional `hostname` parameter that will set `Host` header and TLS SNI\nlabels: {}                       # Map of labels for PodMonitoring. Overrides value set in `defaults`\ninterval: 60s                    # Scraping interval. Overrides value set in `defaults`\nscrapeTimeout: 60s               # Scrape timeout. Overrides value set in `defaults`\nmodule: http_2xx                 # Module used for scraping. Overrides value set in `defaults`\nadditionalMetricsRelabels: {}    # Map of metric labels and values to add"

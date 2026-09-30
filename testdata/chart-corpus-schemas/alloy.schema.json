@@ -3397,6 +3397,25 @@
       ],
       "type": "object"
     },
+    "constrains/crds.create": {
+      "not": {
+        "properties": {
+          "crds": {
+            "properties": {
+              "create": {}
+            },
+            "required": [
+              "create"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "crds"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/create:t": {
       "properties": {
         "create": {
@@ -5411,13 +5430,13 @@
       },
       "type": "array"
     },
-    "values/controller.autoscaling.maxReplicas": {
+    "values/controller.autoscaling.horizontal.maxReplicas": {
       "description": "The upper limit for the number of replicas to which the autoscaler can scale up."
     },
-    "values/controller.autoscaling.minReplicas": {
+    "values/controller.autoscaling.horizontal.minReplicas": {
       "description": "The lower limit for the number of replicas to which the autoscaler can scale down."
     },
-    "values/controller.autoscaling.scaleDown": {
+    "values/controller.autoscaling.horizontal.scaleDown": {
       "additionalProperties": {},
       "properties": {
         "policies": {
@@ -5432,7 +5451,7 @@
       },
       "type": "object"
     },
-    "values/controller.autoscaling.scaleUp": {
+    "values/controller.autoscaling.horizontal.scaleUp": {
       "additionalProperties": {},
       "properties": {
         "policies": {
@@ -5447,10 +5466,10 @@
       },
       "type": "object"
     },
-    "values/controller.autoscaling.targetCPUUtilizationPercentage": {
+    "values/controller.autoscaling.horizontal.targetCPUUtilizationPercentage": {
       "description": "Average CPU utilization across all relevant pods, a percentage of the requested value of the resource for the pods. Setting `targetCPUUtilizationPercentage` to 0 will disable CPU scaling."
     },
-    "values/controller.autoscaling.targetMemoryUtilizationPercentage": {
+    "values/controller.autoscaling.horizontal.targetMemoryUtilizationPercentage": {
       "description": "Average Memory utilization across all relevant pods, a percentage of the requested value of the resource for the pods. Setting `targetMemoryUtilizationPercentage` to 0 will disable Memory scaling."
     },
     "values/controller/allOf/object+object,null;annotations-is-an-unstructured": {
@@ -7009,6 +7028,105 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "crds": {
+                "properties": {
+                  "create": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "create"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "crds"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1crds.create"
+                  },
+                  {
+                    "properties": {
+                      "crds": {
+                        "properties": {
+                          "create": {
+                            "not": {
+                              "enum": [
+                                false
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "crds"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "crds": {
+                        "properties": {
+                          "create": {
+                            "not": {
+                              "enum": [
+                                true
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "create"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "crds"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1crds.create"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "crds": {
+            "type": "object"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -16556,59 +16674,53 @@
               "description": "Creates a HorizontalPodAutoscaler for controller type deployment.\nDeprecated: Please use controller.autoscaling.horizontal instead"
             },
             "horizontal": {
-              "allOf": [
-                {
-                  "type": "object"
+              "additionalProperties": {},
+              "description": "Configures the Horizontal Pod Autoscaler for the controller.",
+              "properties": {
+                "enabled": {
+                  "description": "Enables the Horizontal Pod Autoscaler for the controller."
                 },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "description": "Enables the Horizontal Pod Autoscaler for the controller."
-                    },
-                    "externalHPA": {
-                      "description": "When true, the chart omits `spec.replicas` from the workload AND does NOT\nrender its own HorizontalPodAutoscaler. Use this when an external controller\n(e.g. KEDA, a hand-written HPA, or another scaler) owns replicas for the Alloy\nworkload. Mutually exclusive with `horizontal.enabled`. When set, all other\n`controller.autoscaling.horizontal.*` fields are ignored.\nUpgrade note: switching this from `false` to `true` on an existing release\ntriggers a one-time single-cycle dip to 1 replica on the next `helm upgrade`\n(Helm removes the `replicas` field via `{\"spec\":{\"replicas\":null}}`, which\nKubernetes interprets as \"reset to default\"). The external HPA corrects this\nwithin its next polling interval; users with `minReplicaCount > 1` are\nrestored within ~30s under KEDA defaults. Plan upgrades accordingly."
-                    },
-                    "maxReplicas": {
-                      "$ref": "#/$defs/values~1controller.autoscaling.maxReplicas"
-                    },
-                    "minReplicas": {
-                      "$ref": "#/$defs/values~1controller.autoscaling.minReplicas"
-                    },
-                    "scaleDown": {
-                      "$ref": "#/$defs/values~1controller.autoscaling.scaleDown"
-                    },
-                    "scaleUp": {
-                      "$ref": "#/$defs/values~1controller.autoscaling.scaleUp"
-                    },
-                    "targetCPUUtilizationPercentage": {
-                      "$ref": "#/$defs/values~1controller.autoscaling.targetCPUUtilizationPercentage"
-                    },
-                    "targetMemoryUtilizationPercentage": {
-                      "$ref": "#/$defs/values~1controller.autoscaling.targetMemoryUtilizationPercentage"
-                    }
-                  }
+                "externalHPA": {
+                  "description": "When true, the chart omits `spec.replicas` from the workload AND does NOT\nrender its own HorizontalPodAutoscaler. Use this when an external controller\n(e.g. KEDA, a hand-written HPA, or another scaler) owns replicas for the Alloy\nworkload. Mutually exclusive with `horizontal.enabled`. When set, all other\n`controller.autoscaling.horizontal.*` fields are ignored.\nUpgrade note: switching this from `false` to `true` on an existing release\ntriggers a one-time single-cycle dip to 1 replica on the next `helm upgrade`\n(Helm removes the `replicas` field via `{\"spec\":{\"replicas\":null}}`, which\nKubernetes interprets as \"reset to default\"). The external HPA corrects this\nwithin its next polling interval; users with `minReplicaCount > 1` are\nrestored within ~30s under KEDA defaults. Plan upgrades accordingly."
+                },
+                "maxReplicas": {
+                  "$ref": "#/$defs/values~1controller.autoscaling.horizontal.maxReplicas"
+                },
+                "minReplicas": {
+                  "$ref": "#/$defs/values~1controller.autoscaling.horizontal.minReplicas"
+                },
+                "scaleDown": {
+                  "$ref": "#/$defs/values~1controller.autoscaling.horizontal.scaleDown"
+                },
+                "scaleUp": {
+                  "$ref": "#/$defs/values~1controller.autoscaling.horizontal.scaleUp"
+                },
+                "targetCPUUtilizationPercentage": {
+                  "$ref": "#/$defs/values~1controller.autoscaling.horizontal.targetCPUUtilizationPercentage"
+                },
+                "targetMemoryUtilizationPercentage": {
+                  "$ref": "#/$defs/values~1controller.autoscaling.horizontal.targetMemoryUtilizationPercentage"
                 }
-              ],
-              "description": "Configures the Horizontal Pod Autoscaler for the controller."
+              },
+              "type": "object"
             },
             "maxReplicas": {
-              "$ref": "#/$defs/values~1controller.autoscaling.maxReplicas"
+              "$ref": "#/$defs/values~1controller.autoscaling.horizontal.maxReplicas"
             },
             "minReplicas": {
-              "$ref": "#/$defs/values~1controller.autoscaling.minReplicas"
+              "$ref": "#/$defs/values~1controller.autoscaling.horizontal.minReplicas"
             },
             "scaleDown": {
-              "$ref": "#/$defs/values~1controller.autoscaling.scaleDown"
+              "$ref": "#/$defs/values~1controller.autoscaling.horizontal.scaleDown"
             },
             "scaleUp": {
-              "$ref": "#/$defs/values~1controller.autoscaling.scaleUp"
+              "$ref": "#/$defs/values~1controller.autoscaling.horizontal.scaleUp"
             },
             "targetCPUUtilizationPercentage": {
-              "$ref": "#/$defs/values~1controller.autoscaling.targetCPUUtilizationPercentage"
+              "$ref": "#/$defs/values~1controller.autoscaling.horizontal.targetCPUUtilizationPercentage"
             },
             "targetMemoryUtilizationPercentage": {
-              "$ref": "#/$defs/values~1controller.autoscaling.targetMemoryUtilizationPercentage"
+              "$ref": "#/$defs/values~1controller.autoscaling.horizontal.targetMemoryUtilizationPercentage"
             },
             "vertical": {
               "additionalProperties": {},
@@ -16758,22 +16870,8 @@
           "description": "Whether to install CRDs for monitoring.",
           "type": "boolean"
         },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "image": {
-              "additionalProperties": {},
-              "type": "object"
-            },
-            "podSecurityContext": {
-              "additionalProperties": {},
-              "type": "object"
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
+        "global": {}
+      }
     },
     "enableStatefulSetAutoDeletePVC": {},
     "extraObjects": {

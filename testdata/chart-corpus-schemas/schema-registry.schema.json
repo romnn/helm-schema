@@ -4200,7 +4200,7 @@
             "commonLabels": {
               "anyOf": [
                 {
-                  "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+                  "$ref": "#/$defs/values~1kafka.listeners.client"
                 },
                 {
                   "type": "string"
@@ -4337,7 +4337,7 @@
         "config": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+              "$ref": "#/$defs/values~1kafka.listeners.client"
             },
             {
               "items": {},
@@ -11179,6 +11179,19 @@
         "properties": {
           "kafka": {
             "$ref": "#/$defs/constrains~1diagnosticMode.enabled:t@2"
+          }
+        },
+        "required": [
+          "kafka"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/kafka.enabled": {
+      "not": {
+        "properties": {
+          "kafka": {
+            "$ref": "#/$defs/constrains~1enabled"
           }
         },
         "required": [
@@ -18368,29 +18381,8 @@
           "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
           "type": "string"
         },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "compatibility": {
-              "additionalProperties": {},
-              "properties": {
-                "openshift": {
-                  "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-                }
-              },
-              "type": "object"
-            },
-            "security": {
-              "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-            }
-          },
-          "type": "object"
-        }
+        "global": {}
       },
-      "type": "object"
-    },
-    "values/common.global.compatibility.openshift": {
-      "additionalProperties": {},
       "type": "object"
     },
     "values/commonLabels": {
@@ -18550,6 +18542,10 @@
     "values/kafka.externalAccess.broker.service.usePodIPs": {
       "description": "using the MY_POD_IP address for external access.",
       "type": "boolean"
+    },
+    "values/kafka.listeners.client": {
+      "additionalProperties": {},
+      "type": "object"
     },
     "values/kafka.networkPolicy.allowExternalEgress": {
       "description": "Allow the pod to access any range of port and all destinations."
@@ -22390,38 +22386,6 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1networkPolicy.enabled:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "additionalProperties": {},
-            "description": "Schema Registry Service paramaters.",
-            "properties": {
-              "ports": {
-                "additionalProperties": {},
-                "properties": {
-                  "http": {
-                    "description": "Service HTTP port",
-                    "oneOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1averageValue~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1containerPort~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
-                      }
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "$ref": "#/$defs/constrains~1kafka.controller.affinity:t+kafka.controller.nodeAffinityPreset.type=hard+2more"
@@ -23189,6 +23153,106 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1kafka.enabled"
+                  },
+                  {
+                    "properties": {
+                      "kafka": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                true
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "kafka"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1kafka.enabled"
+                  },
+                  {
+                    "properties": {
+                      "kafka": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                false
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "kafka"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "kafka": {
+                "properties": {
+                  "enabled": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "kafka"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "kafka": {
+            "description": "Kafka chart configuration\nFor information about these parameters, refer to:\nhttps://github.com/bitnami/charts/blob/main/bitnami/kafka/values.yaml",
+            "type": "object"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -25305,23 +25369,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "description": "Schema Registry Service paramaters.",
-          "properties": {
-            "ports": {
-              "required": [
-                "http"
-              ],
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "anyOf": [
           {
@@ -26407,6 +26454,81 @@
         "$ref": "#/$defs/constrains~1image+image=null"
       },
       "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1networkPolicy.enabled:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "Schema Registry Service paramaters.",
+                "properties": {
+                  "ports": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "http": {
+                        "description": "Service HTTP port",
+                        "oneOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1averageValue~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1containerPort~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "Schema Registry Service paramaters.",
+                "properties": {
+                  "ports": {
+                    "required": [
+                      "http"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "Schema Registry Service paramaters.",
+                "properties": {
+                  "ports": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "http": {
+                        "description": "Service HTTP port",
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
     },
     {
       "if": {
@@ -30187,17 +30309,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
     },
     {
       "if": {
@@ -38583,28 +38694,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "description": "Schema Registry Service paramaters.",
-          "properties": {
-            "ports": {
-              "additionalProperties": {},
-              "properties": {
-                "http": {
-                  "description": "Service HTTP port",
-                  "not": {
-                    "type": "null"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -42810,7 +42899,7 @@
     "extraDeploy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+          "$ref": "#/$defs/values~1kafka.listeners.client"
         },
         {
           "items": {},
@@ -42933,8 +43022,7 @@
           "type": "object"
         },
         "storageClass": {}
-      },
-      "type": "object"
+      }
     },
     "hostAliases": {
       "anyOf": [
@@ -42954,6 +43042,7 @@
       "description": "Schema Registry pods host aliases\nhttps://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/"
     },
     "image": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -42977,15 +43066,6 @@
           "then": false
         },
         {
-          "additionalProperties": {},
-          "properties": {
-            "repository": {
-              "description": "[default: REPOSITORY_NAME/schema-registry] Schema Registry image repository",
-              "type": "string"
-            }
-          }
-        },
-        {
           "if": {
             "anyOf": [
               {
@@ -42999,11 +43079,15 @@
             ]
           },
           "then": false
-        },
-        {
-          "type": "object"
         }
-      ]
+      ],
+      "properties": {
+        "repository": {
+          "description": "[default: REPOSITORY_NAME/schema-registry] Schema Registry image repository",
+          "type": "string"
+        }
+      },
+      "type": "object"
     },
     "ingress": {
       "additionalProperties": {},
@@ -54102,14 +54186,7 @@
               "type": "string"
             },
             "client": {
-              "allOf": [
-                {
-                  "type": "object"
-                },
-                {
-                  "additionalProperties": {}
-                }
-              ]
+              "$ref": "#/$defs/values~1kafka.listeners.client"
             },
             "controller": {
               "additionalProperties": {},
@@ -55399,27 +55476,24 @@
         },
         "port": {},
         "ports": {
-          "allOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "http": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1containerPort~1string;pattern-0-1-9"
-                    }
-                  ],
-                  "description": "Service HTTP port"
+          "additionalProperties": {},
+          "properties": {
+            "http": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1containerPort~1string;pattern-0-1-9"
                 }
-              }
-            },
-            {
-              "type": "object"
+              ],
+              "description": "Service HTTP port"
             }
-          ]
+          },
+          "required": [
+            "http"
+          ],
+          "type": "object"
         },
         "sessionAffinity": {
           "$ref": "#/$defs/values~1service.sessionAffinity"

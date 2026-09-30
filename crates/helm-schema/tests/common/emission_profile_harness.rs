@@ -99,6 +99,10 @@ pub(crate) enum ProbeInstance {
 pub(crate) enum ProbeValuesFile {
     /// This values file does.
     Reachable(Value),
+    /// This values file reaches `document`: the probe plus the null
+    /// defaults Helm keeps once an override reaches a subchart, which is
+    /// the document Helm validates for it.
+    ReachableAs { values: Value, document: Value },
     /// None does; the probe is not a document Helm validates.
     Unreachable(String),
 }
@@ -108,8 +112,10 @@ impl ProbeInstance {
     ///
     /// A composed document is reached through the sparse override that
     /// separates it from `defaults`, checked by composing that override
-    /// forward over the chart. When Helm composes it into a different
-    /// document, or aborts on it, the probe is unreachable.
+    /// forward over the chart. When Helm composes it into the probe plus the
+    /// null defaults it keeps, the probe reaches Helm as that document; into
+    /// any other document, or when Helm aborts on it, the probe is
+    /// unreachable.
     ///
     /// # Errors
     ///
@@ -128,6 +134,12 @@ impl ProbeInstance {
             .unwrap_or_else(|| Value::Object(Map::new()));
         match test_util::helm_values::coalesce_chart_values(chart_dir, overlay.clone()) {
             Ok(reached) if reached == *composed => Ok(ProbeValuesFile::Reachable(overlay)),
+            Ok(reached) if adds_only_kept_nulls(&reached, composed) => {
+                Ok(ProbeValuesFile::ReachableAs {
+                    values: overlay,
+                    document: reached,
+                })
+            }
             Ok(_) => Ok(ProbeValuesFile::Unreachable(format!(
                 "Helm composes the separating override {overlay} into a different document"
             ))),
@@ -137,6 +149,23 @@ impl ProbeInstance {
             Err(error) => Err(error.into()),
         }
     }
+}
+
+/// Whether `reached` is `composed` plus null-valued keys `composed` lacks:
+/// the null defaults Helm keeps once an override reaches a subchart.
+fn adds_only_kept_nulls(reached: &Value, composed: &Value) -> bool {
+    let (Value::Object(reached), Value::Object(composed)) = (reached, composed) else {
+        return reached == composed;
+    };
+    for (key, value) in composed {
+        match reached.get(key) {
+            Some(reached) if adds_only_kept_nulls(reached, value) => {}
+            _ => return false,
+        }
+    }
+    reached
+        .iter()
+        .all(|(key, value)| composed.contains_key(key) || value.is_null())
 }
 
 pub(super) fn sparse_override_for_composed(defaults: &Value, composed: &Value) -> Option<Value> {
@@ -181,6 +210,7 @@ pub(crate) struct SemanticControl {
 pub(crate) struct ProfileSchemas {
     full: Validator,
     lean: Validator,
+    lean_schema: Value,
     defaults: Value,
 }
 
@@ -197,8 +227,19 @@ impl ProfileSchemas {
         Ok(Self {
             full,
             lean,
+            lean_schema: lean_schema.clone(),
             defaults,
         })
+    }
+
+    /// The candidate schema as compiled.
+    pub(crate) fn candidate_schema(&self) -> &Value {
+        &self.lean_schema
+    }
+
+    /// Whether the baseline and the candidate accept `instance` as given.
+    pub(crate) fn document_verdicts(&self, instance: &Value) -> (bool, bool) {
+        (self.full.is_valid(instance), self.lean.is_valid(instance))
     }
 
     pub(crate) fn verdicts(&self, probe: &ProbeInstance) -> (bool, bool) {
@@ -1132,6 +1173,7 @@ fn generate_options(
         values_files: Vec::new(),
         infer_required,
         emission: profile.into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],
             k8s_schema_cache_dir: Some(

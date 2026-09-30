@@ -5691,6 +5691,45 @@
         "null"
       ]
     },
+    "constrains/enabled": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=false": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              false
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=true": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              true
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled+enabled:t+enabled=null": {
       "anyOf": [
         {
@@ -6065,13 +6104,7 @@
       "anyOf": [
         {
           "not": {
-            "properties": {
-              "enabled": {}
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/constrains~1enabled"
           }
         },
         {
@@ -6115,6 +6148,19 @@
           "$ref": "#/$defs/constrains~1primary.initContainers:t+primary.persistence+shmVolume.enabled:t+tls+1more"
         }
       ]
+    },
+    "constrains/enabled=true": {
+      "properties": {
+        "enabled": {
+          "enum": [
+            true
+          ]
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
     },
     "constrains/endPort+port+protocol": {
       "additionalProperties": false,
@@ -9537,7 +9583,8 @@
         "hosts": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1postgresql.common.global.postgresql.auth.secretKeys"
+              "additionalProperties": {},
+              "type": "object"
             },
             {
               "$ref": "#/$defs/constrains~1host+paths~1array"
@@ -15582,6 +15629,19 @@
       ],
       "type": "object"
     },
+    "constrains/postgresql.enabled": {
+      "not": {
+        "properties": {
+          "postgresql": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "postgresql"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/postgresql.enabled+postgresql.enabled=null": {
       "properties": {
         "postgresql": {
@@ -21524,16 +21584,11 @@
       "type": "object"
     },
     "constrains/redis": {
-      "not": {
-        "properties": {
-          "redis": {
-            "type": "object"
-          }
-        },
-        "required": [
-          "redis"
-        ],
-        "type": "object"
+      "additionalProperties": {},
+      "properties": {
+        "redis": {
+          "type": "object"
+        }
       }
     },
     "constrains/redis!=null": {
@@ -21996,7 +22051,7 @@
           "$ref": "#/$defs/constrains~1redis.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1redis"
+          "$ref": "#/$defs/constrains~1redis@2"
         }
       ]
     },
@@ -22102,7 +22157,7 @@
           "$ref": "#/$defs/constrains~1redis.enabled+redis.enabled=null"
         },
         {
-          "$ref": "#/$defs/constrains~1redis"
+          "$ref": "#/$defs/constrains~1redis@2"
         }
       ]
     },
@@ -22606,6 +22661,19 @@
         "redis"
       ],
       "type": "object"
+    },
+    "constrains/redis.enabled": {
+      "not": {
+        "properties": {
+          "redis": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "redis"
+        ],
+        "type": "object"
+      }
     },
     "constrains/redis.enabled+redis.enabled=null": {
       "properties": {
@@ -27073,6 +27141,19 @@
       ],
       "type": "object"
     },
+    "constrains/redis@2": {
+      "not": {
+        "properties": {
+          "redis": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "redis"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/registry": {
       "additionalProperties": {},
       "properties": {
@@ -30488,12 +30569,15 @@
     "values/postgresql.auth.secretKeys.adminPasswordKey": {
       "description": "Name of key in existing secret to use for PostgreSQL credentials. Only used when `auth.existingSecret` is set."
     },
-    "values/postgresql.common.exampleValue": {
-      "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
-      "type": "string"
-    },
-    "values/postgresql.common.global.postgresql.auth.secretKeys": {
+    "values/postgresql.common": {
       "additionalProperties": {},
+      "properties": {
+        "exampleValue": {
+          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
+          "type": "string"
+        },
+        "global": {}
+      },
       "type": "object"
     },
     "values/postgresql.diagnosticMode.enabled": {
@@ -30633,6 +30717,15 @@
     },
     "values/postgresql.serviceAccount.name": {
       "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the common.names.fullname template"
+    },
+    "values/postgresql.serviceBindings": {
+      "additionalProperties": {},
+      "description": "Ref: https://servicebinding.io/service-provider/",
+      "properties": {
+        "enabled": {
+          "description": "Create secret for service binding (Experimental)"
+        }
+      }
     },
     "values/postgresql/allOf/object": {
       "allOf": [
@@ -31753,6 +31846,9 @@
     "values/redis.master.livenessProbe.timeoutSeconds": {
       "description": "Timeout seconds for livenessProbe"
     },
+    "values/redis.master.minReadySeconds": {
+      "description": "How many seconds a pod needs to be ready before killing the next, during update"
+    },
     "values/redis.master.persistence.accessModes": {
       "description": "Persistent Volume access modes"
     },
@@ -31797,10 +31893,10 @@
       "description": "ServiceAccount configuration",
       "properties": {
         "annotations": {
-          "$ref": "#/$defs/values~1redis.master.serviceAccount.annotations"
+          "description": "Additional custom annotations for the ServiceAccount"
         },
         "automountServiceAccountToken": {
-          "$ref": "#/$defs/values~1redis.master.serviceAccount.automountServiceAccountToken"
+          "description": "Whether to auto mount the service account token\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#use-the-default-service-account-to-access-the-api-server"
         },
         "create": {
           "description": "Specifies whether a ServiceAccount should be created"
@@ -31809,12 +31905,6 @@
           "$ref": "#/$defs/values~1postgresql.serviceAccount.name"
         }
       }
-    },
-    "values/redis.master.serviceAccount.annotations": {
-      "description": "Additional custom annotations for the ServiceAccount"
-    },
-    "values/redis.master.serviceAccount.automountServiceAccountToken": {
-      "description": "Whether to auto mount the service account token\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/#use-the-default-service-account-to-access-the-api-server"
     },
     "values/redis.metrics.containerSecurityContext.enabled": {
       "description": "Enabled Redis&reg; exporter containers' Security Context"
@@ -31826,8 +31916,7 @@
       "additionalProperties": {},
       "properties": {
         "enabled": {
-          "description": "Use external master for bootstrapping",
-          "type": "boolean"
+          "description": "Use external master for bootstrapping"
         },
         "host": {
           "description": "External master host to bootstrap from"
@@ -31837,8 +31926,14 @@
         }
       }
     },
+    "values/redis.replica.livenessProbe.enabled": {
+      "description": "Enable livenessProbe on Redis&reg; replicas nodes"
+    },
     "values/redis.replica.podSecurityContext.enabled": {
       "description": "Enabled Redis&reg; replicas pods' Security Context"
+    },
+    "values/redis.replica.readinessProbe.enabled": {
+      "description": "Enable readinessProbe on Redis&reg; replicas nodes"
     },
     "values/redis.sentinel.containerSecurityContext.enabled": {
       "description": "Enabled Redis&reg; Sentinel containers' Security Context"
@@ -33073,7 +33168,7 @@
             "$ref": "#/$defs/constrains~1redis.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1redis"
+            "$ref": "#/$defs/constrains~1redis@2"
           }
         ]
       },
@@ -43975,12 +44070,7 @@
             "additionalProperties": {},
             "properties": {
               "global": {
-                "additionalProperties": {},
-                "properties": {
-                  "redis": {
-                    "type": "object"
-                  }
-                }
+                "$ref": "#/$defs/constrains~1redis"
               }
             }
           }
@@ -44016,7 +44106,7 @@
             "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1redis"
+            "$ref": "#/$defs/constrains~1redis@2"
           }
         ]
       },
@@ -46535,7 +46625,7 @@
             "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1redis"
+            "$ref": "#/$defs/constrains~1redis@2"
           }
         ]
       },
@@ -53190,6 +53280,66 @@
           {
             "allOf": [
               {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1redis.enabled"
+                  },
+                  {
+                    "properties": {
+                      "redis": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "redis"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "redis": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "redis"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1redis.enabled"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "redis": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "redis"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1redis"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
                 "$ref": "#/$defs/constrains~1redis.sentinel.service.nodePorts.redis:t+redis.sentinel.service.type=NodePort"
               },
               {
@@ -54227,7 +54377,7 @@
             "$ref": "#/$defs/constrains~1redis.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1redis"
+            "$ref": "#/$defs/constrains~1redis@2"
           }
         ]
       },
@@ -56372,7 +56522,7 @@
             "$ref": "#/$defs/constrains~1redis.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1redis"
+            "$ref": "#/$defs/constrains~1redis@2"
           },
           {
             "$ref": "#/$defs/constrains~1redis+redis.enabled+redis.enabled:t+redis.enabled=null+redis.global+5more"
@@ -60599,7 +60749,7 @@
             "$ref": "#/$defs/constrains~1redis.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1redis"
+            "$ref": "#/$defs/constrains~1redis@2"
           },
           {
             "allOf": [
@@ -66886,6 +67036,71 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1postgresql.enabled"
+                  },
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1postgresql.enabled"
+                  },
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "postgresql": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "postgresql"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "postgresql": {
+            "type": "object"
           }
         }
       }
@@ -90104,8 +90319,7 @@
               "type": "object"
             },
             "usePasswordFiles": {
-              "description": "Mount credentials as a files instead of using an environment variable",
-              "type": "boolean"
+              "description": "Mount credentials as a files instead of using an environment variable"
             },
             "username": {
               "description": "Name for a custom user to create"
@@ -90117,43 +90331,7 @@
           "description": "Kubernetes Cluster Domain"
         },
         "common": {
-          "additionalProperties": {},
-          "properties": {
-            "exampleValue": {
-              "$ref": "#/$defs/values~1postgresql.common.exampleValue"
-            },
-            "global": {
-              "additionalProperties": {},
-              "properties": {
-                "postgresql": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "auth": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "secretKeys": {
-                          "$ref": "#/$defs/values~1postgresql.common.global.postgresql.auth.secretKeys"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "service": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "ports": {
-                          "$ref": "#/$defs/values~1postgresql.common.global.postgresql.auth.secretKeys"
-                        }
-                      },
-                      "type": "object"
-                    }
-                  },
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/values~1postgresql.common"
         },
         "commonAnnotations": {
           "description": "Add annotations to all the deployed resources"
@@ -91171,13 +91349,7 @@
           }
         },
         "serviceBindings": {
-          "additionalProperties": {},
-          "description": "Ref: https://servicebinding.io/service-provider/",
-          "properties": {
-            "enabled": {
-              "description": "Create secret for service binding (Experimental)"
-            }
-          }
+          "$ref": "#/$defs/values~1postgresql.serviceBindings"
         },
         "shmVolume": {
           "additionalProperties": {},
@@ -91196,8 +91368,7 @@
           "description": "TLS configuration",
           "properties": {
             "autoGenerated": {
-              "description": "Generate automatically self-signed TLS certificates",
-              "type": "boolean"
+              "description": "Generate automatically self-signed TLS certificates"
             },
             "certCAFilename": {
               "description": "CA Certificate filename\nIf provided, PostgreSQL will authenticate TLS/SSL clients by requesting them a certificate\nref: https://www.postgresql.org/docs/9.6/auth-methods.html"
@@ -91264,8 +91435,7 @@
             "resources": {}
           }
         }
-      },
-      "type": "object"
+      }
     },
     "probes": {
       "additionalProperties": {},
@@ -98850,7 +99020,7 @@
                     "description": "Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
                     "properties": {
                       "enabled": {
-                        "description": "Enable readinessProbe on Redis&reg; replicas nodes"
+                        "$ref": "#/$defs/values~1redis.replica.readinessProbe.enabled"
                       },
                       "exec": {
                         "$ref": "#/$defs/constrains~1command"
@@ -105085,7 +105255,7 @@
                     "description": "Probe describes a health check to be performed against a container to determine whether it is alive or ready to receive traffic.",
                     "properties": {
                       "enabled": {
-                        "description": "Enable livenessProbe on Redis&reg; replicas nodes"
+                        "$ref": "#/$defs/values~1redis.replica.livenessProbe.enabled"
                       },
                       "exec": {
                         "$ref": "#/$defs/constrains~1command"
@@ -116083,8 +116253,7 @@
               "description": "Enable password authentication on sentinels too"
             },
             "usePasswordFiles": {
-              "description": "Mount credentials as files instead of using an environment variable",
-              "type": "boolean"
+              "description": "Mount credentials as files instead of using an environment variable"
             }
           }
         },
@@ -116092,22 +116261,7 @@
           "description": "Kubernetes cluster domain name"
         },
         "common": {
-          "additionalProperties": {},
-          "properties": {
-            "exampleValue": {
-              "$ref": "#/$defs/values~1postgresql.common.exampleValue"
-            },
-            "global": {
-              "additionalProperties": {},
-              "properties": {
-                "redis": {
-                  "$ref": "#/$defs/values~1postgresql.common.global.postgresql.auth.secretKeys"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/values~1postgresql.common"
         },
         "commonAnnotations": {
           "description": "Annotations to add to all deployed objects"
@@ -116308,8 +116462,7 @@
               }
             },
             "minReadySeconds": {
-              "description": "How many seconds a pod needs to be ready before killing the next, during update",
-              "type": "integer"
+              "$ref": "#/$defs/values~1redis.master.minReadySeconds"
             },
             "nodeAffinityPreset": {
               "additionalProperties": {},
@@ -116361,8 +116514,7 @@
                   "$ref": "#/$defs/values~1postgresql.primary.persistence.dataSource"
                 },
                 "enabled": {
-                  "description": "Enable persistence on Redis&reg; master nodes using Persistent Volume Claims",
-                  "type": "boolean"
+                  "description": "Enable persistence on Redis&reg; master nodes using Persistent Volume Claims"
                 },
                 "existingClaim": {
                   "description": "Use a existing PVC which must be created manually before bound\nNOTE: requires master.persistence.enabled: true"
@@ -116601,8 +116753,7 @@
               "$ref": "#/$defs/values~1postgresql.metrics.customStartupProbe"
             },
             "enabled": {
-              "description": "Start a sidecar prometheus exporter to expose Redis&reg; metrics\nBitnami Redis&reg; Exporter image\nref: https://hub.docker.com/r/bitnami/redis-exporter/tags/",
-              "type": "boolean"
+              "description": "Start a sidecar prometheus exporter to expose Redis&reg; metrics\nBitnami Redis&reg; Exporter image\nref: https://hub.docker.com/r/bitnami/redis-exporter/tags/"
             },
             "extraArgs": {
               "description": "Extra arguments for Redis&reg; exporter, for example:\ne.g.:\nextraArgs:\ncheck-keys: myKey,myOtherKey"
@@ -116833,8 +116984,7 @@
               "description": "Autoscaling configuration",
               "properties": {
                 "enabled": {
-                  "description": "Enable replica autoscaling settings",
-                  "type": "boolean"
+                  "description": "Enable replica autoscaling settings"
                 },
                 "maxReplicas": {
                   "description": "Maximum replicas for the pod autoscaling"
@@ -116944,8 +117094,7 @@
               "additionalProperties": {},
               "properties": {
                 "enabled": {
-                  "description": "Enable livenessProbe on Redis&reg; replicas nodes",
-                  "type": "boolean"
+                  "$ref": "#/$defs/values~1redis.replica.livenessProbe.enabled"
                 },
                 "failureThreshold": {
                   "$ref": "#/$defs/values~1redis.master.livenessProbe.failureThreshold"
@@ -116965,7 +117114,7 @@
               }
             },
             "minReadySeconds": {
-              "description": "How many seconds a pod needs to be ready before killing the next, during update"
+              "$ref": "#/$defs/values~1redis.master.minReadySeconds"
             },
             "nodeAffinityPreset": {
               "additionalProperties": {},
@@ -117017,8 +117166,7 @@
                   "$ref": "#/$defs/values~1postgresql.primary.persistence.dataSource"
                 },
                 "enabled": {
-                  "description": "Enable persistence on Redis&reg; replicas nodes using Persistent Volume Claims",
-                  "type": "boolean"
+                  "description": "Enable persistence on Redis&reg; replicas nodes using Persistent Volume Claims"
                 },
                 "existingClaim": {
                   "description": "Use a existing PVC which must be created manually before bound\nNOTE: requires replica.persistence.enabled: true"
@@ -117125,8 +117273,7 @@
               "additionalProperties": {},
               "properties": {
                 "enabled": {
-                  "description": "Enable readinessProbe on Redis&reg; replicas nodes",
-                  "type": "boolean"
+                  "$ref": "#/$defs/values~1redis.replica.readinessProbe.enabled"
                 },
                 "failureThreshold": {
                   "$ref": "#/$defs/values~1redis.master.readinessProbe.failureThreshold"
@@ -117261,10 +117408,6 @@
             "args": {
               "$ref": "#/$defs/values~1redis.master.args"
             },
-            "automateClusterRecovery": {
-              "description": "Automate cluster recovery in cases where the last replica is not considered a good replica and Sentinel won't automatically failover to it.\nThis also prevents any new replica from starting until the last remaining replica is elected as master to guarantee that it is the one to be elected by Sentinel, and not a newly started replica with no data.\nNOTE: This feature requires a \"downAfterMilliseconds\" value less or equal to 2000.",
-              "type": "boolean"
-            },
             "command": {
               "$ref": "#/$defs/values~1postgresql.primary.command"
             },
@@ -117328,10 +117471,6 @@
             "failoverTimeout": {
               "description": "Timeout for performing a election failover"
             },
-            "getMasterTimeout": {
-              "description": "Amount of time to allow before get_sentinel_master_info() times out.\nNOTE: This is directly related to the startupProbes which are configured to run every 10 seconds for a total of 22 failures. If adjusting this value, also adjust the startupProbes.",
-              "type": "integer"
-            },
             "image": {
               "additionalProperties": {},
               "properties": {
@@ -117366,8 +117505,7 @@
               "additionalProperties": {},
               "properties": {
                 "enabled": {
-                  "description": "Enable livenessProbe on Redis&reg; Sentinel nodes",
-                  "type": "boolean"
+                  "description": "Enable livenessProbe on Redis&reg; Sentinel nodes"
                 },
                 "failureThreshold": {
                   "$ref": "#/$defs/values~1redis.master.livenessProbe.failureThreshold"
@@ -117406,8 +117544,7 @@
                   "$ref": "#/$defs/values~1postgresql.primary.persistence.dataSource"
                 },
                 "enabled": {
-                  "description": "Enable persistence on Redis&reg; sentinel nodes using Persistent Volume Claims (Experimental)",
-                  "type": "boolean"
+                  "description": "Enable persistence on Redis&reg; sentinel nodes using Persistent Volume Claims (Experimental)"
                 },
                 "labels": {
                   "$ref": "#/$defs/values~1redis.master.persistence.labels"
@@ -117439,8 +117576,7 @@
               "additionalProperties": {},
               "properties": {
                 "enabled": {
-                  "description": "Enable readinessProbe on Redis&reg; Sentinel nodes",
-                  "type": "boolean"
+                  "description": "Enable readinessProbe on Redis&reg; Sentinel nodes"
                 },
                 "failureThreshold": {
                   "$ref": "#/$defs/values~1redis.master.readinessProbe.failureThreshold"
@@ -117460,8 +117596,7 @@
               }
             },
             "redisShutdownWaitFailover": {
-              "description": "Whether the Redis&reg; master container waits for the failover at shutdown (in addition to the Redis&reg; Sentinel container).\nSentinel timing restrictions",
-              "type": "boolean"
+              "description": "Whether the Redis&reg; master container waits for the failover at shutdown (in addition to the Redis&reg; Sentinel container).\nSentinel timing restrictions"
             },
             "resources": {},
             "service": {
@@ -117561,33 +117696,10 @@
           }
         },
         "serviceAccount": {
-          "additionalProperties": {},
-          "description": "ServiceAccount configuration",
-          "properties": {
-            "annotations": {
-              "$ref": "#/$defs/values~1redis.master.serviceAccount.annotations"
-            },
-            "automountServiceAccountToken": {
-              "$ref": "#/$defs/values~1redis.master.serviceAccount.automountServiceAccountToken"
-            },
-            "create": {
-              "description": "Specifies whether a ServiceAccount should be created",
-              "type": "boolean"
-            },
-            "name": {
-              "$ref": "#/$defs/values~1postgresql.serviceAccount.name"
-            }
-          }
+          "$ref": "#/$defs/values~1redis.master.serviceAccount"
         },
         "serviceBindings": {
-          "additionalProperties": {},
-          "description": "Ref: https://servicebinding.io/service-provider/",
-          "properties": {
-            "enabled": {
-              "description": "Create secret for service binding (Experimental)",
-              "type": "boolean"
-            }
-          }
+          "$ref": "#/$defs/values~1postgresql.serviceBindings"
         },
         "sysctl": {
           "additionalProperties": {},
@@ -117597,8 +117709,7 @@
               "description": "Override default init-sysctl container command (useful when using custom images)"
             },
             "enabled": {
-              "description": "Enable init container to modify Kernel settings\nBitnami Shell image\nref: https://hub.docker.com/r/bitnami/bitnami-shell/tags/",
-              "type": "boolean"
+              "description": "Enable init container to modify Kernel settings\nBitnami Shell image\nref: https://hub.docker.com/r/bitnami/bitnami-shell/tags/"
             },
             "image": {
               "additionalProperties": {},
@@ -117625,8 +117736,7 @@
               "type": "object"
             },
             "mountHostSys": {
-              "description": "Mount the host `/sys` folder to `/host-sys`\nInit container's resource requests and limits\nref: https://kubernetes.io/docs/user-guide/compute-resources/",
-              "type": "boolean"
+              "description": "Mount the host `/sys` folder to `/host-sys`\nInit container's resource requests and limits\nref: https://kubernetes.io/docs/user-guide/compute-resources/"
             },
             "resources": {}
           }
@@ -117680,8 +117790,7 @@
               ]
             },
             "enabled": {
-              "description": "Enable various syntax that would enable external-dns to work.  Note this requires a working installation of `external-dns` to be usable.",
-              "type": "boolean"
+              "description": "Enable various syntax that would enable external-dns to work.  Note this requires a working installation of `external-dns` to be usable."
             },
             "suffix": {
               "description": "The DNS suffix utilized when `external-dns` is enabled.  Note that we prepend the suffix with the full name of the release."
@@ -117689,8 +117798,7 @@
           }
         },
         "useHostnames": {
-          "description": "Use hostnames internally when announcing replication",
-          "type": "boolean"
+          "description": "Use hostnames internally when announcing replication"
         },
         "volumePermissions": {
           "additionalProperties": {},
@@ -117707,8 +117815,7 @@
               "type": "object"
             },
             "enabled": {
-              "description": "Enable init container that changes the owner/group of the PV mount point to `runAsUser:fsGroup`\nBitnami Shell image\nref: https://hub.docker.com/r/bitnami/bitnami-shell/tags/",
-              "type": "boolean"
+              "description": "Enable init container that changes the owner/group of the PV mount point to `runAsUser:fsGroup`\nBitnami Shell image\nref: https://hub.docker.com/r/bitnami/bitnami-shell/tags/"
             },
             "image": {
               "additionalProperties": {},
@@ -117737,8 +117844,7 @@
             "resources": {}
           }
         }
-      },
-      "type": "object"
+      }
     },
     "replicaCounts": {
       "additionalProperties": {},

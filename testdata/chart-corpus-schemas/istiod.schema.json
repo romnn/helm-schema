@@ -460,18 +460,6 @@
         }
       }
     },
-    "constrains/cpu+memory": {
-      "additionalProperties": {},
-      "properties": {
-        "cpu": {
-          "type": "string"
-        },
-        "memory": {
-          "type": "string"
-        }
-      },
-      "type": "object"
-    },
     "constrains/crlConfigMapName:helm-double-quoted-safe": {
       "additionalProperties": {},
       "properties": {
@@ -4622,18 +4610,6 @@
         }
       }
     },
-    "constrains/limits.cpu+limits.memory+requests": {
-      "additionalProperties": {},
-      "properties": {
-        "limits": {
-          "$ref": "#/$defs/constrains~1cpu+memory"
-        },
-        "requests": {
-          "$ref": "#/$defs/constrains~1cpu+memory"
-        }
-      },
-      "type": "object"
-    },
     "constrains/limits:t": {
       "properties": {
         "limits": {
@@ -7135,6 +7111,220 @@
         "targetAverageUtilization": {}
       }
     },
+    "values/global.defaultPodDisruptionBudget": {
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {}
+      }
+    },
+    "values/global.defaultResources": {
+      "additionalProperties": {},
+      "properties": {
+        "limits": {},
+        "requests": {}
+      },
+      "type": "object"
+    },
+    "values/global.tracer.datadog": {
+      "additionalProperties": {},
+      "properties": {
+        "address": {}
+      }
+    },
+    "values/global.tracer.lightstep": {
+      "additionalProperties": {},
+      "properties": {
+        "accessToken": {},
+        "address": {}
+      }
+    },
+    "values/global.tracer.stackdriver": {
+      "additionalProperties": {},
+      "allOf": [
+        {
+          "if": {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/constrains~1maxNumberOfMessageEvents"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "maxNumberOfMessageEvents": {
+                        "not": {
+                          "enum": [
+                            ""
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "maxNumberOfMessageEvents"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/constrains~1maxNumberOfMessageEvents=null"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/$defs/constrains~1maxNumberOfMessageEvents"
+                      }
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/constrains~1debug=null"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1debug"
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "debug": {
+                        "not": {
+                          "enum": [
+                            ""
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "debug"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1debug"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "not": {
+                        "$ref": "#/$defs/constrains~1maxNumberOfAttributes"
+                      }
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1maxNumberOfAttributes=null"
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/constrains~1maxNumberOfAttributes"
+                    }
+                  },
+                  {
+                    "properties": {
+                      "maxNumberOfAttributes": {
+                        "not": {
+                          "enum": [
+                            ""
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "maxNumberOfAttributes"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        },
+        {
+          "if": {
+            "allOf": [
+              {
+                "not": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/constrains~1maxNumberOfAnnotations=null"
+                    },
+                    {
+                      "not": {
+                        "$ref": "#/$defs/constrains~1maxNumberOfAnnotations"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "maxNumberOfAnnotations": {
+                        "not": {
+                          "enum": [
+                            ""
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "maxNumberOfAnnotations"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/constrains~1maxNumberOfAnnotations"
+                    }
+                  }
+                ]
+              }
+            ]
+          },
+          "then": false
+        }
+      ],
+      "properties": {
+        "debug": {},
+        "maxNumberOfAnnotations": {},
+        "maxNumberOfAttributes": {},
+        "maxNumberOfMessageEvents": {}
+      }
+    },
     "values/integer:int32;averageutilization-is-the-target": {
       "description": "averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type",
       "format": "int32",
@@ -7152,12 +7342,6 @@
           "type": "string"
         }
       ]
-    },
-    "values/istiocoredns": {
-      "additionalProperties": {},
-      "properties": {
-        "enabled": {}
-      }
     },
     "values/keywords/additionalProperties+items": {
       "additionalProperties": {
@@ -7210,10 +7394,6 @@
         "null"
       ]
     },
-    "values/object@2": {
-      "additionalProperties": {},
-      "type": "object"
-    },
     "values/oneOf/anyOf/integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more": {
       "oneOf": [
         {
@@ -7242,41 +7422,6 @@
           ]
         }
       ]
-    },
-    "values/pilot.global.defaultResources": {
-      "additionalProperties": {},
-      "properties": {
-        "limits": {},
-        "requests": {}
-      },
-      "type": "object"
-    },
-    "values/pilot.global.tracer": {
-      "additionalProperties": {},
-      "properties": {
-        "datadog": {
-          "additionalProperties": {},
-          "properties": {
-            "address": {}
-          }
-        },
-        "lightstep": {
-          "additionalProperties": {},
-          "properties": {
-            "accessToken": {},
-            "address": {}
-          }
-        },
-        "stackdriver": {
-          "$ref": "#/$defs/values~1pilot.global.tracer.stackdriver"
-        },
-        "zipkin": {
-          "additionalProperties": {},
-          "properties": {
-            "address": {}
-          }
-        }
-      }
     },
     "values/pilot.global.tracer.stackdriver": {
       "additionalProperties": {},
@@ -7340,182 +7485,6 @@
     "values/string;type-indicates-which-kind": {
       "description": "type indicates which kind of seccomp profile will be applied. Valid options are:\n\nLocalhost - a profile defined in a file on the node should be used. RuntimeDefault - the container runtime default profile should be used. Unconfined - no profile should be applied.",
       "type": "string"
-    },
-    "when/debug+debug!=''+debug=null/then/fail": {
-      "if": {
-        "allOf": [
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1debug=null"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1debug"
-                }
-              ]
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "debug": {
-                    "not": {
-                      "enum": [
-                        ""
-                      ]
-                    }
-                  }
-                },
-                "required": [
-                  "debug"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1debug"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    "when/maxNumberOfAnnotations+maxNumberOfAnnotations!=''+maxNumberOfAnnotations=null/then/fail": {
-      "if": {
-        "allOf": [
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1maxNumberOfAnnotations=null"
-                },
-                {
-                  "not": {
-                    "$ref": "#/$defs/constrains~1maxNumberOfAnnotations"
-                  }
-                }
-              ]
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "properties": {
-                  "maxNumberOfAnnotations": {
-                    "not": {
-                      "enum": [
-                        ""
-                      ]
-                    }
-                  }
-                },
-                "required": [
-                  "maxNumberOfAnnotations"
-                ],
-                "type": "object"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/constrains~1maxNumberOfAnnotations"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    "when/maxNumberOfAttributes+maxNumberOfAttributes!=''+maxNumberOfAttributes=null/then/fail": {
-      "if": {
-        "allOf": [
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "not": {
-                    "$ref": "#/$defs/constrains~1maxNumberOfAttributes"
-                  }
-                },
-                {
-                  "$ref": "#/$defs/constrains~1maxNumberOfAttributes=null"
-                }
-              ]
-            }
-          },
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/constrains~1maxNumberOfAttributes"
-                }
-              },
-              {
-                "properties": {
-                  "maxNumberOfAttributes": {
-                    "not": {
-                      "enum": [
-                        ""
-                      ]
-                    }
-                  }
-                },
-                "required": [
-                  "maxNumberOfAttributes"
-                ],
-                "type": "object"
-              }
-            ]
-          }
-        ]
-      },
-      "then": false
-    },
-    "when/maxNumberOfMessageEvents+maxNumberOfMessageEvents!=''+1more/then/fail": {
-      "if": {
-        "allOf": [
-          {
-            "anyOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/constrains~1maxNumberOfMessageEvents"
-                }
-              },
-              {
-                "properties": {
-                  "maxNumberOfMessageEvents": {
-                    "not": {
-                      "enum": [
-                        ""
-                      ]
-                    }
-                  }
-                },
-                "required": [
-                  "maxNumberOfMessageEvents"
-                ],
-                "type": "object"
-              }
-            ]
-          },
-          {
-            "not": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1maxNumberOfMessageEvents=null"
-                },
-                {
-                  "not": {
-                    "$ref": "#/$defs/constrains~1maxNumberOfMessageEvents"
-                  }
-                }
-              ]
-            }
-          }
-        ]
-      },
-      "then": false
     }
   },
   "$schema": "http://json-schema.org/draft-07/schema#",
@@ -11839,19 +11808,6 @@
         "properties": {
           "pilot": {
             "$ref": "#/$defs/constrains~1telemetry.v2.prometheus"
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "proxy": {
-              "type": "object"
-            }
           }
         }
       }
@@ -17845,7 +17801,8 @@
             "additionalProperties": {},
             "properties": {
               "env": {
-                "$ref": "#/$defs/values~1object@2"
+                "additionalProperties": {},
+                "type": "object"
               }
             }
           },
@@ -18937,6 +18894,7 @@
       }
     },
     "global": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -18964,23 +18922,6 @@
           "then": false
         },
         {
-          "additionalProperties": {},
-          "properties": {
-            "tracer": {
-              "additionalProperties": {},
-              "properties": {
-                "stackdriver": {
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/when~1maxNumberOfAnnotations+maxNumberOfAnnotations!=''+maxNumberOfAnnotations=null~1then~1fail"
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
           "if": {
             "allOf": [
               {
@@ -19006,304 +18947,6 @@
           "then": false
         },
         {
-          "type": "object"
-        },
-        {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "caAddress": {
-                  "type": "string"
-                },
-                "caName": {
-                  "type": "string"
-                },
-                "certSigners": {},
-                "certificates": {},
-                "configCluster": {},
-                "configValidation": {},
-                "defaultPodDisruptionBudget": {
-                  "$ref": "#/$defs/values~1istiocoredns"
-                },
-                "defaultResources": {
-                  "$ref": "#/$defs/values~1pilot.global.defaultResources"
-                },
-                "enableReaderRBAC": {},
-                "enableTracing": {},
-                "externalIstiod": {},
-                "hub": {},
-                "imagePullPolicy": {},
-                "imagePullSecrets": {},
-                "ipFamilies": {},
-                "ipFamilyPolicy": {},
-                "istioNamespace": {},
-                "istiod": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enableAnalysis": {}
-                  }
-                },
-                "localityLbSetting": {},
-                "logAsJson": {},
-                "logging": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "level": {}
-                  }
-                },
-                "meshExpansion": {
-                  "$ref": "#/$defs/values~1istiocoredns"
-                },
-                "meshID": {},
-                "meshNetworks": {},
-                "mountMtlsCerts": {
-                  "type": "boolean"
-                },
-                "mtls": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "auto": {},
-                    "enabled": {}
-                  }
-                },
-                "multiCluster": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "clusterName": {}
-                  }
-                },
-                "nativeNftables": {
-                  "type": "boolean"
-                },
-                "network": {
-                  "type": "string"
-                },
-                "networkPolicy": {
-                  "$ref": "#/$defs/values~1istiocoredns"
-                },
-                "omitSidecarInjectorConfigMap": {},
-                "operatorManageWebhooks": {},
-                "outboundTrafficPolicy": {},
-                "pilotCertProvider": {
-                  "anyOf": [
-                    {
-                      "type": "null"
-                    },
-                    {
-                      "enum": [
-                        "kubernetes"
-                      ]
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ]
-                },
-                "platform": {},
-                "policyCheckFailOpen": {},
-                "priorityClassName": {},
-                "profile": {},
-                "proxy": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "accessLogFile": {},
-                    "accessLogFormat": {},
-                    "autoInject": {},
-                    "clusterDomain": {},
-                    "componentLogLevel": {
-                      "type": "string"
-                    },
-                    "concurrency": {},
-                    "envoyAccessLogService": {
-                      "additionalProperties": {}
-                    },
-                    "envoyMetricsService": {},
-                    "excludeIPRanges": {
-                      "type": "string"
-                    },
-                    "excludeInboundPorts": {
-                      "type": "string"
-                    },
-                    "excludeOutboundPorts": {
-                      "type": "string"
-                    },
-                    "holdApplicationUntilProxyStarts": {},
-                    "image": {
-                      "type": "string"
-                    },
-                    "includeIPRanges": {
-                      "type": "string"
-                    },
-                    "includeInboundPorts": {
-                      "type": "string"
-                    },
-                    "includeOutboundPorts": {
-                      "type": "string"
-                    },
-                    "logLevel": {
-                      "type": "string"
-                    },
-                    "outlierLogPath": {
-                      "type": "string"
-                    },
-                    "privileged": {
-                      "type": "boolean"
-                    },
-                    "protocolDetectionTimeout": {},
-                    "readinessFailureThreshold": {
-                      "type": "integer"
-                    },
-                    "readinessInitialDelaySeconds": {
-                      "type": "integer"
-                    },
-                    "readinessPeriodSeconds": {
-                      "type": "integer"
-                    },
-                    "resources": {
-                      "$ref": "#/$defs/constrains~1limits.cpu+limits.memory+requests"
-                    },
-                    "seccompProfile": {
-                      "$ref": "#/$defs/values~1object@2"
-                    },
-                    "startupProbe": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean"
-                        },
-                        "failureThreshold": {
-                          "type": "integer"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "statusPort": {
-                      "type": "integer"
-                    },
-                    "tracer": {
-                      "anyOf": [
-                        {
-                          "enum": [
-                            "stackdriver"
-                          ]
-                        },
-                        {
-                          "enum": [
-                            "zipkin"
-                          ]
-                        },
-                        {
-                          "enum": [
-                            "datadog"
-                          ]
-                        },
-                        {
-                          "enum": [
-                            "lightstep"
-                          ]
-                        },
-                        {
-                          "type": "null"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    },
-                    "variant": {}
-                  },
-                  "type": "object"
-                },
-                "proxy_init": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "forceApplyIptables": {
-                      "type": "boolean"
-                    },
-                    "image": {
-                      "type": "string"
-                    }
-                  },
-                  "type": "object"
-                },
-                "remotePilotAddress": {},
-                "resourceScope": {},
-                "sds": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "token": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "aud": {}
-                      }
-                    }
-                  }
-                },
-                "sts": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "servicePort": {
-                      "type": "integer"
-                    }
-                  },
-                  "type": "object"
-                },
-                "tag": {},
-                "tracer": {
-                  "$ref": "#/$defs/values~1pilot.global.tracer"
-                },
-                "trustBundleName": {},
-                "variant": {},
-                "waypoint": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "affinity": {
-                      "$ref": "#/$defs/values~1object@2"
-                    },
-                    "nodeSelector": {
-                      "$ref": "#/$defs/values~1object@2"
-                    },
-                    "resources": {
-                      "$ref": "#/$defs/constrains~1limits.cpu+limits.memory+requests"
-                    },
-                    "tolerations": {
-                      "items": {},
-                      "type": "array"
-                    },
-                    "topologySpreadConstraints": {
-                      "items": {},
-                      "type": "array"
-                    }
-                  },
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ]
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "tracer": {
-              "additionalProperties": {},
-              "properties": {
-                "stackdriver": {
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/when~1debug+debug!=''+debug=null~1then~1fail"
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
           "if": {
             "properties": {
               "pilotCertProvider": {
@@ -19318,40 +18961,6 @@
             "type": "object"
           },
           "then": false
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "tracer": {
-              "additionalProperties": {},
-              "properties": {
-                "stackdriver": {
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/when~1maxNumberOfAttributes+maxNumberOfAttributes!=''+maxNumberOfAttributes=null~1then~1fail"
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "tracer": {
-              "additionalProperties": {},
-              "properties": {
-                "stackdriver": {
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/when~1maxNumberOfMessageEvents+maxNumberOfMessageEvents!=''+1more~1then~1fail"
-                    }
-                  ]
-                }
-              }
-            }
-          }
         },
         {
           "if": {
@@ -19369,7 +18978,167 @@
           },
           "then": false
         }
-      ]
+      ],
+      "properties": {
+        "certSigners": {},
+        "certificates": {},
+        "configCluster": {},
+        "configValidation": {},
+        "defaultPodDisruptionBudget": {
+          "$ref": "#/$defs/values~1global.defaultPodDisruptionBudget"
+        },
+        "defaultResources": {
+          "$ref": "#/$defs/values~1global.defaultResources"
+        },
+        "enableReaderRBAC": {},
+        "enableTracing": {},
+        "externalIstiod": {},
+        "hub": {},
+        "imagePullPolicy": {},
+        "imagePullSecrets": {},
+        "ipFamilies": {},
+        "ipFamilyPolicy": {},
+        "istioNamespace": {},
+        "istiod": {
+          "additionalProperties": {},
+          "properties": {
+            "enableAnalysis": {}
+          }
+        },
+        "localityLbSetting": {},
+        "logAsJson": {},
+        "logging": {
+          "additionalProperties": {},
+          "properties": {
+            "level": {}
+          }
+        },
+        "meshExpansion": {
+          "$ref": "#/$defs/values~1global.defaultPodDisruptionBudget"
+        },
+        "meshID": {},
+        "meshNetworks": {},
+        "mtls": {
+          "additionalProperties": {},
+          "properties": {
+            "auto": {},
+            "enabled": {}
+          }
+        },
+        "multiCluster": {
+          "additionalProperties": {},
+          "properties": {
+            "clusterName": {}
+          }
+        },
+        "networkPolicy": {
+          "$ref": "#/$defs/values~1global.defaultPodDisruptionBudget"
+        },
+        "omitSidecarInjectorConfigMap": {},
+        "operatorManageWebhooks": {},
+        "outboundTrafficPolicy": {},
+        "pilotCertProvider": {
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "enum": [
+                "kubernetes"
+              ]
+            },
+            {
+              "type": "string"
+            }
+          ]
+        },
+        "platform": {},
+        "policyCheckFailOpen": {},
+        "priorityClassName": {},
+        "profile": {},
+        "proxy": {
+          "additionalProperties": {},
+          "properties": {
+            "accessLogFile": {},
+            "accessLogFormat": {},
+            "autoInject": {},
+            "clusterDomain": {},
+            "concurrency": {},
+            "envoyAccessLogService": {
+              "additionalProperties": {}
+            },
+            "envoyMetricsService": {},
+            "holdApplicationUntilProxyStarts": {},
+            "protocolDetectionTimeout": {},
+            "tracer": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "stackdriver"
+                  ]
+                },
+                {
+                  "enum": [
+                    "zipkin"
+                  ]
+                },
+                {
+                  "enum": [
+                    "datadog"
+                  ]
+                },
+                {
+                  "enum": [
+                    "lightstep"
+                  ]
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ]
+            },
+            "variant": {}
+          },
+          "type": "object"
+        },
+        "remotePilotAddress": {},
+        "resourceScope": {},
+        "sds": {
+          "additionalProperties": {},
+          "properties": {
+            "token": {
+              "additionalProperties": {},
+              "properties": {
+                "aud": {}
+              }
+            }
+          }
+        },
+        "tag": {},
+        "tracer": {
+          "additionalProperties": {},
+          "properties": {
+            "datadog": {
+              "$ref": "#/$defs/values~1global.tracer.datadog"
+            },
+            "lightstep": {
+              "$ref": "#/$defs/values~1global.tracer.lightstep"
+            },
+            "stackdriver": {
+              "$ref": "#/$defs/values~1global.tracer.stackdriver"
+            },
+            "zipkin": {
+              "$ref": "#/$defs/values~1global.tracer.datadog"
+            }
+          }
+        },
+        "trustBundleName": {},
+        "variant": {}
+      },
+      "type": "object"
     },
     "hub": {},
     "image": {},
@@ -19392,7 +19161,7 @@
       "$ref": "#/$defs/values~1ipFamilyPolicy"
     },
     "istiocoredns": {
-      "$ref": "#/$defs/values~1istiocoredns"
+      "$ref": "#/$defs/values~1global.defaultPodDisruptionBudget"
     },
     "istiodRemote": {
       "additionalProperties": {},
@@ -19420,27 +19189,7 @@
               "additionalProperties": {},
               "properties": {
                 "stackdriver": {
-                  "additionalProperties": {},
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/when~1maxNumberOfMessageEvents+maxNumberOfMessageEvents!=''+1more~1then~1fail"
-                    },
-                    {
-                      "$ref": "#/$defs/when~1debug+debug!=''+debug=null~1then~1fail"
-                    },
-                    {
-                      "$ref": "#/$defs/when~1maxNumberOfAttributes+maxNumberOfAttributes!=''+maxNumberOfAttributes=null~1then~1fail"
-                    },
-                    {
-                      "$ref": "#/$defs/when~1maxNumberOfAnnotations+maxNumberOfAnnotations!=''+maxNumberOfAnnotations=null~1then~1fail"
-                    }
-                  ],
-                  "properties": {
-                    "debug": {},
-                    "maxNumberOfAnnotations": {},
-                    "maxNumberOfAttributes": {},
-                    "maxNumberOfMessageEvents": {}
-                  }
+                  "$ref": "#/$defs/values~1global.tracer.stackdriver"
                 }
               }
             }
@@ -19502,7 +19251,7 @@
             "certificates": {},
             "defaultPodDisruptionBudget": {},
             "defaultResources": {
-              "$ref": "#/$defs/values~1pilot.global.defaultResources"
+              "$ref": "#/$defs/values~1global.defaultResources"
             },
             "enableTracing": {},
             "externalIstiod": {},
@@ -19518,7 +19267,7 @@
             "localityLbSetting": {},
             "logging": {},
             "meshExpansion": {
-              "$ref": "#/$defs/values~1istiocoredns"
+              "$ref": "#/$defs/values~1global.defaultPodDisruptionBudget"
             },
             "meshID": {},
             "mtls": {
@@ -19541,7 +19290,7 @@
                 "accessLogFormat": {},
                 "concurrency": {},
                 "envoyAccessLogService": {
-                  "$ref": "#/$defs/values~1istiocoredns"
+                  "$ref": "#/$defs/values~1global.defaultPodDisruptionBudget"
                 },
                 "envoyMetricsService": {},
                 "holdApplicationUntilProxyStarts": {},
@@ -19559,7 +19308,21 @@
               }
             },
             "tracer": {
-              "$ref": "#/$defs/values~1pilot.global.tracer"
+              "additionalProperties": {},
+              "properties": {
+                "datadog": {
+                  "$ref": "#/$defs/values~1global.tracer.datadog"
+                },
+                "lightstep": {
+                  "$ref": "#/$defs/values~1global.tracer.lightstep"
+                },
+                "stackdriver": {
+                  "$ref": "#/$defs/values~1pilot.global.tracer.stackdriver"
+                },
+                "zipkin": {
+                  "$ref": "#/$defs/values~1global.tracer.datadog"
+                }
+              }
             },
             "trustBundleName": {}
           },
@@ -19569,7 +19332,7 @@
         "ingress": {},
         "ipFamilies": {},
         "istiocoredns": {
-          "$ref": "#/$defs/values~1istiocoredns"
+          "$ref": "#/$defs/values~1global.defaultPodDisruptionBudget"
         },
         "istiodRemote": {
           "additionalProperties": {},
@@ -19604,7 +19367,7 @@
         "podLabels": {},
         "profile": {},
         "resources": {
-          "$ref": "#/$defs/values~1pilot.global.defaultResources"
+          "$ref": "#/$defs/values~1global.defaultResources"
         },
         "revision": {},
         "revisionTags": {},
@@ -19653,7 +19416,7 @@
     "resources": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1pilot.global.defaultResources"
+          "$ref": "#/$defs/values~1global.defaultResources"
         },
         {
           "type": "null"
@@ -19668,36 +19431,30 @@
     "serviceAccountAnnotations": {},
     "serviceAnnotations": {},
     "sidecarInjectorWebhook": {
-      "allOf": [
+      "anyOf": [
         {
+          "additionalProperties": {},
+          "properties": {
+            "alwaysInjectSelector": {},
+            "defaultTemplates": {},
+            "enableNamespacesByDefault": {},
+            "injectedAnnotations": {},
+            "neverInjectSelector": {},
+            "reinvocationPolicy": {},
+            "rewriteAppHTTPProbe": {
+              "type": "boolean"
+            },
+            "templates": {
+              "additionalProperties": {}
+            }
+          },
           "type": "object"
         },
         {
-          "anyOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "alwaysInjectSelector": {},
-                "defaultTemplates": {},
-                "enableNamespacesByDefault": {},
-                "injectedAnnotations": {},
-                "neverInjectSelector": {},
-                "reinvocationPolicy": {},
-                "rewriteAppHTTPProbe": {
-                  "type": "boolean"
-                },
-                "templates": {
-                  "additionalProperties": {}
-                }
-              },
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "type": "null"
         }
-      ]
+      ],
+      "type": "object"
     },
     "sidecarInjectorWebhookAnnotations": {},
     "tag": {},

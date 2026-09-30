@@ -9,7 +9,7 @@ use crate::observed_facts::{HintIntent, HintScope, ObservedFacts};
 pub(crate) fn derive_schema_signals_from_contract_parts(
     uses: &[ContractUse],
     observed_facts: &ObservedFacts,
-    dependency_values_root_fragments: &BTreeSet<String>,
+    dependency_values_roots: &BTreeSet<crate::DependencyValuesRoot>,
     predicate_memo: &helm_schema_core::PredicateMemo,
 ) -> ContractSchemaSignals {
     let mut paths = BTreeMap::new();
@@ -38,29 +38,18 @@ pub(crate) fn derive_schema_signals_from_contract_parts(
             &observed_facts.range_modes,
         );
     }
-    for value_path in dependency_values_root_fragments {
-        if !value_path.trim().is_empty() {
-            let value_path = helm_schema_core::ValuesPath::parse(value_path);
-            let acc = path_accumulator(&mut paths, &value_path);
-            acc.referenced = true;
-            acc.facts.record_facts(ContractValuePathFacts {
-                accepted_values_root_fragment: true,
-                accepted_dependency_values_root_fragment: true,
-                ..ContractValuePathFacts::default()
-            });
-            // Helm's dependency coalescing type-asserts every loaded
-            // dependency's values root BEFORE any rendering and regardless
-            // of the dependency's own activation: a present non-table
-            // aborts with "type mismatch on <name>" (verified against a
-            // condition-disabled dependency). The chart declares the key
-            // as a mapping, so a user null is deleted by the values
-            // coalesce that runs first and reaches the check as absent —
-            // hence the null-tolerant form.
-            let requires_table = ContractRequirementImplication::new(
-                Vec::new(),
-                ContractRequirementTarget::Value,
-                vec![FailValueRequirement::SchemaType("object".to_string())],
-            );
+    for root in dependency_values_roots {
+        if root.path.segments().next().is_none() {
+            continue;
+        }
+        let acc = path_accumulator(&mut paths, &root.path);
+        acc.referenced = true;
+        acc.facts.record_facts(ContractValuePathFacts {
+            accepted_values_root_fragment: true,
+            accepted_dependency_values_root_fragment: true,
+            ..ContractValuePathFacts::default()
+        });
+        for requires_table in dependency_root_table_requirements(root) {
             if !acc.requirement_implications.contains(&requires_table) {
                 acc.requirement_implications.push(requires_table);
             }
@@ -187,4 +176,47 @@ fn string_requirement_routes(
             (path, minimal)
         })
         .collect()
+}
+
+/// Helm's assertions on a dependency values root, as they bind the final
+/// document (see [`crate::DependencyValuesRoot`]).
+///
+/// While the instance is active every present non-table aborts, null
+/// included: the rendering pass deletes a user null only where a default
+/// declares the key, and a null that survived that far failed the first pass
+/// already. While it is pruned only the first pass applies: it rejects a
+/// scalar or list when the root is asserted there, and a null too when the
+/// parent declares no default that deletes it first.
+fn dependency_root_table_requirements(
+    root: &crate::DependencyValuesRoot,
+) -> Vec<ContractRequirementImplication> {
+    let requirement = |outer_guards, requirement| {
+        ContractRequirementImplication::new(
+            outer_guards,
+            ContractRequirementTarget::Value,
+            vec![requirement],
+        )
+    };
+    let table_even_null = || FailValueRequirement::SchemaTypeEvenNull("object".to_string());
+    if root.active.is_empty() || (root.asserted_before_pruning && !root.declared_by_parent) {
+        return vec![requirement(Vec::new(), table_even_null())];
+    }
+    let mut requirements = Vec::new();
+    if root.asserted_before_pruning {
+        requirements.push(requirement(
+            Vec::new(),
+            FailValueRequirement::SchemaType("object".to_string()),
+        ));
+    }
+    for guards in &root.active {
+        // An alternative the schema cannot express keeps its null accepted.
+        if let Ok(outer_guards) = guards
+            .iter()
+            .map(helm_schema_core::ConditionalGuard::try_from)
+            .collect::<Result<Vec<_>, _>>()
+        {
+            requirements.push(requirement(outer_guards, table_even_null()));
+        }
+    }
+    requirements
 }

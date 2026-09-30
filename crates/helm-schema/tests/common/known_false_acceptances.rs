@@ -1,5 +1,5 @@
-//! Accepted documents that Helm or Kubernetes reject, and accepted documents
-//! whose render the pinned evidence cannot decide, that the battery knows.
+//! Accepted documents that Helm or Kubernetes reject, that the battery
+//! knows.
 //!
 //! A baseline that rejects its own chart defaults rejects every probe exactly
 //! as it rejects the defaults, so a probe it rejects carries no evidence and
@@ -9,10 +9,12 @@
 //! blanket rejection. A baseline whose violations differ from its defaults'
 //! is evidence, and a false acceptance behind it is listed only with an
 //! adjudication of why that baseline rejected the cell. Each false
-//! acceptance is listed with its suspected family, and each accepted
-//! render Kubernetes cannot decide with the exact uncertainty the
-//! adjudicator reports. The battery fails on a cell missing from the roster
-//! and on an entry that no longer fails, which must be removed.
+//! acceptance is listed with its suspected family. The battery fails on a
+//! cell missing from the roster and on an entry that no longer fails, which
+//! must be removed. Accepted renders the pinned evidence cannot decide are
+//! listed in `known_undecided_acceptances.rs`.
+
+use std::str::FromStr;
 
 use serde::Serialize;
 
@@ -34,9 +36,24 @@ pub(crate) enum Baseline {
     RejectsUnlikeItsDefaults,
 }
 
-/// The analyzer defect family suspected behind a false acceptance.
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+/// A defect family of the schema-bug-hunt-v1 campaign, as numbered in
+/// `plan/schema-bug-hunt-v1.md`.
+///
+/// The false-acceptance roster below and the frozen-witness catalog
+/// (`family_witnesses.rs`) both attribute their rows to these families.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(crate) enum Family {
+    /// F0: an unversioned external CRD catalog overrides chart-local structural
+    /// facts.
+    F0,
+    /// F1: `global` is absent from a closed root, so the chart cannot be a
+    /// dependency.
+    F1,
+    /// F2: `hasKey` is lowered as "present and non-null".
+    F2,
+    /// F3: `else if .Values.X` inside a chain with a total `else` makes `X`
+    /// mandatory.
+    F3,
     /// F4: a label or annotation map read from a `toYaml` operand.
     F4,
     /// F5: `range` over a value Helm cannot iterate.
@@ -44,48 +61,321 @@ pub(crate) enum Family {
     /// F6: bitnami validation and `fail` helpers (`common.resources.preset`,
     /// `common.errors.insecureImages`, the image pull secret helpers).
     F6,
+    /// F7: an `and` guard containing any undecidable conjunct loses the whole
+    /// guard.
+    F7,
+    /// F8: a capability-guarded region produces no facts at all.
+    F8,
     /// F9: a null deletion reaches a typed sink; nil is modelled, its type
     /// is not.
     F9,
+    /// F10: builtin coverage gaps decide whether a sibling is modelled.
+    F10,
+    /// F11: `.Values` captured into a variable escapes analysis.
+    F11,
+    /// F12: a rendered-sink type constraint is pushed back onto the input,
+    /// ignoring the formatter.
+    F12,
     /// F13: YAML well-formedness, `toYaml` of a string where a list or map
     /// is expected, or a render that is no manifest.
     F13,
+    /// F14: a combinator erases the next pipe stage's type obligation.
+    F14,
+    /// F15: recovered enum literals are discarded by an open alternative.
+    F15,
+    /// F16: a ranged collection is bound to the sink it constructs.
+    F16,
+    /// F17: a `kindIs` dispatch loses one of its arms.
+    F17,
+    /// F18: `required <value> <message>` with reversed arguments emits no
+    /// requirement.
+    F18,
+    /// F19: member requirements are lost through a statically enumerable range.
+    F19,
+    /// F20: a Kubernetes `int-or-string` union is collapsed to the default's
+    /// scalar type.
+    F20,
+    /// F21: a constraint escapes the guard arm its siblings sit inside.
+    F21,
+    /// F22: nil-dereference aborts inside a `range` body are not recorded.
+    F22,
+    /// F23: subchart-scoped nil-deref arms are emitted null-only, so they are
+    /// dead.
+    F23,
+    /// F24: vacuous reject arms: the intended constraint is silently absent.
+    F24,
+    /// F25: the analyzer computes the correct guard, then emits an unguarded
+    /// duplicate.
+    F25,
+    /// F26: "reaches a rendered-string position" is read as "is a string".
+    F26,
+    /// F27: `coalesce` is modelled order-free.
+    F27,
+    /// F28: wrapping the subject in a function loses the path binding.
+    F28,
+    /// F29: a helper's guard is taken from only one of its call sites.
+    F29,
     /// F30: a numeric-looking string rendered as a plain scalar re-types.
     F30,
     /// F31: the provider type is not pushed back through a pass-through
     /// helper.
     F31,
+    /// F32: Helm built-in context roots leak into a values path.
+    F32,
+    /// F33: `append` over a nil list is not modelled.
+    F33,
+    /// F34: an `or` guard drops an ordering-comparison disjunct.
+    F34,
+    /// F35: an `else if` chain emitting the same key loses the `else if`
+    /// condition.
+    F35,
     /// F36: a recovered type is widened with `null` and emitted without the
     /// matching `required`, so a null deletion reaches the abort.
     F36,
+    /// F37: an `IntOrString` union makes `null` fail `oneOf`, so the value is
+    /// forced mandatory.
+    F37,
+    /// F38: a single-line `with` resolves the sink to the enclosing item.
+    F38,
+    /// F39: a provider `oneOf` is kept verbatim while its branches are
+    /// rewritten.
+    F39,
+    /// F40: a plain-scalar preimage is computed per hole, not over the composed
+    /// scalar.
+    F40,
+    /// F41: a value rendered into a mapping-key slot is under-constrained.
+    F41,
+    /// F42: an unmodelled call anywhere in a guard conjunct discards the
+    /// branch.
+    F42,
+    /// F43: `default <literal> .Values.X` pins `X` to the literal's type.
+    F43,
+    /// F44: `required` over a `dig` rooted at a `.Values` sub-path drops its
+    /// terminal.
+    F44,
+    /// F45: `not (len X)` lowers to "absent or null" rather than "empty".
+    F45,
+    /// F46: an undecidable `.Capabilities` conjunct is *dropped* from an abort
+    /// guard.
+    F46,
+    /// F47: a `define` between an accumulator and its `fail` deletes the whole
+    /// arm.
+    F47,
+    /// F48: a leaf contract two wildcard levels deep is dropped.
+    F48,
+    /// F49: function-catalogue omissions decide whether a contract exists.
+    F49,
+    /// F50: an `or`-selected alias conjoins its candidates instead of case-
+    /// splitting.
+    F50,
+    /// F51: an `or`-selected alias path is misclassified when parenthesized.
+    F51,
+    /// F52: Go's `and` returns its operand, not a boolean.
+    F52,
+    /// F53: a self-truthiness gate drops the operand's *kind* contract, not
+    /// just presence.
+    F53,
+    /// F54: a `range` target is constrained against every scalar type except
+    /// string.
+    F54,
+    /// F55: `mustMergeOverwrite` with a non-literal operand drops every sub-
+    /// path fact.
+    F55,
+    /// F56: a guard reading a branch-reassigned variable deletes the whole
+    /// region.
+    F56,
+    /// F57: a helper invoked with a positional `list` context contributes no
+    /// facts.
+    F57,
+    /// F58: a nested `range` drops the inner range's item constraints.
+    F58,
+    /// F59: `eq`/`ne` comparability is hoisted out of its guard.
+    F59,
+    /// F60: a provider constraint lands on the values field that *names* a key.
+    F60,
+    /// F61: a constraint is attributed to a path that is never read.
+    F61,
+    /// F62: subchart-namespace nil-dereference obligations are not emitted at
+    /// all.
+    F62,
+    /// F63: a `range`-derived item shape omits `type: "object"`.
+    F63,
+    /// F64: an accumulate-then-`fail` chain through a formatter is unmodelled.
+    F64,
+    /// F65: a pipeline operand in a comparison drops the entire guarded region.
+    F65,
+    /// F66: `not (keys X)` is modelled as "X null or absent", missing `{}`.
+    F66,
+    /// F67: a local `set $v …` erases an obligation that `$v` established.
+    F67,
+    /// F68: a builtin's Go `string` parameter aborts on nil, and the
+    /// requirement is unmodelled.
+    F68,
+    /// F69: `kindIs` dispatch arms are intersected, so the admitted domain
+    /// collapses to `null`.
+    F69,
+    /// F70: an `or` guard is satisfied by one operand while the *other* reaches
+    /// a typed parameter as `null`.
+    F70,
+    /// F71: a `semverCompare` gate over a helper-derived version is omitted
+    /// entirely.
+    F71,
+    /// F72: a `toYaml` operand is modelled as a nil-navigation abort, so the
+    /// key becomes mandatory.
+    F72,
+    /// F73: the root object is closed with no template-derived reason.
+    F73,
+    /// F74: the emitted schema exceeds Helm's file-size limit, so the chart
+    /// cannot be installed.
+    F74,
     /// F75: a numeric `gt` / `lt` guard in front of a `fail` produces no
     /// constraint.
     F75,
-    /// No family filed: a hard-coded API version the pinned server no
+    /// F76: a constraint from an unconditional statement is conjoined with a
+    /// later branch condition, inverted.
+    F76,
+    /// F77: an unconditional string-operand fact is lost when a sibling
+    /// condition split collapses.
+    F77,
+    /// F78: an object-type fact from a subchart member access is lost the same
+    /// way.
+    F78,
+    /// F79: the round-74 oracle files legitimate provider constraints as false
+    /// rejections.
+    F79,
+    /// F80: declared-shape typing on config-text interpolations collides with
+    /// the flip law.
+    F80,
+    /// D4: a `.Subcharts` reference leaks a subchart's facts into the chart's
+    /// scope.
+    D4,
+    /// D5: a block scalar whose body starts inside a control region.
+    D5,
+    /// D3: colliding template basenames contaminate one chart with another's
+    /// templates. Not one of the 83 campaign families.
+    D3,
+    /// B6: an escaped container loses its guard. An in-flight track, not one of
+    /// the 83 campaign families.
+    B6,
+    /// L1: `| default` literal type hints inside a tpl-evaluated `with` are
+    /// emitted unguarded. Not one of the 83 campaign families.
+    L1,
+    /// L2: merge attribution types `.securityContext.capabilities` as a whole
+    /// `SecurityContext`. Not one of the 83 campaign families.
+    L2,
+    /// No family filed yet: a hard-coded API version the pinned server no
     /// longer serves, an empty `{}` item rendered as a document, a nil
     /// dereference of a deleted table, a non-empty conjunct of a `kindIs`
     /// dispatch arm, a value re-parsed from a helper's `toJson` or `toYaml`
-    /// output.
+    /// output, a renderable default the schema rejects for a reason no
+    /// family names.
     Unfiled,
+}
+
+impl FromStr for Family {
+    type Err = String;
+
+    /// Parses a family label as the plan spells it, such as `F69` or `D5`.
+    fn from_str(label: &str) -> Result<Self, Self::Err> {
+        let family = match label {
+            "F0" => Self::F0,
+            "F1" => Self::F1,
+            "F2" => Self::F2,
+            "F3" => Self::F3,
+            "F4" => Self::F4,
+            "F5" => Self::F5,
+            "F6" => Self::F6,
+            "F7" => Self::F7,
+            "F8" => Self::F8,
+            "F9" => Self::F9,
+            "F10" => Self::F10,
+            "F11" => Self::F11,
+            "F12" => Self::F12,
+            "F13" => Self::F13,
+            "F14" => Self::F14,
+            "F15" => Self::F15,
+            "F16" => Self::F16,
+            "F17" => Self::F17,
+            "F18" => Self::F18,
+            "F19" => Self::F19,
+            "F20" => Self::F20,
+            "F21" => Self::F21,
+            "F22" => Self::F22,
+            "F23" => Self::F23,
+            "F24" => Self::F24,
+            "F25" => Self::F25,
+            "F26" => Self::F26,
+            "F27" => Self::F27,
+            "F28" => Self::F28,
+            "F29" => Self::F29,
+            "F30" => Self::F30,
+            "F31" => Self::F31,
+            "F32" => Self::F32,
+            "F33" => Self::F33,
+            "F34" => Self::F34,
+            "F35" => Self::F35,
+            "F36" => Self::F36,
+            "F37" => Self::F37,
+            "F38" => Self::F38,
+            "F39" => Self::F39,
+            "F40" => Self::F40,
+            "F41" => Self::F41,
+            "F42" => Self::F42,
+            "F43" => Self::F43,
+            "F44" => Self::F44,
+            "F45" => Self::F45,
+            "F46" => Self::F46,
+            "F47" => Self::F47,
+            "F48" => Self::F48,
+            "F49" => Self::F49,
+            "F50" => Self::F50,
+            "F51" => Self::F51,
+            "F52" => Self::F52,
+            "F53" => Self::F53,
+            "F54" => Self::F54,
+            "F55" => Self::F55,
+            "F56" => Self::F56,
+            "F57" => Self::F57,
+            "F58" => Self::F58,
+            "F59" => Self::F59,
+            "F60" => Self::F60,
+            "F61" => Self::F61,
+            "F62" => Self::F62,
+            "F63" => Self::F63,
+            "F64" => Self::F64,
+            "F65" => Self::F65,
+            "F66" => Self::F66,
+            "F67" => Self::F67,
+            "F68" => Self::F68,
+            "F69" => Self::F69,
+            "F70" => Self::F70,
+            "F71" => Self::F71,
+            "F72" => Self::F72,
+            "F73" => Self::F73,
+            "F74" => Self::F74,
+            "F75" => Self::F75,
+            "F76" => Self::F76,
+            "F77" => Self::F77,
+            "F78" => Self::F78,
+            "F79" => Self::F79,
+            "F80" => Self::F80,
+            "D4" => Self::D4,
+            "D5" => Self::D5,
+            "D3" => Self::D3,
+            "B6" => Self::B6,
+            "L1" => Self::L1,
+            "L2" => Self::L2,
+            "Unfiled" => Self::Unfiled,
+            _ => return Err(format!("unknown family label {label:?}")),
+        };
+        Ok(family)
+    }
 }
 
 /// A probe: `path` set to a value of the probe value class `value`.
 pub(crate) struct Probe {
     pub(crate) path: &'static str,
     pub(crate) value: &'static str,
-}
-
-/// Whether the battery case `case` (`{chart}: {probe}`) is `probe` of
-/// `chart`, plain or as the payload of a targeted guard probe.
-pub(crate) fn names(chart: &str, probe: &Probe, case: &str) -> bool {
-    let Some(name) = case
-        .strip_prefix(chart)
-        .and_then(|rest| rest.strip_prefix(": "))
-    else {
-        return false;
-    };
-    let assignment = format!("{} <- {}", probe.path, probe.value);
-    name == assignment || name.ends_with(&format!("[targeted: {assignment}]"))
 }
 
 /// The known false acceptances of one chart that fail alike behind the same
@@ -96,42 +386,6 @@ pub(crate) struct KnownFalseAcceptances {
     pub(crate) baseline: Baseline,
     pub(crate) family: Family,
     pub(crate) probes: &'static [Probe],
-}
-
-impl KnownFalseAcceptances {
-    /// Whether this group lists `case`, failing by `rejection` behind a
-    /// `baseline` rejection.
-    pub(crate) fn lists(&self, case: &str, rejection: Rejection, baseline: Baseline) -> bool {
-        self.rejection == rejection
-            && self.baseline == baseline
-            && self
-                .probes
-                .iter()
-                .any(|probe| names(self.chart, probe, case))
-    }
-}
-
-/// The known accepted cells of one chart that Helm renders and whose
-/// changed resources the pinned evidence cannot decide, for the same
-/// reasons.
-pub(crate) struct KnownUndecidedAcceptances {
-    pub(crate) chart: &'static str,
-    /// Every uncertainty the adjudicator reports for each listed cell,
-    /// exactly and in order.
-    pub(crate) uncertain: &'static [&'static str],
-    pub(crate) probes: &'static [Probe],
-}
-
-impl KnownUndecidedAcceptances {
-    /// Whether this group lists `case`, left undecided for exactly
-    /// `uncertain`.
-    pub(crate) fn lists(&self, case: &str, uncertain: &[String]) -> bool {
-        self.uncertain == uncertain
-            && self
-                .probes
-                .iter()
-                .any(|probe| names(self.chart, probe, case))
-    }
 }
 
 /// The baseline commit every roster row was adjudicated against. A row is
@@ -1351,49 +1605,5 @@ pub(crate) const KNOWN_FALSE_ACCEPTANCES: &[KnownFalseAcceptances] = &[
             path: "extraObjects",
             value: "empty object item",
         }],
-    },
-];
-
-pub(crate) const KNOWN_UNDECIDED_ACCEPTANCES: &[KnownUndecidedAcceptances] = &[
-    // A truthy `openshift.enabled` adds the `route.openshift.io/v1` Route of
-    // buildkit-route.yaml:2-4; every other changed document is decided and adds
-    // no violation. Route is served by the OpenShift API server, not by a
-    // CRD, and the datree CRDs-catalog (ad3b08c5) publishes no
-    // `route.openshift.io/route_v1.json`: its only Route schemas are the
-    // OpenShift-release bundles `openshift/v4.11-strict/route_v1.json` and
-    // `openshift/v4.15-strict/route_route.openshift.io_v1.json`, which the
-    // catalog lookup never addresses. The render stays undecided.
-    KnownUndecidedAcceptances {
-        chart: "okteto",
-        uncertain: &[
-            "document 86: route.openshift.io/v1/Route adjudication-okteto-buildkit: \
-             pinned CRD schema not found",
-        ],
-        probes: &[
-            Probe {
-                path: "openshift.enabled",
-                value: "coercible string",
-            },
-            Probe {
-                path: "openshift.enabled",
-                value: "empty object item",
-            },
-            Probe {
-                path: "openshift.enabled",
-                value: "non-coercible string",
-            },
-            Probe {
-                path: "openshift.enabled",
-                value: "number",
-            },
-            Probe {
-                path: "openshift.enabled",
-                value: "true",
-            },
-            Probe {
-                path: "openshift.enabled",
-                value: "unknown object member",
-            },
-        ],
     },
 ];

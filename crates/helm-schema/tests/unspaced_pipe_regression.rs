@@ -74,6 +74,7 @@ fn emit_schema(chart_dir: &Path) -> eyre::Result<Value> {
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::Full.into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],
             k8s_schema_cache_dir: Some(

@@ -143,6 +143,7 @@ fn generates_schema_for_fixture_chart_without_k8s_provider() -> eyre::Result<()>
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")?),
@@ -275,6 +276,7 @@ fn values_yaml_comments_become_descriptions_without_creating_paths() -> eyre::Re
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -347,6 +349,7 @@ fn chart_yaml_dependency_activation_paths_become_boolean_schema() -> eyre::Resul
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -459,6 +462,7 @@ fn static_chart_crds_type_custom_resource_values() -> eyre::Result<()> {
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             allow_net: false,
             crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")?),
@@ -543,6 +547,7 @@ fn reachable_helper_default_type_hint_applies_without_k8s_provider() -> eyre::Re
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             allow_net: false,
             crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")?),
@@ -657,6 +662,7 @@ fn layered_values_file_comments_override_and_add_descriptions_only() -> eyre::Re
         values_files: vec![layer_one, layer_two],
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -764,6 +770,7 @@ fn subchart_values_are_scoped_to_the_coalesced_child_view() -> eyre::Result<()> 
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -780,30 +787,17 @@ fn subchart_values_are_scoped_to_the_coalesced_child_view() -> eyre::Result<()> 
         .wrap_err("generate schema")?;
 
     let child_global_defaults_schema = serde_json::json!({
-      "allOf": [
-        {
-          "allOf": [
-            { "additionalProperties": {} },
-            { "type": "object" }
-          ]
-        },
-        { "type": "object" }
-      ]
+      "additionalProperties": {},
+      "type": "object"
     });
 
     let expected = serde_json::json!({
       "$schema": "http://json-schema.org/draft-07/schema#",
       "additionalProperties": false,
-      // Helm's dependency coalescing type-asserts the alias' values root.
-      // No `kid.global` absence arm: `helm lint` validates the root
-      // values.yaml without it, and that arm made lint fail
-      // (`at '/kid': 'allOf' failed`, Helm v4.2.3), so it is withdrawn.
-      "allOf": [
-        {
-          "additionalProperties": {},
-          "properties": { "kid": { "type": ["null", "object"] } }
-        }
-      ],
+      // Helm's dependency coalescing type-asserts the alias' values root:
+      // `kid` is an object. No `kid.global` absence arm: `helm lint`
+      // validates the root values.yaml without it, and that arm made lint
+      // fail (`at '/kid': 'allOf' failed`, Helm v4.2.3), so it is withdrawn.
       "properties": {
         // The child's `global.bar` consumer projects to the propagation
         // input too. Omitting `type: object` preserves Helm's rule that a
@@ -919,6 +913,7 @@ fn whole_global_range_accepts_a_child_default_when_the_parent_is_absent() -> eyr
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -951,10 +946,6 @@ fn whole_global_range_accepts_a_child_default_when_the_parent_is_absent() -> eyr
               }
             }
           }
-        },
-        {
-          "additionalProperties": {},
-          "properties": { "kid": { "type": ["null", "object"] } }
         }
       ],
       "properties": {
@@ -964,14 +955,9 @@ fn whole_global_range_accepts_a_child_default_when_the_parent_is_absent() -> eyr
           "properties": {
             "global": {
               "anyOf": [
-                {
-                  "additionalProperties": { "type": "boolean" },
-                  "properties": { "enabled": { "type": "boolean" } },
-                  "type": "object"
-                },
+                { "additionalProperties": {}, "properties": {}, "type": "object" },
                 { "items": {}, "type": "array" },
-                { "type": "null" },
-                { "additionalProperties": {}, "type": "object" }
+                { "type": "null" }
               ]
             }
           },
@@ -1057,6 +1043,7 @@ fn subchart_explicit_null_scalar_defaults_stay_nullable_after_string_context() -
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -1163,6 +1150,7 @@ fn subchart_helper_descendant_access_does_not_widen_parent_objects() -> eyre::Re
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")?),
@@ -1297,6 +1285,7 @@ fn library_subchart_helper_descendant_access_does_not_widen_parent_objects() -> 
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -1390,6 +1379,7 @@ fn deployment_annotations_fragment_stays_annotations_map() -> eyre::Result<()> {
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")?),
@@ -1462,6 +1452,7 @@ fn defaulted_global_image_pull_secrets_do_not_widen_global_parent() -> eyre::Res
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")?),
@@ -1547,6 +1538,7 @@ fn parens_around_values_prefix_propagate_full_path_into_schema() -> eyre::Result
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -1628,6 +1620,7 @@ fn parens_form_does_not_lose_default_driven_nullability_on_inner_field() -> eyre
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -1726,6 +1719,7 @@ fn helper_set_default_mutation_widens_target_path_to_nullable() -> eyre::Result<
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -1747,6 +1741,7 @@ fn helper_set_default_mutation_widens_target_path_to_nullable() -> eyre::Result<
         // the helper navigates `.serviceAccount.name` on every render
         "allOf": [navigated_host_clause(&["serviceAccount"])],
         "properties": {
+            "global": {},
             "serviceAccount": {
                 "additionalProperties": {},
                 "properties": {
@@ -1819,6 +1814,7 @@ fn helper_set_with_unrelated_default_does_not_widen_target_path() -> eyre::Resul
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")?),
@@ -1840,6 +1836,7 @@ fn helper_set_with_unrelated_default_does_not_widen_target_path() -> eyre::Resul
         // the mutation navigates `.serviceAccount` on every render
         "allOf": [navigated_host_clause(&["serviceAccount"])],
         "properties": {
+            "global": {},
             // the `default "fallback"` literal types only the
             // truthy arm, and the only consumer is `printf`, which totally
             // formats ANY input — so the documented string intent must not
@@ -1912,6 +1909,7 @@ fn helper_set_default_mutation_in_branch_does_not_leak_to_later_reads() -> eyre:
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")?),
@@ -2001,6 +1999,7 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable() -> eyre:
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -2085,6 +2084,7 @@ fn nested_printf_around_common_fullname_keeps_name_overrides_nullable() -> eyre:
             }
         ],
         "properties": {
+            "global": {},
             "fullnameOverride": {},
             "nameOverride": {}
         },

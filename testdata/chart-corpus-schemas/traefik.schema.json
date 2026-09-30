@@ -14596,8 +14596,7 @@
         "image": {},
         "registry": {},
         "tag": {}
-      },
-      "type": "object"
+      }
     },
     "values/hub.aigateway": {
       "additionalProperties": {},
@@ -42846,11 +42845,9 @@
                 "proxy": {
                   "$ref": "#/$defs/values~1global.azure.images.hub"
                 }
-              },
-              "type": "object"
+              }
             }
-          },
-          "type": "object"
+          }
         },
         "checkNewVersion": {},
         "notAppendXForwardedFor": {
@@ -42859,8 +42856,7 @@
         "sendAnonymousUsage": {
           "description": "Please take time to consider whether or not you wish to share anonymous data with us\nSee https://doc.traefik.io/traefik/contributing/data-collection/"
         }
-      },
-      "type": "object"
+      }
     },
     "hostNetwork": {
       "description": "If hostNetwork is true, runs traefik in the host network namespace\nTo prevent unschedulable pods due to port collisions, if hostNetwork=true\nand replicas>1, a pod anti-affinity is recommended and will be set if the\naffinity is left as default."
@@ -44601,6 +44597,7 @@
       "description": "Required for IBM Cloud Marketplace integration.\nInjected by IBM Cloud Catalog when deploying via IBM Cloud Schematics. This value is not used by the chart."
     },
     "persistence": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -44618,14 +44615,9 @@
           "then": {
             "$ref": "#/$defs/constrains~1annotations:t"
           }
-        },
-        {
-          "type": "object"
-        },
-        {
-          "additionalProperties": {}
         }
-      ]
+      ],
+      "type": "object"
     },
     "podDisruptionBudget": {
       "additionalProperties": {},

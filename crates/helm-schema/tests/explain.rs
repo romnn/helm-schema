@@ -116,6 +116,7 @@ fn dependency_root_session() -> eyre::Result<AnalysisSession> {
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,
@@ -175,6 +176,7 @@ fn literal_chart_session(reversed: bool) -> eyre::Result<AnalysisSession> {
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             allow_net: false,

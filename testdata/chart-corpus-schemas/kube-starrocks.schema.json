@@ -8321,18 +8321,6 @@
         }
       }
     },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "operator": {
-          "description": "Default values for operator.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
     false,
     {
       "if": {
@@ -14078,17 +14066,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "starrocks": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -14620,7 +14597,8 @@
             }
           }
         }
-      }
+      },
+      "type": "object"
     },
     "operator": {
       "additionalProperties": {},
@@ -14902,8 +14880,7 @@
               "additionalProperties": {},
               "properties": {
                 "create": {
-                  "description": "If set true, the clusterrole, clusterrolebinding, serviceaccount resources will be created for\nthe operator. If changed to false later, these resources will be deleted.\nNote: By default the operator will watch all namespaces, so it needs clusterrole, clusterrolebinding to access resources.\nIf .Values.starrocksOperator.watchNamespace is set, the role and rolebinding will be created for the specified namespace.",
-                  "type": "boolean"
+                  "description": "If set true, the clusterrole, clusterrolebinding, serviceaccount resources will be created for\nthe operator. If changed to false later, these resources will be deleted.\nNote: By default the operator will watch all namespaces, so it needs clusterrole, clusterrolebinding to access resources.\nIf .Values.starrocksOperator.watchNamespace is set, the role and rolebinding will be created for the specified namespace."
                 },
                 "serviceAccount": {
                   "additionalProperties": {},
@@ -21990,6 +21967,7 @@
           },
           "type": "object"
         },
+        "global": {},
         "initPassword": {
           "additionalProperties": {},
           "allOf": [

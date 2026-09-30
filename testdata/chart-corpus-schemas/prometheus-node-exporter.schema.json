@@ -4269,13 +4269,13 @@
       },
       "type": "object"
     },
-    "values/prometheus.podMonitor.attachMetadata": {
+    "values/prometheus.monitor.attachMetadata": {
       "description": "Attach node metadata to discovered targets. Requires Prometheus v2.35.0 and above."
     },
-    "values/prometheus.podMonitor.sampleLimit": {
+    "values/prometheus.monitor.sampleLimit": {
       "description": "SampleLimit defines per-scrape limit on number of scraped samples that will be accepted."
     },
-    "values/prometheus.podMonitor.targetLimit": {
+    "values/prometheus.monitor.targetLimit": {
       "description": "TargetLimit defines a limit on the number of scraped targets that will be accepted."
     },
     "values/prometheus/array;podtargetlabels-defines-the-labels": {
@@ -11437,8 +11437,7 @@
         "imageRegistry": {
           "description": "Allow parent charts to override registry hostname"
         }
-      },
-      "type": "object"
+      }
     },
     "hostIPC": {
       "anyOf": [
@@ -13645,61 +13644,55 @@
       ],
       "properties": {
         "monitor": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "additionalLabels": {},
+            "apiVersion": {
+              "description": "prometheus.monitor.apiVersion ApiVersion for the serviceMonitor Resource(defaults to \"monitoring.coreos.com/v1\")"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "additionalLabels": {},
-                "apiVersion": {
-                  "description": "prometheus.monitor.apiVersion ApiVersion for the serviceMonitor Resource(defaults to \"monitoring.coreos.com/v1\")"
-                },
-                "attachMetadata": {
-                  "$ref": "#/$defs/values~1prometheus.podMonitor.attachMetadata"
-                },
-                "basicAuth": {},
-                "bearerTokenFile": {},
-                "enabled": {},
-                "interval": {},
-                "jobLabel": {},
-                "labelLimit": {
-                  "description": "Per-scrape limit on number of labels that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
-                },
-                "labelNameLengthLimit": {
-                  "description": "Per-scrape limit on length of labels name that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
-                },
-                "labelValueLengthLimit": {
-                  "description": "Per-scrape limit on length of labels value that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
-                },
-                "metricRelabelings": {},
-                "namespace": {},
-                "podTargetLabels": {
-                  "description": "List of pod labels to add to node exporter metrics\nhttps://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#servicemonitor"
-                },
-                "proxyUrl": {
-                  "description": "proxyUrl: URL of a proxy that should be used for scraping."
-                },
-                "relabelings": {},
-                "sampleLimit": {
-                  "$ref": "#/$defs/values~1prometheus.podMonitor.sampleLimit"
-                },
-                "scheme": {},
-                "scrapeTimeout": {},
-                "selectorOverride": {
-                  "description": "Override serviceMonitor selector"
-                },
-                "targetLabels": {
-                  "description": "List of target labels to add to node exporter metrics\nhttps://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#servicemonitor"
-                },
-                "targetLimit": {
-                  "$ref": "#/$defs/values~1prometheus.podMonitor.targetLimit"
-                },
-                "tlsConfig": {}
-              }
-            }
-          ]
+            "attachMetadata": {
+              "$ref": "#/$defs/values~1prometheus.monitor.attachMetadata"
+            },
+            "basicAuth": {},
+            "bearerTokenFile": {},
+            "enabled": {},
+            "interval": {},
+            "jobLabel": {},
+            "labelLimit": {
+              "description": "Per-scrape limit on number of labels that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
+            },
+            "labelNameLengthLimit": {
+              "description": "Per-scrape limit on length of labels name that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
+            },
+            "labelValueLengthLimit": {
+              "description": "Per-scrape limit on length of labels value that will be accepted for a sample. Only valid in Prometheus versions 2.27.0 and newer."
+            },
+            "metricRelabelings": {},
+            "namespace": {},
+            "podTargetLabels": {
+              "description": "List of pod labels to add to node exporter metrics\nhttps://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#servicemonitor"
+            },
+            "proxyUrl": {
+              "description": "proxyUrl: URL of a proxy that should be used for scraping."
+            },
+            "relabelings": {},
+            "sampleLimit": {
+              "$ref": "#/$defs/values~1prometheus.monitor.sampleLimit"
+            },
+            "scheme": {},
+            "scrapeTimeout": {},
+            "selectorOverride": {
+              "description": "Override serviceMonitor selector"
+            },
+            "targetLabels": {
+              "description": "List of target labels to add to node exporter metrics\nhttps://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#servicemonitor"
+            },
+            "targetLimit": {
+              "$ref": "#/$defs/values~1prometheus.monitor.targetLimit"
+            },
+            "tlsConfig": {}
+          },
+          "type": "object"
         },
         "podMonitor": {
           "additionalProperties": {},
@@ -13712,7 +13705,7 @@
               "description": "apiVersion defaults to monitoring.coreos.com/v1."
             },
             "attachMetadata": {
-              "$ref": "#/$defs/values~1prometheus.podMonitor.attachMetadata"
+              "$ref": "#/$defs/values~1prometheus.monitor.attachMetadata"
             },
             "authorization": {
               "description": "Authorization section for this endpoint.\nhttps://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#safeauthorization"
@@ -13779,7 +13772,7 @@
               "description": "RelabelConfigs to apply to samples before scraping. Prometheus Operator automatically adds\nrelabelings for a few standard Kubernetes fields. The original scrape job's name\nis available via the __tmp_prometheus_job_name label.\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config"
             },
             "sampleLimit": {
-              "$ref": "#/$defs/values~1prometheus.podMonitor.sampleLimit"
+              "$ref": "#/$defs/values~1prometheus.monitor.sampleLimit"
             },
             "scheme": {
               "description": "Scheme/protocol to use for scraping."
@@ -13791,7 +13784,7 @@
               "description": "Override pod selector to select pod objects."
             },
             "targetLimit": {
-              "$ref": "#/$defs/values~1prometheus.podMonitor.targetLimit"
+              "$ref": "#/$defs/values~1prometheus.monitor.targetLimit"
             },
             "tlsConfig": {
               "description": "TLS configuration to use when scraping the endpoint."

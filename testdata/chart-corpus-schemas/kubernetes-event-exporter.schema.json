@@ -5018,17 +5018,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
       "if": {
         "not": {
           "properties": {
@@ -7053,26 +7042,7 @@
           "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
           "type": "string"
         },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "compatibility": {
-              "additionalProperties": {},
-              "properties": {
-                "openshift": {
-                  "additionalProperties": {},
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            },
-            "security": {
-              "additionalProperties": {},
-              "type": "object"
-            }
-          },
-          "type": "object"
-        }
+        "global": {}
       },
       "type": "object"
     },
@@ -9120,8 +9090,7 @@
           },
           "type": "object"
         }
-      },
-      "type": "object"
+      }
     },
     "hostAliases": {
       "anyOf": [
@@ -9171,6 +9140,7 @@
       "description": "Add deployment host aliases\nhttps://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/\nKubernetes event exporter configuration, rendered as a template\nref: https://github.com/resmoio/kubernetes-event-exporter#configuration"
     },
     "image": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -9186,80 +9156,75 @@
             ]
           },
           "then": false
-        },
-        {
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "pullPolicy": {
-              "anyOf": [
+        }
+      ],
+      "properties": {
+        "pullPolicy": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/values~1string@4"
+            },
+            {
+              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+            },
+            {
+              "$ref": "#/$defs/values~1object"
+            },
+            {
+              "$ref": "#/$defs/values~1string;pattern-t"
+            },
+            {
+              "$ref": "#/$defs/values~1string;pattern-null-null-null"
+            },
+            {
+              "allOf": [
                 {
-                  "$ref": "#/$defs/values~1string@4"
+                  "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
                 },
                 {
-                  "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-                  "type": "null"
+                  "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
                 },
                 {
-                  "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                  "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
                 },
                 {
-                  "$ref": "#/$defs/values~1object"
+                  "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
                 },
                 {
-                  "$ref": "#/$defs/values~1string;pattern-t"
+                  "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
                 },
                 {
-                  "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                  "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
                 },
                 {
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1not~1keywords~1pattern"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
-                    }
-                  ],
-                  "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-                  "type": "string"
+                  "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
+                },
+                {
+                  "$ref": "#/$defs/values~1not~1keywords~1pattern"
+                },
+                {
+                  "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+                },
+                {
+                  "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
                 }
               ],
-              "description": "Container image pull policy\nSpecify a imagePullPolicy\nref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images"
-            },
-            "repository": {
-              "description": "[default: REPOSITORY_NAME/kubernetes-event-exporter] Container image name",
+              "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
               "type": "string"
             }
-          }
+          ],
+          "description": "Container image pull policy\nSpecify a imagePullPolicy\nref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images"
+        },
+        "repository": {
+          "description": "[default: REPOSITORY_NAME/kubernetes-event-exporter] Container image name",
+          "type": "string"
         }
-      ]
+      },
+      "type": "object"
     },
     "initContainers": {
       "anyOf": [

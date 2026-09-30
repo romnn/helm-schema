@@ -2543,6 +2543,138 @@
       ],
       "type": "object"
     },
+    "constrains/community-operator.community-operator-crds.enabled": {
+      "not": {
+        "properties": {
+          "community-operator": {
+            "properties": {
+              "community-operator-crds": {
+                "properties": {
+                  "enabled": {}
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "community-operator-crds"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "community-operator"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/community-operator.community-operator-crds.enabled+1more": {
+      "anyOf": [
+        {
+          "properties": {
+            "community-operator": {
+              "properties": {
+                "community-operator-crds": {
+                  "properties": {
+                    "enabled": {
+                      "not": {
+                        "enum": [
+                          false
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "community-operator-crds"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "community-operator"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1community-operator.community-operator-crds.enabled"
+        }
+      ]
+    },
+    "constrains/community-operator.community-operator-crds.enabled+1more@2": {
+      "anyOf": [
+        {
+          "properties": {
+            "community-operator": {
+              "properties": {
+                "community-operator-crds": {
+                  "properties": {
+                    "enabled": {
+                      "not": {
+                        "enum": [
+                          true
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "enabled"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "community-operator-crds"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "community-operator"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1community-operator.community-operator-crds.enabled"
+        }
+      ]
+    },
+    "constrains/community-operator.community-operator-crds.enabled=true": {
+      "properties": {
+        "community-operator": {
+          "properties": {
+            "community-operator-crds": {
+              "properties": {
+                "enabled": {
+                  "enum": [
+                    true
+                  ]
+                }
+              },
+              "required": [
+                "enabled"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "community-operator-crds"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "community-operator"
+      ],
+      "type": "object"
+    },
     "constrains/community-operator.createResource:t": {
       "properties": {
         "community-operator": {
@@ -5077,7 +5209,7 @@
       "additionalProperties": {},
       "properties": {
         "name": {
-          "$ref": "#/$defs/constrains~1name~1anyOf~1null;the-name-of-this+object+string+string;pattern-a-za-z0-9-t+3more"
+          "$ref": "#/$defs/constrains~1name~1anyOf~1null;if-specified-this-must+object+string+string;if-specified-this-must+3more"
         }
       }
     },
@@ -5085,7 +5217,7 @@
       "additionalProperties": {},
       "properties": {
         "name": {
-          "$ref": "#/$defs/constrains~1name~1anyOf~1null;if-specified-this-must+object+string+string;if-specified-this-must+3more"
+          "$ref": "#/$defs/constrains~1name~1anyOf~1null;the-name-of-this+object+string+string;pattern-a-za-z0-9-t+3more"
         }
       }
     },
@@ -7668,10 +7800,10 @@
       "properties": {
         "ports": {
           "additionalProperties": {
-            "$ref": "#/$defs/constrains~1name@3"
+            "$ref": "#/$defs/constrains~1name@2"
           },
           "items": {
-            "$ref": "#/$defs/constrains~1name@3"
+            "$ref": "#/$defs/constrains~1name@2"
           }
         }
       }
@@ -7697,10 +7829,10 @@
                 "properties": {
                   "ports": {
                     "additionalProperties": {
-                      "$ref": "#/$defs/constrains~1name@2"
+                      "$ref": "#/$defs/constrains~1name@3"
                     },
                     "items": {
-                      "$ref": "#/$defs/constrains~1name@2"
+                      "$ref": "#/$defs/constrains~1name@3"
                     }
                   }
                 }
@@ -8635,6 +8767,29 @@
         "type": "object"
       }
     },
+    "constrains/tags.install-mongodb!=false": {
+      "properties": {
+        "tags": {
+          "properties": {
+            "install-mongodb": {
+              "not": {
+                "enum": [
+                  false
+                ]
+              }
+            }
+          },
+          "required": [
+            "install-mongodb"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "type": "object"
+    },
     "constrains/tags.install-mongodb+tags.install-mongodb:t+tags.install-mongodb=null": {
       "anyOf": [
         {
@@ -8684,6 +8839,27 @@
             "install-mongodb": {
               "enum": [
                 null
+              ]
+            }
+          },
+          "required": [
+            "install-mongodb"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "type": "object"
+    },
+    "constrains/tags.install-mongodb=true": {
+      "properties": {
+        "tags": {
+          "properties": {
+            "install-mongodb": {
+              "enum": [
+                true
               ]
             }
           },
@@ -11586,6 +11762,30 @@
       "if": {
         "anyOf": [
           {
+            "$ref": "#/$defs/constrains~1tags.install-mongodb=true"
+          },
+          {
+            "$ref": "#/$defs/constrains~1tags.install-mongodb!=false"
+          },
+          {
+            "$ref": "#/$defs/constrains~1tags.install-mongodb"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "community-operator": {
+            "description": "IMPORTANT! Official MongoDB chart requires CRD to be installed first before installing the MongoDB replicaset.",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1tags.install-opensearch:t"
@@ -12461,6 +12661,24 @@
                 ],
                 "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
               }
+            }
+          }
+        }
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "community-operator": {
+          "additionalProperties": {},
+          "description": "IMPORTANT! Official MongoDB chart requires CRD to be installed first before installing the MongoDB replicaset.",
+          "properties": {
+            "community-operator-crds": {
+              "description": "Set to false if CRDs have been installed already. The CRDs can be installed\nmanually from the code repo: github.com/mongodb/mongodb-kubernetes-operator or\nusing the `community-operator-crds` Helm chart.",
+              "type": [
+                "null",
+                "object"
+              ]
             }
           }
         }
@@ -14929,6 +15147,87 @@
             "properties": {
               "initResources": {
                 "$ref": "#/$defs/constrains~1claims@items.name+limits+requests@2"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1tags.install-mongodb=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1community-operator.community-operator-crds.enabled=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1tags.install-mongodb!=false"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1tags.install-mongodb"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/constrains~1community-operator.community-operator-crds.enabled=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1community-operator.community-operator-crds.enabled+1more"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1tags.install-mongodb!=false"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1tags.install-mongodb"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/constrains~1community-operator.community-operator-crds.enabled+1more@2"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1community-operator.community-operator-crds.enabled+1more"
+              },
+              {
+                "$ref": "#/$defs/constrains~1community-operator.community-operator-crds.enabled+1more@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1tags.install-mongodb=true"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "community-operator": {
+            "additionalProperties": {},
+            "description": "IMPORTANT! Official MongoDB chart requires CRD to be installed first before installing the MongoDB replicaset.",
+            "properties": {
+              "community-operator-crds": {
+                "description": "Set to false if CRDs have been installed already. The CRDs can be installed\nmanually from the code repo: github.com/mongodb/mongodb-kubernetes-operator or\nusing the `community-operator-crds` Helm chart.",
+                "type": "object"
               }
             }
           }
@@ -18075,6 +18374,67 @@
                 "$ref": "#/$defs/constrains~1service.type~1null,string"
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "tags": {
+                "properties": {
+                  "install-opensearch": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "install-opensearch"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tags"
+            ],
+            "type": "object"
+          },
+          {
+            "properties": {
+              "tags": {
+                "properties": {
+                  "install-opensearch": {
+                    "not": {
+                      "enum": [
+                        false
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "install-opensearch"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "tags"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1tags.install-opensearch"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "opensearch": {
+            "type": "object"
           }
         }
       }
@@ -25571,9 +25931,9 @@
             "enabled": {
               "description": "If true, MongoDB Community Operator CRDs will be installed.\nIt is strongly recommended to install the CRDs manually before installing the MongoDB replicaset.\nUsing dependencies is not order guaranteed and may cause the MongoDB replicaset installation to fail.",
               "type": "boolean"
-            }
-          },
-          "type": "object"
+            },
+            "global": {}
+          }
         },
         "createResource": {
           "description": "Deploys MongoDB with `resource` attributes."
@@ -25588,6 +25948,7 @@
             "namespace": {}
           }
         },
+        "global": {},
         "imagePullSecrets": {
           "description": "Reference to one or more secrets to be used when pulling images\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/"
         },
@@ -25687,8 +26048,7 @@
         "versionUpgradeHook": {
           "$ref": "#/$defs/values~1community-operator.agent"
         }
-      },
-      "type": "object"
+      }
     },
     "fullnameOverride": {
       "description": "This will override the release name of the application using in all resources."
@@ -28678,28 +29038,22 @@
           "type": "object"
         },
         "istio": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "description": "If true, Graylog server Istio Ingress Gateway will be created"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "description": "If true, Graylog server Istio Ingress Gateway will be created"
-                },
-                "gatewaySelector": {
-                  "description": "Change if you use custom ingressgateway controller"
-                },
-                "host": {
-                  "description": "Graylog server Istio Ingress Gateway hostnames with optional path\nMust be provided if Ingress is enabled\nNote: Graylog does not support two URL. You can specify only single URL"
-                },
-                "tlsSecretName": {
-                  "description": "Please note that tls secret should reside in istio-system namespace\nleave blanc for disabling TLS"
-                }
-              }
+            "gatewaySelector": {
+              "description": "Change if you use custom ingressgateway controller"
+            },
+            "host": {
+              "description": "Graylog server Istio Ingress Gateway hostnames with optional path\nMust be provided if Ingress is enabled\nNote: Graylog does not support two URL. You can specify only single URL"
+            },
+            "tlsSecretName": {
+              "description": "Please note that tls secret should reside in istio-system namespace\nleave blanc for disabling TLS"
             }
-          ]
+          },
+          "type": "object"
         },
         "javaOpts": {
           "description": "Graylog default Java option\njavaOpts: \"-Dlog4j2.formatMsgNoLookups=true -Djdk.tls.acknowledgeCloseNotify=true -XX:+UnlockExperimentalVMOptions -XX:-OmitStackTraceInFastThrow -XX:+UseG1GC -server\""
@@ -29883,30 +30237,24 @@
           "$ref": "#/$defs/values~1graylog.affinity"
         },
         "community": {
-          "allOf": [
-            {
+          "additionalProperties": {},
+          "properties": {
+            "auth": {
               "additionalProperties": {},
               "properties": {
-                "auth": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "password": {
-                      "description": "If empty, a random 20-character alphanumeric string will be generated"
-                    },
-                    "user": {}
-                  }
+                "password": {
+                  "description": "If empty, a random 20-character alphanumeric string will be generated"
                 },
-                "install": {
-                  "description": "If true, MongoDB Community will be installed"
-                },
-                "replicas": {},
-                "version": {}
+                "user": {}
               }
             },
-            {
-              "type": "object"
-            }
-          ]
+            "install": {
+              "description": "If true, MongoDB Community will be installed"
+            },
+            "replicas": {},
+            "version": {}
+          },
+          "type": "object"
         },
         "containers": {
           "description": "Configure MongoDB containers\n- name: mongod\nresources:\nlimits:\ncpu: \"0.2\"\nmemory: 250M\nrequests:\ncpu: \"0.2\"\nmemory: 200M\n- name: mongodb-agent\nresources:\nlimits:\ncpu: \"0.2\"\nmemory: 250M\nrequests:\ncpu: \"0.2\"\nmemory: 200M"
@@ -30308,8 +30656,7 @@
         "transportHostPort": {},
         "transportPort": {},
         "updateStrategy": {}
-      },
-      "type": "object"
+      }
     },
     "rbac": {
       "additionalProperties": {},

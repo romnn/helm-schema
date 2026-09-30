@@ -8,7 +8,7 @@
 use std::collections::BTreeSet;
 
 use color_eyre::eyre;
-use helm_schema::generation::SchemaProfile;
+use helm_schema::generation::{AuthoringPolicy, DeclaredTypes, RootPolicy, SchemaProfile};
 use helm_schema::output::ReferencePolicy;
 use indoc::indoc;
 use serde_json::{Value, json};
@@ -406,6 +406,68 @@ impl PolicyId {
 /// The chart every final-output policy fixture is generated from.
 pub const POLICY_CHART: &str = "schema-emission-controls";
 
+/// One corpus chart generated with a non-default caller authoring option.
+///
+/// Each backs a frozen witness row whose default rejection is a decided
+/// authoring-policy exception (`PolicyException` in
+/// `crates/helm-schema/tests/common/family_witnesses.rs`): the gate requires
+/// the default fixture to reject the witness and this one to accept it.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum AuthoringId {
+    /// `datadog` with an open values root (`--open-root`).
+    DatadogOpenRoot,
+    /// `redis-ha` with annotating declared types (`--declared-types=annotate`).
+    RedisHaDeclaredTypesAnnotate,
+}
+
+impl AuthoringId {
+    /// Every authoring-option fixture.
+    pub const ALL: &[AuthoringId] = &[
+        AuthoringId::DatadogOpenRoot,
+        AuthoringId::RedisHaDeclaredTypesAnnotate,
+    ];
+
+    /// The fixture name `{chart}.{option}` under
+    /// `testdata/chart-corpus-policy-schemas`.
+    #[must_use]
+    pub fn name(self) -> &'static str {
+        match self {
+            AuthoringId::DatadogOpenRoot => "datadog.open-root",
+            AuthoringId::RedisHaDeclaredTypesAnnotate => "redis-ha.declared-types-annotate",
+        }
+    }
+
+    /// The complete generation recipe: the production final-output path over
+    /// the chart-corpus options with this caller authoring policy.
+    #[must_use]
+    pub fn recipe(self) -> PolicyRecipe {
+        let (chart, authoring) = match self {
+            AuthoringId::DatadogOpenRoot => (
+                "datadog",
+                AuthoringPolicy {
+                    root: RootPolicy::Open,
+                    declared_types: DeclaredTypes::Assert,
+                },
+            ),
+            AuthoringId::RedisHaDeclaredTypesAnnotate => (
+                "redis-ha",
+                AuthoringPolicy {
+                    root: RootPolicy::Closed,
+                    declared_types: DeclaredTypes::Annotate,
+                },
+            ),
+        };
+        PolicyRecipe {
+            chart: ChartRecipe {
+                authoring,
+                ..ChartRecipe::corpus(chart, SchemaProfile::Full)
+            },
+            reference_policy: ReferencePolicy::SelfContained,
+            override_file: None,
+        }
+    }
+}
+
 /// One symbolic-IR fixture of the IR corpus.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum IrId {
@@ -482,6 +544,8 @@ pub enum ArtifactId {
     Lean(LeanId),
     /// A final-output policy schema.
     FinalPolicy(PolicyId),
+    /// A whole-chart final output under a non-default authoring policy.
+    Authoring(AuthoringId),
     /// A symbolic contract-IR document.
     Ir(IrId),
 }
@@ -497,6 +561,8 @@ pub enum ArtifactKind {
     Lean,
     /// [`ArtifactId::FinalPolicy`].
     FinalPolicy,
+    /// [`ArtifactId::Authoring`].
+    Authoring,
     /// [`ArtifactId::Ir`].
     Ir,
 }
@@ -510,6 +576,7 @@ impl ArtifactKind {
             ArtifactKind::Template => "template",
             ArtifactKind::Lean => "lean",
             ArtifactKind::FinalPolicy => "final-policy",
+            ArtifactKind::Authoring => "authoring",
             ArtifactKind::Ir => "ir",
         }
     }
@@ -570,6 +637,8 @@ pub struct ChartRecipe {
     pub k8s_version: &'static str,
     /// Whether repeated subtrees are interned into root `$defs`.
     pub minimize: bool,
+    /// Authoring assertions the caller selects.
+    pub authoring: AuthoringPolicy,
 }
 
 impl ChartRecipe {
@@ -594,6 +663,7 @@ impl ChartRecipe {
             infer_required: false,
             k8s_version: BUNDLE_K8S_VERSION,
             minimize: true,
+            authoring: AuthoringPolicy::default(),
         }
     }
 }
@@ -1299,6 +1369,7 @@ impl ArtifactId {
             ArtifactId::Template(_) => ArtifactKind::Template,
             ArtifactId::Lean(_) => ArtifactKind::Lean,
             ArtifactId::FinalPolicy(_) => ArtifactKind::FinalPolicy,
+            ArtifactId::Authoring(_) => ArtifactKind::Authoring,
             ArtifactId::Ir(_) => ArtifactKind::Ir,
         }
     }
@@ -1362,6 +1433,17 @@ impl ArtifactId {
                     recipe: GenerationRecipe::FinalPolicy(policy.recipe()),
                 }
             }
+            ArtifactId::Authoring(authoring) => {
+                let name = authoring.name();
+                ArtifactSpec {
+                    id: self,
+                    dump_name: format!("helm-schema.cli.chart-corpus-policy.{name}.schema.json"),
+                    target: ArtifactTarget::Fixture(format!(
+                        "testdata/chart-corpus-policy-schemas/{name}.schema.json"
+                    )),
+                    recipe: GenerationRecipe::FinalPolicy(authoring.recipe()),
+                }
+            }
             ArtifactId::Ir(ir) => {
                 let case = ir.case();
                 // The historical IR dump stem is the template path with every
@@ -1394,6 +1476,7 @@ impl ArtifactId {
             ArtifactId::Template(template) => format!("{kind}/{}", template.case().dump_stem),
             ArtifactId::Lean(lean) => format!("{kind}/{}", lean.chart()),
             ArtifactId::FinalPolicy(policy) => format!("{kind}/{}", policy.name()),
+            ArtifactId::Authoring(authoring) => format!("{kind}/{}", authoring.name()),
             ArtifactId::Ir(ir) => format!("{kind}/{}", ir.case().recipe.template_path),
         }
     }
@@ -1416,6 +1499,9 @@ pub fn registry() -> Vec<ArtifactSpec> {
     for policy in PolicyId::ALL {
         ids.push(ArtifactId::FinalPolicy(*policy));
     }
+    for authoring in AuthoringId::ALL {
+        ids.push(ArtifactId::Authoring(*authoring));
+    }
     for ir in IrId::ALL {
         ids.push(ArtifactId::Ir(*ir));
     }
@@ -1423,11 +1509,12 @@ pub fn registry() -> Vec<ArtifactSpec> {
 }
 
 /// The number of committed fixtures each artifact family must have.
-pub const FIXTURE_COUNTS: [(ArtifactKind, usize); 5] = [
+pub const FIXTURE_COUNTS: [(ArtifactKind, usize); 6] = [
     (ArtifactKind::Chart, 156),
     (ArtifactKind::Template, 20),
     (ArtifactKind::Lean, 4),
     (ArtifactKind::FinalPolicy, 4),
+    (ArtifactKind::Authoring, 2),
     (ArtifactKind::Ir, 18),
 ];
 
@@ -1571,6 +1658,7 @@ fn describe_chart(chart: &ChartRecipe) -> Value {
         "provider_bundle": PROVIDER_BUNDLE,
         "allow_net": false,
         "minimize": chart.minimize,
+        "authoring": chart.authoring,
     })
 }
 

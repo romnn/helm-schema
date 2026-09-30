@@ -2295,7 +2295,7 @@
               "defaultInitContainers": {
                 "properties": {
                   "volumePermissions": {
-                    "$ref": "#/$defs/constrains~1image.repository@2"
+                    "$ref": "#/$defs/constrains~1image.repository"
                   }
                 },
                 "required": [
@@ -3521,23 +3521,9 @@
       "type": "object"
     },
     "constrains/image.repository": {
-      "additionalProperties": {},
       "properties": {
         "image": {
-          "additionalProperties": {},
-          "properties": {
-            "repository": {
-              "description": "[default: REPOSITORY_NAME/clickhouse-keeper] ClickHouse Keeper image repository",
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    "constrains/image.repository=null": {
-      "properties": {
-        "image": {
-          "$ref": "#/$defs/constrains~1repository=null"
+          "$ref": "#/$defs/constrains~1repository"
         }
       },
       "required": [
@@ -3545,10 +3531,10 @@
       ],
       "type": "object"
     },
-    "constrains/image.repository@2": {
+    "constrains/image.repository=null": {
       "properties": {
         "image": {
-          "$ref": "#/$defs/constrains~1repository@2"
+          "$ref": "#/$defs/constrains~1repository=null"
         }
       },
       "required": [
@@ -4280,7 +4266,7 @@
           "not": {
             "properties": {
               "keeper": {
-                "$ref": "#/$defs/constrains~1image.repository@2"
+                "$ref": "#/$defs/constrains~1image.repository"
               }
             },
             "required": [
@@ -5902,13 +5888,13 @@
       "type": "object"
     },
     "constrains/repository": {
-      "additionalProperties": {},
       "properties": {
-        "repository": {
-          "description": "[default: REPOSITORY_NAME/os-shell] \"volume-permissions\" init-containers' image repository",
-          "type": "string"
-        }
-      }
+        "repository": {}
+      },
+      "required": [
+        "repository"
+      ],
+      "type": "object"
     },
     "constrains/repository=null": {
       "properties": {
@@ -5917,15 +5903,6 @@
             null
           ]
         }
-      },
-      "required": [
-        "repository"
-      ],
-      "type": "object"
-    },
-    "constrains/repository@2": {
-      "properties": {
-        "repository": {}
       },
       "required": [
         "repository"
@@ -7129,6 +7106,10 @@
         }
       ]
     },
+    "values/affinity/object": {
+      "additionalProperties": {},
+      "type": "object"
+    },
     "values/anyOf/array+null+object": {
       "anyOf": [
         {
@@ -7175,10 +7156,6 @@
       },
       "type": "array"
     },
-    "values/common.global.compatibility.openshift": {
-      "additionalProperties": {},
-      "type": "object"
-    },
     "values/commonLabels": {
       "anyOf": [
         {
@@ -7214,6 +7191,10 @@
       "description": "Set container's Security Context seccomp profile",
       "type": "string"
     },
+    "values/defaultInitContainers.volumePermissions.image.repository": {
+      "description": "[default: REPOSITORY_NAME/os-shell] \"volume-permissions\" init-containers' image repository",
+      "type": "string"
+    },
     "values/externalZookeeper.port": {
       "description": "Port of the ClickHouse Keeper / Zookeeper servers",
       "type": "integer"
@@ -7226,6 +7207,10 @@
       "description": "The port on each node on which this service is exposed when type is NodePort or LoadBalancer.  Usually assigned by the system. If a value is specified, in-range, and not in use it will be used, otherwise the operation will fail.  If not specified, a port will be allocated if this Service requires one.  If this field is specified when creating a Service which does not need it, creation will fail. This field will be wiped when updating a Service to no longer need it (e.g. changing type from NodePort to ClusterIP). More info: https://kubernetes.io/docs/concepts/services-networking/service/#type-nodeport",
       "format": "int32",
       "type": "integer"
+    },
+    "values/keeper.image.repository": {
+      "description": "[default: REPOSITORY_NAME/clickhouse-keeper] ClickHouse Keeper image repository",
+      "type": "string"
     },
     "values/keeper/anyOf/array+not/:t+null+object": {
       "anyOf": [
@@ -7631,7 +7616,7 @@
         "anyOf": [
           {
             "not": {
-              "$ref": "#/$defs/constrains~1repository@2"
+              "$ref": "#/$defs/constrains~1repository"
             }
           },
           {
@@ -7681,7 +7666,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1image.repository@2"
+                  "$ref": "#/$defs/constrains~1image.repository"
                 }
               }
             ]
@@ -11295,25 +11280,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "defaultInitContainers": {
-          "additionalProperties": {},
-          "properties": {
-            "volumePermissions": {
-              "additionalProperties": {},
-              "description": "'volume-permissions' init container\nUsed to change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
-              "properties": {
-                "image": {
-                  "type": "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -11992,19 +11958,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "keeper": {
-          "additionalProperties": {},
-          "properties": {
-            "image": {
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "$ref": "#/$defs/constrains~1exposeMysql:t+networkPolicy.allowExternalEgress:t+networkPolicy.enabled:t"
       },
@@ -12334,17 +12287,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
       }
     },
     {
@@ -14764,7 +14706,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1image.repository@2"
+                  "$ref": "#/$defs/constrains~1image.repository"
                 }
               }
             ]
@@ -17451,7 +17393,12 @@
                     "description": "'volume-permissions' init container\nUsed to change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
                     "properties": {
                       "image": {
-                        "$ref": "#/$defs/constrains~1repository"
+                        "additionalProperties": {},
+                        "properties": {
+                          "repository": {
+                            "$ref": "#/$defs/values~1defaultInitContainers.volumePermissions.image.repository"
+                          }
+                        }
                       }
                     }
                   }
@@ -18155,7 +18102,7 @@
     "affinity": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+          "$ref": "#/$defs/values~1affinity~1object"
         },
         {
           "type": "string"
@@ -18226,24 +18173,7 @@
           "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
           "type": "string"
         },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "compatibility": {
-              "additionalProperties": {},
-              "properties": {
-                "openshift": {
-                  "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-                }
-              },
-              "type": "object"
-            },
-            "security": {
-              "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-            }
-          },
-          "type": "object"
-        }
+        "global": {}
       },
       "type": "object"
     },
@@ -18378,7 +18308,7 @@
     "customLivenessProbe": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+          "$ref": "#/$defs/values~1affinity~1object"
         },
         {
           "type": "string"
@@ -18389,7 +18319,7 @@
     "customReadinessProbe": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+          "$ref": "#/$defs/values~1affinity~1object"
         },
         {
           "type": "string"
@@ -18400,7 +18330,7 @@
     "customStartupProbe": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+          "$ref": "#/$defs/values~1affinity~1object"
         },
         {
           "type": "string"
@@ -18460,20 +18390,20 @@
       ],
       "properties": {
         "volumePermissions": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
+          "additionalProperties": {},
+          "description": "'volume-permissions' init container\nUsed to change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
+          "properties": {
+            "image": {
               "additionalProperties": {},
               "properties": {
-                "image": {
-                  "$ref": "#/$defs/constrains~1repository"
+                "repository": {
+                  "$ref": "#/$defs/values~1defaultInitContainers.volumePermissions.image.repository"
                 }
-              }
+              },
+              "type": "object"
             }
-          ],
-          "description": "'volume-permissions' init container\nUsed to change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node"
+          },
+          "type": "object"
         }
       },
       "type": "object"
@@ -18582,7 +18512,7 @@
     "extraDeploy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+          "$ref": "#/$defs/values~1affinity~1object"
         },
         {
           "$ref": "#/$defs/values~1args~1array"
@@ -18683,8 +18613,7 @@
               },
               "type": "object"
             }
-          },
-          "type": "object"
+          }
         },
         "defaultStorageClass": {
           "description": "Global default StorageClass for Persistent Volume(s)"
@@ -18707,8 +18636,7 @@
           "type": "object"
         },
         "storageClass": {}
-      },
-      "type": "object"
+      }
     },
     "hostAliases": {
       "anyOf": [
@@ -18722,23 +18650,19 @@
       "description": "ClickHouse pods host aliases\nhttps://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/"
     },
     "image": {
+      "additionalProperties": {},
       "allOf": [
         {
           "$ref": "#/$defs/when~1repository+repository=null~1then~1fail"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "repository": {
-              "description": "[default: REPOSITORY_NAME/clickhouse] ClickHouse image repository",
-              "type": "string"
-            }
-          }
         }
-      ]
+      ],
+      "properties": {
+        "repository": {
+          "description": "[default: REPOSITORY_NAME/clickhouse] ClickHouse image repository",
+          "type": "string"
+        }
+      },
+      "type": "object"
     },
     "ingress": {
       "additionalProperties": {},
@@ -19172,6 +19096,7 @@
       "description": "ConfigMap with the initdb scripts (Note: Overrides `initdbScripts`)"
     },
     "keeper": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -19920,9 +19845,6 @@
               }
             ]
           }
-        },
-        {
-          "type": "object"
         },
         {
           "if": {
@@ -23175,7 +23097,17 @@
                 }
               },
               {
-                "$ref": "#/$defs/constrains~1image.repository"
+                "additionalProperties": {},
+                "properties": {
+                  "image": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "repository": {
+                        "$ref": "#/$defs/values~1keeper.image.repository"
+                      }
+                    }
+                  }
+                }
               }
             ]
           }
@@ -23681,11 +23613,20 @@
             ]
           },
           "then": false
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.repository"
         }
-      ]
+      ],
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "$ref": "#/$defs/values~1keeper.image.repository"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     "kubeVersion": {
       "description": "Override Kubernetes version"
@@ -23693,7 +23634,7 @@
     "lifecycleHooks": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+          "$ref": "#/$defs/values~1affinity~1object"
         },
         {
           "type": "string"
@@ -24198,7 +24139,7 @@
         "podAnnotations": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+              "$ref": "#/$defs/values~1affinity~1object"
             },
             {
               "type": "string"
@@ -24467,7 +24408,7 @@
     "nodeSelector": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+          "$ref": "#/$defs/values~1affinity~1object"
         },
         {
           "type": "string"
@@ -24514,7 +24455,7 @@
         "dataSource": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+              "$ref": "#/$defs/values~1affinity~1object"
             },
             {
               "type": "string"
@@ -24532,7 +24473,7 @@
         "labels": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+              "$ref": "#/$defs/values~1affinity~1object"
             },
             {
               "type": "object"
@@ -24547,7 +24488,7 @@
         "selector": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+              "$ref": "#/$defs/values~1affinity~1object"
             },
             {
               "type": "string"
@@ -24609,7 +24550,7 @@
     "podAnnotations": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+          "$ref": "#/$defs/values~1affinity~1object"
         },
         {
           "type": "string"
@@ -27003,7 +26944,7 @@
     "usersdFiles": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+          "$ref": "#/$defs/values~1affinity~1object"
         },
         {
           "$ref": "#/$defs/values~1args~1array"

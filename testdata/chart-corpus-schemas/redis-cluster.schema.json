@@ -7585,10 +7585,6 @@
         "null"
       ]
     },
-    "values/common.global.compatibility.openshift": {
-      "additionalProperties": {},
-      "type": "object"
-    },
     "values/commonLabels": {
       "anyOf": [
         {
@@ -9372,7 +9368,8 @@
               "commonLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+                    "additionalProperties": {},
+                    "type": "object"
                   },
                   {
                     "type": "string"
@@ -10162,22 +10159,6 @@
     {
       "additionalProperties": {},
       "properties": {
-        "redis": {
-          "additionalProperties": {},
-          "properties": {
-            "containerPorts": {
-              "required": [
-                "redis"
-              ],
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
         "metrics": {
           "additionalProperties": {},
           "description": "Prometheus Exporter / Metrics",
@@ -10187,6 +10168,99 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/constrains~1networkPolicy.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1cluster.externalAccess.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1cluster.externalAccess.service.loadBalancerIP:t"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "redis": {
+                "additionalProperties": {},
+                "properties": {
+                  "containerPorts": {
+                    "required": [
+                      "redis"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "redis": {
+                "additionalProperties": {},
+                "properties": {
+                  "containerPorts": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "bus": {
+                        "description": "The busPort should be obtained adding 10000 to the redisPort. By default: 10000 + 6379 = 16379",
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "redis": {
+                "additionalProperties": {},
+                "properties": {
+                  "containerPorts": {
+                    "required": [
+                      "bus"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "redis": {
+                "additionalProperties": {},
+                "properties": {
+                  "containerPorts": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "redis": {
+                        "description": "Redis&reg; port",
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -13266,19 +13340,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "redis": {
-          "additionalProperties": {},
-          "properties": {
-            "containerPorts": {
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -13492,17 +13553,6 @@
               }
             }
           }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
         }
       }
     },
@@ -14582,27 +14632,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "redis": {
-          "additionalProperties": {},
-          "properties": {
-            "containerPorts": {
-              "additionalProperties": {},
-              "properties": {
-                "bus": {
-                  "description": "The busPort should be obtained adding 10000 to the redisPort. By default: 10000 + 6379 = 16379",
-                  "not": {
-                    "type": "null"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -15007,22 +15036,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "redis": {
-          "additionalProperties": {},
-          "properties": {
-            "containerPorts": {
-              "required": [
-                "bus"
-              ],
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -15200,27 +15213,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "redis": {
-          "additionalProperties": {},
-          "properties": {
-            "containerPorts": {
-              "additionalProperties": {},
-              "properties": {
-                "redis": {
-                  "description": "Redis&reg; port",
-                  "not": {
-                    "type": "null"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
     },
     {
       "if": {
@@ -20007,27 +19999,7 @@
           "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
           "type": "string"
         },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "compatibility": {
-              "additionalProperties": {},
-              "properties": {
-                "openshift": {
-                  "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-                }
-              },
-              "type": "object"
-            },
-            "redis": {
-              "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-            },
-            "security": {
-              "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-            }
-          },
-          "type": "object"
-        }
+        "global": {}
       },
       "type": "object"
     },
@@ -20142,7 +20114,8 @@
     "extraDeploy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+          "additionalProperties": {},
+          "type": "object"
         },
         {
           "items": {},
@@ -20225,21 +20198,15 @@
         "storageClass": {
           "description": "DEPRECATED: use global.defaultStorageClass instead"
         }
-      },
-      "type": "object"
+      }
     },
     "image": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "additionalProperties": {}
-        }
-      ]
+      "additionalProperties": {},
+      "type": "object"
     },
     "kubeVersion": {},
     "metrics": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -20480,9 +20447,6 @@
           "then": false
         },
         {
-          "type": "object"
-        },
-        {
           "if": {
             "allOf": [
               {
@@ -20645,9 +20609,6 @@
               }
             }
           }
-        },
-        {
-          "additionalProperties": {}
         },
         {
           "if": {
@@ -21020,7 +20981,8 @@
           }
         }
       ],
-      "description": "Prometheus Exporter / Metrics"
+      "description": "Prometheus Exporter / Metrics",
+      "type": "object"
     },
     "nameOverride": {
       "$ref": "#/$defs/values~1nameOverride"
@@ -21573,56 +21535,8 @@
       "type": "object"
     },
     "redis": {
+      "additionalProperties": {},
       "allOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "configmap": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "string"
-                }
-              ],
-              "description": "Additional Redis&reg; configuration for the nodes\nref: https://redis.io/topics/config"
-            },
-            "containerPorts": {
-              "additionalProperties": {},
-              "properties": {
-                "bus": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/values~1metrics~1integer:int32;the-port-that-will"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1string;pattern-0-1-9"
-                    }
-                  ],
-                  "description": "The busPort should be obtained adding 10000 to the redisPort. By default: 10000 + 6379 = 16379"
-                },
-                "redis": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/values~1metrics~1integer:int32;the-port-that-will"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1string;pattern-0-1-9"
-                    }
-                  ],
-                  "description": "Redis&reg; port"
-                }
-              }
-            }
-          }
-        },
-        {
-          "type": "object"
-        },
         {
           "if": {
             "anyOf": [
@@ -21638,7 +21552,56 @@
           },
           "then": false
         }
-      ]
+      ],
+      "properties": {
+        "configmap": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip~1not~1:t"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "description": "Additional Redis&reg; configuration for the nodes\nref: https://redis.io/topics/config"
+        },
+        "containerPorts": {
+          "additionalProperties": {},
+          "properties": {
+            "bus": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/values~1metrics~1integer:int32;the-port-that-will"
+                },
+                {
+                  "$ref": "#/$defs/values~1string;pattern-0-1-9"
+                }
+              ],
+              "description": "The busPort should be obtained adding 10000 to the redisPort. By default: 10000 + 6379 = 16379"
+            },
+            "redis": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/values~1metrics~1integer:int32;the-port-that-will"
+                },
+                {
+                  "$ref": "#/$defs/values~1string;pattern-0-1-9"
+                }
+              ],
+              "description": "Redis&reg; port"
+            }
+          },
+          "required": [
+            "bus",
+            "redis"
+          ],
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     "service": {
       "additionalProperties": {},
@@ -22288,15 +22251,9 @@
       "type": "object"
     },
     "sysctlImage": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "additionalProperties": {}
-        }
-      ],
-      "description": "Sysctl InitContainer\nUsed to perform sysctl operation to modify Kernel settings (needed sometimes to avoid warnings)"
+      "additionalProperties": {},
+      "description": "Sysctl InitContainer\nUsed to perform sysctl operation to modify Kernel settings (needed sometimes to avoid warnings)",
+      "type": "object"
     },
     "tags": {
       "additionalProperties": {},
@@ -22484,18 +22441,14 @@
       "description": "Mount passwords as files instead of environment variables"
     },
     "volumePermissions": {
+      "additionalProperties": {},
       "allOf": [
         {
-          "type": "object"
-        },
-        {
           "$ref": "#/$defs/when~1image+image=null~1then~1fail"
-        },
-        {
-          "additionalProperties": {}
         }
       ],
-      "description": "Init containers parameters:\nvolumePermissions: Change the owner of the persist volume mountpoint to RunAsUser:fsGroup"
+      "description": "Init containers parameters:\nvolumePermissions: Change the owner of the persist volume mountpoint to RunAsUser:fsGroup",
+      "type": "object"
     }
   },
   "type": "object"

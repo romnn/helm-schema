@@ -6326,30 +6326,26 @@
       "anyOf": [
         {
           "additionalProperties": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-              },
-              {
-                "items": {},
-                "type": "array"
-              }
-            ]
+            "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout+tlsConfig~1anyOf~1array+object@2"
           },
           "type": "object"
         },
         {
           "items": {
-            "anyOf": [
-              {
-                "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-              },
-              {
-                "items": {},
-                "type": "array"
-              }
-            ]
+            "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout+tlsConfig~1anyOf~1array+object@2"
           },
+          "type": "array"
+        }
+      ]
+    },
+    "constrains/honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout+tlsConfig/anyOf/array+object@2": {
+      "anyOf": [
+        {
+          "additionalProperties": {},
+          "type": "object"
+        },
+        {
+          "items": {},
           "type": "array"
         }
       ]
@@ -6554,12 +6550,13 @@
       ]
     },
     "constrains/image": {
-      "additionalProperties": {},
       "properties": {
-        "image": {
-          "type": "object"
-        }
-      }
+        "image": {}
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
     },
     "constrains/image.debug:t": {
       "properties": {
@@ -6600,12 +6597,15 @@
       "type": "object"
     },
     "constrains/image.repository": {
-      "additionalProperties": {},
       "properties": {
         "image": {
-          "$ref": "#/$defs/constrains~1repository@2"
+          "$ref": "#/$defs/constrains~1repository@3"
         }
-      }
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
     },
     "constrains/image.repository+image.repository=null": {
       "additionalProperties": {},
@@ -6626,7 +6626,7 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1image.repository@3"
+            "$ref": "#/$defs/constrains~1image.repository"
           }
         }
       ]
@@ -6642,31 +6642,6 @@
       ],
       "type": "object"
     },
-    "constrains/image.repository@2": {
-      "additionalProperties": {},
-      "properties": {
-        "image": {
-          "additionalProperties": {},
-          "properties": {
-            "repository": {
-              "description": "[default: REPOSITORY_NAME/redis-exporter] Redis(R) Exporter image repository",
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    "constrains/image.repository@3": {
-      "properties": {
-        "image": {
-          "$ref": "#/$defs/constrains~1repository@5"
-        }
-      },
-      "required": [
-        "image"
-      ],
-      "type": "object"
-    },
     "constrains/image=null": {
       "properties": {
         "image": {
@@ -6674,15 +6649,6 @@
             null
           ]
         }
-      },
-      "required": [
-        "image"
-      ],
-      "type": "object"
-    },
-    "constrains/image@2": {
-      "properties": {
-        "image": {}
       },
       "required": [
         "image"
@@ -8339,7 +8305,7 @@
           "not": {
             "properties": {
               "metrics": {
-                "$ref": "#/$defs/constrains~1image@2"
+                "$ref": "#/$defs/constrains~1image"
               }
             },
             "required": [
@@ -8378,7 +8344,7 @@
           "not": {
             "properties": {
               "metrics": {
-                "$ref": "#/$defs/constrains~1image.repository@3"
+                "$ref": "#/$defs/constrains~1image.repository"
               }
             },
             "required": [
@@ -11190,21 +11156,7 @@
       "additionalProperties": {},
       "properties": {
         "repository": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/constrains~1path:t~1string@2"
-            },
-            {
-              "$ref": "#/$defs/constrains~1registry~1string;pattern-a-za-z0-9"
-            },
-            {
-              "$ref": "#/$defs/constrains~1registry~1string"
-            },
-            {
-              "$ref": "#/$defs/constrains~1path:t~1object"
-            }
-          ],
-          "description": "[default: REPOSITORY_NAME/os-shell] OS Shell + Utility image repository"
+          "$ref": "#/$defs/values~1sysctl.image.repository"
         }
       }
     },
@@ -11225,30 +11177,25 @@
       "additionalProperties": {},
       "properties": {
         "repository": {
-          "description": "[default: REPOSITORY_NAME/os-shell] OS Shell + Utility image repository",
-          "type": "string"
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1path:t~1string@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1registry~1string;pattern-a-za-z0-9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1registry~1string"
+            },
+            {
+              "$ref": "#/$defs/constrains~1path:t~1object"
+            }
+          ],
+          "description": "[default: REPOSITORY_NAME/os-shell] OS Shell + Utility image repository"
         }
       }
     },
     "constrains/repository@3": {
-      "additionalProperties": {},
-      "properties": {
-        "repository": {
-          "description": "[default: REPOSITORY_NAME/redis-sentinel] Redis(R) Sentinel image repository",
-          "type": "string"
-        }
-      }
-    },
-    "constrains/repository@4": {
-      "additionalProperties": {},
-      "properties": {
-        "repository": {
-          "description": "[default: REPOSITORY_NAME/redis] Redis(R) image repository",
-          "type": "string"
-        }
-      }
-    },
-    "constrains/repository@5": {
       "properties": {
         "repository": {}
       },
@@ -11792,7 +11739,7 @@
           "not": {
             "properties": {
               "sentinel": {
-                "$ref": "#/$defs/constrains~1image@2"
+                "$ref": "#/$defs/constrains~1image"
               }
             },
             "required": [
@@ -11831,7 +11778,7 @@
           "not": {
             "properties": {
               "sentinel": {
-                "$ref": "#/$defs/constrains~1image.repository@3"
+                "$ref": "#/$defs/constrains~1image.repository"
               }
             },
             "required": [
@@ -13098,7 +13045,7 @@
           "not": {
             "properties": {
               "sysctl": {
-                "$ref": "#/$defs/constrains~1image@2"
+                "$ref": "#/$defs/constrains~1image"
               }
             },
             "required": [
@@ -13126,7 +13073,7 @@
           "not": {
             "properties": {
               "sysctl": {
-                "$ref": "#/$defs/constrains~1image.repository@3"
+                "$ref": "#/$defs/constrains~1image.repository"
               }
             },
             "required": [
@@ -13992,7 +13939,7 @@
           "not": {
             "properties": {
               "volumePermissions": {
-                "$ref": "#/$defs/constrains~1image@2"
+                "$ref": "#/$defs/constrains~1image"
               }
             },
             "required": [
@@ -14020,7 +13967,7 @@
           "not": {
             "properties": {
               "volumePermissions": {
-                "$ref": "#/$defs/constrains~1image.repository@3"
+                "$ref": "#/$defs/constrains~1image.repository"
               }
             },
             "required": [
@@ -14332,15 +14279,15 @@
         "null"
       ]
     },
-    "values/common.global.compatibility.openshift": {
-      "additionalProperties": {},
-      "type": "object"
-    },
     "values/commonLabels.'app.kubernetes.io/instance'": {
       "type": [
         "string",
         "null"
       ]
+    },
+    "values/image.repository": {
+      "description": "[default: REPOSITORY_NAME/redis] Redis(R) image repository",
+      "type": "string"
     },
     "values/integer,null:int64;the-gid-to-run": {
       "description": "The GID to run the entrypoint of the container process. Uses runtime default if unset. May also be set in SecurityContext.  If set in both SecurityContext and PodSecurityContext, the value specified in SecurityContext takes precedence for that container. Note that this field cannot be set when spec.os.name is windows.",
@@ -14395,6 +14342,10 @@
     },
     "values/kubectl.containerSecurityContext.seccompProfile.type": {
       "description": "Set kubectl containers' Security Context seccompProfile",
+      "type": "string"
+    },
+    "values/metrics.image.repository": {
+      "description": "[default: REPOSITORY_NAME/redis-exporter] Redis(R) Exporter image repository",
       "type": "string"
     },
     "values/metrics/anyOf/array;podtargetlabels-defines-the-labels+not/:t": {
@@ -14566,6 +14517,10 @@
       "description": "averageUtilization is the target value of the average of the resource metric across all relevant pods, represented as a percentage of the requested value of the resource for the pods. Currently only valid for Resource metric source type",
       "format": "int32",
       "type": "null"
+    },
+    "values/sentinel.image.repository": {
+      "description": "[default: REPOSITORY_NAME/redis-sentinel] Redis(R) Sentinel image repository",
+      "type": "string"
     },
     "values/string;clusterip-is-the-ip": {
       "allOf": [
@@ -14855,6 +14810,19 @@
       "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
       "type": "string"
     },
+    "values/sysctl.image": {
+      "additionalProperties": {},
+      "properties": {
+        "repository": {
+          "$ref": "#/$defs/values~1sysctl.image.repository"
+        }
+      },
+      "type": "object"
+    },
+    "values/sysctl.image.repository": {
+      "description": "[default: REPOSITORY_NAME/os-shell] OS Shell + Utility image repository",
+      "type": "string"
+    },
     "when/any/then/any": {
       "if": {
         "type": "object"
@@ -14878,7 +14846,7 @@
           },
           {
             "not": {
-              "$ref": "#/$defs/constrains~1image@2"
+              "$ref": "#/$defs/constrains~1image"
             }
           }
         ]
@@ -14890,7 +14858,7 @@
         "anyOf": [
           {
             "not": {
-              "$ref": "#/$defs/constrains~1repository@5"
+              "$ref": "#/$defs/constrains~1repository@3"
             }
           },
           {
@@ -15534,7 +15502,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1image@2"
+                  "$ref": "#/$defs/constrains~1image"
                 }
               }
             ]
@@ -16661,7 +16629,12 @@
         "additionalProperties": {},
         "properties": {
           "image": {
-            "$ref": "#/$defs/constrains~1repository@4"
+            "additionalProperties": {},
+            "properties": {
+              "repository": {
+                "$ref": "#/$defs/values~1image.repository"
+              }
+            }
           }
         }
       }
@@ -17007,7 +16980,7 @@
                 "not": {
                   "properties": {
                     "kubectl": {
-                      "$ref": "#/$defs/constrains~1image.repository@3"
+                      "$ref": "#/$defs/constrains~1image.repository"
                     }
                   },
                   "required": [
@@ -17344,20 +17317,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "sysctl": {
-          "additionalProperties": {},
-          "description": "init-sysctl container parameters\nused to perform sysctl operation to modify Kernel settings (needed sometimes to avoid warnings)",
-          "properties": {
-            "image": {
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "anyOf": [
           {
@@ -17574,7 +17533,7 @@
             "description": "'volumePermissions' init container parameters\nChanges the owner and group of the persistent volume mount point to runAsUser:fsGroup values\nbased on the *podSecurityContext/*containerSecurityContext parameters",
             "properties": {
               "image": {
-                "$ref": "#/$defs/constrains~1repository@2"
+                "$ref": "#/$defs/constrains~1repository"
               }
             }
           }
@@ -19088,7 +19047,7 @@
                 "not": {
                   "properties": {
                     "kubectl": {
-                      "$ref": "#/$defs/constrains~1image@2"
+                      "$ref": "#/$defs/constrains~1image"
                     }
                   },
                   "required": [
@@ -20515,14 +20474,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "metrics": {
-          "$ref": "#/$defs/constrains~1image"
-        }
-      }
     },
     {
       "if": {
@@ -24155,7 +24106,12 @@
                 "additionalProperties": {},
                 "properties": {
                   "image": {
-                    "$ref": "#/$defs/constrains~1repository@3"
+                    "additionalProperties": {},
+                    "properties": {
+                      "repository": {
+                        "$ref": "#/$defs/values~1sentinel.image.repository"
+                      }
+                    }
                   }
                 }
               }
@@ -25860,7 +25816,7 @@
             "description": "'volumePermissions' init container parameters\nChanges the owner and group of the persistent volume mount point to runAsUser:fsGroup values\nbased on the *podSecurityContext/*containerSecurityContext parameters",
             "properties": {
               "image": {
-                "$ref": "#/$defs/constrains~1repository"
+                "$ref": "#/$defs/constrains~1repository@2"
               }
             }
           }
@@ -27298,7 +27254,7 @@
             "description": "init-sysctl container parameters\nused to perform sysctl operation to modify Kernel settings (needed sometimes to avoid warnings)",
             "properties": {
               "image": {
-                "$ref": "#/$defs/constrains~1repository@2"
+                "$ref": "#/$defs/constrains~1repository"
               }
             }
           }
@@ -28195,20 +28151,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "volumePermissions": {
-          "additionalProperties": {},
-          "description": "'volumePermissions' init container parameters\nChanges the owner and group of the persistent volume mount point to runAsUser:fsGroup values\nbased on the *podSecurityContext/*containerSecurityContext parameters",
-          "properties": {
-            "image": {
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -28943,17 +28885,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
       }
     },
     {
@@ -31083,26 +31014,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "sentinel": {
-          "additionalProperties": {},
-          "properties": {
-            "service": {
-              "additionalProperties": {},
-              "description": "Redis(R) Sentinel service parameters\nNote: values passed in this section also configure the master service, unless the sentinel.masterService is explicitly overridden.",
-              "properties": {
-                "headless": {
-                  "description": "Headless service properties",
-                  "type": "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -32009,20 +31920,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "sentinel": {
-          "additionalProperties": {},
-          "properties": {
-            "service": {
-              "description": "Redis(R) Sentinel service parameters\nNote: values passed in this section also configure the master service, unless the sentinel.masterService is explicitly overridden.",
-              "type": "object"
-            }
-          }
-        }
-      }
     },
     {
       "if": {
@@ -35897,7 +35794,7 @@
             "description": "init-sysctl container parameters\nused to perform sysctl operation to modify Kernel settings (needed sometimes to avoid warnings)",
             "properties": {
               "image": {
-                "$ref": "#/$defs/constrains~1repository"
+                "$ref": "#/$defs/constrains~1repository@2"
               }
             }
           }
@@ -38994,7 +38891,17 @@
         "additionalProperties": {},
         "properties": {
           "metrics": {
-            "$ref": "#/$defs/constrains~1image.repository@2"
+            "additionalProperties": {},
+            "properties": {
+              "image": {
+                "additionalProperties": {},
+                "properties": {
+                  "repository": {
+                    "$ref": "#/$defs/values~1metrics.image.repository"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -40089,14 +39996,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "sentinel": {
-          "$ref": "#/$defs/constrains~1image"
-        }
-      }
     },
     {
       "if": {
@@ -41593,27 +41492,7 @@
           "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
           "type": "string"
         },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "compatibility": {
-              "additionalProperties": {},
-              "properties": {
-                "openshift": {
-                  "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-                }
-              },
-              "type": "object"
-            },
-            "redis": {
-              "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-            },
-            "security": {
-              "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-            }
-          },
-          "type": "object"
-        }
+        "global": {}
       },
       "type": "object"
     },
@@ -41723,7 +41602,8 @@
     "extraDeploy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+          "additionalProperties": {},
+          "type": "object"
         },
         {
           "items": {},
@@ -41772,8 +41652,7 @@
               },
               "type": "object"
             }
-          },
-          "type": "object"
+          }
         },
         "defaultStorageClass": {
           "description": "Global default StorageClass for Persistent Volume(s)"
@@ -41808,21 +41687,21 @@
         "storageClass": {
           "description": "DEPRECATED: use global.defaultStorageClass instead"
         }
-      },
-      "type": "object"
+      }
     },
     "image": {
+      "additionalProperties": {},
       "allOf": [
         {
           "$ref": "#/$defs/when~1repository+repository=null~1then~1fail"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1repository@4"
         }
-      ]
+      ],
+      "properties": {
+        "repository": {
+          "$ref": "#/$defs/values~1image.repository"
+        }
+      },
+      "type": "object"
     },
     "kubeVersion": {
       "description": "Override Kubernetes version"
@@ -41896,33 +41775,24 @@
           "type": "object"
         },
         "image": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
-              "additionalProperties": {}
-            }
-          ]
+          "additionalProperties": {},
+          "type": "object"
         },
         "resources": {}
       },
       "type": "object"
     },
     "master": {
+      "additionalProperties": {},
       "allOf": [
         {
           "$ref": "#/$defs/when~1serviceAccount+serviceAccount=null~1then~1fail"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "additionalProperties": {}
         }
-      ]
+      ],
+      "type": "object"
     },
     "metrics": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -42574,12 +42444,6 @@
             ]
           },
           "then": false
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.repository@2"
-        },
-        {
-          "type": "object"
         },
         {
           "if": {
@@ -43456,7 +43320,19 @@
             }
           }
         }
-      ]
+      ],
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "$ref": "#/$defs/values~1metrics.image.repository"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     "nameOverride": {
       "$ref": "#/$defs/values~1nameOverride"
@@ -43906,6 +43782,7 @@
       "type": "object"
     },
     "replica": {
+      "additionalProperties": {},
       "allOf": [
         {
           "additionalProperties": {},
@@ -44055,9 +43932,6 @@
           "$ref": "#/$defs/when~1serviceAccount+serviceAccount=null~1then~1fail"
         },
         {
-          "type": "object"
-        },
-        {
           "additionalProperties": {},
           "properties": {
             "podLabels": {
@@ -44076,9 +43950,6 @@
           }
         },
         {
-          "additionalProperties": {}
-        },
-        {
           "if": {
             "anyOf": [
               {
@@ -44093,7 +43964,8 @@
           },
           "then": false
         }
-      ]
+      ],
+      "type": "object"
     },
     "secretAnnotations": {
       "description": "Annotations to add to secret"
@@ -44102,41 +43974,8 @@
       "description": "Enable checksum annotations used to trigger rolling updates when Secret(s) change"
     },
     "sentinel": {
+      "additionalProperties": {},
       "allOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "image": {
-              "$ref": "#/$defs/constrains~1repository@3"
-            },
-            "service": {
-              "additionalProperties": {},
-              "description": "Redis(R) Sentinel service parameters\nNote: values passed in this section also configure the master service, unless the sentinel.masterService is explicitly overridden.",
-              "properties": {
-                "headless": {
-                  "additionalProperties": {},
-                  "description": "Headless service properties",
-                  "properties": {
-                    "extraPorts": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more@2"
-                        },
-                        {
-                          "type": "null"
-                        }
-                      ],
-                      "description": "Optionally specify extra ports to expose for the headless service.\nExample:\nextraPorts:\n- name: my-custom-port\nport: 12345\nprotocol: TCP\ntargetPort: 12345"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        },
         {
           "if": {
             "anyOf": [
@@ -44225,9 +44064,6 @@
           "then": false
         },
         {
-          "type": "object"
-        },
-        {
           "if": {
             "allOf": [
               {
@@ -44270,7 +44106,47 @@
           },
           "then": false
         }
-      ]
+      ],
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "$ref": "#/$defs/values~1sentinel.image.repository"
+            }
+          },
+          "type": "object"
+        },
+        "service": {
+          "additionalProperties": {},
+          "description": "Redis(R) Sentinel service parameters\nNote: values passed in this section also configure the master service, unless the sentinel.masterService is explicitly overridden.",
+          "properties": {
+            "headless": {
+              "additionalProperties": {},
+              "description": "Headless service properties",
+              "properties": {
+                "extraPorts": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more@2"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "description": "Optionally specify extra ports to expose for the headless service.\nExample:\nextraPorts:\n- name: my-custom-port\nport: 12345\nprotocol: TCP\ntargetPort: 12345"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     "serviceAccount": {
       "additionalProperties": {},
@@ -44302,13 +44178,8 @@
       "type": "object"
     },
     "sysctl": {
+      "additionalProperties": {},
       "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.repository"
-        },
         {
           "$ref": "#/$defs/when~1image+image=null~1then~1fail"
         },
@@ -44316,7 +44187,13 @@
           "$ref": "#/$defs/constrains~1image.repository+image.repository=null"
         }
       ],
-      "description": "init-sysctl container parameters\nused to perform sysctl operation to modify Kernel settings (needed sometimes to avoid warnings)"
+      "description": "init-sysctl container parameters\nused to perform sysctl operation to modify Kernel settings (needed sometimes to avoid warnings)",
+      "properties": {
+        "image": {
+          "$ref": "#/$defs/values~1sysctl.image"
+        }
+      },
+      "type": "object"
     },
     "tags": {
       "additionalProperties": {},
@@ -44499,13 +44376,8 @@
       "description": "Use hostnames internally when announcing replication. If false, the hostname will be resolved to an IP address"
     },
     "volumePermissions": {
+      "additionalProperties": {},
       "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.repository"
-        },
         {
           "$ref": "#/$defs/when~1image+image=null~1then~1fail"
         },
@@ -44513,7 +44385,13 @@
           "$ref": "#/$defs/constrains~1image.repository+image.repository=null"
         }
       ],
-      "description": "'volumePermissions' init container parameters\nChanges the owner and group of the persistent volume mount point to runAsUser:fsGroup values\nbased on the *podSecurityContext/*containerSecurityContext parameters"
+      "description": "'volumePermissions' init container parameters\nChanges the owner and group of the persistent volume mount point to runAsUser:fsGroup values\nbased on the *podSecurityContext/*containerSecurityContext parameters",
+      "properties": {
+        "image": {
+          "$ref": "#/$defs/values~1sysctl.image"
+        }
+      },
+      "type": "object"
     }
   },
   "type": "object"

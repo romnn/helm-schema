@@ -337,6 +337,7 @@ fn shadowed_dependency_global_default_does_not_type_ignored_input() {
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
             "properties": {
+                "global": {},
                 "metrics": {
                     "additionalProperties": {},
                     "properties": {
@@ -1315,6 +1316,7 @@ fn quoting_helper_printf_output_clears_its_plain_slot_contract() {
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
             "properties": {
+                "global": {},
                 "repository": {}
             },
             "type": "object"

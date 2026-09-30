@@ -3,7 +3,8 @@
 Source of truth: `adjudicate_flip`, `HelmAdjudicationCoverage`,
 `validate_helm_adjudication_coverage` and `validate_probe_coverage` in
 `crates/helm-schema/tests/schema_emission_profiles.rs`; the rosters in
-`crates/helm-schema/tests/common/known_false_acceptances.rs`; the probe
+`crates/helm-schema/tests/common/known_false_acceptances.rs` and
+`crates/helm-schema/tests/common/known_undecided_acceptances.rs`; the probe
 generator in `crates/helm-schema/tests/common/emission_profile_harness.rs`.
 
 In the harness, `full` or `before` always means the **baseline** schema and
@@ -82,6 +83,7 @@ something Helm renders cleanly is a false rejection, which is a regression.
 | `Collapsed` | on Helm's exact document both profiles agree, with no new reason | dropped: not a flip (`screened_flips_collapsed`) |
 | `TighteningMatchedHelmAbort` | candidate rejects, Helm aborts | matched |
 | `TighteningMatchedKubernetesRejection` | candidate rejects, render adds a new Kubernetes violation beyond the defaults render | matched |
+| `TighteningMatchedDeclaredTypesPolicy` | the candidate rejects, Helm renders with no proved Kubernetes violation, the candidate is the chart's `--declared-types=assert` regeneration, its `annotate` regeneration accepts the document outright, and every value the assert regeneration rejects is a path explain C1 reports unread; whatever the baseline rejects is irrelevant, and no failures are compared | matched, listed in `tightenings_attributed_to_declared_types`; never rostered |
 | `LooseningMatchedKubernetesValidation` | candidate accepts, render valid, every changed resource decided | matched |
 | `LooseningMatchedDefaultsViolations` | candidate accepts, and every violation is one the defaults render already carries (counted with multiplicity) | matched |
 | `LooseningWithUncertainKubernetes` | candidate accepts, Helm renders, some new or changed resource has no decidable schema | must be listed **exactly** (same uncertainty strings, in order) in `KNOWN_UNDECIDED_ACCEPTANCES` |

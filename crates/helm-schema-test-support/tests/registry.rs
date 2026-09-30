@@ -21,7 +21,7 @@ fn registry_holds_every_fixture_family_once() -> eyre::Result<()> {
         have: internal,
         want: vec![ArtifactId::Chart(ChartId::SignozPostgresql)]
     );
-    sim_assert_eq!(have: specs.len(), want: 203);
+    sim_assert_eq!(have: specs.len(), want: 205);
     Ok(())
 }
 
@@ -90,6 +90,7 @@ fn fixture_directories_hold_exactly_the_registered_fixtures() -> eyre::Result<()
     let mut on_disk = BTreeSet::new();
     for dir in [
         "testdata/chart-corpus-schemas",
+        "testdata/chart-corpus-policy-schemas",
         "testdata/emission-profile-schemas/lean",
         "testdata/final-output-schemas",
         "crates/helm-schema-gen/tests/fixtures",

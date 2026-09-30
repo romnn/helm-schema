@@ -6195,22 +6195,19 @@
       "description": "The nodeSelector on Pods tells Kubernetes to schedule Pods on the nodes with\nmatching labels.\nFor more information, see [Assigning Pods to Nodes](https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/).\nThis default ensures that Pods are only scheduled to Linux nodes.\nIt prevents Pods being scheduled to Windows nodes in a mixed OS cluster.\n+docs:property"
     },
     "values/cainjector.podDisruptionBudget": {
-      "allOf": [
-        {
-          "type": "object"
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {
+          "$ref": "#/$defs/values~1cainjector.podDisruptionBudget.enabled"
         },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {
-              "$ref": "#/$defs/values~1podDisruptionBudget.enabled"
-            },
-            "maxUnavailable": {},
-            "minAvailable": {},
-            "unhealthyPodEvictionPolicy": {}
-          }
-        }
-      ]
+        "maxUnavailable": {},
+        "minAvailable": {},
+        "unhealthyPodEvictionPolicy": {}
+      },
+      "type": "object"
+    },
+    "values/cainjector.podDisruptionBudget.enabled": {
+      "description": "Enable or disable the PodDisruptionBudget resource.\nThis prevents downtime during voluntary disruptions such as during a Node upgrade.\nFor example, the PodDisruptionBudget will block `kubectl drain`\nif it is used on the Node where the only remaining cert-manager\nPod is currently running."
     },
     "values/cainjector.serviceAccount.automountServiceAccountToken": {
       "description": "Automount API credentials for a Service Account."
@@ -6547,9 +6544,6 @@
     "values/null;ipfamilypolicy-represents-the-dual-stack-ness": {
       "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
       "type": "null"
-    },
-    "values/podDisruptionBudget.enabled": {
-      "description": "Enable or disable the PodDisruptionBudget resource.\nThis prevents downtime during voluntary disruptions such as during a Node upgrade.\nFor example, the PodDisruptionBudget will block `kubectl drain`\nif it is used on the Node where the only remaining cert-manager\nPod is currently running."
     },
     "values/podDnsConfig/array,null;a-list-of-dns": {
       "description": "A list of DNS name server IP addresses. This will be appended to the base nameservers generated from DNSPolicy. Duplicated nameservers will be removed.",
@@ -10798,15 +10792,9 @@
         },
         "automountServiceAccountToken": {},
         "config": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
-              "additionalProperties": {}
-            }
-          ],
-          "description": "This is used to configure options for the cainjector pod.\nIt allows setting options that are usually provided via flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `cainjector.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: cainjector.config.cert-manager.io/v1alpha1\nkind: CAInjectorConfiguration\nlogging:\nverbosity: 2\nformat: text\nleaderElectionConfig:\nnamespace: kube-system\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics"
+          "additionalProperties": {},
+          "description": "This is used to configure options for the cainjector pod.\nIt allows setting options that are usually provided via flags.\nIf `apiVersion` and `kind` are unspecified they default to the current latest\nversion (currently `cainjector.config.cert-manager.io/v1alpha1`). You can pin\nthe version by specifying the `apiVersion` yourself.\nFor example:\napiVersion: cainjector.config.cert-manager.io/v1alpha1\nkind: CAInjectorConfiguration\nlogging:\nverbosity: 2\nformat: text\nleaderElectionConfig:\nnamespace: kube-system\nConfigure the metrics server for TLS\nSee https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls\nmetricsTLSConfig:\ndynamic:\nsecretNamespace: \"cert-manager\"\nsecretName: \"cert-manager-metrics-ca\"\ndnsNames:\n- cert-manager-metrics",
+          "type": "object"
         },
         "containerSecurityContext": {
           "description": "Container Security Context to be set on the cainjector component container\nFor more information, see [Configure a Security Context for a Pod or Container](https://kubernetes.io/docs/tasks/configure-pod-container/security-context/).\n+docs:property"
@@ -11026,59 +11014,6 @@
           "then": false
         },
         {
-          "additionalProperties": {},
-          "properties": {
-            "revisionHistoryLimit": {
-              "allOf": [
-                {
-                  "if": {
-                    "not": {
-                      "anyOf": [
-                        {
-                          "enum": [
-                            ""
-                          ]
-                        },
-                        {
-                          "enum": [
-                            null
-                          ]
-                        }
-                      ]
-                    }
-                  },
-                  "then": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                      },
-                      {
-                        "description": "The number of old ReplicaSets to retain to allow rollback. This is a pointer to distinguish between explicit zero and not specified. Defaults to 10.",
-                        "format": "int32",
-                        "type": "null"
-                      },
-                      {
-                        "$ref": "#/$defs/values~1cainjector~1string;pattern-0-1-9"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                      },
-                      {
-                        "description": "The number of old ReplicaSets to retain to allow rollback. This is a pointer to distinguish between explicit zero and not specified. Defaults to 10.",
-                        "format": "int32",
-                        "type": "integer"
-                      }
-                    ]
-                  }
-                }
-              ]
-            }
-          }
-        },
-        {
           "if": {
             "anyOf": [
               {
@@ -11250,7 +11185,54 @@
           },
           "type": "object"
         },
-        "revisionHistoryLimit": {}
+        "revisionHistoryLimit": {
+          "allOf": [
+            {
+              "if": {
+                "not": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        ""
+                      ]
+                    },
+                    {
+                      "enum": [
+                        null
+                      ]
+                    }
+                  ]
+                }
+              },
+              "then": {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                  },
+                  {
+                    "description": "The number of old ReplicaSets to retain to allow rollback. This is a pointer to distinguish between explicit zero and not specified. Defaults to 10.",
+                    "format": "int32",
+                    "type": "null"
+                  },
+                  {
+                    "$ref": "#/$defs/values~1cainjector~1string;pattern-0-1-9"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                  },
+                  {
+                    "description": "The number of old ReplicaSets to retain to allow rollback. This is a pointer to distinguish between explicit zero and not specified. Defaults to 10.",
+                    "format": "int32",
+                    "type": "integer"
+                  }
+                ]
+              }
+            }
+          ]
+        }
       },
       "type": "object"
     },
@@ -11411,7 +11393,7 @@
       ],
       "properties": {
         "enabled": {
-          "$ref": "#/$defs/values~1podDisruptionBudget.enabled"
+          "$ref": "#/$defs/values~1cainjector.podDisruptionBudget.enabled"
         },
         "maxUnavailable": {},
         "minAvailable": {},

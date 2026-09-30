@@ -17623,127 +17623,121 @@
           "description": "The selectorLabels used to override the default values."
         },
         "service": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "allocateLoadBalancerNodePorts": {},
+            "annotations": {
+              "description": "The annotations of the Ingress Controller service."
             },
-            {
+            "clusterIP": {
+              "description": "The ClusterIP for the Ingress Controller service, autoassigned if not specified."
+            },
+            "create": {
+              "description": "Creates a service to expose the Ingress Controller pods."
+            },
+            "customPorts": {
+              "description": "A list of custom ports to expose through the Ingress Controller service. Follows the conventional Kubernetes yaml syntax for service ports."
+            },
+            "externalIPs": {
+              "description": "The list of external IPs for the Ingress Controller service."
+            },
+            "externalTrafficPolicy": {
+              "description": "The externalTrafficPolicy of the service. The value Local preserves the client source IP."
+            },
+            "extraLabels": {
+              "description": "The extra labels of the service."
+            },
+            "httpPort": {
               "additionalProperties": {},
               "properties": {
-                "allocateLoadBalancerNodePorts": {},
-                "annotations": {
-                  "description": "The annotations of the Ingress Controller service."
+                "enable": {
+                  "description": "Enables the HTTP port for the Ingress Controller service."
                 },
-                "clusterIP": {
-                  "description": "The ClusterIP for the Ingress Controller service, autoassigned if not specified."
+                "name": {
+                  "description": "The name of the HTTP port."
                 },
-                "create": {
-                  "description": "Creates a service to expose the Ingress Controller pods."
+                "nodePort": {},
+                "port": {
+                  "description": "The HTTP port of the Ingress Controller service."
                 },
-                "customPorts": {
-                  "description": "A list of custom ports to expose through the Ingress Controller service. Follows the conventional Kubernetes yaml syntax for service ports."
+                "targetPort": {
+                  "description": "The HTTP port on the POD where the Ingress Controller service is running."
+                }
+              }
+            },
+            "httpsPort": {
+              "additionalProperties": {},
+              "properties": {
+                "enable": {
+                  "description": "Enables the HTTPS port for the Ingress Controller service."
                 },
-                "externalIPs": {
-                  "description": "The list of external IPs for the Ingress Controller service."
+                "name": {
+                  "description": "The name of the HTTPS port."
                 },
-                "externalTrafficPolicy": {
-                  "description": "The externalTrafficPolicy of the service. The value Local preserves the client source IP."
+                "nodePort": {},
+                "port": {
+                  "description": "The HTTPS port of the Ingress Controller service."
                 },
-                "extraLabels": {
-                  "description": "The extra labels of the service."
+                "targetPort": {
+                  "description": "The HTTPS port on the POD where the Ingress Controller service is running."
+                }
+              }
+            },
+            "ipFamilies": {},
+            "ipFamilyPolicy": {},
+            "loadBalancerClass": {},
+            "loadBalancerIP": {
+              "description": "The static IP address for the load balancer. Requires controller.service.type set to LoadBalancer. The cloud provider must support this feature."
+            },
+            "loadBalancerSourceRanges": {
+              "description": "The IP ranges (CIDR) that are allowed to access the load balancer. Requires controller.service.type set to LoadBalancer. The cloud provider must support this feature."
+            },
+            "sessionAffinity": {
+              "additionalProperties": {},
+              "description": "Session affinity configuration for the Ingress Controller service, ensures requests from the same client IP go to the same pod",
+              "properties": {
+                "enable": {
+                  "description": "Enable session affinity. Valid values: None, ClientIP"
                 },
-                "httpPort": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enable": {
-                      "description": "Enables the HTTP port for the Ingress Controller service."
-                    },
-                    "name": {
-                      "description": "The name of the HTTP port."
-                    },
-                    "nodePort": {},
-                    "port": {
-                      "description": "The HTTP port of the Ingress Controller service."
-                    },
-                    "targetPort": {
-                      "description": "The HTTP port on the POD where the Ingress Controller service is running."
-                    }
-                  }
-                },
-                "httpsPort": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enable": {
-                      "description": "Enables the HTTPS port for the Ingress Controller service."
-                    },
-                    "name": {
-                      "description": "The name of the HTTPS port."
-                    },
-                    "nodePort": {},
-                    "port": {
-                      "description": "The HTTPS port of the Ingress Controller service."
-                    },
-                    "targetPort": {
-                      "description": "The HTTPS port on the POD where the Ingress Controller service is running."
-                    }
-                  }
-                },
-                "ipFamilies": {},
-                "ipFamilyPolicy": {},
-                "loadBalancerClass": {},
-                "loadBalancerIP": {
-                  "description": "The static IP address for the load balancer. Requires controller.service.type set to LoadBalancer. The cloud provider must support this feature."
-                },
-                "loadBalancerSourceRanges": {
-                  "description": "The IP ranges (CIDR) that are allowed to access the load balancer. Requires controller.service.type set to LoadBalancer. The cloud provider must support this feature."
-                },
-                "sessionAffinity": {
-                  "additionalProperties": {},
-                  "description": "Session affinity configuration for the Ingress Controller service, ensures requests from the same client IP go to the same pod",
-                  "properties": {
-                    "enable": {
-                      "description": "Enable session affinity. Valid values: None, ClientIP"
-                    },
-                    "timeoutSeconds": {
-                      "description": "Session affinity timeout in seconds (default: 3600 = 1 hour)"
-                    },
-                    "type": {
-                      "anyOf": [
-                        {
-                          "enum": [
-                            "ClientIP"
-                          ]
-                        },
-                        {
-                          "type": "null"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ],
-                      "description": "Session affinity type. Currently only ClientIP is supported."
-                    }
-                  }
+                "timeoutSeconds": {
+                  "description": "Session affinity timeout in seconds (default: 3600 = 1 hour)"
                 },
                 "type": {
                   "anyOf": [
+                    {
+                      "enum": [
+                        "ClientIP"
+                      ]
+                    },
                     {
                       "type": "null"
                     },
                     {
                       "type": "string"
-                    },
-                    {
-                      "enum": [
-                        "LoadBalancer"
-                      ]
                     }
                   ],
-                  "description": "The type of service to create for the Ingress Controller."
+                  "description": "Session affinity type. Currently only ClientIP is supported."
                 }
               }
+            },
+            "type": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "enum": [
+                    "LoadBalancer"
+                  ]
+                }
+              ],
+              "description": "The type of service to create for the Ingress Controller."
             }
-          ]
+          },
+          "type": "object"
         },
         "serviceAccount": {
           "additionalProperties": {},
@@ -17861,6 +17855,7 @@
       "type": "object"
     },
     "fullnameOverride": {},
+    "global": {},
     "nameOverride": {},
     "nginxAgent": {
       "additionalProperties": {},

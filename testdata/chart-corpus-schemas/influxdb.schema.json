@@ -2482,7 +2482,7 @@
           "not": {
             "properties": {
               "createAdminTokenJob": {
-                "$ref": "#/$defs/constrains~1image.repository@2"
+                "$ref": "#/$defs/constrains~1image.repository"
               }
             },
             "required": [
@@ -2814,7 +2814,7 @@
               "defaultInitContainers": {
                 "properties": {
                   "volumePermissions": {
-                    "$ref": "#/$defs/constrains~1image.repository@2"
+                    "$ref": "#/$defs/constrains~1image.repository"
                   }
                 },
                 "required": [
@@ -3967,18 +3967,15 @@
       "type": "object"
     },
     "constrains/image.repository": {
-      "additionalProperties": {},
       "properties": {
         "image": {
-          "additionalProperties": {},
-          "properties": {
-            "repository": {
-              "description": "[default: REPOSITORY_NAME/os-shell] Kubectl image repository",
-              "type": "string"
-            }
-          }
+          "$ref": "#/$defs/constrains~1repository"
         }
-      }
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
     },
     "constrains/image.repository+image.repository=null": {
       "anyOf": [
@@ -3987,7 +3984,7 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1image.repository@2"
+            "$ref": "#/$defs/constrains~1image.repository"
           }
         }
       ]
@@ -3996,17 +3993,6 @@
       "properties": {
         "image": {
           "$ref": "#/$defs/constrains~1repository=null"
-        }
-      },
-      "required": [
-        "image"
-      ],
-      "type": "object"
-    },
-    "constrains/image.repository@2": {
-      "properties": {
-        "image": {
-          "$ref": "#/$defs/constrains~1repository@2"
         }
       },
       "required": [
@@ -5747,13 +5733,13 @@
       "type": "object"
     },
     "constrains/repository": {
-      "additionalProperties": {},
       "properties": {
-        "repository": {
-          "description": "[default: REPOSITORY_NAME/influxdb] InfluxDB(TM) Core image repository",
-          "type": "string"
-        }
-      }
+        "repository": {}
+      },
+      "required": [
+        "repository"
+      ],
+      "type": "object"
     },
     "constrains/repository=null": {
       "properties": {
@@ -5762,15 +5748,6 @@
             null
           ]
         }
-      },
-      "required": [
-        "repository"
-      ],
-      "type": "object"
-    },
-    "constrains/repository@2": {
-      "properties": {
-        "repository": {}
       },
       "required": [
         "repository"
@@ -6525,26 +6502,6 @@
       ],
       "type": "object"
     },
-    "constrains/volumePermissions.image.repository": {
-      "additionalProperties": {},
-      "properties": {
-        "volumePermissions": {
-          "additionalProperties": {},
-          "description": "'volume-permissions' init-container\nUsed to change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
-          "properties": {
-            "image": {
-              "additionalProperties": {},
-              "properties": {
-                "repository": {
-                  "description": "[default: REPOSITORY_NAME/os-shell] \"volume-permissions\" init-containers' image repository",
-                  "type": "string"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "constrains/volumePermissions=null": {
       "properties": {
         "volumePermissions": {
@@ -6735,6 +6692,14 @@
     "values/containerSecurityContext.seLinuxOptions": {
       "description": "[object,nullable] Set SELinux options in container"
     },
+    "values/createAdminTokenJob.image.repository": {
+      "description": "[default: REPOSITORY_NAME/os-shell] Kubectl image repository",
+      "type": "string"
+    },
+    "values/defaultInitContainers.volumePermissions.image.repository": {
+      "description": "[default: REPOSITORY_NAME/os-shell] \"volume-permissions\" init-containers' image repository",
+      "type": "string"
+    },
     "values/extraEnvVarsCM/null;name-of-the-referent": {
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": "null"
@@ -6810,6 +6775,10 @@
         "string",
         "null"
       ]
+    },
+    "values/image.repository": {
+      "description": "[default: REPOSITORY_NAME/influxdb] InfluxDB(TM) Core image repository",
+      "type": "string"
     },
     "values/integer": {
       "maximum": 0,
@@ -7146,7 +7115,7 @@
         "anyOf": [
           {
             "not": {
-              "$ref": "#/$defs/constrains~1repository@2"
+              "$ref": "#/$defs/constrains~1repository"
             }
           },
           {
@@ -8801,19 +8770,6 @@
                   }
                 }
               }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "createAdminTokenJob": {
-          "additionalProperties": {},
-          "properties": {
-            "image": {
-              "type": "object"
             }
           }
         }
@@ -11662,17 +11618,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
       "if": {
         "not": {
           "$ref": "#/$defs/constrains~1resources:t"
@@ -12642,7 +12587,12 @@
         "additionalProperties": {},
         "properties": {
           "image": {
-            "$ref": "#/$defs/constrains~1repository"
+            "additionalProperties": {},
+            "properties": {
+              "repository": {
+                "$ref": "#/$defs/values~1image.repository"
+              }
+            }
           }
         }
       }
@@ -14056,7 +14006,23 @@
             "additionalProperties": {},
             "properties": {
               "defaultInitContainers": {
-                "$ref": "#/$defs/constrains~1volumePermissions.image.repository"
+                "additionalProperties": {},
+                "properties": {
+                  "volumePermissions": {
+                    "additionalProperties": {},
+                    "description": "'volume-permissions' init-container\nUsed to change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
+                    "properties": {
+                      "image": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "repository": {
+                            "$ref": "#/$defs/values~1defaultInitContainers.volumePermissions.image.repository"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
               }
             }
           }
@@ -14829,20 +14795,6 @@
               }
             ],
             "description": "Annotations to add to all deployed objects"
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "defaultInitContainers": {
-          "additionalProperties": {},
-          "properties": {
-            "volumePermissions": {
-              "description": "'volume-permissions' init-container\nUsed to change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
-              "type": "object"
-            }
           }
         }
       }
@@ -16004,7 +15956,17 @@
             "additionalProperties": {},
             "properties": {
               "createAdminTokenJob": {
-                "$ref": "#/$defs/constrains~1image.repository"
+                "additionalProperties": {},
+                "properties": {
+                  "image": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "repository": {
+                        "$ref": "#/$defs/values~1createAdminTokenJob.image.repository"
+                      }
+                    }
+                  }
+                }
               }
             }
           },
@@ -16243,25 +16205,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "defaultInitContainers": {
-          "additionalProperties": {},
-          "properties": {
-            "volumePermissions": {
-              "additionalProperties": {},
-              "description": "'volume-permissions' init-container\nUsed to change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
-              "properties": {
-                "image": {
-                  "type": "object"
-                }
-              }
-            }
-          }
-        }
-      }
     },
     {
       "if": {
@@ -17375,31 +17318,25 @@
       "description": "Autoscaling configuration\nref: https://kubernetes.io/docs/concepts/workloads/autoscaling/",
       "properties": {
         "hpa": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "description": "Enable HPA for InfluxDB(TM) Core (ignored if `objectStore` is set to `file` or `memory`)"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "description": "Enable HPA for InfluxDB(TM) Core (ignored if `objectStore` is set to `file` or `memory`)"
-                },
-                "maxReplicas": {
-                  "description": "Maximum number of replicas"
-                },
-                "minReplicas": {
-                  "description": "Minimum number of replicas"
-                },
-                "targetCPU": {
-                  "description": "Target CPU utilization percentage"
-                },
-                "targetMemory": {
-                  "description": "Target Memory utilization percentage"
-                }
-              }
+            "maxReplicas": {
+              "description": "Maximum number of replicas"
+            },
+            "minReplicas": {
+              "description": "Minimum number of replicas"
+            },
+            "targetCPU": {
+              "description": "Target CPU utilization percentage"
+            },
+            "targetMemory": {
+              "description": "Target Memory utilization percentage"
             }
-          ]
+          },
+          "type": "object"
         },
         "vpa": {
           "additionalProperties": {},
@@ -17495,26 +17432,7 @@
           "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
           "type": "string"
         },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "compatibility": {
-              "additionalProperties": {},
-              "properties": {
-                "openshift": {
-                  "additionalProperties": {},
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            },
-            "security": {
-              "additionalProperties": {},
-              "type": "object"
-            }
-          },
-          "type": "object"
-        }
+        "global": {}
       },
       "type": "object"
     },
@@ -17587,13 +17505,8 @@
       "type": "object"
     },
     "createAdminTokenJob": {
+      "additionalProperties": {},
       "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1image.repository"
-        },
-        {
-          "type": "object"
-        },
         {
           "$ref": "#/$defs/when~1image+image=null~1then~1fail"
         },
@@ -17609,7 +17522,19 @@
             }
           }
         }
-      ]
+      ],
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "$ref": "#/$defs/values~1createAdminTokenJob.image.repository"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     "customLivenessProbe": {
       "description": "Override default liveness probe"
@@ -17624,6 +17549,7 @@
       "description": "Comma separated list of databases to create (ignored if `objectStore` is set to `memory`)"
     },
     "defaultInitContainers": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -17639,9 +17565,6 @@
             ]
           },
           "then": false
-        },
-        {
-          "type": "object"
         },
         {
           "additionalProperties": {},
@@ -17673,11 +17596,27 @@
               "description": "'volume-permissions' init-container\nUsed to change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node"
             }
           }
-        },
-        {
-          "$ref": "#/$defs/constrains~1volumePermissions.image.repository"
         }
-      ]
+      ],
+      "properties": {
+        "volumePermissions": {
+          "additionalProperties": {},
+          "description": "'volume-permissions' init-container\nUsed to change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
+          "properties": {
+            "image": {
+              "additionalProperties": {},
+              "properties": {
+                "repository": {
+                  "$ref": "#/$defs/values~1defaultInitContainers.volumePermissions.image.repository"
+                }
+              },
+              "type": "object"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     "diagnosticMode": {
       "additionalProperties": {},
@@ -19512,8 +19451,7 @@
           "type": "object"
         },
         "storageClass": {}
-      },
-      "type": "object"
+      }
     },
     "google": {
       "additionalProperties": {},
@@ -19550,17 +19488,18 @@
       "description": "InfluxDB(TM) Core pods host aliases\nhttps://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/"
     },
     "image": {
+      "additionalProperties": {},
       "allOf": [
         {
           "$ref": "#/$defs/when~1repository+repository=null~1then~1fail"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1repository"
         }
-      ]
+      ],
+      "properties": {
+        "repository": {
+          "$ref": "#/$defs/values~1image.repository"
+        }
+      },
+      "type": "object"
     },
     "ingress": {
       "additionalProperties": {},

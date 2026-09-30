@@ -437,6 +437,17 @@
         }
       ]
     },
+    "constrains/grafanaDashboard.create": {
+      "properties": {
+        "grafanaDashboard": {
+          "$ref": "#/$defs/constrains~1create"
+        }
+      },
+      "required": [
+        "grafanaDashboard"
+      ],
+      "type": "object"
+    },
     "constrains/grafanaDashboard.create+grafanaDashboard.create=null": {
       "allOf": [
         {
@@ -446,15 +457,7 @@
           "anyOf": [
             {
               "not": {
-                "properties": {
-                  "grafanaDashboard": {
-                    "$ref": "#/$defs/constrains~1create"
-                  }
-                },
-                "required": [
-                  "grafanaDashboard"
-                ],
-                "type": "object"
+                "$ref": "#/$defs/constrains~1grafanaDashboard.create"
               }
             },
             {
@@ -746,6 +749,19 @@
           "type": "object"
         }
       ]
+    },
+    "constrains/monitoring.grafanaDashboard.create": {
+      "not": {
+        "properties": {
+          "monitoring": {
+            "$ref": "#/$defs/constrains~1grafanaDashboard.create"
+          }
+        },
+        "required": [
+          "monitoring"
+        ],
+        "type": "object"
+      }
     },
     "constrains/mutating": {
       "properties": {
@@ -2175,6 +2191,129 @@
                 ]
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "monitoring": {
+                "properties": {
+                  "grafanaDashboard": {
+                    "properties": {
+                      "create": {
+                        "enum": [
+                          true
+                        ]
+                      }
+                    },
+                    "required": [
+                      "create"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "grafanaDashboard"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "monitoring"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1monitoring.grafanaDashboard.create"
+                  },
+                  {
+                    "properties": {
+                      "monitoring": {
+                        "properties": {
+                          "grafanaDashboard": {
+                            "properties": {
+                              "create": {
+                                "not": {
+                                  "enum": [
+                                    true
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "create"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "grafanaDashboard"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "monitoring"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1monitoring.grafanaDashboard.create"
+                  },
+                  {
+                    "properties": {
+                      "monitoring": {
+                        "properties": {
+                          "grafanaDashboard": {
+                            "properties": {
+                              "create": {
+                                "not": {
+                                  "enum": [
+                                    false
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "create"
+                            ],
+                            "type": "object"
+                          }
+                        },
+                        "required": [
+                          "grafanaDashboard"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "monitoring"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "monitoring": {
+            "type": "object"
           }
         }
       }
@@ -3697,13 +3836,7 @@
         }
       ],
       "properties": {
-        "fullnameOverride": {
-          "type": "string"
-        },
-        "global": {
-          "additionalProperties": {},
-          "type": "object"
-        },
+        "global": {},
         "grafanaDashboard": {
           "additionalProperties": {},
           "allOf": [
@@ -3846,15 +3979,11 @@
             }
           }
         },
-        "nameOverride": {
-          "type": "string"
-        },
         "podMonitorAdditionalLabels": {
           "description": "Additional labels for the podMonitor"
         },
         "podMonitorEnabled": {
-          "description": "Specifies whether the monitoring should be enabled. Requires Prometheus Operator CRDs.",
-          "type": "boolean"
+          "description": "Specifies whether the monitoring should be enabled. Requires Prometheus Operator CRDs."
         },
         "podMonitorMetricRelabelings": {
           "description": "Metrics relabel configurations to apply to samples before ingestion."

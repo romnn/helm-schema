@@ -53,6 +53,15 @@ pub fn build_dependency_refill_values_document(charts: &[ChartContext]) -> Engin
     Ok(doc)
 }
 
+/// The chart's own `values.yaml`, or null when it has none.
+pub(crate) fn chart_own_values(chart: &ChartContext) -> EngineResult<YamlValue> {
+    let path = chart.chart_dir.join("values.yaml")?;
+    if !path.is_file()? {
+        return Ok(YamlValue::Null);
+    }
+    Ok(serde_yaml::from_str(&path.read_to_string()?)?)
+}
+
 pub(crate) struct DependencyGlobalOwnership {
     pub(crate) shadowed_input_paths: BTreeSet<String>,
 }
@@ -62,11 +71,7 @@ pub(crate) fn build_dependency_global_ownership(
 ) -> EngineResult<DependencyGlobalOwnership> {
     let mut declarations = Vec::new();
     for chart in charts {
-        let values_path = chart.chart_dir.join("values.yaml")?;
-        if !values_path.is_file()? {
-            continue;
-        }
-        let defaults = serde_yaml::from_str::<YamlValue>(&values_path.read_to_string()?)?;
+        let defaults = chart_own_values(chart)?;
         let Some(global) = defaults
             .as_mapping()
             .and_then(|mapping| mapping.get(YamlValue::String("global".to_string())))
@@ -181,11 +186,7 @@ fn compose_subchart_values(charts: &[ChartContext], doc: &mut YamlValue) -> Engi
         let target = ensure_mapping_path(doc, &chart.values_prefix);
         coalesce_global_values(target, parent_global.as_ref());
 
-        let path = chart.chart_dir.join("values.yaml")?;
-        if !path.is_file()? {
-            continue;
-        }
-        let defaults: YamlValue = serde_yaml::from_str(&path.read_to_string()?)?;
+        let defaults = chart_own_values(chart)?;
         let dependency_keys = direct_dependency_keys(charts, &chart.values_prefix);
         coalesce_chart_values(target, defaults, &dependency_keys);
     }

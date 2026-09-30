@@ -1178,6 +1178,7 @@ fn cert_manager_webhook_values_root_is_seeded_without_dependency_fragment() -> e
         values_files: Vec::new(),
         infer_required: false,
         emission: crate::generation::SchemaProfile::default().into(),
+        authoring: crate::generation::AuthoringPolicy::default(),
         provider: crate::provider::ProviderOptions {
             k8s_versions: vec!["v1.29.0-standalone-strict".to_string()],
             k8s_schema_cache_dir: Some(test_util::cold_provider_cache_root("k8s")?),
@@ -1545,6 +1546,7 @@ fn activated_rewrite_schema() -> eyre::Result<serde_json::Value> {
         values_files: Vec::new(),
         infer_required: false,
         emission: crate::generation::SchemaProfile::default().into(),
+        authoring: crate::generation::AuthoringPolicy::default(),
         provider: crate::provider::ProviderOptions {
             disable_k8s_schemas: true,
             allow_net: false,
@@ -2081,6 +2083,7 @@ fn tpl_executes_only_the_selected_chart_authored_default_program() -> eyre::Resu
         values_files: Vec::new(),
         infer_required: false,
         emission: crate::generation::SchemaProfile::default().into(),
+        authoring: crate::generation::AuthoringPolicy::default(),
         provider: crate::provider::ProviderOptions {
             disable_k8s_schemas: true,
             allow_net: false,

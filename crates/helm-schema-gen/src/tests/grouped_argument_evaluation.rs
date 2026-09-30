@@ -17,10 +17,7 @@ fn grouped_map_argument_keeps_nil_conversion_separate_from_path_identity() {
     "#};
     let schema = schema_for(parse_ir(src));
     let mut properties = serde_json::Map::new();
-    properties.insert(
-        "bare".to_string(),
-        serde_json::json!({ "allOf": [{}, { "type": "object" }] }),
-    );
+    properties.insert("bare".to_string(), serde_json::json!({ "type": "object" }));
     properties.insert("grouped".to_string(), serde_json::json!({}));
     let expected = expected_values_schema(
         properties,
@@ -200,6 +197,7 @@ fn expected_grouped_selector_argument_schema() -> serde_json::Value {
             },
         ],
         "properties": {
+            "global": {},
             "parent": {
                 "additionalProperties": {},
                 "properties": { "subject": {} },
@@ -324,7 +322,7 @@ fn expected_rebound_root_selector_schema() -> serde_json::Value {
     let mut properties = serde_json::Map::new();
     properties.insert(
         "original".to_string(),
-        serde_json::json!({ "allOf": [{}, { "type": "object" }] }),
+        serde_json::json!({ "type": "object" }),
     );
     properties.insert(
         "rebound".to_string(),
@@ -707,6 +705,7 @@ fn exact_list_range_binding_retains_direct_member_access() {
             },
         ],
         "properties": {
+            "global": {},
             "cfg": {
                 "additionalProperties": {},
                 "allOf": [{
@@ -725,7 +724,7 @@ fn exact_list_range_binding_retains_direct_member_access() {
                     "then": false,
                 }],
                 "properties": {
-                    "child": { "allOf": [{}, { "type": "object" }] },
+                    "child": { "type": "object" },
                 },
                 "type": "object",
             },
@@ -2441,7 +2440,8 @@ fn later_if_header_declaration_reaches_its_else_and_restores_after_the_region() 
                 "properties": { "before": { "type": ["null", "object"] } }
             }
         ],
-        "properties": { "after": {}, "before": {}, "first": {} },
+        "properties": {
+        "global": {}, "after": {}, "before": {}, "first": {} },
         "type": "object"
     });
 

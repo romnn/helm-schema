@@ -13015,28 +13015,22 @@
       "description": "This job is meant primarily for cleaning up CRDs on CI systems.\nUsing this on production systems, especially those that have multiple releases of Velero, will be destructive."
     },
     "configMaps": {
-      "allOf": [
-        {
-          "anyOf": [
-            {
-              "type": "object"
-            },
-            {
-              "additionalProperties": {}
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "array"
-            }
-          ]
-        },
+      "anyOf": [
         {
           "type": "object"
+        },
+        {
+          "additionalProperties": {}
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "array"
         }
       ],
-      "description": "Velero ConfigMaps.\nEg:\nconfigMaps:\nSee: https://velero.io/docs/v1.11/file-system-backup/\nfs-restore-action-config:\nlabels:\nvelero.io/plugin-config: \"\"\nvelero.io/pod-volume-restore: RestoreItemAction\ndata:\nimage: velero/velero:v1.17.1\ncpuRequest: 200m\nmemRequest: 128Mi\ncpuLimit: 200m\nmemLimit: 128Mi\nsecCtx: |\ncapabilities:\ndrop:\n- ALL\nadd: []\nallowPrivilegeEscalation: false\nreadOnlyRootFilesystem: true\nrunAsUser: 1001\nrunAsGroup: 999"
+      "description": "Velero ConfigMaps.\nEg:\nconfigMaps:\nSee: https://velero.io/docs/v1.11/file-system-backup/\nfs-restore-action-config:\nlabels:\nvelero.io/plugin-config: \"\"\nvelero.io/pod-volume-restore: RestoreItemAction\ndata:\nimage: velero/velero:v1.17.1\ncpuRequest: 200m\nmemRequest: 128Mi\ncpuLimit: 200m\nmemLimit: 128Mi\nsecCtx: |\ncapabilities:\ndrop:\n- ALL\nadd: []\nallowPrivilegeEscalation: false\nreadOnlyRootFilesystem: true\nrunAsUser: 1001\nrunAsGroup: 999",
+      "type": "object"
     },
     "configuration": {
       "additionalProperties": {},
@@ -13323,35 +13317,29 @@
         },
         "provider": {},
         "repositoryMaintenanceJob": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
+          "additionalProperties": {},
+          "description": "Resource requests/limits to specify for the repository-maintenance job. Optional.\nhttps://velero.io/docs/v1.14/repository-maintenance/#resource-limitation",
+          "properties": {
+            "latestJobsCount": {},
+            "limits": {},
+            "repositoryConfigData": {
               "additionalProperties": {},
+              "description": "Per-repository resource settings ConfigMap\nThis ConfigMap allows specifying different settings for different repositories\nSee: https://velero.io/docs/main/repository-maintenance/",
               "properties": {
-                "latestJobsCount": {},
-                "limits": {},
-                "repositoryConfigData": {
-                  "additionalProperties": {},
-                  "description": "Per-repository resource settings ConfigMap\nThis ConfigMap allows specifying different settings for different repositories\nSee: https://velero.io/docs/main/repository-maintenance/",
-                  "properties": {
-                    "global": {
-                      "description": "Global configuration applied to all repositories\nThis configuration is used when no specific repository configuration is found\nglobal:\npodResources:\ncpuRequest: \"100m\"\ncpuLimit: \"200m\"\nmemoryRequest: \"100Mi\"\nmemoryLimit: \"200Mi\"\nkeepLatestMaintenanceJobs: 1\nloadAffinity:\n- nodeSelector:\nmatchExpressions:\n- key: \"cloud.google.com/machine-family\"\noperator: \"In\"\nvalues: [\"e2\"]\n- nodeSelector:\nmatchExpressions:\n- key: \"topology.kubernetes.io/zone\"\noperator: \"In\"\nvalues: [\"us-central1-a\", \"us-central1-b\", \"us-central1-c\"]\npriorityClassName: \"low-priority\"  # Note: priorityClassName is only supported in global configuration"
-                    },
-                    "name": {
-                      "description": "Name of the ConfigMap to create. If not provided, will use \"velero-repo-maintenance\""
-                    },
-                    "repositories": {
-                      "description": "Repository-specific configurations\nRepository keys are formed as: \"{namespace}-{storageLocation}-{repositoryType}\"\nFor example: \"default-default-kopia\" or \"prod-s3-backup-kopia\"\nNote: priorityClassName is NOT supported in repository-specific configurations\nrepositories:\n\"kibishii-default-kopia\":\npodResources:\ncpuRequest: \"200m\"\ncpuLimit: \"400m\"\nmemoryRequest: \"200Mi\"\nmemoryLimit: \"400Mi\"\nkeepLatestMaintenanceJobs: 2"
-                    }
-                  }
+                "global": {
+                  "description": "Global configuration applied to all repositories\nThis configuration is used when no specific repository configuration is found\nglobal:\npodResources:\ncpuRequest: \"100m\"\ncpuLimit: \"200m\"\nmemoryRequest: \"100Mi\"\nmemoryLimit: \"200Mi\"\nkeepLatestMaintenanceJobs: 1\nloadAffinity:\n- nodeSelector:\nmatchExpressions:\n- key: \"cloud.google.com/machine-family\"\noperator: \"In\"\nvalues: [\"e2\"]\n- nodeSelector:\nmatchExpressions:\n- key: \"topology.kubernetes.io/zone\"\noperator: \"In\"\nvalues: [\"us-central1-a\", \"us-central1-b\", \"us-central1-c\"]\npriorityClassName: \"low-priority\"  # Note: priorityClassName is only supported in global configuration"
                 },
-                "requests": {}
+                "name": {
+                  "description": "Name of the ConfigMap to create. If not provided, will use \"velero-repo-maintenance\""
+                },
+                "repositories": {
+                  "description": "Repository-specific configurations\nRepository keys are formed as: \"{namespace}-{storageLocation}-{repositoryType}\"\nFor example: \"default-default-kopia\" or \"prod-s3-backup-kopia\"\nNote: priorityClassName is NOT supported in repository-specific configurations\nrepositories:\n\"kibishii-default-kopia\":\npodResources:\ncpuRequest: \"200m\"\ncpuLimit: \"400m\"\nmemoryRequest: \"200Mi\"\nmemoryLimit: \"400Mi\"\nkeepLatestMaintenanceJobs: 2"
+                }
               }
-            }
-          ],
-          "description": "Resource requests/limits to specify for the repository-maintenance job. Optional.\nhttps://velero.io/docs/v1.14/repository-maintenance/#resource-limitation"
+            },
+            "requests": {}
+          },
+          "type": "object"
         },
         "restoreOnlyMode": {
           "description": "`velero server` default: false"
@@ -13376,65 +13364,59 @@
       "type": "object"
     },
     "containerSecurityContext": {
-      "allOf": [
+      "anyOf": [
         {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/constrains~1'velero.io~1restic'~1not~1:t"
-            },
-            {
-              "additionalProperties": {},
-              "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
-              "properties": {
-                "allowPrivilegeEscalation": {
-                  "$ref": "#/$defs/constrains~1allowPrivilegeEscalation+capabilities.add+capabilities.drop+privileged+procMount+14more~1boolean,null;allowprivilegeescalation-controls-whether-a"
-                },
-                "capabilities": {
-                  "$ref": "#/$defs/constrains~1add+drop"
-                },
-                "privileged": {
-                  "$ref": "#/$defs/constrains~1allowPrivilegeEscalation+capabilities.add+capabilities.drop+privileged+procMount+14more~1boolean,null;run-container-in-privileged"
-                },
-                "procMount": {
-                  "$ref": "#/$defs/constrains~1allowPrivilegeEscalation+capabilities.add+capabilities.drop+privileged+procMount+14more~1string,null;procmount-denotes-the-type"
-                },
-                "readOnlyRootFilesystem": {
-                  "$ref": "#/$defs/constrains~1allowPrivilegeEscalation+capabilities.add+capabilities.drop+privileged+procMount+14more~1boolean,null;whether-this-container-has"
-                },
-                "runAsGroup": {
-                  "$ref": "#/$defs/constrains~1allowPrivilegeEscalation+capabilities.add+capabilities.drop+privileged+procMount+14more~1integer,null:int64;the-gid-to-run"
-                },
-                "runAsNonRoot": {
-                  "$ref": "#/$defs/constrains~1allowPrivilegeEscalation+capabilities.add+capabilities.drop+privileged+procMount+14more~1boolean,null;indicates-that-the-container"
-                },
-                "runAsUser": {
-                  "$ref": "#/$defs/constrains~1allowPrivilegeEscalation+capabilities.add+capabilities.drop+privileged+procMount+14more~1integer,null:int64;the-uid-to-run"
-                },
-                "seLinuxOptions": {
-                  "$ref": "#/$defs/constrains~1level+role+type+user"
-                },
-                "seccompProfile": {
-                  "$ref": "#/$defs/constrains~1localhostProfile+type"
-                },
-                "windowsOptions": {
-                  "$ref": "#/$defs/constrains~1gmsaCredentialSpec+gmsaCredentialSpecName+hostProcess+runAsUserName"
-                }
-              },
-              "type": "object"
-            },
-            {
-              "$ref": "#/$defs/values~1affinity~1object"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "$ref": "#/$defs/constrains~1'velero.io~1restic'~1not~1:t"
         },
         {
+          "additionalProperties": {},
+          "description": "SecurityContext holds security configuration that will be applied to a container. Some fields are present in both SecurityContext and PodSecurityContext.  When both are set, the values in SecurityContext take precedence.",
+          "properties": {
+            "allowPrivilegeEscalation": {
+              "$ref": "#/$defs/constrains~1allowPrivilegeEscalation+capabilities.add+capabilities.drop+privileged+procMount+14more~1boolean,null;allowprivilegeescalation-controls-whether-a"
+            },
+            "capabilities": {
+              "$ref": "#/$defs/constrains~1add+drop"
+            },
+            "privileged": {
+              "$ref": "#/$defs/constrains~1allowPrivilegeEscalation+capabilities.add+capabilities.drop+privileged+procMount+14more~1boolean,null;run-container-in-privileged"
+            },
+            "procMount": {
+              "$ref": "#/$defs/constrains~1allowPrivilegeEscalation+capabilities.add+capabilities.drop+privileged+procMount+14more~1string,null;procmount-denotes-the-type"
+            },
+            "readOnlyRootFilesystem": {
+              "$ref": "#/$defs/constrains~1allowPrivilegeEscalation+capabilities.add+capabilities.drop+privileged+procMount+14more~1boolean,null;whether-this-container-has"
+            },
+            "runAsGroup": {
+              "$ref": "#/$defs/constrains~1allowPrivilegeEscalation+capabilities.add+capabilities.drop+privileged+procMount+14more~1integer,null:int64;the-gid-to-run"
+            },
+            "runAsNonRoot": {
+              "$ref": "#/$defs/constrains~1allowPrivilegeEscalation+capabilities.add+capabilities.drop+privileged+procMount+14more~1boolean,null;indicates-that-the-container"
+            },
+            "runAsUser": {
+              "$ref": "#/$defs/constrains~1allowPrivilegeEscalation+capabilities.add+capabilities.drop+privileged+procMount+14more~1integer,null:int64;the-uid-to-run"
+            },
+            "seLinuxOptions": {
+              "$ref": "#/$defs/constrains~1level+role+type+user"
+            },
+            "seccompProfile": {
+              "$ref": "#/$defs/constrains~1localhostProfile+type"
+            },
+            "windowsOptions": {
+              "$ref": "#/$defs/constrains~1gmsaCredentialSpec+gmsaCredentialSpecName+hostProcess+runAsUserName"
+            }
+          },
           "type": "object"
+        },
+        {
+          "$ref": "#/$defs/values~1affinity~1object"
+        },
+        {
+          "type": "null"
         }
       ],
-      "description": "Container Level Security Context for the 'velero' container of the Velero deployment. Optional.\nSee: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container\nallowPrivilegeEscalation: false\ncapabilities:\ndrop: [\"ALL\"]\nadd: []\nreadOnlyRootFilesystem: true"
+      "description": "Container Level Security Context for the 'velero' container of the Velero deployment. Optional.\nSee: https://kubernetes.io/docs/tasks/configure-pod-container/security-context/#set-the-security-context-for-a-container\nallowPrivilegeEscalation: false\ncapabilities:\ndrop: [\"ALL\"]\nadd: []\nreadOnlyRootFilesystem: true",
+      "type": "object"
     },
     "credentials": {
       "additionalProperties": {},
@@ -13628,6 +13610,7 @@
       "description": "Extra volumes for the Velero deployment. Optional."
     },
     "fullnameOverride": {},
+    "global": {},
     "hostAliases": {
       "anyOf": [
         {

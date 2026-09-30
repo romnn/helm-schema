@@ -5019,7 +5019,7 @@
           "not": {
             "properties": {
               "image": {
-                "$ref": "#/$defs/constrains~1repository@2"
+                "$ref": "#/$defs/constrains~1repository"
               }
             },
             "required": [
@@ -7320,13 +7320,13 @@
       "type": "object"
     },
     "constrains/repository": {
-      "additionalProperties": {},
       "properties": {
-        "repository": {
-          "description": "[default: REPOSITORY_NAME/spark] Spark image repository",
-          "type": "string"
-        }
-      }
+        "repository": {}
+      },
+      "required": [
+        "repository"
+      ],
+      "type": "object"
     },
     "constrains/repository=null": {
       "properties": {
@@ -7335,15 +7335,6 @@
             null
           ]
         }
-      },
-      "required": [
-        "repository"
-      ],
-      "type": "object"
-    },
-    "constrains/repository@2": {
-      "properties": {
-        "repository": {}
       },
       "required": [
         "repository"
@@ -8763,6 +8754,10 @@
         "string",
         "null"
       ]
+    },
+    "values/image.repository": {
+      "description": "[default: REPOSITORY_NAME/spark] Spark image repository",
+      "type": "string"
     },
     "values/integer": {
       "maximum": 0,
@@ -13630,7 +13625,12 @@
             "additionalProperties": {},
             "properties": {
               "image": {
-                "$ref": "#/$defs/constrains~1repository"
+                "additionalProperties": {},
+                "properties": {
+                  "repository": {
+                    "$ref": "#/$defs/values~1image.repository"
+                  }
+                }
               }
             }
           }
@@ -14007,17 +14007,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
       }
     },
     {
@@ -17663,26 +17652,7 @@
           "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
           "type": "string"
         },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "compatibility": {
-              "additionalProperties": {},
-              "properties": {
-                "openshift": {
-                  "additionalProperties": {},
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            },
-            "security": {
-              "additionalProperties": {},
-              "type": "object"
-            }
-          },
-          "type": "object"
-        }
+        "global": {}
       },
       "type": "object"
     },
@@ -17835,10 +17805,6 @@
             }
           }
         },
-        "defaultStorageClass": {
-          "description": "Global default StorageClass for Persistent Volume(s)",
-          "type": "string"
-        },
         "imagePullSecrets": {
           "description": "Global Docker registry secret names as an array\nE.g.\nimagePullSecrets:\n- myRegistryKeySecretName"
         },
@@ -17856,25 +17822,21 @@
             }
           },
           "type": "object"
-        },
-        "storageClass": {
-          "description": "DEPRECATED: use global.defaultStorageClass instead",
-          "type": "string"
         }
-      },
-      "type": "object"
+      }
     },
     "hostNetwork": {
       "description": "Enable HOST Network\nIf hostNetwork is true, then dnsPolicy is set to ClusterFirstWithHostNet"
     },
     "image": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1repository@2"
+                  "$ref": "#/$defs/constrains~1repository"
                 }
               },
               {
@@ -17883,14 +17845,14 @@
             ]
           },
           "then": false
-        },
-        {
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1repository"
         }
-      ]
+      ],
+      "properties": {
+        "repository": {
+          "$ref": "#/$defs/values~1image.repository"
+        }
+      },
+      "type": "object"
     },
     "ingress": {
       "additionalProperties": {},
@@ -18454,6 +18416,7 @@
       "description": "Force target Kubernetes version (using Helm capabilities if not set)"
     },
     "master": {
+      "additionalProperties": {},
       "allOf": [
         {
           "$ref": "#/$defs/when~1containerSecurityContext+containerSecurityContext=null+enabled:t~1then~1fail"
@@ -18866,9 +18829,6 @@
           "$ref": "#/$defs/when~1networkPolicy.allowExternal:t+networkPolicy.enabled:t~1then~1networkPolicy.ingressNSMatchLabels:t"
         },
         {
-          "type": "object"
-        },
-        {
           "$ref": "#/$defs/when~1networkPolicy.allowExternal:t+networkPolicy.enabled:t+2more~1then~1networkPolicy.ingressNSPodMatchLabels"
         },
         {
@@ -18914,9 +18874,6 @@
           "then": {
             "$ref": "#/$defs/constrains~1networkPolicy.extraEgress:t+networkPolicy.extraEgress@items.ports@items.endPort+9more"
           }
-        },
-        {
-          "additionalProperties": {}
         },
         {
           "$ref": "#/$defs/when~1enabled:t+podSecurityContext+podSecurityContext=null~1then~1fail"
@@ -18983,7 +18940,8 @@
           }
         }
       ],
-      "description": "Spark master specific configuration"
+      "description": "Spark master specific configuration",
+      "type": "object"
     },
     "metrics": {
       "additionalProperties": {},
@@ -19633,15 +19591,9 @@
           }
         },
         "ssl": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
-              "additionalProperties": {}
-            }
-          ],
-          "description": "SSL configuration"
+          "additionalProperties": {},
+          "description": "SSL configuration",
+          "type": "object"
         },
         "storageEncryptionEnabled": {
           "description": "Enables local storage encryption"
@@ -19888,6 +19840,7 @@
       "type": "object"
     },
     "worker": {
+      "additionalProperties": {},
       "allOf": [
         {
           "$ref": "#/$defs/when~1containerSecurityContext+containerSecurityContext=null+enabled:t~1then~1fail"
@@ -19900,9 +19853,6 @@
         },
         {
           "$ref": "#/$defs/when~1networkPolicy.allowExternal:t+networkPolicy.enabled:t~1then~1networkPolicy.ingressNSMatchLabels:t"
-        },
-        {
-          "type": "object"
         },
         {
           "if": {
@@ -20495,9 +20445,6 @@
           }
         },
         {
-          "additionalProperties": {}
-        },
-        {
           "if": {
             "allOf": [
               {
@@ -20747,7 +20694,8 @@
           }
         }
       ],
-      "description": "Spark worker specific configuration"
+      "description": "Spark worker specific configuration",
+      "type": "object"
     }
   },
   "type": "object"

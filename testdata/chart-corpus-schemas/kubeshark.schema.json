@@ -8232,24 +8232,6 @@
         "tap": {
           "additionalProperties": {},
           "properties": {
-            "auth": {
-              "additionalProperties": {},
-              "properties": {
-                "saml": {
-                  "type": "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "tap": {
-          "additionalProperties": {},
-          "properties": {
             "ingress": {
               "additionalProperties": {},
               "properties": {
@@ -11140,6 +11122,7 @@
     "cloudLicenseEnabled": {},
     "demoModeEnabled": {},
     "dumpLogs": {},
+    "global": {},
     "headless": {},
     "internetConnectivity": {},
     "kube": {},
@@ -14365,53 +14348,48 @@
           ]
         },
         "auth": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
+          "additionalProperties": {},
+          "properties": {
+            "cli": {
               "additionalProperties": {},
               "properties": {
-                "cli": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {},
-                    "subjects": {}
-                  }
-                },
-                "defaultRole": {},
-                "dexConfig": {},
                 "enabled": {},
-                "groupMapping": {},
-                "oidc": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "bypassSslCaCheck": {},
-                    "clientId": {},
-                    "clientSecret": {},
-                    "issuer": {},
-                    "oauth2StateParamExpiry": {},
-                    "refreshTokenLifetime": {}
-                  }
-                },
-                "roles": {},
-                "rolesClaim": {},
-                "saml": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "idpMetadataUrl": {},
-                    "x509crt": {
-                      "type": "string"
-                    },
-                    "x509key": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "type": {}
+                "subjects": {}
               }
-            }
-          ]
+            },
+            "defaultRole": {},
+            "dexConfig": {},
+            "enabled": {},
+            "groupMapping": {},
+            "oidc": {
+              "additionalProperties": {},
+              "properties": {
+                "bypassSslCaCheck": {},
+                "clientId": {},
+                "clientSecret": {},
+                "issuer": {},
+                "oauth2StateParamExpiry": {},
+                "refreshTokenLifetime": {}
+              }
+            },
+            "roles": {},
+            "rolesClaim": {},
+            "saml": {
+              "additionalProperties": {},
+              "properties": {
+                "idpMetadataUrl": {},
+                "x509crt": {
+                  "type": "string"
+                },
+                "x509key": {
+                  "type": "string"
+                }
+              },
+              "type": "object"
+            },
+            "type": {}
+          },
+          "type": "object"
         },
         "bpfOverride": {},
         "capture": {
@@ -14895,45 +14873,39 @@
               "type": "object"
             },
             "local": {
-              "allOf": [
-                {
-                  "type": "object"
-                },
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "storageClass": {
-                      "anyOf": [
-                        {
-                          "$ref": "#/$defs/constrains~1secrets~1string@2"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1annotations:t~1not~1:t"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1secrets~1string;pattern-a-za-z0-9-t"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1secrets~1object"
-                        },
-                        {
-                          "$ref": "#/$defs/values~1tap~1null;storageclassname-is-the-name"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1secrets~1string;pattern-t"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1secrets~1string;pattern-null-null-null"
-                        },
-                        {
-                          "$ref": "#/$defs/values~1tap~1string;storageclassname-is-the-name"
-                        }
-                      ]
+              "additionalProperties": {},
+              "properties": {
+                "storageClass": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/$defs/constrains~1secrets~1string@2"
                     },
-                    "storageSize": {}
-                  }
-                }
-              ]
+                    {
+                      "$ref": "#/$defs/constrains~1annotations:t~1not~1:t"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1secrets~1string;pattern-a-za-z0-9-t"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1secrets~1object"
+                    },
+                    {
+                      "$ref": "#/$defs/values~1tap~1null;storageclassname-is-the-name"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1secrets~1string;pattern-t"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1secrets~1string;pattern-null-null-null"
+                    },
+                    {
+                      "$ref": "#/$defs/values~1tap~1string;storageclassname-is-the-name"
+                    }
+                  ]
+                },
+                "storageSize": {}
+              },
+              "type": "object"
             }
           },
           "type": "object"

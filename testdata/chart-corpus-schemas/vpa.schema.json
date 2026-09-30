@@ -1354,17 +1354,20 @@
         "null"
       ]
     },
+    "constrains/enabled": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled+enabled=null": {
       "anyOf": [
         {
           "not": {
-            "properties": {
-              "enabled": {}
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/constrains~1enabled"
           }
         },
         {
@@ -2826,6 +2829,19 @@
         "metrics-server"
       ],
       "type": "object"
+    },
+    "constrains/metrics-server.enabled": {
+      "not": {
+        "properties": {
+          "metrics-server": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "metrics-server"
+        ],
+        "type": "object"
+      }
     },
     "constrains/metrics-server.enabled+metrics-server.enabled=null": {
       "properties": {
@@ -4665,6 +4681,106 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "metrics-server": {
+                "properties": {
+                  "enabled": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "metrics-server"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "metrics-server": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                false
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "metrics-server"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1metrics-server.enabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "metrics-server": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                true
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "metrics-server"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1metrics-server.enabled"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "metrics-server": {
+            "description": "metrics-server -- configuration options for the [metrics server Helm chart](https://github.com/kubernetes-sigs/metrics-server/tree/master/charts/metrics-server). See the projects [README.md](https://github.com/kubernetes-sigs/metrics-server/tree/master/charts/metrics-server#configuration) for all available options",
+            "type": "object"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -10239,6 +10355,7 @@
         "extraVolumeMounts": {},
         "extraVolumes": {},
         "fullnameOverride": {},
+        "global": {},
         "hostNetwork": {
           "additionalProperties": {},
           "properties": {
@@ -10429,8 +10546,7 @@
         "updateStrategy": {
           "description": "type: RollingUpdate\nrollingUpdate:\nmaxSurge: 0\nmaxUnavailable: 1"
         }
-      },
-      "type": "object"
+      }
     },
     "nameOverride": {
       "description": "nameOverride -- A template override for the name"

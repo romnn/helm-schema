@@ -111,6 +111,7 @@ fn unused_helper_in_used_library_does_not_leak_type_hint() -> eyre::Result<()> {
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -195,6 +196,7 @@ fn unused_helper_in_used_library_does_not_perturb_infer_required() -> eyre::Resu
         values_files: Vec::new(),
         infer_required: true,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,

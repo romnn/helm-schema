@@ -6672,12 +6672,42 @@
       ],
       "type": "object"
     },
+    "constrains/enabled!=false": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              false
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled!=null": {
       "properties": {
         "enabled": {
           "not": {
             "enum": [
               null
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=true": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              true
             ]
           }
         }
@@ -6946,6 +6976,19 @@
         "enabled": {
           "enum": [
             null
+          ]
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled=true": {
+      "properties": {
+        "enabled": {
+          "enum": [
+            true
           ]
         }
       },
@@ -11670,7 +11713,7 @@
         "interval": {},
         "metricRelabelings": {},
         "params": {
-          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+relabelings+1more~1anyOf~1array+object@2"
+          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+relabelings+1more~1anyOf~1array+object"
         },
         "path": {},
         "port": {},
@@ -11682,10 +11725,15 @@
     "constrains/honorLabels+interval+metricRelabelings+params+path+port+relabelings+1more/anyOf/array+object": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global"
+          "additionalProperties": {
+            "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+relabelings+1more~1anyOf~1array+object@2"
+          },
+          "type": "object"
         },
         {
-          "items": {},
+          "items": {
+            "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+relabelings+1more~1anyOf~1array+object@2"
+          },
           "type": "array"
         }
       ]
@@ -11693,15 +11741,11 @@
     "constrains/honorLabels+interval+metricRelabelings+params+path+port+relabelings+1more/anyOf/array+object@2": {
       "anyOf": [
         {
-          "additionalProperties": {
-            "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+relabelings+1more~1anyOf~1array+object"
-          },
+          "additionalProperties": {},
           "type": "object"
         },
         {
-          "items": {
-            "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+relabelings+1more~1anyOf~1array+object"
-          },
+          "items": {},
           "type": "array"
         }
       ]
@@ -11718,7 +11762,7 @@
             "interval": {},
             "metricRelabelings": {},
             "params": {
-              "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+relabelings+1more~1anyOf~1array+object@2"
+              "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+relabelings+1more~1anyOf~1array+object"
             },
             "path": {},
             "port": {},
@@ -11735,7 +11779,7 @@
         "interval": {},
         "metricRelabelings": {},
         "params": {
-          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+relabelings+1more~1anyOf~1array+object@2"
+          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+relabelings+1more~1anyOf~1array+object"
         },
         "path": {},
         "port": {},
@@ -11752,7 +11796,7 @@
             "interval": {},
             "metricRelabelings": {},
             "params": {
-              "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+relabelings+1more~1anyOf~1array+object@2"
+              "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+relabelings+1more~1anyOf~1array+object"
             },
             "path": {},
             "port": {},
@@ -11988,7 +12032,7 @@
       "additionalProperties": {},
       "properties": {
         "hosts": {
-          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+relabelings+1more~1anyOf~1array+object"
+          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+relabelings+1more~1anyOf~1array+object@2"
         },
         "secretName": {}
       },
@@ -18428,6 +18472,19 @@
         "properties": {
           "postgresql": {
             "$ref": "#/$defs/constrains~1diagnosticMode.enabled:t@2"
+          }
+        },
+        "required": [
+          "postgresql"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/postgresql.enabled": {
+      "not": {
+        "properties": {
+          "postgresql": {
+            "$ref": "#/$defs/constrains~1enabled"
           }
         },
         "required": [
@@ -26858,16 +26915,11 @@
       "type": "object"
     },
     "constrains/valkey": {
-      "not": {
-        "properties": {
-          "valkey": {
-            "type": "object"
-          }
-        },
-        "required": [
-          "valkey"
-        ],
-        "type": "object"
+      "additionalProperties": {},
+      "properties": {
+        "valkey": {
+          "type": "object"
+        }
       }
     },
     "constrains/valkey!=null": {
@@ -27562,7 +27614,7 @@
     "constrains/valkey+valkey.enabled+valkey.enabled:t+valkey.enabled=null": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1valkey"
+          "$ref": "#/$defs/constrains~1valkey@2"
         },
         {
           "$ref": "#/$defs/constrains~1valkey.enabled+valkey.enabled=null"
@@ -27659,7 +27711,7 @@
     "constrains/valkey+valkey.enabled+valkey.enabled=null": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1valkey"
+          "$ref": "#/$defs/constrains~1valkey@2"
         },
         {
           "$ref": "#/$defs/constrains~1valkey.enabled+valkey.enabled=null"
@@ -28079,6 +28131,19 @@
         "properties": {
           "valkey": {
             "$ref": "#/$defs/constrains~1diagnosticMode.enabled:t@2"
+          }
+        },
+        "required": [
+          "valkey"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/valkey.enabled": {
+      "not": {
+        "properties": {
+          "valkey": {
+            "$ref": "#/$defs/constrains~1enabled"
           }
         },
         "required": [
@@ -30890,6 +30955,19 @@
       ],
       "type": "object"
     },
+    "constrains/valkey@2": {
+      "not": {
+        "properties": {
+          "valkey": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "valkey"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/value": {
       "additionalProperties": {},
       "properties": {
@@ -31674,12 +31752,15 @@
       },
       "type": "array"
     },
-    "values/common.exampleValue": {
-      "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
-      "type": "string"
-    },
-    "values/common.global": {
+    "values/common": {
       "additionalProperties": {},
+      "properties": {
+        "exampleValue": {
+          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
+          "type": "string"
+        },
+        "global": {}
+      },
       "type": "object"
     },
     "values/commonLabels": {
@@ -32337,40 +32418,38 @@
     "values/postgresql.backup.cronjob.fips.openssl": {
       "description": "Configure OpenSSL FIPS mode: '', 'restricted', 'relaxed', 'off'. If empty (\"\"), 'global.defaultFips' would be used"
     },
-    "values/postgresql.common.global.compatibility": {
-      "additionalProperties": {},
-      "properties": {
-        "openshift": {
-          "$ref": "#/$defs/values~1common.global"
-        }
-      },
-      "type": "object"
-    },
     "values/postgresql.diagnosticMode.enabled": {
       "description": "Enable diagnostic mode (all probes will be disabled and the command will be overridden)"
     },
-    "values/postgresql.global.compatibility.openshift": {
+    "values/postgresql.global.compatibility": {
       "additionalProperties": {},
-      "description": "Compatibility adaptations for Openshift",
+      "description": "Compatibility adaptations for Kubernetes platforms",
       "properties": {
-        "adaptSecurityContext": {
-          "anyOf": [
-            {
-              "enum": [
-                "force"
-              ]
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
+        "omitEmptySeLinuxOptions": {},
+        "openshift": {
+          "additionalProperties": {},
+          "description": "Compatibility adaptations for Openshift",
+          "properties": {
+            "adaptSecurityContext": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "force"
+                  ]
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Adapt the securityContext sections of the deployment to make them compatible with Openshift restricted-v2 SCC: remove runAsUser, runAsGroup and fsGroup and let the platform use their allowed default IDs. Possible values: auto (apply if the detected running cluster is Openshift), force (perform the adaptation always), disabled (do not perform adaptation)"
             }
-          ],
-          "description": "Adapt the securityContext sections of the deployment to make them compatible with Openshift restricted-v2 SCC: remove runAsUser, runAsGroup and fsGroup and let the platform use their allowed default IDs. Possible values: auto (apply if the detected running cluster is Openshift), force (perform the adaptation always), disabled (do not perform adaptation)"
+          },
+          "type": "object"
         }
-      },
-      "type": "object"
+      }
     },
     "values/postgresql.global.defaultFips": {
       "description": "Default value for the FIPS configuration (allowed values: '', restricted, relaxed, off). Can be overridden by the 'fips' object\nConfigure FIPS mode: '', 'restricted', 'relaxed', 'off'"
@@ -35215,7 +35294,7 @@
             "$ref": "#/$defs/constrains~1valkey+valkey.architecture+valkey.architecture!=replication+valkey.enabled+5more"
           },
           {
-            "$ref": "#/$defs/constrains~1valkey"
+            "$ref": "#/$defs/constrains~1valkey@2"
           },
           {
             "$ref": "#/$defs/constrains~1valkey+valkey.architecture=replication+valkey.enabled+valkey.enabled=null+3more"
@@ -40977,7 +41056,7 @@
           {
             "anyOf": [
               {
-                "$ref": "#/$defs/constrains~1valkey"
+                "$ref": "#/$defs/constrains~1valkey@2"
               },
               {
                 "allOf": [
@@ -56433,7 +56512,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1valkey"
+            "$ref": "#/$defs/constrains~1valkey@2"
           },
           {
             "$ref": "#/$defs/constrains~1valkey+valkey.enabled+valkey.enabled:t+valkey.enabled=null+2more"
@@ -57849,7 +57928,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1valkey"
+            "$ref": "#/$defs/constrains~1valkey@2"
           },
           {
             "$ref": "#/$defs/constrains~1valkey+valkey.architecture=replication+valkey.enabled+valkey.enabled=null+3more"
@@ -58934,7 +59013,7 @@
             "$ref": "#/$defs/constrains~1valkey+valkey.commonAnnotations:t+valkey.enabled+valkey.enabled=null+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1valkey"
+            "$ref": "#/$defs/constrains~1valkey@2"
           },
           {
             "$ref": "#/$defs/constrains~1valkey+valkey.architecture=replication+valkey.enabled+valkey.enabled=null+3more"
@@ -62875,7 +62954,7 @@
             "$ref": "#/$defs/constrains~1valkey+valkey.commonAnnotations:t+valkey.enabled+valkey.enabled=null+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1valkey"
+            "$ref": "#/$defs/constrains~1valkey@2"
           },
           {
             "allOf": [
@@ -64730,14 +64809,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "$ref": "#/$defs/constrains~1containerSecurityContext~1null,object"
-        }
-      }
-    },
-    {
       "if": {
         "anyOf": [
           {
@@ -65796,7 +65867,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1valkey"
+            "$ref": "#/$defs/constrains~1valkey@2"
           },
           {
             "allOf": [
@@ -71753,12 +71824,7 @@
             "additionalProperties": {},
             "properties": {
               "global": {
-                "additionalProperties": {},
-                "properties": {
-                  "valkey": {
-                    "type": "object"
-                  }
-                }
+                "$ref": "#/$defs/constrains~1valkey"
               }
             }
           }
@@ -72713,6 +72779,72 @@
           {
             "allOf": [
               {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1postgresql.enabled"
+                  },
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1postgresql.enabled"
+                  },
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "postgresql": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "postgresql"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "postgresql": {
+            "description": "PostgreSQL chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/postgresql/values.yaml",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
                 "$ref": "#/$defs/constrains~1postgresql+postgresql.enabled+postgresql.enabled=null"
               },
               {
@@ -73358,7 +73490,7 @@
       "if": {
         "anyOf": [
           {
-            "$ref": "#/$defs/constrains~1valkey"
+            "$ref": "#/$defs/constrains~1valkey@2"
           },
           {
             "allOf": [
@@ -87134,6 +87266,66 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1valkey.enabled"
+                  },
+                  {
+                    "properties": {
+                      "valkey": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "valkey"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1valkey.enabled"
+                  },
+                  {
+                    "properties": {
+                      "valkey": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "valkey"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "valkey": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "valkey"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1valkey"
+      }
+    },
+    {
+      "if": {
         "$ref": "#/$defs/constrains~1valkey+valkey.architecture=replication+valkey.enabled+valkey.enabled=null+3more"
       },
       "then": {
@@ -88574,16 +88766,7 @@
       "$ref": "#/$defs/values~1command"
     },
     "common": {
-      "additionalProperties": {},
-      "properties": {
-        "exampleValue": {
-          "$ref": "#/$defs/values~1common.exampleValue"
-        },
-        "global": {
-          "$ref": "#/$defs/values~1common.global"
-        }
-      },
-      "type": "object"
+      "$ref": "#/$defs/values~1common"
     },
     "commonAnnotations": {
       "anyOf": [
@@ -88606,13 +88789,8 @@
       "$ref": "#/$defs/values~1commonLabels"
     },
     "cors": {
-      "allOf": [
-        {},
-        {
-          "type": "object"
-        }
-      ],
-      "description": "API Cross-Origin Resource Sharing (CORS) settings. If originAllowAll\nis set to true, all origins will be allowed. Otherwise, define a list of\nallowed origins using either originWhitelist or originRegexWhitelist. For\nmore information, see https://github.com/ottoyiu/django-cors-headers"
+      "description": "API Cross-Origin Resource Sharing (CORS) settings. If originAllowAll\nis set to true, all origins will be allowed. Otherwise, define a list of\nallowed origins using either originWhitelist or originRegexWhitelist. For\nmore information, see https://github.com/ottoyiu/django-cors-headers",
+      "type": "object"
     },
     "csrf": {
       "additionalProperties": {},
@@ -88812,7 +88990,8 @@
     "extraDeploy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global"
+          "additionalProperties": {},
+          "type": "object"
         },
         {
           "items": {},
@@ -88966,8 +89145,7 @@
             "password": {}
           }
         }
-      },
-      "type": "object"
+      }
     },
     "graphQlEnabled": {
       "description": "Enable the GraphQL API"
@@ -90569,23 +90747,17 @@
           "description": "Set container resources according to one common preset (allowed values: none, nano, micro, small, medium, large, xlarge, 2xlarge). This is ignored if init.resources is set (init.resources is recommended for production).\nMore information: https://github.com/bitnami/charts/blob/main/bitnami/common/templates/_resources.tpl#L15"
         },
         "securityContext": {
-          "allOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "$ref": "#/$defs/values~1housekeeping.securityContext.enabled"
-                },
-                "privileged": {},
-                "seLinuxOptions": {
-                  "$ref": "#/$defs/values~1housekeeping.securityContext.seLinuxOptions"
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "$ref": "#/$defs/values~1housekeeping.securityContext.enabled"
             },
-            {
-              "type": "object"
+            "privileged": {},
+            "seLinuxOptions": {
+              "$ref": "#/$defs/values~1housekeeping.securityContext.seLinuxOptions"
             }
-          ]
+          },
+          "type": "object"
         }
       },
       "type": "object"
@@ -104363,8 +104535,7 @@
               "type": "object"
             },
             "usePasswordFiles": {
-              "description": "Mount credentials as a files instead of using an environment variable",
-              "type": "boolean"
+              "description": "Mount credentials as a files instead of using an environment variable"
             },
             "username": {
               "description": "Name for a custom user to create"
@@ -104511,49 +104682,7 @@
           "description": "Kubernetes Cluster Domain"
         },
         "common": {
-          "additionalProperties": {},
-          "properties": {
-            "exampleValue": {
-              "$ref": "#/$defs/values~1common.exampleValue"
-            },
-            "global": {
-              "additionalProperties": {},
-              "properties": {
-                "compatibility": {
-                  "$ref": "#/$defs/values~1postgresql.common.global.compatibility"
-                },
-                "postgresql": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "auth": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "secretKeys": {
-                          "$ref": "#/$defs/values~1common.global"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "service": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "ports": {
-                          "$ref": "#/$defs/values~1common.global"
-                        }
-                      },
-                      "type": "object"
-                    }
-                  },
-                  "type": "object"
-                },
-                "security": {
-                  "$ref": "#/$defs/values~1common.global"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/values~1common"
         },
         "commonAnnotations": {
           "description": "Add annotations to all the deployed resources"
@@ -104600,14 +104729,7 @@
           "description": "Please, note that this will override the parameters, including dependencies, configured to use the global value",
           "properties": {
             "compatibility": {
-              "additionalProperties": {},
-              "description": "Compatibility adaptations for Kubernetes platforms",
-              "properties": {
-                "omitEmptySeLinuxOptions": {},
-                "openshift": {
-                  "$ref": "#/$defs/values~1postgresql.global.compatibility.openshift"
-                }
-              }
+              "$ref": "#/$defs/values~1postgresql.global.compatibility"
             },
             "defaultFips": {
               "$ref": "#/$defs/values~1postgresql.global.defaultFips"
@@ -104655,14 +104777,12 @@
                         "userPasswordKey": {
                           "description": "Name of key in existing secret to use for PostgreSQL credentials (overrides `auth.secretKeys.userPasswordKey`). Only used when `global.postgresql.auth.existingSecret` is set."
                         }
-                      },
-                      "type": "object"
+                      }
                     },
                     "username": {
                       "description": "Name for a custom user to create (overrides `auth.username`)"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "fullnameOverride": {
                   "description": "Full chart name (overrides `fullnameOverride`)"
@@ -104676,14 +104796,11 @@
                         "postgresql": {
                           "description": "PostgreSQL service port (overrides `service.ports.postgresql`)"
                         }
-                      },
-                      "type": "object"
+                      }
                     }
-                  },
-                  "type": "object"
+                  }
                 }
-              },
-              "type": "object"
+              }
             },
             "security": {
               "$ref": "#/$defs/values~1postgresql.global.security"
@@ -104691,15 +104808,13 @@
             "storageClass": {
               "$ref": "#/$defs/values~1postgresql.global.storageClass"
             }
-          },
-          "type": "object"
+          }
         },
         "image": {
           "$ref": "#/$defs/values~1cachingDatabase.existingSecretName"
         },
         "kubeVersion": {
-          "description": "Override Kubernetes version",
-          "type": "string"
+          "description": "Override Kubernetes version"
         },
         "ldap": {
           "additionalProperties": {},
@@ -104764,9 +104879,7 @@
           "additionalProperties": {},
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "description": "[object] Add annotations to the job",
-              "type": "object"
+              "description": "[object] Add annotations to the job"
             },
             "args": {
               "description": "Override default container args on mysql Primary container(s) (useful when using custom images)"
@@ -104793,8 +104906,7 @@
               "description": "Custom startupProbe that overrides the default one"
             },
             "enabled": {
-              "description": "Enable password update job",
-              "type": "boolean"
+              "description": "Enable password update job"
             },
             "extraCommands": {
               "description": "Extra commands to pass to the generation job"
@@ -105065,12 +105177,7 @@
       }
     },
     "releaseCheck": {
-      "allOf": [
-        {},
-        {
-          "type": "object"
-        }
-      ]
+      "type": "object"
     },
     "remoteAuth": {
       "additionalProperties": {},
@@ -105159,7 +105266,8 @@
           "type": "array"
         },
         "defaultPermissions": {
-          "$ref": "#/$defs/values~1common.global"
+          "additionalProperties": {},
+          "type": "object"
         },
         "enabled": {
           "type": "boolean"
@@ -124068,28 +124176,7 @@
           "description": "Kubernetes cluster domain name"
         },
         "common": {
-          "additionalProperties": {},
-          "properties": {
-            "exampleValue": {
-              "$ref": "#/$defs/values~1common.exampleValue"
-            },
-            "global": {
-              "additionalProperties": {},
-              "properties": {
-                "compatibility": {
-                  "$ref": "#/$defs/values~1postgresql.common.global.compatibility"
-                },
-                "security": {
-                  "$ref": "#/$defs/values~1common.global"
-                },
-                "valkey": {
-                  "$ref": "#/$defs/values~1common.global"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/values~1common"
         },
         "commonAnnotations": {
           "description": "Annotations to add to all deployed objects"
@@ -124147,15 +124234,7 @@
           "properties": {
             "apiVersions": {},
             "compatibility": {
-              "additionalProperties": {},
-              "description": "Compatibility adaptations for Kubernetes platforms",
-              "properties": {
-                "omitEmptySeLinuxOptions": {},
-                "openshift": {
-                  "$ref": "#/$defs/values~1postgresql.global.compatibility.openshift"
-                }
-              },
-              "type": "object"
+              "$ref": "#/$defs/values~1postgresql.global.compatibility"
             },
             "defaultFips": {
               "$ref": "#/$defs/values~1postgresql.global.defaultFips"
@@ -124185,8 +124264,7 @@
               },
               "type": "object"
             }
-          },
-          "type": "object"
+          }
         },
         "image": {
           "$ref": "#/$defs/values~1cachingDatabase.existingSecretName"
@@ -124485,6 +124563,7 @@
       "type": "object"
     },
     "worker": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -124896,9 +124975,6 @@
           "then": false
         },
         {
-          "type": "object"
-        },
-        {
           "$ref": "#/$defs/when~1securityContext.enabled:t~1then~1securityContext.allowPrivilegeEscalation+securityContext.capabilities+15more"
         },
         {
@@ -125021,9 +125097,6 @@
               }
             ]
           }
-        },
-        {
-          "$ref": "#/$defs/values~1cachingDatabase.existingSecretName"
         },
         {
           "if": {
@@ -125483,7 +125556,8 @@
           "then": false
         }
       ],
-      "description": "Worker for Netbox\nOnly required for Netbox Jobs, e.g. Webhooks"
+      "description": "Worker for Netbox\nOnly required for Netbox Jobs, e.g. Webhooks",
+      "type": "object"
     }
   },
   "type": "object"

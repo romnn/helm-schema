@@ -33,7 +33,7 @@ fn serialization_only_schema() -> Value {
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "additionalProperties": false,
-        "properties": { "image": { "additionalProperties": {} } }
+        "properties": { "global": {}, "image": { "additionalProperties": {} } }
     })
 }
 
@@ -58,7 +58,8 @@ fn descendant_contract_preserves_serialized_string_and_object_lanes() -> eyre::R
             }]}),
         ),
     ] {
-        let mut document = crate::schema_tree::SchemaDocument::new_root_object();
+        let mut document =
+            crate::schema_tree::SchemaDocument::new_root_object(crate::RootPolicy::Closed);
         document.insert_values_path_schema(&helm_schema_core::ValuesPath::parse("image"), node);
         document.conjoin_literal_path_schema(
             &["image".to_string(), "repository".to_string()],
@@ -128,7 +129,7 @@ fn independent_string_contract_intersects_boolean_provider_preimage() -> eyre::R
     sim_assert_eq!(have: actual, want: serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object", "additionalProperties": false,
-        "properties": {"image": {
+        "properties": {"global": {}, "image": {
             "additionalProperties": {},
             "properties": {"repository": {"allOf": [
                 {"anyOf": [
@@ -167,6 +168,7 @@ fn serialized_ancestor_preserves_independent_descendant_string_contract() {
         "type": "object",
         "additionalProperties": false,
         "properties": {
+            "global": {},
             "image": {
                 "additionalProperties": {},
                 "properties": { "repository": { "type": "string" } }
@@ -231,7 +233,7 @@ fn bounded_numeric_preimage_keeps_unknown_strings_beneath_serialized_parent() ->
     sim_assert_eq!(have: actual, want: serde_json::json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object", "additionalProperties": false,
-        "properties": {"image": {
+        "properties": {"global": {}, "image": {
             "additionalProperties": {},
             "properties": {"repository": {"allOf": [
                 {"anyOf": [{"type": "integer", "minimum": 1}, {"type": "string"}]},
@@ -295,14 +297,15 @@ fn conditional_descendant_preserves_serialized_object_and_array_alternatives() -
         "$schema": "http://json-schema.org/draft-07/schema#",
         "type": "object",
         "additionalProperties": false,
-        "properties": {"image": {"anyOf": [{"type": "array"}, {"type": "object"}]}}
+        "properties": {"global": {}, "image": {"anyOf": [{"type": "array"}, {"type": "object"}]}}
     }));
     Ok(())
 }
 
 #[test]
 fn independent_contract_does_not_replace_a_stronger_member_constraint() -> eyre::Result<()> {
-    let mut document = crate::schema_tree::SchemaDocument::new_root_object();
+    let mut document =
+        crate::schema_tree::SchemaDocument::new_root_object(crate::RootPolicy::Closed);
     let ancestor = serde_json::json!({
         "type": "object", "additionalProperties": false,
         "properties": {"repository": {"type": "integer"}}
@@ -329,7 +332,8 @@ fn independent_contract_does_not_replace_a_stronger_member_constraint() -> eyre:
 
 #[test]
 fn independent_contract_does_not_open_a_closed_ancestor() -> eyre::Result<()> {
-    let mut document = crate::schema_tree::SchemaDocument::new_root_object();
+    let mut document =
+        crate::schema_tree::SchemaDocument::new_root_object(crate::RootPolicy::Closed);
     sim_assert_eq!(have: document.insert_values_path_schema(
         &helm_schema_core::ValuesPath::parse("image"), SchemaNode::foreign(serde_json::json!({
             "type": "object", "additionalProperties": false
@@ -365,7 +369,8 @@ fn independent_contract_preserves_closed_host_across_representations() -> eyre::
         SchemaNode::closed_object(),
     ] {
         sim_assert_eq!(have: ancestor.clone().into_value(), want: closed);
-        let mut document = crate::schema_tree::SchemaDocument::new_root_object();
+        let mut document =
+            crate::schema_tree::SchemaDocument::new_root_object(crate::RootPolicy::Closed);
         document.insert_values_path_schema(&helm_schema_core::ValuesPath::parse("image"), ancestor);
         document.conjoin_literal_path_schema(
             &["image".to_string(), "repository".to_string()],

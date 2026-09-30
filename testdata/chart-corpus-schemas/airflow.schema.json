@@ -26606,6 +26606,19 @@
         "type": "object"
       }
     },
+    "constrains/postgresql.enabled": {
+      "not": {
+        "properties": {
+          "postgresql": {
+            "$ref": "#/$defs/constrains~1enabled@2"
+          }
+        },
+        "required": [
+          "postgresql"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/postgresql.enabled+postgresql.enabled=null": {
       "properties": {
         "postgresql": {
@@ -49818,10 +49831,6 @@
     },
     "values/dagProcessor.safeToEvict": {
       "description": "This setting tells Kubernetes that its ok to evict\nwhen it wants to scale a node down."
-    },
-    "values/dags.gitSync.securityContexts.container": {
-      "additionalProperties": {},
-      "type": "object"
     },
     "values/dags.persistence.existingClaim": {
       "description": "The name of an existing PVC to use"
@@ -122507,6 +122516,96 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1postgresql.enabled"
+                  },
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                false
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1postgresql.enabled"
+                  },
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                true
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "postgresql": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "postgresql"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "postgresql": {
+            "description": "Configuration for postgresql subchart\nUses bitnamilegacy images to avoid Bitnami licensing restrictions\nNot recommended for production - use external database instead",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/constrains~1opensearch.enabled+opensearch.enabled=null"
@@ -143884,45 +143983,39 @@
           "$ref": "#/$defs/values~1config.celery_kubernetes_executor"
         },
         "core": {
-          "allOf": [
+          "anyOf": [
             {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "dags_folder": {
-                      "anyOf": [
-                        {
-                          "enum": [
-                            "{{ include \"airflow_dags\" . }}"
-                          ]
-                        },
-                        {
-                          "type": "null"
-                        },
-                        {
-                          "type": "string"
-                        }
+              "additionalProperties": {},
+              "properties": {
+                "dags_folder": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "{{ include \"airflow_dags\" . }}"
                       ]
                     },
-                    "executor": {
+                    {
+                      "type": "null"
+                    },
+                    {
                       "type": "string"
                     }
-                  },
-                  "type": "object"
+                  ]
                 },
-                {
-                  "type": "null"
-                },
-                {
-                  "type": "array"
+                "executor": {
+                  "type": "string"
                 }
-              ]
+              },
+              "type": "object"
             },
             {
-              "type": "object"
+              "type": "null"
+            },
+            {
+              "type": "array"
             }
-          ]
+          ],
+          "type": "object"
         },
         "dag_processor": {
           "anyOf": [
@@ -144375,7 +144468,8 @@
               "additionalProperties": {},
               "properties": {
                 "container": {
-                  "$ref": "#/$defs/values~1dags.gitSync.securityContexts.container"
+                  "additionalProperties": {},
+                  "type": "object"
                 }
               },
               "type": "object"
@@ -145129,7 +145223,8 @@
     "labels": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1dags.gitSync.securityContexts.container"
+          "additionalProperties": {},
+          "type": "object"
         },
         {
           "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value~1not~1:t"
@@ -145733,8 +145828,7 @@
               "type": "object"
             },
             "usePasswordFiles": {
-              "description": "Mount credentials as a files instead of using an environment variable",
-              "type": "boolean"
+              "description": "Mount credentials as a files instead of using an environment variable"
             },
             "username": {
               "description": "Name for a custom user to create"
@@ -145854,36 +145948,7 @@
               "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
               "type": "string"
             },
-            "global": {
-              "additionalProperties": {},
-              "properties": {
-                "postgresql": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "auth": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "secretKeys": {
-                          "$ref": "#/$defs/values~1dags.gitSync.securityContexts.container"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "service": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "ports": {
-                          "$ref": "#/$defs/values~1dags.gitSync.securityContexts.container"
-                        }
-                      },
-                      "type": "object"
-                    }
-                  },
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            }
+            "global": {}
           },
           "type": "object"
         },
@@ -147231,8 +147296,7 @@
           "description": "TLS configuration",
           "properties": {
             "autoGenerated": {
-              "description": "Generate automatically self-signed TLS certificates",
-              "type": "boolean"
+              "description": "Generate automatically self-signed TLS certificates"
             },
             "certCAFilename": {
               "description": "CA Certificate filename\nIf provided, PostgreSQL will authenticate TLS/SSL clients by requesting them a certificate\nref: https://www.postgresql.org/docs/9.6/auth-methods.html"
@@ -148224,15 +148288,9 @@
       "description": "If set, the secret must contain a key 'webserver-secret-key' with a base64-encoded key value\n(deprecated, use `apiSecretKeySecretName` instead (Airflow 3+))\nWebserver secret key secret example:\nkind: Secret\napiVersion: v1\nmetadata:\nname: custom-webserver-secret\ntype: Opaque\ndata:\nwebserver-secret-key: <base64_encoded_secret_key>"
     },
     "workers": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "additionalProperties": {}
-        }
-      ],
-      "description": "Airflow Worker Config"
+      "additionalProperties": {},
+      "description": "Airflow Worker Config",
+      "type": "object"
     }
   },
   "type": "object"

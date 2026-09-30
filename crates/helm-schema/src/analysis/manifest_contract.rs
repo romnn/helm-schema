@@ -121,10 +121,27 @@ fn apply_chart_activation_guard_sets(
 /// renders only while EVERY level activates, so the alternatives are the
 /// cross product of the per-level guard sets. An empty result means the
 /// chart is unconditionally active.
-fn chart_activation_guard_sets(chain: &[chart::ChartDependencyActivation]) -> Vec<Vec<Guard>> {
+pub(crate) fn chart_activation_guard_sets(
+    chain: &[chart::ChartDependencyActivation],
+) -> Vec<Vec<Guard>> {
+    chain_guard_sets(chain, level_activation_guard_sets)
+}
+
+/// Like [`chart_activation_guard_sets`], with Helm's own dependency
+/// enablement per level ([`helm_level_enabled_guard_sets`]).
+pub(crate) fn helm_enabled_guard_sets(
+    chain: &[chart::ChartDependencyActivation],
+) -> Vec<Vec<Guard>> {
+    chain_guard_sets(chain, helm_level_enabled_guard_sets)
+}
+
+fn chain_guard_sets(
+    chain: &[chart::ChartDependencyActivation],
+    level_guard_sets: fn(&chart::ChartDependencyActivation) -> Vec<Vec<Guard>>,
+) -> Vec<Vec<Guard>> {
     let mut product: Vec<Vec<Guard>> = Vec::new();
     for level in chain {
-        let level_sets = level_activation_guard_sets(level);
+        let level_sets = level_guard_sets(level);
         if level_sets.is_empty() {
             continue;
         }
@@ -143,6 +160,64 @@ fn chart_activation_guard_sets(chain: &[chart::ChartDependencyActivation]) -> Ve
         product = next;
     }
     product
+}
+
+/// The predicate under which one of `guard_sets` holds; true when there are
+/// none.
+pub(crate) fn activation_predicate(guard_sets: Vec<Vec<Guard>>) -> helm_schema_core::Predicate {
+    let alternatives = guard_sets
+        .into_iter()
+        .map(|set| {
+            helm_schema_core::Predicate::all(
+                set.into_iter()
+                    .map(helm_schema_core::Predicate::from)
+                    .collect(),
+            )
+        })
+        .collect::<Vec<_>>();
+    if alternatives.is_empty() {
+        helm_schema_core::Predicate::True
+    } else {
+        helm_schema_core::Predicate::Or(alternatives)
+    }
+}
+
+/// Helm v4.2.3's enablement of one dependency (`processDependencyTags`, then
+/// `processDependencyConditions`): the first condition holding a BOOLEAN
+/// decides, a missing or non-boolean one is skipped; with none deciding, a
+/// tag holding `true` enables, else a tag holding `false` disables, else the
+/// dependency stays enabled.
+fn helm_level_enabled_guard_sets(activation: &chart::ChartDependencyActivation) -> Vec<Vec<Guard>> {
+    let condition_paths = normalized_ordered_paths(&activation.condition_paths);
+    let tag_paths = normalized_sorted_paths(&activation.tag_paths);
+    if condition_paths.is_empty() && tag_paths.is_empty() {
+        return Vec::new();
+    }
+    let equals = |path: &helm_schema_core::ValuesPath, value| Guard::Eq {
+        path: path.clone(),
+        value: helm_schema_core::GuardValue::Bool(value),
+    };
+    let differs = |path: &helm_schema_core::ValuesPath, value| Guard::NotEq {
+        path: path.clone(),
+        value: helm_schema_core::GuardValue::Bool(value),
+    };
+    let mut guard_sets = Vec::new();
+    let mut undecided = Vec::new();
+    for path in &condition_paths {
+        let mut enabled = undecided.clone();
+        enabled.push(equals(path, true));
+        guard_sets.push(enabled);
+        undecided.push(differs(path, true));
+        undecided.push(differs(path, false));
+    }
+    for path in &tag_paths {
+        let mut enabled = undecided.clone();
+        enabled.push(equals(path, true));
+        guard_sets.push(enabled);
+    }
+    undecided.extend(tag_paths.iter().map(|path| differs(path, false)));
+    guard_sets.push(undecided);
+    guard_sets
 }
 
 fn level_activation_guard_sets(activation: &chart::ChartDependencyActivation) -> Vec<Vec<Guard>> {
@@ -338,19 +413,9 @@ pub(crate) fn optional_dependency_helpers_for_chart(
         if helper_names.is_empty() {
             continue;
         }
-        let alternatives: Vec<helm_schema_core::Predicate> = activation_sets
-            .into_iter()
-            .map(|set| {
-                helm_schema_core::Predicate::all(
-                    set.into_iter()
-                        .map(helm_schema_core::Predicate::from)
-                        .collect(),
-                )
-            })
-            .collect();
         out.push(OptionalDependencyHelpers {
             helper_names,
-            inactive: helm_schema_core::Predicate::Or(alternatives).negated(),
+            inactive: activation_predicate(activation_sets).negated(),
         });
     }
     out

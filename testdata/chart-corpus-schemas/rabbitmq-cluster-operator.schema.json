@@ -2911,33 +2911,6 @@
       ],
       "x-kubernetes-map-type": "atomic"
     },
-    "constrains/claims@items.name+limits+requests": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-        },
-        {
-          "additionalProperties": false,
-          "description": "ResourceRequirements describes the compute resource requirements.",
-          "properties": {
-            "claims": {
-              "$ref": "#/$defs/constrains~1@items.name"
-            },
-            "limits": {
-              "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1object,null;limits-describes-the-maximum"
-            },
-            "requests": {
-              "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1object,null;requests-describes-the-minimum"
-            }
-          },
-          "type": "object"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi\nPod Disruption Budget configuration\nref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/"
-    },
     "constrains/clientIP.timeoutSeconds": {
       "anyOf": [
         {
@@ -3163,7 +3136,7 @@
           "not": {
             "properties": {
               "clusterOperator": {
-                "$ref": "#/$defs/constrains~1image.repository@2"
+                "$ref": "#/$defs/constrains~1image.repository"
               }
             },
             "required": [
@@ -5121,18 +5094,15 @@
       "type": "object"
     },
     "constrains/image.repository": {
-      "additionalProperties": {},
       "properties": {
         "image": {
-          "additionalProperties": {},
-          "properties": {
-            "repository": {
-              "description": "[default: REPOSITORY_NAME/rmq-messaging-topology-operator] RabbitMQ Messaging Topology Operator image repository",
-              "type": "string"
-            }
-          }
+          "$ref": "#/$defs/constrains~1repository"
         }
-      }
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
     },
     "constrains/image.repository+image.repository=null": {
       "additionalProperties": {},
@@ -5150,17 +5120,6 @@
       "properties": {
         "image": {
           "$ref": "#/$defs/constrains~1repository=null"
-        }
-      },
-      "required": [
-        "image"
-      ],
-      "type": "object"
-    },
-    "constrains/image.repository@2": {
-      "properties": {
-        "image": {
-          "$ref": "#/$defs/constrains~1repository"
         }
       },
       "required": [
@@ -6631,7 +6590,7 @@
           "not": {
             "properties": {
               "msgTopologyOperator": {
-                "$ref": "#/$defs/constrains~1image.repository@2"
+                "$ref": "#/$defs/constrains~1image.repository"
               }
             },
             "required": [
@@ -7142,75 +7101,6 @@
         "object",
         "null"
       ]
-    },
-    "constrains/name:t": {
-      "additionalProperties": {},
-      "description": "ServiceAccount configuration",
-      "properties": {
-        "name": {
-          "anyOf": [
-            {
-              "$ref": "#/$defs/constrains~1jobLabel~1string@2"
-            },
-            {
-              "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-              "type": "null"
-            },
-            {
-              "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-            },
-            {
-              "$ref": "#/$defs/constrains~1http:t~1string;pattern-a-za-z0-9-t"
-            },
-            {
-              "$ref": "#/$defs/constrains~1jobLabel~1object"
-            },
-            {
-              "$ref": "#/$defs/constrains~1http:t~1string;pattern-t"
-            },
-            {
-              "$ref": "#/$defs/constrains~1http:t~1string;pattern-null-null-null"
-            },
-            {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern@5"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern@4"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern@2"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@2"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@4"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@5"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern@3"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@3"
-                }
-              ],
-              "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-              "type": "string"
-            }
-          ],
-          "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the common.names.fullname template"
-        }
-      }
     },
     "constrains/networkPolicy": {
       "properties": {
@@ -9224,6 +9114,234 @@
         "object"
       ]
     },
+    "values/clusterOperator.args/array;arguments-to-the-entrypoint": {
+      "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
+      "items": {
+        "$ref": "#/$defs/k8s~1clusterrole-rbac-v1~1rules@items.apiGroups@items"
+      },
+      "type": "array"
+    },
+    "values/clusterOperator.automountServiceAccountToken": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1honorLabels:t~1string;pattern-true-true-true-fal"
+        },
+        {
+          "$ref": "#/$defs/constrains~1http:t~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "description": "AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1http:t~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1http:t~1string;pattern-null-null-null"
+        },
+        {
+          "description": "AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.",
+          "type": "boolean"
+        }
+      ],
+      "description": "Mount Service Account token in pod"
+    },
+    "values/clusterOperator.command/array;entrypoint-array-not-executed": {
+      "description": "Entrypoint array. Not executed within a shell. The container image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
+      "items": {
+        "$ref": "#/$defs/k8s~1clusterrole-rbac-v1~1rules@items.apiGroups@items"
+      },
+      "type": "array"
+    },
+    "values/clusterOperator.extraEnvVarsCM/string;name-of-the-referent": {
+      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
+      "type": "string"
+    },
+    "values/clusterOperator.image.pullPolicy/null;image-pull-policy-one": {
+      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+      "type": "null"
+    },
+    "values/clusterOperator.image.pullPolicy/string;image-pull-policy-one": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern"
+        },
+        {
+          "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@3"
+        }
+      ],
+      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
+      "type": "string"
+    },
+    "values/clusterOperator.nodeSelector/object;nodeselector-is-a-selector": {
+      "additionalProperties": {
+        "$ref": "#/$defs/k8s~1clusterrole-rbac-v1~1rules@items.apiGroups@items"
+      },
+      "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
+      "type": "object",
+      "x-kubernetes-map-type": "atomic"
+    },
+    "values/clusterOperator.replicaCount/integer:int32;number-of-desired-pods": {
+      "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+      "format": "int32",
+      "type": "integer"
+    },
+    "values/clusterOperator.replicaCount/null:int32;number-of-desired-pods": {
+      "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
+      "format": "int32",
+      "type": "null"
+    },
+    "values/clusterOperator.resources": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+        },
+        {
+          "additionalProperties": false,
+          "description": "ResourceRequirements describes the compute resource requirements.",
+          "properties": {
+            "claims": {
+              "$ref": "#/$defs/constrains~1@items.name"
+            },
+            "limits": {
+              "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1object,null;limits-describes-the-maximum"
+            },
+            "requests": {
+              "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1object,null;requests-describes-the-minimum"
+            }
+          },
+          "type": "object"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi\nPod Disruption Budget configuration\nref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/"
+    },
+    "values/clusterOperator.revisionHistoryLimit": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1http:t~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1http:t~1string;pattern-t"
+        },
+        {
+          "description": "The number of old ReplicaSets to retain to allow rollback. This is a pointer to distinguish between explicit zero and not specified. Defaults to 10.",
+          "format": "int32",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1http~1string;pattern-0-1-9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1http:t~1string;pattern-null-null-null"
+        },
+        {
+          "description": "The number of old ReplicaSets to retain to allow rollback. This is a pointer to distinguish between explicit zero and not specified. Defaults to 10.",
+          "format": "int32",
+          "type": "integer"
+        }
+      ],
+      "description": "sets number of replicaset to keep in k8s"
+    },
+    "values/clusterOperator.serviceAccount.name": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1jobLabel~1string@2"
+        },
+        {
+          "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1http:t~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1jobLabel~1object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1http:t~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1http:t~1string;pattern-null-null-null"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern@5"
+            },
+            {
+              "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern"
+            },
+            {
+              "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern@4"
+            },
+            {
+              "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@4"
+            },
+            {
+              "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@5"
+            },
+            {
+              "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern"
+            },
+            {
+              "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern@3"
+            },
+            {
+              "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@3"
+            }
+          ],
+          "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+          "type": "string"
+        }
+      ],
+      "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the common.names.fullname template"
+    },
+    "values/clusterOperator.terminationGracePeriodSeconds/integer:int64;optional-duration-in-seconds": {
+      "description": "Optional duration in seconds the pod needs to terminate gracefully. May be decreased in delete request. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). If this value is nil, the default grace period will be used instead. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. Defaults to 30 seconds.",
+      "format": "int64",
+      "type": "integer"
+    },
+    "values/clusterOperator.terminationGracePeriodSeconds/null:int64;optional-duration-in-seconds": {
+      "description": "Optional duration in seconds the pod needs to terminate gracefully. May be decreased in delete request. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). If this value is nil, the default grace period will be used instead. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. Defaults to 30 seconds.",
+      "format": "int64",
+      "type": "null"
+    },
     "values/clusterOperator/anyOf/array+not/:t+null+object": {
       "anyOf": [
         {
@@ -9258,31 +9376,6 @@
       ],
       "description": "[object] Pod labels to match to allow traffic from other namespaces"
     },
-    "values/clusterOperator/anyOf/boolean;automountserviceaccounttoken-indicates-whether-a+5more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1honorLabels:t~1string;pattern-true-true-true-fal"
-        },
-        {
-          "$ref": "#/$defs/constrains~1http:t~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "description": "AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.",
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1http:t~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1http:t~1string;pattern-null-null-null"
-        },
-        {
-          "description": "AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.",
-          "type": "boolean"
-        }
-      ],
-      "description": "Mount Service Account token in pod"
-    },
     "values/clusterOperator/anyOf/boolean;automountserviceaccounttoken-indicates-whether-pods+5more": {
       "anyOf": [
         {
@@ -9307,33 +9400,6 @@
         }
       ],
       "description": "Automount API credentials for a service account."
-    },
-    "values/clusterOperator/anyOf/integer:int32;the-number-of-old+null:int32;the-number-of-old+4more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1http:t~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1http:t~1string;pattern-t"
-        },
-        {
-          "description": "The number of old ReplicaSets to retain to allow rollback. This is a pointer to distinguish between explicit zero and not specified. Defaults to 10.",
-          "format": "int32",
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1http~1string;pattern-0-1-9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1http:t~1string;pattern-null-null-null"
-        },
-        {
-          "description": "The number of old ReplicaSets to retain to allow rollback. This is a pointer to distinguish between explicit zero and not specified. Defaults to 10.",
-          "format": "int32",
-          "type": "integer"
-        }
-      ],
-      "description": "sets number of replicaset to keep in k8s"
     },
     "values/clusterOperator/anyOf/not/:t+null;clusterip-is-the-ip+object+string+string;clusterip-is-the-ip+3more": {
       "anyOf": [
@@ -9562,20 +9628,6 @@
         "null"
       ]
     },
-    "values/clusterOperator/array;arguments-to-the-entrypoint": {
-      "description": "Arguments to the entrypoint. The container image's CMD is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
-      "items": {
-        "$ref": "#/$defs/k8s~1clusterrole-rbac-v1~1rules@items.apiGroups@items"
-      },
-      "type": "array"
-    },
-    "values/clusterOperator/array;entrypoint-array-not-executed": {
-      "description": "Entrypoint array. Not executed within a shell. The container image's ENTRYPOINT is used if this is not provided. Variable references $(VAR_NAME) are expanded using the container's environment. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Cannot be updated. More info: https://kubernetes.io/docs/tasks/inject-data-application/define-command-argument-container/#running-a-command-in-a-shell",
-      "items": {
-        "$ref": "#/$defs/k8s~1clusterrole-rbac-v1~1rules@items.apiGroups@items"
-      },
-      "type": "array"
-    },
     "values/clusterOperator/array;rabbitmq-cluster-operator-metrics": {
       "description": "RabbitMQ Cluster Operator metrics service Load Balancer sources\nref: https://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service\ne.g:\nloadBalancerSourceRanges:\n- 10.10.10.0/24",
       "items": {
@@ -9590,32 +9642,8 @@
         "null"
       ]
     },
-    "values/clusterOperator/integer:int32;number-of-desired-pods": {
-      "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
-      "format": "int32",
-      "type": "integer"
-    },
-    "values/clusterOperator/integer:int64;optional-duration-in-seconds": {
-      "description": "Optional duration in seconds the pod needs to terminate gracefully. May be decreased in delete request. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). If this value is nil, the default grace period will be used instead. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. Defaults to 30 seconds.",
-      "format": "int64",
-      "type": "integer"
-    },
-    "values/clusterOperator/null:int32;number-of-desired-pods": {
-      "description": "Number of desired pods. This is a pointer to distinguish between explicit zero and not specified. Defaults to 1.",
-      "format": "int32",
-      "type": "null"
-    },
-    "values/clusterOperator/null:int64;optional-duration-in-seconds": {
-      "description": "Optional duration in seconds the pod needs to terminate gracefully. May be decreased in delete request. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). If this value is nil, the default grace period will be used instead. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. Defaults to 30 seconds.",
-      "format": "int64",
-      "type": "null"
-    },
     "values/clusterOperator/null;clusterip-is-the-ip": {
       "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
-      "type": "null"
-    },
-    "values/clusterOperator/null;image-pull-policy-one": {
-      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
       "type": "null"
     },
     "values/clusterOperator/null;only-applies-to-service": {
@@ -9625,14 +9653,6 @@
     "values/clusterOperator/null;type-determines-how-the": {
       "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
       "type": "null"
-    },
-    "values/clusterOperator/object;nodeselector-is-a-selector": {
-      "additionalProperties": {
-        "$ref": "#/$defs/k8s~1clusterrole-rbac-v1~1rules@items.apiGroups@items"
-      },
-      "description": "NodeSelector is a selector which must be true for the pod to fit on a node. Selector which must match a node's labels for the pod to be scheduled on that node. More info: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/",
-      "type": "object",
-      "x-kubernetes-map-type": "atomic"
     },
     "values/clusterOperator/object;params-define-optional-http": {
       "additionalProperties": {
@@ -9687,42 +9707,6 @@
       "description": "clusterIP is the IP address of the service and is usually assigned randomly. If an address is specified manually, is in-range (as per system configuration), and is not in use, it will be allocated to the service; otherwise creation of the service will fail. This field may not be changed through updates unless the type field is also being changed to ExternalName (which requires this field to be blank) or the type field is being changed from ExternalName (in which case this field may optionally be specified, as describe above).  Valid values are \"None\", empty string (\"\"), or a valid IP address. Setting this to \"None\" makes a \"headless service\" (no virtual IP), which is useful when direct endpoint connections are preferred and proxying is not required.  Only applies to types ClusterIP, NodePort, and LoadBalancer. If this field is specified when creating a Service of type ExternalName, creation will fail. This field will be wiped when updating a Service to type ExternalName. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
       "type": "string"
     },
-    "values/clusterOperator/string;image-pull-policy-one": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/constrains~1ingressNSMatchLabels~1not~1keywords~1pattern@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@3"
-        }
-      ],
-      "description": "Image pull policy. One of Always, Never, IfNotPresent. Defaults to Always if :latest tag is specified, or IfNotPresent otherwise. Cannot be updated. More info: https://kubernetes.io/docs/concepts/containers/images#updating-images",
-      "type": "string"
-    },
     "values/clusterOperator/string;joblabel-selects-the-label": {
       "allOf": [
         {
@@ -9757,10 +9741,6 @@
         }
       ],
       "description": "jobLabel selects the label from the associated Kubernetes `Service`\nobject which will be used as the `job` label for all metrics.\n\nFor example if `jobLabel` is set to `foo` and the Kubernetes `Service`\nobject is labeled with `foo: bar`, then Prometheus adds the `job=\"bar\"`\nlabel to all ingested metrics.\n\nIf the value of this field is empty or if the label doesn't exist for\nthe given Service, the `job` label of the metrics defaults to the name\nof the associated Kubernetes `Service`.",
-      "type": "string"
-    },
-    "values/clusterOperator/string;name-of-the-referent": {
-      "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": "string"
     },
     "values/clusterOperator/string;only-applies-to-service": {
@@ -10008,6 +9988,10 @@
         "integer",
         "null"
       ]
+    },
+    "values/msgTopologyOperator.image.repository": {
+      "description": "[default: REPOSITORY_NAME/rmq-messaging-topology-operator] RabbitMQ Messaging Topology Operator image repository",
+      "type": "string"
     },
     "values/nameOverride": {
       "anyOf": [
@@ -10680,20 +10664,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "clusterOperator": {
-          "additionalProperties": {},
-          "description": "Bitnami RabbitMQ Cluster Operator image\nref: https://hub.docker.com/r/bitnami/rabbitmq-cluster-operator/tags/",
-          "properties": {
-            "image": {
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -11025,28 +10995,6 @@
           "properties": {
             "metrics": {
               "$ref": "#/$defs/constrains~1podMonitor"
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "clusterOperator": {
-          "additionalProperties": {},
-          "description": "Bitnami RabbitMQ Cluster Operator image\nref: https://hub.docker.com/r/bitnami/rabbitmq-cluster-operator/tags/",
-          "properties": {
-            "containerPorts": {
-              "additionalProperties": {},
-              "properties": {
-                "metrics": {
-                  "description": "RabbitMQ Cluster Operator container port (used for metrics)",
-                  "not": {
-                    "type": "null"
-                  }
-                }
-              }
             }
           }
         }
@@ -13390,17 +13338,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
       "if": {
         "$ref": "#/$defs/constrains~1clusterOperator+clusterOperator=null"
       },
@@ -15517,6 +15454,61 @@
       "if": {
         "allOf": [
           {
+            "$ref": "#/$defs/constrains~1clusterOperator.networkPolicy.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1clusterOperator.metrics.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "clusterOperator": {
+                "additionalProperties": {},
+                "description": "Bitnami RabbitMQ Cluster Operator image\nref: https://hub.docker.com/r/bitnami/rabbitmq-cluster-operator/tags/",
+                "properties": {
+                  "containerPorts": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "metrics": {
+                        "description": "RabbitMQ Cluster Operator container port (used for metrics)",
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "clusterOperator": {
+                "additionalProperties": {},
+                "description": "Bitnami RabbitMQ Cluster Operator image\nref: https://hub.docker.com/r/bitnami/rabbitmq-cluster-operator/tags/",
+                "properties": {
+                  "containerPorts": {
+                    "required": [
+                      "metrics"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
             "$ref": "#/$defs/constrains~1clusterOperator.rbac.create:t"
           },
           {
@@ -15606,23 +15598,6 @@
                   "object"
                 ]
               }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "clusterOperator": {
-          "additionalProperties": {},
-          "description": "Bitnami RabbitMQ Cluster Operator image\nref: https://hub.docker.com/r/bitnami/rabbitmq-cluster-operator/tags/",
-          "properties": {
-            "containerPorts": {
-              "required": [
-                "metrics"
-              ],
-              "type": "object"
             }
           }
         }
@@ -15812,19 +15787,6 @@
               "livenessProbe": {
                 "type": "object"
               }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "msgTopologyOperator": {
-          "additionalProperties": {},
-          "properties": {
-            "image": {
-              "type": "object"
             }
           }
         }
@@ -16707,20 +16669,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "clusterOperator": {
-          "additionalProperties": {},
-          "description": "Bitnami RabbitMQ Cluster Operator image\nref: https://hub.docker.com/r/bitnami/rabbitmq-cluster-operator/tags/",
-          "properties": {
-            "containerPorts": {
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -16775,21 +16723,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "clusterOperator": {
-          "additionalProperties": {},
-          "description": "Bitnami RabbitMQ Cluster Operator image\nref: https://hub.docker.com/r/bitnami/rabbitmq-cluster-operator/tags/",
-          "properties": {
-            "serviceAccount": {
-              "description": "ServiceAccount configuration",
-              "type": "object"
-            }
-          }
-        }
-      }
     },
     {
       "if": {
@@ -17031,370 +16964,8 @@
       "description": "Kubernetes cluster domain name"
     },
     "clusterOperator": {
+      "additionalProperties": {},
       "allOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "affinity": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+24more@2"
-                }
-              ],
-              "description": "Affinity for RabbitMQ Cluster Operator pods assignment\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nNOTE: `podAffinityPreset`, `podAntiAffinityPreset`, and `nodeAffinityPreset` will be ignored when it's set"
-            },
-            "args": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "$ref": "#/$defs/values~1clusterOperator~1array;arguments-to-the-entrypoint"
-                }
-              ],
-              "description": "Override default container args (useful when using custom images)"
-            },
-            "automountServiceAccountToken": {
-              "$ref": "#/$defs/values~1clusterOperator~1anyOf~1boolean;automountserviceaccounttoken-indicates-whether-a+5more"
-            },
-            "command": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/values~1clusterOperator~1array;entrypoint-array-not-executed"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Override default container command (useful when using custom images)"
-            },
-            "containerPorts": {
-              "additionalProperties": {},
-              "properties": {
-                "metrics": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1integer:int32;number-of-port-to"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1http~1string;pattern-0-1-9"
-                    }
-                  ],
-                  "description": "RabbitMQ Cluster Operator container port (used for metrics)"
-                }
-              }
-            },
-            "extraEnvVars": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.name+@items.value+@items.valueFrom.configMapKeyRef.key+10more"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Array with extra environment variables to add to RabbitMQ Cluster Operator nodes\ne.g:\nextraEnvVars:\n- name: FOO\nvalue: \"bar\""
-            },
-            "extraEnvVarsCM": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/values~1clusterOperator~1string;name-of-the-referent"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Name of existing ConfigMap containing extra env vars for RabbitMQ Cluster Operator nodes"
-            },
-            "extraEnvVarsSecret": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/values~1clusterOperator~1string;name-of-the-referent"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Name of existing Secret containing extra env vars for RabbitMQ Cluster Operator nodes"
-            },
-            "extraVolumeMounts": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.mountPath+@items.mountPropagation+@items.name+@items.readOnly+2more"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Optionally specify extra list of additional volumeMounts for the RabbitMQ Cluster Operator container(s)"
-            },
-            "extraVolumes": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Optionally specify extra list of additional volumes for the RabbitMQ Cluster Operator pod(s)"
-            },
-            "hostAliases": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "RabbitMQ Cluster Operator pods host aliases\nhttps://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/"
-            },
-            "image": {
-              "additionalProperties": {},
-              "properties": {
-                "pullPolicy": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1jobLabel~1string@2"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1clusterOperator~1null;image-pull-policy-one"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1http:t~1string;pattern-a-za-z0-9-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1jobLabel~1object"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1http:t~1string;pattern-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1http:t~1string;pattern-null-null-null"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1clusterOperator~1string;image-pull-policy-one"
-                    }
-                  ],
-                  "description": "RabbitMQ Cluster Operator image pull policy\nSpecify a imagePullPolicy\nref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images"
-                },
-                "repository": {
-                  "description": "[default: REPOSITORY_NAME/rabbitmq-cluster-operator] RabbitMQ Cluster Operator image repository",
-                  "type": "string"
-                }
-              }
-            },
-            "initContainers": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more@2"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Add additional init containers to the RabbitMQ Cluster Operator pod(s)\nref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/\ne.g:\ninitContainers:\n- name: your-image-name\nimage: your-image\nimagePullPolicy: Always\ncommand: ['sh', '-c', 'echo \"hello world\"']"
-            },
-            "lifecycleHooks": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1postStart.exec.command+postStart.httpGet.host+9more"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "for the RabbitMQ Cluster Operator container(s) to automate configuration before or after startup"
-            },
-            "nodeSelector": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/values~1clusterOperator~1object;nodeselector-is-a-selector"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Node labels for RabbitMQ Cluster Operator pods assignment\nref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/"
-            },
-            "podAnnotations": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/values~1allOf~1object+object,null;annotations-is-an-unstructured"
-                }
-              ],
-              "description": "Annotations for RabbitMQ Cluster Operator pods\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/"
-            },
-            "replicaCount": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/values~1clusterOperator~1integer:int32;number-of-desired-pods"
-                },
-                {
-                  "$ref": "#/$defs/values~1clusterOperator~1null:int32;number-of-desired-pods"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1http:t~1string;pattern-a-za-z0-9-t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1http:t~1string;pattern-t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1http~1string;pattern-0-1-9"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1http:t~1string;pattern-null-null-null"
-                }
-              ],
-              "description": "Number of RabbitMQ Cluster Operator replicas to deploy"
-            },
-            "resources": {
-              "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
-            },
-            "revisionHistoryLimit": {
-              "$ref": "#/$defs/values~1clusterOperator~1anyOf~1integer:int32;the-number-of-old+null:int32;the-number-of-old+4more"
-            },
-            "serviceAccount": {
-              "$ref": "#/$defs/constrains~1name:t"
-            },
-            "sidecars": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                }
-              ],
-              "description": "Add additional sidecar containers to the RabbitMQ Cluster Operator pod(s)\ne.g:\nsidecars:\n- name: your-image-name\nimage: your-image\nimagePullPolicy: Always\nports:\n- name: portname\ncontainerPort: 1234"
-            },
-            "terminationGracePeriodSeconds": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1http:t~1string;pattern-a-za-z0-9-t"
-                },
-                {
-                  "$ref": "#/$defs/values~1clusterOperator~1integer:int64;optional-duration-in-seconds"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1http:t~1string;pattern-t"
-                },
-                {
-                  "$ref": "#/$defs/values~1clusterOperator~1null:int64;optional-duration-in-seconds"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1http~1string;pattern-0-1-9"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1http:t~1string;pattern-null-null-null"
-                }
-              ],
-              "description": "In seconds, time the given to the %%MAIN_CONTAINER_NAME%% pod needs to terminate gracefully\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods\nConfigure extra options for RabbitMQ Cluster Operator containers' liveness and readiness probes\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes"
-            },
-            "tolerations": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Tolerations for RabbitMQ Cluster Operator pods assignment\nref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/"
-            },
-            "topologySpreadConstraints": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.labelSelector.matchExpressions@items.key+10more"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Topology Spread Constraints for pod assignment\nhttps://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/\nThe value is evaluated as a template"
-            },
-            "updateStrategy": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                },
-                {
-                  "additionalProperties": false,
-                  "description": "DeploymentStrategy describes how to replace existing pods with new ones.",
-                  "properties": {
-                    "rollingUpdate": {
-                      "$ref": "#/$defs/constrains~1maxSurge+maxUnavailable"
-                    },
-                    "type": {
-                      "description": "RabbitMQ Cluster Operator statefulset strategy type\nStrategyType\nCan be set to RollingUpdate or OnDelete",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    }
-                  },
-                  "type": "object"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies"
-            }
-          }
-        },
         {
           "$ref": "#/$defs/when~1rbac+rbac=null~1then~1fail"
         },
@@ -17562,9 +17133,6 @@
           "then": {
             "$ref": "#/$defs/constrains~1serviceAccount.name:t"
           }
-        },
-        {
-          "type": "object"
         },
         {
           "additionalProperties": {},
@@ -18553,7 +18121,380 @@
           }
         }
       ],
-      "description": "Bitnami RabbitMQ Cluster Operator image\nref: https://hub.docker.com/r/bitnami/rabbitmq-cluster-operator/tags/"
+      "description": "Bitnami RabbitMQ Cluster Operator image\nref: https://hub.docker.com/r/bitnami/rabbitmq-cluster-operator/tags/",
+      "properties": {
+        "affinity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/constrains~1nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+24more@2"
+            }
+          ],
+          "description": "Affinity for RabbitMQ Cluster Operator pods assignment\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nNOTE: `podAffinityPreset`, `podAntiAffinityPreset`, and `nodeAffinityPreset` will be ignored when it's set"
+        },
+        "args": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/values~1clusterOperator.args~1array;arguments-to-the-entrypoint"
+            }
+          ],
+          "description": "Override default container args (useful when using custom images)"
+        },
+        "automountServiceAccountToken": {
+          "$ref": "#/$defs/values~1clusterOperator.automountServiceAccountToken"
+        },
+        "command": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/values~1clusterOperator.command~1array;entrypoint-array-not-executed"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Override default container command (useful when using custom images)"
+        },
+        "containerPorts": {
+          "additionalProperties": {},
+          "properties": {
+            "metrics": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1integer:int32;number-of-port-to"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1http~1string;pattern-0-1-9"
+                }
+              ],
+              "description": "RabbitMQ Cluster Operator container port (used for metrics)"
+            }
+          },
+          "required": [
+            "metrics"
+          ],
+          "type": "object"
+        },
+        "extraEnvVars": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.name+@items.value+@items.valueFrom.configMapKeyRef.key+10more"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Array with extra environment variables to add to RabbitMQ Cluster Operator nodes\ne.g:\nextraEnvVars:\n- name: FOO\nvalue: \"bar\""
+        },
+        "extraEnvVarsCM": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/values~1clusterOperator.extraEnvVarsCM~1string;name-of-the-referent"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Name of existing ConfigMap containing extra env vars for RabbitMQ Cluster Operator nodes"
+        },
+        "extraEnvVarsSecret": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/values~1clusterOperator.extraEnvVarsCM~1string;name-of-the-referent"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Name of existing Secret containing extra env vars for RabbitMQ Cluster Operator nodes"
+        },
+        "extraVolumeMounts": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.mountPath+@items.mountPropagation+@items.name+@items.readOnly+2more"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optionally specify extra list of additional volumeMounts for the RabbitMQ Cluster Operator container(s)"
+        },
+        "extraVolumes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optionally specify extra list of additional volumes for the RabbitMQ Cluster Operator pod(s)"
+        },
+        "hostAliases": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "RabbitMQ Cluster Operator pods host aliases\nhttps://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/"
+        },
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "pullPolicy": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1jobLabel~1string@2"
+                },
+                {
+                  "$ref": "#/$defs/values~1clusterOperator.image.pullPolicy~1null;image-pull-policy-one"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1http:t~1string;pattern-a-za-z0-9-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1jobLabel~1object"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1http:t~1string;pattern-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1http:t~1string;pattern-null-null-null"
+                },
+                {
+                  "$ref": "#/$defs/values~1clusterOperator.image.pullPolicy~1string;image-pull-policy-one"
+                }
+              ],
+              "description": "RabbitMQ Cluster Operator image pull policy\nSpecify a imagePullPolicy\nref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images"
+            },
+            "repository": {
+              "description": "[default: REPOSITORY_NAME/rabbitmq-cluster-operator] RabbitMQ Cluster Operator image repository",
+              "type": "string"
+            }
+          },
+          "type": "object"
+        },
+        "initContainers": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Add additional init containers to the RabbitMQ Cluster Operator pod(s)\nref: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/\ne.g:\ninitContainers:\n- name: your-image-name\nimage: your-image\nimagePullPolicy: Always\ncommand: ['sh', '-c', 'echo \"hello world\"']"
+        },
+        "lifecycleHooks": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1postStart.exec.command+postStart.httpGet.host+9more"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "for the RabbitMQ Cluster Operator container(s) to automate configuration before or after startup"
+        },
+        "nodeSelector": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/values~1clusterOperator.nodeSelector~1object;nodeselector-is-a-selector"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Node labels for RabbitMQ Cluster Operator pods assignment\nref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/"
+        },
+        "podAnnotations": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/values~1allOf~1object+object,null;annotations-is-an-unstructured"
+            }
+          ],
+          "description": "Annotations for RabbitMQ Cluster Operator pods\nref: https://kubernetes.io/docs/concepts/overview/working-with-objects/annotations/"
+        },
+        "replicaCount": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/values~1clusterOperator.replicaCount~1integer:int32;number-of-desired-pods"
+            },
+            {
+              "$ref": "#/$defs/values~1clusterOperator.replicaCount~1null:int32;number-of-desired-pods"
+            },
+            {
+              "$ref": "#/$defs/constrains~1http:t~1string;pattern-a-za-z0-9-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1http:t~1string;pattern-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1http~1string;pattern-0-1-9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1http:t~1string;pattern-null-null-null"
+            }
+          ],
+          "description": "Number of RabbitMQ Cluster Operator replicas to deploy"
+        },
+        "resources": {
+          "$ref": "#/$defs/values~1clusterOperator.resources"
+        },
+        "revisionHistoryLimit": {
+          "$ref": "#/$defs/values~1clusterOperator.revisionHistoryLimit"
+        },
+        "serviceAccount": {
+          "additionalProperties": {},
+          "description": "ServiceAccount configuration",
+          "properties": {
+            "name": {
+              "$ref": "#/$defs/values~1clusterOperator.serviceAccount.name"
+            }
+          },
+          "type": "object"
+        },
+        "sidecars": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+            }
+          ],
+          "description": "Add additional sidecar containers to the RabbitMQ Cluster Operator pod(s)\ne.g:\nsidecars:\n- name: your-image-name\nimage: your-image\nimagePullPolicy: Always\nports:\n- name: portname\ncontainerPort: 1234"
+        },
+        "terminationGracePeriodSeconds": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1http:t~1string;pattern-a-za-z0-9-t"
+            },
+            {
+              "$ref": "#/$defs/values~1clusterOperator.terminationGracePeriodSeconds~1integer:int64;optional-duration-in-seconds"
+            },
+            {
+              "$ref": "#/$defs/constrains~1http:t~1string;pattern-t"
+            },
+            {
+              "$ref": "#/$defs/values~1clusterOperator.terminationGracePeriodSeconds~1null:int64;optional-duration-in-seconds"
+            },
+            {
+              "$ref": "#/$defs/constrains~1http~1string;pattern-0-1-9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1http:t~1string;pattern-null-null-null"
+            }
+          ],
+          "description": "In seconds, time the given to the %%MAIN_CONTAINER_NAME%% pod needs to terminate gracefully\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods\nConfigure extra options for RabbitMQ Cluster Operator containers' liveness and readiness probes\nref: https://kubernetes.io/docs/tasks/configure-pod-container/configure-liveness-readiness-probes/#configure-probes"
+        },
+        "tolerations": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Tolerations for RabbitMQ Cluster Operator pods assignment\nref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/"
+        },
+        "topologySpreadConstraints": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.labelSelector.matchExpressions@items.key+10more"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Topology Spread Constraints for pod assignment\nhttps://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/\nThe value is evaluated as a template"
+        },
+        "updateStrategy": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+            },
+            {
+              "additionalProperties": false,
+              "description": "DeploymentStrategy describes how to replace existing pods with new ones.",
+              "properties": {
+                "rollingUpdate": {
+                  "$ref": "#/$defs/constrains~1maxSurge+maxUnavailable"
+                },
+                "type": {
+                  "description": "RabbitMQ Cluster Operator statefulset strategy type\nStrategyType\nCan be set to RollingUpdate or OnDelete",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies"
+        }
+      },
+      "type": "object"
     },
     "common": {
       "additionalProperties": {},
@@ -18562,26 +18503,7 @@
           "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
           "type": "string"
         },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "compatibility": {
-              "additionalProperties": {},
-              "properties": {
-                "openshift": {
-                  "additionalProperties": {},
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            },
-            "security": {
-              "additionalProperties": {},
-              "type": "object"
-            }
-          },
-          "type": "object"
-        }
+        "global": {}
       },
       "type": "object"
     },
@@ -18606,23 +18528,19 @@
       "$ref": "#/$defs/values~1commonLabels"
     },
     "credentialUpdaterImage": {
+      "additionalProperties": {},
       "allOf": [
         {
           "$ref": "#/$defs/when~1repository+repository=null~1then~1fail"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "repository": {
-              "description": "[default: REPOSITORY_NAME/rmq-default-credential-updater] RabbitMQ Default User Credential Updater image repository",
-              "type": "string"
-            }
-          }
         }
-      ]
+      ],
+      "properties": {
+        "repository": {
+          "description": "[default: REPOSITORY_NAME/rmq-default-credential-updater] RabbitMQ Default User Credential Updater image repository",
+          "type": "string"
+        }
+      },
+      "type": "object"
     },
     "diagnosticMode": {
       "additionalProperties": {},
@@ -18689,10 +18607,6 @@
             }
           }
         },
-        "defaultStorageClass": {
-          "description": "Global default StorageClass for Persistent Volume(s)",
-          "type": "string"
-        },
         "imagePullSecrets": {
           "description": "Global Docker registry secret names as an array\nE.g.\nimagePullSecrets:\n- myRegistryKeySecretName"
         },
@@ -18709,18 +18623,14 @@
             }
           },
           "type": "object"
-        },
-        "storageClass": {
-          "description": "DEPRECATED: use global.defaultStorageClass instead",
-          "type": "string"
         }
-      },
-      "type": "object"
+      }
     },
     "kubeVersion": {
       "description": "Override Kubernetes version"
     },
     "msgTopologyOperator": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -19257,9 +19167,6 @@
           "then": false
         },
         {
-          "type": "object"
-        },
-        {
           "additionalProperties": {},
           "properties": {
             "networkPolicy": {
@@ -19447,9 +19354,6 @@
         },
         {
           "$ref": "#/$defs/constrains~1image.repository+image.repository=null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.repository"
         },
         {
           "if": {
@@ -20343,7 +20247,7 @@
                   "extraEnvVarsCM": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1clusterOperator~1string;name-of-the-referent"
+                        "$ref": "#/$defs/values~1clusterOperator.extraEnvVarsCM~1string;name-of-the-referent"
                       },
                       {
                         "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
@@ -20360,7 +20264,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "resources": {
-                    "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
+                    "$ref": "#/$defs/values~1clusterOperator.resources"
                   }
                 }
               },
@@ -20370,10 +20274,10 @@
                   "replicaCount": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1clusterOperator~1integer:int32;number-of-desired-pods"
+                        "$ref": "#/$defs/values~1clusterOperator.replicaCount~1integer:int32;number-of-desired-pods"
                       },
                       {
-                        "$ref": "#/$defs/values~1clusterOperator~1null:int32;number-of-desired-pods"
+                        "$ref": "#/$defs/values~1clusterOperator.replicaCount~1null:int32;number-of-desired-pods"
                       },
                       {
                         "$ref": "#/$defs/constrains~1http:t~1string;pattern-a-za-z0-9-t"
@@ -20396,7 +20300,13 @@
                 "additionalProperties": {},
                 "properties": {
                   "serviceAccount": {
-                    "$ref": "#/$defs/constrains~1name:t"
+                    "additionalProperties": {},
+                    "description": "ServiceAccount configuration",
+                    "properties": {
+                      "name": {
+                        "$ref": "#/$defs/values~1clusterOperator.serviceAccount.name"
+                      }
+                    }
                   }
                 }
               },
@@ -20581,7 +20491,7 @@
                             "$ref": "#/$defs/constrains~1jobLabel~1string@2"
                           },
                           {
-                            "$ref": "#/$defs/values~1clusterOperator~1null;image-pull-policy-one"
+                            "$ref": "#/$defs/values~1clusterOperator.image.pullPolicy~1null;image-pull-policy-one"
                           },
                           {
                             "$ref": "#/$defs/constrains~1http:t~1string;pattern-a-za-z0-9-t"
@@ -20596,7 +20506,7 @@
                             "$ref": "#/$defs/constrains~1http:t~1string;pattern-null-null-null"
                           },
                           {
-                            "$ref": "#/$defs/values~1clusterOperator~1string;image-pull-policy-one"
+                            "$ref": "#/$defs/values~1clusterOperator.image.pullPolicy~1string;image-pull-policy-one"
                           }
                         ],
                         "description": "RabbitMQ Messaging Topology Operator image pull policy\nSpecify a imagePullPolicy\nref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images"
@@ -20655,7 +20565,7 @@
                   "extraEnvVarsSecret": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1clusterOperator~1string;name-of-the-referent"
+                        "$ref": "#/$defs/values~1clusterOperator.extraEnvVarsCM~1string;name-of-the-referent"
                       },
                       {
                         "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
@@ -20669,7 +20579,17 @@
                 }
               },
               {
-                "$ref": "#/$defs/constrains~1image.repository"
+                "additionalProperties": {},
+                "properties": {
+                  "image": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "repository": {
+                        "$ref": "#/$defs/values~1msgTopologyOperator.image.repository"
+                      }
+                    }
+                  }
+                }
               },
               {
                 "additionalProperties": {},
@@ -20680,7 +20600,7 @@
                         "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/values~1clusterOperator~1object;nodeselector-is-a-selector"
+                        "$ref": "#/$defs/values~1clusterOperator.nodeSelector~1object;nodeselector-is-a-selector"
                       },
                       {
                         "type": "null"
@@ -20856,7 +20776,7 @@
                         "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/values~1clusterOperator~1array;entrypoint-array-not-executed"
+                        "$ref": "#/$defs/values~1clusterOperator.command~1array;entrypoint-array-not-executed"
                       },
                       {
                         "type": "null"
@@ -20873,7 +20793,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "revisionHistoryLimit": {
-                    "$ref": "#/$defs/values~1clusterOperator~1anyOf~1integer:int32;the-number-of-old+null:int32;the-number-of-old+4more"
+                    "$ref": "#/$defs/values~1clusterOperator.revisionHistoryLimit"
                   }
                 }
               },
@@ -20889,13 +20809,13 @@
                         "$ref": "#/$defs/constrains~1http:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
-                        "$ref": "#/$defs/values~1clusterOperator~1integer:int64;optional-duration-in-seconds"
+                        "$ref": "#/$defs/values~1clusterOperator.terminationGracePeriodSeconds~1integer:int64;optional-duration-in-seconds"
                       },
                       {
                         "$ref": "#/$defs/constrains~1http:t~1string;pattern-t"
                       },
                       {
-                        "$ref": "#/$defs/values~1clusterOperator~1null:int64;optional-duration-in-seconds"
+                        "$ref": "#/$defs/values~1clusterOperator.terminationGracePeriodSeconds~1null:int64;optional-duration-in-seconds"
                       },
                       {
                         "$ref": "#/$defs/constrains~1http~1string;pattern-0-1-9"
@@ -20912,7 +20832,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "automountServiceAccountToken": {
-                    "$ref": "#/$defs/values~1clusterOperator~1anyOf~1boolean;automountserviceaccounttoken-indicates-whether-a+5more"
+                    "$ref": "#/$defs/values~1clusterOperator.automountServiceAccountToken"
                   }
                 }
               },
@@ -21173,7 +21093,7 @@
                         "type": "string"
                       },
                       {
-                        "$ref": "#/$defs/values~1clusterOperator~1array;arguments-to-the-entrypoint"
+                        "$ref": "#/$defs/values~1clusterOperator.args~1array;arguments-to-the-entrypoint"
                       }
                     ],
                     "description": "Override default container args (useful when using custom images)"
@@ -21485,30 +21405,38 @@
             }
           }
         }
-      ]
+      ],
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "$ref": "#/$defs/values~1msgTopologyOperator.image.repository"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     "nameOverride": {
       "$ref": "#/$defs/values~1nameOverride"
     },
     "namespaceOverride": {},
     "rabbitmqImage": {
+      "additionalProperties": {},
       "allOf": [
         {
           "$ref": "#/$defs/when~1repository+repository=null~1then~1fail"
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "repository": {
-              "description": "[default: REPOSITORY_NAME/rabbitmq] RabbitMQ Image repository",
-              "type": "string"
-            }
-          }
-        },
-        {
-          "type": "object"
         }
-      ]
+      ],
+      "properties": {
+        "repository": {
+          "description": "[default: REPOSITORY_NAME/rabbitmq] RabbitMQ Image repository",
+          "type": "string"
+        }
+      },
+      "type": "object"
     },
     "tags": {
       "additionalProperties": {},

@@ -9812,37 +9812,33 @@
     "extraEnvVars": {
       "allOf": [
         {
-          "type": "object"
-        },
-        {
           "$ref": "#/$defs/constrains~1@items.name+@items.value+@items.valueFrom.configMapKeyRef.key+10more"
-        },
-        {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "type": "null"
-            },
-            {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "properties": {
-                "FTLCONF_dns_listeningMode": {
-                  "description": "issue 360\nTZ: UTC\nProject a variable\nSOME_VAR:\nvalueFrom:\nconfigMapKeyRef:\nkey: some-var\nname: my-config-map",
-                  "type": "string"
-                },
-                "FTLCONF_webserver_port": {}
-              },
-              "type": "object"
-            }
-          ]
         }
       ],
-      "description": "extraEnvironmentVars is a list of extra enviroment variables to set for pihole to use. You can use either scalars or project cm, secrets or pod fields via valueFrom"
+      "anyOf": [
+        {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "properties": {
+            "FTLCONF_dns_listeningMode": {
+              "description": "issue 360\nTZ: UTC\nProject a variable\nSOME_VAR:\nvalueFrom:\nconfigMapKeyRef:\nkey: some-var\nname: my-config-map",
+              "type": "string"
+            },
+            "FTLCONF_webserver_port": {}
+          },
+          "type": "object"
+        }
+      ],
+      "description": "extraEnvironmentVars is a list of extra enviroment variables to set for pihole to use. You can use either scalars or project cm, secrets or pod fields via valueFrom",
+      "type": "object"
     },
     "extraEnvVarsSecret": {
       "anyOf": [
@@ -9982,6 +9978,7 @@
       "description": "values that should be added to pihole-FTL.conf. You can use either scalars or project cm, secrets or pod fields via valueFrom\nAdd values for pihole-FTL.conf\nMAXDBDAYS: 14\nProject a variable\nLOCAL_IPV4:\nvalueFrom:\nfieldRef:\nfieldPath: status.podIP"
     },
     "fullnameOverride": {},
+    "global": {},
     "hostNetwork": {
       "anyOf": [
         {
@@ -10672,32 +10669,26 @@
           "type": "object"
         },
         "sidecar": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "Sidecar configuration",
+          "properties": {
+            "enabled": {
+              "description": "set this to true to enable podMonitor as sidecar"
             },
-            {
+            "image": {
               "additionalProperties": {},
               "properties": {
-                "enabled": {
-                  "description": "set this to true to enable podMonitor as sidecar"
+                "pullPolicy": {},
+                "repository": {
+                  "description": "the repository to use"
                 },
-                "image": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "pullPolicy": {},
-                    "repository": {
-                      "description": "the repository to use"
-                    },
-                    "tag": {}
-                  }
-                },
-                "port": {},
-                "resources": {}
+                "tag": {}
               }
-            }
-          ],
-          "description": "Sidecar configuration"
+            },
+            "port": {},
+            "resources": {}
+          },
+          "type": "object"
         }
       },
       "type": "object"
@@ -11293,88 +11284,76 @@
       "description": "Probes configuration",
       "properties": {
         "liveness": {
-          "allOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "command": {},
-                "enabled": {},
-                "failureThreshold": {
-                  "description": "threshold until the probe is considered failing"
-                },
-                "initialDelaySeconds": {
-                  "description": "wait time before trying the liveness probe"
-                },
-                "port": {},
-                "scheme": {},
-                "timeoutSeconds": {
-                  "description": "timeout in seconds"
-                },
-                "type": {
-                  "anyOf": [
-                    {
-                      "type": "null"
-                    },
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "enum": [
-                        "command"
-                      ]
-                    }
-                  ],
-                  "description": "Generate a liveness probe\n'type' defaults to command, can be set to 'httpGet' to use a HTTP GET type liveness probe."
-                }
-              }
+          "additionalProperties": {},
+          "description": "probes.liveness -- Configure the healthcheck for the ingress controller",
+          "properties": {
+            "command": {},
+            "enabled": {},
+            "failureThreshold": {
+              "description": "threshold until the probe is considered failing"
             },
-            {
-              "type": "object"
+            "initialDelaySeconds": {
+              "description": "wait time before trying the liveness probe"
+            },
+            "port": {},
+            "scheme": {},
+            "timeoutSeconds": {
+              "description": "timeout in seconds"
+            },
+            "type": {
+              "anyOf": [
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "enum": [
+                    "command"
+                  ]
+                }
+              ],
+              "description": "Generate a liveness probe\n'type' defaults to command, can be set to 'httpGet' to use a HTTP GET type liveness probe."
             }
-          ],
-          "description": "probes.liveness -- Configure the healthcheck for the ingress controller"
+          },
+          "type": "object"
         },
         "readiness": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "port: http\nscheme: HTTP",
+          "properties": {
+            "command": {},
+            "enabled": {},
+            "failureThreshold": {
+              "description": "threshold until the probe is considered failing"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "command": {},
-                "enabled": {},
-                "failureThreshold": {
-                  "description": "threshold until the probe is considered failing"
+            "initialDelaySeconds": {
+              "description": "wait time before trying the readiness probe"
+            },
+            "port": {},
+            "scheme": {},
+            "timeoutSeconds": {
+              "description": "timeout in seconds\nport: http\nscheme: HTTP"
+            },
+            "type": {
+              "anyOf": [
+                {
+                  "type": "null"
                 },
-                "initialDelaySeconds": {
-                  "description": "wait time before trying the readiness probe"
+                {
+                  "type": "string"
                 },
-                "port": {},
-                "scheme": {},
-                "timeoutSeconds": {
-                  "description": "timeout in seconds\nport: http\nscheme: HTTP"
-                },
-                "type": {
-                  "anyOf": [
-                    {
-                      "type": "null"
-                    },
-                    {
-                      "type": "string"
-                    },
-                    {
-                      "enum": [
-                        "command"
-                      ]
-                    }
-                  ],
-                  "description": "Generate a readiness probe\n'type' defaults to command, can be set to 'httpGet' to use a HTTP GET type readiness probe."
+                {
+                  "enum": [
+                    "command"
+                  ]
                 }
-              }
+              ],
+              "description": "Generate a readiness probe\n'type' defaults to command, can be set to 'httpGet' to use a HTTP GET type readiness probe."
             }
-          ],
-          "description": "port: http\nscheme: HTTP"
+          },
+          "type": "object"
         }
       },
       "type": "object"
@@ -12333,26 +12312,20 @@
           "description": "Labels for the web interface service"
         },
         "http": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "Configuration for the HTTP web interface listener",
+          "properties": {
+            "enabled": {
+              "description": "Generate a service for HTTP traffic"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "description": "Generate a service for HTTP traffic"
-                },
-                "nodePort": {
-                  "description": "Optional node port for the web HTTP service"
-                },
-                "port": {
-                  "description": "The port of the web HTTP service"
-                }
-              }
+            "nodePort": {
+              "description": "Optional node port for the web HTTP service"
+            },
+            "port": {
+              "description": "The port of the web HTTP service"
             }
-          ],
-          "description": "Configuration for the HTTP web interface listener"
+          },
+          "type": "object"
         },
         "https": {
           "additionalProperties": {},

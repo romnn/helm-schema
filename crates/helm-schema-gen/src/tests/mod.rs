@@ -20,6 +20,7 @@ use helm_schema_ir::{
 };
 use helm_schema_k8s::{Chain, CrdsCatalogSchemaProvider, KubernetesJsonSchemaProvider};
 
+mod authoring_policy;
 mod block_scalar_projection;
 mod bound_helpers;
 mod canonical_emission;
@@ -38,6 +39,7 @@ mod fragment_seeds;
 mod generation_decisions;
 mod grouped_argument_evaluation;
 mod guard_lowering;
+mod helm_global_namespace;
 mod helper_projection;
 mod int_cast_preimages;
 mod iterable_lanes;
@@ -206,6 +208,17 @@ fn schema_for_values_yaml(source: impl SchemaSignalSource, values_yaml: Option<&
 /// defaults helm refills a DELETED dependency values root with. A key
 /// missing INSIDE a surviving root needs no third document — helm validates
 /// the coalesced values, so it reads nil however it was declared.
+/// An always-active dependency root the analyzed chart declares no default
+/// for: Helm asserts it unconditionally.
+fn undeclared_dependency_root(path: &str) -> helm_schema_ir::DependencyValuesRoot {
+    helm_schema_ir::DependencyValuesRoot {
+        path: helm_schema_core::ValuesPath::parse(path),
+        active: Vec::new(),
+        asserted_before_pruning: true,
+        declared_by_parent: false,
+    }
+}
+
 fn schema_for_dependency_values_yaml(
     source: impl SchemaSignalSource,
     values_yaml: &str,
@@ -239,6 +252,11 @@ fn expected_values_schema(
         "additionalProperties": false,
         "type": "object",
     });
+    let mut properties = properties;
+    // Every chart values root reserves Helm's `global` namespace.
+    properties
+        .entry("global")
+        .or_insert_with(|| serde_json::json!({}));
     schema["properties"] = Value::Object(properties);
     if !all_of.is_empty() {
         schema["allOf"] = Value::Array(all_of);

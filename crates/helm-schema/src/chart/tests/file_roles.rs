@@ -88,6 +88,7 @@ fn loaded_chart_corpus_owns_the_classified_source_snapshot() -> eyre::Result<()>
         is_library: false,
         static_root_strings: BTreeMap::new(),
         dependency_activation_chain: Vec::new(),
+        listed_dependency: false,
     };
 
     let corpus = LoadedChartCorpus::load(std::slice::from_ref(&chart), false)?;

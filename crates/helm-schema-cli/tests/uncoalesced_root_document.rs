@@ -26,6 +26,7 @@ fn generate(chart_dir: VfsPath) -> eyre::Result<(serde_json::Value, Vec<LintWith
         values_files: Vec::new(),
         infer_required: false,
         emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
         provider: ProviderOptions {
             k8s_versions: vec!["v1.35.0".to_string()],
             k8s_schema_cache_dir: None,
@@ -139,10 +140,6 @@ fn expected_lint_root_schema() -> serde_json::Value {
                     },
                 },
             },
-            {
-                "additionalProperties": {},
-                "properties": { "kid": { "type": ["null", "object"] } },
-            },
         ],
         "properties": {
             "global": {},
@@ -150,7 +147,7 @@ fn expected_lint_root_schema() -> serde_json::Value {
                 "additionalProperties": {},
                 "properties": {
                     "flag": { "type": "boolean" },
-                    "global": { "additionalProperties": {}, "type": "object" },
+                    "global": {},
                     "grp": {
                         "additionalProperties": {},
                         "properties": { "enabled": {} },
@@ -286,10 +283,6 @@ fn expected_empty_root_schema() -> serde_json::Value {
         "additionalProperties": false,
         "allOf": [
             {
-                "additionalProperties": {},
-                "properties": { "kid": { "type": ["null", "object"] } },
-            },
-            {
                 "if": {
                     "allOf": [
                         {
@@ -345,7 +338,7 @@ fn expected_empty_root_schema() -> serde_json::Value {
             "kid": {
                 "additionalProperties": {},
                 "properties": {
-                    "global": { "additionalProperties": {}, "type": "object" },
+                    "global": {},
                     "grp": {
                         "additionalProperties": {},
                         "properties": { "enabled": {} },
@@ -571,7 +564,7 @@ fn mode_kid_schema() -> serde_json::Value {
                 },
             },
         ],
-        "properties": { "global": { "additionalProperties": {}, "type": "object" }, "mode": {} },
+        "properties": { "global": {}, "mode": {} },
         "type": "object",
     })
 }
@@ -590,10 +583,6 @@ fn expected_mode_schema() -> serde_json::Value {
                         "properties": { "mode": { "type": ["null", "string"] } },
                     },
                 },
-            },
-            {
-                "additionalProperties": {},
-                "properties": { "kid": { "type": ["null", "object"] } },
             },
             mode_root_clause(),
         ],

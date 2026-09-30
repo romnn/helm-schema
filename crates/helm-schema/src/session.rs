@@ -377,7 +377,11 @@ impl AnalysisSession {
             &generated.definition_origins,
             PreparedEmitRequest::empty(request),
             self.chart_base_dir(),
-            FinalOutputPolicy::new(self.resolved_emission_policy()?, self.opts.infer_required),
+            FinalOutputPolicy::new(
+                self.resolved_emission_policy()?,
+                self.opts.infer_required,
+                self.opts.authoring,
+            ),
         )
     }
 
@@ -401,7 +405,11 @@ impl AnalysisSession {
             &generated.definition_origins,
             prepared,
             self.chart_base_dir(),
-            FinalOutputPolicy::new(self.resolved_emission_policy()?, self.opts.infer_required),
+            FinalOutputPolicy::new(
+                self.resolved_emission_policy()?,
+                self.opts.infer_required,
+                self.opts.authoring,
+            ),
         )
     }
 
@@ -524,7 +532,8 @@ impl AnalysisSession {
                         .with_values_documents(&prepared.values_documents)
                         .with_shadowed_input_paths(&prepared.shadowed_input_paths)
                         .with_values_descriptions(&prepared.values_descriptions)
-                        .with_emission_policy(self.resolved_emission_policy()?.policy()),
+                        .with_emission_policy(self.resolved_emission_policy()?.policy())
+                        .with_authoring_policy(self.opts.authoring),
                 );
 
                 Ok(ResolvedContract {
@@ -556,7 +565,8 @@ impl AnalysisSession {
         let input = ValuesSchemaInput::new(finalized_contract.schema_signals(), &provider)
             .with_values_documents(&prepared.values_documents)
             .with_shadowed_input_paths(&prepared.shadowed_input_paths)
-            .with_values_descriptions(&prepared.values_descriptions);
+            .with_values_descriptions(&prepared.values_descriptions)
+            .with_authoring_policy(self.opts.authoring);
         Ok(helm_schema_gen::bench_support::benchmark_policies(
             &input, policies, runs,
         ))

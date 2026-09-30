@@ -5866,35 +5866,29 @@
       ]
     },
     "labels": {
-      "allOf": [
+      "anyOf": [
         {
+          "items": {},
+          "type": "array"
+        },
+        {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "properties": {
+            "app": {},
+            "istio": {},
+            "istio.io/dataplane-mode": {
+              "type": "string"
+            }
+          },
           "type": "object"
         },
         {
-          "anyOf": [
-            {
-              "items": {},
-              "type": "array"
-            },
-            {
-              "additionalProperties": {
-                "type": "string"
-              },
-              "properties": {
-                "app": {},
-                "istio": {},
-                "istio.io/dataplane-mode": {
-                  "type": "string"
-                }
-              },
-              "type": "object"
-            },
-            {
-              "type": "null"
-            }
-          ]
+          "type": "null"
         }
-      ]
+      ],
+      "type": "object"
     },
     "lifecycle": {
       "anyOf": [

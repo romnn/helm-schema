@@ -11845,17 +11845,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
       "if": {
         "not": {
           "$ref": "#/$defs/constrains~1resources:t"
@@ -15920,14 +15909,8 @@
           "description": "Additional configuration for the git-repo-syncer container"
         },
         "image": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
-              "additionalProperties": {}
-            }
-          ]
+          "additionalProperties": {},
+          "type": "object"
         },
         "interval": {
           "description": "Interval for sidecar container pull from the Git repository\nFIPS configuration"
@@ -15951,26 +15934,7 @@
           "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
           "type": "string"
         },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "compatibility": {
-              "additionalProperties": {},
-              "properties": {
-                "openshift": {
-                  "additionalProperties": {},
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            },
-            "security": {
-              "additionalProperties": {},
-              "type": "object"
-            }
-          },
-          "type": "object"
-        }
+        "global": {}
       },
       "type": "object"
     },
@@ -18130,8 +18094,7 @@
           },
           "type": "object"
         }
-      },
-      "type": "object"
+      }
     },
     "healthIngress": {
       "additionalProperties": {},
@@ -18976,6 +18939,7 @@
       "type": "object"
     },
     "image": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -18997,14 +18961,9 @@
             ]
           },
           "then": false
-        },
-        {
-          "type": "object"
-        },
-        {
-          "additionalProperties": {}
         }
-      ]
+      ],
+      "type": "object"
     },
     "ingress": {
       "additionalProperties": {},
@@ -19428,6 +19387,7 @@
       }
     },
     "metrics": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -20355,9 +20315,6 @@
           }
         },
         {
-          "type": "object"
-        },
-        {
           "if": {
             "allOf": [
               {
@@ -20466,9 +20423,6 @@
             ]
           },
           "then": false
-        },
-        {
-          "additionalProperties": {}
         },
         {
           "if": {
@@ -20669,7 +20623,8 @@
           "$ref": "#/$defs/when~1enabled:t+fips+fips=null~1then~1fail"
         }
       ],
-      "description": "Prometheus Exporter / Metrics"
+      "description": "Prometheus Exporter / Metrics",
+      "type": "object"
     },
     "nameOverride": {
       "$ref": "#/$defs/values~1nameOverride"

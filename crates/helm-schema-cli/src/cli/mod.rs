@@ -14,7 +14,7 @@ use std::path::PathBuf;
 
 use clap::{Parser, Subcommand};
 
-pub use chart_args::ChartArgs;
+pub use chart_args::{ChartArgs, DeclaredTypesArg};
 pub use crd_args::{CrdArgs, CrdVersionLookup};
 pub use diag_args::{DiagArgs, DiagFormat};
 pub use emission_args::{EmissionArgs, PolicyToggle};

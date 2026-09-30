@@ -433,7 +433,7 @@ fn nested_dependency_global_projection_partitions_every_ancestor_source() {
 fn contract_ir_pathless_scalar_seed_projects_without_rendered_path() {
     let mut contract = ContractIr::default();
 
-    contract.push_pathless_scalar("extraConfig");
+    contract.push_pathless_scalar(helm_schema_core::ValuesPath::parse("extraConfig"));
 
     let finalized = contract.finalize();
     let value_uses = finalized.uses();
