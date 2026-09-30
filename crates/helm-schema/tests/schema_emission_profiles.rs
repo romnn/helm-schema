@@ -2870,14 +2870,24 @@ fn declared_types_attribution(
     }
     for error in regenerated.asserted.validator.iter_errors(document) {
         let path = error.instance_path().as_str().to_string();
+        // Whether a JSON-pointer token names an object member or an array
+        // element is the document's to say: `Location::segments` reads every
+        // numeric token as an index, even an object key such as `"1"`.
         let mut keys = Vec::new();
-        for segment in error.instance_path().segments() {
-            match segment {
-                jsonschema::paths::LocationSegment::Property(key) => keys.push(key.into_owned()),
-                jsonschema::paths::LocationSegment::Index(_) => {
+        let mut instance = document;
+        for token in path.split('/').skip(1) {
+            let key = token.replace("~1", "/").replace("~0", "~");
+            instance = match instance {
+                serde_json::Value::Object(members) => match members.get(&key) {
+                    Some(member) => member,
+                    None => return Err(format!("{path}: `{key}` is not in the document")),
+                },
+                serde_json::Value::Array(_) => {
                     return Err(format!("{path}: steps into an array"));
                 }
-            }
+                _ => return Err(format!("{path}: steps into a scalar")),
+            };
+            keys.push(key);
         }
         let mut reached = helm_schema_core::ValuesPath::parse("");
         let mut ancestry = vec![reached.clone()];
