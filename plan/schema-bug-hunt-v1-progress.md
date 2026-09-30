@@ -7423,6 +7423,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   regenerated, 1 328 patterns Go-compile; argo-cd/openebs/grafana compile with the debug CLI (r12/chk-*.json). Gates
   on 1e3c2bdf: fmt 0, task lint 0 (r12/lint-2.log). r12/handoff.md is current (its next commands: re-run
   battery-v17 only if status.txt lacks `done` and no run.sh is alive). Orchestrator.
+- 21:12 (Sep 30) — **User decision: no builder chain outlives session 3; session 4 re-runs them under its own
+  control.** The W4 battery-v17 chain (run.sh, then `task test:integration` on 1e3c2bdf, 57 s in) was killed at 21:11;
+  nothing of it is left running; the builder acknowledged and stopped (status.txt is partial: astgrep/tokei 0 —
+  the replacement removes it and re-runs per r12/handoff.md step 1). W1's live battery on dump10 had already ENDED
+  at 20:43: `1 test run: 0 passed, 1 failed` with the single reason "false acceptances missing from
+  KNOWN_FALSE_ACCEPTANCES" (14 145 HELM_FLIP lines; `rework8/battery10-live/battery.log`, coverage.json) — the
+  expected outcome the builder's open item 1 (roster the R29 false acceptances after adjudicating each) addresses;
+  no unmatched tightening was reported. The W1 builder acknowledged and stopped. Both builders are now idle and die
+  with this session; the resume briefs stand. Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and

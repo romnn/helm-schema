@@ -159,7 +159,8 @@ resume prompt for session 4 is at the end of this section.
   filed against D1). Not run on main for landing 9: `task test:all`, luup2 — owed.
 - **Landing order: W4/F75 = landing 10 → k8s D1–D3 = landing 11 → W1 = landing 12 → frontend 2.2.** One
   fixture-moving landing at a time; every candidate rebases onto the current main before its final dump + battery.
-- **Landing 10 (W4/F75) — NOT launched; rework 12 CHECKPOINTED, its battery chain was alive at hand-off.** Clone
+- **Landing 10 (W4/F75) — NOT launched; rework 12 CHECKPOINTED; its battery-v17 chain was KILLED at 21:11 (user
+  decision) and session 4's replacement builder re-runs it.** Clone
   `/Volumes/T7/dev/round8-landing10`, branch landing-10 at c6f9f663 = main + the 51 rework-11 commits (tip 4fc19662) —
   STALE: re-stage on the rework-12 tip once it is reviewed LAND ×2. Env `/Volumes/T7/dev/round8/runner/landing-10.env`
   committed (bd9a486; header names 4fc19662 and 51 commits — update tip, count and move count; E=round8-landing10-run1,
@@ -173,7 +174,8 @@ resume prompt for session 4 is at the end of this section.
   adjudicate that totality explicitly — with the 13-cell red→green test, 18 gen fixtures + the R51 CLI fixture regenerated, fmt/lint 0; the
   battery-v17 chain (lint:fc → nextest → FULL integration → clean dump → verify → Go-regexp → helmsweep → live battery →
   release CLI → matrix v13 → fixture diff/moves/size table → final-v13.patch + sha256 into
-  `round8-w4-evidence/rebase/battery-v17/status.txt`) was restarted 21:07 on 1e3c2bdf. Resume file
+  `round8-w4-evidence/rebase/battery-v17/status.txt`) was restarted 21:07 on 1e3c2bdf and killed at 21:11 during `task test:integration` (partial status.txt: remove it
+  before re-running). Resume file
   `round8-w4-evidence/rebase/r12/handoff.md` (exact next commands). The builder a4a462316266893c4 dies with session 3:
   spawn the replacement from `round8/brief-w4-rework12-resume.md` (same clone/target) unless status.txt already says
   `done` with a green battery — then only the final handoff rewrite is missing. Re-check reviewers with FRESH runs on
@@ -200,8 +202,10 @@ resume prompt for session 4 is at the end of this section.
   R31 corrected: okteto `probe=null` was a genuine false rejection) and the checkpoint gates are green except FULL
   integration: 145 fixture adoptions + 4 OPEN real diffs caused by R29 (explain redis_exporter…, explain_values_json…,
   nacos_ingress_api_version… ×2) that need review; 232 late R29 regressions were fixed but are not yet pinned by named
-  tests; the LIVE battery on dump10 was running at hand-off (`rework8/battery10-live/battery.log`; re-run
-  `bash /Volumes/T7/dev/round8-w1-evidence/rework8/battery9.sh live` only if it died). Open: roster the R29 false
+  tests; the LIVE battery on dump10 ENDED 20:43 with 1 failed, sole reason "false acceptances missing from
+  KNOWN_FALSE_ACCEPTANCES" (`rework8/battery10-live/battery.log` + coverage.json; no unmatched tightening) — the
+  expected input for open item 1 (adjudicate and roster the R29 false acceptances), then re-run
+  `bash /Volumes/T7/dev/round8-w1-evidence/rework8/battery9.sh live`. Open: roster the R29 false
   acceptances, review the 4 diffs, wrong-rows-v8.txt, regenerate final-v9. The builder (ae88c76cb6bda5467) is dead with
   session 3: spawn the replacement from `round8/brief-w1-rework8-resume.md`. Reviews on the real hand-back: fresh runs on
   both models pointed at review-w1-rework{5,6,7}-*.md and rework8/handoff.md (the old sessions bde21128/b7fd0b5d expire).
