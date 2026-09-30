@@ -4083,7 +4083,9 @@ type AttributionCell = (
 /// changed `propertyNames`, closed object, tuple limit or `minContains`
 /// predicate beside the policy's failure, or an unrelated closed-root
 /// rejection. Renaming a definition changes nothing, since no failure is
-/// compared with another.
+/// compared with another. The document, not the JSON-pointer token, says
+/// whether a rejected value is an object member (`settings."1"`) or an array
+/// element (`settings.list[0]`, never attributed).
 #[test]
 #[expect(
     clippy::too_many_lines,
@@ -4107,6 +4109,8 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
               enabled: false
               unread: ""
               size: 3
+              "1": ""
+              list: [""]
         "#},
     )?;
     std::fs::write(
@@ -4164,7 +4168,9 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
         )
     };
     let settings = |member: &str, value: serde_json::Value| {
-        let mut document = json!({"settings": {"enabled": false, "size": 3, "unread": 7}});
+        let mut document = json!({
+            "settings": {"enabled": false, "size": 3, "unread": 7, "1": "", "list": [""]},
+        });
         document["settings"][member] = value;
         document
     };
@@ -4172,12 +4178,35 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
 
     // (baseline, constraint the chart's generation carries under both
     // policies, document, attribution). A `None` constraint is the chart as
-    // generated. Every document renders (rework6/helm-r20.log).
+    // generated. Every document renders (rework8/helm-cells.log).
     let (renamed_baseline, renamed_baseline_defs) = not_integer("a");
     let (renamed_chart, renamed_chart_defs) = not_integer("b");
     let cells: Vec<AttributionCell> = vec![
         // The policy alone rejects the unread declared default.
         (json!({}), None, unread(json!(7)), Ok(())),
+        // The unread declared default `"1"` is an object member although its
+        // JSON-pointer token is numeric.
+        (
+            json!({}),
+            None,
+            {
+                let mut document = settings("1", json!(7));
+                document["settings"]["unread"] = json!("");
+                document
+            },
+            Ok(()),
+        ),
+        // The unread declared default `list` is rejected at an array element.
+        (
+            json!({}),
+            None,
+            {
+                let mut document = settings("list", json!([7]));
+                document["settings"]["unread"] = json!("");
+                document
+            },
+            Err("/settings/list/0: steps into an array"),
+        ),
         // `size` is read by the Widget sink and typed only by its default.
         (
             json!({}),
