@@ -7071,6 +7071,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   re-staged: main 566309de + 14 F1 commits + K17 + cell_matrix + catalog 345d5be3 (three patches clean; 17 commits);
   env header updated. Launch on LAND ×2. Orchestrator.
 
+- 02:17 (Sep 30) — **F1 rework 7: sol LAND, astra REWORK on one P2 → rework 8 (small). W4 rework 8: astra REWORK
+  (R41–R45 + the Traefik R40); sol's run was stopped by a content filter and re-run rephrased.** F1
+  (`review-f1-rework7-{sol,astra}.md`): both call the identity-free (b)+(c)+(d) proof sound and complete (sol's
+  `not{const}` cell shows (c) alone is not enough and (b) declines it); both accept the landing-9 assembly and the
+  catalog; astra's P2: the unread walk trusts `LocationSegment::Index` for array traversal, but jsonschema 0.56
+  reparses numeric pointer tokens as indices even for object keys (`settings: {"1": ""}` probe declined with
+  "steps into an array") → decide object-vs-array from the document; builder resumed (test-only). Landing 9 waits
+  for that fix + astra's re-check. W4 (`review-w4-rework8-astra.md`): R41 synapse's pretty schema 5 873 638 B
+  exceeds Helm's 5 242 880 B limit (186 root allOf arms from the tpl-program capture expansion) — the sweep would
+  refuse it; R42 the merged capture drops provable parse failures after a defined include; R43 the self-include
+  cycle claim rejects a mutation-terminated recursion Helm renders; R44 undefined-helper matching misses Go string
+  escapes and implicit file templates; R45 mapping separators/NEL admitted; sound-subset direction for Traefik
+  confirmed with the boundary "never negate S"; the rebase preserves semantics. `brief-w4-rework9.md` (R40–R45)
+  sent to the builder. Sol re-run 20260930T001709-419cfbc0 (the flagged run 89e63fe7 had noted a lead: the claim
+  regex can match an include inside a quoted Go string literal — carried into R44). Disk 145 GB, load 15.
+  Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
