@@ -167,11 +167,13 @@ resume prompt for session 4 is at the end of this section.
   claimed unrecognised programs missing — grafana/spinnaker `include (((((print "x"))))) .` renders, main accepts, r11
   rejects; R59 literal-named missing include inside a computed operand must still reject; R60 nested `not`; R61 CR /
   `\r` in double-quoted literals). Rework 12 (brief `brief-w4-rework12.md`) is CHECKPOINTED in `round8-w4-r9` at
-  a5a1f33a (clean; 53 commits on b51c8589): R58–R61 done in code (tpl_programs.rs, positive claim patterns, no
-  complement) with the 13-cell red→green test, 18 gen fixtures + the R51 CLI fixture regenerated, fmt/lint 0; the
+  1e3c2bdf (clean; 54 commits on b51c8589; a5a1f33a's trie patterns were replaced after they broke argo-cd/openebs
+  regex compilation and openebs' 5 MiB budget): R58–R61 done in code — NOTE the missing-callable claim is again a
+  COMPLEMENT, of `resolvable_calls_program` argued as a total word language (tpl_programs.rs:264); the re-check must
+  adjudicate that totality explicitly — with the 13-cell red→green test, 18 gen fixtures + the R51 CLI fixture regenerated, fmt/lint 0; the
   battery-v17 chain (lint:fc → nextest → FULL integration → clean dump → verify → Go-regexp → helmsweep → live battery →
   release CLI → matrix v13 → fixture diff/moves/size table → final-v13.patch + sha256 into
-  `round8-w4-evidence/rebase/battery-v17/status.txt`) started 20:31. Resume file
+  `round8-w4-evidence/rebase/battery-v17/status.txt`) was restarted 21:07 on 1e3c2bdf. Resume file
   `round8-w4-evidence/rebase/r12/handoff.md` (exact next commands). The builder a4a462316266893c4 dies with session 3:
   spawn the replacement from `round8/brief-w4-rework12-resume.md` (same clone/target) unless status.txt already says
   `done` with a green battery — then only the final handoff rewrite is missing. Re-check reviewers with FRESH runs on

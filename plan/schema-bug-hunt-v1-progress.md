@@ -7406,6 +7406,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   only, battery 1 passed / 0 unmatched, matrix r12→r13 changes = the r13 cells), rewrite the handoff as final, hand
   back. The builder a4a462316266893c4 dies with session 3; the replacement resumes from
   `round8/brief-w4-rework12-resume.md`. Orchestrator.
+- 21:10 (Sep 30) — **W4 rework 12 checkpoint MOVED: HEAD 1e3c2bdf (a5a1f33a's trie complement replaced), battery-v17
+  chain RESTARTED 21:07 on 1e3c2bdf.** The builder's first R58 design (a5a1f33a, trie-based positive patterns) made
+  argo-cd/openebs patterns uncompilable ("is not a regex") and pushed openebs' Helm-ready schema over 5 MiB in the
+  battery-v17 integration log, so that run was killed. At 1e3c2bdf the missing-callable claim is the complement of
+  `resolvable_calls_program` (tpl_programs.rs:264, used :388), argued as a TOTAL word language over lexed programs:
+  every include/template word is followed, after blanks, by a literal that may name a callable or by a non-literal
+  token (`unnamed` :295) after which the operand's own tokens follow; every lexed program segments unless some call
+  takes a literal naming no callable, so no operand form or depth bounds the claim; the bounded unknown-operand
+  language and parenthesized() are deleted. **This is a complement again, justified by totality — the re-check must
+  adjudicate that totality claim explicitly (the rework-12 brief asked for positive patterns, everything else UNKNOWN);
+  the orchestrator has not verified it.** Undefined-function claim positive (:238); R60 nested `not` (:311/:316);
+  R61 STRING_LITERAL keeps CR, a literal "may name a callable" only if its text is a callable name, holds an
+  undecoded octal/hex/unicode escape, or is a raw literal with a CR. Tests: the 13-cell test red on 4fc19662
+  (r12/red-r58-r61.log), green at 1e3c2bdf (r12/green-r58-r61.log, gen 814/814); 18 gen fixtures + the CLI fixture
+  regenerated, 1 328 patterns Go-compile; argo-cd/openebs/grafana compile with the debug CLI (r12/chk-*.json). Gates
+  on 1e3c2bdf: fmt 0, task lint 0 (r12/lint-2.log). r12/handoff.md is current (its next commands: re-run
+  battery-v17 only if status.txt lacks `done` and no run.sh is alive). Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
