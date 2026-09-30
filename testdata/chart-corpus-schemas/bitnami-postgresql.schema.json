@@ -2654,50 +2654,9 @@
       "additionalProperties": {},
       "properties": {
         "automountServiceAccountToken": {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1anyOf~1boolean;automountserviceaccounttoken-indicates-whether-a+5more"
+          "$ref": "#/$defs/values~1primary.automountServiceAccountToken"
         }
       }
-    },
-    "constrains/automountServiceAccountToken/anyOf/boolean;automountserviceaccounttoken-indicates-whether-a+5more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-true-true-true-fal"
-        },
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "description": "AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.",
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-        },
-        {
-          "description": "AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.",
-          "type": "boolean"
-        }
-      ],
-      "description": "Mount Service Account token in pod"
-    },
-    "constrains/automountServiceAccountToken/string;pattern-a-za-z0-9-t": {
-      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "constrains/automountServiceAccountToken/string;pattern-null-null-null": {
-      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
-      "type": "string"
-    },
-    "constrains/automountServiceAccountToken/string;pattern-t": {
-      "pattern": "^[ \\t]*(#.*)?$",
-      "type": "string"
-    },
-    "constrains/automountServiceAccountToken/string;pattern-true-true-true-fal": {
-      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
-      "type": "string"
     },
     "constrains/awsElasticBlockStore.fsType+awsElasticBlockStore.partition+185more": {
       "additionalProperties": false,
@@ -4842,20 +4801,6 @@
         "object",
         "null"
       ]
-    },
-    "constrains/claims@items.name+limits+requests@3": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
     },
     "constrains/clientIP.timeoutSeconds": {
       "additionalProperties": false,
@@ -7204,7 +7149,7 @@
     "constrains/image.repository": {
       "properties": {
         "image": {
-          "$ref": "#/$defs/constrains~1repository@3"
+          "$ref": "#/$defs/constrains~1repository"
         }
       },
       "required": [
@@ -8415,19 +8360,19 @@
     "constrains/minAvailable:t/anyOf/integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
         },
         {
           "type": "integer"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
         },
         {
           "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-0-1-9"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
         },
         {
           "type": "null"
@@ -8440,16 +8385,16 @@
           "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
         },
         {
           "$ref": "#/$defs/constrains~1minAvailable:t~1object"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
         },
         {
           "type": "null"
@@ -8589,6 +8534,18 @@
     },
     "constrains/minAvailable:t/string;pattern-0-1-9": {
       "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[+-]_*0[0-7]{0,8}[89][0-9]{0,8})$",
+      "type": "string"
+    },
+    "constrains/minAvailable:t/string;pattern-a-za-z0-9-t": {
+      "pattern": "^&[A-Za-z0-9_-]+[ \\t]*(#.*)?$",
+      "type": "string"
+    },
+    "constrains/minAvailable:t/string;pattern-null-null-null": {
+      "pattern": "^(~|null|Null|NULL)([ \\t]+#.*)?$",
+      "type": "string"
+    },
+    "constrains/minAvailable:t/string;pattern-t": {
+      "pattern": "^[ \\t]*(#.*)?$",
       "type": "string"
     },
     "constrains/minAvailable:t/string@2": {
@@ -9753,16 +9710,16 @@
               "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
             },
             {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
             },
             {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
             },
             {
               "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-0-1-9"
             },
             {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
             }
           ],
           "description": "Node port for PostgreSQL"
@@ -11487,13 +11444,13 @@
       "type": "object"
     },
     "constrains/repository": {
-      "additionalProperties": {},
       "properties": {
-        "repository": {
-          "description": "[default: REPOSITORY_NAME/os-shell] Init container volume-permissions image repository",
-          "type": "string"
-        }
-      }
+        "repository": {}
+      },
+      "required": [
+        "repository"
+      ],
+      "type": "object"
     },
     "constrains/repository=null": {
       "properties": {
@@ -11508,29 +11465,11 @@
       ],
       "type": "object"
     },
-    "constrains/repository@2": {
-      "additionalProperties": {},
-      "properties": {
-        "repository": {
-          "description": "[default: REPOSITORY_NAME/postgresql] PostgreSQL image repository",
-          "type": "string"
-        }
-      }
-    },
-    "constrains/repository@3": {
-      "properties": {
-        "repository": {}
-      },
-      "required": [
-        "repository"
-      ],
-      "type": "object"
-    },
     "constrains/resources.claims@items.name+resources.limits+resources.requests+resources:t": {
       "additionalProperties": {},
       "properties": {
         "resources": {
-          "$ref": "#/$defs/constrains~1claims@items.name+limits+requests@3"
+          "$ref": "#/$defs/values~1primary.resources"
         }
       }
     },
@@ -12770,31 +12709,6 @@
       ],
       "description": "Addresses that are allowed when service is LoadBalancer\nhttps://kubernetes.io/docs/tasks/access-application-cluster/configure-cloud-provider-firewall/#restrict-access-for-loadbalancer-service\nloadBalancerSourceRanges:\n- 10.10.10.0/24"
     },
-    "values/anyOf/boolean;use-the-host-s-ipc+null;use-the-host-s-ipc+string;pattern-a-za-z0-9-t+3more": {
-      "anyOf": [
-        {
-          "description": "Use the host's ipc namespace. Optional: Default to false.",
-          "type": "null"
-        },
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-true-true-true-fal"
-        },
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-        },
-        {
-          "description": "Use the host's ipc namespace. Optional: Default to false.",
-          "type": "boolean"
-        }
-      ],
-      "description": "Specify if host IPC should be enabled for PostgreSQL pod (postgresql primary)"
-    },
     "values/anyOf/not/:t+null;clusterip-is-the-ip+object+string+string;clusterip-is-the-ip+3more": {
       "anyOf": [
         {
@@ -12804,7 +12718,7 @@
           "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
         },
         {
           "$ref": "#/$defs/constrains~1minAvailable:t~1object"
@@ -12813,13 +12727,13 @@
           "$ref": "#/$defs/values~1null;clusterip-is-the-ip"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
         },
         {
           "$ref": "#/$defs/values~1string;clusterip-is-the-ip"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
         }
       ],
       "description": "Static clusterIP or None for headless services\ne.g:\nclusterIP: None"
@@ -12833,20 +12747,20 @@
           "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
         },
         {
           "$ref": "#/$defs/constrains~1minAvailable:t~1object"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
         },
         {
           "description": "loadBalancerClass is the class of the load balancer implementation this Service belongs to. If specified, the value of this field must be a label-style identifier, with an optional prefix, e.g. \"internal-vip\" or \"example.com/internal-vip\". Unprefixed names are reserved for end-users. This field can only be set when the Service type is 'LoadBalancer'. If not set, the default load balancer implementation is used, today this is typically done through the cloud provider integration, but should apply for any default implementation. If set, it is assumed that a load balancer implementation is watching for Services with a matching class. Any default load balancer implementation (e.g. cloud providers) should ignore Services that set this field. This field can only be set when creating or updating a Service to type 'LoadBalancer'. Once set, it can not be changed. This field will be wiped when a service is updated to a non 'LoadBalancer' type.",
           "type": "null"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
         },
         {
           "allOf": [
@@ -12896,16 +12810,16 @@
           "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
         },
         {
           "$ref": "#/$defs/constrains~1minAvailable:t~1object"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
         },
         {
           "allOf": [
@@ -12950,35 +12864,6 @@
       ],
       "description": "Load balancer IP if service type is `LoadBalancer`\nSet the LoadBalancer service type to internal only\nref: https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer"
     },
-    "values/anyOf/not/:t+null;path-within-the-volume+object+string+string;path-within-the-volume+3more": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/values~1null;path-within-the-volume"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
-        },
-        {
-          "$ref": "#/$defs/values~1string;path-within-the-volume"
-        },
-        {
-          "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-        },
-        {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-        }
-      ],
-      "description": "The subdirectory of the volume to mount to\nUseful in dev environments and one PV for multiple services"
-    },
     "values/anyOf/not/:t+string": {
       "anyOf": [
         {
@@ -13016,19 +12901,19 @@
           "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
         },
         {
           "$ref": "#/$defs/constrains~1minAvailable:t~1object"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
         },
         {
           "$ref": "#/$defs/values~1null;name-must-be-unique"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
         }
       ]
     },
@@ -13038,7 +12923,7 @@
           "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
         },
         {
           "$ref": "#/$defs/constrains~1minAvailable:t~1object"
@@ -13050,10 +12935,10 @@
           "$ref": "#/$defs/values~1null;supports-clientip-and-none"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
         }
       ],
       "description": "Session Affinity for Kubernetes service, can be \"None\" or \"ClientIP\"\nIf \"ClientIP\", consecutive client requests will be directed to the same Pod\nref: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies"
@@ -13104,16 +12989,16 @@
           "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
         },
         {
           "$ref": "#/$defs/constrains~1minAvailable:t~1object"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
         }
       ],
       "description": "Kubernetes Service type"
@@ -13124,7 +13009,7 @@
           "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
         },
         {
           "$ref": "#/$defs/constrains~1minAvailable:t~1object"
@@ -13134,7 +13019,7 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
         },
         {
           "allOf": [
@@ -13173,7 +13058,7 @@
           "type": "string"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
         }
       ],
       "description": "Volume retention behavior that applies when the StatefulSet is deleted"
@@ -13220,7 +13105,7 @@
           "type": "string"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
         },
         {
           "$ref": "#/$defs/constrains~1minAvailable:t~1object"
@@ -13230,74 +13115,13 @@
           "type": "null"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
         }
       ],
       "description": "Volume retention behavior when the replica count of the StatefulSet is reduced"
-    },
-    "values/anyOf/object+string+string;path-within-the-container": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1object"
-        },
-        {
-          "$ref": "#/$defs/values~1string;path-within-the-container"
-        }
-      ],
-      "description": "The path the volume will be mounted at\nNote: useful when using custom PostgreSQL images"
-    },
-    "values/anyOf/object+string+string;this-must-match-the": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
-        },
-        {
-          "allOf": [
-            {
-              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@10"
-            },
-            {
-              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@4"
-            },
-            {
-              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@9"
-            },
-            {
-              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@2"
-            },
-            {
-              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@5"
-            },
-            {
-              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@7"
-            },
-            {
-              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@8"
-            },
-            {
-              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern"
-            },
-            {
-              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@3"
-            },
-            {
-              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@6"
-            }
-          ],
-          "description": "This must match the Name of a Volume.",
-          "type": "string"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1object"
-        }
-      ],
-      "description": "Name to assign the volume"
     },
     "values/array,integer,null,object;pvc-access-mode-for": {
       "description": "PVC Access Mode for PostgreSQL volume",
@@ -13360,13 +13184,85 @@
         }
       }
     },
+    "values/backup/null;path-within-the-volume": {
+      "description": "Path within the volume from which the container's volume should be mounted. Defaults to \"\" (volume's root).",
+      "type": "null"
+    },
+    "values/backup/string;path-within-the-container": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@6"
+        }
+      ],
+      "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
+      "type": "string"
+    },
+    "values/backup/string;path-within-the-volume": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@6"
+        }
+      ],
+      "description": "Path within the volume from which the container's volume should be mounted. Defaults to \"\" (volume's root).",
+      "type": "string"
+    },
     "values/boolean;host-networking-requested-for": {
       "description": "Host networking requested for this pod. Use the host's network namespace. If this option is set, the ports that will be used must be specified. Default to false.",
       "type": "boolean"
-    },
-    "values/common.global.compatibility.openshift": {
-      "additionalProperties": {},
-      "type": "object"
     },
     "values/commonLabels": {
       "anyOf": [
@@ -13385,6 +13281,10 @@
         }
       ],
       "description": "Add labels to all the deployed resources"
+    },
+    "values/image.repository": {
+      "description": "[default: REPOSITORY_NAME/postgresql] PostgreSQL image repository",
+      "type": "string"
     },
     "values/integer,null:int32;failure-threshold-for-livenessprobe": {
       "description": "Failure threshold for livenessProbe",
@@ -13531,16 +13431,16 @@
           "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
         },
         {
           "$ref": "#/$defs/constrains~1minAvailable:t~1object"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
         },
         {
-          "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
         },
         {
           "$ref": "#/$defs/values~1null;variable-references-var-name-are"
@@ -13626,10 +13526,6 @@
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": "null"
     },
-    "values/null;path-within-the-volume": {
-      "description": "Path within the volume from which the container's volume should be mounted. Defaults to \"\" (volume's root).",
-      "type": "null"
-    },
     "values/null;supports-clientip-and-none": {
       "description": "Supports \"ClientIP\" and \"None\". Used to maintain session affinity. Enable client IP based session affinity. Must be ClientIP or None. Defaults to None. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
       "type": "null"
@@ -13688,6 +13584,160 @@
     },
     "values/passwordUpdateJob.podSecurityContext.enabled": {
       "description": "Enabled credential init job pods' Security Context"
+    },
+    "values/primary.automountServiceAccountToken": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1string;pattern-true-true-true-fal"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "description": "AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
+        },
+        {
+          "description": "AutomountServiceAccountToken indicates whether a service account token should be automatically mounted.",
+          "type": "boolean"
+        }
+      ],
+      "description": "Mount Service Account token in pod"
+    },
+    "values/primary.hostIPC": {
+      "anyOf": [
+        {
+          "description": "Use the host's ipc namespace. Optional: Default to false.",
+          "type": "null"
+        },
+        {
+          "$ref": "#/$defs/values~1string;pattern-true-true-true-fal"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
+        },
+        {
+          "description": "Use the host's ipc namespace. Optional: Default to false.",
+          "type": "boolean"
+        }
+      ],
+      "description": "Specify if host IPC should be enabled for PostgreSQL pod (postgresql primary)"
+    },
+    "values/primary.persistence.mountPath": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1object"
+        },
+        {
+          "$ref": "#/$defs/values~1backup~1string;path-within-the-container"
+        }
+      ],
+      "description": "The path the volume will be mounted at\nNote: useful when using custom PostgreSQL images"
+    },
+    "values/primary.persistence.subPath": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/values~1backup~1null;path-within-the-volume"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
+        },
+        {
+          "$ref": "#/$defs/values~1backup~1string;path-within-the-volume"
+        },
+        {
+          "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
+        }
+      ],
+      "description": "The subdirectory of the volume to mount to\nUseful in dev environments and one PV for multiple services"
+    },
+    "values/primary.persistence.volumeName": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
+        },
+        {
+          "allOf": [
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@10"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@4"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@5"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@7"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@8"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@3"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@6"
+            }
+          ],
+          "description": "This must match the Name of a Volume.",
+          "type": "string"
+        },
+        {
+          "$ref": "#/$defs/constrains~1minAvailable:t~1object"
+        }
+      ],
+      "description": "Name to assign the volume"
+    },
+    "values/primary.resources": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+        },
+        {
+          "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Set container requests and limits for different resources like CPU or memory (essential for production workloads)\nExample:\nresources:\nrequests:\ncpu: 2\nmemory: 512Mi\nlimits:\ncpu: 3\nmemory: 1024Mi"
     },
     "values/primary/object;data-contains-the-configuration": {
       "additionalProperties": {
@@ -13896,80 +13946,12 @@
       "description": "Name of the referent. More info: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#names",
       "type": "string"
     },
-    "values/string;path-within-the-container": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@6"
-        }
-      ],
-      "description": "Path within the container at which the volume should be mounted.  Must not contain ':'.",
-      "type": "string"
-    },
-    "values/string;path-within-the-volume": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@10"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@4"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@9"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@2"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@5"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@7"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@8"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@3"
-        },
-        {
-          "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@6"
-        }
-      ],
-      "description": "Path within the volume from which the container's volume should be mounted. Defaults to \"\" (volume's root).",
-      "type": "string"
-    },
     "values/string;pattern-a-za-z0-9": {
       "pattern": "^&[A-Za-z0-9_-]+$",
+      "type": "string"
+    },
+    "values/string;pattern-true-true-true-fal": {
+      "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
       "type": "string"
     },
     "values/string;supports-clientip-and-none": {
@@ -14080,6 +14062,10 @@
       "description": "Variable references $(VAR_NAME) are expanded using the previously defined environment variables in the container and any service environment variables. If a variable cannot be resolved, the reference in the input string will be unchanged. Double $$ are reduced to a single $, which allows for escaping the $(VAR_NAME) syntax: i.e. \"$$(VAR_NAME)\" will produce the string literal \"$(VAR_NAME)\". Escaped references will never be expanded, regardless of whether the variable exists or not. Defaults to \"\".",
       "type": "string"
     },
+    "values/volumePermissions.image.repository": {
+      "description": "[default: REPOSITORY_NAME/os-shell] Init container volume-permissions image repository",
+      "type": "string"
+    },
     "when/containerSecurityContext+containerSecurityContext=null+enabled:t/then/fail": {
       "if": {
         "allOf": [
@@ -14159,7 +14145,7 @@
         "anyOf": [
           {
             "not": {
-              "$ref": "#/$defs/constrains~1repository@3"
+              "$ref": "#/$defs/constrains~1repository"
             }
           },
           {
@@ -14556,6 +14542,66 @@
                     "properties": {
                       "labels": {
                         "$ref": "#/$defs/values~1anyOf~1allOf~1object+object,null;map-of-string-keys+not~1:t+string"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "not": {
+              "$ref": "#/$defs/constrains~1primary.persistence.enabled:t"
+            }
+          },
+          {
+            "$ref": "#/$defs/constrains~1primary.initContainers:t+primary.persistence+shmVolume.enabled:t+tls+1more@2"
+          },
+          {
+            "$ref": "#/$defs/constrains~1primary.persistence.enabled:t+primary.persistence.existingClaim:t"
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "primary": {
+                "additionalProperties": {},
+                "properties": {
+                  "persistence": {
+                    "description": "PostgreSQL Primary persistence configuration",
+                    "required": [
+                      "volumeName"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "primary": {
+                "additionalProperties": {},
+                "properties": {
+                  "persistence": {
+                    "additionalProperties": {},
+                    "description": "PostgreSQL Primary persistence configuration",
+                    "properties": {
+                      "volumeName": {
+                        "description": "Name to assign the volume",
+                        "not": {
+                          "type": "null"
+                        }
                       }
                     }
                   }
@@ -15257,6 +15303,122 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/constrains~1primary.initContainers:t+primary.persistence+shmVolume.enabled:t+tls+1more@2"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "primary": {
+                "additionalProperties": {},
+                "properties": {
+                  "persistence": {
+                    "additionalProperties": {},
+                    "description": "PostgreSQL Primary persistence configuration",
+                    "properties": {
+                      "mountPath": {
+                        "$ref": "#/$defs/values~1primary.persistence.mountPath"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "primary": {
+                "additionalProperties": {},
+                "properties": {
+                  "persistence": {
+                    "additionalProperties": {},
+                    "description": "PostgreSQL Primary persistence configuration",
+                    "properties": {
+                      "subPath": {
+                        "$ref": "#/$defs/values~1primary.persistence.subPath"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "primary": {
+                "additionalProperties": {},
+                "properties": {
+                  "persistence": {
+                    "description": "PostgreSQL Primary persistence configuration",
+                    "required": [
+                      "mountPath"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "volumePermissions": {
+                "additionalProperties": {},
+                "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
+                "properties": {
+                  "resources": {
+                    "$ref": "#/$defs/values~1primary.resources"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "primary": {
+                "additionalProperties": {},
+                "properties": {
+                  "persistence": {
+                    "additionalProperties": {},
+                    "description": "PostgreSQL Primary persistence configuration",
+                    "properties": {
+                      "mountPath": {
+                        "$ref": "#/$defs/values~1not~1null"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "primary": {
+                "additionalProperties": {},
+                "properties": {
+                  "persistence": {
+                    "additionalProperties": {},
+                    "description": "PostgreSQL Primary persistence configuration",
+                    "properties": {
+                      "volumeName": {
+                        "$ref": "#/$defs/values~1primary.persistence.volumeName"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/constrains~1architecture=replication"
@@ -15657,16 +15819,16 @@
                         "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       },
                       {
                         "$ref": "#/$defs/values~1null;variable-references-var-name-are"
@@ -17979,25 +18141,13 @@
             "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
             "properties": {
               "image": {
-                "$ref": "#/$defs/constrains~1repository"
+                "additionalProperties": {},
+                "properties": {
+                  "repository": {
+                    "$ref": "#/$defs/values~1volumePermissions.image.repository"
+                  }
+                }
               }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "primary": {
-          "additionalProperties": {},
-          "properties": {
-            "persistence": {
-              "description": "PostgreSQL Primary persistence configuration",
-              "required": [
-                "mountPath"
-              ],
-              "type": "object"
             }
           }
         }
@@ -19250,23 +19400,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "primary": {
-          "additionalProperties": {},
-          "properties": {
-            "persistence": {
-              "description": "PostgreSQL Primary persistence configuration",
-              "required": [
-                "volumeName"
-              ],
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "$ref": "#/$defs/constrains~1architecture=replication+primary.initContainers:t+primary.persistence+4more"
       },
@@ -19692,7 +19825,7 @@
                     "description": "PostgreSQL read only persistence configuration",
                     "properties": {
                       "mountPath": {
-                        "$ref": "#/$defs/values~1anyOf~1object+string+string;path-within-the-container"
+                        "$ref": "#/$defs/values~1primary.persistence.mountPath"
                       }
                     }
                   }
@@ -19707,7 +19840,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "hostIPC": {
-                    "$ref": "#/$defs/values~1anyOf~1boolean;use-the-host-s-ipc+null;use-the-host-s-ipc+string;pattern-a-za-z0-9-t+3more"
+                    "$ref": "#/$defs/values~1primary.hostIPC"
                   }
                 }
               }
@@ -19896,7 +20029,7 @@
                         "type": "integer"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
                         "description": "replicas is the desired number of replicas of the given Template. These are replicas in the sense that they are instantiations of the same Template, but individual replicas also have a consistent identity. If unspecified, defaults to 1.",
@@ -19904,13 +20037,13 @@
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-0-1-9"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       }
                     ],
                     "description": "Number of PostgreSQL read only replicas"
@@ -19964,7 +20097,7 @@
                         "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1minAvailable:t~1object"
@@ -19973,10 +20106,10 @@
                         "$ref": "#/$defs/values~1string;name-of-the-referent"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       }
                     ],
                     "description": "Name of existing ConfigMap containing extra env vars for PostgreSQL read only nodes"
@@ -20089,7 +20222,7 @@
                     "description": "PostgreSQL read only persistence configuration",
                     "properties": {
                       "subPath": {
-                        "$ref": "#/$defs/values~1anyOf~1not~1:t+null;path-within-the-volume+object+string+string;path-within-the-volume+3more"
+                        "$ref": "#/$defs/values~1primary.persistence.subPath"
                       }
                     }
                   }
@@ -20189,13 +20322,13 @@
                         "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
                         "$ref": "#/$defs/values~1integer:int64;optional-duration-in-seconds"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
                         "$ref": "#/$defs/values~1null:int64;optional-duration-in-seconds"
@@ -20204,7 +20337,7 @@
                         "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-0-1-9"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       }
                     ],
                     "description": "Seconds PostgreSQL read only pod needs to terminate gracefully\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods"
@@ -20231,7 +20364,7 @@
                         "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1minAvailable:t~1object"
@@ -20240,10 +20373,10 @@
                         "$ref": "#/$defs/values~1string;name-of-the-referent"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       }
                     ],
                     "description": "Name of existing Secret containing extra env vars for PostgreSQL read only nodes"
@@ -20434,19 +20567,19 @@
                         "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
                         "$ref": "#/$defs/values~1string;if-specified-indicates-the"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       },
                       {
                         "$ref": "#/$defs/values~1null;if-specified-indicates-the"
@@ -20513,16 +20646,16 @@
                         "$ref": "#/$defs/values~1boolean;host-networking-requested-for"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-true-true-true-fal"
+                        "$ref": "#/$defs/values~1string;pattern-true-true-true-fal"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       }
                     ],
                     "description": "Specify if host network should be enabled for PostgreSQL pod (PostgreSQL read only)"
@@ -20828,16 +20961,16 @@
                         "$ref": "#/$defs/values~1string;variable-references-var-name-are"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       },
                       {
                         "$ref": "#/$defs/values~1null;variable-references-var-name-are"
@@ -21478,20 +21611,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "volumePermissions": {
-          "additionalProperties": {},
-          "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
-          "properties": {
-            "image": {
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -21842,19 +21961,19 @@
                         "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
                         "$ref": "#/$defs/values~1null;name-must-be-unique"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       }
                     ],
                     "description": "Full chart name (overrides `fullnameOverride`)"
@@ -22420,20 +22539,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "primary": {
-          "additionalProperties": {},
-          "properties": {
-            "persistence": {
-              "description": "PostgreSQL Primary persistence configuration",
-              "type": "object"
-            }
-          }
-        }
-      }
     },
     {
       "if": {
@@ -24061,17 +24166,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -25338,20 +25432,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "primary": {
-          "additionalProperties": {},
-          "properties": {
-            "initdb": {
-              "description": "Initdb configuration\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#specifying-initdb-arguments",
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -25903,86 +25983,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1primary.initContainers:t+primary.persistence+shmVolume.enabled:t+tls+1more@2"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "primary": {
-                "additionalProperties": {},
-                "properties": {
-                  "persistence": {
-                    "additionalProperties": {},
-                    "description": "PostgreSQL Primary persistence configuration",
-                    "properties": {
-                      "mountPath": {
-                        "$ref": "#/$defs/values~1anyOf~1object+string+string;path-within-the-container"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "primary": {
-                "additionalProperties": {},
-                "properties": {
-                  "persistence": {
-                    "additionalProperties": {},
-                    "description": "PostgreSQL Primary persistence configuration",
-                    "properties": {
-                      "subPath": {
-                        "$ref": "#/$defs/values~1anyOf~1not~1:t+null;path-within-the-volume+object+string+string;path-within-the-volume+3more"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "volumePermissions": {
-                "additionalProperties": {},
-                "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
-                "properties": {
-                  "resources": {
-                    "$ref": "#/$defs/constrains~1claims@items.name+limits+requests@3"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "primary": {
-                "additionalProperties": {},
-                "properties": {
-                  "persistence": {
-                    "additionalProperties": {},
-                    "description": "PostgreSQL Primary persistence configuration",
-                    "properties": {
-                      "volumeName": {
-                        "$ref": "#/$defs/values~1anyOf~1object+string+string;this-must-match-the"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
     },
     {
       "if": {
@@ -26629,25 +26629,6 @@
       "additionalProperties": {},
       "properties": {
         "primary": {
-          "additionalProperties": {},
-          "properties": {
-            "persistence": {
-              "additionalProperties": {},
-              "description": "PostgreSQL Primary persistence configuration",
-              "properties": {
-                "mountPath": {
-                  "$ref": "#/$defs/values~1not~1null"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "primary": {
           "$ref": "#/$defs/constrains~1containerSecurityContext"
         }
       }
@@ -27286,7 +27267,12 @@
         "additionalProperties": {},
         "properties": {
           "image": {
-            "$ref": "#/$defs/constrains~1repository@2"
+            "additionalProperties": {},
+            "properties": {
+              "repository": {
+                "$ref": "#/$defs/values~1image.repository"
+              }
+            }
           }
         }
       }
@@ -27489,16 +27475,16 @@
                         "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       },
                       {
                         "type": "null"
@@ -29349,28 +29335,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "primary": {
-          "additionalProperties": {},
-          "properties": {
-            "persistence": {
-              "additionalProperties": {},
-              "description": "PostgreSQL Primary persistence configuration",
-              "properties": {
-                "volumeName": {
-                  "description": "Name to assign the volume",
-                  "not": {
-                    "type": "null"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -29811,16 +29775,16 @@
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       },
                       {
                         "allOf": [
@@ -30084,7 +30048,7 @@
                         "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1minAvailable:t~1object"
@@ -30093,10 +30057,10 @@
                         "$ref": "#/$defs/values~1string;name-of-the-referent"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       }
                     ],
                     "description": "Full chart name (overrides `fullnameOverride`)"
@@ -30894,16 +30858,16 @@
                         "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       }
                     ],
                     "description": "Full chart name (overrides `fullnameOverride`)"
@@ -31809,10 +31773,10 @@
                       "fsGroup": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                           },
                           {
                             "description": "A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod:\n\n1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume. Note that this field cannot be set when spec.os.name is windows.",
@@ -31823,7 +31787,7 @@
                             "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-0-1-9"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                           },
                           {
                             "description": "A special supplemental group that applies to all containers in a pod. Some volume types allow the Kubelet to change the ownership of that volume to be owned by the pod:\n\n1. The owning GID will be the FSGroup 2. The setgid bit is set (new files created in the volume will be owned by FSGroup) 3. The permission bits are OR'd with rw-rw----\n\nIf unset, the Kubelet will not modify the ownership and permissions of any volume. Note that this field cannot be set when spec.os.name is windows.",
@@ -31990,7 +31954,7 @@
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                           },
                           {
                             "description": "Specifies how to treat concurrent executions of a Job. Valid values are:\n\n- \"Allow\" (default): allows CronJobs to run concurrently; - \"Forbid\": forbids concurrent runs, skipping next run if previous run hasn't finished yet; - \"Replace\": cancels currently running job and replaces it with a new one",
@@ -32000,10 +31964,10 @@
                             "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                           }
                         ],
                         "description": "Set the cronjob parameter concurrencyPolicy"
@@ -32056,16 +32020,16 @@
                             "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                           },
                           {
                             "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-0-1-9"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                           },
                           {
                             "description": "ttlSecondsAfterFinished limits the lifetime of a Job that has finished execution (either Complete or Failed). If this field is set, ttlSecondsAfterFinished after the Job finishes, it is eligible to be automatically deleted. When the Job is being deleted, its lifecycle guarantees (e.g. finalizers) will be honored. If this field is unset, the Job won't be automatically deleted. If this field is set to zero, the Job becomes eligible to be deleted immediately after it finishes.",
@@ -32093,7 +32057,7 @@
                             "type": "integer"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                           },
                           {
                             "description": "The number of successful finished jobs to retain. Value must be non-negative integer. Defaults to 3.",
@@ -32101,13 +32065,13 @@
                             "type": "null"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                           },
                           {
                             "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-0-1-9"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                           }
                         ],
                         "description": "Set the cronjob parameter successfulJobsHistoryLimit"
@@ -32140,10 +32104,10 @@
                             "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                           },
                           {
                             "description": "Optional deadline in seconds for starting the job if it misses scheduled time for any reason.  Missed jobs executions will be counted as failed ones.",
@@ -32154,7 +32118,7 @@
                             "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-0-1-9"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                           },
                           {
                             "description": "Optional deadline in seconds for starting the job if it misses scheduled time for any reason.  Missed jobs executions will be counted as failed ones.",
@@ -32265,16 +32229,16 @@
                             "type": "integer"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                           },
                           {
                             "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-0-1-9"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                           }
                         ],
                         "description": "Set the cronjob parameter failedJobsHistoryLimit"
@@ -32331,16 +32295,16 @@
                             "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                           },
                           {
                             "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                           },
                           {
                             "description": "Restart policy for all containers within the pod. One of Always, OnFailure, Never. In some contexts, only a subset of those values may be permitted. Default to Always. More info: https://kubernetes.io/docs/concepts/workloads/pods/pod-lifecycle/#restart-policy",
@@ -32371,16 +32335,16 @@
                                 "$ref": "#/$defs/values~1string;variable-references-var-name-are"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                                "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                               },
                               {
                                 "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                                "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                                "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                               },
                               {
                                 "$ref": "#/$defs/values~1null;variable-references-var-name-are"
@@ -32566,7 +32530,7 @@
                                 "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                               },
                               {
-                                "$ref": "#/$defs/values~1string;path-within-the-container"
+                                "$ref": "#/$defs/values~1backup~1string;path-within-the-container"
                               }
                             ],
                             "description": "Path to mount the volume at"
@@ -32589,25 +32553,25 @@
                           "subPath": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/values~1null;path-within-the-volume"
+                                "$ref": "#/$defs/values~1backup~1null;path-within-the-volume"
                               },
                               {
                                 "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
                               },
                               {
-                                "$ref": "#/$defs/values~1string;path-within-the-volume"
+                                "$ref": "#/$defs/values~1backup~1string;path-within-the-volume"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                                "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                               },
                               {
                                 "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                                "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                               },
                               {
-                                "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                                "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                               }
                             ],
                             "description": "Subdirectory of the volume to mount at\nand one PV for multiple services."
@@ -32769,48 +32733,7 @@
           "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
           "type": "string"
         },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "compatibility": {
-              "additionalProperties": {},
-              "properties": {
-                "openshift": {
-                  "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-                }
-              },
-              "type": "object"
-            },
-            "postgresql": {
-              "additionalProperties": {},
-              "properties": {
-                "auth": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "secretKeys": {
-                      "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-                    }
-                  },
-                  "type": "object"
-                },
-                "service": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "ports": {
-                      "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-                    }
-                  },
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            },
-            "security": {
-              "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-            }
-          },
-          "type": "object"
-        }
+        "global": {}
       },
       "type": "object"
     },
@@ -32908,7 +32831,8 @@
     "extraDeploy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+          "additionalProperties": {},
+          "type": "object"
         },
         {
           "items": {},
@@ -32930,21 +32854,6 @@
       "additionalProperties": {},
       "allOf": [
         {
-          "additionalProperties": {},
-          "properties": {
-            "postgresql": {
-              "allOf": [
-                {
-                  "if": {
-                    "$ref": "#/$defs/constrains~1auth+auth=null"
-                  },
-                  "then": false
-                }
-              ]
-            }
-          }
-        },
-        {
           "if": {
             "anyOf": [
               {
@@ -32958,53 +32867,6 @@
             ]
           },
           "then": false
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "postgresql": {
-              "allOf": [
-                {
-                  "$ref": "#/$defs/when~1service+service=null~1then~1fail"
-                }
-              ]
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "postgresql": {
-              "additionalProperties": {},
-              "properties": {
-                "service": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "anyOf": [
-                          {
-                            "not": {
-                              "properties": {
-                                "ports": {}
-                              },
-                              "required": [
-                                "ports"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1ports=null"
-                          }
-                        ]
-                      },
-                      "then": false
-                    }
-                  ]
-                }
-              }
-            }
-          }
         }
       ],
       "description": "Please, note that this will override the parameters, including dependencies, configured to use the global value",
@@ -33060,6 +32922,17 @@
         "kubeVersion": {},
         "postgresql": {
           "additionalProperties": {},
+          "allOf": [
+            {
+              "$ref": "#/$defs/when~1service+service=null~1then~1fail"
+            },
+            {
+              "if": {
+                "$ref": "#/$defs/constrains~1auth+auth=null"
+              },
+              "then": false
+            }
+          ],
           "properties": {
             "auth": {
               "additionalProperties": {},
@@ -33083,18 +32956,13 @@
                     "adminPasswordKey": {
                       "description": "Name of key in existing secret to use for PostgreSQL credentials (overrides `auth.secretKeys.adminPasswordKey`). Only used when `global.postgresql.auth.existingSecret` is set."
                     },
-                    "metricsPasswordKey": {
-                      "description": "Name of key in existing secret to use for PostgreSQL credentials (overrides `auth.secretKeys.metricsPasswordKey`). Only used when `global.postgresql.auth.existingSecret` is set.",
-                      "type": "string"
-                    },
                     "replicationPasswordKey": {
                       "description": "Name of key in existing secret to use for PostgreSQL credentials (overrides `auth.secretKeys.replicationPasswordKey`). Only used when `global.postgresql.auth.existingSecret` is set."
                     },
                     "userPasswordKey": {
                       "description": "Name of key in existing secret to use for PostgreSQL credentials (overrides `auth.secretKeys.userPasswordKey`). Only used when `global.postgresql.auth.existingSecret` is set."
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "username": {
                   "description": "Name for a custom user to create (overrides `auth.username`)"
@@ -33107,6 +32975,29 @@
             },
             "service": {
               "additionalProperties": {},
+              "allOf": [
+                {
+                  "if": {
+                    "anyOf": [
+                      {
+                        "not": {
+                          "properties": {
+                            "ports": {}
+                          },
+                          "required": [
+                            "ports"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1ports=null"
+                      }
+                    ]
+                  },
+                  "then": false
+                }
+              ],
               "properties": {
                 "ports": {
                   "additionalProperties": {},
@@ -33152,17 +33043,18 @@
       "type": "object"
     },
     "image": {
+      "additionalProperties": {},
       "allOf": [
         {
           "$ref": "#/$defs/when~1repository+repository=null~1then~1fail"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1repository@2"
         }
-      ]
+      ],
+      "properties": {
+        "repository": {
+          "$ref": "#/$defs/values~1image.repository"
+        }
+      },
+      "type": "object"
     },
     "kubeVersion": {
       "description": "Override Kubernetes version"
@@ -33216,16 +33108,16 @@
                     "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                    "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                   },
                   {
                     "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                    "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                    "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                   },
                   {
                     "$ref": "#/$defs/values~1null;variable-references-var-name-are"
@@ -33264,16 +33156,16 @@
                     "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                    "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                   },
                   {
                     "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                    "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                    "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                   },
                   {
                     "$ref": "#/$defs/values~1null;variable-references-var-name-are"
@@ -33316,16 +33208,16 @@
                         "$ref": "#/$defs/values~1string;variable-references-var-name-are"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       },
                       {
                         "$ref": "#/$defs/values~1null;variable-references-var-name-are"
@@ -33363,16 +33255,16 @@
                         "$ref": "#/$defs/values~1string;variable-references-var-name-are"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       },
                       {
                         "$ref": "#/$defs/values~1null;variable-references-var-name-are"
@@ -33447,16 +33339,16 @@
                     "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                    "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                   },
                   {
                     "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                    "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                    "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                   },
                   {
                     "$ref": "#/$defs/values~1null;variable-references-var-name-are"
@@ -33526,16 +33418,16 @@
                     "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                    "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                   },
                   {
                     "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                    "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                    "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                   },
                   {
                     "$ref": "#/$defs/values~1null;variable-references-var-name-are"
@@ -33595,16 +33487,16 @@
                     "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                    "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                   },
                   {
                     "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                    "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                    "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                   },
                   {
                     "$ref": "#/$defs/values~1null;variable-references-var-name-are"
@@ -33666,6 +33558,7 @@
       "type": "object"
     },
     "metrics": {
+      "additionalProperties": {},
       "allOf": [
         {
           "$ref": "#/$defs/when~1containerSecurityContext+containerSecurityContext=null+enabled:t~1then~1fail"
@@ -33714,7 +33607,7 @@
                             "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                           },
                           {
                             "$ref": "#/$defs/constrains~1minAvailable:t~1object"
@@ -33723,13 +33616,13 @@
                             "$ref": "#/$defs/values~1null;clusterip-is-the-ip"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                           },
                           {
                             "$ref": "#/$defs/values~1string;clusterip-is-the-ip"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                           }
                         ],
                         "description": "Static clusterIP or None for headless services\nref: https://kubernetes.io/docs/concepts/services-networking/service/#choosing-your-own-ip-address"
@@ -33797,7 +33690,7 @@
                             "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                           },
                           {
                             "$ref": "#/$defs/constrains~1minAvailable:t~1object"
@@ -33809,10 +33702,10 @@
                             "$ref": "#/$defs/values~1null;supports-clientip-and-none"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                           }
                         ],
                         "description": "Control where client requests go, to the same pod or round-robin. Allowed values: `ClientIP` or `None`\nref: https://kubernetes.io/docs/concepts/services-networking/service/"
@@ -33939,9 +33832,6 @@
             ]
           },
           "then": false
-        },
-        {
-          "type": "object"
         },
         {
           "if": {
@@ -34141,7 +34031,7 @@
                             "type": "boolean"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-true-true-true-fal"
+                            "$ref": "#/$defs/values~1string;pattern-true-true-true-fal"
                           },
                           {
                             "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
@@ -34240,9 +34130,6 @@
               }
             ]
           }
-        },
-        {
-          "additionalProperties": {}
         },
         {
           "if": {
@@ -34424,7 +34311,8 @@
             }
           }
         }
-      ]
+      ],
+      "type": "object"
     },
     "nameOverride": {
       "$ref": "#/$defs/values~1nameOverride"
@@ -34503,7 +34391,7 @@
                         "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1minAvailable:t~1object"
@@ -34512,10 +34400,10 @@
                         "$ref": "#/$defs/values~1string;name-of-the-referent"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       }
                     ],
                     "description": "ConfigMap containing extra env vars to configure the credential init job"
@@ -34537,7 +34425,7 @@
                         "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1minAvailable:t~1object"
@@ -34546,10 +34434,10 @@
                         "$ref": "#/$defs/values~1string;name-of-the-referent"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       }
                     ],
                     "description": "Secret containing extra env vars to configure the credential init job (in case of sensitive data)"
@@ -34645,7 +34533,7 @@
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
                         "description": "Specifies the number of retries before marking this job failed. Defaults to 6",
@@ -34653,13 +34541,13 @@
                         "type": "integer"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-0-1-9"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       }
                     ],
                     "description": "set backoff limit of the job"
@@ -35011,6 +34899,7 @@
       "description": "Shared preload libraries (comma-separated list)"
     },
     "primary": {
+      "additionalProperties": {},
       "allOf": [
         {
           "additionalProperties": {},
@@ -35257,9 +35146,6 @@
             ]
           },
           "then": false
-        },
-        {
-          "type": "object"
         },
         {
           "additionalProperties": {},
@@ -35513,500 +35399,6 @@
             ]
           },
           "then": false
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "affinity": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+24more@2"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Affinity for PostgreSQL primary pods assignment\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nNote: primary.podAffinityPreset, primary.podAntiAffinityPreset, and primary.nodeAffinityPreset will be ignored when it's set"
-            },
-            "automountServiceAccountToken": {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1anyOf~1boolean;automountserviceaccounttoken-indicates-whether-a+5more"
-            },
-            "extraEnvVars": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.name+@items.value+@items.valueFrom.configMapKeyRef.key+10more"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Array with extra environment variables to add to PostgreSQL Primary nodes\ne.g:\nextraEnvVars:\n- name: FOO\nvalue: \"bar\""
-            },
-            "extraEnvVarsCM": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
-                },
-                {
-                  "$ref": "#/$defs/values~1null;name-of-the-referent"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1minAvailable:t~1object"
-                },
-                {
-                  "$ref": "#/$defs/values~1string;name-of-the-referent"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                }
-              ],
-              "description": "Name of existing ConfigMap containing extra env vars for PostgreSQL Primary nodes"
-            },
-            "extraEnvVarsSecret": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
-                },
-                {
-                  "$ref": "#/$defs/values~1null;name-of-the-referent"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1minAvailable:t~1object"
-                },
-                {
-                  "$ref": "#/$defs/values~1string;name-of-the-referent"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                }
-              ],
-              "description": "Name of existing Secret containing extra env vars for PostgreSQL Primary nodes"
-            },
-            "extraPodSpec": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1activeDeadlineSeconds+383more@2"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Optionally specify extra PodSpec for the PostgreSQL Primary pod(s)"
-            },
-            "extraVolumeMounts": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.mountPath+@items.mountPropagation+@items.name+@items.readOnly+2more"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Optionally specify extra list of additional volumeMounts for the PostgreSQL Primary container(s)"
-            },
-            "extraVolumes": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more"
-                    }
-                  ],
-                  "description": "List of volumes that can be mounted by containers belonging to the pod. More info: https://kubernetes.io/docs/concepts/storage/volumes",
-                  "x-kubernetes-patch-merge-key": "name",
-                  "x-kubernetes-patch-strategy": "merge,retainKeys"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Optionally specify extra list of additional volumes for the PostgreSQL Primary pod(s)"
-            },
-            "hostAliases": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "PostgreSQL primary pods host aliases\nhttps://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/"
-            },
-            "hostIPC": {
-              "$ref": "#/$defs/values~1anyOf~1boolean;use-the-host-s-ipc+null;use-the-host-s-ipc+string;pattern-a-za-z0-9-t+3more"
-            },
-            "hostNetwork": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/values~1null;host-networking-requested-for"
-                },
-                {
-                  "$ref": "#/$defs/values~1boolean;host-networking-requested-for"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-true-true-true-fal"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                }
-              ],
-              "description": "Specify if host network should be enabled for PostgreSQL pod (postgresql primary)"
-            },
-            "initContainers": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more@2"
-                    }
-                  ],
-                  "description": "List of initialization containers belonging to the pod. Init containers are executed in order prior to containers being started. If any init container fails, the pod is considered to have failed and is handled according to its restartPolicy. The name for an init container or normal container must be unique among all containers. Init containers may not have Lifecycle actions, Readiness probes, Liveness probes, or Startup probes. The resourceRequirements of an init container are taken into account during scheduling by finding the highest request/limit for each resource type, and then using the max of of that value or the sum of the normal containers. Limits are applied to init containers in a similar fashion. Init containers cannot currently be added or removed. Cannot be updated. More info: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/",
-                  "x-kubernetes-patch-merge-key": "name",
-                  "x-kubernetes-patch-strategy": "merge"
-                }
-              ],
-              "description": "Add additional init containers to the PostgreSQL Primary pod(s)\nExample\ninitContainers:\n- name: do-something\nimage: busybox\ncommand: ['do', 'something']\nPod Disruption Budget configuration\nref: https://kubernetes.io/docs/tasks/run-application/configure-pdb"
-            },
-            "initdb": {
-              "additionalProperties": {},
-              "description": "Initdb configuration\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#specifying-initdb-arguments",
-              "properties": {
-                "user": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1string;variable-references-var-name-are"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1minAvailable:t~1object"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1null;variable-references-var-name-are"
-                    }
-                  ],
-                  "description": "Specify the PostgreSQL username to execute the initdb scripts"
-                }
-              }
-            },
-            "lifecycleHooks": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1postStart.exec.command+postStart.httpGet.host+9more"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "for the PostgreSQL Primary container to automate configuration before or after startup\nPostgreSQL Primary resource requests and limits\nref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/"
-            },
-            "nodeSelector": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/values~1object;nodeselector-is-a-selector"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Node labels for PostgreSQL primary pods assignment\nref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/"
-            },
-            "persistence": {
-              "additionalProperties": {},
-              "description": "PostgreSQL Primary persistence configuration",
-              "properties": {
-                "mountPath": {
-                  "$ref": "#/$defs/values~1anyOf~1object+string+string;path-within-the-container"
-                },
-                "subPath": {
-                  "$ref": "#/$defs/values~1anyOf~1not~1:t+null;path-within-the-volume+object+string+string;path-within-the-volume+3more"
-                },
-                "volumeName": {
-                  "$ref": "#/$defs/values~1anyOf~1object+string+string;this-must-match-the"
-                }
-              }
-            },
-            "podAnnotations": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/values~1allOf~1object+object,null;annotations-is-an-unstructured"
-                }
-              ],
-              "description": "Map of annotations to add to the pods (postgresql primary)"
-            },
-            "priorityClassName": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1minAvailable:t~1object"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                },
-                {
-                  "$ref": "#/$defs/values~1string;if-specified-indicates-the"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                },
-                {
-                  "$ref": "#/$defs/values~1null;if-specified-indicates-the"
-                }
-              ],
-              "description": "Priority Class to use for each pod (postgresql primary)"
-            },
-            "resources": {
-              "$ref": "#/$defs/constrains~1claims@items.name+limits+requests@3"
-            },
-            "runtimeClassName": {
-              "anyOf": [
-                {
-                  "description": "RuntimeClassName refers to a RuntimeClass object in the node.k8s.io group, which should be used to run this pod.  If no RuntimeClass resource matches the named class, the pod will not be run. If unset or empty, the \"legacy\" RuntimeClass will be used, which is an implicit class with an empty definition that uses the default runtime handler. More info: https://git.k8s.io/enhancements/keps/sig-node/585-runtime-class",
-                  "type": "null"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1minAvailable:t~1object"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                },
-                {
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@10"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@4"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@9"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@2"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@5"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@7"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@8"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@3"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@6"
-                    }
-                  ],
-                  "description": "RuntimeClassName refers to a RuntimeClass object in the node.k8s.io group, which should be used to run this pod.  If no RuntimeClass resource matches the named class, the pod will not be run. If unset or empty, the \"legacy\" RuntimeClass will be used, which is an implicit class with an empty definition that uses the default runtime handler. More info: https://git.k8s.io/enhancements/keps/sig-node/585-runtime-class",
-                  "type": "string"
-                }
-              ],
-              "description": "Name of the runtime class to be used by pod(s)\nref: https://kubernetes.io/docs/concepts/containers/runtime-class/"
-            },
-            "sidecars": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more"
-                }
-              ],
-              "description": "Add additional sidecar containers to the PostgreSQL Primary pod(s)\nFor example:\nsidecars:\n- name: your-image-name\nimage: your-image\nimagePullPolicy: Always\nports:\n- name: portname\ncontainerPort: 1234"
-            },
-            "terminationGracePeriodSeconds": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                },
-                {
-                  "$ref": "#/$defs/values~1integer:int64;optional-duration-in-seconds"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                },
-                {
-                  "$ref": "#/$defs/values~1null:int64;optional-duration-in-seconds"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-0-1-9"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                }
-              ],
-              "description": "Seconds PostgreSQL primary pod needs to terminate gracefully\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods"
-            },
-            "tolerations": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Tolerations for PostgreSQL primary pods assignment\nref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/"
-            },
-            "topologySpreadConstraints": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.labelSelector.matchExpressions@items.key+10more"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "Topology Spread Constraints for pod assignment spread across your cluster among failure-domains. Evaluated as a template\nRef: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods"
-            },
-            "updateStrategy": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
-                },
-                {
-                  "additionalProperties": false,
-                  "description": "StatefulSetUpdateStrategy indicates the strategy that the StatefulSet controller will use to perform updates. It includes any additional parameters necessary to perform the update for the indicated strategy.",
-                  "properties": {
-                    "rollingUpdate": {
-                      "additionalProperties": false,
-                      "description": "PostgreSQL Primary statefulset rolling update configuration parameters",
-                      "properties": {
-                        "maxUnavailable": {
-                          "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1oneOf~1integer,null+string,null"
-                        },
-                        "partition": {
-                          "$ref": "#/$defs/values~1integer,null:int32;partition-indicates-the-ordinal"
-                        }
-                      },
-                      "type": [
-                        "object",
-                        "null"
-                      ]
-                    },
-                    "type": {
-                      "description": "PostgreSQL Primary statefulset strategy type",
-                      "type": [
-                        "string",
-                        "null"
-                      ]
-                    }
-                  },
-                  "type": "object"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "description": "ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies"
-            }
-          }
         },
         {
           "additionalProperties": {},
@@ -36622,16 +36014,16 @@
                             "$ref": "#/$defs/values~1string;variable-references-var-name-are"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                           },
                           {
                             "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                           },
                           {
                             "$ref": "#/$defs/values~1null;variable-references-var-name-are"
@@ -36789,7 +36181,505 @@
             ]
           }
         }
-      ]
+      ],
+      "properties": {
+        "affinity": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+24more@2"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Affinity for PostgreSQL primary pods assignment\nref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nNote: primary.podAffinityPreset, primary.podAntiAffinityPreset, and primary.nodeAffinityPreset will be ignored when it's set"
+        },
+        "automountServiceAccountToken": {
+          "$ref": "#/$defs/values~1primary.automountServiceAccountToken"
+        },
+        "extraEnvVars": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.name+@items.value+@items.valueFrom.configMapKeyRef.key+10more"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Array with extra environment variables to add to PostgreSQL Primary nodes\ne.g:\nextraEnvVars:\n- name: FOO\nvalue: \"bar\""
+        },
+        "extraEnvVarsCM": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
+            },
+            {
+              "$ref": "#/$defs/values~1null;name-of-the-referent"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1object"
+            },
+            {
+              "$ref": "#/$defs/values~1string;name-of-the-referent"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
+            }
+          ],
+          "description": "Name of existing ConfigMap containing extra env vars for PostgreSQL Primary nodes"
+        },
+        "extraEnvVarsSecret": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
+            },
+            {
+              "$ref": "#/$defs/values~1null;name-of-the-referent"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1object"
+            },
+            {
+              "$ref": "#/$defs/values~1string;name-of-the-referent"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
+            }
+          ],
+          "description": "Name of existing Secret containing extra env vars for PostgreSQL Primary nodes"
+        },
+        "extraPodSpec": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1activeDeadlineSeconds+383more@2"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optionally specify extra PodSpec for the PostgreSQL Primary pod(s)"
+        },
+        "extraVolumeMounts": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.mountPath+@items.mountPropagation+@items.name+@items.readOnly+2more"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optionally specify extra list of additional volumeMounts for the PostgreSQL Primary container(s)"
+        },
+        "extraVolumes": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/constrains~1@items.awsElasticBlockStore.fsType+@items.awsElasticBlockStore.partition+185more"
+                }
+              ],
+              "description": "List of volumes that can be mounted by containers belonging to the pod. More info: https://kubernetes.io/docs/concepts/storage/volumes",
+              "x-kubernetes-patch-merge-key": "name",
+              "x-kubernetes-patch-strategy": "merge,retainKeys"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Optionally specify extra list of additional volumes for the PostgreSQL Primary pod(s)"
+        },
+        "hostAliases": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.hostnames+@items.ip"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "PostgreSQL primary pods host aliases\nhttps://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/"
+        },
+        "hostIPC": {
+          "$ref": "#/$defs/values~1primary.hostIPC"
+        },
+        "hostNetwork": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/values~1null;host-networking-requested-for"
+            },
+            {
+              "$ref": "#/$defs/values~1boolean;host-networking-requested-for"
+            },
+            {
+              "$ref": "#/$defs/values~1string;pattern-true-true-true-fal"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
+            }
+          ],
+          "description": "Specify if host network should be enabled for PostgreSQL pod (postgresql primary)"
+        },
+        "initContainers": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+            },
+            {
+              "type": "null"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more@2"
+                }
+              ],
+              "description": "List of initialization containers belonging to the pod. Init containers are executed in order prior to containers being started. If any init container fails, the pod is considered to have failed and is handled according to its restartPolicy. The name for an init container or normal container must be unique among all containers. Init containers may not have Lifecycle actions, Readiness probes, Liveness probes, or Startup probes. The resourceRequirements of an init container are taken into account during scheduling by finding the highest request/limit for each resource type, and then using the max of of that value or the sum of the normal containers. Limits are applied to init containers in a similar fashion. Init containers cannot currently be added or removed. Cannot be updated. More info: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/",
+              "x-kubernetes-patch-merge-key": "name",
+              "x-kubernetes-patch-strategy": "merge"
+            }
+          ],
+          "description": "Add additional init containers to the PostgreSQL Primary pod(s)\nExample\ninitContainers:\n- name: do-something\nimage: busybox\ncommand: ['do', 'something']\nPod Disruption Budget configuration\nref: https://kubernetes.io/docs/tasks/run-application/configure-pdb"
+        },
+        "initdb": {
+          "additionalProperties": {},
+          "description": "Initdb configuration\nref: https://github.com/bitnami/containers/tree/main/bitnami/postgresql#specifying-initdb-arguments",
+          "properties": {
+            "user": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
+                },
+                {
+                  "$ref": "#/$defs/values~1string;variable-references-var-name-are"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1minAvailable:t~1object"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
+                },
+                {
+                  "$ref": "#/$defs/values~1null;variable-references-var-name-are"
+                }
+              ],
+              "description": "Specify the PostgreSQL username to execute the initdb scripts"
+            }
+          },
+          "type": "object"
+        },
+        "lifecycleHooks": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1postStart.exec.command+postStart.httpGet.host+9more"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "for the PostgreSQL Primary container to automate configuration before or after startup\nPostgreSQL Primary resource requests and limits\nref: https://kubernetes.io/docs/concepts/configuration/manage-compute-resources-container/"
+        },
+        "nodeSelector": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/values~1object;nodeselector-is-a-selector"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Node labels for PostgreSQL primary pods assignment\nref: https://kubernetes.io/docs/concepts/scheduling-eviction/assign-pod-node/"
+        },
+        "persistence": {
+          "additionalProperties": {},
+          "description": "PostgreSQL Primary persistence configuration",
+          "properties": {
+            "mountPath": {
+              "$ref": "#/$defs/values~1primary.persistence.mountPath"
+            },
+            "subPath": {
+              "$ref": "#/$defs/values~1primary.persistence.subPath"
+            },
+            "volumeName": {
+              "$ref": "#/$defs/values~1primary.persistence.volumeName"
+            }
+          },
+          "required": [
+            "mountPath",
+            "volumeName"
+          ],
+          "type": "object"
+        },
+        "podAnnotations": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/values~1allOf~1object+object,null;annotations-is-an-unstructured"
+            }
+          ],
+          "description": "Map of annotations to add to the pods (postgresql primary)"
+        },
+        "priorityClassName": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1object"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
+            },
+            {
+              "$ref": "#/$defs/values~1string;if-specified-indicates-the"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
+            },
+            {
+              "$ref": "#/$defs/values~1null;if-specified-indicates-the"
+            }
+          ],
+          "description": "Priority Class to use for each pod (postgresql primary)"
+        },
+        "resources": {
+          "$ref": "#/$defs/values~1primary.resources"
+        },
+        "runtimeClassName": {
+          "anyOf": [
+            {
+              "description": "RuntimeClassName refers to a RuntimeClass object in the node.k8s.io group, which should be used to run this pod.  If no RuntimeClass resource matches the named class, the pod will not be run. If unset or empty, the \"legacy\" RuntimeClass will be used, which is an implicit class with an empty definition that uses the default runtime handler. More info: https://git.k8s.io/enhancements/keps/sig-node/585-runtime-class",
+              "type": "null"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string@3"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1object"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
+            },
+            {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@10"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@4"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@9"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@2"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@5"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@7"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@8"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@3"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1minAvailable:t~1not~1keywords~1pattern@6"
+                }
+              ],
+              "description": "RuntimeClassName refers to a RuntimeClass object in the node.k8s.io group, which should be used to run this pod.  If no RuntimeClass resource matches the named class, the pod will not be run. If unset or empty, the \"legacy\" RuntimeClass will be used, which is an implicit class with an empty definition that uses the default runtime handler. More info: https://git.k8s.io/enhancements/keps/sig-node/585-runtime-class",
+              "type": "string"
+            }
+          ],
+          "description": "Name of the runtime class to be used by pod(s)\nref: https://kubernetes.io/docs/concepts/containers/runtime-class/"
+        },
+        "sidecars": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more"
+            }
+          ],
+          "description": "Add additional sidecar containers to the PostgreSQL Primary pod(s)\nFor example:\nsidecars:\n- name: your-image-name\nimage: your-image\nimagePullPolicy: Always\nports:\n- name: portname\ncontainerPort: 1234"
+        },
+        "terminationGracePeriodSeconds": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
+            },
+            {
+              "$ref": "#/$defs/values~1integer:int64;optional-duration-in-seconds"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
+            },
+            {
+              "$ref": "#/$defs/values~1null:int64;optional-duration-in-seconds"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-0-1-9"
+            },
+            {
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
+            }
+          ],
+          "description": "Seconds PostgreSQL primary pod needs to terminate gracefully\nref: https://kubernetes.io/docs/concepts/workloads/pods/pod/#termination-of-pods"
+        },
+        "tolerations": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Tolerations for PostgreSQL primary pods assignment\nref: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/"
+        },
+        "topologySpreadConstraints": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.labelSelector.matchExpressions@items.key+10more"
+            },
+            {
+              "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Topology Spread Constraints for pod assignment spread across your cluster among failure-domains. Evaluated as a template\nRef: https://kubernetes.io/docs/concepts/workloads/pods/pod-topology-spread-constraints/#spread-constraints-for-pods"
+        },
+        "updateStrategy": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
+            },
+            {
+              "additionalProperties": false,
+              "description": "StatefulSetUpdateStrategy indicates the strategy that the StatefulSet controller will use to perform updates. It includes any additional parameters necessary to perform the update for the indicated strategy.",
+              "properties": {
+                "rollingUpdate": {
+                  "additionalProperties": false,
+                  "description": "PostgreSQL Primary statefulset rolling update configuration parameters",
+                  "properties": {
+                    "maxUnavailable": {
+                      "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1oneOf~1integer,null+string,null"
+                    },
+                    "partition": {
+                      "$ref": "#/$defs/values~1integer,null:int32;partition-indicates-the-ordinal"
+                    }
+                  },
+                  "type": [
+                    "object",
+                    "null"
+                  ]
+                },
+                "type": {
+                  "description": "PostgreSQL Primary statefulset strategy type",
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                }
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#update-strategies"
+        }
+      },
+      "type": "object"
     },
     "psp": {
       "additionalProperties": {},
@@ -36903,14 +36793,8 @@
       "type": "object"
     },
     "readReplicas": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "additionalProperties": {}
-        }
-      ]
+      "additionalProperties": {},
+      "type": "object"
     },
     "replication": {
       "additionalProperties": {},
@@ -36954,19 +36838,19 @@
                         "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
                         "$ref": "#/$defs/constrains~1minAvailable:t~1object"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
                         "$ref": "#/$defs/values~1null;name-must-be-unique"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       }
                     ],
                     "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the common.names.fullname template"
@@ -36979,24 +36863,24 @@
                   "automountServiceAccountToken": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-true-true-true-fal"
+                        "$ref": "#/$defs/values~1string;pattern-true-true-true-fal"
                       },
                       {
                         "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
                         "type": "null"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                       },
                       {
                         "description": "AutomountServiceAccountToken indicates whether pods running as this service account should have an API token automatically mounted. Can be overridden at the pod level.",
                         "type": "boolean"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                       },
                       {
-                        "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                        "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                       }
                     ],
                     "description": "Allows auto mount of ServiceAccountToken on the serviceAccount created\nCan be set to false if pods using this serviceAccount do not need to use K8s API"
@@ -37031,16 +36915,16 @@
               "$ref": "#/$defs/constrains~1@items.from@items.ipBlock.cidr+@items.from@items.ipBlock.except+8more~1not~1:t"
             },
             {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
             },
             {
               "$ref": "#/$defs/constrains~1minAvailable:t~1object"
             },
             {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
             },
             {
-              "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+              "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
             },
             {
               "type": "string"
@@ -37117,17 +37001,17 @@
                       {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-a-za-z0-9-t"
                           },
                           {
                             "pattern": "^(([+-]_*)?(0|[1-9][0-9_]{0,17}|0[xX][0-9a-fA-F]{1,15}|0[bB][01]{1,62}|0[oO][0-7]{1,20}|0[0-7]{1,20})|[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*[0-9][0-9_]{0,50}(\\.[0-9_]{0,50})?([eE][+-]?[0-9]{1,2})?|[+-]_*\\._*[0-9][0-9_]{0,50}([eE][+-]?[0-9]{1,2})?|\\.[0-9]{1,50}([eE][+-]?[0-9]{1,2})?)$",
                             "type": "string"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-t"
                           },
                           {
-                            "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                            "$ref": "#/$defs/constrains~1minAvailable:t~1string;pattern-null-null-null"
                           },
                           {
                             "type": "number"
@@ -37394,18 +37278,8 @@
       "type": "object"
     },
     "volumePermissions": {
+      "additionalProperties": {},
       "allOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "image": {
-              "$ref": "#/$defs/constrains~1repository"
-            }
-          }
-        },
-        {
-          "type": "object"
-        },
         {
           "$ref": "#/$defs/when~1image+image=null~1then~1fail"
         },
@@ -37422,7 +37296,19 @@
           }
         }
       ],
-      "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node"
+      "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "$ref": "#/$defs/values~1volumePermissions.image.repository"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     }
   },
   "type": "object"

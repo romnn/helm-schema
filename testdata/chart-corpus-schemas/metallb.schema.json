@@ -740,6 +740,50 @@
       ],
       "type": "object"
     },
+    "constrains/crds.enabled": {
+      "properties": {
+        "crds": {
+          "$ref": "#/$defs/constrains~1enabled"
+        }
+      },
+      "required": [
+        "crds"
+      ],
+      "type": "object"
+    },
+    "constrains/crds.enabled!=false": {
+      "properties": {
+        "crds": {
+          "$ref": "#/$defs/constrains~1enabled!=false"
+        }
+      },
+      "required": [
+        "crds"
+      ],
+      "type": "object"
+    },
+    "constrains/crds.enabled!=true": {
+      "properties": {
+        "crds": {
+          "$ref": "#/$defs/constrains~1enabled!=true"
+        }
+      },
+      "required": [
+        "crds"
+      ],
+      "type": "object"
+    },
+    "constrains/crds.enabled=true": {
+      "properties": {
+        "crds": {
+          "$ref": "#/$defs/constrains~1enabled=true"
+        }
+      },
+      "required": [
+        "crds"
+      ],
+      "type": "object"
+    },
     "constrains/create:t": {
       "properties": {
         "create": {
@@ -751,10 +795,62 @@
       ],
       "type": "object"
     },
+    "constrains/enabled": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=false": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              false
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=true": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              true
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled:t": {
       "properties": {
         "enabled": {
           "$ref": "#/$defs/t"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled=true": {
+      "properties": {
+        "enabled": {
+          "enum": [
+            true
+          ]
         }
       },
       "required": [
@@ -1795,6 +1891,66 @@
         }
       ]
     },
+    "constrains/frr-k8s.crds.enabled": {
+      "not": {
+        "properties": {
+          "frr-k8s": {
+            "$ref": "#/$defs/constrains~1crds.enabled"
+          }
+        },
+        "required": [
+          "frr-k8s"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/frr-k8s.crds.enabled+frr-k8s.crds.enabled!=false": {
+      "anyOf": [
+        {
+          "properties": {
+            "frr-k8s": {
+              "$ref": "#/$defs/constrains~1crds.enabled!=false"
+            }
+          },
+          "required": [
+            "frr-k8s"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1frr-k8s.crds.enabled"
+        }
+      ]
+    },
+    "constrains/frr-k8s.crds.enabled+frr-k8s.crds.enabled!=true": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1frr-k8s.crds.enabled"
+        },
+        {
+          "properties": {
+            "frr-k8s": {
+              "$ref": "#/$defs/constrains~1crds.enabled!=true"
+            }
+          },
+          "required": [
+            "frr-k8s"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/frr-k8s.crds.enabled=true": {
+      "properties": {
+        "frr-k8s": {
+          "$ref": "#/$defs/constrains~1crds.enabled=true"
+        }
+      },
+      "required": [
+        "frr-k8s"
+      ],
+      "type": "object"
+    },
     "constrains/frr-k8s.frrk8s.frr.secureMetricsPort:t": {
       "properties": {
         "frr-k8s": {
@@ -2013,13 +2169,7 @@
       "not": {
         "properties": {
           "frrk8s": {
-            "properties": {
-              "enabled": {}
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/constrains~1enabled"
           }
         },
         "required": [
@@ -2027,6 +2177,42 @@
         ],
         "type": "object"
       }
+    },
+    "constrains/frrk8s.enabled+frrk8s.enabled!=false": {
+      "anyOf": [
+        {
+          "properties": {
+            "frrk8s": {
+              "$ref": "#/$defs/constrains~1enabled!=false"
+            }
+          },
+          "required": [
+            "frrk8s"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1frrk8s.enabled"
+        }
+      ]
+    },
+    "constrains/frrk8s.enabled+frrk8s.enabled!=true": {
+      "anyOf": [
+        {
+          "properties": {
+            "frrk8s": {
+              "$ref": "#/$defs/constrains~1enabled!=true"
+            }
+          },
+          "required": [
+            "frrk8s"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1frrk8s.enabled"
+        }
+      ]
     },
     "constrains/frrk8s.enabled+frrk8s.enabled:t+frrk8s.enabled=null": {
       "anyOf": [
@@ -2076,6 +2262,17 @@
             "enabled"
           ],
           "type": "object"
+        }
+      },
+      "required": [
+        "frrk8s"
+      ],
+      "type": "object"
+    },
+    "constrains/frrk8s.enabled=true": {
+      "properties": {
+        "frrk8s": {
+          "$ref": "#/$defs/constrains~1enabled=true"
         }
       },
       "required": [
@@ -4507,6 +4704,42 @@
         "resources": {}
       }
     },
+    "values/string;failurepolicy-defines-how-unrecognized": {
+      "allOf": [
+        {
+          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@10"
+        },
+        {
+          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@4"
+        },
+        {
+          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@9"
+        },
+        {
+          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@2"
+        },
+        {
+          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@5"
+        },
+        {
+          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@7"
+        },
+        {
+          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@8"
+        },
+        {
+          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern"
+        },
+        {
+          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@3"
+        },
+        {
+          "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@6"
+        }
+      ],
+      "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
+      "type": "string"
+    },
     "values/string;namespace-of-the-referenced": {
       "allOf": [
         {
@@ -5327,6 +5560,51 @@
       "if": {
         "anyOf": [
           {
+            "$ref": "#/$defs/constrains~1crds.enabled=true"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1crds.enabled!=false"
+                  },
+                  {
+                    "not": {
+                      "$ref": "#/$defs/constrains~1crds.enabled"
+                    }
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/constrains~1crds.enabled"
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1crds.enabled!=true"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "crds": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "$ref": "#/$defs/constrains~1controller.enabled:t"
           },
           {
@@ -5545,6 +5823,1433 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1frrk8s.enabled+frrk8s.enabled:t+frrk8s.enabled=null"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "frrStatus": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "resources": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Resource limits and requests for the FRR status container."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "frr": {
+                        "additionalProperties": {},
+                        "description": "frr contains configuration specific to the FRR container,",
+                        "properties": {
+                          "image": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "pullPolicy": {
+                                "anyOf": [
+                                  {
+                                    "$ref": "#/$defs/constrains~1name:t~1string@2"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/constrains~1pullPolicy:t~1null;image-pull-policy-one"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-a-za-z0-9-t"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/constrains~1name:t~1object"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-t"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-null-null-null"
+                                  },
+                                  {
+                                    "$ref": "#/$defs/constrains~1pullPolicy:t~1string;image-pull-policy-one"
+                                  }
+                                ],
+                                "description": "The FRR image pull policy."
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "frr-k8s": {
+                  "properties": {
+                    "frrk8s": {
+                      "properties": {
+                        "webhookPort": {
+                          "not": {
+                            "enum": [
+                              null
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "webhookPort"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "frrk8s"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "frr-k8s"
+              ],
+              "type": "object"
+            },
+            "then": {
+              "additionalProperties": {},
+              "properties": {
+                "frr-k8s": {
+                  "additionalProperties": {},
+                  "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                  "properties": {
+                    "frrk8s": {
+                      "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                      "required": [
+                        "webhookPort"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "serviceAccount": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "frr": {
+                        "description": "frr contains configuration specific to the FRR container,",
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "serviceAccount": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "name": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/constrains~1name:t~1string@2"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1serviceAccount.name:t~1null;serviceaccountname-is-the-name"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-a-za-z0-9-t"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1name:t~1object"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-t"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-null-null-null"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1serviceAccount.name:t~1string;serviceaccountname-is-the-name"
+                              }
+                            ],
+                            "description": "The name of the ServiceAccount to use. If not set and create is true, a name is generated using the fullname template."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "livenessProbe": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "reloader": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "resources": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Resource limits and requests for the reloader container."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "labels": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
+                          },
+                          {
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "array"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1annotations:t~1object"
+                          }
+                        ],
+                        "description": "Additional labels to add to the pod."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "frrStatus": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "frr": {
+                        "additionalProperties": {},
+                        "description": "frr contains configuration specific to the FRR container,",
+                        "properties": {
+                          "image": {
+                            "type": "object"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "nameOverride": {
+                    "anyOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1name:t~1string@2"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-a-za-z0-9-t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1name:t~1object"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-t"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-null-null-null"
+                      },
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "$ref": "#/$defs/constrains~1port~1string"
+                      }
+                    ],
+                    "description": "String to override the default chart name."
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "prometheus": {
+                    "additionalProperties": {},
+                    "description": "scrape annotations specifies whether to add Prometheus metric\nauto-collection annotations to pods. See\nhttps://github.com/prometheus/prometheus/blob/release-2.1/documentation/examples/prometheus-kubernetes.yml\nfor a corresponding Prometheus configuration. Alternatively, you\nmay want to use the Prometheus Operator\n(https://github.com/coreos/prometheus-operator) for more powerful\nmonitoring configuration. If you use the Prometheus operator, this\ncan be left at false.",
+                    "properties": {
+                      "secureMetricsPort": {
+                        "description": "Port frr-k8s will listen on for secure metrics.",
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "resources": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Resource limits and requests for the frr-k8s controller container.\nlimits:\ncpu: 100m\nmemory: 100Mi"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more"
+                      }
+                    ],
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset."
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "startupProbe": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "readinessProbe": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "labels": {
+                        "description": "Additional labels to add to the pod.",
+                        "type": [
+                          "array",
+                          "null",
+                          "object"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "crds": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "validationFailurePolicy": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/values~1null;failurepolicy-defines-how-unrecognized"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1name:t~1string@2"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-a-za-z0-9-t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1name:t~1object"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1string;failurepolicy-defines-how-unrecognized"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-null-null-null"
+                          }
+                        ],
+                        "description": "Validation failure policy for CRDs. Can be Fail or Ignore."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "tls": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "metricsTLSSecret": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1name:t~1string@2"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1null;secretname-is-the-name"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1string;secretname-is-the-name"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-a-za-z0-9-t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1name:t~1object"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-null-null-null"
+                          }
+                        ],
+                        "description": "The name of the secret to be mounted in the pods to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "frr": {
+                        "additionalProperties": {},
+                        "description": "frr contains configuration specific to the FRR container,",
+                        "properties": {
+                          "resources": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Resource limits and requests for the FRR container."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "tls": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "prometheus": {
+                    "additionalProperties": {},
+                    "description": "scrape annotations specifies whether to add Prometheus metric\nauto-collection annotations to pods. See\nhttps://github.com/prometheus/prometheus/blob/release-2.1/documentation/examples/prometheus-kubernetes.yml\nfor a corresponding Prometheus configuration. Alternatively, you\nmay want to use the Prometheus Operator\n(https://github.com/coreos/prometheus-operator) for more powerful\nmonitoring configuration. If you use the Prometheus operator, this\ncan be left at false.",
+                    "properties": {
+                      "secureMetricsPort": {
+                        "$ref": "#/$defs/helm-double-quoted-safe",
+                        "description": "Port frr-k8s will listen on for secure metrics."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "image": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "frrMetrics": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "updateStrategy": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
+                          },
+                          {
+                            "additionalProperties": false,
+                            "description": "DaemonSetUpdateStrategy is a struct used to control the update strategy for a DaemonSet.",
+                            "properties": {
+                              "rollingUpdate": {
+                                "$ref": "#/$defs/constrains~1maxSurge+maxUnavailable"
+                              },
+                              "type": {
+                                "description": "Specify the FRR-K8s daemonset update strategy.",
+                                "type": [
+                                  "string",
+                                  "null"
+                                ]
+                              }
+                            },
+                            "type": "object"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "ref: https://kubernetes.io/docs/tasks/manage-daemon/update-daemon-set/\nStrategyType\nCan be set to RollingUpdate or OnDelete"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "prometheus": {
+                    "additionalProperties": {},
+                    "description": "scrape annotations specifies whether to add Prometheus metric\nauto-collection annotations to pods. See\nhttps://github.com/prometheus/prometheus/blob/release-2.1/documentation/examples/prometheus-kubernetes.yml\nfor a corresponding Prometheus configuration. Alternatively, you\nmay want to use the Prometheus Operator\n(https://github.com/coreos/prometheus-operator) for more powerful\nmonitoring configuration. If you use the Prometheus operator, this\ncan be left at false.",
+                    "properties": {
+                      "secureMetricsPort": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1extraContainers:t+extraContainers@items.args+extraContainers@items.command+89more~1integer:int32;number-of-port-to"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-0-1-9"
+                          }
+                        ],
+                        "description": "Port frr-k8s will listen on for secure metrics."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "runtimeClassName": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/values~1null;runtimeclassname-refers-to-a"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1name:t~1string@2"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-a-za-z0-9-t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1name:t~1object"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-null-null-null"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1string;runtimeclassname-refers-to-a"
+                          }
+                        ],
+                        "description": "Runtime class name for the pod."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "webhookPort": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1extraContainers:t+extraContainers@items.args+extraContainers@items.command+89more~1integer:int32;number-of-port-to"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-0-1-9"
+                          }
+                        ],
+                        "description": "Port for the webhook server."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "labels": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/values~1object"
+                          },
+                          {
+                            "type": "null"
+                          },
+                          {
+                            "type": "array"
+                          }
+                        ],
+                        "description": "Additional labels to add to the pod."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "imagePullSecrets": {
+                    "$ref": "#/$defs/constrains~1@items.name"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "tolerations": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Tolerations for pod assignment."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "nodeSelector": {
+                        "anyOf": [
+                          {
+                            "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1nodeSelector:t~1object;nodeselector-is-a-selector"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Node selector for pod assignment."
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "prometheus": {
+                    "additionalProperties": {},
+                    "description": "scrape annotations specifies whether to add Prometheus metric\nauto-collection annotations to pods. See\nhttps://github.com/prometheus/prometheus/blob/release-2.1/documentation/examples/prometheus-kubernetes.yml\nfor a corresponding Prometheus configuration. Alternatively, you\nmay want to use the Prometheus Operator\n(https://github.com/coreos/prometheus-operator) for more powerful\nmonitoring configuration. If you use the Prometheus operator, this\ncan be left at false.",
+                    "properties": {
+                      "serviceMonitor": {
+                        "description": "Prometheus Operator ServiceMonitors.",
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "frr-k8s": {
+                  "properties": {
+                    "prometheus": {
+                      "$ref": "#/$defs/constrains~1secureMetricsPort!=null"
+                    }
+                  },
+                  "required": [
+                    "prometheus"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "frr-k8s"
+              ],
+              "type": "object"
+            },
+            "then": {
+              "additionalProperties": {},
+              "properties": {
+                "frr-k8s": {
+                  "additionalProperties": {},
+                  "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                  "properties": {
+                    "prometheus": {
+                      "description": "scrape annotations specifies whether to add Prometheus metric\nauto-collection annotations to pods. See\nhttps://github.com/prometheus/prometheus/blob/release-2.1/documentation/examples/prometheus-kubernetes.yml\nfor a corresponding Prometheus configuration. Alternatively, you\nmay want to use the Prometheus Operator\n(https://github.com/coreos/prometheus-operator) for more powerful\nmonitoring configuration. If you use the Prometheus operator, this\ncan be left at false.",
+                      "required": [
+                        "secureMetricsPort"
+                      ],
+                      "type": "object"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "rbac": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "frr": {
+                        "additionalProperties": {},
+                        "description": "frr contains configuration specific to the FRR container,",
+                        "properties": {
+                          "secureMetricsPort": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/constrains~1extraContainers:t+extraContainers@items.args+extraContainers@items.command+89more~1integer:int32;number-of-port-to"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-0-1-9"
+                              }
+                            ],
+                            "description": "Secure metrics port for FRR."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "reloader": {
+                        "type": "object"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "frr": {
+                        "additionalProperties": {},
+                        "description": "frr contains configuration specific to the FRR container,",
+                        "properties": {
+                          "image": {
+                            "additionalProperties": {},
+                            "properties": {
+                              "repository": {
+                                "description": "The FRR image repository.",
+                                "not": {
+                                  "type": "array"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "frrMetrics": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "resources": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Resource limits and requests for the FRR metrics container."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "prometheus": {
+                    "description": "scrape annotations specifies whether to add Prometheus metric\nauto-collection annotations to pods. See\nhttps://github.com/prometheus/prometheus/blob/release-2.1/documentation/examples/prometheus-kubernetes.yml\nfor a corresponding Prometheus configuration. Alternatively, you\nmay want to use the Prometheus Operator\n(https://github.com/coreos/prometheus-operator) for more powerful\nmonitoring configuration. If you use the Prometheus operator, this\ncan be left at false.",
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "frr": {
+                        "additionalProperties": {},
+                        "description": "frr contains configuration specific to the FRR container,",
+                        "properties": {
+                          "secureMetricsPort": {
+                            "description": "Secure metrics port for FRR.",
+                            "not": {
+                              "type": "null"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "image": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "repository": {
+                            "description": "The frr-k8s image repository.",
+                            "not": {
+                              "type": "array"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "webhookPort": {
+                        "description": "Port for the webhook server.",
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "frr-k8s": {
+                  "properties": {
+                    "frrk8s": {
+                      "properties": {
+                        "frr": {
+                          "$ref": "#/$defs/constrains~1secureMetricsPort!=null"
+                        }
+                      },
+                      "required": [
+                        "frr"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "frrk8s"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "frr-k8s"
+              ],
+              "type": "object"
+            },
+            "then": {
+              "additionalProperties": {},
+              "properties": {
+                "frr-k8s": {
+                  "additionalProperties": {},
+                  "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                  "properties": {
+                    "frrk8s": {
+                      "additionalProperties": {},
+                      "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                      "properties": {
+                        "frr": {
+                          "description": "frr contains configuration specific to the FRR container,",
+                          "required": [
+                            "secureMetricsPort"
+                          ],
+                          "type": "object"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frr-k8s": {
+                "additionalProperties": {},
+                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+                "properties": {
+                  "frrk8s": {
+                    "additionalProperties": {},
+                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
+                    "properties": {
+                      "image": {
+                        "additionalProperties": {},
+                        "properties": {
+                          "pullPolicy": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/constrains~1name:t~1string@2"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1pullPolicy:t~1null;image-pull-policy-one"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-a-za-z0-9-t"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1name:t~1object"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-t"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-null-null-null"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1pullPolicy:t~1string;image-pull-policy-one"
+                              }
+                            ],
+                            "description": "The frr-k8s image pull policy."
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -6135,6 +7840,87 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1frrk8s.enabled+frrk8s.enabled!=false"
+              },
+              {
+                "$ref": "#/$defs/constrains~1frr-k8s.crds.enabled=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1frrk8s.enabled+frrk8s.enabled!=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1frrk8s.enabled+frrk8s.enabled!=false"
+              },
+              {
+                "$ref": "#/$defs/constrains~1frr-k8s.crds.enabled+frr-k8s.crds.enabled!=false"
+              },
+              {
+                "$ref": "#/$defs/constrains~1frr-k8s.crds.enabled+frr-k8s.crds.enabled!=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1frrk8s.enabled+frrk8s.enabled!=true"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1frrk8s.enabled"
+          },
+          {
+            "$ref": "#/$defs/constrains~1frrk8s.enabled=null"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1frr-k8s.crds.enabled=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1frrk8s.enabled=true"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1frrk8s.enabled:t"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1frr-k8s.crds.enabled+frr-k8s.crds.enabled!=false"
+              },
+              {
+                "$ref": "#/$defs/constrains~1frr-k8s.crds.enabled+frr-k8s.crds.enabled!=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1frrk8s.enabled=true"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "frr-k8s": {
+            "additionalProperties": {},
+            "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+            "properties": {
+              "crds": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -6833,1480 +8619,6 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1frrk8s.enabled+frrk8s.enabled:t+frrk8s.enabled=null"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "frrStatus": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "resources": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ],
-                            "description": "Resource limits and requests for the FRR status container."
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "frr": {
-                        "additionalProperties": {},
-                        "description": "frr contains configuration specific to the FRR container,",
-                        "properties": {
-                          "image": {
-                            "additionalProperties": {},
-                            "properties": {
-                              "pullPolicy": {
-                                "anyOf": [
-                                  {
-                                    "$ref": "#/$defs/constrains~1name:t~1string@2"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/constrains~1pullPolicy:t~1null;image-pull-policy-one"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-a-za-z0-9-t"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/constrains~1name:t~1object"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-t"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-null-null-null"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/constrains~1pullPolicy:t~1string;image-pull-policy-one"
-                                  }
-                                ],
-                                "description": "The FRR image pull policy."
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "if": {
-              "properties": {
-                "frr-k8s": {
-                  "properties": {
-                    "frrk8s": {
-                      "properties": {
-                        "webhookPort": {
-                          "not": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "webhookPort"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "frrk8s"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "frr-k8s"
-              ],
-              "type": "object"
-            },
-            "then": {
-              "additionalProperties": {},
-              "properties": {
-                "frr-k8s": {
-                  "additionalProperties": {},
-                  "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                  "properties": {
-                    "frrk8s": {
-                      "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                      "required": [
-                        "webhookPort"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "serviceAccount": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "frr": {
-                        "description": "frr contains configuration specific to the FRR container,",
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "serviceAccount": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "name": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/constrains~1name:t~1string@2"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1serviceAccount.name:t~1null;serviceaccountname-is-the-name"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-a-za-z0-9-t"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1name:t~1object"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-t"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-null-null-null"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1serviceAccount.name:t~1string;serviceaccountname-is-the-name"
-                              }
-                            ],
-                            "description": "The name of the ServiceAccount to use. If not set and create is true, a name is generated using the fullname template."
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "livenessProbe": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "reloader": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "resources": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ],
-                            "description": "Resource limits and requests for the reloader container."
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "labels": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
-                          },
-                          {
-                            "type": "object"
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "type": "array"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1annotations:t~1object"
-                          }
-                        ],
-                        "description": "Additional labels to add to the pod."
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "frrStatus": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "frr": {
-                        "additionalProperties": {},
-                        "description": "frr contains configuration specific to the FRR container,",
-                        "properties": {
-                          "image": {
-                            "type": "object"
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "nameOverride": {
-                    "anyOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1name:t~1string@2"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-a-za-z0-9-t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1name:t~1object"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-t"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-null-null-null"
-                      },
-                      {
-                        "type": "null"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1port~1string"
-                      }
-                    ],
-                    "description": "String to override the default chart name."
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "prometheus": {
-                    "additionalProperties": {},
-                    "description": "scrape annotations specifies whether to add Prometheus metric\nauto-collection annotations to pods. See\nhttps://github.com/prometheus/prometheus/blob/release-2.1/documentation/examples/prometheus-kubernetes.yml\nfor a corresponding Prometheus configuration. Alternatively, you\nmay want to use the Prometheus Operator\n(https://github.com/coreos/prometheus-operator) for more powerful\nmonitoring configuration. If you use the Prometheus operator, this\ncan be left at false.",
-                    "properties": {
-                      "secureMetricsPort": {
-                        "description": "Port frr-k8s will listen on for secure metrics.",
-                        "not": {
-                          "type": "null"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "resources": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "Resource limits and requests for the frr-k8s controller container.\nlimits:\ncpu: 100m\nmemory: 100Mi"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "allOf": [
-                      {
-                        "$ref": "#/$defs/constrains~1affinity.nodeAffinity.preferredDuringSchedulingIgnoredDuringExecution@items.preference.matchExpressions@items.key+25more"
-                      }
-                    ],
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset."
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "startupProbe": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "readinessProbe": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "labels": {
-                        "description": "Additional labels to add to the pod.",
-                        "type": [
-                          "array",
-                          "null",
-                          "object"
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "crds": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "validationFailurePolicy": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/values~1null;failurepolicy-defines-how-unrecognized"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1name:t~1string@2"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-a-za-z0-9-t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1name:t~1object"
-                          },
-                          {
-                            "allOf": [
-                              {
-                                "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@10"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@4"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@9"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@2"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@5"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@7"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@8"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@3"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1interval:t~1not~1keywords~1pattern@6"
-                              }
-                            ],
-                            "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
-                            "type": "string"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-null-null-null"
-                          }
-                        ],
-                        "description": "Validation failure policy for CRDs. Can be Fail or Ignore."
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "tls": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "metricsTLSSecret": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1name:t~1string@2"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1null;secretname-is-the-name"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1string;secretname-is-the-name"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-a-za-z0-9-t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1name:t~1object"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-null-null-null"
-                          }
-                        ],
-                        "description": "The name of the secret to be mounted in the pods to provide TLS certificates for metrics endpoints. If not present, a self-signed certificate is auto-generated."
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "frr": {
-                        "additionalProperties": {},
-                        "description": "frr contains configuration specific to the FRR container,",
-                        "properties": {
-                          "resources": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ],
-                            "description": "Resource limits and requests for the FRR container."
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "tls": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "prometheus": {
-                    "additionalProperties": {},
-                    "description": "scrape annotations specifies whether to add Prometheus metric\nauto-collection annotations to pods. See\nhttps://github.com/prometheus/prometheus/blob/release-2.1/documentation/examples/prometheus-kubernetes.yml\nfor a corresponding Prometheus configuration. Alternatively, you\nmay want to use the Prometheus Operator\n(https://github.com/coreos/prometheus-operator) for more powerful\nmonitoring configuration. If you use the Prometheus operator, this\ncan be left at false.",
-                    "properties": {
-                      "secureMetricsPort": {
-                        "$ref": "#/$defs/helm-double-quoted-safe",
-                        "description": "Port frr-k8s will listen on for secure metrics."
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "image": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "frrMetrics": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "updateStrategy": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
-                          },
-                          {
-                            "additionalProperties": false,
-                            "description": "DaemonSetUpdateStrategy is a struct used to control the update strategy for a DaemonSet.",
-                            "properties": {
-                              "rollingUpdate": {
-                                "$ref": "#/$defs/constrains~1maxSurge+maxUnavailable"
-                              },
-                              "type": {
-                                "description": "Specify the FRR-K8s daemonset update strategy.",
-                                "type": [
-                                  "string",
-                                  "null"
-                                ]
-                              }
-                            },
-                            "type": "object"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "ref: https://kubernetes.io/docs/tasks/manage-daemon/update-daemon-set/\nStrategyType\nCan be set to RollingUpdate or OnDelete"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "prometheus": {
-                    "additionalProperties": {},
-                    "description": "scrape annotations specifies whether to add Prometheus metric\nauto-collection annotations to pods. See\nhttps://github.com/prometheus/prometheus/blob/release-2.1/documentation/examples/prometheus-kubernetes.yml\nfor a corresponding Prometheus configuration. Alternatively, you\nmay want to use the Prometheus Operator\n(https://github.com/coreos/prometheus-operator) for more powerful\nmonitoring configuration. If you use the Prometheus operator, this\ncan be left at false.",
-                    "properties": {
-                      "secureMetricsPort": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1extraContainers:t+extraContainers@items.args+extraContainers@items.command+89more~1integer:int32;number-of-port-to"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-0-1-9"
-                          }
-                        ],
-                        "description": "Port frr-k8s will listen on for secure metrics."
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "runtimeClassName": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/values~1null;runtimeclassname-refers-to-a"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1name:t~1string@2"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-a-za-z0-9-t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1name:t~1object"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-null-null-null"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1string;runtimeclassname-refers-to-a"
-                          }
-                        ],
-                        "description": "Runtime class name for the pod."
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "webhookPort": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1extraContainers:t+extraContainers@items.args+extraContainers@items.command+89more~1integer:int32;number-of-port-to"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-0-1-9"
-                          }
-                        ],
-                        "description": "Port for the webhook server."
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "labels": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/values~1object"
-                          },
-                          {
-                            "type": "null"
-                          },
-                          {
-                            "type": "array"
-                          }
-                        ],
-                        "description": "Additional labels to add to the pod."
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "imagePullSecrets": {
-                    "$ref": "#/$defs/constrains~1@items.name"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "tolerations": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "Tolerations for pod assignment."
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "nodeSelector": {
-                        "anyOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1nodeSelector:t~1object;nodeselector-is-a-selector"
-                          },
-                          {
-                            "type": "null"
-                          }
-                        ],
-                        "description": "Node selector for pod assignment."
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "prometheus": {
-                    "additionalProperties": {},
-                    "description": "scrape annotations specifies whether to add Prometheus metric\nauto-collection annotations to pods. See\nhttps://github.com/prometheus/prometheus/blob/release-2.1/documentation/examples/prometheus-kubernetes.yml\nfor a corresponding Prometheus configuration. Alternatively, you\nmay want to use the Prometheus Operator\n(https://github.com/coreos/prometheus-operator) for more powerful\nmonitoring configuration. If you use the Prometheus operator, this\ncan be left at false.",
-                    "properties": {
-                      "serviceMonitor": {
-                        "description": "Prometheus Operator ServiceMonitors.",
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "if": {
-              "properties": {
-                "frr-k8s": {
-                  "properties": {
-                    "prometheus": {
-                      "$ref": "#/$defs/constrains~1secureMetricsPort!=null"
-                    }
-                  },
-                  "required": [
-                    "prometheus"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "frr-k8s"
-              ],
-              "type": "object"
-            },
-            "then": {
-              "additionalProperties": {},
-              "properties": {
-                "frr-k8s": {
-                  "additionalProperties": {},
-                  "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                  "properties": {
-                    "prometheus": {
-                      "description": "scrape annotations specifies whether to add Prometheus metric\nauto-collection annotations to pods. See\nhttps://github.com/prometheus/prometheus/blob/release-2.1/documentation/examples/prometheus-kubernetes.yml\nfor a corresponding Prometheus configuration. Alternatively, you\nmay want to use the Prometheus Operator\n(https://github.com/coreos/prometheus-operator) for more powerful\nmonitoring configuration. If you use the Prometheus operator, this\ncan be left at false.",
-                      "required": [
-                        "secureMetricsPort"
-                      ],
-                      "type": "object"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "crds": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "rbac": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "frr": {
-                        "additionalProperties": {},
-                        "description": "frr contains configuration specific to the FRR container,",
-                        "properties": {
-                          "secureMetricsPort": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/constrains~1extraContainers:t+extraContainers@items.args+extraContainers@items.command+89more~1integer:int32;number-of-port-to"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-0-1-9"
-                              }
-                            ],
-                            "description": "Secure metrics port for FRR."
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "reloader": {
-                        "type": "object"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "frr": {
-                        "additionalProperties": {},
-                        "description": "frr contains configuration specific to the FRR container,",
-                        "properties": {
-                          "image": {
-                            "additionalProperties": {},
-                            "properties": {
-                              "repository": {
-                                "description": "The FRR image repository.",
-                                "not": {
-                                  "type": "array"
-                                }
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "frrMetrics": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "resources": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1claims@items.name+limits+requests"
-                              },
-                              {
-                                "type": "null"
-                              }
-                            ],
-                            "description": "Resource limits and requests for the FRR metrics container."
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "prometheus": {
-                    "description": "scrape annotations specifies whether to add Prometheus metric\nauto-collection annotations to pods. See\nhttps://github.com/prometheus/prometheus/blob/release-2.1/documentation/examples/prometheus-kubernetes.yml\nfor a corresponding Prometheus configuration. Alternatively, you\nmay want to use the Prometheus Operator\n(https://github.com/coreos/prometheus-operator) for more powerful\nmonitoring configuration. If you use the Prometheus operator, this\ncan be left at false.",
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "frr": {
-                        "additionalProperties": {},
-                        "description": "frr contains configuration specific to the FRR container,",
-                        "properties": {
-                          "secureMetricsPort": {
-                            "description": "Secure metrics port for FRR.",
-                            "not": {
-                              "type": "null"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "image": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "repository": {
-                            "description": "The frr-k8s image repository.",
-                            "not": {
-                              "type": "array"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "webhookPort": {
-                        "description": "Port for the webhook server.",
-                        "not": {
-                          "type": "null"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "if": {
-              "properties": {
-                "frr-k8s": {
-                  "properties": {
-                    "frrk8s": {
-                      "properties": {
-                        "frr": {
-                          "$ref": "#/$defs/constrains~1secureMetricsPort!=null"
-                        }
-                      },
-                      "required": [
-                        "frr"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "frrk8s"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "frr-k8s"
-              ],
-              "type": "object"
-            },
-            "then": {
-              "additionalProperties": {},
-              "properties": {
-                "frr-k8s": {
-                  "additionalProperties": {},
-                  "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                  "properties": {
-                    "frrk8s": {
-                      "additionalProperties": {},
-                      "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                      "properties": {
-                        "frr": {
-                          "description": "frr contains configuration specific to the FRR container,",
-                          "required": [
-                            "secureMetricsPort"
-                          ],
-                          "type": "object"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frr-k8s": {
-                "additionalProperties": {},
-                "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
-                "properties": {
-                  "frrk8s": {
-                    "additionalProperties": {},
-                    "description": "controller contains configuration specific to the FRRK8s controller\ndaemonset.",
-                    "properties": {
-                      "image": {
-                        "additionalProperties": {},
-                        "properties": {
-                          "pullPolicy": {
-                            "anyOf": [
-                              {
-                                "$ref": "#/$defs/constrains~1name:t~1string@2"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1pullPolicy:t~1null;image-pull-policy-one"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1@items.name~1not~1:t"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-a-za-z0-9-t"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1name:t~1object"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-t"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-null-null-null"
-                              },
-                              {
-                                "$ref": "#/$defs/constrains~1pullPolicy:t~1string;image-pull-policy-one"
-                              }
-                            ],
-                            "description": "The frr-k8s image pull policy."
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
         "allOf": [
           {
             "anyOf": [
@@ -8821,6 +9133,34 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1frrk8s.enabled+frrk8s.enabled!=false"
+              },
+              {
+                "$ref": "#/$defs/constrains~1frrk8s.enabled+frrk8s.enabled!=true"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1frrk8s.enabled=true"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "frr-k8s": {
+            "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+            "type": "object"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -9716,6 +10056,23 @@
             }
           }
         ]
+      }
+    },
+    {
+      "additionalProperties": {},
+      "properties": {
+        "frr-k8s": {
+          "additionalProperties": {},
+          "description": "Values passed to the frr-k8s subchart (note the hyphen in \"frr-k8s\").\nFor all available options, see:\nhttps://github.com/metallb/frr-k8s/blob/main/charts/frr-k8s/values.yaml",
+          "properties": {
+            "crds": {
+              "type": [
+                "null",
+                "object"
+              ]
+            }
+          }
+        }
       }
     },
     {
@@ -10700,25 +11057,29 @@
         "enabled": {
           "type": "boolean"
         },
-        "global": {
-          "additionalProperties": {},
-          "type": "object"
-        },
+        "global": {},
         "validationFailurePolicy": {
           "anyOf": [
             {
               "$ref": "#/$defs/values~1null;failurepolicy-defines-how-unrecognized"
             },
             {
-              "const": "Fail"
+              "$ref": "#/$defs/constrains~1name:t~1string@2"
+            },
+            {
+              "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-a-za-z0-9-t"
             },
             {
               "$ref": "#/$defs/constrains~1name:t~1object"
             },
             {
-              "description": "FailurePolicy defines how unrecognized errors from the admission endpoint are handled - allowed values are Ignore or Fail. Defaults to Fail.",
-              "pattern": "^[ \\t]*(#.*)?$",
-              "type": "string"
+              "$ref": "#/$defs/values~1string;failurepolicy-defines-how-unrecognized"
+            },
+            {
+              "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1failureThreshold~1string;pattern-null-null-null"
             }
           ]
         }
@@ -10736,6 +11097,7 @@
               "description": "Enable installation of CRDs.",
               "type": "boolean"
             },
+            "global": {},
             "validationFailurePolicy": {
               "description": "Validation failure policy for CRDs. Can be Fail or Ignore."
             }
@@ -10939,10 +11301,7 @@
         "fullnameOverride": {
           "description": "String to override the default fully qualified app name."
         },
-        "global": {
-          "additionalProperties": {},
-          "type": "object"
-        },
+        "global": {},
         "imagePullSecrets": {},
         "nameOverride": {
           "description": "String to override the default chart name."
@@ -11020,8 +11379,7 @@
             }
           }
         }
-      },
-      "type": "object"
+      }
     },
     "frrk8s": {
       "additionalProperties": {},
@@ -13160,23 +13518,17 @@
         },
         "extraContainers": {},
         "frr": {
-          "allOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {},
-                "image": {
-                  "$ref": "#/$defs/values~1controller.image"
-                },
-                "metricsPort": {},
-                "resources": {}
-              }
+          "additionalProperties": {},
+          "description": "frr contains configuration specific to the MetalLB FRR container,\nfor speaker running alongside FRR.\nDEPRECATED: The FRR mode is deprecated and will be removed in a future\nrelease. Use the frr-k8s mode (frrk8s.enabled) instead, which is now\nthe default BGP backend.",
+          "properties": {
+            "enabled": {},
+            "image": {
+              "$ref": "#/$defs/values~1controller.image"
             },
-            {
-              "type": "object"
-            }
-          ],
-          "description": "frr contains configuration specific to the MetalLB FRR container,\nfor speaker running alongside FRR.\nDEPRECATED: The FRR mode is deprecated and will be removed in a future\nrelease. Use the frr-k8s mode (frrk8s.enabled) instead, which is now\nthe default BGP backend."
+            "metricsPort": {},
+            "resources": {}
+          },
+          "type": "object"
         },
         "frrMetrics": {
           "$ref": "#/$defs/values~1speaker.frrMetrics"
@@ -13209,22 +13561,16 @@
           "description": "Speaker log level. Must be one of: `all`, `debug`, `info`, `warn`, `error` or `none`"
         },
         "memberlist": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "description": "When enabled: false, the speaker pods must run on all nodes"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "description": "When enabled: false, the speaker pods must run on all nodes"
-                },
-                "mlBindAddrOverride": {},
-                "mlBindPort": {},
-                "mlSecretKeyPath": {}
-              }
-            }
-          ]
+            "mlBindAddrOverride": {},
+            "mlBindPort": {},
+            "mlSecretKeyPath": {}
+          },
+          "type": "object"
         },
         "nodeSelector": {
           "description": "limits:\ncpu: 100m\nmemory: 100Mi"

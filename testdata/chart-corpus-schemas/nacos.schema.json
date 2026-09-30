@@ -2620,6 +2620,15 @@
       ],
       "type": "object"
     },
+    "constrains/enabled": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled+enabled:t+enabled=null": {
       "anyOf": [
         {
@@ -2641,13 +2650,7 @@
       "anyOf": [
         {
           "not": {
-            "properties": {
-              "enabled": {}
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/constrains~1enabled"
           }
         },
         {
@@ -8382,33 +8385,39 @@
       ],
       "type": "object"
     },
+    "constrains/mode": {
+      "not": {
+        "properties": {
+          "mode": {}
+        },
+        "required": [
+          "mode"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/mode!=standalone": {
+      "properties": {
+        "mode": {
+          "not": {
+            "enum": [
+              "standalone"
+            ]
+          }
+        }
+      },
+      "required": [
+        "mode"
+      ],
+      "type": "object"
+    },
     "constrains/mode+mode!=standalone": {
       "anyOf": [
         {
-          "properties": {
-            "mode": {
-              "not": {
-                "enum": [
-                  "standalone"
-                ]
-              }
-            }
-          },
-          "required": [
-            "mode"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1mode!=standalone"
         },
         {
-          "not": {
-            "properties": {
-              "mode": {}
-            },
-            "required": [
-              "mode"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/$defs/constrains~1mode"
         }
       ]
     },
@@ -8901,6 +8910,19 @@
         "mysql"
       ],
       "type": "object"
+    },
+    "constrains/mysql.enabled": {
+      "not": {
+        "properties": {
+          "mysql": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "mysql"
+        ],
+        "type": "object"
+      }
     },
     "constrains/mysql.enabled+mysql.enabled=null": {
       "properties": {
@@ -15811,6 +15833,17 @@
         "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1anyOf~1null+string+string;pattern-"
       },
       "type": "array"
+    },
+    "values/common": {
+      "additionalProperties": {},
+      "properties": {
+        "exampleValue": {
+          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
+          "type": "string"
+        },
+        "global": {}
+      },
+      "type": "object"
     },
     "values/commonLabels/anyOf/null+object;map-of-string-keys": {
       "anyOf": [
@@ -23927,17 +23960,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
       "if": {
         "anyOf": [
           {
@@ -26752,6 +26774,111 @@
       "if": {
         "anyOf": [
           {
+            "$ref": "#/$defs/constrains~1mode!=standalone"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "mysql": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                true
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "mysql"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1mysql.enabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "mysql": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                false
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "mysql"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1mysql.enabled"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "mysql": {
+                "properties": {
+                  "enabled": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "mysql"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1mode"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "mysql": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1mysql.secondary.args:t"
@@ -28112,19 +28239,6 @@
         "properties": {
           "mysql": {
             "$ref": "#/$defs/constrains~1secondary.persistence.accessModes"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1mode+mode!=standalone"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "mysql": {
-            "type": "object"
           }
         }
       }
@@ -32610,18 +32724,7 @@
       "description": "Default container command (useful when using custom images). Use array form"
     },
     "common": {
-      "additionalProperties": {},
-      "properties": {
-        "exampleValue": {
-          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
-          "type": "string"
-        },
-        "global": {
-          "additionalProperties": {},
-          "type": "object"
-        }
-      },
-      "type": "object"
+      "$ref": "#/$defs/values~1common"
     },
     "commonAnnotations": {
       "allOf": [
@@ -34594,8 +34697,7 @@
         "storageClass": {
           "description": "Global StorageClass for Persistent Volume(s)"
         }
-      },
-      "type": "object"
+      }
     },
     "healthCheck": {
       "additionalProperties": {},
@@ -49796,6 +49898,9 @@
         "clusterDomain": {
           "description": "Cluster domain"
         },
+        "common": {
+          "$ref": "#/$defs/values~1common"
+        },
         "commonAnnotations": {
           "description": "Common annotations to add to all MySQL resources (sub-charts are not considered). Evaluated as a template"
         },
@@ -50753,8 +50858,7 @@
             }
           }
         }
-      },
-      "type": "object"
+      }
     },
     "nameOverride": {
       "anyOf": [

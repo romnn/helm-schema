@@ -3342,6 +3342,15 @@
       ],
       "type": "object"
     },
+    "constrains/enabled": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled+enabled:t+enabled=null": {
       "anyOf": [
         {
@@ -3363,13 +3372,7 @@
       "anyOf": [
         {
           "not": {
-            "properties": {
-              "enabled": {}
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/constrains~1enabled"
           }
         },
         {
@@ -7127,6 +7130,19 @@
       ],
       "type": "object"
     },
+    "constrains/opensearch.enabled": {
+      "not": {
+        "properties": {
+          "opensearch": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "opensearch"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/opensearch.enabled+opensearch.enabled=null": {
       "properties": {
         "opensearch": {
@@ -10653,16 +10669,16 @@
       "description": "Number of seconds after which the probe times out",
       "type": "integer"
     },
-    "values/jira.service/integer:int32;the-port-that-will": {
+    "values/jira.service.port/integer:int32;the-port-that-will": {
       "description": "The port that will be exposed by this service.",
       "format": "int32",
       "type": "integer"
     },
-    "values/jira.service/null;type-determines-how-the": {
+    "values/jira.service.type/null;type-determines-how-the": {
       "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
       "type": "null"
     },
-    "values/jira.service/string;type-determines-how-the": {
+    "values/jira.service.type/string;type-determines-how-the": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern@10"
@@ -10962,10 +10978,10 @@
     "values/opensearch/anyOf/null;type-determines-how-the+object+string+string;pattern-a-za-z0-9-t+3more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1jira.service~1null;type-determines-how-the"
+          "$ref": "#/$defs/values~1jira.service.type~1null;type-determines-how-the"
         },
         {
-          "$ref": "#/$defs/values~1jira.service~1string;type-determines-how-the"
+          "$ref": "#/$defs/values~1jira.service.type~1string;type-determines-how-the"
         },
         {
           "$ref": "#/$defs/constrains~1hosts~1string@3"
@@ -11574,24 +11590,6 @@
                 ],
                 "description": "such as opensearch.yml and log4j2.properties"
               }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "jira": {
-          "additionalProperties": {},
-          "description": "Jira configuration",
-          "properties": {
-            "service": {
-              "description": "K8s Service configuration",
-              "required": [
-                "port"
-              ],
-              "type": "object"
             }
           }
         }
@@ -14103,6 +14101,133 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/constrains~1gateway.create:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "jira": {
+                "additionalProperties": {},
+                "description": "Jira configuration",
+                "properties": {
+                  "service": {
+                    "description": "K8s Service configuration",
+                    "required": [
+                      "port"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "gateway": {
+                "additionalProperties": {},
+                "description": "Gateway API configuration\nUse this section when routing external traffic to Jira via the Kubernetes\nGateway API, or when using an external proxy/load balancer without creating\nany K8s routing resource. Only one of 'ingress' or 'gateway' should be used.\nhttps://gateway-api.sigs.k8s.io/",
+                "properties": {
+                  "pathType": {
+                    "description": "Path matching type. Can be \"PathPrefix\", \"Exact\", or \"RegularExpression\".\nPathPrefix is recommended for most use cases.",
+                    "not": {
+                      "type": "null"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "gateway": {
+                "additionalProperties": {},
+                "description": "Gateway API configuration\nUse this section when routing external traffic to Jira via the Kubernetes\nGateway API, or when using an external proxy/load balancer without creating\nany K8s routing resource. Only one of 'ingress' or 'gateway' should be used.\nhttps://gateway-api.sigs.k8s.io/",
+                "properties": {
+                  "hostnames": {
+                    "description": "The hostnames that should be routed to Jira. At least one hostname\nis required when gateway.create is true. Setting hostnames activates gateway\nmode for product configuration even when gateway.create is false, allowing\nuse with a pre-existing Gateway or external proxy.\nThe first entry is used as the canonical hostname for base URL, proxy\nsettings, and NOTES output — list the primary/public hostname first.\n- jira.example.com\n- jira-prod.example.com",
+                    "type": [
+                      "array",
+                      "integer",
+                      "null",
+                      "object"
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "jira": {
+                "additionalProperties": {},
+                "description": "Jira configuration",
+                "properties": {
+                  "service": {
+                    "additionalProperties": {},
+                    "description": "K8s Service configuration",
+                    "properties": {
+                      "port": {
+                        "description": "The port on which the Jira K8s Service will listen",
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "gateway": {
+                "description": "Gateway API configuration\nUse this section when routing external traffic to Jira via the Kubernetes\nGateway API, or when using an external proxy/load balancer without creating\nany K8s routing resource. Only one of 'ingress' or 'gateway' should be used.\nhttps://gateway-api.sigs.k8s.io/",
+                "required": [
+                  "pathType"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "jira": {
+                "additionalProperties": {},
+                "description": "Jira configuration",
+                "properties": {
+                  "service": {
+                    "additionalProperties": {},
+                    "description": "K8s Service configuration",
+                    "properties": {
+                      "port": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1@items.cors.allowCredentials+@items.cors.allowHeaders+45more~1integer:int32;port-specifies-the-destination"
+                          }
+                        ],
+                        "description": "The port on which the Jira K8s Service will listen"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -14582,6 +14707,105 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1opensearch.enabled"
+                  },
+                  {
+                    "properties": {
+                      "opensearch": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                false
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "opensearch"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "opensearch": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                true
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "opensearch"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1opensearch.enabled"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "opensearch": {
+                "properties": {
+                  "enabled": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "opensearch"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "opensearch": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "$ref": "#/$defs/constrains~1atlassianAnalyticsAndSupport.analytics.enabled:t+1more"
       },
       "then": {
@@ -14981,27 +15205,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "jira": {
-          "additionalProperties": {},
-          "description": "Jira configuration",
-          "properties": {
-            "service": {
-              "additionalProperties": {},
-              "description": "K8s Service configuration",
-              "properties": {
-                "sessionAffinityConfig": {
-                  "description": "Session affinity configuration",
-                  "type": "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -15338,29 +15541,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "jira": {
-          "additionalProperties": {},
-          "description": "Jira configuration",
-          "properties": {
-            "service": {
-              "additionalProperties": {},
-              "description": "K8s Service configuration",
-              "properties": {
-                "port": {
-                  "description": "The port on which the Jira K8s Service will listen",
-                  "not": {
-                    "type": "null"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -15656,17 +15836,6 @@
       "properties": {
         "podAnnotations": {
           "$ref": "#/$defs/values~1podAnnotations"
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
         }
       }
     },
@@ -16047,32 +16216,6 @@
                       }
                     ],
                     "description": "- secretName: chart-example-tls\nhosts:\n- chart-example.local"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "jira": {
-          "additionalProperties": {},
-          "description": "Jira configuration",
-          "properties": {
-            "service": {
-              "additionalProperties": {},
-              "description": "K8s Service configuration",
-              "properties": {
-                "sessionAffinityConfig": {
-                  "additionalProperties": {},
-                  "description": "Session affinity configuration",
-                  "properties": {
-                    "clientIP": {
-                      "type": "object"
-                    }
                   }
                 }
               }
@@ -18023,92 +18166,6 @@
       "then": false
     },
     {
-      "if": {
-        "$ref": "#/$defs/constrains~1gateway.create:t"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "gateway": {
-                "additionalProperties": {},
-                "description": "Gateway API configuration\nUse this section when routing external traffic to Jira via the Kubernetes\nGateway API, or when using an external proxy/load balancer without creating\nany K8s routing resource. Only one of 'ingress' or 'gateway' should be used.\nhttps://gateway-api.sigs.k8s.io/",
-                "properties": {
-                  "pathType": {
-                    "description": "Path matching type. Can be \"PathPrefix\", \"Exact\", or \"RegularExpression\".\nPathPrefix is recommended for most use cases.",
-                    "not": {
-                      "type": "null"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "gateway": {
-                "additionalProperties": {},
-                "description": "Gateway API configuration\nUse this section when routing external traffic to Jira via the Kubernetes\nGateway API, or when using an external proxy/load balancer without creating\nany K8s routing resource. Only one of 'ingress' or 'gateway' should be used.\nhttps://gateway-api.sigs.k8s.io/",
-                "properties": {
-                  "hostnames": {
-                    "description": "The hostnames that should be routed to Jira. At least one hostname\nis required when gateway.create is true. Setting hostnames activates gateway\nmode for product configuration even when gateway.create is false, allowing\nuse with a pre-existing Gateway or external proxy.\nThe first entry is used as the canonical hostname for base URL, proxy\nsettings, and NOTES output — list the primary/public hostname first.\n- jira.example.com\n- jira-prod.example.com",
-                    "type": [
-                      "array",
-                      "integer",
-                      "null",
-                      "object"
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "gateway": {
-                "description": "Gateway API configuration\nUse this section when routing external traffic to Jira via the Kubernetes\nGateway API, or when using an external proxy/load balancer without creating\nany K8s routing resource. Only one of 'ingress' or 'gateway' should be used.\nhttps://gateway-api.sigs.k8s.io/",
-                "required": [
-                  "pathType"
-                ],
-                "type": "object"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "jira": {
-                "additionalProperties": {},
-                "description": "Jira configuration",
-                "properties": {
-                  "service": {
-                    "additionalProperties": {},
-                    "description": "K8s Service configuration",
-                    "properties": {
-                      "port": {
-                        "anyOf": [
-                          {
-                            "type": "string"
-                          },
-                          {
-                            "$ref": "#/$defs/constrains~1@items.cors.allowCredentials+@items.cors.allowHeaders+45more~1integer:int32;port-specifies-the-destination"
-                          }
-                        ],
-                        "description": "The port on which the Jira K8s Service will listen"
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
       "additionalProperties": {},
       "properties": {
         "additionalFiles": {
@@ -19378,10 +19435,7 @@
     "common": {
       "additionalProperties": {},
       "properties": {
-        "global": {
-          "additionalProperties": {},
-          "type": "object"
-        }
+        "global": {}
       },
       "type": "object"
     },
@@ -22315,33 +22369,27 @@
           }
         },
         "securityContext": {
-          "allOf": [
+          "anyOf": [
             {
-              "anyOf": [
-                {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {},
-                    "fsGroup": {
-                      "description": "The GID used by the Jira docker image\nGID will default to 2001 if not supplied and securityContextEnabled is set to true.\nThis is intended to ensure that the shared-home volume is group-writeable by the GID used by the Jira container.\nHowever, this doesn't appear to work for NFS volumes due to a K8s bug: https://github.com/kubernetes/examples/issues/260"
-                    },
-                    "fsGroupChangePolicy": {
-                      "description": "fsGroupChangePolicy defines behavior for changing ownership and permission of the volume before being exposed inside a Pod.\nThis field only applies to volume types that support fsGroup controlled ownership and permissions.\nhttps://kubernetes.io/docs/tasks/configure-pod-container/security-context/#configure-volume-permission-and-ownership-change-policy-for-pods",
-                      "type": "string"
-                    },
-                    "gid": {}
-                  },
-                  "type": "object"
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {},
+                "fsGroup": {
+                  "description": "The GID used by the Jira docker image\nGID will default to 2001 if not supplied and securityContextEnabled is set to true.\nThis is intended to ensure that the shared-home volume is group-writeable by the GID used by the Jira container.\nHowever, this doesn't appear to work for NFS volumes due to a K8s bug: https://github.com/kubernetes/examples/issues/260"
                 },
-                {
-                  "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1not~1:t"
-                }
-              ]
+                "fsGroupChangePolicy": {
+                  "description": "fsGroupChangePolicy defines behavior for changing ownership and permission of the volume before being exposed inside a Pod.\nThis field only applies to volume types that support fsGroup controlled ownership and permissions.\nhttps://kubernetes.io/docs/tasks/configure-pod-container/security-context/#configure-volume-permission-and-ownership-change-policy-for-pods",
+                  "type": "string"
+                },
+                "gid": {}
+              },
+              "type": "object"
             },
             {
-              "type": "object"
+              "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1not~1:t"
             }
-          ]
+          ],
+          "type": "object"
         },
         "securityContextEnabled": {
           "description": "Whether to apply security context to pod."
@@ -22358,181 +22406,180 @@
           "type": "object"
         },
         "service": {
-          "allOf": [
-            {
+          "additionalProperties": {},
+          "description": "K8s Service configuration",
+          "properties": {
+            "annotations": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1not~1:t"
+                },
+                {
+                  "$ref": "#/$defs/values~1affinity~1object"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1annotations:t~1allOf~1object+object,null;annotations-is-an-unstructured"
+                }
+              ],
+              "description": "Additional annotations to apply to the Service"
+            },
+            "contextPath": {
+              "description": "The Tomcat context path that Jira will use. The ATL_TOMCAT_CONTEXTPATH\nwill be set automatically."
+            },
+            "loadBalancerIP": {
+              "description": "Use specific loadBalancerIP. Only applies to service type LoadBalancer."
+            },
+            "nodePort": {
+              "description": "Only applicable if service.type is NodePort. NodePort for Jira service"
+            },
+            "port": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/values~1jira.service.port~1integer:int32;the-port-that-will"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-0-1-9"
+                }
+              ],
+              "description": "The port on which the Jira K8s Service will listen"
+            },
+            "sessionAffinity": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1hosts~1string@3"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-a-za-z0-9-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1hosts~1object"
+                },
+                {
+                  "allOf": [
+                    {
+                      "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern@10"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern@4"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern@9"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern@2"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern@5"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern@7"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern@8"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern@3"
+                    },
+                    {
+                      "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern@6"
+                    }
+                  ],
+                  "description": "Supports \"ClientIP\" and \"None\". Used to maintain session affinity. Enable client IP based session affinity. Must be ClientIP or None. Defaults to None. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
+                  "type": "string"
+                },
+                {
+                  "description": "Supports \"ClientIP\" and \"None\". Used to maintain session affinity. Enable client IP based session affinity. Must be ClientIP or None. Defaults to None. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-null-null-null"
+                }
+              ],
+              "description": "Session affinity type. If you want to make sure that connections from a particular client\nare passed to the same pod each time, set sessionAffinity to ClientIP.\nSee: https://kubernetes.io/docs/reference/networking/virtual-ips/#session-affinity"
+            },
+            "sessionAffinityConfig": {
               "additionalProperties": {},
+              "description": "Session affinity configuration",
               "properties": {
-                "annotations": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1not~1:t"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1affinity~1object"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1annotations:t~1allOf~1object+object,null;annotations-is-an-unstructured"
-                    }
-                  ],
-                  "description": "Additional annotations to apply to the Service"
-                },
-                "contextPath": {
-                  "description": "The Tomcat context path that Jira will use. The ATL_TOMCAT_CONTEXTPATH\nwill be set automatically."
-                },
-                "loadBalancerIP": {
-                  "description": "Use specific loadBalancerIP. Only applies to service type LoadBalancer."
-                },
-                "nodePort": {
-                  "description": "Only applicable if service.type is NodePort. NodePort for Jira service"
-                },
-                "port": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/values~1jira.service~1integer:int32;the-port-that-will"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-0-1-9"
-                    }
-                  ],
-                  "description": "The port on which the Jira K8s Service will listen"
-                },
-                "sessionAffinity": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1hosts~1string@3"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-a-za-z0-9-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1hosts~1object"
-                    },
-                    {
-                      "allOf": [
+                "clientIP": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "timeoutSeconds": {
+                      "anyOf": [
                         {
-                          "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern@10"
+                          "description": "timeoutSeconds specifies the seconds of ClientIP type session sticky time. The value must be >0 && <=86400(for 1 day) if ServiceAffinity == \"ClientIP\". Default value is 10800(for 3 hours).",
+                          "format": "int32",
+                          "type": "null"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern@4"
+                          "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1not~1:t"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern@9"
+                          "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-a-za-z0-9-t"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern@2"
+                          "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-t"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern@5"
+                          "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-0-1-9"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern@7"
+                          "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-null-null-null"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern@8"
+                          "type": "null"
                         },
                         {
-                          "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern@3"
-                        },
-                        {
-                          "$ref": "#/$defs/constrains~1hosts~1not~1keywords~1pattern@6"
+                          "description": "timeoutSeconds specifies the seconds of ClientIP type session sticky time. The value must be >0 && <=86400(for 1 day) if ServiceAffinity == \"ClientIP\". Default value is 10800(for 3 hours).",
+                          "format": "int32",
+                          "type": "integer"
                         }
                       ],
-                      "description": "Supports \"ClientIP\" and \"None\". Used to maintain session affinity. Enable client IP based session affinity. Must be ClientIP or None. Defaults to None. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
-                      "type": "string"
-                    },
-                    {
-                      "description": "Supports \"ClientIP\" and \"None\". Used to maintain session affinity. Enable client IP based session affinity. Must be ClientIP or None. Defaults to None. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
-                      "type": "null"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-null-null-null"
+                      "description": "Specifies the seconds of ClientIP type session sticky time.\nThe value must be > 0 && <= 86400(for 1 day) if ServiceAffinity == \"ClientIP\". Default value is 10800 (for 3 hours)."
                     }
-                  ],
-                  "description": "Session affinity type. If you want to make sure that connections from a particular client\nare passed to the same pod each time, set sessionAffinity to ClientIP.\nSee: https://kubernetes.io/docs/reference/networking/virtual-ips/#session-affinity"
-                },
-                "sessionAffinityConfig": {
-                  "additionalProperties": {},
-                  "description": "Session affinity configuration",
-                  "properties": {
-                    "clientIP": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "timeoutSeconds": {
-                          "anyOf": [
-                            {
-                              "description": "timeoutSeconds specifies the seconds of ClientIP type session sticky time. The value must be >0 && <=86400(for 1 day) if ServiceAffinity == \"ClientIP\". Default value is 10800(for 3 hours).",
-                              "format": "int32",
-                              "type": "null"
-                            },
-                            {
-                              "$ref": "#/$defs/constrains~1@items.args+@items.command+@items.env@items.name+@items.env@items.value+87more~1not~1:t"
-                            },
-                            {
-                              "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-a-za-z0-9-t"
-                            },
-                            {
-                              "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-t"
-                            },
-                            {
-                              "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-0-1-9"
-                            },
-                            {
-                              "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-null-null-null"
-                            },
-                            {
-                              "type": "null"
-                            },
-                            {
-                              "description": "timeoutSeconds specifies the seconds of ClientIP type session sticky time. The value must be >0 && <=86400(for 1 day) if ServiceAffinity == \"ClientIP\". Default value is 10800(for 3 hours).",
-                              "format": "int32",
-                              "type": "integer"
-                            }
-                          ],
-                          "description": "Specifies the seconds of ClientIP type session sticky time.\nThe value must be > 0 && <= 86400(for 1 day) if ServiceAffinity == \"ClientIP\". Default value is 10800 (for 3 hours)."
-                        }
-                      }
-                    }
-                  }
-                },
-                "type": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/values~1jira.service~1null;type-determines-how-the"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1jira.service~1string;type-determines-how-the"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1hosts~1string@3"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-a-za-z0-9-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1hosts~1object"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-null-null-null"
-                    }
-                  ],
-                  "description": "The type of K8s service to use for Jira"
+                  },
+                  "type": "object"
                 }
-              }
-            },
-            {
+              },
               "type": "object"
+            },
+            "type": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/values~1jira.service.type~1null;type-determines-how-the"
+                },
+                {
+                  "$ref": "#/$defs/values~1jira.service.type~1string;type-determines-how-the"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1hosts~1string@3"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-a-za-z0-9-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1hosts~1object"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-null-null-null"
+                }
+              ],
+              "description": "The type of K8s service to use for Jira"
             }
+          },
+          "required": [
+            "port"
           ],
-          "description": "K8s Service configuration"
+          "type": "object"
         },
         "session": {
           "additionalProperties": {},
@@ -22756,10 +22803,10 @@
                   "jmxExporterPortType": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1jira.service~1null;type-determines-how-the"
+                        "$ref": "#/$defs/values~1jira.service.type~1null;type-determines-how-the"
                       },
                       {
-                        "$ref": "#/$defs/values~1jira.service~1string;type-determines-how-the"
+                        "$ref": "#/$defs/values~1jira.service.type~1string;type-determines-how-the"
                       },
                       {
                         "$ref": "#/$defs/constrains~1hosts~1string@3"
@@ -22787,7 +22834,7 @@
                   "jmxExporterPort": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1jira.service~1integer:int32;the-port-that-will"
+                        "$ref": "#/$defs/values~1jira.service.port~1integer:int32;the-port-that-will"
                       },
                       {
                         "$ref": "#/$defs/constrains~1content+defaultMode:t+fileName~1string;pattern-0-1-9"

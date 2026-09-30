@@ -1,5 +1,14 @@
 {
   "$defs": {
+    "constrains/enabled": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/kind=ConfigMap": {
       "properties": {
         "kind": {
@@ -25,6 +34,19 @@
         "kind"
       ],
       "type": "object"
+    },
+    "constrains/worker.enabled": {
+      "not": {
+        "properties": {
+          "worker": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "worker"
+        ],
+        "type": "object"
+      }
     },
     "t": {
       "anyOf": [
@@ -184,6 +206,105 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1worker.enabled"
+                  },
+                  {
+                    "properties": {
+                      "worker": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                false
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "worker"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1worker.enabled"
+                  },
+                  {
+                    "properties": {
+                      "worker": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                true
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "worker"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "worker": {
+                "properties": {
+                  "enabled": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "worker"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "worker": {
+            "type": "object"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -697,13 +818,7 @@
                     "anyOf": [
                       {
                         "not": {
-                          "properties": {
-                            "enabled": {}
-                          },
-                          "required": [
-                            "enabled"
-                          ],
-                          "type": "object"
+                          "$ref": "#/$defs/constrains~1enabled"
                         }
                       },
                       {
@@ -753,19 +868,19 @@
         "enabled": {
           "type": "boolean"
         },
-        "global": {
-          "additionalProperties": {},
-          "type": "object"
-        },
+        "global": {},
         "replicas": {}
-      },
-      "type": "object"
+      }
     }
   },
   "type": "object",
   "x-helm-schema-generated": true,
   "x-helm-schema-policy": {
     "annotation-format-version": 1,
+    "authoring": {
+      "declared-types": "assert",
+      "root": "closed"
+    },
     "modifiers": {
       "overrides": {
         "count": 1,
@@ -774,8 +889,8 @@
       "reference-mode": "preserved"
     },
     "narrowing": [],
-    "policy-fingerprint": "95931ecb2094f8f5311ce635900435d13b200eb9e02241f43d5b73dbd72f440b",
-    "policy-vocabulary-version": 1,
+    "policy-fingerprint": "66e5842b2a365f476bea063d177a326f8047f8132e4828d96a7491b384b169d8",
+    "policy-vocabulary-version": 2,
     "requested-profile": "full",
     "resolved": {
       "kind-partitions": true,

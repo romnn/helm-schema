@@ -5298,11 +5298,14 @@
     "fullnameOverride": {},
     "global": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "imagePullSecrets": {
+      "description": "Generated from deployments/kubernetes/templates/chart/values.yaml.tmpl",
+      "properties": {
+        "imagePullSecrets": {
+          "anyOf": [
+            {
+              "const": []
+            },
+            {
               "allOf": [
                 {
                   "if": {
@@ -5337,15 +5340,9 @@
                     ]
                   }
                 }
-              ],
-              "description": "imagePullSecrets:\n- name: my-pull-secret\nimagePullSecrets:\n- my-pull-secret"
+              ]
             }
-          }
-        }
-      ],
-      "description": "Generated from deployments/kubernetes/templates/chart/values.yaml.tmpl",
-      "properties": {
-        "imagePullSecrets": {
+          ],
           "description": "imagePullSecrets:\n- name: my-pull-secret\nimagePullSecrets:\n- my-pull-secret"
         },
         "imageRegistry": {
@@ -9480,41 +9477,35 @@
           "type": "object"
         },
         "podMonitor": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {
+              "description": "Used to pass annotations that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {
-                  "description": "Used to pass annotations that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec"
-                },
-                "bearerTokenSecret": {},
-                "enabled": {
-                  "description": "Set the namespace the podMonitor should be deployed\nnamespace: monitoring"
-                },
-                "honorLabels": {
-                  "description": "Retain the job and instance labels of the metrics pushed to the Pushgateway\n[Scraping Pushgateway](https://github.com/prometheus/pushgateway#configure-the-pushgateway-as-a-target-to-scrape)"
-                },
-                "interval": {},
-                "labels": {
-                  "description": "Used to pass Labels that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec"
-                },
-                "metricRelabelings": {
-                  "description": "Metric relabel configs to apply to samples before ingestion.\n[Metric Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs)\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]"
-                },
-                "namespace": {},
-                "podTargetLabels": {},
-                "relabelings": {
-                  "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace"
-                },
-                "scheme": {},
-                "timeout": {},
-                "tlsConfig": {}
-              }
-            }
-          ]
+            "bearerTokenSecret": {},
+            "enabled": {
+              "description": "Set the namespace the podMonitor should be deployed\nnamespace: monitoring"
+            },
+            "honorLabels": {
+              "description": "Retain the job and instance labels of the metrics pushed to the Pushgateway\n[Scraping Pushgateway](https://github.com/prometheus/pushgateway#configure-the-pushgateway-as-a-target-to-scrape)"
+            },
+            "interval": {},
+            "labels": {
+              "description": "Used to pass Labels that are used by the Prometheus installed in your cluster to select Service Monitors to work with\nref: https://github.com/coreos/prometheus-operator/blob/master/Documentation/api.md#prometheusspec"
+            },
+            "metricRelabelings": {
+              "description": "Metric relabel configs to apply to samples before ingestion.\n[Metric Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#metric_relabel_configs)\n- action: keep\nregex: 'kube_(daemonset|deployment|pod|namespace|node|statefulset).+'\nsourceLabels: [__name__]"
+            },
+            "namespace": {},
+            "podTargetLabels": {},
+            "relabelings": {
+              "description": "Relabel configs to apply to samples before ingestion.\n[Relabeling](https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config)\n- sourceLabels: [__meta_kubernetes_pod_node_name]\nseparator: ;\nregex: ^(.*)$\ntargetLabel: nodename\nreplacement: $1\naction: replace"
+            },
+            "scheme": {},
+            "timeout": {},
+            "tlsConfig": {}
+          },
+          "type": "object"
         },
         "pprofAddr": {
           "description": "Address to start pprof server on. Default is \":6060\""
@@ -9560,92 +9551,86 @@
           }
         },
         "serviceAccount": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "Service account config for the agent pods",
+          "properties": {
+            "annotations": {},
+            "automountServiceAccountToken": {},
+            "create": {
+              "description": "Specifies whether a ServiceAccount should be created"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {},
-                "automountServiceAccountToken": {},
-                "create": {
-                  "description": "Specifies whether a ServiceAccount should be created"
+            "labels": {},
+            "name": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/values~1string@3"
                 },
-                "labels": {},
-                "name": {
-                  "anyOf": [
+                {
+                  "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+                  "type": "null"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1annotations:t~1not~1:t"
+                },
+                {
+                  "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                },
+                {
+                  "$ref": "#/$defs/values~1object"
+                },
+                {
+                  "$ref": "#/$defs/values~1string;pattern-t"
+                },
+                {
+                  "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                },
+                {
+                  "allOf": [
                     {
-                      "$ref": "#/$defs/values~1string@3"
+                      "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
                     },
                     {
-                      "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-                      "type": "null"
+                      "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
                     },
                     {
-                      "$ref": "#/$defs/constrains~1annotations:t~1not~1:t"
+                      "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
                     },
                     {
-                      "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                      "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
                     },
                     {
-                      "$ref": "#/$defs/values~1object"
+                      "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
                     },
                     {
-                      "$ref": "#/$defs/values~1string;pattern-t"
+                      "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
                     },
                     {
-                      "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                      "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
                     },
                     {
-                      "type": "null"
+                      "$ref": "#/$defs/values~1not~1keywords~1pattern"
                     },
                     {
-                      "type": "string"
+                      "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
                     },
                     {
-                      "allOf": [
-                        {
-                          "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
-                        },
-                        {
-                          "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
-                        },
-                        {
-                          "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
-                        },
-                        {
-                          "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
-                        },
-                        {
-                          "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
-                        },
-                        {
-                          "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
-                        },
-                        {
-                          "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
-                        },
-                        {
-                          "$ref": "#/$defs/values~1not~1keywords~1pattern"
-                        },
-                        {
-                          "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
-                        },
-                        {
-                          "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
-                        }
-                      ],
-                      "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
-                      "type": "string"
+                      "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
                     }
                   ],
-                  "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
+                  "description": "ServiceAccountName is the name of the ServiceAccount to use to run this pod. More info: https://kubernetes.io/docs/tasks/configure-pod-container/configure-service-account/",
+                  "type": "string"
                 }
-              }
+              ],
+              "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
             }
-          ],
-          "description": "Service account config for the agent pods"
+          },
+          "type": "object"
         },
         "serviceMonitor": {
           "additionalProperties": {},

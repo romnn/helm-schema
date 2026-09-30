@@ -1540,17 +1540,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "library": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
       "if": {
         "anyOf": [
           {
@@ -3365,6 +3354,105 @@
       "if": {
         "anyOf": [
           {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1csi.installCsiOperator"
+                  },
+                  {
+                    "properties": {
+                      "csi": {
+                        "properties": {
+                          "installCsiOperator": {
+                            "not": {
+                              "enum": [
+                                false
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "installCsiOperator"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "csi"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "csi": {
+                        "properties": {
+                          "installCsiOperator": {
+                            "not": {
+                              "enum": [
+                                true
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "installCsiOperator"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "csi"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1csi.installCsiOperator"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "csi": {
+                "properties": {
+                  "installCsiOperator": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "installCsiOperator"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "csi"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ceph-csi-operator": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "properties": {
               "scaleDownOperator": {
                 "enum": [
@@ -4058,10 +4146,7 @@
           }
         },
         "fullnameOverride": {},
-        "global": {
-          "additionalProperties": {},
-          "type": "object"
-        },
+        "global": {},
         "imagePullSecrets": {
           "description": "List of image pull secret names for pulling container images (default: [])"
         },
@@ -4096,8 +4181,7 @@
             }
           }
         }
-      },
-      "type": "object"
+      }
     },
     "cephCommandsTimeoutSeconds": {
       "description": "The timeout for ceph commands in seconds"
@@ -4483,10 +4567,7 @@
     "library": {
       "additionalProperties": {},
       "properties": {
-        "global": {
-          "additionalProperties": {},
-          "type": "object"
-        }
+        "global": {}
       },
       "type": "object"
     },

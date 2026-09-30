@@ -7975,6 +7975,15 @@
       ],
       "type": "object"
     },
+    "constrains/enabled": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled+enabled:t+enabled=null": {
       "anyOf": [
         {
@@ -7996,13 +8005,7 @@
       "anyOf": [
         {
           "not": {
-            "properties": {
-              "enabled": {}
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/constrains~1enabled"
           }
         },
         {
@@ -16236,6 +16239,19 @@
       ],
       "type": "object"
     },
+    "constrains/redis-ha.enabled": {
+      "not": {
+        "properties": {
+          "redis-ha": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "redis-ha"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/redis-ha.enabled+redis-ha.enabled=null": {
       "properties": {
         "redis-ha": {
@@ -21532,11 +21548,11 @@
     "values/applicationSet.httproute.parentRefs": {
       "description": "Gateway API parentRefs for the HTTPRoute\nMust reference an existing Gateway\n- name: example-gateway\nnamespace: example-gateway-namespace\nsectionName: https"
     },
-    "values/applicationSet.ingress/keywords/description": {
-      "description": "Ingress path type. One of `Exact`, `Prefix` or `ImplementationSpecific`"
-    },
-    "values/applicationSet.ingress/keywords/description@2": {
+    "values/applicationSet.ingress.extraHosts": {
       "description": "The list of additional hostnames to be covered by ingress record\n- name: argocd.example.com\npath: /"
+    },
+    "values/applicationSet.ingress.pathType": {
+      "description": "Ingress path type. One of `Exact`, `Prefix` or `ImplementationSpecific`"
     },
     "values/applicationSet.listenerset.parentRef": {
       "description": "Gateway API parentRef for the ListenerSet\nMust reference an existing Gateway. Unlike HTTPRoute, ListenerSet accepts exactly one parentRef.\ngroup: gateway.networking.k8s.io\nkind: Gateway\nname: example-gateway\nnamespace: example-gateway-namespace"
@@ -22182,6 +22198,9 @@
     "values/controller.affinity": {
       "description": "Assign custom [affinity] rules to the deployment"
     },
+    "values/controller.containerPorts.metrics": {
+      "description": "Metrics container port"
+    },
     "values/controller.containerSecurityContext": {
       "description": "Application controller container-level security context"
     },
@@ -22284,9 +22303,6 @@
     },
     "values/dex.certificateSecret.ca": {
       "description": "Certificate authority. Required for self-signed certificates."
-    },
-    "values/dex.containerPorts.metrics": {
-      "description": "Metrics container port"
     },
     "values/dex.livenessProbe.httpScheme": {
       "description": "Scheme to use for for the liveness probe (can be HTTP or HTTPS)"
@@ -22680,10 +22696,6 @@
     },
     "values/redis-ha.exporter.serviceMonitor.telemetryPath": {
       "description": "Set path to redis-exporter telemtery-path (default is /metrics)"
-    },
-    "values/redis-ha.global.additionalLabels": {
-      "additionalProperties": {},
-      "type": "object"
     },
     "values/redis-ha.haproxy.init": {
       "additionalProperties": {},
@@ -23222,7 +23234,7 @@
     "values/redisSecretInit.jobAnnotations": {
       "description": "Annotations to be added to the Redis secret-init Job"
     },
-    "values/repoServer.autoscaling/keywords/description": {
+    "values/repoServer.autoscaling.behavior": {
       "description": "Configures the scaling behavior of the target in both Up and Down directions.\nscaleDown:\nstabilizationWindowSeconds: 300\npolicies:\n- type: Pods\nvalue: 1\nperiodSeconds: 180\nscaleUp:\nstabilizationWindowSeconds: 300\npolicies:\n- type: Pods\nvalue: 2\nperiodSeconds: 60"
     },
     "values/repoServer.existingVolumes.gpgKeyring": {
@@ -29286,6 +29298,111 @@
             }
           }
         ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                true
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1redis-ha.enabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                false
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1redis-ha.enabled"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "not": {
+              "$ref": "#/$defs/constrains~1redis-ha+redis-ha=null"
+            }
+          },
+          {
+            "properties": {
+              "redis-ha": {
+                "properties": {
+                  "enabled": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "redis-ha"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis-ha": {
+            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
+            "type": "object"
+          }
+        }
       }
     },
     {
@@ -40590,22 +40707,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "if": {
-        "not": {
-          "$ref": "#/$defs/constrains~1redis-ha+redis-ha=null"
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "redis-ha": {
-            "description": "Redis-HA subchart replaces custom redis deployment when `redis-ha.enabled=true`\nRef: https://github.com/DandyDeveloper/charts/blob/master/charts/redis-ha/values.yaml",
-            "type": "object"
-          }
-        }
-      }
     },
     {
       "if": {
@@ -55703,13 +55804,8 @@
           "type": "object"
         },
         "deploymentLabels": {
-          "allOf": [
-            {},
-            {
-              "type": "object"
-            }
-          ],
-          "description": "Labels for the ApplicationSet controller Deployment"
+          "description": "Labels for the ApplicationSet controller Deployment",
+          "type": "object"
         },
         "deploymentStrategy": {
           "additionalProperties": {},
@@ -55894,53 +55990,47 @@
           "description": "If defined, uses a Secret to pull an image from a private Docker registry or repository."
         },
         "ingress": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "Ingress for the Git Generator webhook\nRef: https://argocd-applicationset.readthedocs.io/en/master/Generators-Git/#webhook-configuration)",
+          "properties": {
+            "annotations": {
+              "description": "Additional ingress annotations"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {
-                  "description": "Additional ingress annotations"
-                },
-                "enabled": {
-                  "description": "Enable an ingress resource for ApplicationSet webhook"
-                },
-                "extraHosts": {
-                  "$ref": "#/$defs/values~1applicationSet.ingress~1keywords~1description@2"
-                },
-                "extraPaths": {
-                  "description": "Additional ingress paths\n- path: /*\npathType: Prefix\nbackend:\nservice:\nname: ssl-redirect\nport:\nname: use-annotation"
-                },
-                "extraRules": {
-                  "description": "Additional ingress rules\nNote: Supports use of custom Helm templates\n- http:\npaths:\n- path: /api/webhook\npathType: Prefix\nbackend:\nservice:\nname: '{{ include \"argo-cd.applicationSet.fullname\" . }}'\nport:\nname: '{{ .Values.applicationSet.service.portName }}'"
-                },
-                "extraTls": {
-                  "description": "Additional ingress TLS configuration\n- secretName: argocd-applicationset-tls\nhosts:\n- argocd-applicationset.example.com"
-                },
-                "hostname": {
-                  "description": "Argo CD ApplicationSet hostname"
-                },
-                "ingressClassName": {
-                  "description": "Defines which ingress ApplicationSet controller will implement the resource"
-                },
-                "labels": {
-                  "description": "Additional ingress labels"
-                },
-                "path": {
-                  "description": "List of ingress paths"
-                },
-                "pathType": {
-                  "$ref": "#/$defs/values~1applicationSet.ingress~1keywords~1description"
-                },
-                "tls": {
-                  "description": "Enable TLS configuration for the hostname defined at `applicationSet.webhook.ingress.hostname`\nTLS certificate will be retrieved from a TLS secret with name:`argocd-applicationset-controller-tls`"
-                }
-              }
+            "enabled": {
+              "description": "Enable an ingress resource for ApplicationSet webhook"
+            },
+            "extraHosts": {
+              "$ref": "#/$defs/values~1applicationSet.ingress.extraHosts"
+            },
+            "extraPaths": {
+              "description": "Additional ingress paths\n- path: /*\npathType: Prefix\nbackend:\nservice:\nname: ssl-redirect\nport:\nname: use-annotation"
+            },
+            "extraRules": {
+              "description": "Additional ingress rules\nNote: Supports use of custom Helm templates\n- http:\npaths:\n- path: /api/webhook\npathType: Prefix\nbackend:\nservice:\nname: '{{ include \"argo-cd.applicationSet.fullname\" . }}'\nport:\nname: '{{ .Values.applicationSet.service.portName }}'"
+            },
+            "extraTls": {
+              "description": "Additional ingress TLS configuration\n- secretName: argocd-applicationset-tls\nhosts:\n- argocd-applicationset.example.com"
+            },
+            "hostname": {
+              "description": "Argo CD ApplicationSet hostname"
+            },
+            "ingressClassName": {
+              "description": "Defines which ingress ApplicationSet controller will implement the resource"
+            },
+            "labels": {
+              "description": "Additional ingress labels"
+            },
+            "path": {
+              "description": "List of ingress paths"
+            },
+            "pathType": {
+              "$ref": "#/$defs/values~1applicationSet.ingress.pathType"
+            },
+            "tls": {
+              "description": "Enable TLS configuration for the hostname defined at `applicationSet.webhook.ingress.hostname`\nTLS certificate will be retrieved from a TLS secret with name:`argocd-applicationset-controller-tls`"
             }
-          ],
-          "description": "Ingress for the Git Generator webhook\nRef: https://argocd-applicationset.readthedocs.io/en/master/Generators-Git/#webhook-configuration)"
+          },
+          "type": "object"
         },
         "initContainers": {
           "allOf": [
@@ -56064,13 +56154,8 @@
           "type": "object"
         },
         "podLabels": {
-          "allOf": [
-            {},
-            {
-              "type": "object"
-            }
-          ],
-          "description": "Labels for the ApplicationSet controller pods"
+          "description": "Labels for the ApplicationSet controller pods",
+          "type": "object"
         },
         "priorityClassName": {
           "anyOf": [
@@ -58506,15 +58591,9 @@
           "description": "Provide one or multiple [external cluster credentials]\nRef:\n- https://argo-cd.readthedocs.io/en/stable/operator-manual/declarative-setup/#clusters\n- https://argo-cd.readthedocs.io/en/stable/operator-manual/security/#external-cluster-credentials\n- https://argo-cd.readthedocs.io/en/stable/user-guide/projects/#project-scoped-repositories-and-clusters\nmycluster:\nserver: https://mycluster.example.com\nlabels: {}\nannotations: {}\nconfig:\nbearerToken: \"<authentication token>\"\ntlsClientConfig:\ninsecure: false\ncaData: \"<base64 encoded certificate>\"\nmycluster2:\nserver: https://mycluster2.example.com\nlabels: {}\nannotations: {}\nnamespaces: namespace1,namespace2\nclusterResources: true\nconfig:\nbearerToken: \"<authentication token>\"\ntlsClientConfig:\ninsecure: false\ncaData: \"<base64 encoded certificate>\"\nmycluster3-project-scoped:\nserver: https://mycluster3.example.com\nlabels: {}\nannotations: {}\nproject: my-project1\nconfig:\nbearerToken: \"<authentication token>\"\ntlsClientConfig:\ninsecure: false\ncaData: \"<base64 encoded certificate>\"\nmycluster4-sharded:\nshard: 1\nserver: https://mycluster4.example.com\nlabels: {}\nannotations: {}\nconfig:\nbearerToken: \"<authentication token>\"\ntlsClientConfig:\ninsecure: false\ncaData: \"<base64 encoded certificate>\""
         },
         "cm": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
-              "additionalProperties": {}
-            }
-          ],
-          "description": "General Argo CD configuration. Any values you put under `.configs.cm` are passed to argocd-cm ConfigMap.\nRef: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml"
+          "additionalProperties": {},
+          "description": "General Argo CD configuration. Any values you put under `.configs.cm` are passed to argocd-cm ConfigMap.\nRef: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cm.yaml",
+          "type": "object"
         },
         "cmp": {
           "additionalProperties": {},
@@ -58585,45 +58664,33 @@
           "type": "object"
         },
         "params": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "Argo CD configuration parameters\nRef: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cmd-params-cm.yaml",
+          "properties": {
+            "annotations": {
+              "description": "Annotations to be added to the argocd-cmd-params-cm ConfigMap"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {
-                  "description": "Annotations to be added to the argocd-cmd-params-cm ConfigMap"
-                },
-                "application.namespaces": {},
-                "create": {
-                  "description": "Create the argocd-cmd-params-cm configmap\nIf false, it is expected the configmap will be created by something else."
-                },
-                "server.insecure": {},
-                "server.rootpath": {}
-              }
-            }
-          ],
-          "description": "Argo CD configuration parameters\nRef: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/argocd-cmd-params-cm.yaml"
+            "application.namespaces": {},
+            "create": {
+              "description": "Create the argocd-cmd-params-cm configmap\nIf false, it is expected the configmap will be created by something else."
+            },
+            "server.insecure": {},
+            "server.rootpath": {}
+          },
+          "type": "object"
         },
         "rbac": {
-          "allOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {
-                  "description": "Annotations to be added to argocd-rbac-cm configmap"
-                },
-                "create": {
-                  "description": "Create the argocd-rbac-cm configmap with ([Argo CD RBAC policy]) definitions.\nIf false, it is expected the configmap will be created by something else.\nArgo CD will not work if there is no configmap created with the name above."
-                }
-              }
+          "additionalProperties": {},
+          "description": "Argo CD RBAC policy configuration\nRef: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/rbac.md",
+          "properties": {
+            "annotations": {
+              "description": "Annotations to be added to argocd-rbac-cm configmap"
             },
-            {
-              "type": "object"
+            "create": {
+              "description": "Create the argocd-rbac-cm configmap with ([Argo CD RBAC policy]) definitions.\nIf false, it is expected the configmap will be created by something else.\nArgo CD will not work if there is no configmap created with the name above."
             }
-          ],
-          "description": "Argo CD RBAC policy configuration\nRef: https://github.com/argoproj/argo-cd/blob/master/docs/operator-manual/rbac.md"
+          },
+          "type": "object"
         },
         "repositories": {
           "anyOf": [
@@ -60121,20 +60188,14 @@
           }
         },
         "containerPorts": {
-          "allOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "metrics": {
-                  "$ref": "#/$defs/values~1dex.containerPorts.metrics"
-                }
-              }
-            },
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "Application controller container ports",
+          "properties": {
+            "metrics": {
+              "$ref": "#/$defs/values~1controller.containerPorts.metrics"
             }
-          ],
-          "description": "Application controller container ports"
+          },
+          "type": "object"
         },
         "containerSecurityContext": {
           "$ref": "#/$defs/values~1controller.containerSecurityContext"
@@ -62209,7 +62270,7 @@
               "description": "HTTP container port"
             },
             "metrics": {
-              "$ref": "#/$defs/values~1dex.containerPorts.metrics"
+              "$ref": "#/$defs/values~1controller.containerPorts.metrics"
             }
           }
         },
@@ -64367,7 +64428,7 @@
           "description": "Notification controller container ports",
           "properties": {
             "metrics": {
-              "$ref": "#/$defs/values~1dex.containerPorts.metrics"
+              "$ref": "#/$defs/values~1controller.containerPorts.metrics"
             }
           }
         },
@@ -64841,7 +64902,7 @@
           "description": "Redis container ports",
           "properties": {
             "metrics": {
-              "$ref": "#/$defs/values~1dex.containerPorts.metrics"
+              "$ref": "#/$defs/values~1controller.containerPorts.metrics"
             },
             "redis": {
               "description": "Redis container port"
@@ -72376,21 +72437,6 @@
           "additionalProperties": {},
           "description": "Globally shared configuration",
           "properties": {
-            "additionalLabels": {
-              "$ref": "#/$defs/values~1redis-ha.global.additionalLabels"
-            },
-            "affinity": {
-              "additionalProperties": {},
-              "properties": {
-                "nodeAffinity": {
-                  "$ref": "#/$defs/values~1redis-ha.global.additionalLabels"
-                }
-              },
-              "type": "object"
-            },
-            "certificateAnnotations": {
-              "$ref": "#/$defs/values~1redis-ha.global.additionalLabels"
-            },
             "compatibility": {
               "additionalProperties": {},
               "description": "Openshift compatibility options",
@@ -72418,47 +72464,8 @@
                 }
               }
             },
-            "deploymentAnnotations": {
-              "$ref": "#/$defs/values~1redis-ha.global.additionalLabels"
-            },
-            "deploymentLabels": {
-              "$ref": "#/$defs/values~1redis-ha.global.additionalLabels"
-            },
-            "deploymentStrategy": {
-              "$ref": "#/$defs/values~1redis-ha.global.additionalLabels"
-            },
-            "dualStack": {
-              "$ref": "#/$defs/values~1redis-ha.global.additionalLabels"
-            },
-            "image": {
-              "$ref": "#/$defs/values~1redis-ha.global.additionalLabels"
-            },
-            "logging": {
-              "$ref": "#/$defs/values~1redis-ha.global.additionalLabels"
-            },
-            "networkPolicy": {
-              "$ref": "#/$defs/values~1redis-ha.global.additionalLabels"
-            },
-            "nodeSelector": {
-              "$ref": "#/$defs/values~1redis-ha.global.additionalLabels"
-            },
-            "podAnnotations": {
-              "$ref": "#/$defs/values~1redis-ha.global.additionalLabels"
-            },
-            "podLabels": {
-              "$ref": "#/$defs/values~1redis-ha.global.additionalLabels"
-            },
             "priorityClassName": {
               "description": "Default priority class for all components"
-            },
-            "securityContext": {
-              "$ref": "#/$defs/values~1redis-ha.global.additionalLabels"
-            },
-            "statefulsetAnnotations": {
-              "$ref": "#/$defs/values~1redis-ha.global.additionalLabels"
-            },
-            "statefulsetLabels": {
-              "$ref": "#/$defs/values~1redis-ha.global.additionalLabels"
             }
           }
         },
@@ -73324,8 +73331,7 @@
             }
           }
         }
-      },
-      "type": "object"
+      }
     },
     "redisSecretInit": {
       "additionalProperties": {},
@@ -74278,38 +74284,32 @@
           "$ref": "#/$defs/values~1applicationSet.automountServiceAccountToken"
         },
         "autoscaling": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "Repo server Horizontal Pod Autoscaler",
+          "properties": {
+            "behavior": {
+              "$ref": "#/$defs/values~1repoServer.autoscaling.behavior"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "behavior": {
-                  "$ref": "#/$defs/values~1repoServer.autoscaling~1keywords~1description"
-                },
-                "enabled": {
-                  "description": "Enable Horizontal Pod Autoscaler ([HPA]) for the repo server"
-                },
-                "maxReplicas": {
-                  "description": "Maximum number of replicas for the repo server [HPA]"
-                },
-                "metrics": {
-                  "description": "Configures custom HPA metrics for the Argo CD repo server\nRef: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/"
-                },
-                "minReplicas": {
-                  "description": "Minimum number of replicas for the repo server [HPA]"
-                },
-                "targetCPUUtilizationPercentage": {
-                  "description": "Average CPU utilization percentage for the repo server [HPA]"
-                },
-                "targetMemoryUtilizationPercentage": {
-                  "description": "Average memory utilization percentage for the repo server [HPA]"
-                }
-              }
+            "enabled": {
+              "description": "Enable Horizontal Pod Autoscaler ([HPA]) for the repo server"
+            },
+            "maxReplicas": {
+              "description": "Maximum number of replicas for the repo server [HPA]"
+            },
+            "metrics": {
+              "description": "Configures custom HPA metrics for the Argo CD repo server\nRef: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/"
+            },
+            "minReplicas": {
+              "description": "Minimum number of replicas for the repo server [HPA]"
+            },
+            "targetCPUUtilizationPercentage": {
+              "description": "Average CPU utilization percentage for the repo server [HPA]"
+            },
+            "targetMemoryUtilizationPercentage": {
+              "description": "Average memory utilization percentage for the repo server [HPA]"
             }
-          ],
-          "description": "Repo server Horizontal Pod Autoscaler"
+          },
+          "type": "object"
         },
         "certificateSecret": {
           "additionalProperties": {},
@@ -74419,13 +74419,8 @@
           "type": "object"
         },
         "deploymentLabels": {
-          "allOf": [
-            {},
-            {
-              "type": "object"
-            }
-          ],
-          "description": "Labels for the repo server Deployment"
+          "description": "Labels for the repo server Deployment",
+          "type": "object"
         },
         "deploymentStrategy": {
           "additionalProperties": {},
@@ -74724,13 +74719,8 @@
           "type": "object"
         },
         "podLabels": {
-          "allOf": [
-            {},
-            {
-              "type": "object"
-            }
-          ],
-          "description": "Labels to be added to repo server pods"
+          "description": "Labels to be added to repo server pods",
+          "type": "object"
         },
         "priorityClassName": {
           "anyOf": [
@@ -78675,38 +78665,32 @@
           "$ref": "#/$defs/values~1applicationSet.automountServiceAccountToken"
         },
         "autoscaling": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "Argo CD server Horizontal Pod Autoscaler",
+          "properties": {
+            "behavior": {
+              "$ref": "#/$defs/values~1repoServer.autoscaling.behavior"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "behavior": {
-                  "$ref": "#/$defs/values~1repoServer.autoscaling~1keywords~1description"
-                },
-                "enabled": {
-                  "description": "Enable Horizontal Pod Autoscaler ([HPA]) for the Argo CD server"
-                },
-                "maxReplicas": {
-                  "description": "Maximum number of replicas for the Argo CD server [HPA]"
-                },
-                "metrics": {
-                  "description": "Configures custom HPA metrics for the Argo CD server\nRef: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/"
-                },
-                "minReplicas": {
-                  "description": "Minimum number of replicas for the Argo CD server [HPA]"
-                },
-                "targetCPUUtilizationPercentage": {
-                  "description": "Average CPU utilization percentage for the Argo CD server [HPA]"
-                },
-                "targetMemoryUtilizationPercentage": {
-                  "description": "Average memory utilization percentage for the Argo CD server [HPA]"
-                }
-              }
+            "enabled": {
+              "description": "Enable Horizontal Pod Autoscaler ([HPA]) for the Argo CD server"
+            },
+            "maxReplicas": {
+              "description": "Maximum number of replicas for the Argo CD server [HPA]"
+            },
+            "metrics": {
+              "description": "Configures custom HPA metrics for the Argo CD server\nRef: https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/"
+            },
+            "minReplicas": {
+              "description": "Minimum number of replicas for the Argo CD server [HPA]"
+            },
+            "targetCPUUtilizationPercentage": {
+              "description": "Average CPU utilization percentage for the Argo CD server [HPA]"
+            },
+            "targetMemoryUtilizationPercentage": {
+              "description": "Average memory utilization percentage for the Argo CD server [HPA]"
             }
-          ],
-          "description": "Argo CD server Horizontal Pod Autoscaler"
+          },
+          "type": "object"
         },
         "backendTLSPolicy": {
           "additionalProperties": {},
@@ -78846,13 +78830,8 @@
           "type": "object"
         },
         "deploymentLabels": {
-          "allOf": [
-            {},
-            {
-              "type": "object"
-            }
-          ],
-          "description": "Labels for the server Deployment"
+          "description": "Labels for the server Deployment",
+          "type": "object"
         },
         "deploymentStrategy": {
           "additionalProperties": {},
@@ -79132,167 +79111,155 @@
           "$ref": "#/$defs/values~1repoServer.imagePullSecrets"
         },
         "ingress": {
-          "allOf": [
-            {
+          "additionalProperties": {},
+          "description": "Argo CD server ingress configuration",
+          "properties": {
+            "annotations": {
+              "description": "Additional ingress annotations\nRef: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#option-1-ssl-passthrough\nnginx.ingress.kubernetes.io/force-ssl-redirect: \"true\"\nnginx.ingress.kubernetes.io/ssl-passthrough: \"true\""
+            },
+            "aws": {
               "additionalProperties": {},
+              "description": "AWS specific options for Application Load Balancer\nApplies only when `serv.ingress.controller` is set to `aws`\nRef: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#aws-application-load-balancers-albs-and-classic-elb-http-mode",
               "properties": {
-                "annotations": {
-                  "description": "Additional ingress annotations\nRef: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#option-1-ssl-passthrough\nnginx.ingress.kubernetes.io/force-ssl-redirect: \"true\"\nnginx.ingress.kubernetes.io/ssl-passthrough: \"true\""
+                "backendProtocolVersion": {
+                  "description": "Backend protocol version for the AWS ALB gRPC service\nThis tells AWS to send traffic from the ALB using gRPC.\nFor more information: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html#health-check-settings"
                 },
-                "aws": {
-                  "additionalProperties": {},
-                  "description": "AWS specific options for Application Load Balancer\nApplies only when `serv.ingress.controller` is set to `aws`\nRef: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#aws-application-load-balancers-albs-and-classic-elb-http-mode",
-                  "properties": {
-                    "backendProtocolVersion": {
-                      "description": "Backend protocol version for the AWS ALB gRPC service\nThis tells AWS to send traffic from the ALB using gRPC.\nFor more information: https://docs.aws.amazon.com/elasticloadbalancing/latest/application/target-group-health-checks.html#health-check-settings"
-                    },
-                    "serviceAnnotations": {
-                      "description": "Annotations for the AWS ALB gRPC service\nAllows adding custom annotations to the gRPC service for integrations like DataDog, Prometheus, etc."
-                    },
-                    "serviceType": {
-                      "description": "Service type for the AWS ALB gRPC service\nCan be of type NodePort or ClusterIP depending on which mode you are running.\nInstance mode needs type NodePort, IP mode needs type ClusterIP\nRef: https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.2/how-it-works/#ingress-traffic"
-                    }
-                  }
+                "serviceAnnotations": {
+                  "description": "Annotations for the AWS ALB gRPC service\nAllows adding custom annotations to the gRPC service for integrations like DataDog, Prometheus, etc."
                 },
-                "controller": {
-                  "anyOf": [
-                    {
-                      "enum": [
-                        "aws"
-                      ]
-                    },
-                    {
-                      "enum": [
-                        "gke"
-                      ]
-                    },
-                    {
-                      "enum": [
-                        "generic"
-                      ]
-                    },
-                    {
-                      "type": "null"
-                    },
-                    {
-                      "type": "string"
-                    }
-                  ],
-                  "description": "Specific implementation for ingress controller. One of `generic`, `aws` or `gke`\nAdditional configuration might be required in related configuration sections"
-                },
-                "enabled": {
-                  "description": "Enable an ingress resource for the Argo CD server"
-                },
-                "extraHosts": {
-                  "$ref": "#/$defs/values~1applicationSet.ingress~1keywords~1description@2"
-                },
-                "extraPaths": {
-                  "description": "Additional ingress paths\nNote: Supports use of custom Helm templates\n- path: /*\npathType: Prefix\nbackend:\nservice:\nname: ssl-redirect\nport:\nname: use-annotation"
-                },
-                "extraRules": {
-                  "description": "Additional ingress rules\nNote: Supports use of custom Helm templates\n- http:\npaths:\n- path: /\npathType: Prefix\nbackend:\nservice:\nname: '{{ include \"argo-cd.server.fullname\" . }}'\nport:\nname: '{{ .Values.server.service.servicePortHttpsName }}'"
-                },
-                "extraTls": {
-                  "description": "Additional TLS configuration\n- hosts:\n- argocd.example.com\nsecretName: your-certificate-name"
-                },
-                "gke": {
-                  "additionalProperties": {},
-                  "description": "Google specific options for Google Application Load Balancer\nApplies only when `server.ingress.controller` is set to `gke`\nRef: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#google-cloud-load-balancers-with-kubernetes-ingress",
-                  "properties": {
-                    "backendConfig": {
-                      "description": "Google [BackendConfig] resource, for use with the GKE Ingress Controller\nRef: https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-features#configuring_ingress_features_through_frontendconfig_parameters\niap:\nenabled: true\noauthclientCredentials:\nsecretName: argocd-secret"
-                    },
-                    "frontendConfig": {
-                      "description": "Google [FrontendConfig] resource, for use with the GKE Ingress Controller\nRef: https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-features#configuring_ingress_features_through_frontendconfig_parameters\nredirectToHttps:\nenabled: true\nresponseCodeName: RESPONSE_CODE"
-                    },
-                    "managedCertificate": {
-                      "additionalProperties": {},
-                      "description": "Managed GKE certificate for ingress hostname",
-                      "properties": {
-                        "create": {
-                          "description": "Create ManagedCertificate resource and annotations for Google Load balancer\nRef: https://cloud.google.com/kubernetes-engine/docs/how-to/managed-certs"
-                        },
-                        "extraDomains": {
-                          "description": "Additional domains for ManagedCertificate resource\n- argocd.example.com"
-                        }
-                      }
-                    }
-                  }
-                },
-                "hostname": {
-                  "description": "Argo CD server hostname"
-                },
-                "ingressClassName": {
-                  "description": "Defines which ingress controller will implement the resource"
-                },
-                "labels": {
-                  "description": "Additional ingress labels"
-                },
-                "path": {
-                  "description": "The path to Argo CD server"
-                },
-                "pathType": {
-                  "$ref": "#/$defs/values~1applicationSet.ingress~1keywords~1description"
-                },
-                "tls": {
-                  "description": "Enable TLS configuration for the hostname defined at `server.ingress.hostname`\nTLS certificate will be retrieved from a TLS secret `argocd-server-tls`\nYou can create this secret via `certificate` or `certificateSecret` option"
+                "serviceType": {
+                  "description": "Service type for the AWS ALB gRPC service\nCan be of type NodePort or ClusterIP depending on which mode you are running.\nInstance mode needs type NodePort, IP mode needs type ClusterIP\nRef: https://kubernetes-sigs.github.io/aws-load-balancer-controller/v2.2/how-it-works/#ingress-traffic"
                 }
               }
             },
-            {
-              "type": "object"
+            "controller": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "aws"
+                  ]
+                },
+                {
+                  "enum": [
+                    "gke"
+                  ]
+                },
+                {
+                  "enum": [
+                    "generic"
+                  ]
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Specific implementation for ingress controller. One of `generic`, `aws` or `gke`\nAdditional configuration might be required in related configuration sections"
+            },
+            "enabled": {
+              "description": "Enable an ingress resource for the Argo CD server"
+            },
+            "extraHosts": {
+              "$ref": "#/$defs/values~1applicationSet.ingress.extraHosts"
+            },
+            "extraPaths": {
+              "description": "Additional ingress paths\nNote: Supports use of custom Helm templates\n- path: /*\npathType: Prefix\nbackend:\nservice:\nname: ssl-redirect\nport:\nname: use-annotation"
+            },
+            "extraRules": {
+              "description": "Additional ingress rules\nNote: Supports use of custom Helm templates\n- http:\npaths:\n- path: /\npathType: Prefix\nbackend:\nservice:\nname: '{{ include \"argo-cd.server.fullname\" . }}'\nport:\nname: '{{ .Values.server.service.servicePortHttpsName }}'"
+            },
+            "extraTls": {
+              "description": "Additional TLS configuration\n- hosts:\n- argocd.example.com\nsecretName: your-certificate-name"
+            },
+            "gke": {
+              "additionalProperties": {},
+              "description": "Google specific options for Google Application Load Balancer\nApplies only when `server.ingress.controller` is set to `gke`\nRef: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#google-cloud-load-balancers-with-kubernetes-ingress",
+              "properties": {
+                "backendConfig": {
+                  "description": "Google [BackendConfig] resource, for use with the GKE Ingress Controller\nRef: https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-features#configuring_ingress_features_through_frontendconfig_parameters\niap:\nenabled: true\noauthclientCredentials:\nsecretName: argocd-secret"
+                },
+                "frontendConfig": {
+                  "description": "Google [FrontendConfig] resource, for use with the GKE Ingress Controller\nRef: https://cloud.google.com/kubernetes-engine/docs/how-to/ingress-features#configuring_ingress_features_through_frontendconfig_parameters\nredirectToHttps:\nenabled: true\nresponseCodeName: RESPONSE_CODE"
+                },
+                "managedCertificate": {
+                  "additionalProperties": {},
+                  "description": "Managed GKE certificate for ingress hostname",
+                  "properties": {
+                    "create": {
+                      "description": "Create ManagedCertificate resource and annotations for Google Load balancer\nRef: https://cloud.google.com/kubernetes-engine/docs/how-to/managed-certs"
+                    },
+                    "extraDomains": {
+                      "description": "Additional domains for ManagedCertificate resource\n- argocd.example.com"
+                    }
+                  }
+                }
+              }
+            },
+            "hostname": {
+              "description": "Argo CD server hostname"
+            },
+            "ingressClassName": {
+              "description": "Defines which ingress controller will implement the resource"
+            },
+            "labels": {
+              "description": "Additional ingress labels"
+            },
+            "path": {
+              "description": "The path to Argo CD server"
+            },
+            "pathType": {
+              "$ref": "#/$defs/values~1applicationSet.ingress.pathType"
+            },
+            "tls": {
+              "description": "Enable TLS configuration for the hostname defined at `server.ingress.hostname`\nTLS certificate will be retrieved from a TLS secret `argocd-server-tls`\nYou can create this secret via `certificate` or `certificateSecret` option"
             }
-          ],
-          "description": "Argo CD server ingress configuration"
+          },
+          "type": "object"
         },
         "ingressGrpc": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "Dedicated gRPC ingress for ingress controllers that supports only single backend protocol per Ingress resource\nRef: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#option-2-multiple-ingress-objects-and-hosts",
+          "properties": {
+            "annotations": {
+              "description": "Additional ingress annotations for dedicated [gRPC-ingress]"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {
-                  "description": "Additional ingress annotations for dedicated [gRPC-ingress]"
-                },
-                "enabled": {
-                  "description": "Enable an ingress resource for the Argo CD server for dedicated [gRPC-ingress]"
-                },
-                "extraHosts": {
-                  "description": "The list of additional hostnames to be covered by ingress record\n- name: grpc.argocd.example.com\npath: /"
-                },
-                "extraPaths": {
-                  "description": "Additional ingress paths for dedicated [gRPC-ingress]\nNote: Supports use of custom Helm templates\n- path: /*\npathType: Prefix\nbackend:\nservice:\nname: ssl-redirect\nport:\nname: use-annotation"
-                },
-                "extraRules": {
-                  "description": "Additional ingress rules\nNote: Supports use of custom Helm templates\n- http:\npaths:\n- path: /\npathType: Prefix\nbackend:\nservice:\nname: '{{ include \"argo-cd.server.fullname\" . }}'\nport:\nname: '{{ .Values.server.service.servicePortHttpName }}'"
-                },
-                "extraTls": {
-                  "description": "Additional TLS configuration for dedicated [gRPC-ingress]\n- secretName: your-certificate-name\nhosts:\n- argocd.example.com"
-                },
-                "hostname": {
-                  "description": "Argo CD server hostname for dedicated [gRPC-ingress]"
-                },
-                "ingressClassName": {
-                  "description": "Defines which ingress controller will implement the resource [gRPC-ingress]"
-                },
-                "labels": {
-                  "description": "Additional ingress labels for dedicated [gRPC-ingress]"
-                },
-                "path": {
-                  "description": "Argo CD server ingress path for dedicated [gRPC-ingress]"
-                },
-                "pathType": {
-                  "description": "Ingress path type for dedicated [gRPC-ingress]. One of `Exact`, `Prefix` or `ImplementationSpecific`"
-                },
-                "tls": {
-                  "description": "Enable TLS configuration for the hostname defined at `server.ingressGrpc.hostname`\nTLS certificate will be retrieved from a TLS secret with name: `argocd-server-grpc-tls`"
-                }
-              }
+            "enabled": {
+              "description": "Enable an ingress resource for the Argo CD server for dedicated [gRPC-ingress]"
+            },
+            "extraHosts": {
+              "description": "The list of additional hostnames to be covered by ingress record\n- name: grpc.argocd.example.com\npath: /"
+            },
+            "extraPaths": {
+              "description": "Additional ingress paths for dedicated [gRPC-ingress]\nNote: Supports use of custom Helm templates\n- path: /*\npathType: Prefix\nbackend:\nservice:\nname: ssl-redirect\nport:\nname: use-annotation"
+            },
+            "extraRules": {
+              "description": "Additional ingress rules\nNote: Supports use of custom Helm templates\n- http:\npaths:\n- path: /\npathType: Prefix\nbackend:\nservice:\nname: '{{ include \"argo-cd.server.fullname\" . }}'\nport:\nname: '{{ .Values.server.service.servicePortHttpName }}'"
+            },
+            "extraTls": {
+              "description": "Additional TLS configuration for dedicated [gRPC-ingress]\n- secretName: your-certificate-name\nhosts:\n- argocd.example.com"
+            },
+            "hostname": {
+              "description": "Argo CD server hostname for dedicated [gRPC-ingress]"
+            },
+            "ingressClassName": {
+              "description": "Defines which ingress controller will implement the resource [gRPC-ingress]"
+            },
+            "labels": {
+              "description": "Additional ingress labels for dedicated [gRPC-ingress]"
+            },
+            "path": {
+              "description": "Argo CD server ingress path for dedicated [gRPC-ingress]"
+            },
+            "pathType": {
+              "description": "Ingress path type for dedicated [gRPC-ingress]. One of `Exact`, `Prefix` or `ImplementationSpecific`"
+            },
+            "tls": {
+              "description": "Enable TLS configuration for the hostname defined at `server.ingressGrpc.hostname`\nTLS certificate will be retrieved from a TLS secret with name: `argocd-server-grpc-tls`"
             }
-          ],
-          "description": "Dedicated gRPC ingress for ingress controllers that supports only single backend protocol per Ingress resource\nRef: https://argo-cd.readthedocs.io/en/stable/operator-manual/ingress/#option-2-multiple-ingress-objects-and-hosts"
+          },
+          "type": "object"
         },
         "initContainers": {
           "allOf": [
@@ -79436,13 +79403,8 @@
           "type": "object"
         },
         "podLabels": {
-          "allOf": [
-            {},
-            {
-              "type": "object"
-            }
-          ],
-          "description": "Labels to be added to server pods"
+          "description": "Labels to be added to server pods",
+          "type": "object"
         },
         "priorityClassName": {
           "anyOf": [

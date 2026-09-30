@@ -4896,18 +4896,12 @@
       "description": "controllerConfig specifies controller configuration",
       "properties": {
         "featureGates": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "GlobalAcceleratorController": {}
-              }
-            }
-          ],
-          "description": "featureGates set of key: value pairs that describe AWS load balance controller features\nListenerRulesTagging: true\nWeightedTargetGroups: true\nServiceTypeLoadBalancerOnly: false\nEndpointsFailOpen: true\nEnableServiceController: true\nEnableIPTargetType: true\nEnableTCPUDPListener: false\nEnableRGTAPI: false\nSubnetsClusterTagCheck: true\nNLBHealthCheckAdvancedConfig: true\nNLBSecurityGroup: true\nALBSingleSubnet: false\nLBCapacityReservation: true\nSubnetDiscoveryByReachability: true\nNLBGatewayAPI: true\nALBGatewayAPI: true\nGatewayListenerSet: true\nGlobalAcceleratorController: false\nIngressPlanAnnotation: false\nEnhancedDefaultBehavior: false\nEnableDefaultTagsLowPriority: false\nALBTargetControlAgent: false\nEnableCertificateManagement: false"
+          "additionalProperties": {},
+          "description": "featureGates set of key: value pairs that describe AWS load balance controller features\nListenerRulesTagging: true\nWeightedTargetGroups: true\nServiceTypeLoadBalancerOnly: false\nEndpointsFailOpen: true\nEnableServiceController: true\nEnableIPTargetType: true\nEnableTCPUDPListener: false\nEnableRGTAPI: false\nSubnetsClusterTagCheck: true\nNLBHealthCheckAdvancedConfig: true\nNLBSecurityGroup: true\nALBSingleSubnet: false\nLBCapacityReservation: true\nSubnetDiscoveryByReachability: true\nNLBGatewayAPI: true\nALBGatewayAPI: true\nGatewayListenerSet: true\nGlobalAcceleratorController: false\nIngressPlanAnnotation: false\nEnhancedDefaultBehavior: false\nEnableDefaultTagsLowPriority: false\nALBTargetControlAgent: false\nEnableCertificateManagement: false",
+          "properties": {
+            "GlobalAcceleratorController": {}
+          },
+          "type": "object"
         }
       },
       "type": "object"
@@ -6857,6 +6851,7 @@
       "description": "extraVolumes for the extraVolumeMounts. Useful to mount a projected service account token for example.\n- name: aws-iam-token\nprojected:\ndefaultMode: 420\nsources:\n- serviceAccountToken:\naudience: sts.amazonaws.com\nexpirationSeconds: 86400\npath: token"
     },
     "fullnameOverride": {},
+    "global": {},
     "globalAcceleratorMaxConcurrentReconciles": {
       "description": "Maximum number of concurrently running reconcile loops for GlobalAccelerator objects"
     },

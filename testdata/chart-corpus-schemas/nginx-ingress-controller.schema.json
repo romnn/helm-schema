@@ -1963,7 +1963,7 @@
           "not": {
             "properties": {
               "defaultBackend": {
-                "$ref": "#/$defs/constrains~1image.repository@2"
+                "$ref": "#/$defs/constrains~1image.repository"
               }
             },
             "required": [
@@ -4644,18 +4644,15 @@
       "type": "object"
     },
     "constrains/image.repository": {
-      "additionalProperties": {},
       "properties": {
         "image": {
-          "additionalProperties": {},
-          "properties": {
-            "repository": {
-              "description": "[default: REPOSITORY_NAME/nginx] Default backend image repository",
-              "type": "string"
-            }
-          }
+          "$ref": "#/$defs/constrains~1repository"
         }
-      }
+      },
+      "required": [
+        "image"
+      ],
+      "type": "object"
     },
     "constrains/image.repository+image.repository=null": {
       "anyOf": [
@@ -4664,7 +4661,7 @@
         },
         {
           "not": {
-            "$ref": "#/$defs/constrains~1image.repository@2"
+            "$ref": "#/$defs/constrains~1image.repository"
           }
         }
       ]
@@ -4673,17 +4670,6 @@
       "properties": {
         "image": {
           "$ref": "#/$defs/constrains~1repository=null"
-        }
-      },
-      "required": [
-        "image"
-      ],
-      "type": "object"
-    },
-    "constrains/image.repository@2": {
-      "properties": {
-        "image": {
-          "$ref": "#/$defs/constrains~1repository@2"
         }
       },
       "required": [
@@ -6338,13 +6324,13 @@
       "type": "object"
     },
     "constrains/repository": {
-      "additionalProperties": {},
       "properties": {
-        "repository": {
-          "description": "[default: REPOSITORY_NAME/nginx-ingress-controller] Nginx Ingress Controller image repository",
-          "type": "string"
-        }
-      }
+        "repository": {}
+      },
+      "required": [
+        "repository"
+      ],
+      "type": "object"
     },
     "constrains/repository=null": {
       "properties": {
@@ -6353,15 +6339,6 @@
             null
           ]
         }
-      },
-      "required": [
-        "repository"
-      ],
-      "type": "object"
-    },
-    "constrains/repository@2": {
-      "properties": {
-        "repository": {}
       },
       "required": [
         "repository"
@@ -7070,10 +7047,6 @@
         "null"
       ]
     },
-    "values/common.global.compatibility.openshift": {
-      "additionalProperties": {},
-      "type": "object"
-    },
     "values/commonLabels": {
       "anyOf": [
         {
@@ -7094,6 +7067,10 @@
     },
     "values/containerSecurityContext.seLinuxOptions": {
       "description": "[object,nullable] Set SELinux options in container"
+    },
+    "values/defaultBackend.image.repository": {
+      "description": "[default: REPOSITORY_NAME/nginx] Default backend image repository",
+      "type": "string"
     },
     "values/defaultBackend/anyOf/integer:int32;the-port-that-will+not/:t+string;pattern-0-1-9": {
       "anyOf": [
@@ -7151,6 +7128,10 @@
         }
       ],
       "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
+      "type": "string"
+    },
+    "values/image.repository": {
+      "description": "[default: REPOSITORY_NAME/nginx-ingress-controller] Nginx Ingress Controller image repository",
       "type": "string"
     },
     "values/ingressClassResource/null;name-must-be-unique": {
@@ -7317,6 +7298,10 @@
       "description": "Optional duration in seconds the pod needs to terminate gracefully. May be decreased in delete request. Value must be non-negative integer. The value zero indicates stop immediately via the kill signal (no opportunity to shut down). If this value is nil, the default grace period will be used instead. The grace period is the duration in seconds after the processes running in the pod are sent a termination signal and the time when the processes are forcibly halted with a kill signal. Set this value longer than the expected cleanup time for your process. Defaults to 30 seconds.",
       "format": "int64",
       "type": "null"
+    },
+    "values/object": {
+      "additionalProperties": {},
+      "type": "object"
     },
     "values/object;annotations-is-an-unstructured": {
       "additionalProperties": {
@@ -7699,7 +7684,7 @@
         "anyOf": [
           {
             "not": {
-              "$ref": "#/$defs/constrains~1repository@2"
+              "$ref": "#/$defs/constrains~1repository"
             }
           },
           {
@@ -7858,20 +7843,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "defaultBackend": {
-          "additionalProperties": {},
-          "description": "Default 404 backend",
-          "properties": {
-            "image": {
-              "type": "object"
-            }
-          }
-        }
-      }
     },
     {
       "if": {
@@ -11140,7 +11111,12 @@
             "additionalProperties": {},
             "properties": {
               "image": {
-                "$ref": "#/$defs/constrains~1repository"
+                "additionalProperties": {},
+                "properties": {
+                  "repository": {
+                    "$ref": "#/$defs/values~1image.repository"
+                  }
+                }
               }
             }
           },
@@ -12387,17 +12363,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
       "if": {
         "anyOf": [
           {
@@ -12779,7 +12744,7 @@
               "udp": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+                    "$ref": "#/$defs/values~1object"
                   },
                   {
                     "type": "string"
@@ -12850,7 +12815,7 @@
               "tcp": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+                    "$ref": "#/$defs/values~1object"
                   },
                   {
                     "type": "string"
@@ -15547,24 +15512,7 @@
           "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
           "type": "string"
         },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "compatibility": {
-              "additionalProperties": {},
-              "properties": {
-                "openshift": {
-                  "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-                }
-              },
-              "type": "object"
-            },
-            "security": {
-              "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-            }
-          },
-          "type": "object"
-        }
+        "global": {}
       },
       "type": "object"
     },
@@ -15684,6 +15632,7 @@
       }
     },
     "defaultBackend": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -15823,7 +15772,17 @@
                 }
               },
               {
-                "$ref": "#/$defs/constrains~1image.repository"
+                "additionalProperties": {},
+                "properties": {
+                  "image": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "repository": {
+                        "$ref": "#/$defs/values~1defaultBackend.image.repository"
+                      }
+                    }
+                  }
+                }
               },
               {
                 "additionalProperties": {},
@@ -16191,9 +16150,6 @@
           }
         },
         {
-          "$ref": "#/$defs/constrains~1image.repository"
-        },
-        {
           "if": {
             "allOf": [
               {
@@ -16308,9 +16264,6 @@
             ]
           },
           "then": false
-        },
-        {
-          "type": "object"
         },
         {
           "if": {
@@ -16907,7 +16860,19 @@
           }
         }
       ],
-      "description": "Default 404 backend"
+      "description": "Default 404 backend",
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "$ref": "#/$defs/values~1defaultBackend.image.repository"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     "defaultBackendService": {
       "description": "Default 404 backend service; required only if `defaultBackend.enabled = false`\nMust be <namespace>/<service_name>"
@@ -16930,7 +16895,7 @@
     "extraDeploy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+          "$ref": "#/$defs/values~1object"
         },
         {
           "items": {},
@@ -17014,8 +16979,7 @@
           },
           "type": "object"
         }
-      },
-      "type": "object"
+      }
     },
     "headers": {},
     "hostAliases": {
@@ -17025,17 +16989,18 @@
       "description": "If the Nginx deployment / daemonset should run on the host's network namespace\nRequired on CNI based K8s installations, since CNI and hostport don't mix yet\nCan be deprecated once https://github.com/kubernetes/kubernetes/issues/23920 is merged"
     },
     "image": {
+      "additionalProperties": {},
       "allOf": [
         {
           "$ref": "#/$defs/when~1repository+repository=null~1then~1fail"
-        },
-        {
-          "$ref": "#/$defs/constrains~1repository"
-        },
-        {
-          "type": "object"
         }
-      ]
+      ],
+      "properties": {
+        "repository": {
+          "$ref": "#/$defs/values~1image.repository"
+        }
+      },
+      "type": "object"
     },
     "ingressClassResource": {
       "additionalProperties": {},
@@ -19319,7 +19284,7 @@
     "tcp": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+          "$ref": "#/$defs/values~1object"
         },
         {
           "items": {},
@@ -19355,7 +19320,7 @@
     "udp": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+          "$ref": "#/$defs/values~1object"
         },
         {
           "items": {},

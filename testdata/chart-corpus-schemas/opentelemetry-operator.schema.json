@@ -1649,7 +1649,7 @@
       },
       "type": "object"
     },
-    "values/manager.ports/oneOf/anyOf/integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more": {
+    "values/manager.ports.healthzPort/oneOf/anyOf/integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more": {
       "oneOf": [
         {
           "anyOf": [
@@ -3445,24 +3445,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "manager": {
-          "additionalProperties": {},
-          "description": "Provide OpenTelemetry Operator manager container image and resources.",
-          "properties": {
-            "ports": {
-              "description": "operator.clusterobservability: false\noperator.targetallocator.fallbackstrategy: false\noperand.networkpolicy: false",
-              "required": [
-                "metricsPort"
-              ],
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -4301,28 +4283,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "manager": {
-          "additionalProperties": {},
-          "description": "Provide OpenTelemetry Operator manager container image and resources.",
-          "properties": {
-            "ports": {
-              "additionalProperties": {},
-              "description": "operator.clusterobservability: false\noperator.targetallocator.fallbackstrategy: false\noperand.networkpolicy: false",
-              "properties": {
-                "metricsPort": {
-                  "not": {
-                    "type": "null"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -4426,28 +4386,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "manager": {
-          "additionalProperties": {},
-          "description": "Provide OpenTelemetry Operator manager container image and resources.",
-          "properties": {
-            "ports": {
-              "additionalProperties": {},
-              "description": "operator.clusterobservability: false\noperator.targetallocator.fallbackstrategy: false\noperand.networkpolicy: false",
-              "properties": {
-                "healthzPort": {
-                  "not": {
-                    "type": "null"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
     },
     {
       "if": {
@@ -4852,24 +4790,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "manager": {
-          "additionalProperties": {},
-          "description": "Provide OpenTelemetry Operator manager container image and resources.",
-          "properties": {
-            "ports": {
-              "description": "operator.clusterobservability: false\noperator.targetallocator.fallbackstrategy: false\noperand.networkpolicy: false",
-              "required": [
-                "healthzPort"
-              ],
-              "type": "object"
-            }
-          }
-        }
-      }
     }
   ],
   "properties": {
@@ -5948,6 +5868,7 @@
     "fullnameOverride": {
       "description": "Fully override the name (excludes the chart's release name)."
     },
+    "global": {},
     "hostNetwork": {
       "anyOf": [
         {
@@ -7656,44 +7577,51 @@
           ]
         },
         "ports": {
-          "allOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "healthzPort": {
-                  "$ref": "#/$defs/values~1manager.ports~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
+          "additionalProperties": {},
+          "description": "operator.clusterobservability: false\noperator.targetallocator.fallbackstrategy: false\noperand.networkpolicy: false",
+          "properties": {
+            "healthzPort": {
+              "allOf": [
+                {
+                  "not": {
+                    "type": "null"
+                  }
                 },
-                "metricsPort": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/values~1integer:int32;number-of-port-to"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1string;pattern-0-1-9"
-                    }
-                  ]
-                },
-                "pprofPort": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/values~1not~1:t"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1integer:int32;number-of-port-to"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1string;pattern-0-1-9"
-                    }
-                  ]
-                },
-                "webhookPort": {}
-              }
+                {
+                  "$ref": "#/$defs/values~1manager.ports.healthzPort~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
+                }
+              ]
             },
-            {
-              "type": "object"
-            }
+            "metricsPort": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/values~1integer:int32;number-of-port-to"
+                },
+                {
+                  "$ref": "#/$defs/values~1string;pattern-0-1-9"
+                }
+              ]
+            },
+            "pprofPort": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/values~1not~1:t"
+                },
+                {
+                  "$ref": "#/$defs/values~1integer:int32;number-of-port-to"
+                },
+                {
+                  "$ref": "#/$defs/values~1string;pattern-0-1-9"
+                }
+              ]
+            },
+            "webhookPort": {}
+          },
+          "required": [
+            "healthzPort",
+            "metricsPort"
           ],
-          "description": "operator.clusterobservability: false\noperator.targetallocator.fallbackstrategy: false\noperand.networkpolicy: false"
+          "type": "object"
         },
         "prometheusRule": {
           "additionalProperties": {},
@@ -8172,7 +8100,7 @@
                   "minAvailable": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1manager.ports~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
+                        "$ref": "#/$defs/values~1manager.ports.healthzPort~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
                       },
                       {
                         "$ref": "#/$defs/values~1not~1:t"
@@ -8188,7 +8116,7 @@
                   "maxUnavailable": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1manager.ports~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
+                        "$ref": "#/$defs/values~1manager.ports.healthzPort~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
                       },
                       {
                         "$ref": "#/$defs/values~1not~1:t"

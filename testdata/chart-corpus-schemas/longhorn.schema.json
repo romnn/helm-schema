@@ -6672,121 +6672,6 @@
     },
     "global": {
       "additionalProperties": {},
-      "allOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "cattle": {
-              "additionalProperties": {},
-              "properties": {
-                "windowsCluster": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "allOf": [
-                          {
-                            "$ref": "#/$defs/constrains~1enabled:t"
-                          },
-                          {
-                            "anyOf": [
-                              {
-                                "properties": {
-                                  "defaultSetting": {
-                                    "enum": [
-                                      null
-                                    ]
-                                  }
-                                },
-                                "required": [
-                                  "defaultSetting"
-                                ],
-                                "type": "object"
-                              },
-                              {
-                                "not": {
-                                  "properties": {
-                                    "defaultSetting": {}
-                                  },
-                                  "required": [
-                                    "defaultSetting"
-                                  ],
-                                  "type": "object"
-                                }
-                              }
-                            ]
-                          }
-                        ]
-                      },
-                      "then": false
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "cattle": {
-              "additionalProperties": {},
-              "properties": {
-                "windowsCluster": {
-                  "allOf": [
-                    {
-                      "if": {
-                        "$ref": "#/$defs/constrains~1enabled:t"
-                      },
-                      "then": {
-                        "allOf": [
-                          {
-                            "additionalProperties": {},
-                            "properties": {
-                              "tolerations": {
-                                "anyOf": [
-                                  {
-                                    "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/constrains~1group:t~1not~1:t"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "description": "Toleration for Linux nodes that can run user-deployed Longhorn components."
-                              }
-                            }
-                          },
-                          {
-                            "additionalProperties": {},
-                            "properties": {
-                              "nodeSelector": {
-                                "anyOf": [
-                                  {
-                                    "$ref": "#/$defs/constrains~1group:t~1not~1:t"
-                                  },
-                                  {
-                                    "$ref": "#/$defs/values~1object;nodeselector-is-a-selector"
-                                  },
-                                  {
-                                    "type": "null"
-                                  }
-                                ],
-                                "description": "Node selector for Linux nodes that can run user-deployed Longhorn components."
-                              }
-                            }
-                          }
-                        ]
-                      }
-                    }
-                  ]
-                }
-              }
-            }
-          }
-        }
-      ],
       "description": "Default values for longhorn.\nThis is a YAML-formatted file.\nDeclare variables to be passed into your templates.",
       "properties": {
         "cattle": {
@@ -6797,6 +6682,93 @@
             },
             "windowsCluster": {
               "additionalProperties": {},
+              "allOf": [
+                {
+                  "if": {
+                    "$ref": "#/$defs/constrains~1enabled:t"
+                  },
+                  "then": {
+                    "allOf": [
+                      {
+                        "additionalProperties": {},
+                        "properties": {
+                          "tolerations": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value"
+                              },
+                              {
+                                "$ref": "#/$defs/constrains~1group:t~1not~1:t"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Toleration for Linux nodes that can run user-deployed Longhorn components."
+                          }
+                        }
+                      },
+                      {
+                        "additionalProperties": {},
+                        "properties": {
+                          "nodeSelector": {
+                            "anyOf": [
+                              {
+                                "$ref": "#/$defs/constrains~1group:t~1not~1:t"
+                              },
+                              {
+                                "$ref": "#/$defs/values~1object;nodeselector-is-a-selector"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Node selector for Linux nodes that can run user-deployed Longhorn components."
+                          }
+                        }
+                      }
+                    ]
+                  }
+                },
+                {
+                  "if": {
+                    "allOf": [
+                      {
+                        "$ref": "#/$defs/constrains~1enabled:t"
+                      },
+                      {
+                        "anyOf": [
+                          {
+                            "properties": {
+                              "defaultSetting": {
+                                "enum": [
+                                  null
+                                ]
+                              }
+                            },
+                            "required": [
+                              "defaultSetting"
+                            ],
+                            "type": "object"
+                          },
+                          {
+                            "not": {
+                              "properties": {
+                                "defaultSetting": {}
+                              },
+                              "required": [
+                                "defaultSetting"
+                              ],
+                              "type": "object"
+                            }
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  "then": false
+                }
+              ],
               "properties": {
                 "defaultSetting": {
                   "additionalProperties": {},

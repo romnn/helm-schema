@@ -10095,26 +10095,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "haproxy": {
-          "additionalProperties": {},
-          "description": "Enables a HA Proxy for better LoadBalancing / Sentinel Master support. Automatically proxies to Redis master.\nRecommend for externally exposed Redis clusters.\nref: https://cbonte.github.io/haproxy-dconv/1.9/intro.html",
-          "properties": {
-            "metrics": {
-              "additionalProperties": {},
-              "description": "Official HAProxy embedded prometheus metrics settings.\nRef: https://github.com/haproxy/haproxy/tree/master/contrib/prometheus-exporter",
-              "properties": {
-                "serviceMonitor": {
-                  "type": "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "$ref": "#/$defs/constrains~1redis.customConfig:t"
       },
@@ -13462,8 +13442,7 @@
               },
               "type": "object"
             }
-          },
-          "type": "object"
+          }
         },
         "priorityClassName": {
           "description": "Default priority class for all components"
@@ -15594,58 +15573,53 @@
           "description": "Container lifecycle hooks.\nRef: https://kubernetes.io/docs/concepts/containers/container-lifecycle-hooks/"
         },
         "metrics": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "Official HAProxy embedded prometheus metrics settings.\nRef: https://github.com/haproxy/haproxy/tree/master/contrib/prometheus-exporter",
+          "properties": {
+            "enabled": {
+              "description": "HAProxy enable prometheus metric scraping"
             },
-            {
+            "port": {
+              "description": "HAProxy prometheus metrics scraping port"
+            },
+            "portName": {
+              "description": "HAProxy metrics scraping port name"
+            },
+            "scrapePath": {
+              "description": "HAProxy prometheus metrics scraping path"
+            },
+            "serviceMonitor": {
               "additionalProperties": {},
               "properties": {
+                "disableAPICheck": {
+                  "description": "Disable API Check on ServiceMonitor"
+                },
                 "enabled": {
-                  "description": "HAProxy enable prometheus metric scraping"
+                  "$ref": "#/$defs/values~1exporter.serviceMonitor.enabled"
                 },
-                "port": {
-                  "description": "HAProxy prometheus metrics scraping port"
+                "endpointAdditionalProperties": {
+                  "$ref": "#/$defs/values~1exporter.serviceMonitor.endpointAdditionalProperties"
                 },
-                "portName": {
-                  "description": "HAProxy metrics scraping port name"
+                "interval": {
+                  "$ref": "#/$defs/values~1exporter.serviceMonitor.interval"
                 },
-                "scrapePath": {
-                  "description": "HAProxy prometheus metrics scraping path"
+                "labels": {
+                  "$ref": "#/$defs/values~1exporter.serviceMonitor.labels"
                 },
-                "serviceMonitor": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "disableAPICheck": {
-                      "description": "Disable API Check on ServiceMonitor"
-                    },
-                    "enabled": {
-                      "$ref": "#/$defs/values~1exporter.serviceMonitor.enabled"
-                    },
-                    "endpointAdditionalProperties": {
-                      "$ref": "#/$defs/values~1exporter.serviceMonitor.endpointAdditionalProperties"
-                    },
-                    "interval": {
-                      "$ref": "#/$defs/values~1exporter.serviceMonitor.interval"
-                    },
-                    "labels": {
-                      "$ref": "#/$defs/values~1exporter.serviceMonitor.labels"
-                    },
-                    "namespace": {
-                      "$ref": "#/$defs/values~1exporter.serviceMonitor.namespace"
-                    },
-                    "telemetryPath": {
-                      "$ref": "#/$defs/values~1exporter.serviceMonitor.telemetryPath"
-                    },
-                    "timeout": {
-                      "description": "Set timeout for scrape (default is 10s)"
-                    }
-                  }
+                "namespace": {
+                  "$ref": "#/$defs/values~1exporter.serviceMonitor.namespace"
+                },
+                "telemetryPath": {
+                  "$ref": "#/$defs/values~1exporter.serviceMonitor.telemetryPath"
+                },
+                "timeout": {
+                  "description": "Set timeout for scrape (default is 10s)"
                 }
-              }
+              },
+              "type": "object"
             }
-          ],
-          "description": "Official HAProxy embedded prometheus metrics settings.\nRef: https://github.com/haproxy/haproxy/tree/master/contrib/prometheus-exporter"
+          },
+          "type": "object"
         },
         "networkPolicy": {
           "additionalProperties": {},

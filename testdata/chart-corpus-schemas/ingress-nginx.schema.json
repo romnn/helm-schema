@@ -7853,17 +7853,26 @@
       "properties": {},
       "type": "object"
     },
-    "values/controller.admissionWebhooks/keywords/description": {
+    "values/controller.admissionWebhooks.createSecretJob.activeDeadlineSeconds": {
       "description": "Deadline in seconds for the job to complete. Must be greater than 0 to enforce. If unset or 0, no deadline is enforced."
     },
-    "values/controller.extraEnvs": {
+    "values/controller.admissionWebhooks.createSecretJob.resources": {
+      "description": "limits:\ncpu: 10m\nmemory: 20Mi\nrequests:\ncpu: 10m\nmemory: 20Mi"
+    },
+    "values/controller.admissionWebhooks.extraEnvs": {
       "description": "Additional environment variables to set\nextraEnvs:\n- name: FOO\nvalueFrom:\nsecretKeyRef:\nkey: FOO\nname: secret-resource"
+    },
+    "values/controller.admissionWebhooks.patch.image.tag": {
+      "description": "for backwards compatibility consider setting the full image url via the repository value below\nuse *either* current default registry/image or repository format or installing chart by providing the values.yaml will fail\nrepository:"
+    },
+    "values/controller.admissionWebhooks.patch.networkPolicy.enabled": {
+      "description": "Enable 'networkPolicy' or not"
+    },
+    "values/controller.admissionWebhooks.patch.runtimeClassName": {
+      "description": "Instruct the kubelet to use the named RuntimeClass to run the pod"
     },
     "values/controller.image.runAsGroup": {
       "description": "This value must not be changed using the official image.\nuid=101(www-data) gid=82(www-data) groups=82(www-data)"
-    },
-    "values/controller.image.tag": {
-      "description": "for backwards compatibility consider setting the full image url via the repository value below\nuse *either* current default registry/image or repository format or installing chart by providing the values.yaml will fail\nrepository:"
     },
     "values/controller.minAvailable": {
       "description": "Minimum available pods set in PodDisruptionBudget.\nDefine either 'minAvailable' or 'maxUnavailable', never both."
@@ -7871,14 +7880,8 @@
     "values/controller.minReadySeconds": {
       "description": "`minReadySeconds` to avoid killing pods before we are ready"
     },
-    "values/controller.networkPolicy.enabled": {
-      "description": "Enable 'networkPolicy' or not"
-    },
     "values/controller.podLabels": {
       "description": "Labels to add to the pod container metadata\nkey: value"
-    },
-    "values/controller.runtimeClassName": {
-      "description": "Instruct the kubelet to use the named RuntimeClass to run the pod"
     },
     "values/controller.tolerations": {
       "description": "Node tolerations for server scheduling to nodes with taints\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/\n- key: \"key\"\noperator: \"Equal|Exists\"\nvalue: \"value\"\neffect: \"NoSchedule|PreferNoSchedule|NoExecute(1.6 only)\""
@@ -8542,9 +8545,6 @@
       ],
       "description": "Supports \"ClientIP\" and \"None\". Used to maintain session affinity. Enable client IP based session affinity. Must be ClientIP or None. Defaults to None. More info: https://kubernetes.io/docs/concepts/services-networking/service/#virtual-ips-and-service-proxies",
       "type": "string"
-    },
-    "values/defaultBackend.resources": {
-      "description": "limits:\ncpu: 10m\nmemory: 20Mi\nrequests:\ncpu: 10m\nmemory: 20Mi"
     },
     "values/defaultBackend/anyOf/integer:int32;how-often-in-seconds+null:int32;how-often-in-seconds+4more": {
       "anyOf": [
@@ -22134,198 +22134,192 @@
           "description": "Will add custom headers before sending response traffic to the client according to: https://kubernetes.github.io/ingress-nginx/user-guide/nginx-configuration/configmap/#add-headers"
         },
         "admissionWebhooks": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {
+              "description": "ignore-check.kube-linter.io/no-read-only-rootfs: \"This deployment needs write access to root filesystem\"."
             },
-            {
+            "certManager": {
+              "additionalProperties": {},
+              "description": "Use certmanager to generate webhook certs",
+              "properties": {
+                "admissionCert": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "duration": {
+                      "description": "default to be 1y"
+                    },
+                    "revisionHistoryLimit": {
+                      "description": "Revision history limit of the webhook certificate.\nRef.: https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec"
+                    }
+                  }
+                },
+                "enabled": {},
+                "issuerRef": {},
+                "rootCert": {
+                  "additionalProperties": {},
+                  "description": "self-signed root certificate",
+                  "properties": {
+                    "duration": {
+                      "description": "default to be 5y"
+                    },
+                    "revisionHistoryLimit": {
+                      "description": "Revision history limit of the root certificate.\nRef.: https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec"
+                    }
+                  }
+                }
+              }
+            },
+            "certificate": {},
+            "createSecretJob": {
               "additionalProperties": {},
               "properties": {
-                "annotations": {
-                  "description": "ignore-check.kube-linter.io/no-read-only-rootfs: \"This deployment needs write access to root filesystem\"."
-                },
-                "certManager": {
-                  "additionalProperties": {},
-                  "description": "Use certmanager to generate webhook certs",
-                  "properties": {
-                    "admissionCert": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "duration": {
-                          "description": "default to be 1y"
-                        },
-                        "revisionHistoryLimit": {
-                          "description": "Revision history limit of the webhook certificate.\nRef.: https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec"
-                        }
-                      }
-                    },
-                    "enabled": {},
-                    "issuerRef": {},
-                    "rootCert": {
-                      "additionalProperties": {},
-                      "description": "self-signed root certificate",
-                      "properties": {
-                        "duration": {
-                          "description": "default to be 5y"
-                        },
-                        "revisionHistoryLimit": {
-                          "description": "Revision history limit of the root certificate.\nRef.: https://cert-manager.io/docs/reference/api-docs/#cert-manager.io/v1.CertificateSpec"
-                        }
-                      }
-                    }
-                  }
-                },
-                "certificate": {},
-                "createSecretJob": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "activeDeadlineSeconds": {
-                      "$ref": "#/$defs/values~1controller.admissionWebhooks~1keywords~1description"
-                    },
-                    "name": {},
-                    "resources": {
-                      "$ref": "#/$defs/values~1defaultBackend.resources"
-                    },
-                    "securityContext": {
-                      "description": "Security context for secret creation containers"
-                    },
-                    "volumeMounts": {
-                      "description": "Volume mounts for secret creation containers\n- name: certs\nmountPath: /etc/webhook/certs\nreadOnly: true"
-                    },
-                    "volumes": {
-                      "description": "Volumes for secret creation pod"
-                    }
-                  }
-                },
-                "enabled": {
-                  "description": "Additional annotations to the admission webhooks.\nThese annotations will be added to the ValidatingWebhookConfiguration and\nthe Jobs Spec of the admission webhooks."
-                },
-                "extraEnvs": {
-                  "$ref": "#/$defs/values~1controller.extraEnvs"
-                },
-                "failurePolicy": {
-                  "description": "Admission Webhook failure policy to use"
-                },
-                "key": {},
-                "labels": {
-                  "description": "Labels to be added to admission webhooks"
+                "activeDeadlineSeconds": {
+                  "$ref": "#/$defs/values~1controller.admissionWebhooks.createSecretJob.activeDeadlineSeconds"
                 },
                 "name": {},
-                "namespaceSelector": {},
-                "objectSelector": {},
-                "patch": {
-                  "additionalProperties": {},
-                  "description": "- name: certs\nsecret:\nsecretName: my-webhook-secret",
-                  "properties": {
-                    "enabled": {},
-                    "image": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "digest": {},
-                        "image": {
-                          "description": "registry: registry.k8s.io"
-                        },
-                        "pullPolicy": {},
-                        "registry": {},
-                        "repository": {},
-                        "tag": {
-                          "$ref": "#/$defs/values~1controller.image.tag"
-                        }
-                      }
-                    },
-                    "labels": {
-                      "description": "Labels to be added to patch job resources"
-                    },
-                    "networkPolicy": {
-                      "additionalProperties": {},
-                      "description": "NetworkPolicy for webhook patch",
-                      "properties": {
-                        "enabled": {
-                          "$ref": "#/$defs/values~1controller.networkPolicy.enabled"
-                        }
-                      }
-                    },
-                    "nodeSelector": {},
-                    "podAnnotations": {},
-                    "priorityClassName": {
-                      "description": "Provide a priority class name to the webhook patching job"
-                    },
-                    "rbac": {
-                      "additionalProperties": {},
-                      "description": "Admission webhook patch job RBAC",
-                      "properties": {
-                        "create": {
-                          "description": "Create RBAC or not"
-                        }
-                      }
-                    },
-                    "runtimeClassName": {
-                      "$ref": "#/$defs/values~1controller.runtimeClassName"
-                    },
-                    "securityContext": {
-                      "description": "Security context for secret creation & webhook patch pods"
-                    },
-                    "serviceAccount": {
-                      "additionalProperties": {},
-                      "description": "Admission webhook patch job service account",
-                      "properties": {
-                        "automountServiceAccountToken": {
-                          "description": "Auto-mount service account token or not"
-                        },
-                        "create": {
-                          "description": "Create a service account or not"
-                        },
-                        "name": {
-                          "description": "Custom service account name"
-                        }
-                      }
-                    },
-                    "tolerations": {}
-                  }
+                "resources": {
+                  "$ref": "#/$defs/values~1controller.admissionWebhooks.createSecretJob.resources"
                 },
-                "patchWebhookJob": {
+                "securityContext": {
+                  "description": "Security context for secret creation containers"
+                },
+                "volumeMounts": {
+                  "description": "Volume mounts for secret creation containers\n- name: certs\nmountPath: /etc/webhook/certs\nreadOnly: true"
+                },
+                "volumes": {
+                  "description": "Volumes for secret creation pod"
+                }
+              }
+            },
+            "enabled": {
+              "description": "Additional annotations to the admission webhooks.\nThese annotations will be added to the ValidatingWebhookConfiguration and\nthe Jobs Spec of the admission webhooks."
+            },
+            "extraEnvs": {
+              "$ref": "#/$defs/values~1controller.admissionWebhooks.extraEnvs"
+            },
+            "failurePolicy": {
+              "description": "Admission Webhook failure policy to use"
+            },
+            "key": {},
+            "labels": {
+              "description": "Labels to be added to admission webhooks"
+            },
+            "name": {},
+            "namespaceSelector": {},
+            "objectSelector": {},
+            "patch": {
+              "additionalProperties": {},
+              "description": "- name: certs\nsecret:\nsecretName: my-webhook-secret",
+              "properties": {
+                "enabled": {},
+                "image": {
                   "additionalProperties": {},
-                  "description": "- name: certs\nsecret:\nsecretName: my-webhook-secret",
                   "properties": {
-                    "activeDeadlineSeconds": {
-                      "$ref": "#/$defs/values~1controller.admissionWebhooks~1keywords~1description"
+                    "digest": {},
+                    "image": {
+                      "description": "registry: registry.k8s.io"
                     },
-                    "name": {},
-                    "resources": {},
-                    "securityContext": {
-                      "description": "Security context for webhook patch containers"
-                    },
-                    "volumeMounts": {
-                      "description": "Volume mounts for webhook patch containers\n- name: certs\nmountPath: /etc/webhook/certs\nreadOnly: true"
-                    },
-                    "volumes": {
-                      "description": "Volumes for webhook patch pod"
+                    "pullPolicy": {},
+                    "registry": {},
+                    "repository": {},
+                    "tag": {
+                      "$ref": "#/$defs/values~1controller.admissionWebhooks.patch.image.tag"
                     }
                   }
                 },
-                "port": {
-                  "description": "timeoutSeconds: 10"
+                "labels": {
+                  "description": "Labels to be added to patch job resources"
                 },
-                "service": {
+                "networkPolicy": {
                   "additionalProperties": {},
+                  "description": "NetworkPolicy for webhook patch",
                   "properties": {
-                    "annotations": {},
-                    "clusterIP": {},
-                    "externalIPs": {
-                      "description": "clusterIP: \"\""
-                    },
-                    "loadBalancerIP": {},
-                    "loadBalancerSourceRanges": {
-                      "description": "loadBalancerIP: \"\""
-                    },
-                    "servicePort": {},
-                    "type": {}
+                    "enabled": {
+                      "$ref": "#/$defs/values~1controller.admissionWebhooks.patch.networkPolicy.enabled"
+                    }
                   }
                 },
-                "timeoutSeconds": {}
+                "nodeSelector": {},
+                "podAnnotations": {},
+                "priorityClassName": {
+                  "description": "Provide a priority class name to the webhook patching job"
+                },
+                "rbac": {
+                  "additionalProperties": {},
+                  "description": "Admission webhook patch job RBAC",
+                  "properties": {
+                    "create": {
+                      "description": "Create RBAC or not"
+                    }
+                  }
+                },
+                "runtimeClassName": {
+                  "$ref": "#/$defs/values~1controller.admissionWebhooks.patch.runtimeClassName"
+                },
+                "securityContext": {
+                  "description": "Security context for secret creation & webhook patch pods"
+                },
+                "serviceAccount": {
+                  "additionalProperties": {},
+                  "description": "Admission webhook patch job service account",
+                  "properties": {
+                    "automountServiceAccountToken": {
+                      "description": "Auto-mount service account token or not"
+                    },
+                    "create": {
+                      "description": "Create a service account or not"
+                    },
+                    "name": {
+                      "description": "Custom service account name"
+                    }
+                  }
+                },
+                "tolerations": {}
               }
-            }
-          ]
+            },
+            "patchWebhookJob": {
+              "additionalProperties": {},
+              "description": "- name: certs\nsecret:\nsecretName: my-webhook-secret",
+              "properties": {
+                "activeDeadlineSeconds": {
+                  "$ref": "#/$defs/values~1controller.admissionWebhooks.createSecretJob.activeDeadlineSeconds"
+                },
+                "name": {},
+                "resources": {},
+                "securityContext": {
+                  "description": "Security context for webhook patch containers"
+                },
+                "volumeMounts": {
+                  "description": "Volume mounts for webhook patch containers\n- name: certs\nmountPath: /etc/webhook/certs\nreadOnly: true"
+                },
+                "volumes": {
+                  "description": "Volumes for webhook patch pod"
+                }
+              }
+            },
+            "port": {
+              "description": "timeoutSeconds: 10"
+            },
+            "service": {
+              "additionalProperties": {},
+              "properties": {
+                "annotations": {},
+                "clusterIP": {},
+                "externalIPs": {
+                  "description": "clusterIP: \"\""
+                },
+                "loadBalancerIP": {},
+                "loadBalancerSourceRanges": {
+                  "description": "loadBalancerIP: \"\""
+                },
+                "servicePort": {},
+                "type": {}
+              }
+            },
+            "timeoutSeconds": {}
+          },
+          "type": "object"
         },
         "affinity": {
           "description": "Affinity and anti-affinity rules for server scheduling to nodes\nRef: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity\nAn example of preferred pod anti-affinity, weight is in the range 1-100\npodAntiAffinity:\npreferredDuringSchedulingIgnoredDuringExecution:\n- weight: 100\npodAffinityTerm:\nlabelSelector:\nmatchExpressions:\n- key: app.kubernetes.io/name\noperator: In\nvalues:\n- '{{ include \"ingress-nginx.name\" . }}'\n- key: app.kubernetes.io/instance\noperator: In\nvalues:\n- '{{ .Release.Name }}'\n- key: app.kubernetes.io/component\noperator: In\nvalues:\n- controller\ntopologyKey: kubernetes.io/hostname"
@@ -22431,7 +22425,7 @@
           "description": "Additional containers to be added to the controller pod.\nSee https://github.com/lemonldap-ng-controller/lemonldap-ng-controller as example.\n- name: my-sidecar\nimage: nginx:latest\n- name: lemonldap-ng-controller\nimage: lemonldapng/lemonldap-ng-controller:0.2.0\nargs:\n- /lemonldap-ng-controller\n- --alsologtostderr\n- --configmap=$(POD_NAMESPACE)/lemonldap-ng-configuration\nenv:\n- name: POD_NAME\nvalueFrom:\nfieldRef:\nfieldPath: metadata.name\n- name: POD_NAMESPACE\nvalueFrom:\nfieldRef:\nfieldPath: metadata.namespace\nvolumeMounts:\n- name: copy-portal-skins\nmountPath: /srv/var/lib/lemonldap-ng/portal/skins"
         },
         "extraEnvs": {
-          "$ref": "#/$defs/values~1controller.extraEnvs"
+          "$ref": "#/$defs/values~1controller.admissionWebhooks.extraEnvs"
         },
         "extraInitContainers": {
           "description": "Containers, which are run before the app containers are started. Values may contain Helm templates.\n- name: init-myservice\nimage: busybox\ncommand: ['sh', '-c', 'until nslookup myservice; do echo waiting for myservice; sleep 2; done;']\n- name: init-dynamic\nimage: busybox\ncommand:\n- sh\n- -c\n- echo \"Release={{ .Release.Name }} Namespace={{ .Release.Namespace }}\""
@@ -22509,7 +22503,7 @@
             },
             "seccompProfile": {},
             "tag": {
-              "$ref": "#/$defs/values~1controller.image.tag"
+              "$ref": "#/$defs/values~1controller.admissionWebhooks.patch.image.tag"
             }
           }
         },
@@ -22648,105 +22642,99 @@
           "description": "Maxmind license key to download GeoLite2 Databases.\nhttps://blog.maxmind.com/2019/12/significant-changes-to-accessing-and-using-geolite2-databases/"
         },
         "metrics": {
-          "allOf": [
-            {
+          "additionalProperties": {},
+          "description": "issuerRef:\nname: \"issuer\"\nkind: \"ClusterIssuer\"",
+          "properties": {
+            "enabled": {
+              "description": "if this port is changed, change healthz-port: in extraArgs: accordingly"
+            },
+            "port": {},
+            "portName": {},
+            "prometheusRule": {
               "additionalProperties": {},
               "properties": {
-                "enabled": {
-                  "description": "if this port is changed, change healthz-port: in extraArgs: accordingly"
+                "additionalLabels": {},
+                "annotations": {
+                  "description": "Annotations to be added to the PrometheusRule."
                 },
-                "port": {},
-                "portName": {},
-                "prometheusRule": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "additionalLabels": {},
-                    "annotations": {
-                      "description": "Annotations to be added to the PrometheusRule."
-                    },
-                    "enabled": {},
-                    "namespace": {},
-                    "rules": {
-                      "description": "namespace: \"\"\nThese are just examples rules, please adapt them to your needs\n- alert: NGINXConfigFailed\nexpr: count(nginx_ingress_controller_config_last_reload_successful == 0) > 0\nfor: 1s\nlabels:\nseverity: critical\nannotations:\ndescription: bad ingress config - nginx config test failed\nsummary: uninstall the latest ingress changes to allow config reloads to resume\nBy default a fake self-signed certificate is generated as default and\nit is fine if it expires. If `--default-ssl-certificate` flag is used\nand a valid certificate passed please do not filter for `host` label!\n(i.e. delete `{host!=\"_\"}` so also the default SSL certificate is\nchecked for expiration)\n- alert: NGINXCertificateExpiry\nexpr: (avg(nginx_ingress_controller_ssl_expire_time_seconds{host!=\"_\"}) by (host) - time()) < 604800\nfor: 1s\nlabels:\nseverity: critical\nannotations:\ndescription: ssl certificate(s) will expire in less then a week\nsummary: renew expiring certificates to avoid downtime\n- alert: NGINXTooMany500s\nexpr: 100 * ( sum( nginx_ingress_controller_requests{status=~\"5.+\"} ) / sum(nginx_ingress_controller_requests) ) > 5\nfor: 1m\nlabels:\nseverity: warning\nannotations:\ndescription: Too many 5XXs\nsummary: More than 5% of all requests returned 5XX, this requires your attention\n- alert: NGINXTooMany400s\nexpr: 100 * ( sum( nginx_ingress_controller_requests{status=~\"4.+\"} ) / sum(nginx_ingress_controller_requests) ) > 5\nfor: 1m\nlabels:\nseverity: warning\nannotations:\ndescription: Too many 4XXs\nsummary: More than 5% of all requests returned 4XX, this requires your attention"
-                    }
-                  }
-                },
-                "service": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "annotations": {
-                      "description": "prometheus.io/scrape: \"true\"\nprometheus.io/port: \"10254\""
-                    },
-                    "clusterIP": {},
-                    "enabled": {
-                      "description": "Enable the metrics service or not."
-                    },
-                    "externalIPs": {
-                      "description": "List of IP addresses at which the stats-exporter service is available\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips"
-                    },
-                    "externalTrafficPolicy": {},
-                    "labels": {
-                      "description": "Labels to be added to the metrics service resource\nclusterIP: \"\""
-                    },
-                    "loadBalancerIP": {},
-                    "loadBalancerSourceRanges": {
-                      "description": "loadBalancerIP: \"\""
-                    },
-                    "nodePort": {},
-                    "servicePort": {},
-                    "type": {}
-                  }
-                },
-                "serviceMonitor": {
-                  "additionalProperties": {},
-                  "description": "externalTrafficPolicy: \"\"\nnodePort: \"\"",
-                  "properties": {
-                    "additionalLabels": {},
-                    "annotations": {
-                      "description": "Annotations to be added to the ServiceMonitor."
-                    },
-                    "enabled": {},
-                    "honorLabels": {},
-                    "jobLabel": {},
-                    "labelLimit": {
-                      "description": "Per-scrape limit on number of labels that will be accepted for a sample."
-                    },
-                    "labelNameLengthLimit": {
-                      "description": "Per-scrape limit on length of labels name that will be accepted for a sample."
-                    },
-                    "labelValueLengthLimit": {
-                      "description": "Per-scrape limit on length of labels value that will be accepted for a sample."
-                    },
-                    "metricRelabelings": {},
-                    "namespace": {
-                      "description": "The label to use to retrieve the job name from.\njobLabel: \"app.kubernetes.io/name\""
-                    },
-                    "namespaceSelector": {},
-                    "relabelings": {},
-                    "sampleLimit": {
-                      "description": "Defines a per-scrape limit on the number of scraped samples that will be accepted."
-                    },
-                    "scrapeInterval": {
-                      "description": "Default: scrape .Release.Namespace or namespaceOverride only\nTo scrape all, use the following:\nnamespaceSelector:\nany: true"
-                    },
-                    "scrapeTimeout": {
-                      "description": "Timeout after which the scrape is ended. Not being set if empty and therefore defaults to the global Prometheus scrape timeout."
-                    },
-                    "targetLabels": {
-                      "description": "honorLabels: true"
-                    },
-                    "targetLimit": {
-                      "description": "Defines a limit on the number of scraped targets that will be accepted."
-                    }
-                  }
+                "enabled": {},
+                "namespace": {},
+                "rules": {
+                  "description": "namespace: \"\"\nThese are just examples rules, please adapt them to your needs\n- alert: NGINXConfigFailed\nexpr: count(nginx_ingress_controller_config_last_reload_successful == 0) > 0\nfor: 1s\nlabels:\nseverity: critical\nannotations:\ndescription: bad ingress config - nginx config test failed\nsummary: uninstall the latest ingress changes to allow config reloads to resume\nBy default a fake self-signed certificate is generated as default and\nit is fine if it expires. If `--default-ssl-certificate` flag is used\nand a valid certificate passed please do not filter for `host` label!\n(i.e. delete `{host!=\"_\"}` so also the default SSL certificate is\nchecked for expiration)\n- alert: NGINXCertificateExpiry\nexpr: (avg(nginx_ingress_controller_ssl_expire_time_seconds{host!=\"_\"}) by (host) - time()) < 604800\nfor: 1s\nlabels:\nseverity: critical\nannotations:\ndescription: ssl certificate(s) will expire in less then a week\nsummary: renew expiring certificates to avoid downtime\n- alert: NGINXTooMany500s\nexpr: 100 * ( sum( nginx_ingress_controller_requests{status=~\"5.+\"} ) / sum(nginx_ingress_controller_requests) ) > 5\nfor: 1m\nlabels:\nseverity: warning\nannotations:\ndescription: Too many 5XXs\nsummary: More than 5% of all requests returned 5XX, this requires your attention\n- alert: NGINXTooMany400s\nexpr: 100 * ( sum( nginx_ingress_controller_requests{status=~\"4.+\"} ) / sum(nginx_ingress_controller_requests) ) > 5\nfor: 1m\nlabels:\nseverity: warning\nannotations:\ndescription: Too many 4XXs\nsummary: More than 5% of all requests returned 4XX, this requires your attention"
                 }
               }
             },
-            {
-              "type": "object"
+            "service": {
+              "additionalProperties": {},
+              "properties": {
+                "annotations": {
+                  "description": "prometheus.io/scrape: \"true\"\nprometheus.io/port: \"10254\""
+                },
+                "clusterIP": {},
+                "enabled": {
+                  "description": "Enable the metrics service or not."
+                },
+                "externalIPs": {
+                  "description": "List of IP addresses at which the stats-exporter service is available\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips"
+                },
+                "externalTrafficPolicy": {},
+                "labels": {
+                  "description": "Labels to be added to the metrics service resource\nclusterIP: \"\""
+                },
+                "loadBalancerIP": {},
+                "loadBalancerSourceRanges": {
+                  "description": "loadBalancerIP: \"\""
+                },
+                "nodePort": {},
+                "servicePort": {},
+                "type": {}
+              }
+            },
+            "serviceMonitor": {
+              "additionalProperties": {},
+              "description": "externalTrafficPolicy: \"\"\nnodePort: \"\"",
+              "properties": {
+                "additionalLabels": {},
+                "annotations": {
+                  "description": "Annotations to be added to the ServiceMonitor."
+                },
+                "enabled": {},
+                "honorLabels": {},
+                "jobLabel": {},
+                "labelLimit": {
+                  "description": "Per-scrape limit on number of labels that will be accepted for a sample."
+                },
+                "labelNameLengthLimit": {
+                  "description": "Per-scrape limit on length of labels name that will be accepted for a sample."
+                },
+                "labelValueLengthLimit": {
+                  "description": "Per-scrape limit on length of labels value that will be accepted for a sample."
+                },
+                "metricRelabelings": {},
+                "namespace": {
+                  "description": "The label to use to retrieve the job name from.\njobLabel: \"app.kubernetes.io/name\""
+                },
+                "namespaceSelector": {},
+                "relabelings": {},
+                "sampleLimit": {
+                  "description": "Defines a per-scrape limit on the number of scraped samples that will be accepted."
+                },
+                "scrapeInterval": {
+                  "description": "Default: scrape .Release.Namespace or namespaceOverride only\nTo scrape all, use the following:\nnamespaceSelector:\nany: true"
+                },
+                "scrapeTimeout": {
+                  "description": "Timeout after which the scrape is ended. Not being set if empty and therefore defaults to the global Prometheus scrape timeout."
+                },
+                "targetLabels": {
+                  "description": "honorLabels: true"
+                },
+                "targetLimit": {
+                  "description": "Defines a limit on the number of scraped targets that will be accepted."
+                }
+              }
             }
-          ],
-          "description": "issuerRef:\nname: \"issuer\"\nkind: \"ClusterIssuer\""
+          },
+          "type": "object"
         },
         "minAvailable": {
           "$ref": "#/$defs/values~1controller.minAvailable"
@@ -22760,7 +22748,7 @@
           "description": "NetworkPolicy for controller component.",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/values~1controller.networkPolicy.enabled"
+              "$ref": "#/$defs/values~1controller.admissionWebhooks.patch.networkPolicy.enabled"
             }
           },
           "type": "object"
@@ -22824,7 +22812,7 @@
           "description": "Define requests resources to avoid probe issues due to CPU utilization in busy nodes\nref: https://github.com/kubernetes/ingress-nginx/issues/4735#issuecomment-551204903\nIdeally, there should be no limits.\nhttps://engineering.indeedblog.com/blog/2019/12/cpu-throttling-regression-fix/"
         },
         "runtimeClassName": {
-          "$ref": "#/$defs/values~1controller.runtimeClassName"
+          "$ref": "#/$defs/values~1controller.admissionWebhooks.patch.runtimeClassName"
         },
         "scope": {
           "additionalProperties": {},
@@ -22842,191 +22830,185 @@
           }
         },
         "service": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "allocateLoadBalancerNodePorts": {},
+            "annotations": {
+              "description": "Annotations to be added to the external controller service. See `controller.service.internal.annotations` for annotations to be added to the internal controller service."
             },
-            {
+            "appProtocol": {
+              "description": "Declare the app protocol of the external HTTP and HTTPS listeners or not. Supersedes provider-specific annotations for declaring the backend protocol.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#application-protocol"
+            },
+            "clusterIP": {
+              "description": "Pre-defined cluster internal IP address of the external controller service. Take care of collisions with existing services.\nThis value is immutable. Set once, it can not be changed without deleting and re-creating the service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#choosing-your-own-ip-address"
+            },
+            "clusterIPs": {
+              "description": "Pre-defined cluster internal IP addresses of the external controller service. Take care of collisions with existing services.\nThis value is immutable. Set once, it can not be changed without deleting and re-creating the service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#choosing-your-own-ip-address"
+            },
+            "enableHttp": {
+              "description": "Enable the HTTP listener on both controller services or not."
+            },
+            "enableHttps": {
+              "description": "Enable the HTTPS listener on both controller services or not."
+            },
+            "enabled": {
+              "description": "Enable controller services or not. This does not influence the creation of either the admission webhook or the metrics service."
+            },
+            "external": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "description": "Enable the external controller service or not. Useful for internal-only deployments."
+                },
+                "labels": {
+                  "description": "Labels to be added to the external controller service."
+                }
+              }
+            },
+            "externalIPs": {
+              "description": "List of node IP addresses at which the external controller service is available.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips"
+            },
+            "externalTrafficPolicy": {
+              "description": "External traffic policy of the external controller service. Set to \"Local\" to preserve source IP on providers supporting it.\nRef: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip"
+            },
+            "healthCheckNodePort": {},
+            "internal": {
               "additionalProperties": {},
               "properties": {
                 "allocateLoadBalancerNodePorts": {},
                 "annotations": {
-                  "description": "Annotations to be added to the external controller service. See `controller.service.internal.annotations` for annotations to be added to the internal controller service."
+                  "description": "Annotations to be added to the internal controller service. Mandatory for the internal controller service to be created. Varies with the cloud service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer"
                 },
                 "appProtocol": {
-                  "description": "Declare the app protocol of the external HTTP and HTTPS listeners or not. Supersedes provider-specific annotations for declaring the backend protocol.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#application-protocol"
+                  "description": "Declare the app protocol of the internal HTTP and HTTPS listeners or not. Supersedes provider-specific annotations for declaring the backend protocol.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#application-protocol"
                 },
                 "clusterIP": {
-                  "description": "Pre-defined cluster internal IP address of the external controller service. Take care of collisions with existing services.\nThis value is immutable. Set once, it can not be changed without deleting and re-creating the service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#choosing-your-own-ip-address"
+                  "description": "Pre-defined cluster internal IP address of the internal controller service. Take care of collisions with existing services.\nThis value is immutable. Set once, it can not be changed without deleting and re-creating the service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#choosing-your-own-ip-address"
                 },
                 "clusterIPs": {
-                  "description": "Pre-defined cluster internal IP addresses of the external controller service. Take care of collisions with existing services.\nThis value is immutable. Set once, it can not be changed without deleting and re-creating the service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#choosing-your-own-ip-address"
-                },
-                "enableHttp": {
-                  "description": "Enable the HTTP listener on both controller services or not."
-                },
-                "enableHttps": {
-                  "description": "Enable the HTTPS listener on both controller services or not."
+                  "description": "Pre-defined cluster internal IP addresses of the internal controller service. Take care of collisions with existing services.\nThis value is immutable. Set once, it can not be changed without deleting and re-creating the service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#choosing-your-own-ip-address"
                 },
                 "enabled": {
-                  "description": "Enable controller services or not. This does not influence the creation of either the admission webhook or the metrics service."
-                },
-                "external": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "description": "Enable the external controller service or not. Useful for internal-only deployments."
-                    },
-                    "labels": {
-                      "description": "Labels to be added to the external controller service."
-                    }
-                  }
+                  "description": "Enable the internal controller service or not. Remember to configure `controller.service.internal.annotations` when enabling this."
                 },
                 "externalIPs": {
-                  "description": "List of node IP addresses at which the external controller service is available.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips"
+                  "description": "List of node IP addresses at which the internal controller service is available.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips"
                 },
                 "externalTrafficPolicy": {
-                  "description": "External traffic policy of the external controller service. Set to \"Local\" to preserve source IP on providers supporting it.\nRef: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip"
+                  "description": "External traffic policy of the internal controller service. Set to \"Local\" to preserve source IP on providers supporting it.\nRef: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip"
                 },
                 "healthCheckNodePort": {},
-                "internal": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "allocateLoadBalancerNodePorts": {},
-                    "annotations": {
-                      "description": "Annotations to be added to the internal controller service. Mandatory for the internal controller service to be created. Varies with the cloud service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#internal-load-balancer"
-                    },
-                    "appProtocol": {
-                      "description": "Declare the app protocol of the internal HTTP and HTTPS listeners or not. Supersedes provider-specific annotations for declaring the backend protocol.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#application-protocol"
-                    },
-                    "clusterIP": {
-                      "description": "Pre-defined cluster internal IP address of the internal controller service. Take care of collisions with existing services.\nThis value is immutable. Set once, it can not be changed without deleting and re-creating the service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#choosing-your-own-ip-address"
-                    },
-                    "clusterIPs": {
-                      "description": "Pre-defined cluster internal IP addresses of the internal controller service. Take care of collisions with existing services.\nThis value is immutable. Set once, it can not be changed without deleting and re-creating the service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#choosing-your-own-ip-address"
-                    },
-                    "enabled": {
-                      "description": "Enable the internal controller service or not. Remember to configure `controller.service.internal.annotations` when enabling this."
-                    },
-                    "externalIPs": {
-                      "description": "List of node IP addresses at which the internal controller service is available.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips"
-                    },
-                    "externalTrafficPolicy": {
-                      "description": "External traffic policy of the internal controller service. Set to \"Local\" to preserve source IP on providers supporting it.\nRef: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip"
-                    },
-                    "healthCheckNodePort": {},
-                    "ipFamilies": {
-                      "description": "List of IP families (e.g. IPv4, IPv6) assigned to the internal controller service. This field is usually assigned automatically based on cluster configuration and the `ipFamilyPolicy` field.\nRef: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services"
-                    },
-                    "ipFamilyPolicy": {
-                      "description": "Represents the dual-stack capabilities of the internal controller service. Possible values are SingleStack, PreferDualStack or RequireDualStack.\nFields `ipFamilies` and `clusterIP` depend on the value of this field.\nRef: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services"
-                    },
-                    "labels": {
-                      "description": "Labels to be added to the internal controller service."
-                    },
-                    "loadBalancerClass": {
-                      "description": "Load balancer class of the internal controller service. Used by cloud providers to select a load balancer implementation other than the cloud provider default.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#load-balancer-class"
-                    },
-                    "loadBalancerIP": {
-                      "description": "Deprecated: Pre-defined IP address of the internal controller service. Used by cloud providers to connect the resulting load balancer service to a pre-existing static IP.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer"
-                    },
-                    "loadBalancerSourceRanges": {
-                      "description": "Restrict access to the internal controller service. Values must be CIDRs. Allows any source address by default."
-                    },
-                    "nodePorts": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "http": {
-                          "description": "Node port allocated for the internal HTTP listener. If left empty, the service controller allocates one from the configured node port range."
-                        },
-                        "https": {
-                          "description": "Node port allocated for the internal HTTPS listener. If left empty, the service controller allocates one from the configured node port range."
-                        }
-                      }
-                    },
-                    "ports": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "http": {},
-                        "https": {}
-                      }
-                    },
-                    "sessionAffinity": {
-                      "description": "Session affinity of the internal controller service. Must be either \"None\" or \"ClientIP\" if set. Defaults to \"None\".\nRef: https://kubernetes.io/docs/reference/networking/virtual-ips/#session-affinity"
-                    },
-                    "targetPorts": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "http": {},
-                        "https": {}
-                      }
-                    },
-                    "type": {
-                      "description": "Type of the internal controller service.\nDefaults to the value of `controller.service.type`.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types"
-                    }
-                  }
-                },
                 "ipFamilies": {
-                  "description": "List of IP families (e.g. IPv4, IPv6) assigned to the external controller service. This field is usually assigned automatically based on cluster configuration and the `ipFamilyPolicy` field.\nRef: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services"
+                  "description": "List of IP families (e.g. IPv4, IPv6) assigned to the internal controller service. This field is usually assigned automatically based on cluster configuration and the `ipFamilyPolicy` field.\nRef: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services"
                 },
                 "ipFamilyPolicy": {
-                  "description": "Represents the dual-stack capabilities of the external controller service. Possible values are SingleStack, PreferDualStack or RequireDualStack.\nFields `ipFamilies` and `clusterIP` depend on the value of this field.\nRef: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services"
+                  "description": "Represents the dual-stack capabilities of the internal controller service. Possible values are SingleStack, PreferDualStack or RequireDualStack.\nFields `ipFamilies` and `clusterIP` depend on the value of this field.\nRef: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services"
                 },
                 "labels": {
-                  "description": "Labels to be added to both controller services."
+                  "description": "Labels to be added to the internal controller service."
                 },
                 "loadBalancerClass": {
-                  "description": "Load balancer class of the external controller service. Used by cloud providers to select a load balancer implementation other than the cloud provider default.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#load-balancer-class"
+                  "description": "Load balancer class of the internal controller service. Used by cloud providers to select a load balancer implementation other than the cloud provider default.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#load-balancer-class"
                 },
                 "loadBalancerIP": {
-                  "description": "Deprecated: Pre-defined IP address of the external controller service. Used by cloud providers to connect the resulting load balancer service to a pre-existing static IP.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer"
+                  "description": "Deprecated: Pre-defined IP address of the internal controller service. Used by cloud providers to connect the resulting load balancer service to a pre-existing static IP.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer"
                 },
                 "loadBalancerSourceRanges": {
-                  "description": "Restrict access to the external controller service. Values must be CIDRs. Allows any source address by default."
+                  "description": "Restrict access to the internal controller service. Values must be CIDRs. Allows any source address by default."
                 },
                 "nodePorts": {
                   "additionalProperties": {},
                   "properties": {
                     "http": {
-                      "description": "Node port allocated for the external HTTP listener. If left empty, the service controller allocates one from the configured node port range."
+                      "description": "Node port allocated for the internal HTTP listener. If left empty, the service controller allocates one from the configured node port range."
                     },
                     "https": {
-                      "description": "Node port allocated for the external HTTPS listener. If left empty, the service controller allocates one from the configured node port range."
+                      "description": "Node port allocated for the internal HTTPS listener. If left empty, the service controller allocates one from the configured node port range."
                     }
                   }
                 },
                 "ports": {
                   "additionalProperties": {},
                   "properties": {
-                    "http": {
-                      "description": "Port the external HTTP listener is published with."
-                    },
-                    "https": {
-                      "description": "Port the external HTTPS listener is published with."
-                    }
+                    "http": {},
+                    "https": {}
                   }
                 },
                 "sessionAffinity": {
-                  "description": "Session affinity of the external controller service. Must be either \"None\" or \"ClientIP\" if set. Defaults to \"None\".\nRef: https://kubernetes.io/docs/reference/networking/virtual-ips/#session-affinity"
+                  "description": "Session affinity of the internal controller service. Must be either \"None\" or \"ClientIP\" if set. Defaults to \"None\".\nRef: https://kubernetes.io/docs/reference/networking/virtual-ips/#session-affinity"
                 },
                 "targetPorts": {
                   "additionalProperties": {},
                   "properties": {
-                    "http": {
-                      "description": "Port of the ingress controller the external HTTP listener is mapped to."
-                    },
-                    "https": {
-                      "description": "Port of the ingress controller the external HTTPS listener is mapped to."
-                    }
+                    "http": {},
+                    "https": {}
                   }
                 },
                 "type": {
-                  "description": "Type of the external controller service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
-                  "type": "string"
+                  "description": "Type of the internal controller service.\nDefaults to the value of `controller.service.type`.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types"
                 }
               }
+            },
+            "ipFamilies": {
+              "description": "List of IP families (e.g. IPv4, IPv6) assigned to the external controller service. This field is usually assigned automatically based on cluster configuration and the `ipFamilyPolicy` field.\nRef: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services"
+            },
+            "ipFamilyPolicy": {
+              "description": "Represents the dual-stack capabilities of the external controller service. Possible values are SingleStack, PreferDualStack or RequireDualStack.\nFields `ipFamilies` and `clusterIP` depend on the value of this field.\nRef: https://kubernetes.io/docs/concepts/services-networking/dual-stack/#services"
+            },
+            "labels": {
+              "description": "Labels to be added to both controller services."
+            },
+            "loadBalancerClass": {
+              "description": "Load balancer class of the external controller service. Used by cloud providers to select a load balancer implementation other than the cloud provider default.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#load-balancer-class"
+            },
+            "loadBalancerIP": {
+              "description": "Deprecated: Pre-defined IP address of the external controller service. Used by cloud providers to connect the resulting load balancer service to a pre-existing static IP.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#loadbalancer"
+            },
+            "loadBalancerSourceRanges": {
+              "description": "Restrict access to the external controller service. Values must be CIDRs. Allows any source address by default."
+            },
+            "nodePorts": {
+              "additionalProperties": {},
+              "properties": {
+                "http": {
+                  "description": "Node port allocated for the external HTTP listener. If left empty, the service controller allocates one from the configured node port range."
+                },
+                "https": {
+                  "description": "Node port allocated for the external HTTPS listener. If left empty, the service controller allocates one from the configured node port range."
+                }
+              }
+            },
+            "ports": {
+              "additionalProperties": {},
+              "properties": {
+                "http": {
+                  "description": "Port the external HTTP listener is published with."
+                },
+                "https": {
+                  "description": "Port the external HTTPS listener is published with."
+                }
+              }
+            },
+            "sessionAffinity": {
+              "description": "Session affinity of the external controller service. Must be either \"None\" or \"ClientIP\" if set. Defaults to \"None\".\nRef: https://kubernetes.io/docs/reference/networking/virtual-ips/#session-affinity"
+            },
+            "targetPorts": {
+              "additionalProperties": {},
+              "properties": {
+                "http": {
+                  "description": "Port of the ingress controller the external HTTP listener is mapped to."
+                },
+                "https": {
+                  "description": "Port of the ingress controller the external HTTPS listener is mapped to."
+                }
+              }
+            },
+            "type": {
+              "description": "Type of the external controller service.\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
+              "type": "string"
             }
-          ]
+          },
+          "type": "object"
         },
         "shareProcessNamespace": {
           "description": "shareProcessNamespace enables process namespace sharing within the pod.\nThis can be used for example to signal log rotation using `kill -USR1` from a sidecar."
@@ -26231,7 +26213,7 @@
             },
             "seccompProfile": {},
             "tag": {
-              "$ref": "#/$defs/values~1controller.image.tag"
+              "$ref": "#/$defs/values~1controller.admissionWebhooks.patch.image.tag"
             }
           }
         },
@@ -26262,7 +26244,7 @@
           "description": "NetworkPolicy for default backend component.",
           "properties": {
             "enabled": {
-              "$ref": "#/$defs/values~1controller.networkPolicy.enabled"
+              "$ref": "#/$defs/values~1controller.admissionWebhooks.patch.networkPolicy.enabled"
             }
           }
         },
@@ -26292,10 +26274,10 @@
         },
         "replicaCount": {},
         "resources": {
-          "$ref": "#/$defs/values~1defaultBackend.resources"
+          "$ref": "#/$defs/values~1controller.admissionWebhooks.createSecretJob.resources"
         },
         "runtimeClassName": {
-          "$ref": "#/$defs/values~1controller.runtimeClassName"
+          "$ref": "#/$defs/values~1controller.admissionWebhooks.patch.runtimeClassName"
         },
         "service": {
           "additionalProperties": {},
@@ -26417,8 +26399,7 @@
             "tag": {}
           }
         }
-      },
-      "type": "object"
+      }
     },
     "imagePullSecrets": {
       "description": "Optional array of imagePullSecrets containing private registry credentials\nRef: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\n- name: secretName"

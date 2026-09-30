@@ -57872,111 +57872,105 @@
           }
         },
         "dashboards": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "SCProvider": {
+              "description": "ENV_NAME:\nconfigMapKeyRef:\nname: configmap-name\nkey: value_key\nDo not reprocess already processed unchanged resources on k8s API reconnect.\nignoreAlreadyProcessed: true"
             },
-            {
+            "defaultFolderName": {
+              "description": "The default folder name, it will create a subfolder under the `folder` and put dashboards in there instead"
+            },
+            "enabled": {},
+            "env": {
+              "description": "Additional environment variables for the dashboards sidecar"
+            },
+            "envValueFrom": {
+              "$ref": "#/$defs/values~1sidecar.alerts.envValueFrom"
+            },
+            "extraMounts": {
+              "description": "Additional dashboards sidecar volume mounts"
+            },
+            "folder": {
+              "description": "Log level. Can be one of: DEBUG, INFO, WARN, ERROR, CRITICAL.\nlogLevel: INFO\nfolder in the pod that should hold the collected dashboards (unless `defaultFolderName` is set)"
+            },
+            "folderAnnotation": {
+              "description": "If specified, the sidecar will look for annotation with this name to create folder and put graph here.\nYou can use this parameter together with `provider.foldersFromFilesStructure`to annotate configmaps and create folder structure."
+            },
+            "ignoreAlreadyProcessed": {},
+            "initDashboards": {
+              "description": "This is needed if skipReload is true, to load any dashboards defined at startup time.\nDeploy the dashboard sidecar as an initContainer."
+            },
+            "label": {
+              "description": "label that the configmaps with dashboards are marked with (can be templated)"
+            },
+            "labelValue": {
+              "description": "value of label that the configmaps with dashboards are set to (can be templated)"
+            },
+            "logLevel": {},
+            "maxConnectRetries": {},
+            "maxReadRetries": {},
+            "maxTotalRetries": {},
+            "provider": {
               "additionalProperties": {},
+              "description": "Use native sidecar https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/\nrestartPolicy: Always\nonly applies to native sidecars\nstartupProbe:\nhttpGet:\npath: /healthz\nport: 8083\ninitialDelaySeconds: 5\nperiodSeconds: 5\nfailureThreshold: 60 # 5 minutes\nwatchServerTimeout: request to the server, asking it to cleanly close the connection after that.\ndefaults to 60sec; much higher values like 3600 seconds (1h) are feasible for non-Azure K8S\nwatchServerTimeout: 3600\nwatchClientTimeout: is a client-side timeout, configuring your local socket.\nIf you have a network outage dropping all packets with no RST/FIN,\nthis is how long your client waits before realizing & dropping the connection.\ndefaults to 66sec (sic!)\nwatchClientTimeout: 60\nprovider configuration that lets grafana manage the dashboards",
               "properties": {
-                "SCProvider": {
-                  "description": "ENV_NAME:\nconfigMapKeyRef:\nname: configmap-name\nkey: value_key\nDo not reprocess already processed unchanged resources on k8s API reconnect.\nignoreAlreadyProcessed: true"
+                "allowUiUpdates": {
+                  "description": "allow updating provisioned dashboards from the UI"
                 },
-                "defaultFolderName": {
-                  "description": "The default folder name, it will create a subfolder under the `folder` and put dashboards in there instead"
-                },
-                "enabled": {},
-                "env": {
-                  "description": "Additional environment variables for the dashboards sidecar"
-                },
-                "envValueFrom": {
-                  "$ref": "#/$defs/values~1sidecar.alerts.envValueFrom"
-                },
-                "extraMounts": {
-                  "description": "Additional dashboards sidecar volume mounts"
+                "disableDelete": {
+                  "description": "disableDelete to activate a import-only behaviour"
                 },
                 "folder": {
-                  "description": "Log level. Can be one of: DEBUG, INFO, WARN, ERROR, CRITICAL.\nlogLevel: INFO\nfolder in the pod that should hold the collected dashboards (unless `defaultFolderName` is set)"
+                  "description": "folder in which the dashboards should be imported in grafana"
                 },
-                "folderAnnotation": {
-                  "description": "If specified, the sidecar will look for annotation with this name to create folder and put graph here.\nYou can use this parameter together with `provider.foldersFromFilesStructure`to annotate configmaps and create folder structure."
+                "folderUid": {
+                  "description": "<string> folder UID. will be automatically generated if not specified"
                 },
-                "ignoreAlreadyProcessed": {},
-                "initDashboards": {
-                  "description": "This is needed if skipReload is true, to load any dashboards defined at startup time.\nDeploy the dashboard sidecar as an initContainer."
+                "foldersFromFilesStructure": {
+                  "description": "allow Grafana to replicate dashboard structure from filesystem"
                 },
-                "label": {
-                  "description": "label that the configmaps with dashboards are marked with (can be templated)"
+                "name": {
+                  "description": "name of the provider, should be unique"
                 },
-                "labelValue": {
-                  "description": "value of label that the configmaps with dashboards are set to (can be templated)"
+                "orgid": {
+                  "description": "orgid as configured in grafana"
                 },
-                "logLevel": {},
-                "maxConnectRetries": {},
-                "maxReadRetries": {},
-                "maxTotalRetries": {},
-                "provider": {
-                  "additionalProperties": {},
-                  "description": "Use native sidecar https://kubernetes.io/docs/concepts/workloads/pods/sidecar-containers/\nrestartPolicy: Always\nonly applies to native sidecars\nstartupProbe:\nhttpGet:\npath: /healthz\nport: 8083\ninitialDelaySeconds: 5\nperiodSeconds: 5\nfailureThreshold: 60 # 5 minutes\nwatchServerTimeout: request to the server, asking it to cleanly close the connection after that.\ndefaults to 60sec; much higher values like 3600 seconds (1h) are feasible for non-Azure K8S\nwatchServerTimeout: 3600\nwatchClientTimeout: is a client-side timeout, configuring your local socket.\nIf you have a network outage dropping all packets with no RST/FIN,\nthis is how long your client waits before realizing & dropping the connection.\ndefaults to 66sec (sic!)\nwatchClientTimeout: 60\nprovider configuration that lets grafana manage the dashboards",
-                  "properties": {
-                    "allowUiUpdates": {
-                      "description": "allow updating provisioned dashboards from the UI"
-                    },
-                    "disableDelete": {
-                      "description": "disableDelete to activate a import-only behaviour"
-                    },
-                    "folder": {
-                      "description": "folder in which the dashboards should be imported in grafana"
-                    },
-                    "folderUid": {
-                      "description": "<string> folder UID. will be automatically generated if not specified"
-                    },
-                    "foldersFromFilesStructure": {
-                      "description": "allow Grafana to replicate dashboard structure from filesystem"
-                    },
-                    "name": {
-                      "description": "name of the provider, should be unique"
-                    },
-                    "orgid": {
-                      "description": "orgid as configured in grafana"
-                    },
-                    "type": {
-                      "description": "type of the provider"
-                    },
-                    "updateIntervalSeconds": {}
-                  }
+                "type": {
+                  "description": "type of the provider"
                 },
-                "reloadURL": {
-                  "description": "maxTotalRetries: Total number of retries to allow for any http request.\nTakes precedence over other counts. Applies to all requests to reloadURL and k8s api requests.\nSet to 0 to fail on the first retry.\nmaxTotalRetries: 5\nmaxConnectRetries: How many connection-related errors to retry on for any http request.\nThese are errors raised before the request is sent to the remote server, which we assume has not triggered the server to process the request.\nApplies to all requests to reloadURL and k8s api requests.\nSet to 0 to fail on the first retry of this type.\nmaxConnectRetries: 10\nmaxReadRetries: How many times to retry on read errors for any http request\nThese errors are raised after the request was sent to the server, so the request may have side-effects.\nApplies to all requests to reloadURL and k8s api requests.\nSet to 0 to fail on the first retry of this type.\nmaxReadRetries: 5\nEndpoint to send request to reload alerts"
-                },
-                "resource": {
-                  "$ref": "#/$defs/values~1sidecar.alerts.resource"
-                },
-                "resourceName": {
-                  "description": "resourceName: comma separated list of resource names to be fetched/checked by this sidecar.\nper default all resources of the type defined in {{ .Values.sidecar.dashboards.resource }} will be checked.\nThis e.g. allows stricter RBAC rules which are limited to the resources meant for the sidecars.\nresourceName: \"secret/dashboards-0,configmap/dashboards-1\""
-                },
-                "restartPolicy": {},
-                "script": {
-                  "$ref": "#/$defs/values~1sidecar.alerts.script"
-                },
-                "searchNamespace": {
-                  "description": "Namespaces list. If specified, the sidecar will search for config-maps/secrets inside these namespaces.\nOtherwise the namespace in which the sidecar is running will be used.\nIt's also possible to specify ALL to search in all namespaces."
-                },
-                "sizeLimit": {
-                  "description": "Sets the size limit of the dashboard sidecar emptyDir volume"
-                },
-                "skipReload": {},
-                "startupProbe": {
-                  "$ref": "#/$defs/values~1sidecar.alerts.startupProbe"
-                },
-                "watchClientTimeout": {},
-                "watchMethod": {
-                  "$ref": "#/$defs/values~1sidecar.alerts.watchMethod"
-                },
-                "watchServerTimeout": {}
+                "updateIntervalSeconds": {}
               }
-            }
-          ]
+            },
+            "reloadURL": {
+              "description": "maxTotalRetries: Total number of retries to allow for any http request.\nTakes precedence over other counts. Applies to all requests to reloadURL and k8s api requests.\nSet to 0 to fail on the first retry.\nmaxTotalRetries: 5\nmaxConnectRetries: How many connection-related errors to retry on for any http request.\nThese are errors raised before the request is sent to the remote server, which we assume has not triggered the server to process the request.\nApplies to all requests to reloadURL and k8s api requests.\nSet to 0 to fail on the first retry of this type.\nmaxConnectRetries: 10\nmaxReadRetries: How many times to retry on read errors for any http request\nThese errors are raised after the request was sent to the server, so the request may have side-effects.\nApplies to all requests to reloadURL and k8s api requests.\nSet to 0 to fail on the first retry of this type.\nmaxReadRetries: 5\nEndpoint to send request to reload alerts"
+            },
+            "resource": {
+              "$ref": "#/$defs/values~1sidecar.alerts.resource"
+            },
+            "resourceName": {
+              "description": "resourceName: comma separated list of resource names to be fetched/checked by this sidecar.\nper default all resources of the type defined in {{ .Values.sidecar.dashboards.resource }} will be checked.\nThis e.g. allows stricter RBAC rules which are limited to the resources meant for the sidecars.\nresourceName: \"secret/dashboards-0,configmap/dashboards-1\""
+            },
+            "restartPolicy": {},
+            "script": {
+              "$ref": "#/$defs/values~1sidecar.alerts.script"
+            },
+            "searchNamespace": {
+              "description": "Namespaces list. If specified, the sidecar will search for config-maps/secrets inside these namespaces.\nOtherwise the namespace in which the sidecar is running will be used.\nIt's also possible to specify ALL to search in all namespaces."
+            },
+            "sizeLimit": {
+              "description": "Sets the size limit of the dashboard sidecar emptyDir volume"
+            },
+            "skipReload": {},
+            "startupProbe": {
+              "$ref": "#/$defs/values~1sidecar.alerts.startupProbe"
+            },
+            "watchClientTimeout": {},
+            "watchMethod": {
+              "$ref": "#/$defs/values~1sidecar.alerts.watchMethod"
+            },
+            "watchServerTimeout": {}
+          },
+          "type": "object"
         },
         "datasources": {
           "additionalProperties": {},

@@ -6812,6 +6812,7 @@
       "description": "- name: QDRANT_ALLOW_RECOVERY_MODE\nvalue: true"
     },
     "fullnameOverride": {},
+    "global": {},
     "image": {
       "additionalProperties": {},
       "allOf": [
@@ -7536,31 +7537,25 @@
       ],
       "properties": {
         "serviceMonitor": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "additionalLabels": {},
+            "authorization": {
+              "description": "Authorization to apply to the metrics endpoint for the cases when the API key(s) are configured externally\nref: https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.SafeAuthorization\nauthorization:\ntype: Bearer\ncredentials:\nname: external-secret-with-api-key\nkey: api-key"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "additionalLabels": {},
-                "authorization": {
-                  "description": "Authorization to apply to the metrics endpoint for the cases when the API key(s) are configured externally\nref: https://prometheus-operator.dev/docs/api-reference/api/#monitoring.coreos.com/v1.SafeAuthorization\nauthorization:\ntype: Bearer\ncredentials:\nname: external-secret-with-api-key\nkey: api-key"
-                },
-                "enabled": {},
-                "metricRelabelings": {
-                  "description": "MetricRelabelConfigs to apply to samples after scraping, but before ingestion.\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#relabelconfig"
-                },
-                "relabelings": {
-                  "description": "RelabelConfigs to apply to samples before scraping\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#relabelconfig"
-                },
-                "scrapeInterval": {},
-                "scrapeTimeout": {},
-                "targetPath": {},
-                "targetPort": {}
-              }
-            }
-          ]
+            "enabled": {},
+            "metricRelabelings": {
+              "description": "MetricRelabelConfigs to apply to samples after scraping, but before ingestion.\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#relabelconfig"
+            },
+            "relabelings": {
+              "description": "RelabelConfigs to apply to samples before scraping\nref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#relabelconfig"
+            },
+            "scrapeInterval": {},
+            "scrapeTimeout": {},
+            "targetPath": {},
+            "targetPort": {}
+          },
+          "type": "object"
         }
       },
       "type": "object"

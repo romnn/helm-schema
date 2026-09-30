@@ -7130,6 +7130,45 @@
         "null"
       ]
     },
+    "constrains/embedded": {
+      "properties": {
+        "embedded": {}
+      },
+      "required": [
+        "embedded"
+      ],
+      "type": "object"
+    },
+    "constrains/embedded!=false": {
+      "properties": {
+        "embedded": {
+          "not": {
+            "enum": [
+              false
+            ]
+          }
+        }
+      },
+      "required": [
+        "embedded"
+      ],
+      "type": "object"
+    },
+    "constrains/embedded!=true": {
+      "properties": {
+        "embedded": {
+          "not": {
+            "enum": [
+              true
+            ]
+          }
+        }
+      },
+      "required": [
+        "embedded"
+      ],
+      "type": "object"
+    },
     "constrains/embedded+embedded:t+embedded=null": {
       "anyOf": [
         {
@@ -7602,13 +7641,7 @@
         },
         {
           "not": {
-            "properties": {
-              "embedded": {}
-            },
-            "required": [
-              "embedded"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/constrains~1embedded"
           }
         }
       ]
@@ -7776,6 +7809,19 @@
           "$ref": "#/$defs/constrains~1provisioning.networkPolicy.enabled:t"
         }
       ]
+    },
+    "constrains/embedded=true": {
+      "properties": {
+        "embedded": {
+          "enum": [
+            true
+          ]
+        }
+      },
+      "required": [
+        "embedded"
+      ],
+      "type": "object"
     },
     "constrains/enabled!=null": {
       "properties": {
@@ -11358,7 +11404,7 @@
         "interval": {},
         "metricRelabelings": {},
         "params": {
-          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout~1anyOf~1array+object@2"
+          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout~1anyOf~1array+object"
         },
         "path": {},
         "port": {},
@@ -11369,10 +11415,15 @@
     "constrains/honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout/anyOf/array+object": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1minio.common.global.compatibility.openshift"
+          "additionalProperties": {
+            "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout~1anyOf~1array+object@2"
+          },
+          "type": "object"
         },
         {
-          "items": {},
+          "items": {
+            "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout~1anyOf~1array+object@2"
+          },
           "type": "array"
         }
       ]
@@ -11380,15 +11431,11 @@
     "constrains/honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout/anyOf/array+object@2": {
       "anyOf": [
         {
-          "additionalProperties": {
-            "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout~1anyOf~1array+object"
-          },
+          "additionalProperties": {},
           "type": "object"
         },
         {
-          "items": {
-            "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout~1anyOf~1array+object"
-          },
+          "items": {},
           "type": "array"
         }
       ]
@@ -11400,7 +11447,7 @@
         "interval": {},
         "metricRelabelings": {},
         "params": {
-          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout~1anyOf~1array+object@2"
+          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout~1anyOf~1array+object"
         },
         "path": {},
         "port": {},
@@ -12701,7 +12748,7 @@
         },
         "region": {},
         "tags": {
-          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout~1anyOf~1array+object"
+          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout~1anyOf~1array+object@2"
         },
         "versioning": {},
         "withLock": {}
@@ -14735,6 +14782,19 @@
         }
       ]
     },
+    "constrains/minio.embedded": {
+      "not": {
+        "properties": {
+          "minio": {
+            "$ref": "#/$defs/constrains~1embedded"
+          }
+        },
+        "required": [
+          "minio"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/minio.embedded+minio.embedded=null": {
       "properties": {
         "minio": {
@@ -16215,7 +16275,7 @@
       "properties": {
         "name": {},
         "options": {
-          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout~1anyOf~1array+object"
+          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout~1anyOf~1array+object@2"
         }
       },
       "type": "object"
@@ -19169,6 +19229,19 @@
         "properties": {
           "postgresql": {
             "$ref": "#/$defs/constrains~1diagnosticMode.enabled:t@2"
+          }
+        },
+        "required": [
+          "postgresql"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/postgresql.embedded": {
+      "not": {
+        "properties": {
+          "postgresql": {
+            "$ref": "#/$defs/constrains~1embedded"
           }
         },
         "required": [
@@ -23456,16 +23529,11 @@
       }
     },
     "constrains/redis": {
-      "not": {
-        "properties": {
-          "redis": {
-            "type": "object"
-          }
-        },
-        "required": [
-          "redis"
-        ],
-        "type": "object"
+      "additionalProperties": {},
+      "properties": {
+        "redis": {
+          "type": "object"
+        }
       }
     },
     "constrains/redis!=null": {
@@ -24085,7 +24153,7 @@
           "$ref": "#/$defs/constrains~1redis.embedded+redis.embedded=null"
         },
         {
-          "$ref": "#/$defs/constrains~1redis"
+          "$ref": "#/$defs/constrains~1redis@2"
         },
         {
           "$ref": "#/$defs/constrains~1redis.embedded:t"
@@ -24243,7 +24311,7 @@
           "$ref": "#/$defs/constrains~1redis.embedded+redis.embedded=null"
         },
         {
-          "$ref": "#/$defs/constrains~1redis"
+          "$ref": "#/$defs/constrains~1redis@2"
         }
       ]
     },
@@ -24828,6 +24896,19 @@
         "properties": {
           "redis": {
             "$ref": "#/$defs/constrains~1diagnosticMode.enabled:t@2"
+          }
+        },
+        "required": [
+          "redis"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/redis.embedded": {
+      "not": {
+        "properties": {
+          "redis": {
+            "$ref": "#/$defs/constrains~1embedded"
           }
         },
         "required": [
@@ -27671,6 +27752,19 @@
       ],
       "type": "object"
     },
+    "constrains/redis@2": {
+      "not": {
+        "properties": {
+          "redis": {
+            "type": "object"
+          }
+        },
+        "required": [
+          "redis"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/registry": {
       "additionalProperties": {},
       "properties": {
@@ -30359,23 +30453,17 @@
       ]
     },
     "values/api.autoscaling": {
-      "allOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "enabled": {},
-            "maxReplicas": {},
-            "minReplicas": {},
-            "targetCPUUtilizationPercentage": {
-              "description": "targetMemoryUtilizationPercentage: 80"
-            },
-            "targetMemoryUtilizationPercentage": {}
-          }
+      "additionalProperties": {},
+      "properties": {
+        "enabled": {},
+        "maxReplicas": {},
+        "minReplicas": {},
+        "targetCPUUtilizationPercentage": {
+          "description": "targetMemoryUtilizationPercentage: 80"
         },
-        {
-          "type": "object"
-        }
-      ]
+        "targetMemoryUtilizationPercentage": {}
+      },
+      "type": "object"
     },
     "values/api.containerPort": {
       "anyOf": [
@@ -31146,30 +31234,44 @@
       ]
     },
     "values/api.service": {
-      "allOf": [
+      "additionalProperties": {},
+      "properties": {
+        "port": {
+          "$ref": "#/$defs/values~1api.service.port"
+        },
+        "type": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/values~1api.service.type~1anyOf~1null;type-determines-how-the+object+string+string;pattern-a-za-z0-9-t+3more"
+            },
+            {
+              "const": "ClusterIP"
+            }
+          ]
+        }
+      },
+      "required": [
+        "port"
+      ],
+      "type": "object"
+    },
+    "values/api.service.port": {
+      "anyOf": [
         {
-          "type": "object"
+          "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
         },
         {
-          "additionalProperties": {},
-          "properties": {
-            "port": {
-              "$ref": "#/$defs/values~1sandbox.service.port"
-            },
-            "type": {
-              "$ref": "#/$defs/values~1api.service~1anyOf~1null;type-determines-how-the+object+string+string;pattern-a-za-z0-9-t+3more"
-            }
-          }
+          "$ref": "#/$defs/constrains~1autoscaling.enabled:t+autoscaling.maxReplicas+autoscaling.minReplicas+2more~1string;pattern-0-1-9"
         }
       ]
     },
-    "values/api.service/anyOf/null;type-determines-how-the+object+string+string;pattern-a-za-z0-9-t+3more": {
+    "values/api.service.type/anyOf/null;type-determines-how-the+object+string+string;pattern-a-za-z0-9-t+3more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1api.service~1null;type-determines-how-the"
+          "$ref": "#/$defs/values~1api.service.type~1null;type-determines-how-the"
         },
         {
-          "$ref": "#/$defs/values~1api.service~1string;type-determines-how-the"
+          "$ref": "#/$defs/values~1api.service.type~1string;type-determines-how-the"
         },
         {
           "$ref": "#/$defs/constrains~1global.imageRegistry~1string@3"
@@ -31188,11 +31290,11 @@
         }
       ]
     },
-    "values/api.service/null;type-determines-how-the": {
+    "values/api.service.type/null;type-determines-how-the": {
       "description": "type determines how the Service is exposed. Defaults to ClusterIP. Valid options are ExternalName, ClusterIP, NodePort, and LoadBalancer. \"ClusterIP\" allocates a cluster-internal IP address for load-balancing to endpoints. Endpoints are determined by the selector or if that is not specified, by manual construction of an Endpoints object or EndpointSlice objects. If clusterIP is \"None\", no virtual IP is allocated and the endpoints are published as a set of endpoints rather than a virtual IP. \"NodePort\" builds on ClusterIP and allocates a port on every node which routes to the same endpoints as the clusterIP. \"LoadBalancer\" builds on NodePort and creates an external load-balancer (if supported in the current cloud) which routes to the same endpoints as the clusterIP. \"ExternalName\" aliases this service to the specified externalName. Several other fields do not apply to ExternalName services. More info: https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types",
       "type": "null"
     },
-    "values/api.service/string;type-determines-how-the": {
+    "values/api.service.type/string;type-determines-how-the": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1global.imageRegistry~1not~1keywords~1pattern@5"
@@ -31499,11 +31601,6 @@
     "values/minio.apiIngress.extraHosts": {
       "description": "The list of additional hostnames to be covered with this ingress record.\nMost likely the hostname above will be enough, but in the event more hosts are needed, this is an array\ne.g:\nextraHosts:\n- name: minio.local\npath: /"
     },
-    "values/minio.apiIngress.extraPaths": {
-      "description": "Any additional paths that may need to be added to the ingress under the main host\nFor example: The ALB ingress controller requires a special rule for handling SSL redirection.\nextraPaths:\n- path: /*\nbackend:\nserviceName: ssl-redirect\nservicePort: use-annotation",
-      "items": {},
-      "type": "array"
-    },
     "values/minio.apiIngress.extraRules": {
       "description": "Additional rules to be covered with this ingress record\nref: https://kubernetes.io/docs/concepts/services-networking/ingress/#ingress-rules\ne.g:\nextraRules:\n- host: example.local\nhttp:\npath: /\nbackend:\nservice:\nname: example-svc\nport:\nname: http"
     },
@@ -31513,33 +31610,18 @@
     "values/minio.apiIngress.ingressClassName": {
       "description": "IngressClass that will be be used to implement the Ingress (Kubernetes 1.18+)\nThis is supported in Kubernetes 1.18+ and required if you have more than one IngressClass marked as the default for your cluster.\nref: https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/"
     },
-    "values/minio.apiIngress.path": {
-      "description": "The Path to MinIO&reg;. You may need to set this to '/*' in order to use this with ALB ingress controllers.",
-      "type": "string"
+    "values/minio.auth.useCredentialsFiles": {
+      "description": "Mount credentials as a files instead of using an environment variable"
     },
-    "values/minio.apiIngress.selfSigned": {
-      "description": "Create a TLS secret for this ingress record using self-signed certificates generated by Helm",
-      "type": "boolean"
-    },
-    "values/minio.apiIngress.servicePort": {
-      "description": "Service port to be used\nDefault is http. Alternative is https.",
-      "type": "string"
-    },
-    "values/minio.common.exampleValue": {
-      "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
-      "type": "string"
-    },
-    "values/minio.common.global.compatibility": {
+    "values/minio.common": {
       "additionalProperties": {},
       "properties": {
-        "openshift": {
-          "$ref": "#/$defs/values~1minio.common.global.compatibility.openshift"
-        }
+        "exampleValue": {
+          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
+          "type": "string"
+        },
+        "global": {}
       },
-      "type": "object"
-    },
-    "values/minio.common.global.compatibility.openshift": {
-      "additionalProperties": {},
       "type": "object"
     },
     "values/minio.containerSecurityContext.enabled": {
@@ -31572,8 +31654,14 @@
     "values/minio.nameOverride": {
       "description": "String to partially override common.names.fullname template (will maintain the release name)"
     },
+    "values/minio.networkPolicy.allowExternalEgress": {
+      "description": "Allow the pod to access any range of port and all destinations."
+    },
     "values/minio.podSecurityContext.enabled": {
       "description": "Enable pod Security Context"
+    },
+    "values/minio.tls.autoGenerated": {
+      "description": "Generate automatically self-signed TLS certificates"
     },
     "values/minio/anyOf/integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more": {
       "anyOf": [
@@ -32105,10 +32193,6 @@
     "values/postgresql.auth.secretKeys.adminPasswordKey": {
       "description": "Name of key in existing secret to use for PostgreSQL credentials. Only used when `auth.existingSecret` is set."
     },
-    "values/postgresql.auth.usePasswordFiles": {
-      "description": "Mount credentials as a files instead of using an environment variable",
-      "type": "boolean"
-    },
     "values/postgresql.backup.cronjob.containerSecurityContext.seLinuxOptions": {
       "description": "[object,nullable] Set SELinux options in container"
     },
@@ -32415,10 +32499,10 @@
     "values/postgresql/anyOf/null;type-determines-how-the+object+string+string;pattern-a-za-z0-9-t+3more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1api.service~1null;type-determines-how-the"
+          "$ref": "#/$defs/values~1api.service.type~1null;type-determines-how-the"
         },
         {
-          "$ref": "#/$defs/values~1api.service~1string;type-determines-how-the"
+          "$ref": "#/$defs/values~1api.service.type~1string;type-determines-how-the"
         },
         {
           "$ref": "#/$defs/constrains~1global.imageRegistry~1string@3"
@@ -32843,7 +32927,7 @@
     "values/redis/allOf/anyOf/integer:int32;the-port-on-each+null:int32;the-port-on-each+string;pattern-0-1-9+3more+1more": {
       "allOf": [
         {
-          "$ref": "#/$defs/values~1sandbox.service.port"
+          "$ref": "#/$defs/values~1api.service.port"
         },
         {
           "anyOf": [
@@ -33155,16 +33239,6 @@
         },
         {
           "type": "null"
-        }
-      ]
-    },
-    "values/sandbox.service.port": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
-        },
-        {
-          "$ref": "#/$defs/constrains~1autoscaling.enabled:t+autoscaling.maxReplicas+autoscaling.minReplicas+2more~1string;pattern-0-1-9"
         }
       ]
     },
@@ -35297,7 +35371,7 @@
             "$ref": "#/$defs/constrains~1redis.embedded+redis.embedded=null"
           },
           {
-            "$ref": "#/$defs/constrains~1redis"
+            "$ref": "#/$defs/constrains~1redis@2"
           },
           {
             "$ref": "#/$defs/constrains~1redis.embedded:t"
@@ -39430,14 +39504,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "api": {
-          "$ref": "#/$defs/constrains~1service.port?"
-        }
-      }
-    },
-    {
       "if": {
         "$ref": "#/$defs/constrains~1minio+minio.embedded+minio.embedded:t+minio.embedded=null+minio.mode=standalone"
       },
@@ -43246,11 +43312,63 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "frontend": {
-          "$ref": "#/$defs/constrains~1service.port@2"
-        }
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "redis": {
+                        "$ref": "#/$defs/constrains~1embedded!=false"
+                      }
+                    },
+                    "required": [
+                      "redis"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1redis.embedded"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1redis.embedded"
+                  },
+                  {
+                    "properties": {
+                      "redis": {
+                        "$ref": "#/$defs/constrains~1embedded!=true"
+                      }
+                    },
+                    "required": [
+                      "redis"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "redis": {
+                "$ref": "#/$defs/constrains~1embedded=true"
+              }
+            },
+            "required": [
+              "redis"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1redis"
       }
     },
     {
@@ -50539,7 +50657,7 @@
             "$ref": "#/$defs/constrains~1redis.embedded+redis.embedded=null"
           },
           {
-            "$ref": "#/$defs/constrains~1redis"
+            "$ref": "#/$defs/constrains~1redis@2"
           },
           {
             "allOf": [
@@ -52392,7 +52510,7 @@
             "$ref": "#/$defs/constrains~1redis.embedded+redis.embedded=null"
           },
           {
-            "$ref": "#/$defs/constrains~1redis"
+            "$ref": "#/$defs/constrains~1redis@2"
           },
           {
             "$ref": "#/$defs/constrains~1redis.embedded:t"
@@ -62502,6 +62620,175 @@
     },
     {
       "if": {
+        "$ref": "#/$defs/constrains~1httpRoute.enabled:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "api": {
+                "$ref": "#/$defs/constrains~1service.port?"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frontend": {
+                "$ref": "#/$defs/constrains~1service.port@2"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "api": {
+                "$ref": "#/$defs/constrains~1service.port@3"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "httpRoute": {
+                "additionalProperties": {},
+                "properties": {
+                  "hostnames": {
+                    "$ref": "#/$defs/constrains~1params~1array,integer,null,object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "httpRoute": {
+                "additionalProperties": {},
+                "properties": {
+                  "gatewayRef": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "namespace": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "httpRoute": {
+                "additionalProperties": {},
+                "properties": {
+                  "gatewayRef": {
+                    "required": [
+                      "namespace"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "pluginDaemon": {
+                "additionalProperties": {},
+                "description": "新增plugin_daemon服务",
+                "properties": {
+                  "service": {
+                    "$ref": "#/$defs/constrains~1port@4"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "httpRoute": {
+                "additionalProperties": {},
+                "properties": {
+                  "gatewayRef": {
+                    "required": [
+                      "name"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frontend": {
+                "$ref": "#/$defs/constrains~1service.port?"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "api": {
+                "$ref": "#/$defs/constrains~1service.port@2"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "frontend": {
+                "$ref": "#/$defs/constrains~1service.port@3"
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "httpRoute": {
+                "additionalProperties": {},
+                "properties": {
+                  "gatewayRef": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "httpRoute": {
+                "additionalProperties": {},
+                "properties": {
+                  "gatewayRef": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "name": {
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -62729,7 +63016,7 @@
             "$ref": "#/$defs/constrains~1redis.embedded+redis.embedded=null"
           },
           {
-            "$ref": "#/$defs/constrains~1redis"
+            "$ref": "#/$defs/constrains~1redis@2"
           },
           {
             "$ref": "#/$defs/constrains~1redis.embedded:t"
@@ -64197,7 +64484,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1redis"
+            "$ref": "#/$defs/constrains~1redis@2"
           },
           {
             "$ref": "#/$defs/constrains~1redis.embedded:t"
@@ -68370,6 +68657,71 @@
       "if": {
         "anyOf": [
           {
+            "properties": {
+              "postgresql": {
+                "$ref": "#/$defs/constrains~1embedded=true"
+              }
+            },
+            "required": [
+              "postgresql"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "$ref": "#/$defs/constrains~1embedded!=false"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1postgresql.embedded"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "$ref": "#/$defs/constrains~1embedded!=true"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1postgresql.embedded"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "postgresql": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1redis.sentinel.service.nodePorts.redis:t+redis.sentinel.service.type=NodePort"
@@ -71134,7 +71486,8 @@
                     "description": "MinIO&reg; authentication parameters",
                     "properties": {
                       "useCredentialsFiles": {
-                        "$ref": "#/$defs/values~1postgresql.auth.usePasswordFiles"
+                        "description": "Mount credentials as a files instead of using an environment variable",
+                        "type": "boolean"
                       }
                     }
                   }
@@ -71932,7 +72285,7 @@
             "$ref": "#/$defs/constrains~1redis.embedded+redis.embedded=null"
           },
           {
-            "$ref": "#/$defs/constrains~1redis"
+            "$ref": "#/$defs/constrains~1redis@2"
           },
           {
             "$ref": "#/$defs/constrains~1redis.embedded:t"
@@ -76113,6 +76466,71 @@
       "if": {
         "anyOf": [
           {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1minio.embedded"
+                  },
+                  {
+                    "properties": {
+                      "minio": {
+                        "$ref": "#/$defs/constrains~1embedded!=false"
+                      }
+                    },
+                    "required": [
+                      "minio"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1minio.embedded"
+                  },
+                  {
+                    "properties": {
+                      "minio": {
+                        "$ref": "#/$defs/constrains~1embedded!=true"
+                      }
+                    },
+                    "required": [
+                      "minio"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "minio": {
+                "$ref": "#/$defs/constrains~1embedded=true"
+              }
+            },
+            "required": [
+              "minio"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "minio": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "$ref": "#/$defs/constrains~1ingress.enabled:t"
           },
           {
@@ -76385,14 +76803,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "frontend": {
-          "$ref": "#/$defs/constrains~1service.port?"
-        }
-      }
-    },
-    {
       "if": {
         "anyOf": [
           {
@@ -76492,12 +76902,7 @@
             "additionalProperties": {},
             "properties": {
               "global": {
-                "additionalProperties": {},
-                "properties": {
-                  "redis": {
-                    "type": "object"
-                  }
-                }
+                "$ref": "#/$defs/constrains~1redis"
               }
             }
           }
@@ -77272,143 +77677,6 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1httpRoute.enabled:t"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "api": {
-                "$ref": "#/$defs/constrains~1service.port@3"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "httpRoute": {
-                "additionalProperties": {},
-                "properties": {
-                  "hostnames": {
-                    "$ref": "#/$defs/constrains~1params~1array,integer,null,object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "httpRoute": {
-                "additionalProperties": {},
-                "properties": {
-                  "gatewayRef": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "namespace": {
-                        "not": {
-                          "type": "null"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "httpRoute": {
-                "additionalProperties": {},
-                "properties": {
-                  "gatewayRef": {
-                    "required": [
-                      "namespace"
-                    ],
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "pluginDaemon": {
-                "additionalProperties": {},
-                "description": "新增plugin_daemon服务",
-                "properties": {
-                  "service": {
-                    "$ref": "#/$defs/constrains~1port@4"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "httpRoute": {
-                "additionalProperties": {},
-                "properties": {
-                  "gatewayRef": {
-                    "required": [
-                      "name"
-                    ],
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "frontend": {
-                "$ref": "#/$defs/constrains~1service.port@3"
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "httpRoute": {
-                "additionalProperties": {},
-                "properties": {
-                  "gatewayRef": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "httpRoute": {
-                "additionalProperties": {},
-                "properties": {
-                  "gatewayRef": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "name": {
-                        "not": {
-                          "type": "null"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -77462,14 +77730,6 @@
               }
             }
           }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "api": {
-          "$ref": "#/$defs/constrains~1service.port@2"
         }
       }
     },
@@ -79391,7 +79651,7 @@
             "$ref": "#/$defs/constrains~1redis.embedded+redis.embedded=null"
           },
           {
-            "$ref": "#/$defs/constrains~1redis"
+            "$ref": "#/$defs/constrains~1redis@2"
           },
           {
             "$ref": "#/$defs/constrains~1redis.embedded:t"
@@ -85626,10 +85886,10 @@
                       "type": {
                         "anyOf": [
                           {
-                            "$ref": "#/$defs/values~1api.service~1null;type-determines-how-the"
+                            "$ref": "#/$defs/values~1api.service.type~1null;type-determines-how-the"
                           },
                           {
-                            "$ref": "#/$defs/values~1api.service~1string;type-determines-how-the"
+                            "$ref": "#/$defs/values~1api.service.type~1string;type-determines-how-the"
                           },
                           {
                             "$ref": "#/$defs/constrains~1global.imageRegistry~1string@3"
@@ -85863,7 +86123,8 @@
                   "commonLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1minio.common.global.compatibility.openshift"
+                        "additionalProperties": {},
+                        "type": "object"
                       },
                       {
                         "type": "string"
@@ -90475,19 +90736,11 @@
             "annotations": {
               "$ref": "#/$defs/values~1minio.apiIngress.annotations"
             },
-            "apiVersion": {
-              "description": "Force Ingress API version (automatically detected if not set)",
-              "type": "string"
-            },
             "enabled": {
-              "description": "Enable ingress controller resource for MinIO API",
-              "type": "boolean"
+              "description": "Enable ingress controller resource for MinIO API"
             },
             "extraHosts": {
               "$ref": "#/$defs/values~1minio.apiIngress.extraHosts"
-            },
-            "extraPaths": {
-              "$ref": "#/$defs/values~1minio.apiIngress.extraPaths"
             },
             "extraRules": {
               "$ref": "#/$defs/values~1minio.apiIngress.extraRules"
@@ -90501,27 +90754,8 @@
             "ingressClassName": {
               "$ref": "#/$defs/values~1minio.apiIngress.ingressClassName"
             },
-            "path": {
-              "$ref": "#/$defs/values~1minio.apiIngress.path"
-            },
-            "pathType": {
-              "description": "Ingress path type",
-              "type": "string"
-            },
-            "secrets": {
-              "description": "If you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate are expected in PEM format\nname should line up with a secretName set further up\nIf it is not set and you're using cert-manager, this is unneeded, as it will create a secret for you with valid certificates\nIf it is not set and you're NOT using cert-manager either, self-signed certificates will be created valid for 365 days\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\nExample\nsecrets:\n- name: minio.local-tls\nkey: \"\"\ncertificate: \"\"",
-              "items": {},
-              "type": "array"
-            },
-            "selfSigned": {
-              "$ref": "#/$defs/values~1minio.apiIngress.selfSigned"
-            },
-            "servicePort": {
-              "$ref": "#/$defs/values~1minio.apiIngress.servicePort"
-            },
             "tls": {
-              "description": "Enable TLS configuration for the hostname defined at `apiIngress.hostname` parameter\nTLS certificates will be retrieved from a TLS secret with name: `{{- printf \"%s-tls\" .Values.apiIngress.hostname }}`\nYou can:\n- Use the `ingress.secrets` parameter to create this TLS secret\n- Rely on cert-manager to create it by setting the corresponding annotations\n- Rely on Helm to create self-signed certificates by setting `ingress.selfSigned=true`",
-              "type": "boolean"
+              "description": "Enable TLS configuration for the hostname defined at `apiIngress.hostname` parameter\nTLS certificates will be retrieved from a TLS secret with name: `{{- printf \"%s-tls\" .Values.apiIngress.hostname }}`\nYou can:\n- Use the `ingress.secrets` parameter to create this TLS secret\n- Rely on cert-manager to create it by setting the corresponding annotations\n- Rely on Helm to create self-signed certificates by setting `ingress.selfSigned=true`"
             }
           }
         },
@@ -90548,7 +90782,7 @@
               "description": "MinIO&reg; root username"
             },
             "useCredentialsFiles": {
-              "description": "Mount credentials as a files instead of using an environment variable"
+              "$ref": "#/$defs/values~1minio.auth.useCredentialsFiles"
             }
           }
         },
@@ -90579,28 +90813,7 @@
           "description": "Default container command (useful when using custom images). Use array form"
         },
         "common": {
-          "additionalProperties": {},
-          "properties": {
-            "exampleValue": {
-              "$ref": "#/$defs/values~1minio.common.exampleValue"
-            },
-            "global": {
-              "additionalProperties": {},
-              "properties": {
-                "compatibility": {
-                  "$ref": "#/$defs/values~1minio.common.global.compatibility"
-                },
-                "image": {
-                  "$ref": "#/$defs/values~1minio.common.global.compatibility.openshift"
-                },
-                "labels": {
-                  "$ref": "#/$defs/values~1minio.common.global.compatibility.openshift"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/values~1minio.common"
         },
         "commonAnnotations": {
           "description": "Annotations to add to all deployed objects"
@@ -90785,7 +90998,9 @@
               "$ref": "#/$defs/values~1minio.apiIngress.extraHosts"
             },
             "extraPaths": {
-              "$ref": "#/$defs/values~1minio.apiIngress.extraPaths"
+              "description": "Any additional paths that may need to be added to the ingress under the main host\nFor example: The ALB ingress controller requires a special rule for handling SSL redirection.\nextraPaths:\n- path: /*\nbackend:\nserviceName: ssl-redirect\nservicePort: use-annotation",
+              "items": {},
+              "type": "array"
             },
             "extraRules": {
               "$ref": "#/$defs/values~1minio.apiIngress.extraRules"
@@ -90800,7 +91015,8 @@
               "$ref": "#/$defs/values~1minio.apiIngress.ingressClassName"
             },
             "path": {
-              "$ref": "#/$defs/values~1minio.apiIngress.path"
+              "description": "The Path to MinIO&reg;. You may need to set this to '/*' in order to use this with ALB ingress controllers.",
+              "type": "string"
             },
             "pathType": {
               "description": "Ingress path type",
@@ -90810,10 +91026,11 @@
               "description": "If you're providing your own certificates, please use this to add the certificates as secrets\nkey and certificate are expected in PEM format\nname should line up with a secretName set further up\nIf it is not set and you're using cert-manager, this is unneeded, as it will create a secret for you with valid certificates\nIf it is not set and you're NOT using cert-manager either, self-signed certificates will be created valid for 365 days\nIt is also possible to create and manage the certificates outside of this helm chart\nPlease see README.md for more information\nExample\nsecrets:\n- name: minio.local-tls\nkey: \"\"\ncertificate: \"\""
             },
             "selfSigned": {
-              "$ref": "#/$defs/values~1minio.apiIngress.selfSigned"
+              "description": "Create a TLS secret for this ingress record using self-signed certificates generated by Helm"
             },
             "servicePort": {
-              "$ref": "#/$defs/values~1minio.apiIngress.servicePort"
+              "description": "Service port to be used\nDefault is http. Alternative is https.",
+              "type": "string"
             },
             "tls": {
               "description": "Enable TLS configuration for the hostname defined at `ingress.hostname` parameter\nTLS certificates will be retrieved from a TLS secret with name: `{{- printf \"%s-tls\" .Values.ingress.hostname }}`\nYou can:\n- Use the `ingress.secrets` parameter to create this TLS secret\n- Rely on cert-manager to create it by setting the corresponding annotations\n- Rely on Helm to create self-signed certificates by setting `ingress.selfSigned=true`"
@@ -90909,8 +91126,7 @@
                   "description": "ApiVersion for the serviceMonitor Resource (defaults to \"monitoring.coreos.com/v1\")"
                 },
                 "enabled": {
-                  "description": "If the operator is installed in your cluster, set to true to create a Service Monitor Entry",
-                  "type": "boolean"
+                  "description": "If the operator is installed in your cluster, set to true to create a Service Monitor Entry"
                 },
                 "honorLabels": {
                   "description": "Specify honorLabels parameter to add the scrape endpoint",
@@ -90938,7 +91154,8 @@
                 "paths": {
                   "anyOf": [
                     {
-                      "$ref": "#/$defs/values~1minio.common.global.compatibility.openshift"
+                      "additionalProperties": {},
+                      "type": "object"
                     },
                     {
                       "items": {},
@@ -91003,7 +91220,7 @@
               "description": "The Policy model to apply\nWhen set to false, only pods with the correct client label will have network access to the ports MinIO is\nlistening on. When true, MinIO will accept connections from any source (with the correct destination port)."
             },
             "allowExternalEgress": {
-              "description": "Allow the pod to access any range of port and all destinations."
+              "$ref": "#/$defs/values~1minio.networkPolicy.allowExternalEgress"
             },
             "enabled": {
               "description": "Enable creation of NetworkPolicy resources"
@@ -91085,8 +91302,7 @@
               "description": "Annotations for the PVC"
             },
             "enabled": {
-              "description": "Enable MinIO&reg; data persistence using PVC. If false, use emptyDir",
-              "type": "boolean"
+              "description": "Enable MinIO&reg; data persistence using PVC. If false, use emptyDir"
             },
             "existingClaim": {
               "description": "Name of an existing PVC to use (only in `standalone` mode)"
@@ -91371,7 +91587,7 @@
           "description": "Enable tls in front of MinIO&reg; containers.",
           "properties": {
             "autoGenerated": {
-              "description": "Generate automatically self-signed TLS certificates"
+              "$ref": "#/$defs/values~1minio.tls.autoGenerated"
             },
             "enabled": {
               "description": "Enable tls in front of the container"
@@ -91596,7 +91812,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "type": {
-                        "$ref": "#/$defs/values~1api.service~1anyOf~1null;type-determines-how-the+object+string+string;pattern-a-za-z0-9-t+3more"
+                        "$ref": "#/$defs/values~1api.service.type~1anyOf~1null;type-determines-how-the+object+string+string;pattern-a-za-z0-9-t+3more"
                       }
                     }
                   }
@@ -91635,7 +91851,7 @@
                     "additionalProperties": {},
                     "properties": {
                       "port": {
-                        "$ref": "#/$defs/values~1sandbox.service.port"
+                        "$ref": "#/$defs/values~1api.service.port"
                       }
                     }
                   }
@@ -102297,7 +102513,7 @@
               "type": "object"
             },
             "usePasswordFiles": {
-              "$ref": "#/$defs/values~1postgresql.auth.usePasswordFiles"
+              "$ref": "#/$defs/values~1minio.auth.useCredentialsFiles"
             },
             "username": {
               "description": "Name for a custom user to create"
@@ -102449,52 +102665,7 @@
           "description": "Kubernetes Cluster Domain"
         },
         "common": {
-          "additionalProperties": {},
-          "properties": {
-            "exampleValue": {
-              "$ref": "#/$defs/values~1minio.common.exampleValue"
-            },
-            "global": {
-              "additionalProperties": {},
-              "properties": {
-                "compatibility": {
-                  "$ref": "#/$defs/values~1minio.common.global.compatibility"
-                },
-                "image": {
-                  "$ref": "#/$defs/values~1minio.common.global.compatibility.openshift"
-                },
-                "labels": {
-                  "$ref": "#/$defs/values~1minio.common.global.compatibility.openshift"
-                },
-                "postgresql": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "auth": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "secretKeys": {
-                          "$ref": "#/$defs/values~1minio.common.global.compatibility.openshift"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "service": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "ports": {
-                          "$ref": "#/$defs/values~1minio.common.global.compatibility.openshift"
-                        }
-                      },
-                      "type": "object"
-                    }
-                  },
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/values~1minio.common"
         },
         "commonAnnotations": {
           "description": "Add annotations to all the deployed resources"
@@ -102710,8 +102881,7 @@
           "description": "TLS configuration",
           "properties": {
             "autoGenerated": {
-              "description": "Generate automatically self-signed TLS certificates",
-              "type": "boolean"
+              "$ref": "#/$defs/values~1minio.tls.autoGenerated"
             },
             "certCAFilename": {
               "description": "CA Certificate filename\nIf provided, PostgreSQL will authenticate TLS/SSL clients by requesting them a certificate\nref: https://www.postgresql.org/docs/9.6/auth-methods.html"
@@ -103869,10 +104039,10 @@
                           "type": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/values~1api.service~1null;type-determines-how-the"
+                                "$ref": "#/$defs/values~1api.service.type~1null;type-determines-how-the"
                               },
                               {
-                                "$ref": "#/$defs/values~1api.service~1string;type-determines-how-the"
+                                "$ref": "#/$defs/values~1api.service.type~1string;type-determines-how-the"
                               },
                               {
                                 "$ref": "#/$defs/constrains~1global.imageRegistry~1string@3"
@@ -104744,10 +104914,10 @@
                           "type": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/values~1api.service~1null;type-determines-how-the"
+                                "$ref": "#/$defs/values~1api.service.type~1null;type-determines-how-the"
                               },
                               {
-                                "$ref": "#/$defs/values~1api.service~1string;type-determines-how-the"
+                                "$ref": "#/$defs/values~1api.service.type~1string;type-determines-how-the"
                               },
                               {
                                 "$ref": "#/$defs/constrains~1global.imageRegistry~1string@3"
@@ -111913,10 +112083,10 @@
                           "type": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/values~1api.service~1null;type-determines-how-the"
+                                "$ref": "#/$defs/values~1api.service.type~1null;type-determines-how-the"
                               },
                               {
-                                "$ref": "#/$defs/values~1api.service~1string;type-determines-how-the"
+                                "$ref": "#/$defs/values~1api.service.type~1string;type-determines-how-the"
                               },
                               {
                                 "$ref": "#/$defs/constrains~1global.imageRegistry~1string@3"
@@ -113101,10 +113271,10 @@
                           "type": {
                             "anyOf": [
                               {
-                                "$ref": "#/$defs/values~1api.service~1null;type-determines-how-the"
+                                "$ref": "#/$defs/values~1api.service.type~1null;type-determines-how-the"
                               },
                               {
-                                "$ref": "#/$defs/values~1api.service~1string;type-determines-how-the"
+                                "$ref": "#/$defs/values~1api.service.type~1string;type-determines-how-the"
                               },
                               {
                                 "$ref": "#/$defs/constrains~1global.imageRegistry~1string@3"
@@ -117017,31 +117187,7 @@
           "description": "Kubernetes cluster domain name"
         },
         "common": {
-          "additionalProperties": {},
-          "properties": {
-            "exampleValue": {
-              "$ref": "#/$defs/values~1minio.common.exampleValue"
-            },
-            "global": {
-              "additionalProperties": {},
-              "properties": {
-                "compatibility": {
-                  "$ref": "#/$defs/values~1minio.common.global.compatibility"
-                },
-                "image": {
-                  "$ref": "#/$defs/values~1minio.common.global.compatibility.openshift"
-                },
-                "labels": {
-                  "$ref": "#/$defs/values~1minio.common.global.compatibility.openshift"
-                },
-                "redis": {
-                  "$ref": "#/$defs/values~1minio.common.global.compatibility.openshift"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/values~1minio.common"
         },
         "commonAnnotations": {
           "description": "Annotations to add to all deployed objects"
@@ -117193,11 +117339,6 @@
                 "pullPolicy": {
                   "description": "Kubectl image pull policy\nSpecify a imagePullPolicy\nDefaults to 'Always' if image tag is 'latest', else set to 'IfNotPresent'\nref: https://kubernetes.io/docs/concepts/containers/images/#pre-pulled-images"
                 },
-                "pullSecrets": {
-                  "description": "Kubectl pull secrets\nOptionally specify an array of imagePullSecrets.\nSecrets must be manually created in the namespace.\nref: https://kubernetes.io/docs/tasks/configure-pod-container/pull-image-private-registry/\ne.g:\npullSecrets:\n- myRegistryKeySecretName",
-                  "items": {},
-                  "type": "array"
-                },
                 "registry": {
                   "description": "[default: REGISTRY_NAME] Kubectl image registry"
                 },
@@ -117236,8 +117377,7 @@
               "description": "Don't require client label for connections\nWhen set to false, only pods with the correct client label will have network access to the ports\nRedis&reg; is listening on. When true, Redis&reg; will accept connections from any source\n(with the correct destination port)."
             },
             "allowExternalEgress": {
-              "description": "Allow the pod to access any range of port and all destinations.",
-              "type": "boolean"
+              "$ref": "#/$defs/values~1minio.networkPolicy.allowExternalEgress"
             },
             "enabled": {
               "description": "Enable creation of NetworkPolicy resources"
@@ -117412,8 +117552,7 @@
               ]
             },
             "enabled": {
-              "description": "Enable various syntax that would enable external-dns to work.  Note this requires a working installation of `external-dns` to be usable.",
-              "type": "boolean"
+              "description": "Enable various syntax that would enable external-dns to work.  Note this requires a working installation of `external-dns` to be usable."
             },
             "suffix": {
               "description": "The DNS suffix utilized when `external-dns` is enabled.  Note that we prepend the suffix with the full name of the release."
@@ -117421,8 +117560,7 @@
           }
         },
         "useHostnames": {
-          "description": "Use hostnames internally when announcing replication. If false, the hostname will be resolved to an IP address",
-          "type": "boolean"
+          "description": "Use hostnames internally when announcing replication. If false, the hostname will be resolved to an IP address"
         },
         "volumePermissions": {
           "additionalProperties": {},
@@ -117547,26 +117685,7 @@
           "$ref": "#/$defs/values~1api.securityContext"
         },
         "service": {
-          "additionalProperties": {},
-          "properties": {
-            "port": {
-              "$ref": "#/$defs/values~1sandbox.service.port"
-            },
-            "type": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/values~1api.service~1anyOf~1null;type-determines-how-the+object+string+string;pattern-a-za-z0-9-t+3more"
-                },
-                {
-                  "const": "ClusterIP"
-                }
-              ]
-            }
-          },
-          "required": [
-            "port"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/values~1api.service"
         },
         "tolerations": {
           "$ref": "#/$defs/values~1api.tolerations"

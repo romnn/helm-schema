@@ -897,10 +897,10 @@
       ]
     },
     "constrains/agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more": {
-      "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@3"
+      "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
     },
     "constrains/agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2": {
-      "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
+      "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@3"
     },
     "constrains/agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@3": {
       "anyOf": [
@@ -1485,16 +1485,16 @@
       ]
     },
     "constrains/agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more": {
-      "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@6"
+      "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
     },
     "constrains/agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2": {
-      "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@5"
+      "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
     },
     "constrains/agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3": {
-      "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
+      "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@6"
     },
     "constrains/agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4": {
-      "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
+      "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@5"
     },
     "constrains/agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@5": {
       "anyOf": [
@@ -2802,7 +2802,7 @@
     "constrains/agents+datadog.apiKey:t+datadog.apiKeyExistingSecret:t+7more": {
       "allOf": [
         {
-          "$ref": "#/$defs/constrains~1datadog.hostProfiler.seccomp.enabled+datadog.hostProfiler.seccomp.enabled!=false"
+          "$ref": "#/$defs/constrains~1datadog.hostProfiler.seccomp.enabled+datadog.hostProfiler.seccomp.enabled!=false@2"
         },
         {
           "$ref": "#/$defs/constrains~1providers.gke.gdc:t"
@@ -2820,7 +2820,7 @@
           "$ref": "#/$defs/constrains~1datadog.apiKey:t+datadog.apiKeyExistingSecret:t"
         },
         {
-          "$ref": "#/$defs/constrains~1datadog.hostProfiler.seccomp.enabled+datadog.hostProfiler.seccomp.enabled!=false@2"
+          "$ref": "#/$defs/constrains~1datadog.hostProfiler.seccomp.enabled+datadog.hostProfiler.seccomp.enabled!=false"
         },
         {
           "$ref": "#/$defs/constrains~1providers.gke.autopilot:t"
@@ -6395,6 +6395,33 @@
         }
       ]
     },
+    "constrains/clusterAgent.metricsProvider.useDatadogMetrics": {
+      "not": {
+        "properties": {
+          "clusterAgent": {
+            "properties": {
+              "metricsProvider": {
+                "properties": {
+                  "useDatadogMetrics": {}
+                },
+                "required": [
+                  "useDatadogMetrics"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "metricsProvider"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "clusterAgent"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/clusterAgent.metricsProvider.useDatadogMetrics+11more": {
       "anyOf": [
         {
@@ -6444,31 +6471,7 @@
     "constrains/clusterAgent.metricsProvider.useDatadogMetrics+1more": {
       "anyOf": [
         {
-          "not": {
-            "properties": {
-              "clusterAgent": {
-                "properties": {
-                  "metricsProvider": {
-                    "properties": {
-                      "useDatadogMetrics": {}
-                    },
-                    "required": [
-                      "useDatadogMetrics"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "metricsProvider"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "clusterAgent"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/$defs/constrains~1clusterAgent.metricsProvider.useDatadogMetrics"
         },
         {
           "properties": {
@@ -6480,6 +6483,82 @@
                       "enum": [
                         null
                       ]
+                    }
+                  },
+                  "required": [
+                    "useDatadogMetrics"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "metricsProvider"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "clusterAgent"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/clusterAgent.metricsProvider.useDatadogMetrics+1more@2": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1clusterAgent.metricsProvider.useDatadogMetrics"
+        },
+        {
+          "properties": {
+            "clusterAgent": {
+              "properties": {
+                "metricsProvider": {
+                  "properties": {
+                    "useDatadogMetrics": {
+                      "not": {
+                        "enum": [
+                          false
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "useDatadogMetrics"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "metricsProvider"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "clusterAgent"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/clusterAgent.metricsProvider.useDatadogMetrics+1more@3": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1clusterAgent.metricsProvider.useDatadogMetrics"
+        },
+        {
+          "properties": {
+            "clusterAgent": {
+              "properties": {
+                "metricsProvider": {
+                  "properties": {
+                    "useDatadogMetrics": {
+                      "not": {
+                        "enum": [
+                          true
+                        ]
+                      }
                     }
                   },
                   "required": [
@@ -8114,6 +8193,41 @@
         }
       }
     },
+    "constrains/crds+crds=null": {
+      "allOf": [
+        {
+          "anyOf": [
+            {
+              "not": {
+                "properties": {
+                  "crds": {}
+                },
+                "required": [
+                  "crds"
+                ],
+                "type": "object"
+              }
+            },
+            {
+              "properties": {
+                "crds": {
+                  "enum": [
+                    null
+                  ]
+                }
+              },
+              "required": [
+                "crds"
+              ],
+              "type": "object"
+            }
+          ]
+        },
+        {
+          "type": "object"
+        }
+      ]
+    },
     "constrains/crds.annotations:t": {
       "additionalProperties": {},
       "properties": {
@@ -8362,19 +8476,6 @@
             "datadogSLOs"
           ],
           "type": "object"
-        }
-      },
-      "required": [
-        "crds"
-      ],
-      "type": "object"
-    },
-    "constrains/crds=null": {
-      "properties": {
-        "crds": {
-          "enum": [
-            null
-          ]
         }
       },
       "required": [
@@ -9367,6 +9468,103 @@
       ],
       "type": "object"
     },
+    "constrains/datadog.autoscaling.workload.enabled": {
+      "not": {
+        "properties": {
+          "datadog": {
+            "properties": {
+              "autoscaling": {
+                "properties": {
+                  "workload": {
+                    "$ref": "#/$defs/constrains~1enabled"
+                  }
+                },
+                "required": [
+                  "workload"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "autoscaling"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "datadog"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/datadog.autoscaling.workload.enabled+datadog.autoscaling.workload.enabled!=false": {
+      "anyOf": [
+        {
+          "properties": {
+            "datadog": {
+              "properties": {
+                "autoscaling": {
+                  "properties": {
+                    "workload": {
+                      "$ref": "#/$defs/constrains~1enabled!=false"
+                    }
+                  },
+                  "required": [
+                    "workload"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "autoscaling"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "datadog"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1datadog.autoscaling.workload.enabled"
+        }
+      ]
+    },
+    "constrains/datadog.autoscaling.workload.enabled+datadog.autoscaling.workload.enabled!=true": {
+      "anyOf": [
+        {
+          "properties": {
+            "datadog": {
+              "properties": {
+                "autoscaling": {
+                  "properties": {
+                    "workload": {
+                      "$ref": "#/$defs/constrains~1enabled!=true"
+                    }
+                  },
+                  "required": [
+                    "workload"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "autoscaling"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "datadog"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1datadog.autoscaling.workload.enabled"
+        }
+      ]
+    },
     "constrains/datadog.autoscaling.workload.enabled+datadog.autoscaling.workload.enabled=null": {
       "anyOf": [
         {
@@ -9397,33 +9595,7 @@
           "type": "object"
         },
         {
-          "not": {
-            "properties": {
-              "datadog": {
-                "properties": {
-                  "autoscaling": {
-                    "properties": {
-                      "workload": {
-                        "$ref": "#/$defs/constrains~1enabled"
-                      }
-                    },
-                    "required": [
-                      "workload"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "autoscaling"
-                ],
-                "type": "object"
-              }
-            },
-            "required": [
-              "datadog"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/$defs/constrains~1datadog.autoscaling.workload.enabled"
         }
       ]
     },
@@ -9781,17 +9953,7 @@
                 "datadog": {
                   "properties": {
                     "discovery": {
-                      "properties": {
-                        "enabled": {
-                          "enum": [
-                            true
-                          ]
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/constrains~1enabled=true"
                     }
                   },
                   "required": [
@@ -10266,19 +10428,7 @@
                 "hostProfiler": {
                   "properties": {
                     "seccomp": {
-                      "properties": {
-                        "enabled": {
-                          "not": {
-                            "enum": [
-                              "false"
-                            ]
-                          }
-                        }
-                      },
-                      "required": [
-                        "enabled"
-                      ],
-                      "type": "object"
+                      "$ref": "#/$defs/constrains~1enabled!=false"
                     }
                   },
                   "required": [
@@ -10316,7 +10466,7 @@
                         "enabled": {
                           "not": {
                             "enum": [
-                              false
+                              "false"
                             ]
                           }
                         }
@@ -10346,28 +10496,83 @@
         }
       ]
     },
-    "constrains/datadog.instrumentationCrd.enabled+datadog.instrumentationCrd.enabled=null": {
-      "anyOf": [
-        {
-          "not": {
+    "constrains/datadog.instrumentationCrd.enabled": {
+      "not": {
+        "properties": {
+          "datadog": {
             "properties": {
-              "datadog": {
-                "properties": {
-                  "instrumentationCrd": {
-                    "$ref": "#/$defs/constrains~1enabled"
-                  }
-                },
-                "required": [
-                  "instrumentationCrd"
-                ],
-                "type": "object"
+              "instrumentationCrd": {
+                "$ref": "#/$defs/constrains~1enabled"
               }
             },
             "required": [
-              "datadog"
+              "instrumentationCrd"
             ],
             "type": "object"
           }
+        },
+        "required": [
+          "datadog"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/datadog.instrumentationCrd.enabled+datadog.instrumentationCrd.enabled!=false": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1datadog.instrumentationCrd.enabled"
+        },
+        {
+          "properties": {
+            "datadog": {
+              "properties": {
+                "instrumentationCrd": {
+                  "$ref": "#/$defs/constrains~1enabled!=false"
+                }
+              },
+              "required": [
+                "instrumentationCrd"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "datadog"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/datadog.instrumentationCrd.enabled+datadog.instrumentationCrd.enabled!=true": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1datadog.instrumentationCrd.enabled"
+        },
+        {
+          "properties": {
+            "datadog": {
+              "properties": {
+                "instrumentationCrd": {
+                  "$ref": "#/$defs/constrains~1enabled!=true"
+                }
+              },
+              "required": [
+                "instrumentationCrd"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "datadog"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/datadog.instrumentationCrd.enabled+datadog.instrumentationCrd.enabled=null": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1datadog.instrumentationCrd.enabled"
         },
         {
           "properties": {
@@ -11112,6 +11317,58 @@
         "type": "object"
       }
     },
+    "constrains/datadog.operator.enabled+datadog.operator.enabled!=false": {
+      "anyOf": [
+        {
+          "properties": {
+            "datadog": {
+              "properties": {
+                "operator": {
+                  "$ref": "#/$defs/constrains~1enabled!=false"
+                }
+              },
+              "required": [
+                "operator"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "datadog"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1datadog.operator.enabled"
+        }
+      ]
+    },
+    "constrains/datadog.operator.enabled+datadog.operator.enabled!=true": {
+      "anyOf": [
+        {
+          "properties": {
+            "datadog": {
+              "properties": {
+                "operator": {
+                  "$ref": "#/$defs/constrains~1enabled!=true"
+                }
+              },
+              "required": [
+                "operator"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "datadog"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1datadog.operator.enabled"
+        }
+      ]
+    },
     "constrains/datadog.operator.enabled+datadog.operator.enabled:t+1more": {
       "anyOf": [
         {
@@ -11214,6 +11471,25 @@
           "properties": {
             "operator": {
               "$ref": "#/$defs/constrains~1enabled=null"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "datadog"
+      ],
+      "type": "object"
+    },
+    "constrains/datadog.operator.enabled=true": {
+      "properties": {
+        "datadog": {
+          "properties": {
+            "operator": {
+              "$ref": "#/$defs/constrains~1enabled=true"
             }
           },
           "required": [
@@ -13092,6 +13368,36 @@
       ],
       "type": "object"
     },
+    "constrains/enabled!=false": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              false
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=true": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              true
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled:t": {
       "properties": {
         "enabled": {
@@ -13108,6 +13414,19 @@
         "enabled": {
           "enum": [
             null
+          ]
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled=true": {
+      "properties": {
+        "enabled": {
+          "enum": [
+            true
           ]
         }
       },
@@ -13148,16 +13467,6 @@
         "env"
       ],
       "type": "object"
-    },
-    "constrains/exec+httpGet+tcpSocket": {
-      "additionalProperties": {},
-      "properties": {
-        "exec": {},
-        "httpGet": {
-          "$ref": "#/$defs/values~1agents.containers.traceAgent.livenessProbe.tcpSocket"
-        },
-        "tcpSocket": {}
-      }
     },
     "constrains/exec.command+httpGet.host+httpGet.httpHeaders@items.name+7more": {
       "additionalProperties": false,
@@ -14188,6 +14497,15 @@
       },
       "required": [
         "injector"
+      ],
+      "type": "object"
+    },
+    "constrains/installCRDs": {
+      "properties": {
+        "installCRDs": {}
+      },
+      "required": [
+        "installCRDs"
       ],
       "type": "object"
     },
@@ -16931,6 +17249,79 @@
       ],
       "type": "object"
     },
+    "constrains/operator.installCRDs": {
+      "not": {
+        "properties": {
+          "operator": {
+            "$ref": "#/$defs/constrains~1installCRDs"
+          }
+        },
+        "required": [
+          "operator"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/operator.installCRDs+operator.installCRDs!=false": {
+      "anyOf": [
+        {
+          "properties": {
+            "operator": {
+              "properties": {
+                "installCRDs": {
+                  "not": {
+                    "enum": [
+                      false
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "installCRDs"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.installCRDs"
+        }
+      ]
+    },
+    "constrains/operator.installCRDs+operator.installCRDs!=true": {
+      "anyOf": [
+        {
+          "properties": {
+            "operator": {
+              "properties": {
+                "installCRDs": {
+                  "not": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "installCRDs"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "operator"
+          ],
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/constrains~1operator.installCRDs"
+        }
+      ]
+    },
     "constrains/operator.installCRDs+operator.installCRDs=null": {
       "properties": {
         "operator": {
@@ -16955,13 +17346,7 @@
                 },
                 {
                   "not": {
-                    "properties": {
-                      "installCRDs": {}
-                    },
-                    "required": [
-                      "installCRDs"
-                    ],
-                    "type": "object"
+                    "$ref": "#/$defs/constrains~1installCRDs"
                   }
                 }
               ]
@@ -16980,6 +17365,27 @@
           "properties": {
             "installCRDs": {
               "$ref": "#/$defs/t"
+            }
+          },
+          "required": [
+            "installCRDs"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "operator"
+      ],
+      "type": "object"
+    },
+    "constrains/operator.installCRDs=true": {
+      "properties": {
+        "operator": {
+          "properties": {
+            "installCRDs": {
+              "enum": [
+                true
+              ]
             }
           },
           "required": [
@@ -19023,6 +19429,36 @@
         "type": "object"
       }
     },
+    "constrains/tags.install-crds+tags.install-crds!=false": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1tags.install-crds"
+        },
+        {
+          "properties": {
+            "tags": {
+              "properties": {
+                "install-crds": {
+                  "not": {
+                    "enum": [
+                      false
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "install-crds"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "tags"
+          ],
+          "type": "object"
+        }
+      ]
+    },
     "constrains/tags.install-crds+tags.install-crds:t+tags.install-crds=null": {
       "anyOf": [
         {
@@ -19072,6 +19508,27 @@
             "install-crds": {
               "enum": [
                 null
+              ]
+            }
+          },
+          "required": [
+            "install-crds"
+          ],
+          "type": "object"
+        }
+      },
+      "required": [
+        "tags"
+      ],
+      "type": "object"
+    },
+    "constrains/tags.install-crds=true": {
+      "properties": {
+        "tags": {
+          "properties": {
+            "install-crds": {
+              "enum": [
+                true
               ]
             }
           },
@@ -21166,6 +21623,9 @@
     "values/agents.affinity": {
       "description": "Ref: https://kubernetes.io/docs/concepts/configuration/assign-pod-node/#affinity-and-anti-affinity"
     },
+    "values/agents.containers.agent.livenessProbe.httpGet": {
+      "additionalProperties": {}
+    },
     "values/agents.containers.agent.securityContext.capabilities": {
       "additionalProperties": {},
       "properties": {
@@ -21178,9 +21638,6 @@
         "type": "string"
       },
       "type": "array"
-    },
-    "values/agents.containers.traceAgent.livenessProbe.tcpSocket": {
-      "additionalProperties": {}
     },
     "values/agents.dnsConfig": {
       "description": "ref: https://kubernetes.io/docs/concepts/services-networking/dns-pod-service/#pod-dns-config\noptions:\n- name: ndots\nvalue: \"1\""
@@ -21498,10 +21955,10 @@
     "values/datadog.apiKeyExistingSecret": {
       "description": "If set, this parameter takes precedence over \"apiKey\".\n<DATADOG_API_KEY_SECRET>"
     },
-    "values/datadog.apm/keywords/description": {
+    "values/datadog.apm.port": {
       "description": "Note: Make sure your client is sending to the same UDP port."
     },
-    "values/datadog.apm/keywords/description@2": {
+    "values/datadog.apm.portEnabled": {
       "description": "ref: https://docs.datadoghq.com/agent/kubernetes/apm/"
     },
     "values/datadog.appKeyExistingSecret": {
@@ -21511,8 +21968,11 @@
       "description": "datadog.csi.enabled -- Enable datadog csi driver\nRequires version 7.67 or later of the cluster agent\nNote:\n- When set to true, the CSI driver subchart will be installed automatically.\n- Do not install the CSI driver separately if this is enabled, or you may hit conflicts.",
       "type": "boolean"
     },
-    "values/datadog.dogstatsd/keywords/description": {
+    "values/datadog.dogstatsd.originDetection": {
       "description": "ref: https://docs.datadoghq.com/developers/dogstatsd/unix_socket/#using-origin-detection-for-container-tagging"
+    },
+    "values/datadog.dogstatsd.tags": {
+      "description": "Learn more about tagging: https://docs.datadoghq.com/tagging/\n- \"<KEY_1>:<VALUE_1>\"\n- \"<KEY_2>:<VALUE_2>\""
     },
     "values/datadog.kubeStateMetricsCore.collectApiServicesMetrics": {
       "description": "Configuring this field will change the default kubernetes_state_core check configuration and the RBACs granted to Datadog Cluster Agent to run the kubernetes_state_core check."
@@ -21522,9 +21982,6 @@
     },
     "values/datadog.site": {
       "description": "Set to 'datadoghq.com' to send data to the US1 site (default).\nSet to 'datadoghq.eu' to send data to the EU site.\nSet to 'us3.datadoghq.com' to send data to the US3 site.\nSet to 'us5.datadoghq.com' to send data to the US5 site.\nSet to 'ddog-gov.com' to send data to the US1-FED site.\nSet to 'ap1.datadoghq.com' to send data to the AP1 site.\ndatadoghq.com"
-    },
-    "values/datadog.tags": {
-      "description": "Learn more about tagging: https://docs.datadoghq.com/tagging/\n- \"<KEY_1>:<VALUE_1>\"\n- \"<KEY_2>:<VALUE_2>\""
     },
     "values/integer": {
       "maximum": 0,
@@ -23295,7 +23752,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
           },
           {
             "$ref": "#/$defs/constrains~1targetSystem=linux"
@@ -23924,6 +24381,35 @@
           }
         ]
       }
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1datadog.operator.enabled+datadog.operator.enabled:t+7more"
+          },
+          {
+            "properties": {
+              "operator": {
+                "properties": {
+                  "datadogCRDs": {
+                    "$ref": "#/$defs/constrains~1crds+crds=null"
+                  }
+                },
+                "required": [
+                  "datadogCRDs"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "operator"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": false
     },
     {
       "if": {
@@ -24693,7 +25179,7 @@
                 "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1agents.containers.initContainers.securityContext:t"
@@ -25137,7 +25623,7 @@
                 "$ref": "#/$defs/constrains~1useFIPSAgent:t"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
               },
               {
                 "$ref": "#/$defs/constrains~1fips.enabled:t"
@@ -25162,7 +25648,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
               },
               {
                 "$ref": "#/$defs/constrains~1targetSystem=linux"
@@ -25409,7 +25895,7 @@
                     "$ref": "#/$defs/constrains~1providers.talos.enabled:t"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+                    "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
                   },
                   {
                     "$ref": "#/$defs/constrains~1datadog.systemProbe.enableOOMKill:t"
@@ -25440,7 +25926,7 @@
                     "$ref": "#/$defs/constrains~1datadog.securityAgent.runtime.enabled:t"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+                    "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
                   },
                   {
                     "$ref": "#/$defs/constrains~1providers.gke.gdc:t"
@@ -26533,7 +27019,7 @@
                 "$ref": "#/$defs/constrains~1providers.talos.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1datadog.systemProbe.enableOOMKill:t"
@@ -26569,7 +27055,7 @@
                 "$ref": "#/$defs/constrains~1datadog.securityAgent.runtime.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
               },
               {
                 "$ref": "#/$defs/constrains~1datadog.systemProbe.enableOOMKill:t"
@@ -26621,7 +27107,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
           },
           {
             "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+8more"
@@ -26921,7 +27407,7 @@
             "$ref": "#/$defs/constrains~1providers.gke.autopilot:t@2"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
           },
           {
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t"
@@ -26936,7 +27422,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
               },
               {
                 "$ref": "#/$defs/constrains~1datadog.apm.instrumentation.enabled:t"
@@ -26986,7 +27472,7 @@
                 "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1datadog.apm.instrumentation.enabled:t"
@@ -27883,7 +28369,7 @@
               {
                 "allOf": [
                   {
-                    "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+                    "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
                   },
                   {
                     "$ref": "#/$defs/constrains~1providers.gke.gdc:t"
@@ -28033,7 +28519,7 @@
                 "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+7more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1datadog.systemProbe.enableOOMKill:t"
@@ -28070,7 +28556,7 @@
                 "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+7more@2"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1datadog.systemProbe.enableOOMKill:t"
@@ -28258,7 +28744,7 @@
                 "$ref": "#/$defs/constrains~1datadog.securityAgent.runtime.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
               },
               {
                 "$ref": "#/$defs/constrains~1datadog.systemProbe.enableOOMKill:t"
@@ -28350,7 +28836,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
           },
           {
             "anyOf": [
@@ -28817,6 +29303,105 @@
       "if": {
         "anyOf": [
           {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "datadog": {
+                        "properties": {
+                          "kubeStateMetricsEnabled": {
+                            "not": {
+                              "enum": [
+                                true
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "kubeStateMetricsEnabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "datadog"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1datadog.kubeStateMetricsEnabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "datadog": {
+                        "properties": {
+                          "kubeStateMetricsEnabled": {
+                            "not": {
+                              "enum": [
+                                false
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "kubeStateMetricsEnabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "datadog"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1datadog.kubeStateMetricsEnabled"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "datadog": {
+                "properties": {
+                  "kubeStateMetricsEnabled": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "kubeStateMetricsEnabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "datadog"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "kube-state-metrics": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "$ref": "#/$defs/constrains~1clusterAgent.enabled:t+clusterChecksRunner+7more@2"
           },
           {
@@ -28860,7 +29445,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
           },
           {
             "anyOf": [
@@ -29150,7 +29735,7 @@
                 "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "not": {
@@ -33768,7 +34353,7 @@
                 "$ref": "#/$defs/constrains~1datadog.otlp.logs+datadog.otlp.logs=null"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
               },
               {
                 "$ref": "#/$defs/constrains~1datadog.otlp:t"
@@ -33793,7 +34378,7 @@
                 "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1datadog.otlp:t"
@@ -33923,7 +34508,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
               },
               {
                 "$ref": "#/$defs/constrains~1agents.enabled:t"
@@ -33983,7 +34568,7 @@
                 "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1targetSystem=linux"
@@ -35338,27 +35923,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "datadog": {
-          "additionalProperties": {},
-          "description": "datadog.apiKey -- Your Datadog API key",
-          "properties": {
-            "apm": {
-              "additionalProperties": {},
-              "description": "Enable apm agent and provide custom configs\nAPM is enabled by default. If local service Internal Traffic Policy is allowed (Kubernetes v1.22+), the agent service is created with the APM local traceport.\ndatadog.apm.socketEnabled -- Enable APM over Socket (Unix Socket or windows named pipe)",
-              "properties": {
-                "instrumentation": {
-                  "description": "APM Single Step Instrumentation\nRequires Cluster Agent 7.49+.",
-                  "type": "object"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -36406,7 +36970,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
           },
           {
             "$ref": "#/$defs/constrains~1targetSystem=windows@2"
@@ -37061,7 +37625,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
           },
           {
             "$ref": "#/$defs/constrains~1targetSystem=linux"
@@ -37506,7 +38070,7 @@
                     "$ref": "#/$defs/constrains~1providers.talos.enabled:t"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+                    "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
                   },
                   {
                     "$ref": "#/$defs/constrains~1datadog.systemProbe.enableOOMKill:t"
@@ -42178,7 +42742,7 @@
                 "$ref": "#/$defs/constrains~1providers.talos.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
               },
               {
                 "not": {
@@ -42333,7 +42897,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
               },
               {
                 "$ref": "#/$defs/constrains~1providers.gke.gdc:t"
@@ -45380,17 +45944,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "datadog-csi-driver": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
       "if": {
         "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+datadog.securityAgent.runtime.enabled:t+4more"
       },
@@ -45661,7 +46214,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
           },
           {
             "properties": {
@@ -45851,7 +46404,7 @@
                 "$ref": "#/$defs/constrains~1providers.talos.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+11more"
@@ -45888,7 +46441,7 @@
                 "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+11more"
@@ -45965,6 +46518,33 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1datadog.operator.migration.enabled:t"
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "operator": {
+            "additionalProperties": {},
+            "properties": {
+              "datadogCRDs": {
+                "additionalProperties": {},
+                "properties": {
+                  "keepCrds": {
+                    "description": "operator.datadogCRDs.keepCrds -- Set to true to keep the CRDs when the helm chart is uninstalled. This must be set to true if datadog.operator.migration.enabled is set to true.",
+                    "type": [
+                      "boolean",
+                      "null"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
     },
     {
       "if": {
@@ -47442,59 +48022,6 @@
       "if": {
         "allOf": [
           {
-            "properties": {
-              "operator": {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "properties": {
-                          "datadogCRDs": {
-                            "enum": [
-                              null
-                            ]
-                          }
-                        },
-                        "required": [
-                          "datadogCRDs"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "not": {
-                          "properties": {
-                            "datadogCRDs": {}
-                          },
-                          "required": [
-                            "datadogCRDs"
-                          ],
-                          "type": "object"
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "type": "object"
-                  }
-                ]
-              }
-            },
-            "required": [
-              "operator"
-            ],
-            "type": "object"
-          },
-          {
-            "$ref": "#/$defs/constrains~1datadog.operator.migration.enabled:t"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/$defs/constrains~1datadog.otlp.receiver.protocols.http.enabled:t"
           },
           {
@@ -47676,7 +48203,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
           },
           {
             "$ref": "#/$defs/constrains~1targetSystem=linux"
@@ -47724,7 +48251,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
           },
           {
             "$ref": "#/$defs/constrains~1targetSystem=linux"
@@ -47953,7 +48480,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
           },
           {
             "$ref": "#/$defs/constrains~1agents.containers.processAgent.securityContext:t"
@@ -48357,7 +48884,7 @@
             "$ref": "#/$defs/constrains~1datadog.disableDefaultOsReleasePaths:t+4more"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
           },
           {
             "$ref": "#/$defs/constrains~1targetSystem=linux"
@@ -48451,7 +48978,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
           },
           {
             "$ref": "#/$defs/constrains~1agents.containers.initContainers.securityContext:t"
@@ -49830,7 +50357,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
           },
           {
             "$ref": "#/$defs/constrains~1targetSystem=linux"
@@ -50321,7 +50848,7 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
               },
               {
                 "anyOf": [
@@ -51024,7 +51551,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
           },
           {
             "$ref": "#/$defs/constrains~1targetSystem=linux"
@@ -51554,7 +52081,7 @@
                 "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1targetSystem=linux"
@@ -52151,7 +52678,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
           },
           {
             "$ref": "#/$defs/constrains~1targetSystem=linux"
@@ -52308,7 +52835,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
           },
           {
             "$ref": "#/$defs/constrains~1providers.gke.gdc:t"
@@ -52357,50 +52884,6 @@
             }
           }
         }
-      }
-    },
-    {
-      "if": {
-        "$ref": "#/$defs/constrains~1datadog.operator.migration.enabled:t"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "operator": {
-                "additionalProperties": {},
-                "properties": {
-                  "datadogCRDs": {
-                    "type": "object"
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "operator": {
-                "additionalProperties": {},
-                "properties": {
-                  "datadogCRDs": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "keepCrds": {
-                        "description": "operator.datadogCRDs.keepCrds -- Set to true to keep the CRDs when the helm chart is uninstalled. This must be set to true if datadog.operator.migration.enabled is set to true.",
-                        "type": [
-                          "boolean",
-                          "null"
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
       }
     },
     {
@@ -53254,29 +53737,7 @@
           {
             "properties": {
               "datadog-crds": {
-                "allOf": [
-                  {
-                    "anyOf": [
-                      {
-                        "not": {
-                          "properties": {
-                            "crds": {}
-                          },
-                          "required": [
-                            "crds"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1crds=null"
-                      }
-                    ]
-                  },
-                  {
-                    "type": "object"
-                  }
-                ]
+                "$ref": "#/$defs/constrains~1crds+crds=null"
               }
             },
             "required": [
@@ -53866,6 +54327,72 @@
       "if": {
         "anyOf": [
           {
+            "$ref": "#/$defs/constrains~1datadog.operator.migration.preview:t"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1datadog.operator.enabled+datadog.operator.enabled!=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1datadog.operator.enabled+datadog.operator.enabled!=false"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "operator": {
+                    "properties": {
+                      "fullnameOverride": {
+                        "pattern": "datadog-operator",
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "fullnameOverride"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "operator"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1datadog.operator.migration.enabled:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1operator.fullnameOverride:t"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1datadog.operator.enabled=true"
+          },
+          {
+            "$ref": "#/$defs/constrains~1datadog.operator.migration.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1datadog.operator.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "operator": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "$ref": "#/$defs/constrains~1agents.rbac.create:t"
           },
           {
@@ -54281,7 +54808,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
           },
           {
             "$ref": "#/$defs/constrains~1targetSystem=linux"
@@ -56843,7 +57370,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
           },
           {
             "anyOf": [
@@ -57399,65 +57926,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1datadog.operator.enabled+datadog.operator.enabled:t+7more"
-          },
-          {
-            "properties": {
-              "operator": {
-                "allOf": [
-                  {
-                    "type": "object"
-                  },
-                  {
-                    "anyOf": [
-                      {
-                        "properties": {
-                          "datadogCRDs": {
-                            "$ref": "#/$defs/constrains~1crds=null"
-                          }
-                        },
-                        "required": [
-                          "datadogCRDs"
-                        ],
-                        "type": "object"
-                      },
-                      {
-                        "not": {
-                          "properties": {
-                            "datadogCRDs": {
-                              "properties": {
-                                "crds": {}
-                              },
-                              "required": [
-                                "crds"
-                              ],
-                              "type": "object"
-                            }
-                          },
-                          "required": [
-                            "datadogCRDs"
-                          ],
-                          "type": "object"
-                        }
-                      }
-                    ]
-                  }
-                ]
-              }
-            },
-            "required": [
-              "operator"
-            ],
-            "type": "object"
-          }
-        ]
-      },
-      "then": false
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "anyOf": [
               {
                 "allOf": [
@@ -57468,7 +57936,7 @@
                     "$ref": "#/$defs/constrains~1providers.talos.enabled:t"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+                    "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
                   },
                   {
                     "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+11more@3"
@@ -57505,7 +57973,7 @@
                     "$ref": "#/$defs/constrains~1providers.talos.enabled:t"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+                    "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
                   },
                   {
                     "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+11more@3"
@@ -59207,7 +59675,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1datadog.hostProfiler.seccomp.enabled+datadog.hostProfiler.seccomp.enabled!=false"
+            "$ref": "#/$defs/constrains~1datadog.hostProfiler.seccomp.enabled+datadog.hostProfiler.seccomp.enabled!=false@2"
           },
           {
             "$ref": "#/$defs/constrains~1providers.gke.gdc:t"
@@ -59249,7 +59717,7 @@
             "$ref": "#/$defs/constrains~1agents.podSecurity.securityContextConstraints.create:t"
           },
           {
-            "$ref": "#/$defs/constrains~1datadog.hostProfiler.seccomp.enabled+datadog.hostProfiler.seccomp.enabled!=false@2"
+            "$ref": "#/$defs/constrains~1datadog.hostProfiler.seccomp.enabled+datadog.hostProfiler.seccomp.enabled!=false"
           },
           {
             "anyOf": [
@@ -61032,7 +61500,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
           },
           {
             "anyOf": [
@@ -61260,7 +61728,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
           },
           {
             "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+11more"
@@ -61798,7 +62266,7 @@
                     "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more@2"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+                    "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
                   },
                   {
                     "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+8more"
@@ -61817,7 +62285,7 @@
                     "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+7more"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+                    "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
                   },
                   {
                     "$ref": "#/$defs/constrains~1datadog.systemProbe.enableOOMKill:t"
@@ -61854,7 +62322,7 @@
                     "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+7more"
                   },
                   {
-                    "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+                    "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
                   },
                   {
                     "$ref": "#/$defs/constrains~1datadog.systemProbe.enableOOMKill:t"
@@ -61941,6 +62409,171 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1datadog.autoscaling.workload.enabled+datadog.autoscaling.workload.enabled!=false"
+              },
+              {
+                "$ref": "#/$defs/constrains~1datadog.instrumentationCrd.enabled+datadog.instrumentationCrd.enabled!=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1datadog.autoscaling.workload.enabled+datadog.autoscaling.workload.enabled!=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1datadog.instrumentationCrd.enabled+datadog.instrumentationCrd.enabled!=false"
+              },
+              {
+                "$ref": "#/$defs/constrains~1clusterAgent.metricsProvider.useDatadogMetrics+1more@3"
+              },
+              {
+                "$ref": "#/$defs/constrains~1clusterAgent.metricsProvider.useDatadogMetrics+1more@2"
+              },
+              {
+                "$ref": "#/$defs/constrains~1tags.install-crds+tags.install-crds!=false"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1datadog.autoscaling.workload.enabled+datadog.autoscaling.workload.enabled!=false"
+              },
+              {
+                "$ref": "#/$defs/constrains~1datadog.instrumentationCrd.enabled+datadog.instrumentationCrd.enabled!=true"
+              },
+              {
+                "properties": {
+                  "clusterAgent": {
+                    "properties": {
+                      "metricsProvider": {
+                        "properties": {
+                          "useDatadogMetrics": {
+                            "enum": [
+                              true
+                            ]
+                          }
+                        },
+                        "required": [
+                          "useDatadogMetrics"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "metricsProvider"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "clusterAgent"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1datadog.autoscaling.workload.enabled+datadog.autoscaling.workload.enabled!=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1datadog.instrumentationCrd.enabled+datadog.instrumentationCrd.enabled!=false"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "datadog": {
+                "properties": {
+                  "autoscaling": {
+                    "properties": {
+                      "workload": {
+                        "$ref": "#/$defs/constrains~1enabled=true"
+                      }
+                    },
+                    "required": [
+                      "workload"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "autoscaling"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "datadog"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1datadog.autoscaling.workload.enabled+datadog.autoscaling.workload.enabled!=false"
+              },
+              {
+                "properties": {
+                  "datadog": {
+                    "properties": {
+                      "instrumentationCrd": {
+                        "$ref": "#/$defs/constrains~1enabled=true"
+                      }
+                    },
+                    "required": [
+                      "instrumentationCrd"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "datadog"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1datadog.autoscaling.workload.enabled+datadog.autoscaling.workload.enabled!=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1tags.install-crds=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1datadog.autoscaling.workload.enabled+datadog.autoscaling.workload.enabled!=false"
+              },
+              {
+                "$ref": "#/$defs/constrains~1datadog.instrumentationCrd.enabled+datadog.instrumentationCrd.enabled!=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1datadog.autoscaling.workload.enabled+datadog.autoscaling.workload.enabled!=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1datadog.instrumentationCrd.enabled+datadog.instrumentationCrd.enabled!=false"
+              },
+              {
+                "$ref": "#/$defs/constrains~1clusterAgent.metricsProvider.useDatadogMetrics+1more@3"
+              },
+              {
+                "$ref": "#/$defs/constrains~1clusterAgent.metricsProvider.useDatadogMetrics+1more@2"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "datadog-crds": {
+            "type": "object"
+          }
+        }
+      }
     },
     {
       "if": {
@@ -64570,7 +65203,7 @@
             "$ref": "#/$defs/constrains~1registryMigrationMode+registryMigrationMode!=auto"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
           },
           {
             "$ref": "#/$defs/constrains~1agents.enabled:t"
@@ -64767,7 +65400,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
           },
           {
             "$ref": "#/$defs/constrains~1agents.podSecurity.apparmor.enabled:t"
@@ -65520,59 +66153,6 @@
     },
     {
       "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1datadog.operator.migration.preview:t"
-          },
-          {
-            "allOf": [
-              {
-                "properties": {
-                  "operator": {
-                    "properties": {
-                      "fullnameOverride": {
-                        "pattern": "datadog-operator",
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "fullnameOverride"
-                    ],
-                    "type": "object"
-                  }
-                },
-                "required": [
-                  "operator"
-                ],
-                "type": "object"
-              },
-              {
-                "$ref": "#/$defs/constrains~1datadog.operator.migration.enabled:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1operator.fullnameOverride:t"
-              }
-            ]
-          },
-          {
-            "$ref": "#/$defs/constrains~1datadog.operator.migration.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1datadog.operator.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "operator": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "$ref": "#/$defs/constrains~1kubeVersionOverride+kubeVersionOverride:t+otelAgentGateway.autoscaling+1more@2"
       },
       "then": {
@@ -65703,7 +66283,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
           },
           {
             "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+11more"
@@ -66172,7 +66752,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
           },
           {
             "$ref": "#/$defs/constrains~1targetSystem=linux"
@@ -66337,7 +66917,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
           },
           {
             "anyOf": [
@@ -66415,7 +66995,7 @@
                 "$ref": "#/$defs/constrains~1datadog.securityAgent.runtime.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
               },
               {
                 "$ref": "#/$defs/constrains~1datadog.systemProbe.enableOOMKill:t"
@@ -66480,7 +67060,7 @@
                 "$ref": "#/$defs/constrains~1datadog.securityAgent.runtime.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1providers.gke.gdc:t"
@@ -66505,7 +67085,7 @@
                 "$ref": "#/$defs/constrains~1providers.talos.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1datadog.systemProbe.enableOOMKill:t"
@@ -66954,7 +67534,7 @@
                 "$ref": "#/$defs/constrains~1datadog.securityAgent.runtime.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1providers.gke.gdc:t"
@@ -67014,7 +67594,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
           },
           {
             "anyOf": [
@@ -67304,7 +67884,7 @@
                             "$ref": "#/$defs/constrains~1@items.effect+@items.key+@items.operator+@items.tolerationSeconds+@items.value~1not~1:t"
                           },
                           {
-                            "$ref": "#/$defs/values~1agents.containers.traceAgent.livenessProbe.tcpSocket"
+                            "$ref": "#/$defs/values~1agents.containers.agent.livenessProbe.httpGet"
                           }
                         ],
                         "description": "datadog.secretBackend.roles -- Creates roles for Datadog to read the specified secrets - replacing `datadog.secretBackend.enableGlobalPermissions`.\n- namespace: secret-location-namespace\nsecrets:\n- secret-1\n- secret-2"
@@ -67494,7 +68074,7 @@
                 "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1datadog.gpuMonitoring.privilegedMode:t"
@@ -68624,7 +69204,7 @@
                 "$ref": "#/$defs/constrains~1datadog+datadog.sbom.host.enabled:t+datadog.systemProbe.osReleasePath:t"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1providers.gke.gdc:t"
@@ -68652,7 +69232,7 @@
                 "$ref": "#/$defs/constrains~1providers.gke.autopilot:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1targetSystem=linux"
@@ -68674,7 +69254,7 @@
                 "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1targetSystem=linux"
@@ -68747,7 +69327,7 @@
                 "$ref": "#/$defs/constrains~1providers.gke.autopilot:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t"
@@ -68766,7 +69346,7 @@
                 "$ref": "#/$defs/constrains~1providers.gke.autopilot:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1datadog.systemProbe.enableOOMKill:t"
@@ -68811,7 +69391,7 @@
                 "$ref": "#/$defs/constrains~1datadog.securityAgent.runtime.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
               },
               {
                 "$ref": "#/$defs/constrains~1datadog.systemProbe.enableOOMKill:t"
@@ -68851,7 +69431,7 @@
                 "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
               },
               {
                 "$ref": "#/$defs/constrains~1targetSystem=linux"
@@ -68994,6 +69574,121 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1operator.installCRDs+operator.installCRDs!=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1datadog.operator.enabled=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1tags.install-crds+tags.install-crds!=false"
+              },
+              {
+                "$ref": "#/$defs/constrains~1operator.installCRDs+operator.installCRDs!=false"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1tags.install-crds=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1operator.installCRDs+operator.installCRDs!=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1datadog.operator.enabled=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1operator.installCRDs+operator.installCRDs!=false"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1datadog.operator.enabled+datadog.operator.enabled!=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1datadog.operator.enabled+datadog.operator.enabled!=false"
+              },
+              {
+                "$ref": "#/$defs/constrains~1operator.installCRDs=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1datadog.operator.enabled+datadog.operator.enabled!=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1operator.installCRDs+operator.installCRDs!=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1datadog.operator.enabled+datadog.operator.enabled!=false"
+              },
+              {
+                "$ref": "#/$defs/constrains~1tags.install-crds+tags.install-crds!=false"
+              },
+              {
+                "$ref": "#/$defs/constrains~1operator.installCRDs+operator.installCRDs!=false"
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1datadog.operator.migration.enabled:t"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1tags.install-crds=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1datadog.operator.enabled+datadog.operator.enabled!=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1operator.installCRDs+operator.installCRDs!=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1datadog.operator.enabled+datadog.operator.enabled!=false"
+              },
+              {
+                "$ref": "#/$defs/constrains~1operator.installCRDs+operator.installCRDs!=false"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1datadog.operator.enabled=true"
+              },
+              {
+                "$ref": "#/$defs/constrains~1operator.installCRDs=true"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "operator": {
+            "additionalProperties": {},
+            "properties": {
+              "datadogCRDs": {
+                "type": "object"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/constrains~1agents.lifecycle:t"
@@ -69113,7 +69808,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
           },
           {
             "$ref": "#/$defs/constrains~1targetSystem=linux"
@@ -69224,7 +69919,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
           },
           {
             "$ref": "#/$defs/constrains~1providers.gke.gdc:t"
@@ -69324,7 +70019,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
           },
           {
             "$ref": "#/$defs/constrains~1agents.enabled:t"
@@ -69419,7 +70114,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@3"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more"
           },
           {
             "$ref": "#/$defs/constrains~1targetSystem=windows@2"
@@ -70161,7 +70856,7 @@
                 "$ref": "#/$defs/constrains~1providers.talos.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+                "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
               },
               {
                 "$ref": "#/$defs/constrains~1datadog.securityContext:t"
@@ -70387,7 +71082,7 @@
             "$ref": "#/$defs/constrains~1registryMigrationMode+registryMigrationMode!=auto"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
           },
           {
             "$ref": "#/$defs/constrains~1agents.enabled:t"
@@ -71557,7 +72252,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
           },
           {
             "anyOf": [
@@ -71948,7 +72643,7 @@
             "$ref": "#/$defs/constrains~1datadog.envDict.HELM_FORCE_RENDER:t+providers.gke.autopilot:t+2more@2"
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
           },
           {
             "anyOf": [
@@ -72270,7 +72965,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
           },
           {
             "$ref": "#/$defs/constrains~1agents.enabled:t"
@@ -72766,7 +73461,7 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more@2"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.doNotCheckTag:t+agents.image.tag+16more"
           },
           {
             "anyOf": [
@@ -73599,7 +74294,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@4"
+            "$ref": "#/$defs/constrains~1agents+agents.image+agents.image.tag+agents.image.tag=6+agents.image.tag=7+21more@2"
           },
           {
             "$ref": "#/$defs/constrains~1targetSystem=linux"
@@ -75082,15 +75777,16 @@
                   "description": "agents.containers.agent.healthPort -- Port number to use in the node agent for the healthz endpoint"
                 },
                 "livenessProbe": {
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1exec+httpGet+tcpSocket"
+                  "additionalProperties": {},
+                  "description": "agents.containers.agent.livenessProbe -- Override default agent liveness probe settings",
+                  "properties": {
+                    "exec": {},
+                    "httpGet": {
+                      "$ref": "#/$defs/values~1agents.containers.agent.livenessProbe.httpGet"
                     },
-                    {
-                      "type": "object"
-                    }
-                  ],
-                  "description": "agents.containers.agent.livenessProbe -- Override default agent liveness probe settings"
+                    "tcpSocket": {}
+                  },
+                  "type": "object"
                 },
                 "logLevel": {
                   "description": "agents.containers.agent.logLevel -- Set logging verbosity, valid log levels are: trace, debug, info, warn, error, critical, and off.\nIf not set, fall back to the value of datadog.logLevel.\nINFO"
@@ -75099,15 +75795,16 @@
                   "description": "agents.containers.agent.ports -- Allows to specify extra ports (hostPorts for instance) for this container"
                 },
                 "readinessProbe": {
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1exec+httpGet+tcpSocket"
+                  "additionalProperties": {},
+                  "description": "agents.containers.agent.readinessProbe -- Override default agent readiness probe settings",
+                  "properties": {
+                    "exec": {},
+                    "httpGet": {
+                      "$ref": "#/$defs/values~1agents.containers.agent.livenessProbe.httpGet"
                     },
-                    {
-                      "type": "object"
-                    }
-                  ],
-                  "description": "agents.containers.agent.readinessProbe -- Override default agent readiness probe settings"
+                    "tcpSocket": {}
+                  },
+                  "type": "object"
                 },
                 "resources": {
                   "description": "agents.containers.agent.resources -- Resource requests and limits for the agent container.\nrequests:\ncpu: 200m\nmemory: 256Mi\nlimits:\ncpu: 200m\nmemory: 256Mi"
@@ -75127,15 +75824,16 @@
                   "type": "object"
                 },
                 "startupProbe": {
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1exec+httpGet+tcpSocket"
+                  "additionalProperties": {},
+                  "description": "agents.containers.agent.startupProbe -- Override default agent startup probe settings",
+                  "properties": {
+                    "exec": {},
+                    "httpGet": {
+                      "$ref": "#/$defs/values~1agents.containers.agent.livenessProbe.httpGet"
                     },
-                    {
-                      "type": "object"
-                    }
-                  ],
-                  "description": "agents.containers.agent.startupProbe -- Override default agent startup probe settings"
+                    "tcpSocket": {}
+                  },
+                  "type": "object"
                 }
               },
               "type": "object"
@@ -75500,7 +76198,7 @@
                     "exec": {},
                     "httpGet": {},
                     "tcpSocket": {
-                      "$ref": "#/$defs/values~1agents.containers.traceAgent.livenessProbe.tcpSocket"
+                      "$ref": "#/$defs/values~1agents.containers.agent.livenessProbe.httpGet"
                     }
                   }
                 },
@@ -75660,7 +76358,7 @@
               "description": "agents.podSecurity.seccompProfiles -- Allowed seccomp profiles"
             },
             "securityContext": {
-              "$ref": "#/$defs/values~1agents.containers.traceAgent.livenessProbe.tcpSocket"
+              "$ref": "#/$defs/values~1agents.containers.agent.livenessProbe.httpGet"
             },
             "securityContextConstraints": {
               "additionalProperties": {},
@@ -75690,32 +76388,26 @@
           "description": "agents.priorityPreemptionPolicyValue -- Set to \"Never\" to change the PriorityClass to non-preempting"
         },
         "rbac": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "Provide Daemonset RBAC configuration",
+          "properties": {
+            "automountServiceAccountToken": {
+              "description": "agents.rbac.automountServiceAccountToken -- If true, automatically mount the ServiceAccount's API credentials if agents.rbac.create is true"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "automountServiceAccountToken": {
-                  "description": "agents.rbac.automountServiceAccountToken -- If true, automatically mount the ServiceAccount's API credentials if agents.rbac.create is true"
-                },
-                "create": {
-                  "description": "agents.rbac.create -- If true, create & use RBAC resources"
-                },
-                "serviceAccountAdditionalLabels": {
-                  "description": "agents.rbac.serviceAccountAdditionalLabels -- Labels to add to the ServiceAccount if agents.rbac.create is true"
-                },
-                "serviceAccountAnnotations": {
-                  "description": "agents.rbac.serviceAccountAnnotations -- Annotations to add to the ServiceAccount if agents.rbac.create is true"
-                },
-                "serviceAccountName": {
-                  "description": "agents.rbac.serviceAccountName -- Specify a preexisting ServiceAccount to use if agents.rbac.create is false"
-                }
-              }
+            "create": {
+              "description": "agents.rbac.create -- If true, create & use RBAC resources"
+            },
+            "serviceAccountAdditionalLabels": {
+              "description": "agents.rbac.serviceAccountAdditionalLabels -- Labels to add to the ServiceAccount if agents.rbac.create is true"
+            },
+            "serviceAccountAnnotations": {
+              "description": "agents.rbac.serviceAccountAnnotations -- Annotations to add to the ServiceAccount if agents.rbac.create is true"
+            },
+            "serviceAccountName": {
+              "description": "agents.rbac.serviceAccountName -- Specify a preexisting ServiceAccount to use if agents.rbac.create is false"
             }
-          ],
-          "description": "Provide Daemonset RBAC configuration"
+          },
+          "type": "object"
         },
         "revisionHistoryLimit": {
           "description": "agents.revisionHistoryLimit -- The number of ControllerRevision to keep in this DaemonSet."
@@ -75968,138 +76660,132 @@
           "description": "clusterAgent.additionalLabels -- Adds labels to the Cluster Agent deployment and pods\nkey: \"value\""
         },
         "admissionController": {
-          "allOf": [
-            {
+          "additionalProperties": {},
+          "properties": {
+            "agentSidecarInjection": {
               "additionalProperties": {},
+              "description": "clusterAgent.admissionController.agentSidecarInjection.enabled -- Enables Datadog Agent sidecar injection.",
               "properties": {
-                "agentSidecarInjection": {
+                "clusterAgentCommunicationEnabled": {
+                  "description": "clusterAgent.admissionController.agentSidecarInjection.clusterAgentCommunicationEnabled -- Enable communication between Agent sidecars and the Cluster Agent."
+                },
+                "clusterAgentTlsVerification": {
                   "additionalProperties": {},
-                  "description": "clusterAgent.admissionController.agentSidecarInjection.enabled -- Enables Datadog Agent sidecar injection.",
+                  "description": "clusterAgent.admissionController.agentSidecarInjection.clusterAgentTlsVerification -- TLS verification configuration for sidecar-to-cluster-agent communication.",
                   "properties": {
-                    "clusterAgentCommunicationEnabled": {
-                      "description": "clusterAgent.admissionController.agentSidecarInjection.clusterAgentCommunicationEnabled -- Enable communication between Agent sidecars and the Cluster Agent."
-                    },
-                    "clusterAgentTlsVerification": {
-                      "additionalProperties": {},
-                      "description": "clusterAgent.admissionController.agentSidecarInjection.clusterAgentTlsVerification -- TLS verification configuration for sidecar-to-cluster-agent communication.",
-                      "properties": {
-                        "copyCaConfigMap": {
-                          "description": "clusterAgent.admissionController.agentSidecarInjection.clusterAgentTlsVerification.copyCaConfigMap -- Enable automatic creation of a ConfigMap containing the Cluster Agent's CA certificate in namespaces where sidecar injection occurs."
-                        },
-                        "enabled": {
-                          "description": "clusterAgent.admissionController.agentSidecarInjection.clusterAgentTlsVerification.enabled -- Enable TLS verification for Agent sidecars communicating with the Cluster Agent."
-                        }
-                      }
-                    },
-                    "containerRegistry": {
-                      "description": "clusterAgent.admissionController.agentSidecarInjection.containerRegistry -- Override the default registry for the sidecar Agent."
+                    "copyCaConfigMap": {
+                      "description": "clusterAgent.admissionController.agentSidecarInjection.clusterAgentTlsVerification.copyCaConfigMap -- Enable automatic creation of a ConfigMap containing the Cluster Agent's CA certificate in namespaces where sidecar injection occurs."
                     },
                     "enabled": {
-                      "description": "When enabled, the admission controller mutating webhook will inject an Agent sidecar with minimal configuration in every pod meeting the configured criteria."
-                    },
-                    "imageName": {
-                      "description": "clusterAgent.admissionController.imageName -- Override the default agents.image.name for the Agent sidecar."
-                    },
-                    "imageTag": {
-                      "description": "clusterAgent.admissionController.imageTag -- Override the default agents.image.tag for the Agent sidecar."
-                    },
-                    "profiles": {
-                      "description": "This setting allows overriding the sidecar Agent configuration by adding environment variables and providing resource settings.\n- env:\n- name: DD_ORCHESTRATOR_EXPLORER_ENABLED\nvalue: \"true\"\nresources:\nrequests:\ncpu: \"1\"\nmemory: \"512Mi\"\nlimits:\ncpu: \"2\"\nmemory: \"1024Mi\""
-                    },
-                    "provider": {
-                      "description": "Currently only \"fargate\" is supported. To use the feature in other environments (including local testing) omit the config.\nref: https://docs.datadoghq.com/integrations/eks_fargate"
-                    },
-                    "selectors": {
-                      "description": "clusterAgent.admissionController.agentSidecarInjection.selectors -- Defines the pod selector for sidecar injection, currently only one rule is supported.\n- objectSelector:\nmatchLabels:\n\"podlabelKey1\": podlabelValue1\n\"podlabelKey2\": podlabelValue2\nnamespaceSelector:\nmatchLabels:\n\"nsLabelKey1\": nsLabelValue1\n\"nsLabelKey2\": nsLabelValue2"
+                      "description": "clusterAgent.admissionController.agentSidecarInjection.clusterAgentTlsVerification.enabled -- Enable TLS verification for Agent sidecars communicating with the Cluster Agent."
                     }
                   }
-                },
-                "configMode": {
-                  "description": "If clusterAgent.admissionController.configMode is not set:\n* and datadog.apm.socketEnabled is true, the Admission Controller uses socket.\n* and datadog.apm.portEnabled is true, the Admission Controller uses hostip.\n* and datadog.apm.useLocalService is true and the aformentioned two are false, the Admission Controller uses service.\n* Otherwise, the Admission Controller defaults to hostip.\nNote: \"service\" mode relies on the internal traffic service to target the agent running on the local node (requires Kubernetes v1.22+).\nNote: \"csi\" mode requires enabling csi with `datadog.csi.enabled`. If not set, the admission controller will fallback to \"socket\" mode.\nNote: \"csi\" mode requires version 7.65 or later of the cluster agent.\nref: https://docs.datadoghq.com/agent/cluster_agent/admission_controller/#configure-apm-and-dogstatsd-communication-mode\n\"hostip\", \"socket\", \"csi\" or \"service\""
                 },
                 "containerRegistry": {
-                  "description": "The clusterAgent uses this configuration for apm.instrumentation, agentSidecar, and cwsInstrumentation, if\nnot otherwise specified."
-                },
-                "cwsInstrumentation": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "description": "clusterAgent.admissionController.cwsInstrumentation.enabled -- Enable the CWS Instrumentation admission controller endpoint."
-                    },
-                    "mode": {
-                      "description": "clusterAgent.admissionController.cwsInstrumentation.mode -- Mode defines how the CWS Instrumentation should behave.\nOptions are \"remote_copy\" or \"init_container\""
-                    }
-                  }
+                  "description": "clusterAgent.admissionController.agentSidecarInjection.containerRegistry -- Override the default registry for the sidecar Agent."
                 },
                 "enabled": {
-                  "description": "clusterAgent.admissionController.enabled -- Enable the admissionController to be able to inject APM/Dogstatsd config and standard tags (env, service, version) automatically into your pods"
+                  "description": "When enabled, the admission controller mutating webhook will inject an Agent sidecar with minimal configuration in every pod meeting the configured criteria."
                 },
-                "failurePolicy": {
-                  "description": "The default of Ignore means that pods will still be admitted even if the webhook is unavailable to inject them.\nSetting to Fail will require the admission controller to be present and pods to be injected before they are allowed to run."
+                "imageName": {
+                  "description": "clusterAgent.admissionController.imageName -- Override the default agents.image.name for the Agent sidecar."
                 },
-                "kubernetesAdmissionEvents": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "description": "clusterAgent.admissionController.kubernetesAdmissionEvents.enabled -- Enable the Kubernetes Admission Events feature."
-                    }
-                  }
+                "imageTag": {
+                  "description": "clusterAgent.admissionController.imageTag -- Override the default agents.image.tag for the Agent sidecar."
                 },
-                "mutateUnlabelled": {
-                  "description": "clusterAgent.admissionController.mutateUnlabelled -- Enable injecting config without having the pod label 'admission.datadoghq.com/enabled=\"true\"'"
+                "profiles": {
+                  "description": "This setting allows overriding the sidecar Agent configuration by adding environment variables and providing resource settings.\n- env:\n- name: DD_ORCHESTRATOR_EXPLORER_ENABLED\nvalue: \"true\"\nresources:\nrequests:\ncpu: \"1\"\nmemory: \"512Mi\"\nlimits:\ncpu: \"2\"\nmemory: \"1024Mi\""
                 },
-                "mutation": {
-                  "additionalProperties": {},
-                  "description": "clusterAgent.admissionController.mutation -- Mutation Webhook configuration options",
-                  "properties": {
-                    "enabled": {
-                      "description": "clusterAgent.admissionController.mutation.enabled -- Enabled enables the Admission Controller mutation webhook. Default: true. (Requires Agent 7.59.0+)."
-                    }
-                  }
+                "provider": {
+                  "description": "Currently only \"fargate\" is supported. To use the feature in other environments (including local testing) omit the config.\nref: https://docs.datadoghq.com/integrations/eks_fargate"
                 },
-                "port": {
-                  "description": "clusterAgent.admissionController.port -- Set port of cluster-agent admission controller service"
-                },
-                "probe": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "description": "clusterAgent.admissionController.probe.enabled -- Enable the admission controller connectivity probe.\nThe probe periodically sends dry-run ConfigMap creation requests to verify the webhook is reachable from the API server.\n(Requires Cluster Agent 7.78.0+)."
-                    },
-                    "gracePeriod": {
-                      "description": "clusterAgent.admissionController.probe.gracePeriod -- Seconds to wait at startup before the first probe."
-                    },
-                    "interval": {
-                      "description": "clusterAgent.admissionController.probe.interval -- Seconds between probe executions."
-                    }
-                  }
-                },
-                "remoteInstrumentation": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "enabled": {
-                      "description": "clusterAgent.admissionController.remoteInstrumentation.enabled -- Enable polling and applying library injection using Remote Config.\nThis feature is in beta, and enables Remote Config in the Cluster Agent. It also requires Cluster Agent version 7.43+.\nEnabling this feature grants the Cluster Agent the permissions to patch Deployment objects in the cluster."
-                    }
-                  }
-                },
-                "validation": {
-                  "additionalProperties": {},
-                  "description": "clusterAgent.admissionController.validation -- Validation Webhook configuration options",
-                  "properties": {
-                    "enabled": {
-                      "description": "clusterAgent.admissionController.validation.enabled -- Enabled enables the Admission Controller validation webhook. Default: true. (Requires Agent 7.59.0+)."
-                    }
-                  }
-                },
-                "webhookName": {
-                  "description": "clusterAgent.admissionController.webhookName -- Name of the validatingwebhookconfiguration and mutatingwebhookconfiguration created by the cluster-agent"
+                "selectors": {
+                  "description": "clusterAgent.admissionController.agentSidecarInjection.selectors -- Defines the pod selector for sidecar injection, currently only one rule is supported.\n- objectSelector:\nmatchLabels:\n\"podlabelKey1\": podlabelValue1\n\"podlabelKey2\": podlabelValue2\nnamespaceSelector:\nmatchLabels:\n\"nsLabelKey1\": nsLabelValue1\n\"nsLabelKey2\": nsLabelValue2"
                 }
               }
             },
-            {
-              "type": "object"
+            "configMode": {
+              "description": "If clusterAgent.admissionController.configMode is not set:\n* and datadog.apm.socketEnabled is true, the Admission Controller uses socket.\n* and datadog.apm.portEnabled is true, the Admission Controller uses hostip.\n* and datadog.apm.useLocalService is true and the aformentioned two are false, the Admission Controller uses service.\n* Otherwise, the Admission Controller defaults to hostip.\nNote: \"service\" mode relies on the internal traffic service to target the agent running on the local node (requires Kubernetes v1.22+).\nNote: \"csi\" mode requires enabling csi with `datadog.csi.enabled`. If not set, the admission controller will fallback to \"socket\" mode.\nNote: \"csi\" mode requires version 7.65 or later of the cluster agent.\nref: https://docs.datadoghq.com/agent/cluster_agent/admission_controller/#configure-apm-and-dogstatsd-communication-mode\n\"hostip\", \"socket\", \"csi\" or \"service\""
+            },
+            "containerRegistry": {
+              "description": "The clusterAgent uses this configuration for apm.instrumentation, agentSidecar, and cwsInstrumentation, if\nnot otherwise specified."
+            },
+            "cwsInstrumentation": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "description": "clusterAgent.admissionController.cwsInstrumentation.enabled -- Enable the CWS Instrumentation admission controller endpoint."
+                },
+                "mode": {
+                  "description": "clusterAgent.admissionController.cwsInstrumentation.mode -- Mode defines how the CWS Instrumentation should behave.\nOptions are \"remote_copy\" or \"init_container\""
+                }
+              }
+            },
+            "enabled": {
+              "description": "clusterAgent.admissionController.enabled -- Enable the admissionController to be able to inject APM/Dogstatsd config and standard tags (env, service, version) automatically into your pods"
+            },
+            "failurePolicy": {
+              "description": "The default of Ignore means that pods will still be admitted even if the webhook is unavailable to inject them.\nSetting to Fail will require the admission controller to be present and pods to be injected before they are allowed to run."
+            },
+            "kubernetesAdmissionEvents": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "description": "clusterAgent.admissionController.kubernetesAdmissionEvents.enabled -- Enable the Kubernetes Admission Events feature."
+                }
+              }
+            },
+            "mutateUnlabelled": {
+              "description": "clusterAgent.admissionController.mutateUnlabelled -- Enable injecting config without having the pod label 'admission.datadoghq.com/enabled=\"true\"'"
+            },
+            "mutation": {
+              "additionalProperties": {},
+              "description": "clusterAgent.admissionController.mutation -- Mutation Webhook configuration options",
+              "properties": {
+                "enabled": {
+                  "description": "clusterAgent.admissionController.mutation.enabled -- Enabled enables the Admission Controller mutation webhook. Default: true. (Requires Agent 7.59.0+)."
+                }
+              }
+            },
+            "port": {
+              "description": "clusterAgent.admissionController.port -- Set port of cluster-agent admission controller service"
+            },
+            "probe": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "description": "clusterAgent.admissionController.probe.enabled -- Enable the admission controller connectivity probe.\nThe probe periodically sends dry-run ConfigMap creation requests to verify the webhook is reachable from the API server.\n(Requires Cluster Agent 7.78.0+)."
+                },
+                "gracePeriod": {
+                  "description": "clusterAgent.admissionController.probe.gracePeriod -- Seconds to wait at startup before the first probe."
+                },
+                "interval": {
+                  "description": "clusterAgent.admissionController.probe.interval -- Seconds between probe executions."
+                }
+              }
+            },
+            "remoteInstrumentation": {
+              "additionalProperties": {},
+              "properties": {
+                "enabled": {
+                  "description": "clusterAgent.admissionController.remoteInstrumentation.enabled -- Enable polling and applying library injection using Remote Config.\nThis feature is in beta, and enables Remote Config in the Cluster Agent. It also requires Cluster Agent version 7.43+.\nEnabling this feature grants the Cluster Agent the permissions to patch Deployment objects in the cluster."
+                }
+              }
+            },
+            "validation": {
+              "additionalProperties": {},
+              "description": "clusterAgent.admissionController.validation -- Validation Webhook configuration options",
+              "properties": {
+                "enabled": {
+                  "description": "clusterAgent.admissionController.validation.enabled -- Enabled enables the Admission Controller validation webhook. Default: true. (Requires Agent 7.59.0+)."
+                }
+              }
+            },
+            "webhookName": {
+              "description": "clusterAgent.admissionController.webhookName -- Name of the validatingwebhookconfiguration and mutatingwebhookconfiguration created by the cluster-agent"
             }
-          ]
+          },
+          "type": "object"
         },
         "advancedConfd": {
           "description": "ref: https://docs.datadoghq.com/agent/autodiscovery/\nmysql.d:\n1.yaml: |-\ncluster_check: true\ninstances:\n- host: <EXTERNAL_IP>\nport: 3306\nusername: datadog\npassword: <YOUR_CHOSEN_PASSWORD>\n2.yaml:  |-\ncluster_check: true\ninstances:\n- host: <EXTERNAL_IP>\nport: 3306\nusername: datadog\npassword: <YOUR_CHOSEN_PASSWORD>"
@@ -76227,7 +76913,7 @@
           "properties": {
             "exec": {},
             "httpGet": {
-              "$ref": "#/$defs/values~1agents.containers.traceAgent.livenessProbe.tcpSocket"
+              "$ref": "#/$defs/values~1agents.containers.agent.livenessProbe.httpGet"
             },
             "tcpSocket": {}
           }
@@ -76392,7 +77078,7 @@
           "properties": {
             "exec": {},
             "httpGet": {
-              "$ref": "#/$defs/values~1agents.containers.traceAgent.livenessProbe.tcpSocket"
+              "$ref": "#/$defs/values~1agents.containers.agent.livenessProbe.httpGet"
             },
             "tcpSocket": {}
           }
@@ -76418,7 +77104,7 @@
           "properties": {
             "exec": {},
             "httpGet": {
-              "$ref": "#/$defs/values~1agents.containers.traceAgent.livenessProbe.tcpSocket"
+              "$ref": "#/$defs/values~1agents.containers.agent.livenessProbe.httpGet"
             },
             "tcpSocket": {}
           }
@@ -76613,7 +77299,7 @@
           "properties": {
             "exec": {},
             "httpGet": {
-              "$ref": "#/$defs/values~1agents.containers.traceAgent.livenessProbe.tcpSocket"
+              "$ref": "#/$defs/values~1agents.containers.agent.livenessProbe.httpGet"
             },
             "tcpSocket": {}
           }
@@ -76683,7 +77369,7 @@
           "properties": {
             "exec": {},
             "httpGet": {
-              "$ref": "#/$defs/values~1agents.containers.traceAgent.livenessProbe.tcpSocket"
+              "$ref": "#/$defs/values~1agents.containers.agent.livenessProbe.httpGet"
             },
             "tcpSocket": {}
           }
@@ -76715,7 +77401,7 @@
           "properties": {
             "exec": {},
             "httpGet": {
-              "$ref": "#/$defs/values~1agents.containers.traceAgent.livenessProbe.tcpSocket"
+              "$ref": "#/$defs/values~1agents.containers.agent.livenessProbe.httpGet"
             },
             "tcpSocket": {}
           }
@@ -77605,95 +78291,90 @@
           "$ref": "#/$defs/values~1datadog.apiKeyExistingSecret"
         },
         "apm": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "Enable apm agent and provide custom configs\nAPM is enabled by default. If local service Internal Traffic Policy is allowed (Kubernetes v1.22+), the agent service is created with the APM local traceport.\ndatadog.apm.socketEnabled -- Enable APM over Socket (Unix Socket or windows named pipe)",
+          "properties": {
+            "enabled": {
+              "description": "ref: https://github.com/DataDog/docker-dd-agent#tracing-from-the-host"
             },
-            {
+            "errorTrackingStandalone": {
               "additionalProperties": {},
+              "description": "Error Tracking backend",
               "properties": {
                 "enabled": {
-                  "description": "ref: https://github.com/DataDog/docker-dd-agent#tracing-from-the-host"
-                },
-                "errorTrackingStandalone": {
-                  "additionalProperties": {},
-                  "description": "Error Tracking backend",
-                  "properties": {
-                    "enabled": {
-                      "description": "datadog.apm.errorTrackingStandalone.enabled -- Enables Error Tracking for backend services."
-                    }
-                  }
-                },
-                "hostSocketPath": {
-                  "description": "datadog.apm.hostSocketPath -- Host path to the trace-agent socket"
-                },
-                "instrumentation": {
-                  "additionalProperties": {},
-                  "description": "APM Single Step Instrumentation\nRequires Cluster Agent 7.49+.",
-                  "properties": {
-                    "disabledNamespaces": {
-                      "description": "datadog.apm.instrumentation.disabledNamespaces -- Disable injecting the Datadog APM libraries into pods in specific namespaces."
-                    },
-                    "enabled": {
-                      "description": "datadog.apm.instrumentation.enabled -- Enable injecting the Datadog APM libraries into all pods in the cluster."
-                    },
-                    "enabledNamespaces": {
-                      "description": "datadog.apm.instrumentation.enabledNamespaces -- Enable injecting the Datadog APM libraries into pods in specific namespaces."
-                    },
-                    "injectionMode": {
-                      "description": "datadog.apm.instrumentation.injectionMode -- The injection mode to use for libraries injection.\nValid values are: \"auto\", \"init_container\", \"csi\" (experimental, requires Cluster Agent 7.76.0+ and Datadog CSI Driver), \"image_volume\" (experimental, requires Cluster Agent 7.77.0+)\nEmpty by default so the Cluster Agent can apply its own defaults."
-                    },
-                    "injector": {
-                      "additionalProperties": {},
-                      "description": "This feature is in preview. It requires Cluster Agent 7.57+.",
-                      "properties": {
-                        "imageTag": {
-                          "description": "datadog.apm.instrumentation.injector.imageTag -- The image tag to use for the APM Injector (preview)."
-                        }
-                      }
-                    },
-                    "language_detection": {
-                      "additionalProperties": {},
-                      "description": "Language detection currently only detects languages and adds them as annotations on deployments, but doesn't use these languages for injecting libraries to applicative pods.\nIt requires Agent 7.52+ and Cluster Agent 7.52+",
-                      "properties": {
-                        "enabled": {
-                          "description": "datadog.apm.instrumentation.language_detection.enabled -- Run language detection to automatically detect languages of user workloads (preview)."
-                        }
-                      }
-                    },
-                    "libVersions": {
-                      "description": "datadog.apm.instrumentation.libVersions -- Inject specific version of tracing libraries with Single Step Instrumentation."
-                    },
-                    "skipKPITelemetry": {
-                      "description": "datadog.apm.instrumentation.skipKPITelemetry -- Disable generating Configmap for APM Instrumentation KPIs"
-                    },
-                    "targets": {
-                      "description": "datadog.apm.instrumentation.targets -- Enable target based workload selection.\nRequires Cluster Agent 7.64.0+.\nddTraceConfigs[]valueFrom Requires Cluster Agent 7.66.0+.\n- name: \"example\"\npodSelector:\nmatchLabels:\nlanguage: \"python\"\nnamespaceSelector:\nmatchNames:\n- \"applications\"\nddTraceVersions:\npython: \"v2\"\nddTraceConfigs:\n- name: \"DD_PROFILING_ENABLED\"\nvalue: \"true\"\n- name: \"DD_SERVICE\"\nvalueFrom:\nfieldRef:\nfieldPath: metadata.labels[my-label]"
-                    }
-                  }
-                },
-                "port": {
-                  "$ref": "#/$defs/values~1datadog.apm~1keywords~1description"
-                },
-                "portEnabled": {
-                  "$ref": "#/$defs/values~1datadog.apm~1keywords~1description@2"
-                },
-                "socketEnabled": {
-                  "$ref": "#/$defs/values~1datadog.apm~1keywords~1description@2"
-                },
-                "socketPath": {
-                  "description": "datadog.apm.socketPath -- Path to the trace-agent socket"
-                },
-                "useLocalService": {
-                  "description": "ref: https://docs.datadoghq.com/tracing/guide/setting_up_apm_with_kubernetes_service/?tab=helm"
-                },
-                "useSocketVolume": {
-                  "$ref": "#/$defs/values~1datadog.apm~1keywords~1description@2"
+                  "description": "datadog.apm.errorTrackingStandalone.enabled -- Enables Error Tracking for backend services."
                 }
               }
+            },
+            "hostSocketPath": {
+              "description": "datadog.apm.hostSocketPath -- Host path to the trace-agent socket"
+            },
+            "instrumentation": {
+              "additionalProperties": {},
+              "description": "APM Single Step Instrumentation\nRequires Cluster Agent 7.49+.",
+              "properties": {
+                "disabledNamespaces": {
+                  "description": "datadog.apm.instrumentation.disabledNamespaces -- Disable injecting the Datadog APM libraries into pods in specific namespaces."
+                },
+                "enabled": {
+                  "description": "datadog.apm.instrumentation.enabled -- Enable injecting the Datadog APM libraries into all pods in the cluster."
+                },
+                "enabledNamespaces": {
+                  "description": "datadog.apm.instrumentation.enabledNamespaces -- Enable injecting the Datadog APM libraries into pods in specific namespaces."
+                },
+                "injectionMode": {
+                  "description": "datadog.apm.instrumentation.injectionMode -- The injection mode to use for libraries injection.\nValid values are: \"auto\", \"init_container\", \"csi\" (experimental, requires Cluster Agent 7.76.0+ and Datadog CSI Driver), \"image_volume\" (experimental, requires Cluster Agent 7.77.0+)\nEmpty by default so the Cluster Agent can apply its own defaults."
+                },
+                "injector": {
+                  "additionalProperties": {},
+                  "description": "This feature is in preview. It requires Cluster Agent 7.57+.",
+                  "properties": {
+                    "imageTag": {
+                      "description": "datadog.apm.instrumentation.injector.imageTag -- The image tag to use for the APM Injector (preview)."
+                    }
+                  }
+                },
+                "language_detection": {
+                  "additionalProperties": {},
+                  "description": "Language detection currently only detects languages and adds them as annotations on deployments, but doesn't use these languages for injecting libraries to applicative pods.\nIt requires Agent 7.52+ and Cluster Agent 7.52+",
+                  "properties": {
+                    "enabled": {
+                      "description": "datadog.apm.instrumentation.language_detection.enabled -- Run language detection to automatically detect languages of user workloads (preview)."
+                    }
+                  }
+                },
+                "libVersions": {
+                  "description": "datadog.apm.instrumentation.libVersions -- Inject specific version of tracing libraries with Single Step Instrumentation."
+                },
+                "skipKPITelemetry": {
+                  "description": "datadog.apm.instrumentation.skipKPITelemetry -- Disable generating Configmap for APM Instrumentation KPIs"
+                },
+                "targets": {
+                  "description": "datadog.apm.instrumentation.targets -- Enable target based workload selection.\nRequires Cluster Agent 7.64.0+.\nddTraceConfigs[]valueFrom Requires Cluster Agent 7.66.0+.\n- name: \"example\"\npodSelector:\nmatchLabels:\nlanguage: \"python\"\nnamespaceSelector:\nmatchNames:\n- \"applications\"\nddTraceVersions:\npython: \"v2\"\nddTraceConfigs:\n- name: \"DD_PROFILING_ENABLED\"\nvalue: \"true\"\n- name: \"DD_SERVICE\"\nvalueFrom:\nfieldRef:\nfieldPath: metadata.labels[my-label]"
+                }
+              },
+              "type": "object"
+            },
+            "port": {
+              "$ref": "#/$defs/values~1datadog.apm.port"
+            },
+            "portEnabled": {
+              "$ref": "#/$defs/values~1datadog.apm.portEnabled"
+            },
+            "socketEnabled": {
+              "$ref": "#/$defs/values~1datadog.apm.portEnabled"
+            },
+            "socketPath": {
+              "description": "datadog.apm.socketPath -- Path to the trace-agent socket"
+            },
+            "useLocalService": {
+              "description": "ref: https://docs.datadoghq.com/tracing/guide/setting_up_apm_with_kubernetes_service/?tab=helm"
+            },
+            "useSocketVolume": {
+              "$ref": "#/$defs/values~1datadog.apm.portEnabled"
             }
-          ],
-          "description": "Enable apm agent and provide custom configs\nAPM is enabled by default. If local service Internal Traffic Policy is allowed (Kubernetes v1.22+), the agent service is created with the APM local traceport.\ndatadog.apm.socketEnabled -- Enable APM over Socket (Unix Socket or windows named pipe)"
+          },
+          "type": "object"
         },
         "appKey": {
           "description": "If you are using clusterAgent.metricsProvider.enabled = true, you must set\na Datadog application key for read access to your metrics.\n<DATADOG_APP_KEY>"
@@ -78049,47 +78730,41 @@
           "description": "datadog.dockerSocketPath -- Path to the docker socket\n/var/run/docker.sock"
         },
         "dogstatsd": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "ref: https://docs.datadoghq.com/agent/kubernetes/dogstatsd/\nTo emit custom metrics from your Kubernetes application, use DogStatsD.\ndatadog.dogstatsd.port -- Override the Agent DogStatsD port",
+          "properties": {
+            "hostSocketPath": {
+              "description": "datadog.dogstatsd.hostSocketPath -- Host path to the DogStatsD socket"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "hostSocketPath": {
-                  "description": "datadog.dogstatsd.hostSocketPath -- Host path to the DogStatsD socket"
-                },
-                "nonLocalTraffic": {
-                  "description": "ref: https://github.com/DataDog/docker-dd-agent#environment-variables"
-                },
-                "originDetection": {
-                  "$ref": "#/$defs/values~1datadog.dogstatsd~1keywords~1description"
-                },
-                "port": {
-                  "$ref": "#/$defs/values~1datadog.apm~1keywords~1description"
-                },
-                "socketPath": {
-                  "description": "datadog.dogstatsd.socketPath -- Path to the DogStatsD socket"
-                },
-                "tagCardinality": {
-                  "$ref": "#/$defs/values~1datadog.dogstatsd~1keywords~1description"
-                },
-                "tags": {
-                  "$ref": "#/$defs/values~1datadog.tags"
-                },
-                "useHostPID": {
-                  "description": "This is required for Dogstatsd origin detection to work.\nSee https://docs.datadoghq.com/developers/dogstatsd/unix_socket/"
-                },
-                "useHostPort": {
-                  "description": "Needs to be used for sending custom metrics.\nThe ports need to be available on all hosts.\nWARNING: Make sure that hosts using this are properly firewalled otherwise\nmetrics and traces are accepted from any host able to connect to this host."
-                },
-                "useSocketVolume": {
-                  "description": "ref: https://docs.datadoghq.com/developers/dogstatsd/unix_socket/"
-                }
-              }
+            "nonLocalTraffic": {
+              "description": "ref: https://github.com/DataDog/docker-dd-agent#environment-variables"
+            },
+            "originDetection": {
+              "$ref": "#/$defs/values~1datadog.dogstatsd.originDetection"
+            },
+            "port": {
+              "$ref": "#/$defs/values~1datadog.apm.port"
+            },
+            "socketPath": {
+              "description": "datadog.dogstatsd.socketPath -- Path to the DogStatsD socket"
+            },
+            "tagCardinality": {
+              "$ref": "#/$defs/values~1datadog.dogstatsd.originDetection"
+            },
+            "tags": {
+              "$ref": "#/$defs/values~1datadog.dogstatsd.tags"
+            },
+            "useHostPID": {
+              "description": "This is required for Dogstatsd origin detection to work.\nSee https://docs.datadoghq.com/developers/dogstatsd/unix_socket/"
+            },
+            "useHostPort": {
+              "description": "Needs to be used for sending custom metrics.\nThe ports need to be available on all hosts.\nWARNING: Make sure that hosts using this are properly firewalled otherwise\nmetrics and traces are accepted from any host able to connect to this host."
+            },
+            "useSocketVolume": {
+              "description": "ref: https://docs.datadoghq.com/developers/dogstatsd/unix_socket/"
             }
-          ],
-          "description": "ref: https://docs.datadoghq.com/agent/kubernetes/dogstatsd/\nTo emit custom metrics from your Kubernetes application, use DogStatsD.\ndatadog.dogstatsd.port -- Override the Agent DogStatsD port"
+          },
+          "type": "object"
         },
         "dynamicInstrumentationGo": {
           "additionalProperties": {},
@@ -78110,7 +78785,7 @@
               "type": "integer"
             },
             {
-              "$ref": "#/$defs/values~1agents.containers.traceAgent.livenessProbe.tcpSocket"
+              "$ref": "#/$defs/values~1agents.containers.agent.livenessProbe.httpGet"
             },
             {
               "type": "null"
@@ -79128,54 +79803,48 @@
           "$ref": "#/$defs/values~1datadog.site"
         },
         "systemProbe": {
-          "allOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "apparmor": {
-                  "description": "datadog.systemProbe.apparmor -- Specify a apparmor profile for system-probe"
-                },
-                "btfPath": {
-                  "description": "datadog.systemProbe.btfPath -- Specify the path to a BTF file for your kernel"
-                },
-                "enableDefaultKernelHeadersPaths": {
-                  "description": "datadog.systemProbe.enableDefaultKernelHeadersPaths -- Enable mount of default paths where kernel headers are stored"
-                },
-                "enableDefaultOsReleasePaths": {
-                  "description": "DEPRECATED. Use datadog.disableDefaultOsReleasePaths instead.\ndatadog.systemProbe.enableDefaultOsReleasePaths -- enable default os-release files mount"
-                },
-                "enableKernelHeaderDownload": {},
-                "enableOOMKill": {
-                  "description": "datadog.systemProbe.enableOOMKill -- Enable the OOM kill eBPF-based check"
-                },
-                "enableRuntimeCompiler": {},
-                "enableTCPQueueLength": {
-                  "description": "datadog.systemProbe.enableTCPQueueLength -- Enable the TCP queue length eBPF-based check"
-                },
-                "enabled": {},
-                "mountPackageManagementDirs": {
-                  "description": "datadog.systemProbe.mountPackageManagementDirs -- Enables mounting of specific package management directories when runtime compilation is enabled\nFor runtime compilation to be able to download kernel headers, the host's package management folders\nmust be mounted to the /host directory. For example, for Ubuntu & Debian the following mount would be necessary:\n- name: \"apt-config-dir\"\nhostPath: /etc/apt\nmountPath: /host/etc/apt\nIf this list is empty, then all necessary package management directories (for all supported OSs) will be mounted."
-                },
-                "osReleasePath": {},
-                "runtimeCompilationAssetDir": {
-                  "description": "datadog.systemProbe.runtimeCompilationAssetDir -- Specify a directory for runtime compilation assets to live in"
-                },
-                "seccomp": {
-                  "description": "Note that this will break `kubectl exec … -c system-probe -- /bin/bash`"
-                },
-                "seccompRoot": {
-                  "description": "datadog.systemProbe.seccompRoot -- Specify the seccomp profile root directory"
-                }
-              }
+          "additionalProperties": {},
+          "description": "Enable systemProbe agent and provide custom configs",
+          "properties": {
+            "apparmor": {
+              "description": "datadog.systemProbe.apparmor -- Specify a apparmor profile for system-probe"
             },
-            {
-              "type": "object"
+            "btfPath": {
+              "description": "datadog.systemProbe.btfPath -- Specify the path to a BTF file for your kernel"
+            },
+            "enableDefaultKernelHeadersPaths": {
+              "description": "datadog.systemProbe.enableDefaultKernelHeadersPaths -- Enable mount of default paths where kernel headers are stored"
+            },
+            "enableDefaultOsReleasePaths": {
+              "description": "DEPRECATED. Use datadog.disableDefaultOsReleasePaths instead.\ndatadog.systemProbe.enableDefaultOsReleasePaths -- enable default os-release files mount"
+            },
+            "enableKernelHeaderDownload": {},
+            "enableOOMKill": {
+              "description": "datadog.systemProbe.enableOOMKill -- Enable the OOM kill eBPF-based check"
+            },
+            "enableRuntimeCompiler": {},
+            "enableTCPQueueLength": {
+              "description": "datadog.systemProbe.enableTCPQueueLength -- Enable the TCP queue length eBPF-based check"
+            },
+            "enabled": {},
+            "mountPackageManagementDirs": {
+              "description": "datadog.systemProbe.mountPackageManagementDirs -- Enables mounting of specific package management directories when runtime compilation is enabled\nFor runtime compilation to be able to download kernel headers, the host's package management folders\nmust be mounted to the /host directory. For example, for Ubuntu & Debian the following mount would be necessary:\n- name: \"apt-config-dir\"\nhostPath: /etc/apt\nmountPath: /host/etc/apt\nIf this list is empty, then all necessary package management directories (for all supported OSs) will be mounted."
+            },
+            "osReleasePath": {},
+            "runtimeCompilationAssetDir": {
+              "description": "datadog.systemProbe.runtimeCompilationAssetDir -- Specify a directory for runtime compilation assets to live in"
+            },
+            "seccomp": {
+              "description": "Note that this will break `kubectl exec … -c system-probe -- /bin/bash`"
+            },
+            "seccompRoot": {
+              "description": "datadog.systemProbe.seccompRoot -- Specify the seccomp profile root directory"
             }
-          ],
-          "description": "Enable systemProbe agent and provide custom configs"
+          },
+          "type": "object"
         },
         "tags": {
-          "$ref": "#/$defs/values~1datadog.tags"
+          "$ref": "#/$defs/values~1datadog.dogstatsd.tags"
         },
         "traceroute": {
           "additionalProperties": {},
@@ -79239,22 +79908,14 @@
             }
           }
         },
-        "fullnameOverride": {
-          "description": "fullnameOverride -- Override the fully qualified app name",
-          "type": "string"
-        },
-        "global": {
-          "additionalProperties": {},
-          "type": "object"
-        },
+        "global": {},
         "keepCrds": {
           "description": "keepCrds -- Instruct Helm to skip deleting CRD resources when a helm operation (such as helm uninstall, helm upgrade or helm rollback) would result in its deletion. These resources will become orphaned unless another Helm installation is instructed to take ownership of the resources using the `--take-ownership` flag.\nFor more details: https://helm.sh/docs/howto/charts_tips_and_tricks/#tell-helm-not-to-uninstall-a-resource"
         },
         "nameOverride": {
           "$ref": "#/$defs/values~1datadog-crds.nameOverride"
         }
-      },
-      "type": "object"
+      }
     },
     "datadog-csi-driver": {
       "additionalProperties": {},
@@ -79508,10 +80169,7 @@
           "description": "List of additional cli arguments to configure kube-state-metrics\nfor example: --enable-gzip-encoding, --log-file, etc.\nall the possible args can be found here: https://github.com/kubernetes/kube-state-metrics/blob/master/docs/cli-arguments.md"
         },
         "fullnameOverride": {},
-        "global": {
-          "additionalProperties": {},
-          "type": "object"
-        },
+        "global": {},
         "hostNetwork": {},
         "image": {
           "additionalProperties": {},
@@ -79674,8 +80332,7 @@
         "tolerations": {
           "description": "Tolerations for pod assignment\nRef: https://kubernetes.io/docs/concepts/configuration/taint-and-toleration/"
         }
-      },
-      "type": "object"
+      }
     },
     "kubeVersionOverride": {
       "description": "kubeVersionOverride -- Override Kubernetes version detection. Useful for GitOps tools like FluxCD that don't expose the real cluster version to Helm\n\"1.28.0\""
@@ -79797,6 +80454,7 @@
                 }
               }
             },
+            "global": {},
             "keepCrds": {
               "description": "operator.datadogCRDs.keepCrds -- Set to true to keep the CRDs when the helm chart is uninstalled. This must be set to true if datadog.operator.migration.enabled is set to true."
             },
@@ -79865,10 +80523,7 @@
         "fullnameOverride": {
           "description": "fullNameOverride -- Override the full qualified app name"
         },
-        "global": {
-          "additionalProperties": {},
-          "type": "object"
-        },
+        "global": {},
         "image": {
           "additionalProperties": {},
           "properties": {
@@ -80035,8 +80690,7 @@
         "watchNamespacesSLO": {
           "description": "watchNamespacesSLO -- Restricts the Operator to watch DatadogSLO resources on specific namespaces.\nRequires v1.8.0+\nexample: watch only two namespaces:\nwatchNamespacesSLO:\n- \"default\"\n- \"datadog\"\nto watch all namespaces\nwatchNamespacesSLO:\n- \"\""
         }
-      },
-      "type": "object"
+      }
     },
     "otelAgentGateway": {
       "additionalProperties": {},
@@ -81636,10 +82290,8 @@
       "type": "object"
     },
     "providers": {
+      "additionalProperties": {},
       "allOf": [
-        {
-          "type": "object"
-        },
         {
           "if": {
             "anyOf": [
@@ -81654,9 +82306,6 @@
             ]
           },
           "then": false
-        },
-        {
-          "$ref": "#/$defs/values~1agents.containers.traceAgent.livenessProbe.tcpSocket"
         },
         {
           "if": {
@@ -81679,7 +82328,8 @@
           },
           "then": false
         }
-      ]
+      ],
+      "type": "object"
     },
     "registry": {
       "description": "gcr.io/datadoghq"

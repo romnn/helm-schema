@@ -8356,12 +8356,42 @@
         }
       }
     },
+    "constrains/enabled!=false": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              false
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled!=null": {
       "properties": {
         "enabled": {
           "not": {
             "enum": [
               null
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=true": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              true
             ]
           }
         }
@@ -9269,6 +9299,19 @@
         "enabled": {
           "enum": [
             null
+          ]
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled=true": {
+      "properties": {
+        "enabled": {
+          "enum": [
+            true
           ]
         }
       },
@@ -12688,7 +12731,7 @@
           "not": {
             "properties": {
               "global": {
-                "$ref": "#/$defs/constrains~1postgresql@4"
+                "$ref": "#/$defs/constrains~1postgresql@5"
               }
             },
             "required": [
@@ -13687,7 +13730,7 @@
                       "service": {
                         "properties": {
                           "ports": {
-                            "$ref": "#/$defs/constrains~1postgresql@4"
+                            "$ref": "#/$defs/constrains~1postgresql@5"
                           }
                         },
                         "required": [
@@ -14148,7 +14191,7 @@
     "constrains/honorLabels+interval+metricRelabelings+params+path+port+relabelings+1more/anyOf/array+object": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1postgresql.common.global.compatibility.openshift"
+          "$ref": "#/$defs/values~1gitea.startupProbe"
         },
         {
           "items": {},
@@ -21499,7 +21542,7 @@
           "$ref": "#/$defs/constrains~1postgresql.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1postgresql@3"
+          "$ref": "#/$defs/constrains~1postgresql@4"
         },
         {
           "$ref": "#/$defs/constrains~1postgresql.enabled+postgresql.enabled=null@2"
@@ -21509,7 +21552,7 @@
     "constrains/postgresql+postgresql.enabled+postgresql.enabled=null": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1postgresql@3"
+          "$ref": "#/$defs/constrains~1postgresql@4"
         },
         {
           "$ref": "#/$defs/constrains~1postgresql.enabled+postgresql.enabled=null@2"
@@ -21604,7 +21647,7 @@
       "anyOf": [
         {
           "not": {
-            "$ref": "#/$defs/constrains~1postgresql@4"
+            "$ref": "#/$defs/constrains~1postgresql@5"
           }
         },
         {
@@ -22284,6 +22327,19 @@
         "properties": {
           "postgresql-ha": {
             "$ref": "#/$defs/constrains~1diagnosticMode.enabled:t@2"
+          }
+        },
+        "required": [
+          "postgresql-ha"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/postgresql-ha.enabled": {
+      "not": {
+        "properties": {
+          "postgresql-ha": {
+            "$ref": "#/$defs/constrains~1enabled@3"
           }
         },
         "required": [
@@ -26216,6 +26272,19 @@
         "type": "object"
       }
     },
+    "constrains/postgresql.enabled": {
+      "not": {
+        "properties": {
+          "postgresql": {
+            "$ref": "#/$defs/constrains~1enabled@3"
+          }
+        },
+        "required": [
+          "postgresql"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/postgresql.enabled+postgresql.enabled=null": {
       "anyOf": [
         {
@@ -26230,17 +26299,7 @@
           "type": "object"
         },
         {
-          "not": {
-            "properties": {
-              "postgresql": {
-                "$ref": "#/$defs/constrains~1enabled@3"
-              }
-            },
-            "required": [
-              "postgresql"
-            ],
-            "type": "object"
-          }
+          "$ref": "#/$defs/constrains~1postgresql.enabled"
         }
       ]
     },
@@ -29931,6 +29990,14 @@
       }
     },
     "constrains/postgresql@3": {
+      "additionalProperties": {},
+      "properties": {
+        "postgresql": {
+          "type": "object"
+        }
+      }
+    },
+    "constrains/postgresql@4": {
       "not": {
         "properties": {
           "postgresql": {
@@ -29943,7 +30010,7 @@
         "type": "object"
       }
     },
-    "constrains/postgresql@4": {
+    "constrains/postgresql@5": {
       "properties": {
         "postgresql": {}
       },
@@ -37302,6 +37369,19 @@
         "type": "object"
       }
     },
+    "constrains/valkey-cluster.enabled": {
+      "not": {
+        "properties": {
+          "valkey-cluster": {
+            "$ref": "#/$defs/constrains~1enabled@3"
+          }
+        },
+        "required": [
+          "valkey-cluster"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/valkey-cluster.enabled+valkey-cluster.enabled=null": {
       "properties": {
         "valkey-cluster": {
@@ -39104,6 +39184,19 @@
         "properties": {
           "valkey": {
             "$ref": "#/$defs/constrains~1diagnosticMode.enabled:t@2"
+          }
+        },
+        "required": [
+          "valkey"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/valkey.enabled": {
+      "not": {
+        "properties": {
+          "valkey": {
+            "$ref": "#/$defs/constrains~1enabled@3"
           }
         },
         "required": [
@@ -43010,6 +43103,10 @@
         }
       ]
     },
+    "values/gitea.startupProbe": {
+      "additionalProperties": {},
+      "type": "object"
+    },
     "values/gitea/anyOf/null;variable-references-var-name-are+object+string+string;pattern-a-za-z0-9-t+3more": {
       "anyOf": [
         {
@@ -43380,6 +43477,17 @@
     "values/postgresql-ha.backup.enabled": {
       "description": "Enable the logical dump of the database \"regularly\""
     },
+    "values/postgresql-ha.common": {
+      "additionalProperties": {},
+      "properties": {
+        "exampleValue": {
+          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
+          "type": "string"
+        },
+        "global": {}
+      },
+      "type": "object"
+    },
     "values/postgresql-ha.diagnosticMode.enabled": {
       "description": "Enable diagnostic mode (all probes will be disabled and the command will be overridden)"
     },
@@ -43395,32 +43503,29 @@
       "properties": {
         "omitEmptySeLinuxOptions": {},
         "openshift": {
-          "$ref": "#/$defs/values~1postgresql-ha.global.compatibility.openshift"
+          "additionalProperties": {},
+          "description": "Compatibility adaptations for Openshift",
+          "properties": {
+            "adaptSecurityContext": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "force"
+                  ]
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Adapt the securityContext sections of the deployment to make them compatible with Openshift restricted-v2 SCC: remove runAsUser, runAsGroup and fsGroup and let the platform use their allowed default IDs. Possible values: auto (apply if the detected running cluster is Openshift), force (perform the adaptation always), disabled (do not perform adaptation)"
+            }
+          },
+          "type": "object"
         }
       }
-    },
-    "values/postgresql-ha.global.compatibility.openshift": {
-      "additionalProperties": {},
-      "description": "Compatibility adaptations for Openshift",
-      "properties": {
-        "adaptSecurityContext": {
-          "anyOf": [
-            {
-              "enum": [
-                "force"
-              ]
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
-            }
-          ],
-          "description": "Adapt the securityContext sections of the deployment to make them compatible with Openshift restricted-v2 SCC: remove runAsUser, runAsGroup and fsGroup and let the platform use their allowed default IDs. Possible values: auto (apply if the detected running cluster is Openshift), force (perform the adaptation always), disabled (do not perform adaptation)"
-        }
-      },
-      "type": "object"
     },
     "values/postgresql-ha.global.defaultStorageClass": {
       "description": "Global default StorageClass for Persistent Volume(s)"
@@ -43515,8 +43620,13 @@
     "values/postgresql-ha.rbac.rules": {
       "description": "Custom RBAC rules to set\ne.g:\nrules:\n- apiGroups:\n- \"\"\nresources:\n- pods\nverbs:\n- get\n- list"
     },
-    "values/postgresql-ha.service.ports.postgresql": {
-      "description": "PostgreSQL service port (overrides `service.ports.postgresql`)"
+    "values/postgresql-ha.service.ports": {
+      "additionalProperties": {},
+      "properties": {
+        "postgresql": {
+          "description": "PostgreSQL service port (overrides `service.ports.postgresql`)"
+        }
+      }
     },
     "values/postgresql-ha.service.sessionAffinityConfig": {
       "description": "Additional settings for the sessionAffinity\nsessionAffinityConfig:\nclientIP:\ntimeoutSeconds: 300"
@@ -43584,23 +43694,6 @@
     "values/postgresql.backup.cronjob.containerSecurityContext.enabled": {
       "description": "Enabled containers' Security Context"
     },
-    "values/postgresql.common.exampleValue": {
-      "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
-      "type": "string"
-    },
-    "values/postgresql.common.global.compatibility": {
-      "additionalProperties": {},
-      "properties": {
-        "openshift": {
-          "$ref": "#/$defs/values~1postgresql.common.global.compatibility.openshift"
-        }
-      },
-      "type": "object"
-    },
-    "values/postgresql.common.global.compatibility.openshift": {
-      "additionalProperties": {},
-      "type": "object"
-    },
     "values/postgresql.global.storageClass": {
       "description": "DEPRECATED: use global.defaultStorageClass instead"
     },
@@ -43612,6 +43705,9 @@
           "description": "Create secret for service binding (Experimental)"
         }
       }
+    },
+    "values/postgresql.tls.autoGenerated": {
+      "description": "Generate automatically self-signed TLS certificates"
     },
     "values/postgresql/anyOf/allOf/object+object,null;annotations-is-an-unstructured+not/:t+string": {
       "anyOf": [
@@ -44366,13 +44462,13 @@
       "description": "WhenDeleted specifies what happens to PVCs created from StatefulSet VolumeClaimTemplates when the StatefulSet is deleted. The default policy of `Retain` causes PVCs to not be affected by StatefulSet deletion. The `Delete` policy causes those PVCs to be deleted.",
       "type": "string"
     },
-    "values/service.http/anyOf/array;externalips-is-a-list+not/:t+null": {
+    "values/service.http.externalIPs": {
       "anyOf": [
         {
           "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
         },
         {
-          "$ref": "#/$defs/values~1service.http~1array;externalips-is-a-list"
+          "$ref": "#/$defs/values~1service.http.externalIPs~1array;externalips-is-a-list"
         },
         {
           "type": "null"
@@ -44380,30 +44476,18 @@
       ],
       "description": "External IPs for service"
     },
-    "values/service.http/array;externalips-is-a-list": {
+    "values/service.http.externalIPs/array;externalips-is-a-list": {
       "description": "externalIPs is a list of IP addresses for which nodes in the cluster will also accept traffic for this service.  These IPs are not managed by Kubernetes.  The user is responsible for ensuring that traffic arrives at a node with this IP.  A common example is external load-balancers that are not part of the Kubernetes system.",
       "items": {
         "$ref": "#/$defs/constrains~1@items.apiGroups+@items.nonResourceURLs+@items.resourceNames+@items.resources+1more~1string,null"
       },
       "type": "array"
     },
-    "values/service.http/array;ipfamilies-is-a-list": {
-      "description": "IPFamilies is a list of IP families (e.g. IPv4, IPv6) assigned to this service. This field is usually assigned automatically based on cluster configuration and the ipFamilyPolicy field. If this field is specified manually, the requested family is available in the cluster, and ipFamilyPolicy allows it, it will be used; otherwise creation of the service will fail. This field is conditionally mutable: it allows for adding or removing a secondary IP family, but it does not allow changing the primary IP family of the Service. Valid values are \"IPv4\" and \"IPv6\".  This field only applies to Services of types ClusterIP, NodePort, and LoadBalancer, and does apply to \"headless\" services. This field will be wiped when updating a Service to type ExternalName.\n\nThis field may hold a maximum of two entries (dual-stack families, in either order).  These families must correspond to the values of the clusterIPs field, if specified. Both clusterIPs and ipFamilies are governed by the ipFamilyPolicy field.",
-      "items": {
-        "$ref": "#/$defs/constrains~1@items.apiGroups+@items.nonResourceURLs+@items.resourceNames+@items.resources+1more~1string,null"
-      },
-      "type": "array",
-      "x-kubernetes-list-type": "atomic"
-    },
-    "values/service.http/null;externaltrafficpolicy-describes-how-nodes": {
+    "values/service.http.externalTrafficPolicy/null;externaltrafficpolicy-describes-how-nodes": {
       "description": "externalTrafficPolicy describes how nodes distribute service traffic they receive on one of the Service's \"externally-facing\" addresses (NodePorts, ExternalIPs, and LoadBalancer IPs). If set to \"Local\", the proxy will configure the service in a way that assumes that external load balancers will take care of balancing the service traffic between nodes, and so each node will deliver traffic only to the node-local endpoints of the service, without masquerading the client source IP. (Traffic mistakenly sent to a node with no endpoints will be dropped.) The default value, \"Cluster\", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features). Note that traffic sent to an External IP or LoadBalancer IP from within the cluster will always get \"Cluster\" semantics, but clients sending to a NodePort from within the cluster may need to take traffic policy into account when picking a node.",
       "type": "null"
     },
-    "values/service.http/null;ipfamilypolicy-represents-the-dual-stack-ness": {
-      "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
-      "type": "null"
-    },
-    "values/service.http/string;externaltrafficpolicy-describes-how-nodes": {
+    "values/service.http.externalTrafficPolicy/string;externaltrafficpolicy-describes-how-nodes": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1not~1keywords~1pattern@10"
@@ -44439,7 +44523,19 @@
       "description": "externalTrafficPolicy describes how nodes distribute service traffic they receive on one of the Service's \"externally-facing\" addresses (NodePorts, ExternalIPs, and LoadBalancer IPs). If set to \"Local\", the proxy will configure the service in a way that assumes that external load balancers will take care of balancing the service traffic between nodes, and so each node will deliver traffic only to the node-local endpoints of the service, without masquerading the client source IP. (Traffic mistakenly sent to a node with no endpoints will be dropped.) The default value, \"Cluster\", uses the standard behavior of routing to all endpoints evenly (possibly modified by topology and other features). Note that traffic sent to an External IP or LoadBalancer IP from within the cluster will always get \"Cluster\" semantics, but clients sending to a NodePort from within the cluster may need to take traffic policy into account when picking a node.",
       "type": "string"
     },
-    "values/service.http/string;ipfamilypolicy-represents-the-dual-stack-ness": {
+    "values/service.http.ipFamilies/array;ipfamilies-is-a-list": {
+      "description": "IPFamilies is a list of IP families (e.g. IPv4, IPv6) assigned to this service. This field is usually assigned automatically based on cluster configuration and the ipFamilyPolicy field. If this field is specified manually, the requested family is available in the cluster, and ipFamilyPolicy allows it, it will be used; otherwise creation of the service will fail. This field is conditionally mutable: it allows for adding or removing a secondary IP family, but it does not allow changing the primary IP family of the Service. Valid values are \"IPv4\" and \"IPv6\".  This field only applies to Services of types ClusterIP, NodePort, and LoadBalancer, and does apply to \"headless\" services. This field will be wiped when updating a Service to type ExternalName.\n\nThis field may hold a maximum of two entries (dual-stack families, in either order).  These families must correspond to the values of the clusterIPs field, if specified. Both clusterIPs and ipFamilies are governed by the ipFamilyPolicy field.",
+      "items": {
+        "$ref": "#/$defs/constrains~1@items.apiGroups+@items.nonResourceURLs+@items.resourceNames+@items.resources+1more~1string,null"
+      },
+      "type": "array",
+      "x-kubernetes-list-type": "atomic"
+    },
+    "values/service.http.ipFamilyPolicy/null;ipfamilypolicy-represents-the-dual-stack-ness": {
+      "description": "IPFamilyPolicy represents the dual-stack-ness requested or required by this Service. If there is no value provided, then this field will be set to SingleStack. Services can be \"SingleStack\" (a single IP family), \"PreferDualStack\" (two IP families on dual-stack configured clusters or a single IP family on single-stack clusters), or \"RequireDualStack\" (two IP families on dual-stack configured clusters, otherwise fail). The ipFamilies and clusterIPs fields depend on the value of this field. This field will be wiped when updating a service to type ExternalName.",
+      "type": "null"
+    },
+    "values/service.http.ipFamilyPolicy/string;ipfamilypolicy-represents-the-dual-stack-ness": {
       "allOf": [
         {
           "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1not~1keywords~1pattern@10"
@@ -44549,30 +44645,6 @@
       ],
       "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
       "type": "string"
-    },
-    "values/valkey-cluster.common": {
-      "additionalProperties": {},
-      "properties": {
-        "exampleValue": {
-          "$ref": "#/$defs/values~1postgresql.common.exampleValue"
-        },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "compatibility": {
-              "$ref": "#/$defs/values~1postgresql.common.global.compatibility"
-            },
-            "security": {
-              "$ref": "#/$defs/values~1postgresql.common.global.compatibility.openshift"
-            },
-            "valkey": {
-              "$ref": "#/$defs/values~1postgresql.common.global.compatibility.openshift"
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
     },
     "values/valkey-cluster.containerSecurityContext.runAsUser": {
       "description": "Set containers' Security Context runAsUser"
@@ -47608,7 +47680,7 @@
             "$ref": "#/$defs/constrains~1postgresql.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1postgresql@3"
+            "$ref": "#/$defs/constrains~1postgresql@4"
           },
           {
             "$ref": "#/$defs/constrains~1postgresql+postgresql.auth.password:t+postgresql.auth.postgresPassword:t+6more"
@@ -53810,6 +53882,75 @@
       "if": {
         "anyOf": [
           {
+            "$ref": "#/$defs/constrains~1valkey+valkey=null@2"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1valkey.enabled"
+                  },
+                  {
+                    "properties": {
+                      "valkey": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "valkey"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1valkey.enabled"
+                  },
+                  {
+                    "properties": {
+                      "valkey": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "valkey"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "valkey": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "valkey"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "valkey": {
+            "description": "Valkey and [Valkey cluster](#valkey-cluster) cannot be enabled at the same time.",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1valkey-cluster.volumePermissions.enabled:t"
@@ -56769,7 +56910,7 @@
             ]
           },
           {
-            "$ref": "#/$defs/constrains~1postgresql@3"
+            "$ref": "#/$defs/constrains~1postgresql@4"
           },
           {
             "$ref": "#/$defs/constrains~1postgresql+postgresql.auth.enablePostgresUser:t+4more"
@@ -61321,7 +61462,7 @@
             "$ref": "#/$defs/constrains~1postgresql+postgresql.architecture=replication+10more"
           },
           {
-            "$ref": "#/$defs/constrains~1postgresql@3"
+            "$ref": "#/$defs/constrains~1postgresql@4"
           },
           {
             "$ref": "#/$defs/constrains~1postgresql+postgresql.auth.enablePostgresUser:t+4more"
@@ -67960,6 +68101,120 @@
       }
     },
     {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/constrains~1postgresql-ha+postgresql-ha=null"
+                }
+              },
+              {
+                "not": {
+                  "properties": {
+                    "gitea": {
+                      "properties": {
+                        "config": {
+                          "properties": {
+                            "database": {
+                              "properties": {
+                                "HOST": {
+                                  "$ref": "#/$defs/t"
+                                }
+                              },
+                              "required": [
+                                "HOST"
+                              ],
+                              "type": "object"
+                            }
+                          },
+                          "required": [
+                            "database"
+                          ],
+                          "type": "object"
+                        }
+                      },
+                      "required": [
+                        "config"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "gitea"
+                  ],
+                  "type": "object"
+                }
+              },
+              {
+                "$ref": "#/$defs/constrains~1postgresql-ha.enabled:t"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "postgresql-ha": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "postgresql-ha"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "postgresql-ha": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "postgresql-ha"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1postgresql-ha.enabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "postgresql-ha": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "postgresql-ha"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1postgresql-ha.enabled"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "postgresql-ha": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
       "additionalProperties": {},
       "properties": {
         "gitea": {
@@ -69624,22 +69879,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "properties": {
-            "ssh": {
-              "required": [
-                "port"
-              ],
-              "type": "object"
-            }
-          }
-        }
       }
     },
     {
@@ -74547,27 +74786,6 @@
       },
       "then": {
         "$ref": "#/$defs/constrains~1fullnameOverride@2"
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "properties": {
-            "http": {
-              "additionalProperties": {},
-              "properties": {
-                "port": {
-                  "description": "Port number for web traffic",
-                  "not": {
-                    "type": "null"
-                  }
-                }
-              }
-            }
-          }
-        }
       }
     },
     {
@@ -84910,73 +85128,6 @@
       "if": {
         "allOf": [
           {
-            "$ref": "#/$defs/constrains~1gatewayAPI.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1gatewayAPI.core.httpRoute.enabled:t"
-          },
-          {
-            "not": {
-              "properties": {
-                "gatewayAPI": {
-                  "properties": {
-                    "core": {
-                      "properties": {
-                        "httpRoute": {
-                          "$ref": "#/$defs/constrains~1rules:t"
-                        }
-                      },
-                      "required": [
-                        "httpRoute"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "core"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "gatewayAPI"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "additionalProperties": {},
-            "properties": {
-              "http": {
-                "additionalProperties": {},
-                "properties": {
-                  "port": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.cors.allowCredentials+@items.cors.allowHeaders+45more~1integer:int32;port-specifies-the-destination"
-                      }
-                    ],
-                    "description": "Port number for web traffic"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/$defs/constrains~1postgresql-ha+postgresql-ha=null"
           },
           {
@@ -86079,20 +86230,6 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1valkey+valkey=null@2"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "valkey": {
-            "description": "Valkey and [Valkey cluster](#valkey-cluster) cannot be enabled at the same time.",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -86373,12 +86510,7 @@
             "additionalProperties": {},
             "properties": {
               "global": {
-                "additionalProperties": {},
-                "properties": {
-                  "postgresql": {
-                    "type": "object"
-                  }
-                }
+                "$ref": "#/$defs/constrains~1postgresql@3"
               }
             }
           }
@@ -93146,27 +93278,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "properties": {
-            "ssh": {
-              "additionalProperties": {},
-              "properties": {
-                "port": {
-                  "description": "Port number for ssh traffic",
-                  "not": {
-                    "type": "null"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "anyOf": [
           {
@@ -94250,22 +94361,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "if": {
-        "not": {
-          "$ref": "#/$defs/constrains~1valkey-cluster+valkey-cluster=null"
-        }
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "valkey-cluster": {
-            "description": "Valkey cluster and [Valkey](#valkey) cannot be enabled at the same time.\n⚠️ The valkey charts do not work well with special characters in the password (<https://gitea.com/gitea/helm-chart/issues/690>).\nConsider omitting such or open an issue in the Bitnami repo and let us know once this got fixed.",
-            "type": "object"
-          }
-        }
       }
     },
     {
@@ -96568,22 +96663,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "properties": {
-            "http": {
-              "required": [
-                "port"
-              ],
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "anyOf": [
           {
@@ -96689,73 +96768,6 @@
                         "type": "object"
                       }
                     }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
-            "$ref": "#/$defs/constrains~1gatewayAPI.enabled:t"
-          },
-          {
-            "$ref": "#/$defs/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
-          },
-          {
-            "not": {
-              "properties": {
-                "gatewayAPI": {
-                  "properties": {
-                    "core": {
-                      "properties": {
-                        "tcpRoute": {
-                          "$ref": "#/$defs/constrains~1rules:t"
-                        }
-                      },
-                      "required": [
-                        "tcpRoute"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "core"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "gatewayAPI"
-              ],
-              "type": "object"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "service": {
-            "additionalProperties": {},
-            "properties": {
-              "ssh": {
-                "additionalProperties": {},
-                "properties": {
-                  "port": {
-                    "anyOf": [
-                      {
-                        "type": "string"
-                      },
-                      {
-                        "$ref": "#/$defs/constrains~1@items.cors.allowCredentials+@items.cors.allowHeaders+45more~1integer:int32;port-specifies-the-destination"
-                      }
-                    ],
-                    "description": "Port number for ssh traffic"
                   }
                 }
               }
@@ -98504,6 +98516,77 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "valkey-cluster": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "valkey-cluster"
+            ],
+            "type": "object"
+          },
+          {
+            "not": {
+              "$ref": "#/$defs/constrains~1valkey-cluster+valkey-cluster=null"
+            }
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1valkey-cluster.enabled"
+                  },
+                  {
+                    "properties": {
+                      "valkey-cluster": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "valkey-cluster"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1valkey-cluster.enabled"
+                  },
+                  {
+                    "properties": {
+                      "valkey-cluster": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "valkey-cluster"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "valkey-cluster": {
+            "description": "Valkey cluster and [Valkey](#valkey) cannot be enabled at the same time.\n⚠️ The valkey charts do not work well with special characters in the password (<https://gitea.com/gitea/helm-chart/issues/690>).\nConsider omitting such or open an issue in the Bitnami repo and let us know once this got fixed.",
+            "type": "object"
           }
         }
       }
@@ -100313,65 +100396,6 @@
       "if": {
         "allOf": [
           {
-            "not": {
-              "$ref": "#/$defs/constrains~1postgresql-ha+postgresql-ha=null"
-            }
-          },
-          {
-            "not": {
-              "properties": {
-                "gitea": {
-                  "properties": {
-                    "config": {
-                      "properties": {
-                        "database": {
-                          "properties": {
-                            "HOST": {
-                              "$ref": "#/$defs/t"
-                            }
-                          },
-                          "required": [
-                            "HOST"
-                          ],
-                          "type": "object"
-                        }
-                      },
-                      "required": [
-                        "database"
-                      ],
-                      "type": "object"
-                    }
-                  },
-                  "required": [
-                    "config"
-                  ],
-                  "type": "object"
-                }
-              },
-              "required": [
-                "gitea"
-              ],
-              "type": "object"
-            }
-          },
-          {
-            "$ref": "#/$defs/constrains~1postgresql-ha.enabled:t"
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql-ha": {
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "allOf": [
-          {
             "$ref": "#/$defs/constrains~1postgresql-ha+postgresql-ha=null"
           },
           {
@@ -100742,6 +100766,114 @@
         ]
       },
       "then": false
+    },
+    {
+      "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1gatewayAPI.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1gatewayAPI.core.tcpRoute.enabled:t"
+          },
+          {
+            "not": {
+              "properties": {
+                "gatewayAPI": {
+                  "properties": {
+                    "core": {
+                      "properties": {
+                        "tcpRoute": {
+                          "$ref": "#/$defs/constrains~1rules:t"
+                        }
+                      },
+                      "required": [
+                        "tcpRoute"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "core"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "gatewayAPI"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "properties": {
+                  "ssh": {
+                    "required": [
+                      "port"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "properties": {
+                  "ssh": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "port": {
+                        "description": "Port number for ssh traffic",
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "properties": {
+                  "ssh": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "port": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1@items.cors.allowCredentials+@items.cors.allowHeaders+45more~1integer:int32;port-specifies-the-destination"
+                          }
+                        ],
+                        "description": "Port number for ssh traffic"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
     },
     {
       "if": {
@@ -103294,6 +103426,66 @@
             }
           }
         ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1postgresql.enabled"
+                  },
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1postgresql.enabled"
+                  },
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "postgresql": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "postgresql"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1postgresql@3"
       }
     },
     {
@@ -112442,6 +112634,114 @@
     },
     {
       "if": {
+        "allOf": [
+          {
+            "$ref": "#/$defs/constrains~1gatewayAPI.enabled:t"
+          },
+          {
+            "$ref": "#/$defs/constrains~1gatewayAPI.core.httpRoute.enabled:t"
+          },
+          {
+            "not": {
+              "properties": {
+                "gatewayAPI": {
+                  "properties": {
+                    "core": {
+                      "properties": {
+                        "httpRoute": {
+                          "$ref": "#/$defs/constrains~1rules:t"
+                        }
+                      },
+                      "required": [
+                        "httpRoute"
+                      ],
+                      "type": "object"
+                    }
+                  },
+                  "required": [
+                    "core"
+                  ],
+                  "type": "object"
+                }
+              },
+              "required": [
+                "gatewayAPI"
+              ],
+              "type": "object"
+            }
+          }
+        ]
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "properties": {
+                  "http": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "port": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "$ref": "#/$defs/constrains~1@items.cors.allowCredentials+@items.cors.allowHeaders+45more~1integer:int32;port-specifies-the-destination"
+                          }
+                        ],
+                        "description": "Port number for web traffic"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "properties": {
+                  "http": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "port": {
+                        "description": "Port number for web traffic",
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "properties": {
+                  "http": {
+                    "required": [
+                      "port"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "if": {
         "anyOf": [
           {
             "$ref": "#/$defs/constrains~1valkey+valkey.architecture+valkey.architecture!=replication+5more@2"
@@ -113629,7 +113929,7 @@
             "$ref": "#/$defs/constrains~1postgresql+postgresql.architecture=replication+10more"
           },
           {
-            "$ref": "#/$defs/constrains~1postgresql@3"
+            "$ref": "#/$defs/constrains~1postgresql@4"
           },
           {
             "allOf": [
@@ -120162,160 +120462,154 @@
           }
         },
         "config": {
-          "allOf": [
+          "anyOf": [
             {
-              "type": "object"
+              "items": {
+                "$ref": "#/$defs/values~1ingress.hosts"
+              },
+              "type": "array"
             },
             {
-              "anyOf": [
-                {
-                  "items": {
-                    "$ref": "#/$defs/values~1ingress.hosts"
-                  },
-                  "type": "array"
-                },
-                {
-                  "type": "null"
-                },
-                {
-                  "additionalProperties": {
-                    "$ref": "#/$defs/values~1ingress.hosts"
-                  },
+              "type": "null"
+            },
+            {
+              "additionalProperties": {
+                "$ref": "#/$defs/values~1ingress.hosts"
+              },
+              "properties": {
+                "actions": {},
+                "cache": {
+                  "additionalProperties": {},
                   "properties": {
-                    "actions": {},
-                    "cache": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "ADAPTER": {},
-                        "HOST": {}
-                      }
-                    },
-                    "cron": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "GIT_GC_REPOS": {}
-                      }
-                    },
-                    "database": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "HOST": {}
-                      }
-                    },
-                    "indexer": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "ISSUE_INDEXER_TYPE": {
-                          "anyOf": [
-                            {
-                              "enum": [
-                                "bleve"
-                              ]
-                            },
-                            {
-                              "type": "null"
-                            },
-                            {
-                              "type": "string"
-                            }
+                    "ADAPTER": {},
+                    "HOST": {}
+                  }
+                },
+                "cron": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "GIT_GC_REPOS": {}
+                  }
+                },
+                "database": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "HOST": {}
+                  }
+                },
+                "indexer": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "ISSUE_INDEXER_TYPE": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            "bleve"
                           ]
                         },
-                        "REPO_INDEXER_TYPE": {
-                          "anyOf": [
-                            {
-                              "enum": [
-                                "bleve"
-                              ]
-                            },
-                            {
-                              "type": "null"
-                            },
-                            {
-                              "type": "string"
-                            }
-                          ]
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "string"
                         }
-                      }
+                      ]
                     },
-                    "metrics": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "ENABLED": {},
-                        "TOKEN": {}
-                      }
-                    },
-                    "oauth2": {},
-                    "queue": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "CONN_STR": {},
-                        "TYPE": {}
-                      }
-                    },
-                    "queue.issue_indexer": {},
-                    "repository": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "ROOT": {}
-                      }
-                    },
-                    "security": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "INSTALL_LOCK": {}
-                      }
-                    },
-                    "server": {
-                      "additionalProperties": {},
-                      "description": "APP_NAME: \"Gitea: Git with a cup of tea\"\nRUN_MODE: dev",
-                      "properties": {
-                        "APP_DATA_PATH": {},
-                        "DOMAIN": {},
-                        "ENABLE_PPROF": {},
-                        "HTTP_PORT": {
-                          "allOf": [
-                            {
-                              "$ref": "#/$defs/constrains~1minAvailable:t~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
-                            },
-                            {
-                              "$ref": "#/$defs/values~1gitea.config~1anyOf~1integer:int32;number-of-port-to+string;pattern-0-1-9"
-                            }
+                    "REPO_INDEXER_TYPE": {
+                      "anyOf": [
+                        {
+                          "enum": [
+                            "bleve"
                           ]
                         },
-                        "PROTOCOL": {},
-                        "ROOT_URL": {},
-                        "SSH_DOMAIN": {},
-                        "SSH_LISTEN_PORT": {
-                          "allOf": [
-                            {
-                              "$ref": "#/$defs/constrains~1minAvailable:t~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
-                            },
-                            {
-                              "$ref": "#/$defs/values~1gitea.config~1anyOf~1integer:int32;number-of-port-to+string;pattern-0-1-9"
-                            }
-                          ],
-                          "description": "SSH port for rootless Gitea image\nrootless image\nsecurity:\nPASSWORD_COMPLEXITY: spec"
+                        {
+                          "type": "null"
                         },
-                        "SSH_PORT": {
-                          "description": "SSH port for rootlful Gitea image\nrootful image"
-                        },
-                        "START_SSH_SERVER": {}
-                      },
-                      "type": "object"
-                    },
-                    "session": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "PROVIDER": {},
-                        "PROVIDER_CONFIG": {}
-                      }
+                        {
+                          "type": "string"
+                        }
+                      ]
                     }
+                  }
+                },
+                "metrics": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "ENABLED": {},
+                    "TOKEN": {}
+                  }
+                },
+                "oauth2": {},
+                "queue": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "CONN_STR": {},
+                    "TYPE": {}
+                  }
+                },
+                "queue.issue_indexer": {},
+                "repository": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "ROOT": {}
+                  }
+                },
+                "security": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "INSTALL_LOCK": {}
+                  }
+                },
+                "server": {
+                  "additionalProperties": {},
+                  "description": "APP_NAME: \"Gitea: Git with a cup of tea\"\nRUN_MODE: dev",
+                  "properties": {
+                    "APP_DATA_PATH": {},
+                    "DOMAIN": {},
+                    "ENABLE_PPROF": {},
+                    "HTTP_PORT": {
+                      "allOf": [
+                        {
+                          "$ref": "#/$defs/constrains~1minAvailable:t~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
+                        },
+                        {
+                          "$ref": "#/$defs/values~1gitea.config~1anyOf~1integer:int32;number-of-port-to+string;pattern-0-1-9"
+                        }
+                      ]
+                    },
+                    "PROTOCOL": {},
+                    "ROOT_URL": {},
+                    "SSH_DOMAIN": {},
+                    "SSH_LISTEN_PORT": {
+                      "allOf": [
+                        {
+                          "$ref": "#/$defs/constrains~1minAvailable:t~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more"
+                        },
+                        {
+                          "$ref": "#/$defs/values~1gitea.config~1anyOf~1integer:int32;number-of-port-to+string;pattern-0-1-9"
+                        }
+                      ],
+                      "description": "SSH port for rootless Gitea image\nrootless image\nsecurity:\nPASSWORD_COMPLEXITY: spec"
+                    },
+                    "SSH_PORT": {
+                      "description": "SSH port for rootlful Gitea image\nrootful image"
+                    },
+                    "START_SSH_SERVER": {}
                   },
                   "type": "object"
+                },
+                "session": {
+                  "additionalProperties": {},
+                  "properties": {
+                    "PROVIDER": {},
+                    "PROVIDER_CONFIG": {}
+                  }
                 }
-              ]
+              },
+              "type": "object"
             }
-          ]
+          ],
+          "type": "object"
         },
         "customLivenessProbe": {},
         "customReadinessProbe": {},
@@ -120347,15 +120641,9 @@
           "description": "LDAP configuration\n- name: \"LDAP 1\"\nexistingSecret:\nsecurityProtocol:\nhost:\nport:\nuserSearchBase:\nuserFilter:\nadminFilter:\nemailAttribute:\nbindDn:\nbindPassword:\nusernameAttribute:\npublicSSHKeyAttribute:"
         },
         "livenessProbe": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
-              "$ref": "#/$defs/values~1ingress.hosts"
-            }
-          ],
-          "description": "Modify the liveness probe for your needs or completely disable it by commenting out."
+          "additionalProperties": {},
+          "description": "Modify the liveness probe for your needs or completely disable it by commenting out.",
+          "type": "object"
         },
         "metrics": {
           "additionalProperties": {},
@@ -120425,15 +120713,9 @@
           "description": "Annotations for the Gitea pod"
         },
         "readinessProbe": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
-              "$ref": "#/$defs/values~1ingress.hosts"
-            }
-          ],
-          "description": "Modify the readiness probe for your needs or completely disable it by commenting out."
+          "additionalProperties": {},
+          "description": "Modify the readiness probe for your needs or completely disable it by commenting out.",
+          "type": "object"
         },
         "ssh": {
           "additionalProperties": {},
@@ -120444,14 +120726,7 @@
           }
         },
         "startupProbe": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
-              "$ref": "#/$defs/values~1ingress.hosts"
-            }
-          ]
+          "$ref": "#/$defs/values~1gitea.startupProbe"
         }
       },
       "type": "object"
@@ -132480,8 +132755,7 @@
               "type": "object"
             },
             "usePasswordFiles": {
-              "description": "Mount credentials as a files instead of using an environment variable",
-              "type": "boolean"
+              "description": "Mount credentials as a files instead of using an environment variable"
             },
             "username": {
               "description": "Name for a custom user to create"
@@ -132605,49 +132879,7 @@
           "description": "Kubernetes Cluster Domain"
         },
         "common": {
-          "additionalProperties": {},
-          "properties": {
-            "exampleValue": {
-              "$ref": "#/$defs/values~1postgresql.common.exampleValue"
-            },
-            "global": {
-              "additionalProperties": {},
-              "properties": {
-                "compatibility": {
-                  "$ref": "#/$defs/values~1postgresql.common.global.compatibility"
-                },
-                "postgresql": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "auth": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "secretKeys": {
-                          "$ref": "#/$defs/values~1postgresql.common.global.compatibility.openshift"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "service": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "ports": {
-                          "$ref": "#/$defs/values~1postgresql.common.global.compatibility.openshift"
-                        }
-                      },
-                      "type": "object"
-                    }
-                  },
-                  "type": "object"
-                },
-                "security": {
-                  "$ref": "#/$defs/values~1postgresql.common.global.compatibility.openshift"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/values~1postgresql-ha.common"
         },
         "commonAnnotations": {
           "description": "Add annotations to all the deployed resources"
@@ -132736,14 +132968,12 @@
                         "userPasswordKey": {
                           "description": "Name of key in existing secret to use for PostgreSQL credentials (overrides `auth.secretKeys.userPasswordKey`). Only used when `global.postgresql.auth.existingSecret` is set."
                         }
-                      },
-                      "type": "object"
+                      }
                     },
                     "username": {
                       "$ref": "#/$defs/values~1postgresql-ha.global.postgresql.username"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "fullnameOverride": {
                   "description": "Full chart name (overrides `fullnameOverride`)"
@@ -132752,19 +132982,11 @@
                   "additionalProperties": {},
                   "properties": {
                     "ports": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "postgresql": {
-                          "$ref": "#/$defs/values~1postgresql-ha.service.ports.postgresql"
-                        }
-                      },
-                      "type": "object"
+                      "$ref": "#/$defs/values~1postgresql-ha.service.ports"
                     }
-                  },
-                  "type": "object"
+                  }
                 }
-              },
-              "type": "object"
+              }
             },
             "security": {
               "$ref": "#/$defs/values~1postgresql-ha.global.security"
@@ -132772,15 +132994,13 @@
             "storageClass": {
               "$ref": "#/$defs/values~1postgresql.global.storageClass"
             }
-          },
-          "type": "object"
+          }
         },
         "image": {
           "$ref": "#/$defs/values~1ingress.hosts"
         },
         "kubeVersion": {
-          "description": "Override Kubernetes version",
-          "type": "string"
+          "description": "Override Kubernetes version"
         },
         "ldap": {
           "additionalProperties": {},
@@ -132845,9 +133065,7 @@
           "additionalProperties": {},
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "description": "[object] Add annotations to the job",
-              "type": "object"
+              "description": "[object] Add annotations to the job"
             },
             "args": {
               "description": "Override default container args on mysql Primary container(s) (useful when using custom images)"
@@ -132874,8 +133092,7 @@
               "description": "Custom startupProbe that overrides the default one"
             },
             "enabled": {
-              "description": "Enable password update job",
-              "type": "boolean"
+              "description": "Enable password update job"
             },
             "extraCommands": {
               "description": "Extra commands to pass to the generation job"
@@ -133024,8 +133241,7 @@
           "description": "TLS configuration",
           "properties": {
             "autoGenerated": {
-              "description": "Generate automatically self-signed TLS certificates",
-              "type": "boolean"
+              "$ref": "#/$defs/values~1postgresql.tls.autoGenerated"
             },
             "certCAFilename": {
               "description": "CA Certificate filename\nIf provided, PostgreSQL will authenticate TLS/SSL clients by requesting them a certificate\nref: https://www.postgresql.org/docs/9.6/auth-methods.html"
@@ -133191,7 +133407,7 @@
               "commonLabels": {
                 "anyOf": [
                   {
-                    "$ref": "#/$defs/values~1postgresql.common.global.compatibility.openshift"
+                    "$ref": "#/$defs/values~1gitea.startupProbe"
                   },
                   {
                     "type": "string"
@@ -143377,6 +143593,9 @@
         "clusterDomain": {
           "description": "Kubernetes Cluster Domain"
         },
+        "common": {
+          "$ref": "#/$defs/values~1postgresql-ha.common"
+        },
         "commonAnnotations": {
           "description": "Common annotations to add to all resources (sub-charts are not considered). Evaluated as a template"
         },
@@ -143459,16 +143678,8 @@
                 "existingSecret": {
                   "description": "Name of existing secret to use for PostgreSQL passwords (overrides `postgresql.existingSecret`)"
                 },
-                "password": {
-                  "description": "Name for a custom password to create (overrides `auth.password`)",
-                  "type": "string"
-                },
                 "repmgrDatabase": {
                   "description": "PostgreSQL repmgr database (overrides `postgresql.repmgrDatabase`)"
-                },
-                "repmgrPassword": {
-                  "description": "PostgreSQL repmgr password (overrides `postgresql.repmgrpassword`)",
-                  "type": "string"
                 },
                 "repmgrUsername": {
                   "description": "PostgreSQL repmgr username (overrides `postgresql.repmgrUsername`)"
@@ -143476,15 +143687,13 @@
                 "username": {
                   "$ref": "#/$defs/values~1postgresql-ha.global.postgresql.username"
                 }
-              },
-              "type": "object"
+              }
             },
             "security": {
               "$ref": "#/$defs/values~1postgresql-ha.global.security"
             },
             "storageClass": {}
-          },
-          "type": "object"
+          }
         },
         "kubeVersion": {
           "description": "Override Kubernetes version"
@@ -143912,12 +144121,7 @@
               "description": "PostgreSQL service port name\nref: https://kubernetes.io/docs/concepts/services-networking/service/#multi-port-services"
             },
             "ports": {
-              "additionalProperties": {},
-              "properties": {
-                "postgresql": {
-                  "$ref": "#/$defs/values~1postgresql-ha.service.ports.postgresql"
-                }
-              }
+              "$ref": "#/$defs/values~1postgresql-ha.service.ports"
             },
             "serviceLabels": {
               "description": "Labels for PostgreSQL service"
@@ -144505,430 +144709,424 @@
       ],
       "properties": {
         "http": {
-          "allOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1commonAnnotations:t~1object,null;annotations-is-an-unstructured"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1commonAnnotations:t~1object"
-                    }
-                  ],
-                  "description": "HTTP service annotations"
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/constrains~1commonAnnotations:t~1object,null;annotations-is-an-unstructured"
                 },
-                "clusterIP": {
-                  "description": "ClusterIP setting for http autosetup for deployment is None"
-                },
-                "externalIPs": {
-                  "$ref": "#/$defs/values~1service.http~1anyOf~1array;externalips-is-a-list+not~1:t+null"
-                },
-                "externalTrafficPolicy": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1string@2"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1object"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1service.http~1null;externaltrafficpolicy-describes-how-nodes"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1service.http~1string;externaltrafficpolicy-describes-how-nodes"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "description": "If `service.http.type` is `NodePort` or `LoadBalancer`, set this to `Local` to enable source IP preservation"
-                },
-                "ipFamilies": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1service.http~1array;ipfamilies-is-a-list"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "description": "HTTP service dual-stack familiy selection,for dual-stack parameters see official kubernetes [dual-stack concept documentation](https://kubernetes.io/docs/concepts/services-networking/dual-stack/)."
-                },
-                "ipFamilyPolicy": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1string@2"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1object"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1service.http~1null;ipfamilypolicy-represents-the-dual-stack-ness"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1service.http~1string;ipfamilypolicy-represents-the-dual-stack-ness"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "description": "HTTP service dual-stack policy"
-                },
-                "labels": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1commonLabels~1allOf~1object+object,null;map-of-string-keys"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1affinity~1object"
-                    }
-                  ],
-                  "description": "HTTP service additional labels"
-                },
-                "loadBalancerClass": {
-                  "description": "Loadbalancer class"
-                },
-                "loadBalancerIP": {
-                  "description": "LoadBalancer IP setting"
-                },
-                "loadBalancerSourceRanges": {
-                  "description": "Source range filter for http loadbalancer"
-                },
-                "nodePort": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1postgresql:t~1integer:int32;the-port-on-each"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1postgresql:t~1null:int32;the-port-on-each"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1backup.cronjob.failedJobsHistoryLimit~1string;pattern-0-1-9"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "description": "NodePort for http service"
-                },
-                "port": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1backup.cronjob.failedJobsHistoryLimit~1string;pattern-0-1-9"
-                    }
-                  ],
-                  "description": "Port number for web traffic"
-                },
-                "type": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/values~1postgresql~1null;type-determines-how-the"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1postgresql~1string;type-determines-how-the"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1string@2"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1object"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                    }
-                  ],
-                  "description": "Kubernetes service type for web traffic"
+                {
+                  "$ref": "#/$defs/constrains~1commonAnnotations:t~1object"
                 }
-              }
+              ],
+              "description": "HTTP service annotations"
             },
-            {
-              "type": "object"
+            "clusterIP": {
+              "description": "ClusterIP setting for http autosetup for deployment is None"
+            },
+            "externalIPs": {
+              "$ref": "#/$defs/values~1service.http.externalIPs"
+            },
+            "externalTrafficPolicy": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1string@2"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1object"
+                },
+                {
+                  "$ref": "#/$defs/values~1service.http.externalTrafficPolicy~1null;externaltrafficpolicy-describes-how-nodes"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                },
+                {
+                  "$ref": "#/$defs/values~1service.http.externalTrafficPolicy~1string;externaltrafficpolicy-describes-how-nodes"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "If `service.http.type` is `NodePort` or `LoadBalancer`, set this to `Local` to enable source IP preservation"
+            },
+            "ipFamilies": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
+                },
+                {
+                  "$ref": "#/$defs/values~1service.http.ipFamilies~1array;ipfamilies-is-a-list"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "HTTP service dual-stack familiy selection,for dual-stack parameters see official kubernetes [dual-stack concept documentation](https://kubernetes.io/docs/concepts/services-networking/dual-stack/)."
+            },
+            "ipFamilyPolicy": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1string@2"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1object"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                },
+                {
+                  "$ref": "#/$defs/values~1service.http.ipFamilyPolicy~1null;ipfamilypolicy-represents-the-dual-stack-ness"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                },
+                {
+                  "$ref": "#/$defs/values~1service.http.ipFamilyPolicy~1string;ipfamilypolicy-represents-the-dual-stack-ness"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "HTTP service dual-stack policy"
+            },
+            "labels": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1commonLabels~1allOf~1object+object,null;map-of-string-keys"
+                },
+                {
+                  "$ref": "#/$defs/values~1affinity~1object"
+                }
+              ],
+              "description": "HTTP service additional labels"
+            },
+            "loadBalancerClass": {
+              "description": "Loadbalancer class"
+            },
+            "loadBalancerIP": {
+              "description": "LoadBalancer IP setting"
+            },
+            "loadBalancerSourceRanges": {
+              "description": "Source range filter for http loadbalancer"
+            },
+            "nodePort": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1postgresql:t~1integer:int32;the-port-on-each"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1postgresql:t~1null:int32;the-port-on-each"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1backup.cronjob.failedJobsHistoryLimit~1string;pattern-0-1-9"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "NodePort for http service"
+            },
+            "port": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1backup.cronjob.failedJobsHistoryLimit~1string;pattern-0-1-9"
+                }
+              ],
+              "description": "Port number for web traffic"
+            },
+            "type": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/values~1postgresql~1null;type-determines-how-the"
+                },
+                {
+                  "$ref": "#/$defs/values~1postgresql~1string;type-determines-how-the"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1string@2"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1object"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                }
+              ],
+              "description": "Kubernetes service type for web traffic"
             }
-          ]
+          },
+          "required": [
+            "port"
+          ],
+          "type": "object"
         },
         "port": {},
         "ssh": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {
-                  "allOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1commonAnnotations:t~1object,null;annotations-is-an-unstructured"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1commonAnnotations:t~1object"
-                    }
-                  ],
-                  "description": "SSH service annotations"
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {
+              "allOf": [
+                {
+                  "$ref": "#/$defs/constrains~1commonAnnotations:t~1object,null;annotations-is-an-unstructured"
                 },
-                "clusterIP": {
-                  "description": "ClusterIP setting for ssh autosetup for deployment is None"
-                },
-                "externalIPs": {
-                  "$ref": "#/$defs/values~1service.http~1anyOf~1array;externalips-is-a-list+not~1:t+null"
-                },
-                "externalTrafficPolicy": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1string@2"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1object"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1service.http~1null;externaltrafficpolicy-describes-how-nodes"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1service.http~1string;externaltrafficpolicy-describes-how-nodes"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "description": "If `service.ssh.type` is `NodePort` or `LoadBalancer`, set this to `Local` to enable source IP preservation"
-                },
-                "hostPort": {
-                  "anyOf": [
-                    {
-                      "description": "Number of port to expose on the host. If specified, this must be a valid port number, 0 < x < 65536. If HostNetwork is specified, this must match ContainerPort. Most containers do not need this.",
-                      "format": "int32",
-                      "type": "integer"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1backup.cronjob.failedJobsHistoryLimit~1string;pattern-0-1-9"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                    },
-                    {
-                      "type": "null"
-                    },
-                    {
-                      "description": "Number of port to expose on the host. If specified, this must be a valid port number, 0 < x < 65536. If HostNetwork is specified, this must match ContainerPort. Most containers do not need this.",
-                      "format": "int32",
-                      "type": "null"
-                    }
-                  ],
-                  "description": "HostPort for ssh service"
-                },
-                "ipFamilies": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1service.http~1array;ipfamilies-is-a-list"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "description": "SSH service dual-stack familiy selection,for dual-stack parameters see official kubernetes [dual-stack concept documentation](https://kubernetes.io/docs/concepts/services-networking/dual-stack/)."
-                },
-                "ipFamilyPolicy": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1string@2"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1object"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1service.http~1null;ipfamilypolicy-represents-the-dual-stack-ness"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1service.http~1string;ipfamilypolicy-represents-the-dual-stack-ness"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "description": "SSH service dual-stack policy"
-                },
-                "labels": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1commonLabels~1allOf~1object+object,null;map-of-string-keys"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1affinity~1object"
-                    }
-                  ],
-                  "description": "SSH service additional labels"
-                },
-                "loadBalancerClass": {
-                  "description": "Loadbalancer class"
-                },
-                "loadBalancerIP": {
-                  "description": "LoadBalancer IP setting"
-                },
-                "loadBalancerSourceRanges": {
-                  "description": "Source range filter for ssh loadbalancer"
-                },
-                "nodePort": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1postgresql:t~1integer:int32;the-port-on-each"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1postgresql:t~1null:int32;the-port-on-each"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1backup.cronjob.failedJobsHistoryLimit~1string;pattern-0-1-9"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                    },
-                    {
-                      "type": "null"
-                    }
-                  ],
-                  "description": "NodePort for ssh service"
-                },
-                "port": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1backup.cronjob.failedJobsHistoryLimit~1string;pattern-0-1-9"
-                    }
-                  ],
-                  "description": "Port number for ssh traffic"
-                },
-                "type": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/values~1postgresql~1null;type-determines-how-the"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1postgresql~1string;type-determines-how-the"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1string@2"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1object"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
-                    }
-                  ],
-                  "description": "Kubernetes service type for ssh traffic"
+                {
+                  "$ref": "#/$defs/constrains~1commonAnnotations:t~1object"
                 }
-              }
+              ],
+              "description": "SSH service annotations"
+            },
+            "clusterIP": {
+              "description": "ClusterIP setting for ssh autosetup for deployment is None"
+            },
+            "externalIPs": {
+              "$ref": "#/$defs/values~1service.http.externalIPs"
+            },
+            "externalTrafficPolicy": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1string@2"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1object"
+                },
+                {
+                  "$ref": "#/$defs/values~1service.http.externalTrafficPolicy~1null;externaltrafficpolicy-describes-how-nodes"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                },
+                {
+                  "$ref": "#/$defs/values~1service.http.externalTrafficPolicy~1string;externaltrafficpolicy-describes-how-nodes"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "If `service.ssh.type` is `NodePort` or `LoadBalancer`, set this to `Local` to enable source IP preservation"
+            },
+            "hostPort": {
+              "anyOf": [
+                {
+                  "description": "Number of port to expose on the host. If specified, this must be a valid port number, 0 < x < 65536. If HostNetwork is specified, this must match ContainerPort. Most containers do not need this.",
+                  "format": "int32",
+                  "type": "integer"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1backup.cronjob.failedJobsHistoryLimit~1string;pattern-0-1-9"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "description": "Number of port to expose on the host. If specified, this must be a valid port number, 0 < x < 65536. If HostNetwork is specified, this must match ContainerPort. Most containers do not need this.",
+                  "format": "int32",
+                  "type": "null"
+                }
+              ],
+              "description": "HostPort for ssh service"
+            },
+            "ipFamilies": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
+                },
+                {
+                  "$ref": "#/$defs/values~1service.http.ipFamilies~1array;ipfamilies-is-a-list"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "SSH service dual-stack familiy selection,for dual-stack parameters see official kubernetes [dual-stack concept documentation](https://kubernetes.io/docs/concepts/services-networking/dual-stack/)."
+            },
+            "ipFamilyPolicy": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1string@2"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1object"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                },
+                {
+                  "$ref": "#/$defs/values~1service.http.ipFamilyPolicy~1null;ipfamilypolicy-represents-the-dual-stack-ness"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                },
+                {
+                  "$ref": "#/$defs/values~1service.http.ipFamilyPolicy~1string;ipfamilypolicy-represents-the-dual-stack-ness"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "SSH service dual-stack policy"
+            },
+            "labels": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1commonLabels~1allOf~1object+object,null;map-of-string-keys"
+                },
+                {
+                  "$ref": "#/$defs/values~1affinity~1object"
+                }
+              ],
+              "description": "SSH service additional labels"
+            },
+            "loadBalancerClass": {
+              "description": "Loadbalancer class"
+            },
+            "loadBalancerIP": {
+              "description": "LoadBalancer IP setting"
+            },
+            "loadBalancerSourceRanges": {
+              "description": "Source range filter for ssh loadbalancer"
+            },
+            "nodePort": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1postgresql:t~1integer:int32;the-port-on-each"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1postgresql:t~1null:int32;the-port-on-each"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1backup.cronjob.failedJobsHistoryLimit~1string;pattern-0-1-9"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "NodePort for ssh service"
+            },
+            "port": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1backup.cronjob.failedJobsHistoryLimit~1string;pattern-0-1-9"
+                }
+              ],
+              "description": "Port number for ssh traffic"
+            },
+            "type": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/values~1postgresql~1null;type-determines-how-the"
+                },
+                {
+                  "$ref": "#/$defs/values~1postgresql~1string;type-determines-how-the"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1string@2"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-a-za-z0-9-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1object"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
+                }
+              ],
+              "description": "Kubernetes service type for ssh traffic"
             }
-          ]
+          },
+          "required": [
+            "port"
+          ],
+          "type": "object"
         }
       },
       "type": "object"
@@ -154232,7 +154430,7 @@
                                 "$ref": "#/$defs/constrains~1backup.cronjob.concurrencyPolicy~1object"
                               },
                               {
-                                "$ref": "#/$defs/values~1service.http~1null;externaltrafficpolicy-describes-how-nodes"
+                                "$ref": "#/$defs/values~1service.http.externalTrafficPolicy~1null;externaltrafficpolicy-describes-how-nodes"
                               },
                               {
                                 "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-t"
@@ -154241,7 +154439,7 @@
                                 "$ref": "#/$defs/constrains~1automountServiceAccountToken~1string;pattern-null-null-null"
                               },
                               {
-                                "$ref": "#/$defs/values~1service.http~1string;externaltrafficpolicy-describes-how-nodes"
+                                "$ref": "#/$defs/values~1service.http.externalTrafficPolicy~1string;externaltrafficpolicy-describes-how-nodes"
                               }
                             ],
                             "description": "Valkey exporter service external traffic policy\nref: https://kubernetes.io/docs/tasks/access-application-cluster/create-external-load-balancer/#preserving-the-client-source-ip"
@@ -155538,7 +155736,7 @@
                                 "$ref": "#/$defs/constrains~1@items.action=replace,Replace,keep,+19more+@items.modulus+@items.regex+4more~1not~1:t"
                               },
                               {
-                                "$ref": "#/$defs/values~1service.http~1array;externalips-is-a-list"
+                                "$ref": "#/$defs/values~1service.http.externalIPs~1array;externalips-is-a-list"
                               },
                               {
                                 "type": "null"
@@ -161746,7 +161944,7 @@
           "description": "Kubernetes cluster domain name"
         },
         "common": {
-          "$ref": "#/$defs/values~1valkey-cluster.common"
+          "$ref": "#/$defs/values~1postgresql-ha.common"
         },
         "commonAnnotations": {
           "description": "Annotations to add to all deployed objects"
@@ -161789,15 +161987,7 @@
           "properties": {
             "apiVersions": {},
             "compatibility": {
-              "additionalProperties": {},
-              "description": "Compatibility adaptations for Kubernetes platforms",
-              "properties": {
-                "omitEmptySeLinuxOptions": {},
-                "openshift": {
-                  "$ref": "#/$defs/values~1postgresql-ha.global.compatibility.openshift"
-                }
-              },
-              "type": "object"
+              "$ref": "#/$defs/values~1postgresql-ha.global.compatibility"
             },
             "defaultStorageClass": {
               "$ref": "#/$defs/values~1postgresql-ha.global.defaultStorageClass"
@@ -161823,8 +162013,7 @@
                 }
               }
             }
-          },
-          "type": "object"
+          }
         },
         "image": {
           "$ref": "#/$defs/values~1ingress.hosts"
@@ -162125,8 +162314,7 @@
           "additionalProperties": {},
           "description": "'volumePermissions' init container parameters\nChanges the owner and group of the persistent volume mount point to runAsUser:fsGroup values\nbased on the *podSecurityContext/*containerSecurityContext parameters"
         }
-      },
-      "type": "object"
+      }
     },
     "valkey-cluster": {
       "additionalProperties": {},
@@ -165273,7 +165461,7 @@
                   "commonLabels": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1postgresql.common.global.compatibility.openshift"
+                        "$ref": "#/$defs/values~1gitea.startupProbe"
                       },
                       {
                         "type": "string"
@@ -168622,7 +168810,7 @@
           "description": "Kubernetes Cluster Domain"
         },
         "common": {
-          "$ref": "#/$defs/values~1valkey-cluster.common"
+          "$ref": "#/$defs/values~1postgresql-ha.common"
         },
         "commonAnnotations": {
           "description": "Annotations to add to all deployed objects"
@@ -168940,7 +169128,7 @@
               "description": "Require clients to authenticate or not"
             },
             "autoGenerated": {
-              "description": "Generate automatically self-signed TLS certificates"
+              "$ref": "#/$defs/values~1postgresql.tls.autoGenerated"
             },
             "certCAFilename": {
               "description": "CA Certificate filename"
@@ -168983,8 +169171,7 @@
           "additionalProperties": {},
           "description": "Init containers parameters:\nvolumePermissions: Change the owner of the persist volume mountpoint to RunAsUser:fsGroup"
         }
-      },
-      "type": "object"
+      }
     }
   },
   "required": [

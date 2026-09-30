@@ -2164,17 +2164,20 @@
         }
       }
     },
+    "constrains/enabled": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled+enabled=null": {
       "anyOf": [
         {
           "not": {
-            "properties": {
-              "enabled": {}
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/constrains~1enabled"
           }
         },
         {
@@ -5837,6 +5840,19 @@
         "redis-ha"
       ],
       "type": "object"
+    },
+    "constrains/redis-ha.enabled": {
+      "not": {
+        "properties": {
+          "redis-ha": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "redis-ha"
+        ],
+        "type": "object"
+      }
     },
     "constrains/redis-ha.enabled+redis-ha.enabled=null": {
       "properties": {
@@ -11477,6 +11493,88 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                true
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1redis-ha.enabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "redis-ha": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                false
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "redis-ha"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1redis-ha.enabled"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1redis-ha.enabled=true"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "redis-ha": {
+            "description": "Enables and configure the automatic deployment of the redis-ha subchart",
+            "type": "object"
           }
         }
       }
@@ -33134,8 +33232,7 @@
             }
           }
         }
-      },
-      "type": "object"
+      }
     },
     "replicaCount": {},
     "resizePolicy": {

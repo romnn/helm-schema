@@ -3803,26 +3803,89 @@
         }
       ]
     },
-    "constrains/db.bundleTestDB+db.bundleTestDB=null": {
-      "anyOf": [
-        {
-          "not": {
+    "constrains/db.bundleTestDB": {
+      "not": {
+        "properties": {
+          "db": {
             "properties": {
-              "db": {
-                "properties": {
-                  "bundleTestDB": {}
-                },
-                "required": [
-                  "bundleTestDB"
-                ],
-                "type": "object"
-              }
+              "bundleTestDB": {}
             },
             "required": [
-              "db"
+              "bundleTestDB"
             ],
             "type": "object"
           }
+        },
+        "required": [
+          "db"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/db.bundleTestDB+db.bundleTestDB!=false": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1db.bundleTestDB"
+        },
+        {
+          "properties": {
+            "db": {
+              "properties": {
+                "bundleTestDB": {
+                  "not": {
+                    "enum": [
+                      false
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "bundleTestDB"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "db"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/db.bundleTestDB+db.bundleTestDB!=true": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1db.bundleTestDB"
+        },
+        {
+          "properties": {
+            "db": {
+              "properties": {
+                "bundleTestDB": {
+                  "not": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "bundleTestDB"
+              ],
+              "type": "object"
+            }
+          },
+          "required": [
+            "db"
+          ],
+          "type": "object"
+        }
+      ]
+    },
+    "constrains/db.bundleTestDB+db.bundleTestDB=null": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/constrains~1db.bundleTestDB"
         },
         {
           "properties": {
@@ -6791,23 +6854,9 @@
       "type": "object"
     },
     "constrains/image.repository": {
-      "additionalProperties": {},
       "properties": {
         "image": {
-          "additionalProperties": {},
-          "properties": {
-            "repository": {
-              "description": "[default: REPOSITORY_NAME/apache-exporter] Apache exporter image repository",
-              "type": "string"
-            }
-          }
-        }
-      }
-    },
-    "constrains/image.repository=null": {
-      "properties": {
-        "image": {
-          "$ref": "#/$defs/constrains~1repository=null"
+          "$ref": "#/$defs/constrains~1repository"
         }
       },
       "required": [
@@ -6815,10 +6864,10 @@
       ],
       "type": "object"
     },
-    "constrains/image.repository@2": {
+    "constrains/image.repository=null": {
       "properties": {
         "image": {
-          "$ref": "#/$defs/constrains~1repository"
+          "$ref": "#/$defs/constrains~1repository=null"
         }
       },
       "required": [
@@ -11549,7 +11598,7 @@
           "not": {
             "properties": {
               "metrics": {
-                "$ref": "#/$defs/constrains~1image.repository@2"
+                "$ref": "#/$defs/constrains~1image.repository"
               }
             },
             "required": [
@@ -14181,26 +14230,7 @@
           "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
           "type": "string"
         },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "compatibility": {
-              "additionalProperties": {},
-              "properties": {
-                "openshift": {
-                  "additionalProperties": {},
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            },
-            "security": {
-              "additionalProperties": {},
-              "type": "object"
-            }
-          },
-          "type": "object"
-        }
+        "global": {}
       },
       "type": "object"
     },
@@ -14307,6 +14337,10 @@
     },
     "values/mariadb.passwordUpdateJob.podSecurityContext.enabled": {
       "description": "Enabled credential init job pods' Security Context"
+    },
+    "values/metrics.image.repository": {
+      "description": "[default: REPOSITORY_NAME/apache-exporter] Apache exporter image repository",
+      "type": "string"
     },
     "values/nameOverride": {
       "anyOf": [
@@ -15545,7 +15579,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1image.repository@2"
+                  "$ref": "#/$defs/constrains~1image.repository"
                 }
               }
             ]
@@ -19853,20 +19887,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "metrics": {
-          "additionalProperties": {},
-          "description": "Prometheus Exporter / Metrics",
-          "properties": {
-            "image": {
-              "type": "object"
-            }
-          }
-        }
-      }
     },
     {
       "if": {
@@ -27330,17 +27350,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
       "if": {
         "not": {
           "$ref": "#/$defs/constrains~1resources:t"
@@ -33854,6 +33863,113 @@
       "if": {
         "anyOf": [
           {
+            "properties": {
+              "db": {
+                "properties": {
+                  "bundleTestDB": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "bundleTestDB"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "db"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB!=false"
+              },
+              {
+                "properties": {
+                  "tags": {
+                    "properties": {
+                      "phpmyadmin-database": {
+                        "enum": [
+                          true
+                        ]
+                      }
+                    },
+                    "required": [
+                      "phpmyadmin-database"
+                    ],
+                    "type": "object"
+                  }
+                },
+                "required": [
+                  "tags"
+                ],
+                "type": "object"
+              },
+              {
+                "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB!=true"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB!=false"
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1tags.phpmyadmin-database"
+                  },
+                  {
+                    "properties": {
+                      "tags": {
+                        "properties": {
+                          "phpmyadmin-database": {
+                            "not": {
+                              "enum": [
+                                false
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "phpmyadmin-database"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "tags"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/constrains~1db.bundleTestDB+db.bundleTestDB!=true"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "mariadb": {
+            "description": "MariaDB chart configuration\nhttps://github.com/bitnami/charts/blob/main/bitnami/mariadb/values.yaml",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "allOf": [
               {
                 "$ref": "#/$defs/constrains~1mariadb.serviceBindings.enabled:t"
@@ -34374,7 +34490,7 @@
               },
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1image.repository@2"
+                  "$ref": "#/$defs/constrains~1image.repository"
                 }
               }
             ]
@@ -44854,8 +44970,7 @@
           "type": "object"
         },
         "storageClass": {}
-      },
-      "type": "object"
+      }
     },
     "hostAliases": {
       "anyOf": [
@@ -44917,6 +45032,7 @@
       "description": "[array] Deployment pod host aliases\nhttps://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/"
     },
     "image": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -44941,46 +45057,41 @@
         },
         {
           "$ref": "#/$defs/when~1repository+repository=null~1then~1fail"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "additionalProperties": {},
-          "properties": {
-            "pullPolicy": {
-              "anyOf": [
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string@3"
-                },
-                {
-                  "$ref": "#/$defs/values~1null;image-pull-policy-one"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string;pattern-a-za-z0-9-t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1object"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string;pattern-t"
-                },
-                {
-                  "$ref": "#/$defs/constrains~1mysql~1string;pattern-null-null-null"
-                },
-                {
-                  "$ref": "#/$defs/values~1string;image-pull-policy-one"
-                }
-              ],
-              "description": "Image pull policy\nSpecify a imagePullPolicy"
-            },
-            "repository": {
-              "description": "[default: REPOSITORY_NAME/phpmyadmin] phpMyAdmin image repository",
-              "type": "string"
-            }
-          }
         }
-      ]
+      ],
+      "properties": {
+        "pullPolicy": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string@3"
+            },
+            {
+              "$ref": "#/$defs/values~1null;image-pull-policy-one"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string;pattern-a-za-z0-9-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1object"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string;pattern-t"
+            },
+            {
+              "$ref": "#/$defs/constrains~1mysql~1string;pattern-null-null-null"
+            },
+            {
+              "$ref": "#/$defs/values~1string;image-pull-policy-one"
+            }
+          ],
+          "description": "Image pull policy\nSpecify a imagePullPolicy"
+        },
+        "repository": {
+          "description": "[default: REPOSITORY_NAME/phpmyadmin] phpMyAdmin image repository",
+          "type": "string"
+        }
+      },
+      "type": "object"
     },
     "ingress": {
       "additionalProperties": {},
@@ -45817,10 +45928,6 @@
         "initdbScriptsConfigMap": {
           "description": "ConfigMap with the initdb scripts (Note: Overrides `initdbScripts`)"
         },
-        "kubeVersion": {
-          "description": "Force target Kubernetes version (using Helm capabilities if not set)",
-          "type": "string"
-        },
         "mariadb": {
           "additionalProperties": {},
           "properties": {
@@ -46027,51 +46134,14 @@
         "tde": {
           "additionalProperties": {},
           "properties": {
-            "ariaEncryptTables": {
-              "description": "Enables automatic encryption of all Aria tablespaces (allowed values: ON, OFF | default: ON)",
-              "type": "string"
-            },
             "enabled": {
-              "description": "Enable Transparent Data Encryption using the File Key Management Encryption Plugin for MariaDB",
-              "type": "boolean"
-            },
-            "encryptBINLOG": {
-              "description": "Enables encrypting binary logs including relay logs (allowed values: ON, OFF | default: ON)",
-              "type": "string"
-            },
-            "encryptTmpDiskTables": {
-              "description": "Enables automatic encryption of all internal on-disk temporary tables that are created during query execution (allowed values: ON, OFF | default: ON)",
-              "type": "string"
-            },
-            "encryptTmpTiles": {
-              "description": "Enables automatic encryption of temporary files, such as those created for filesort operations, binary log file caches, etc. (allowed values: ON, OFF | default: ON)",
-              "type": "string"
+              "description": "Enable Transparent Data Encryption using the File Key Management Encryption Plugin for MariaDB"
             },
             "encryptedKeyFilename": {
               "description": "File name of the 'encrypted keyfile' when it is different from the default (keyfile.enc), is also used for key name in the existingSecret"
             },
             "existingSecret": {
               "description": "Existing secret that contains Transparent Data Encryption key files used when secretsStoreProvider is not enabled"
-            },
-            "fileKeyManagementEncryptionAlgorithm": {
-              "description": "Encryption algorithm used for encrypting data (allowed values: AES_CTR, AES_CBC | default: AES_CTR)",
-              "type": "string"
-            },
-            "innodbEncryptLog": {
-              "description": "Enables encryption of the InnoDB redo log (allowed values: ON, OFF | default: ON)",
-              "type": "string"
-            },
-            "innodbEncryptTables": {
-              "description": "Enables automatic encryption of all InnoDB tablespaces (allowed values: FORCE, ON, OFF | default: FORCE)",
-              "type": "string"
-            },
-            "innodbEncryptTemporaryTables": {
-              "description": "Enables automatic encryption of the InnoDB temporary tablespace (allowed values: ON, OFF | default: ON)",
-              "type": "string"
-            },
-            "innodbEncryptionThreads": {
-              "description": "Number of threads to use for encryption (default: 4)",
-              "type": "integer"
             },
             "randomKeyFilename": {
               "description": "File name of the 'random keyfile' when it is different from the default (keyfile.key), is also used for key name in the existingSecret"
@@ -46145,8 +46215,7 @@
                   }
                 },
                 "enabled": {
-                  "description": "Enable automatic generation of certificates for TLS",
-                  "type": "boolean"
+                  "description": "Enable automatic generation of certificates for TLS"
                 },
                 "engine": {
                   "anyOf": [
@@ -46180,14 +46249,6 @@
             "certCAFilename": {
               "description": "The secret key from the existingSecret if 'ca' key different from the default (tls.crt)"
             },
-            "certFilename": {
-              "description": "The secret key from the existingSecret if 'cert' key different from the default (tls.crt)",
-              "type": "string"
-            },
-            "certKeyFilename": {
-              "description": "The secret key from the existingSecret if 'key' key different from the default (tls.key)",
-              "type": "string"
-            },
             "enabled": {
               "description": "Enable TLS in MariaDB"
             },
@@ -46208,6 +46269,7 @@
       "type": "object"
     },
     "metrics": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -46300,9 +46362,6 @@
             ]
           },
           "then": false
-        },
-        {
-          "type": "object"
         },
         {
           "if": {
@@ -46435,7 +46494,17 @@
                 }
               },
               {
-                "$ref": "#/$defs/constrains~1image.repository"
+                "additionalProperties": {},
+                "properties": {
+                  "image": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "repository": {
+                        "$ref": "#/$defs/values~1metrics.image.repository"
+                      }
+                    }
+                  }
+                }
               }
             ]
           }
@@ -46565,9 +46634,6 @@
               }
             ]
           }
-        },
-        {
-          "$ref": "#/$defs/constrains~1image.repository"
         },
         {
           "if": {
@@ -46739,7 +46805,19 @@
           }
         }
       ],
-      "description": "Prometheus Exporter / Metrics"
+      "description": "Prometheus Exporter / Metrics",
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "$ref": "#/$defs/values~1metrics.image.repository"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     "nameOverride": {
       "$ref": "#/$defs/values~1nameOverride"

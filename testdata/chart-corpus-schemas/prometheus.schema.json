@@ -1463,6 +1463,19 @@
       ],
       "type": "object"
     },
+    "constrains/alertmanager.enabled": {
+      "not": {
+        "properties": {
+          "alertmanager": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "alertmanager"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/alertmanager.enabled+alertmanager.enabled=null": {
       "properties": {
         "alertmanager": {
@@ -3229,10 +3242,10 @@
       ]
     },
     "constrains/configMap+mountPath+name+readOnly+subPath/anyOf/object+string+string;path-within-the-container": {
-      "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;path-within-the-container@3"
+      "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;path-within-the-container@2"
     },
     "constrains/configMap+mountPath+name+readOnly+subPath/anyOf/object+string+string;path-within-the-container@2": {
-      "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;path-within-the-container"
+      "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;path-within-the-container@3"
     },
     "constrains/configMap+mountPath+name+readOnly+subPath/anyOf/object+string+string;path-within-the-container@3": {
       "anyOf": [
@@ -3290,7 +3303,7 @@
           "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1null;name-of-the-referent+object+string+string;name-of-the-referent+3more"
         },
         "mountPath": {
-          "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;path-within-the-container@2"
+          "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;path-within-the-container"
         },
         "name": {},
         "readOnly": {
@@ -5052,6 +5065,36 @@
       ],
       "type": "object"
     },
+    "constrains/enabled!=false": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              false
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=true": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              true
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled+enabled:t+enabled=null": {
       "anyOf": [
         {
@@ -5680,6 +5723,19 @@
         "enabled": {
           "enum": [
             null
+          ]
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled=true": {
+      "properties": {
+        "enabled": {
+          "enum": [
+            true
           ]
         }
       },
@@ -7102,7 +7158,7 @@
           "$ref": "#/$defs/constrains~1hostPath~1anyOf~1object+string+string;path-of-the-directory"
         },
         "mountPath": {
-          "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;path-within-the-container@2"
+          "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;path-within-the-container"
         },
         "name": {
           "$ref": "#/$defs/constrains~1hostPath+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;this-must-match-the"
@@ -8428,6 +8484,19 @@
       ],
       "type": "object"
     },
+    "constrains/kube-state-metrics.enabled": {
+      "not": {
+        "properties": {
+          "kube-state-metrics": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "kube-state-metrics"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/kube-state-metrics.enabled+kube-state-metrics.enabled=null": {
       "properties": {
         "kube-state-metrics": {
@@ -8817,17 +8886,7 @@
     "constrains/kubeRBACProxy.enabled=true": {
       "properties": {
         "kubeRBACProxy": {
-          "properties": {
-            "enabled": {
-              "enum": [
-                true
-              ]
-            }
-          },
-          "required": [
-            "enabled"
-          ],
-          "type": "object"
+          "$ref": "#/$defs/constrains~1enabled=true"
         }
       },
       "required": [
@@ -9640,7 +9699,7 @@
       "additionalProperties": {},
       "properties": {
         "mountPath": {
-          "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;path-within-the-container@2"
+          "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;path-within-the-container"
         }
       }
     },
@@ -9729,7 +9788,7 @@
       "additionalProperties": {},
       "properties": {
         "mountPath": {
-          "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;path-within-the-container@2"
+          "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;path-within-the-container"
         },
         "name": {
           "$ref": "#/$defs/constrains~1hostPath+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;this-must-match-the"
@@ -12467,6 +12526,19 @@
       ],
       "type": "object"
     },
+    "constrains/prometheus-node-exporter.enabled": {
+      "not": {
+        "properties": {
+          "prometheus-node-exporter": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "prometheus-node-exporter"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/prometheus-node-exporter.enabled+prometheus-node-exporter.enabled=null": {
       "properties": {
         "prometheus-node-exporter": {
@@ -13290,6 +13362,19 @@
           "type": "object"
         }
       ]
+    },
+    "constrains/prometheus-pushgateway.enabled": {
+      "not": {
+        "properties": {
+          "prometheus-pushgateway": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "prometheus-pushgateway"
+        ],
+        "type": "object"
+      }
     },
     "constrains/prometheus-pushgateway.enabled+prometheus-pushgateway.enabled=null": {
       "properties": {
@@ -19588,26 +19673,10 @@
       }
     },
     "values/kube-state-metrics.releaseLabel": {
-      "description": "set to true to add the release label so scraping of the servicemonitor with kube-prometheus-stack works out of the box",
-      "type": "boolean"
+      "description": "set to true to add the release label so scraping of the servicemonitor with kube-prometheus-stack works out of the box"
     },
     "values/kube-state-metrics.serviceAccount.name": {
       "description": "The name of the ServiceAccount to use.\nIf not set and create is true, a name is generated using the fullname template"
-    },
-    "values/kube-state-metrics.verticalPodAutoscaler.controlledResources": {
-      "description": "List of resources that the vertical pod autoscaler can control. Defaults to cpu and memory\nSpecifies which resource values should be controlled: RequestsOnly or RequestsAndLimits.\ncontrolledValues: RequestsAndLimits",
-      "items": {},
-      "type": "array"
-    },
-    "values/kube-state-metrics.verticalPodAutoscaler.maxAllowed": {
-      "additionalProperties": {},
-      "description": "Define the max allowed resources for the pod",
-      "type": "object"
-    },
-    "values/kube-state-metrics.verticalPodAutoscaler.minAllowed": {
-      "additionalProperties": {},
-      "description": "cpu: 200m\nmemory: 100Mi\nDefine the min allowed resources for the pod\ncpu: 200m\nmemory: 100Mi",
-      "type": "object"
     },
     "values/kube-state-metrics/allOf/anyOf/null+object;annotations-is-an-unstructured+object": {
       "allOf": [
@@ -23341,20 +23410,6 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "alertmanager": {
-            "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "$ref": "#/$defs/constrains~1networkPolicy.enabled:t"
       },
       "then": {
@@ -24508,6 +24563,75 @@
             }
           }
         ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "alertmanager": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "alertmanager"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "alertmanager": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "alertmanager"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1alertmanager.enabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1alertmanager.enabled"
+                  },
+                  {
+                    "properties": {
+                      "alertmanager": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "alertmanager"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "$ref": "#/$defs/constrains~1alertmanager.enabled:t"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "alertmanager": {
+            "description": "alertmanager sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/alertmanager",
+            "type": "object"
+          }
+        }
       }
     },
     {
@@ -26769,6 +26893,72 @@
       "then": false
     },
     {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "kube-state-metrics": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "kube-state-metrics"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1kube-state-metrics.enabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "kube-state-metrics": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "kube-state-metrics"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1kube-state-metrics.enabled"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "kube-state-metrics": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "kube-state-metrics"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "kube-state-metrics": {
+            "description": "kube-state-metrics sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-state-metrics",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
       "additionalProperties": {},
       "properties": {
         "configmapReload": {
@@ -27072,6 +27262,72 @@
               ],
               "description": "Additional Prometheus server Secret mounts\nDefines additional mounts with secrets. Secrets must be manually created in the namespace.\n- name: secret-files\nmountPath: /etc/secrets\nsubPath: \"\"\nsecretName: prom-secret-files\nreadOnly: true"
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "prometheus-pushgateway": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "prometheus-pushgateway"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1prometheus-pushgateway.enabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "prometheus-pushgateway": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "prometheus-pushgateway"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1prometheus-pushgateway.enabled"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "prometheus-pushgateway": {
+            "description": "prometheus-pushgateway sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-pushgateway",
+            "type": "object"
           }
         }
       }
@@ -33140,6 +33396,72 @@
             }
           }
         ]
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "properties": {
+              "prometheus-node-exporter": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "prometheus-node-exporter"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "prometheus-node-exporter": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "prometheus-node-exporter"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1prometheus-node-exporter.enabled"
+                  },
+                  {
+                    "properties": {
+                      "prometheus-node-exporter": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "prometheus-node-exporter"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "prometheus-node-exporter": {
+            "description": "prometheus-node-exporter sub-chart configurable values\nPlease see https://github.com/prometheus-community/helm-charts/tree/main/charts/prometheus-node-exporter",
+            "type": "object"
+          }
+        }
       }
     },
     {
@@ -40990,6 +41312,7 @@
           "description": "Optionally specify extra list of additional volumes\n- name: extras\nemptyDir: {}"
         },
         "fullnameOverride": {},
+        "global": {},
         "hostAliases": {
           "description": "nameservers:\n- 1.2.3.4\nsearches:\n- ns1.svc.cluster-domain.example\n- my.dns.search.suffix\noptions:\n- name: ndots\nvalue: \"2\"\n- name: edns0"
         },
@@ -41226,8 +41549,7 @@
             "updatePolicy": {}
           }
         }
-      },
-      "type": "object"
+      }
     },
     "commonMetaLabels": {
       "anyOf": [
@@ -46763,9 +47085,7 @@
           "additionalProperties": {},
           "description": "If set to true, this will deploy kube-state-metrics as a StatefulSet and the data\nwill be automatically sharded across <.Values.replicas> pods using the built-in\nautodiscovery feature: https://github.com/kubernetes/kube-state-metrics#automated-sharding\nThis is an experimental feature and there are no stability guarantees.",
           "properties": {
-            "enabled": {
-              "type": "boolean"
-            }
+            "enabled": {}
           }
         },
         "collectors": {
@@ -47138,8 +47458,7 @@
           "$ref": "#/$defs/values~1kube-state-metrics.releaseLabel"
         },
         "releaseNamespace": {
-          "description": "Enable only the release namespace for collecting resources. By default all namespaces are collected.\nIf releaseNamespace and namespaces are both set a merged list will be collected.",
-          "type": "boolean"
+          "description": "Enable only the release namespace for collecting resources. By default all namespaces are collected.\nIf releaseNamespace and namespaces are both set a merged list will be collected."
         },
         "replicas": {},
         "resources": {
@@ -47236,18 +47555,7 @@
           "additionalProperties": {},
           "description": "Enable vertical pod autoscaler support for kube-state-metrics",
           "properties": {
-            "controlledResources": {
-              "$ref": "#/$defs/values~1kube-state-metrics.verticalPodAutoscaler.controlledResources"
-            },
-            "enabled": {
-              "type": "boolean"
-            },
-            "maxAllowed": {
-              "$ref": "#/$defs/values~1kube-state-metrics.verticalPodAutoscaler.maxAllowed"
-            },
-            "minAllowed": {
-              "$ref": "#/$defs/values~1kube-state-metrics.verticalPodAutoscaler.minAllowed"
-            }
+            "enabled": {}
           },
           "type": "object"
         },
@@ -47257,8 +47565,7 @@
         "volumes": {
           "description": "volumes are used to add custom volumes to deployment\nSee example below\n- configMap:\nname: cm-for-volume\nname: config-volume"
         }
-      },
-      "type": "object"
+      }
     },
     "nameOverride": {
       "$ref": "#/$defs/values~1nameOverride"
@@ -51943,12 +52250,10 @@
               "additionalProperties": {},
               "properties": {
                 "rapl": {
-                  "description": "Fixes /sys/devices/virtual/powercap/*/energy_uj\nCollector enabled by default",
-                  "type": "boolean"
+                  "description": "Fixes /sys/devices/virtual/powercap/*/energy_uj\nCollector enabled by default"
                 },
                 "slabinfo": {
-                  "description": "Fixes /proc/slabinfo\nCollector disabled by default",
-                  "type": "boolean"
+                  "description": "Fixes /proc/slabinfo\nCollector disabled by default"
                 }
               },
               "type": "object"
@@ -52291,23 +52596,11 @@
           "additionalProperties": {},
           "description": "Enable vertical pod autoscaler support for prometheus-node-exporter",
           "properties": {
-            "controlledResources": {
-              "$ref": "#/$defs/values~1kube-state-metrics.verticalPodAutoscaler.controlledResources"
-            },
-            "enabled": {
-              "type": "boolean"
-            },
-            "maxAllowed": {
-              "$ref": "#/$defs/values~1kube-state-metrics.verticalPodAutoscaler.maxAllowed"
-            },
-            "minAllowed": {
-              "$ref": "#/$defs/values~1kube-state-metrics.verticalPodAutoscaler.minAllowed"
-            }
+            "enabled": {}
           },
           "type": "object"
         }
-      },
-      "type": "object"
+      }
     },
     "prometheus-pushgateway": {
       "additionalProperties": {},
@@ -54694,8 +54987,7 @@
         "webConfiguration": {
           "$ref": "#/$defs/values~1prometheus-pushgateway.webConfiguration"
         }
-      },
-      "type": "object"
+      }
     },
     "rbac": {
       "additionalProperties": {},
@@ -57980,7 +58272,7 @@
                     "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1null;name-of-the-referent+object+string+string;name-of-the-referent+3more"
                   },
                   "mountPath": {
-                    "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;path-within-the-container@2"
+                    "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;path-within-the-container"
                   },
                   "name": {},
                   "readOnly": {
@@ -58022,7 +58314,7 @@
                     "$ref": "#/$defs/constrains~1hostPath~1anyOf~1object+string+string;path-of-the-directory"
                   },
                   "mountPath": {
-                    "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;path-within-the-container@2"
+                    "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;path-within-the-container"
                   },
                   "name": {
                     "$ref": "#/$defs/constrains~1hostPath+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;this-must-match-the"
@@ -58073,7 +58365,7 @@
                 "additionalProperties": {},
                 "properties": {
                   "mountPath": {
-                    "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;path-within-the-container@2"
+                    "$ref": "#/$defs/constrains~1configMap+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;path-within-the-container"
                   },
                   "name": {
                     "$ref": "#/$defs/constrains~1hostPath+mountPath+name+readOnly+subPath~1anyOf~1object+string+string;this-must-match-the"
@@ -58367,23 +58659,17 @@
           "$ref": "#/$defs/values~1alertmanager.podAntiAffinityTopologyKey"
         },
         "podDisruptionBudget": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "PodDisruptionBudget settings\nref: https://kubernetes.io/docs/concepts/workloads/pods/disruptions/",
+          "properties": {
+            "enabled": {
+              "description": "maxUnavailable: 1\nminAvailable: 1\nunhealthyPodEvictionPolicy is available since 1.27.0 (beta)\nhttps://kubernetes.io/docs/tasks/run-application/configure-pdb/#unhealthy-pod-eviction-policy\nunhealthyPodEvictionPolicy: IfHealthyBudget"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "description": "maxUnavailable: 1\nminAvailable: 1\nunhealthyPodEvictionPolicy is available since 1.27.0 (beta)\nhttps://kubernetes.io/docs/tasks/run-application/configure-pdb/#unhealthy-pod-eviction-policy\nunhealthyPodEvictionPolicy: IfHealthyBudget"
-                },
-                "maxUnavailable": {},
-                "minAvailable": {},
-                "unhealthyPodEvictionPolicy": {}
-              }
-            }
-          ],
-          "description": "PodDisruptionBudget settings\nref: https://kubernetes.io/docs/concepts/workloads/pods/disruptions/"
+            "maxUnavailable": {},
+            "minAvailable": {},
+            "unhealthyPodEvictionPolicy": {}
+          },
+          "type": "object"
         },
         "podLabels": {
           "anyOf": [
@@ -58695,72 +58981,66 @@
           "description": "Security context to be added to server pods"
         },
         "service": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "additionalPorts": {
+              "description": "Additional port to define in the Service\nadditionalPorts:\n- name: authenticated\nport: 8081\ntargetPort: 8081"
             },
-            {
+            "annotations": {},
+            "clusterIP": {},
+            "enabled": {
+              "description": "If false, no Service will be created for the Prometheus server"
+            },
+            "externalIPs": {
+              "description": "List of IP addresses at which the Prometheus server service is available\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips"
+            },
+            "externalTrafficPolicy": {
+              "description": "externalTrafficPolicy is applicable to service with externally-facing addresses (NodePorts, ExternalIPs, and LoadBalancer IPs)"
+            },
+            "gRPC": {
               "additionalProperties": {},
+              "description": "Enable gRPC port on service to allow auto discovery with thanos-querier",
               "properties": {
-                "additionalPorts": {
-                  "description": "Additional port to define in the Service\nadditionalPorts:\n- name: authenticated\nport: 8081\ntargetPort: 8081"
-                },
-                "annotations": {},
-                "clusterIP": {},
-                "enabled": {
-                  "description": "If false, no Service will be created for the Prometheus server"
-                },
-                "externalIPs": {
-                  "description": "List of IP addresses at which the Prometheus server service is available\nRef: https://kubernetes.io/docs/concepts/services-networking/service/#external-ips"
-                },
-                "externalTrafficPolicy": {
-                  "description": "externalTrafficPolicy is applicable to service with externally-facing addresses (NodePorts, ExternalIPs, and LoadBalancer IPs)"
-                },
-                "gRPC": {
-                  "additionalProperties": {},
-                  "description": "Enable gRPC port on service to allow auto discovery with thanos-querier",
-                  "properties": {
-                    "enabled": {},
-                    "nodePort": {},
-                    "servicePort": {
-                      "description": "nodePort: 10901"
-                    },
-                    "type": {
-                      "anyOf": [
-                        {
-                          "enum": [
-                            "NodePort"
-                          ]
-                        },
-                        {
-                          "type": "null"
-                        },
-                        {
-                          "type": "string"
-                        }
-                      ]
-                    }
-                  }
-                },
-                "labels": {},
-                "loadBalancerClass": {},
-                "loadBalancerIP": {},
-                "loadBalancerSourceRanges": {},
+                "enabled": {},
                 "nodePort": {},
-                "servicePort": {},
-                "sessionAffinity": {},
-                "statefulsetReplica": {
-                  "additionalProperties": {},
-                  "description": "If using a statefulSet (statefulSet.enabled=true), configure the\nservice to connect to a specific replica to have a consistent view\nof the data.",
-                  "properties": {
-                    "enabled": {},
-                    "replica": {}
-                  }
+                "servicePort": {
+                  "description": "nodePort: 10901"
                 },
-                "type": {}
+                "type": {
+                  "anyOf": [
+                    {
+                      "enum": [
+                        "NodePort"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    },
+                    {
+                      "type": "string"
+                    }
+                  ]
+                }
               }
-            }
-          ]
+            },
+            "labels": {},
+            "loadBalancerClass": {},
+            "loadBalancerIP": {},
+            "loadBalancerSourceRanges": {},
+            "nodePort": {},
+            "servicePort": {},
+            "sessionAffinity": {},
+            "statefulsetReplica": {
+              "additionalProperties": {},
+              "description": "If using a statefulSet (statefulSet.enabled=true), configure the\nservice to connect to a specific replica to have a consistent view\nof the data.",
+              "properties": {
+                "enabled": {},
+                "replica": {}
+              }
+            },
+            "type": {}
+          },
+          "type": "object"
         },
         "sidecarContainers": {
           "description": "sidecarContainers - add more containers to prometheus server\nKey/Value where Key is the sidecar `- name: <Key>`\nExample:\nsidecarContainers:\nwebserver:\nimage: nginx\nOR for adding OAuth authentication to Prometheus\nsidecarContainers:\noauth-proxy:\nimage: quay.io/oauth2-proxy/oauth2-proxy\nargs:\n- --upstream=http://127.0.0.1:9090\n- --http-address=0.0.0.0:8081\n- ...\nports:\n- containerPort: 8081\nname: oauth-proxy\nprotocol: TCP\nresources: {}"

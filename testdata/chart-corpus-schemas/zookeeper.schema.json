@@ -2383,7 +2383,7 @@
     "constrains/image.repository": {
       "properties": {
         "image": {
-          "$ref": "#/$defs/constrains~1repository@3"
+          "$ref": "#/$defs/constrains~1repository"
         }
       },
       "required": [
@@ -3554,13 +3554,13 @@
       "type": "object"
     },
     "constrains/repository": {
-      "additionalProperties": {},
       "properties": {
-        "repository": {
-          "description": "[default: REPOSITORY_NAME/os-shell] Init container volume-permissions image repository",
-          "type": "string"
-        }
-      }
+        "repository": {}
+      },
+      "required": [
+        "repository"
+      ],
+      "type": "object"
     },
     "constrains/repository=null": {
       "properties": {
@@ -3569,24 +3569,6 @@
             null
           ]
         }
-      },
-      "required": [
-        "repository"
-      ],
-      "type": "object"
-    },
-    "constrains/repository@2": {
-      "additionalProperties": {},
-      "properties": {
-        "repository": {
-          "description": "[default: REPOSITORY_NAME/zookeeper] ZooKeeper image repository",
-          "type": "string"
-        }
-      }
-    },
-    "constrains/repository@3": {
-      "properties": {
-        "repository": {}
       },
       "required": [
         "repository"
@@ -4840,10 +4822,6 @@
       "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
       "type": "string"
     },
-    "values/common.global.compatibility.openshift": {
-      "additionalProperties": {},
-      "type": "object"
-    },
     "values/commonLabels": {
       "anyOf": [
         {
@@ -4918,6 +4896,10 @@
     },
     "values/extraVolumes/string;name-is-the-name": {
       "description": "Name is the name of resource being referenced",
+      "type": "string"
+    },
+    "values/image.repository": {
+      "description": "[default: REPOSITORY_NAME/zookeeper] ZooKeeper image repository",
       "type": "string"
     },
     "values/integer:int32;the-port-on-each": {
@@ -5374,6 +5356,10 @@
       ],
       "type": "string"
     },
+    "values/volumePermissions.image.repository": {
+      "description": "[default: REPOSITORY_NAME/os-shell] Init container volume-permissions image repository",
+      "type": "string"
+    },
     "when/client+client=null/then/fail": {
       "if": {
         "anyOf": [
@@ -5409,7 +5395,7 @@
         "anyOf": [
           {
             "not": {
-              "$ref": "#/$defs/constrains~1repository@3"
+              "$ref": "#/$defs/constrains~1repository"
             }
           },
           {
@@ -5866,27 +5852,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "properties": {
-            "ports": {
-              "additionalProperties": {},
-              "properties": {
-                "follower": {
-                  "description": "ZooKeeper follower service port",
-                  "not": {
-                    "type": "null"
-                  }
-                }
-              }
-            }
-          }
-        }
       }
     },
     {
@@ -7593,22 +7558,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "properties": {
-            "ports": {
-              "required": [
-                "election"
-              ],
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -8553,20 +8502,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "volumePermissions": {
-          "additionalProperties": {},
-          "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
-          "properties": {
-            "image": {
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -9163,7 +9098,8 @@
           "commonLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+                "additionalProperties": {},
+                "type": "object"
               },
               {
                 "type": "string"
@@ -9730,17 +9666,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
     },
     {
       "if": {
@@ -10434,7 +10359,12 @@
         "additionalProperties": {},
         "properties": {
           "image": {
-            "$ref": "#/$defs/constrains~1repository@2"
+            "additionalProperties": {},
+            "properties": {
+              "repository": {
+                "$ref": "#/$defs/values~1image.repository"
+              }
+            }
           }
         }
       }
@@ -10916,22 +10846,6 @@
             }
           }
         ]
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "properties": {
-            "ports": {
-              "required": [
-                "follower"
-              ],
-              "type": "object"
-            }
-          }
-        }
       }
     },
     {
@@ -11489,27 +11403,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "properties": {
-            "ports": {
-              "additionalProperties": {},
-              "properties": {
-                "election": {
-                  "description": "ZooKeeper election service port\nNode ports to expose\nNOTE: choose port between <30000-32767>",
-                  "not": {
-                    "type": "null"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -11866,7 +11759,12 @@
                 "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
                 "properties": {
                   "image": {
-                    "$ref": "#/$defs/constrains~1repository"
+                    "additionalProperties": {},
+                    "properties": {
+                      "repository": {
+                        "$ref": "#/$defs/values~1volumePermissions.image.repository"
+                      }
+                    }
                   }
                 }
               }
@@ -12874,24 +12772,7 @@
           "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
           "type": "string"
         },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "compatibility": {
-              "additionalProperties": {},
-              "properties": {
-                "openshift": {
-                  "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-                }
-              },
-              "type": "object"
-            },
-            "security": {
-              "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-            }
-          },
-          "type": "object"
-        }
+        "global": {}
       },
       "type": "object"
     },
@@ -13237,7 +13118,8 @@
     "extraDeploy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+          "additionalProperties": {},
+          "type": "object"
         },
         {
           "items": {},
@@ -15016,8 +14898,7 @@
         "storageClass": {
           "description": "DEPRECATED: use global.defaultStorageClass instead"
         }
-      },
-      "type": "object"
+      }
     },
     "heapSize": {
       "description": "Size (in MB) for the Java Heap options (Xmx and Xms)\nThis env var is ignored if Xmx an Xms are configured via `jvmFlags`"
@@ -15070,17 +14951,18 @@
       "description": "ZooKeeper pods host aliases\nhttps://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/"
     },
     "image": {
+      "additionalProperties": {},
       "allOf": [
         {
           "$ref": "#/$defs/when~1repository+repository=null~1then~1fail"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/constrains~1repository@2"
         }
-      ]
+      ],
+      "properties": {
+        "repository": {
+          "$ref": "#/$defs/values~1image.repository"
+        }
+      },
+      "type": "object"
     },
     "initContainers": {
       "anyOf": [
@@ -17485,44 +17367,42 @@
           }
         },
         "ports": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "client": {
+              "description": "ZooKeeper client service port"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "client": {
-                  "description": "ZooKeeper client service port"
+            "election": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/values~1integer:int32;the-port-that-will"
                 },
-                "election": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/values~1integer:int32;the-port-that-will"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1string;pattern-0-1-9"
-                    }
-                  ],
-                  "description": "ZooKeeper election service port\nNode ports to expose\nNOTE: choose port between <30000-32767>"
-                },
-                "follower": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/values~1integer:int32;the-port-that-will"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1string;pattern-0-1-9"
-                    }
-                  ],
-                  "description": "ZooKeeper follower service port"
-                },
-                "tls": {
-                  "description": "ZooKeeper TLS service port"
+                {
+                  "$ref": "#/$defs/values~1string;pattern-0-1-9"
                 }
-              }
+              ],
+              "description": "ZooKeeper election service port\nNode ports to expose\nNOTE: choose port between <30000-32767>"
+            },
+            "follower": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/values~1integer:int32;the-port-that-will"
+                },
+                {
+                  "$ref": "#/$defs/values~1string;pattern-0-1-9"
+                }
+              ],
+              "description": "ZooKeeper follower service port"
+            },
+            "tls": {
+              "description": "ZooKeeper TLS service port"
             }
-          ]
+          },
+          "required": [
+            "election",
+            "follower"
+          ],
+          "type": "object"
         },
         "sessionAffinity": {
           "anyOf": [
@@ -17943,15 +17823,10 @@
       "description": "Basic time unit (in milliseconds) used by ZooKeeper for heartbeats"
     },
     "tls": {
+      "additionalProperties": {},
       "allOf": [
         {
           "$ref": "#/$defs/when~1quorum+quorum=null~1then~1fail"
-        },
-        {
-          "type": "object"
-        },
-        {
-          "additionalProperties": {}
         },
         {
           "if": {
@@ -17988,7 +17863,8 @@
           "$ref": "#/$defs/when~1client+client=null~1then~1fail"
         }
       ],
-      "description": "Enable SSL/TLS encryption"
+      "description": "Enable SSL/TLS encryption",
+      "type": "object"
     },
     "tolerations": {
       "anyOf": [
@@ -18203,18 +18079,8 @@
       "description": "Mount credentials as files instead of using environment variables"
     },
     "volumePermissions": {
+      "additionalProperties": {},
       "allOf": [
-        {
-          "additionalProperties": {},
-          "properties": {
-            "image": {
-              "$ref": "#/$defs/constrains~1repository"
-            }
-          }
-        },
-        {
-          "type": "object"
-        },
         {
           "if": {
             "$ref": "#/$defs/constrains~1image+image=null"
@@ -18234,7 +18100,19 @@
           }
         }
       ],
-      "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node"
+      "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node",
+      "properties": {
+        "image": {
+          "additionalProperties": {},
+          "properties": {
+            "repository": {
+              "$ref": "#/$defs/values~1volumePermissions.image.repository"
+            }
+          },
+          "type": "object"
+        }
+      },
+      "type": "object"
     },
     "zooServers": {
       "description": "ZooKeeper space separated servers list. Leave empty to use the default ZooKeeper server names."

@@ -22538,26 +22538,20 @@
           "type": "string"
         },
         "googlePodMonitor": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "enabled": {
+              "description": "If enabled, It creates Google Managed Prometheus scraping config"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "enabled": {
-                  "description": "If enabled, It creates Google Managed Prometheus scraping config"
-                },
-                "scrapeEndpoint": {
-                  "description": "This is the default endpoint used by the prometheus plugin"
-                },
-                "scrapeInterval": {
-                  "description": "Set a custom namespace where to deploy PodMonitoring resource\nserviceMonitorNamespace: \"\""
-                },
-                "serviceMonitorNamespace": {}
-              }
-            }
-          ]
+            "scrapeEndpoint": {
+              "description": "This is the default endpoint used by the prometheus plugin"
+            },
+            "scrapeInterval": {
+              "description": "Set a custom namespace where to deploy PodMonitoring resource\nserviceMonitorNamespace: \"\""
+            },
+            "serviceMonitorNamespace": {}
+          },
+          "type": "object"
         },
         "healthProbes": {
           "description": "Enable Kubernetes Probes configuration configured in `controller.probes`"
@@ -22637,47 +22631,41 @@
           "type": "object"
         },
         "httpsKeyStore": {
-          "allOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "disableSecretMount": {},
-                "enable": {
-                  "description": "Enables HTTPS keystore on jenkins controller"
-                },
-                "fileName": {
-                  "description": "Jenkins keystore filename which will appear under controller.httpsKeyStore.path"
-                },
-                "httpPort": {
-                  "description": "HTTP Port that Jenkins should listen to along with HTTPS, it also serves as the liveness and readiness probes port."
-                },
-                "jenkinsHttpsJksPasswordSecretKey": {
-                  "description": "Name of the key in the secret that contains the JKS password"
-                },
-                "jenkinsHttpsJksPasswordSecretName": {
-                  "description": "Name of the secret that contains the JKS password, if it is not in the same secret as the JKS file"
-                },
-                "jenkinsHttpsJksSecretKey": {
-                  "description": "Name of the key in the secret that already has SSL keystore"
-                },
-                "jenkinsHttpsJksSecretName": {
-                  "description": "Name of the secret that already has SSL keystore"
-                },
-                "jenkinsKeyStoreBase64Encoded": {
-                  "description": "Base64 encoded Keystore content. Keystore must be converted to base64 then being pasted here\nConvert keystore.jks files content to base64 > $ cat keystore.jks | base64\n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"
-                },
-                "password": {
-                  "description": "Jenkins keystore password"
-                },
-                "path": {
-                  "description": "Path of HTTPS keystore file"
-                }
-              }
+          "additionalProperties": {},
+          "properties": {
+            "disableSecretMount": {},
+            "enable": {
+              "description": "Enables HTTPS keystore on jenkins controller"
             },
-            {
-              "type": "object"
+            "fileName": {
+              "description": "Jenkins keystore filename which will appear under controller.httpsKeyStore.path"
+            },
+            "httpPort": {
+              "description": "HTTP Port that Jenkins should listen to along with HTTPS, it also serves as the liveness and readiness probes port."
+            },
+            "jenkinsHttpsJksPasswordSecretKey": {
+              "description": "Name of the key in the secret that contains the JKS password"
+            },
+            "jenkinsHttpsJksPasswordSecretName": {
+              "description": "Name of the secret that contains the JKS password, if it is not in the same secret as the JKS file"
+            },
+            "jenkinsHttpsJksSecretKey": {
+              "description": "Name of the key in the secret that already has SSL keystore"
+            },
+            "jenkinsHttpsJksSecretName": {
+              "description": "Name of the secret that already has SSL keystore"
+            },
+            "jenkinsKeyStoreBase64Encoded": {
+              "description": "Base64 encoded Keystore content. Keystore must be converted to base64 then being pasted here\nConvert keystore.jks files content to base64 > $ cat keystore.jks | base64\n/u3+7QAAAAIAAAABAAAAAQANamVua2luc2NpLmNvbQAAAW2r/b1ZAAAFATCCBP0wDgYKKwYBBAEq\nAhEBAQUABIIE6QbCqasvoHS0pSwYqSvdydMCB9t+VNfwhFIiiuAelJfO5sSe2SebJbtwHgLcRz1Z\ngMtWgOSFdl3bWSzA7vrW2LED52h+jXLYSWvZzuDuh8hYO85m10ikF6QR+dTi4jra0whIFDvq3pxe\nTnESxEsN+DvbZM3jA3qsjQJSeISNpDjO099dqQvHpnCn18lyk7J4TWJ8sOQQb1EM2zDAfAOSqA/x\nQuPEFl74DlY+5DIk6EBvpmWhaMSvXzWZACGA0sYqa157dq7O0AqmuLG/EI5EkHETO4CrtBW+yLcy\n2dUCXOMA+j+NjM1BjrQkYE5vtSfNO6lFZcISyKo5pTFlcA7ut0Fx2nZ8GhHTn32CpeWwNcZBn1gR\npZVt6DxVVkhTAkMLhR4rL2wGIi/1WRs23ZOLGKtyDNvDHnQyDiQEoJGy9nAthA8aNHa3cfdF10vB\nDrb19vtpFHmpvKEEhpk2EBRF4fTi644Fuhu2Ied6118AlaPvEea+n6G4vBz+8RWuVCmZjLU+7h8l\nHy3/WdUPoIL5eW7Kz+hS+sRTFzfu9C48dMkQH3a6f3wSY+mufizNF9U298r98TnYy+PfDJK0bstG\nPh6yPWx8DGXKQBwrhWJWXI6JwZDeC5Ny+l8p1SypTmAjpIaSW3ge+KgcL6Wtt1R5hUV1ajVwVSUi\nHF/FachKqPqyLJFZTGjNrxnmNYpt8P1d5JTvJfmfr55Su/P9n7kcyWp7zMcb2Q5nlXt4tWogOHLI\nOzEWKCacbFfVHE+PpdrcvCVZMDzFogIq5EqGTOZe2poPpBVE+1y9mf5+TXBegy5HToLWvmfmJNTO\nNCDuBjgLs2tdw2yMPm4YEr57PnMX5gGTC3f2ZihXCIJDCRCdQ9sVBOjIQbOCzxFXkVITo0BAZhCi\nYz61wt3Ud8e//zhXWCkCsSV+IZCxxPzhEFd+RFVjW0Nm9hsb2FgAhkXCjsGROgoleYgaZJWvQaAg\nUyBzMmKDPKTllBHyE3Gy1ehBNGPgEBChf17/9M+j8pcm1OmlM434ctWQ4qW7RU56//yq1soFY0Te\nfu2ei03a6m68fYuW6s7XEEK58QisJWRAvEbpwu/eyqfs7PsQ+zSgJHyk2rO95IxdMtEESb2GRuoi\nBs+AHNdYFTAi+GBWw9dvEgqQ0Mpv0//6bBE/Fb4d7b7f56uUNnnE7mFnjGmGQN+MvC62pfwfvJTT\nEkT1iZ9kjM9FprTFWXT4UmO3XTvesGeE50sV9YPm71X4DCQwc4KE8vyuwj0s6oMNAUACW2ClU9QQ\ny0tRpaF1tzs4N42Q5zl0TzWxbCCjAtC3u6xf+c8MCGrr7DzNhm42LOQiHTa4MwX4x96q7235oiAU\niQqSI/hyF5yLpWw4etyUvsx2/0/0wkuTU1FozbLoCWJEWcPS7QadMrRRISxHf0YobIeQyz34regl\nt1qSQ3dCU9D6AHLgX6kqllx4X0fnFq7LtfN7fA2itW26v+kAT2QFZ3qZhINGfofCja/pITC1uNAZ\ngsJaTMcQ600krj/ynoxnjT+n1gmeqThac6/Mi3YlVeRtaxI2InL82ZuD+w/dfY9OpPssQjy3xiQa\njPuaMWXRxz/sS9syOoGVH7XBwKrWpQcpchozWJt40QV5DslJkclcr8aC2AGlzuJMTdEgz1eqV0+H\nbAXG9HRHN/0eJTn1/QAAAAEABVguNTA5AAADjzCCA4swggJzAhRGqVxH4HTLYPGO4rzHcCPeGDKn\nxTANBgkqhkiG9w0BAQsFADCBgTELMAkGA1UEBhMCY2ExEDAOBgNVBAgMB29udGFyaW8xEDAOBgNV\nBAcMB3Rvcm9udG8xFDASBgNVBAoMC2plbmtpbnN0ZXN0MRkwFwYDVQQDDBBqZW5raW5zdGVzdC5p\nbmZvMR0wGwYJKoZIhvcNAQkBFg50ZXN0QHRlc3QuaW5mbzAeFw0xOTEwMDgxNTI5NTVaFw0xOTEx\nMDcxNTI5NTVaMIGBMQswCQYDVQQGEwJjYTEQMA4GA1UECAwHb250YXJpbzEQMA4GA1UEBwwHdG9y\nb250bzEUMBIGA1UECgwLamVua2luc3Rlc3QxGTAXBgNVBAMMEGplbmtpbnN0ZXN0LmluZm8xHTAb\nBgkqhkiG9w0BCQEWDnRlc3RAdGVzdC5pbmZvMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKC\nAQEA02q352JTHGvROMBhSHvSv+vnoOTDKSTz2aLQn0tYrIRqRo+8bfmMjXuhkwZPSnCpvUGNAJ+w\nJrt/dqMoYUjCBkjylD/qHmnXN5EwS1cMg1Djh65gi5JJLFJ7eNcoSsr/0AJ+TweIal1jJSP3t3PF\n9Uv21gm6xdm7HnNK66WpUUXLDTKaIs/jtagVY1bLOo9oEVeLN4nT2CYWztpMvdCyEDUzgEdDbmrP\nF5nKUPK5hrFqo1Dc5rUI4ZshL3Lpv398aMxv6n2adQvuL++URMEbXXBhxOrT6rCtYzbcR5fkwS9i\nd3Br45CoWOQro02JAepoU0MQKY5+xQ4Bq9Q7tB9BAwIDAQABMA0GCSqGSIb3DQEBCwUAA4IBAQAe\n4xc+mSvKkrKBHg9/zpkWgZUiOp4ENJCi8H4tea/PCM439v6y/kfjT/okOokFvX8N5aa1OSz2Vsrl\nm8kjIc6hiA7bKzT6lb0EyjUShFFZ5jmGVP4S7/hviDvgB5yEQxOPpumkdRP513YnEGj/o9Pazi5h\n/MwpRxxazoda9r45kqQpyG+XoM4pB+Fd3JzMc4FUGxfVPxJU4jLawnJJiZ3vqiSyaB0YyUL+Er1Q\n6NnqtR4gEBF0ZVlQmkycFvD4EC2boP943dLqNUvop+4R3SM1QMM6P5u8iTXtHd/VN4MwMyy1wtog\nhYAzODo1Jt59pcqqKJEas0C/lFJEB3frw4ImNx5fNlJYOpx+ijfQs9m39CevDq0="
+            },
+            "password": {
+              "description": "Jenkins keystore password"
+            },
+            "path": {
+              "description": "Path of HTTPS keystore file"
             }
-          ]
+          },
+          "type": "object"
         },
         "image": {
           "additionalProperties": {},
@@ -22734,49 +22722,43 @@
         },
         "imageTag": {},
         "ingress": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "annotations": {
+              "description": "Primary Ingress annotations"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {
-                  "description": "Primary Ingress annotations"
-                },
-                "apiVersion": {
-                  "description": "Primary Ingress API version"
-                },
-                "enabled": {
-                  "description": "Enables the Primary ingress"
-                },
-                "hostName": {
-                  "description": "Primary Ingress hostname"
-                },
-                "ingressClassName": {
-                  "description": "Primary Ingress ingressClassName"
-                },
-                "labels": {
-                  "description": "Primary Ingress labels"
-                },
-                "path": {
-                  "description": "Primary Ingress path"
-                },
-                "pathType": {
-                  "description": "Primary Ingress rule pathType, choices are: Exact, ImplementationSpecific, Prefix"
-                },
-                "paths": {
-                  "description": "Override for the default Primary Ingress paths\n- backend:\nserviceName: ssl-redirect\nservicePort: use-annotation\n- backend:\nserviceName: >-\n{{ template \"jenkins.fullname\" . }}\nDon't use string here, use only integer value!\nservicePort: 8080"
-                },
-                "resourceRootUrl": {
-                  "description": "Primary Hostname to serve assets from"
-                },
-                "tls": {
-                  "description": "Primary Ingress TLS configuration\n- secretName: jenkins.cluster.local\nhosts:\n- jenkins.cluster.local"
-                }
-              }
+            "apiVersion": {
+              "description": "Primary Ingress API version"
+            },
+            "enabled": {
+              "description": "Enables the Primary ingress"
+            },
+            "hostName": {
+              "description": "Primary Ingress hostname"
+            },
+            "ingressClassName": {
+              "description": "Primary Ingress ingressClassName"
+            },
+            "labels": {
+              "description": "Primary Ingress labels"
+            },
+            "path": {
+              "description": "Primary Ingress path"
+            },
+            "pathType": {
+              "description": "Primary Ingress rule pathType, choices are: Exact, ImplementationSpecific, Prefix"
+            },
+            "paths": {
+              "description": "Override for the default Primary Ingress paths\n- backend:\nserviceName: ssl-redirect\nservicePort: use-annotation\n- backend:\nserviceName: >-\n{{ template \"jenkins.fullname\" . }}\nDon't use string here, use only integer value!\nservicePort: 8080"
+            },
+            "resourceRootUrl": {
+              "description": "Primary Hostname to serve assets from"
+            },
+            "tls": {
+              "description": "Primary Ingress TLS configuration\n- secretName: jenkins.cluster.local\nhosts:\n- jenkins.cluster.local"
             }
-          ]
+          },
+          "type": "object"
         },
         "initConfigMap": {
           "description": "Name of the existing ConfigMap that contains init scripts"
@@ -22998,28 +22980,22 @@
           "description": "Annotations for controller pod"
         },
         "podDisruptionBudget": {
-          "allOf": [
-            {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {},
-                "apiVersion": {
-                  "description": "Policy API version"
-                },
-                "enabled": {
-                  "description": "Enable Kubernetes Pod Disruption Budget configuration"
-                },
-                "labels": {},
-                "maxUnavailable": {
-                  "description": "Number of pods that can be unavailable. Either an absolute number or a percentage"
-                }
-              }
+          "additionalProperties": {},
+          "description": "PodDisruptionBudget config\nref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/",
+          "properties": {
+            "annotations": {},
+            "apiVersion": {
+              "description": "Policy API version"
             },
-            {
-              "type": "object"
+            "enabled": {
+              "description": "Enable Kubernetes Pod Disruption Budget configuration"
+            },
+            "labels": {},
+            "maxUnavailable": {
+              "description": "Number of pods that can be unavailable. Either an absolute number or a percentage"
             }
-          ],
-          "description": "PodDisruptionBudget config\nref: https://kubernetes.io/docs/tasks/run-application/configure-pdb/"
+          },
+          "type": "object"
         },
         "podLabels": {
           "anyOf": [
@@ -23121,47 +23097,41 @@
           "description": "Configures the restrictions for naming projects. Set this key to null or empty to skip it in the default config."
         },
         "prometheus": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "Expose Prometheus metrics\nIf enabled, add the prometheus plugin to the list of plugins to install\nhttps://plugins.jenkins.io/prometheus",
+          "properties": {
+            "alertingRulesAdditionalLabels": {
+              "description": "Additional labels to add to the PrometheusRule object"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "alertingRulesAdditionalLabels": {
-                  "description": "Additional labels to add to the PrometheusRule object"
-                },
-                "alertingrules": {
-                  "description": "Array of prometheus alerting rules"
-                },
-                "enabled": {
-                  "description": "Enables prometheus service monitor"
-                },
-                "metricRelabelings": {
-                  "description": "MetricRelabelConfigs to apply to samples before ingestion."
-                },
-                "prometheusRuleNamespace": {
-                  "description": "Set a custom namespace where to deploy PrometheusRule resource"
-                },
-                "relabelings": {
-                  "description": "RelabelConfigs to apply to samples before scraping. Prometheus Operator automatically adds\nrelabelings for a few standard Kubernetes fields. The original scrape job’s name\nis available via the __tmp_prometheus_job_name label.\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config"
-                },
-                "scrapeEndpoint": {
-                  "description": "The endpoint prometheus should get metrics from"
-                },
-                "scrapeInterval": {
-                  "description": "How often prometheus should scrape metrics"
-                },
-                "serviceMonitorAdditionalLabels": {
-                  "description": "Additional labels to add to the service monitor object"
-                },
-                "serviceMonitorNamespace": {
-                  "description": "Set a custom namespace where to deploy ServiceMonitor resource"
-                }
-              }
+            "alertingrules": {
+              "description": "Array of prometheus alerting rules"
+            },
+            "enabled": {
+              "description": "Enables prometheus service monitor"
+            },
+            "metricRelabelings": {
+              "description": "MetricRelabelConfigs to apply to samples before ingestion."
+            },
+            "prometheusRuleNamespace": {
+              "description": "Set a custom namespace where to deploy PrometheusRule resource"
+            },
+            "relabelings": {
+              "description": "RelabelConfigs to apply to samples before scraping. Prometheus Operator automatically adds\nrelabelings for a few standard Kubernetes fields. The original scrape job’s name\nis available via the __tmp_prometheus_job_name label.\nMore info: https://prometheus.io/docs/prometheus/latest/configuration/configuration/#relabel_config"
+            },
+            "scrapeEndpoint": {
+              "description": "The endpoint prometheus should get metrics from"
+            },
+            "scrapeInterval": {
+              "description": "How often prometheus should scrape metrics"
+            },
+            "serviceMonitorAdditionalLabels": {
+              "description": "Additional labels to add to the service monitor object"
+            },
+            "serviceMonitorNamespace": {
+              "description": "Set a custom namespace where to deploy ServiceMonitor resource"
             }
-          ],
-          "description": "Expose Prometheus metrics\nIf enabled, add the prometheus plugin to the list of plugins to install\nhttps://plugins.jenkins.io/prometheus"
+          },
+          "type": "object"
         },
         "publishNotReadyAddresses": {
           "description": "If enabled, the controller is available through its service before its pods reports ready. Makes startup screen and\nauto-reload on restart feature possible."
@@ -23345,41 +23315,35 @@
           "description": "List of groovy functions to approve\n- \"method groovy.json.JsonSlurperClassic parseText java.lang.String\"\n- \"new groovy.json.JsonSlurperClassic\""
         },
         "secondaryingress": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "description": "often you want to have your controller all locked down and private,\nbut you still want to get webhooks from your SCM\nA secondary ingress will let you expose different urls\nwith a different configuration",
+          "properties": {
+            "annotations": {
+              "description": "Secondary Ingress annotations\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\nFor Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "annotations": {
-                  "description": "Secondary Ingress annotations\nkubernetes.io/ingress.class: nginx\nkubernetes.io/tls-acme: \"true\"\nFor Kubernetes >= 1.18 you should specify the ingress-controller via the field ingressClassName\nSee https://kubernetes.io/blog/2020/04/02/improvements-to-the-ingress-api-in-kubernetes-1.18/#specifying-the-class-of-an-ingress"
-                },
-                "apiVersion": {
-                  "description": "Secondary Ingress API version"
-                },
-                "enabled": {
-                  "description": "Enables the Secondary Ingress\npaths you want forwarded to the backend\nex /github-webhook"
-                },
-                "hostName": {
-                  "description": "Secondary Ingress hostname"
-                },
-                "ingressClassName": {
-                  "description": "Secondary Ingress ingressClassName\nconfigures the hostname e.g., jenkins-external.example.com"
-                },
-                "labels": {
-                  "description": "Secondary Ingress labels"
-                },
-                "paths": {
-                  "description": "Secondary Ingress paths\nFor Kubernetes v1.14+, use 'networking.k8s.io/v1beta1'\nFor Kubernetes v1.19+, use 'networking.k8s.io/v1'"
-                },
-                "tls": {
-                  "description": "Secondary Ingress TLS configuration\n- secretName: jenkins-external.example.com\nhosts:\n- jenkins-external.example.com"
-                }
-              }
+            "apiVersion": {
+              "description": "Secondary Ingress API version"
+            },
+            "enabled": {
+              "description": "Enables the Secondary Ingress\npaths you want forwarded to the backend\nex /github-webhook"
+            },
+            "hostName": {
+              "description": "Secondary Ingress hostname"
+            },
+            "ingressClassName": {
+              "description": "Secondary Ingress ingressClassName\nconfigures the hostname e.g., jenkins-external.example.com"
+            },
+            "labels": {
+              "description": "Secondary Ingress labels"
+            },
+            "paths": {
+              "description": "Secondary Ingress paths\nFor Kubernetes v1.14+, use 'networking.k8s.io/v1beta1'\nFor Kubernetes v1.19+, use 'networking.k8s.io/v1'"
+            },
+            "tls": {
+              "description": "Secondary Ingress TLS configuration\n- secretName: jenkins-external.example.com\nhosts:\n- jenkins-external.example.com"
             }
-          ],
-          "description": "often you want to have your controller all locked down and private,\nbut you still want to get webhooks from your SCM\nA secondary ingress will let you expose different urls\nwith a different configuration"
+          },
+          "type": "object"
         },
         "secretClaims": {
           "description": "List of `SecretClaim` resources to create\n- name: secretName        # required\npath: testPath          # required\ntype: kubernetes.io/tls # optional\nrenew: 60               # optional"
@@ -23958,6 +23922,7 @@
     "fullnameOverride": {
       "description": "Override the full resource names"
     },
+    "global": {},
     "helmtest": {
       "additionalProperties": {},
       "description": "Here you can configure unit tests values when executing the helm unittest in the CONTRIBUTING.md",

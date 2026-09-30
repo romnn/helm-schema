@@ -3116,6 +3116,36 @@
       ],
       "type": "object"
     },
+    "constrains/enabled!=false": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              false
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=true": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              true
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled+enabled:t+enabled=null": {
       "anyOf": [
         {
@@ -3418,6 +3448,19 @@
         "enabled": {
           "enum": [
             null
+          ]
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled=true": {
+      "properties": {
+        "enabled": {
+          "enum": [
+            true
           ]
         }
       },
@@ -4533,7 +4576,8 @@
         "hosts": {
           "anyOf": [
             {
-              "$ref": "#/$defs/values~1terminals.global"
+              "additionalProperties": {},
+              "type": "object"
             },
             {
               "$ref": "#/$defs/constrains~1hosts+secretName~1array"
@@ -5892,6 +5936,19 @@
         "ollama"
       ],
       "type": "object"
+    },
+    "constrains/ollama.enabled": {
+      "not": {
+        "properties": {
+          "ollama": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "ollama"
+        ],
+        "type": "object"
+      }
     },
     "constrains/ollama.enabled+ollama.enabled=null": {
       "properties": {
@@ -7473,6 +7530,19 @@
         }
       ]
     },
+    "constrains/pipelines.enabled": {
+      "not": {
+        "properties": {
+          "pipelines": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "pipelines"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/pipelines.enabled+pipelines.enabled=null": {
       "properties": {
         "pipelines": {
@@ -8602,6 +8672,19 @@
       },
       "type": "object"
     },
+    "constrains/terminals.enabled": {
+      "not": {
+        "properties": {
+          "terminals": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "terminals"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/terminals.enabled+terminals.enabled:t+terminals.enabled=null": {
       "anyOf": [
         {
@@ -8733,6 +8816,19 @@
         "tika"
       ],
       "type": "object"
+    },
+    "constrains/tika.enabled": {
+      "not": {
+        "properties": {
+          "tika": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "tika"
+        ],
+        "type": "object"
+      }
     },
     "constrains/tika.enabled+tika.enabled=null": {
       "properties": {
@@ -12137,10 +12233,6 @@
       ],
       "type": "string"
     },
-    "values/terminals.global": {
-      "additionalProperties": {},
-      "type": "object"
-    },
     "values/terminals/oneOf/anyOf/integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more": {
       "oneOf": [
         {
@@ -14387,6 +14479,110 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1ollama.enabled:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1ollamaUrlsFromExtraEnv:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "ollama": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "ollama"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1ollama.enabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "ollama": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "ollama"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1ollama.enabled"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1ollamaUrls:t"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1ollama.enabled:t"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/constrains~1ollamaUrlsFromExtraEnv:t"
+              }
+            ]
+          },
+          {
+            "properties": {
+              "ollama": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "ollama"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/constrains~1ollamaUrls:t"
+                }
+              },
+              {
+                "$ref": "#/$defs/constrains~1ollamaUrlsFromExtraEnv:t"
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "ollama": {
+            "type": "object"
           }
         }
       }
@@ -18211,6 +18407,116 @@
       "if": {
         "anyOf": [
           {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1pipelines.enabled"
+                  },
+                  {
+                    "properties": {
+                      "pipelines": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "pipelines"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1pipelines.enabled"
+                  },
+                  {
+                    "properties": {
+                      "pipelines": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "pipelines"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1enableOpenaiApi:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/constrains~1enableOpenaiApi:t+openaiBaseApiUrl:t+openaiBaseApiUrls:t+pipelines.enabled:t@3"
+                }
+              },
+              {
+                "$ref": "#/$defs/constrains~1openaiBaseApiUrl:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1enableOpenaiApi:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1openaiBaseApiUrls:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1openaiBaseApiUrl:t"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "not": {
+                  "$ref": "#/$defs/constrains~1enableOpenaiApi:t+openaiBaseApiUrl:t+openaiBaseApiUrls:t+pipelines.enabled:t"
+                }
+              },
+              {
+                "$ref": "#/$defs/constrains~1enableOpenaiApi:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/constrains~1enableOpenaiApi:t+openaiBaseApiUrl:t+openaiBaseApiUrls:t+pipelines.enabled:t@3"
+                }
+              }
+            ]
+          },
+          {
+            "properties": {
+              "pipelines": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "pipelines"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "pipelines": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
             "$ref": "#/$defs/constrains~1ollama+ollama.enabled+ollama.enabled=null+ollama.httpRoute.enabled:t+1more"
           },
           {
@@ -18379,6 +18685,71 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1tika.enabled"
+                  },
+                  {
+                    "properties": {
+                      "tika": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "tika"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1tika.enabled"
+                  },
+                  {
+                    "properties": {
+                      "tika": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "tika"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "tika": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "tika"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "tika": {
+            "type": "object"
           }
         }
       }
@@ -20165,6 +20536,71 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "terminals": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "terminals"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1terminals.enabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "terminals": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "terminals"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1terminals.enabled"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "terminals": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "terminals"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "terminals": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "allOf": [
           {
             "$ref": "#/$defs/constrains~1sso.github.enabled:t"
@@ -20372,59 +20808,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1ollama.enabled:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1ollamaUrlsFromExtraEnv:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1ollamaUrls:t"
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1ollama.enabled:t"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/constrains~1ollamaUrlsFromExtraEnv:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/constrains~1ollamaUrls:t"
-                }
-              },
-              {
-                "$ref": "#/$defs/constrains~1ollamaUrlsFromExtraEnv:t"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "ollama": {
-            "type": "object"
-          }
-        }
-      }
     },
     {
       "if": {
@@ -21092,65 +21475,6 @@
         "$ref": "#/$defs/constrains~1websocket+websocket=null"
       },
       "then": false
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1enableOpenaiApi:t"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/constrains~1enableOpenaiApi:t+openaiBaseApiUrl:t+openaiBaseApiUrls:t+pipelines.enabled:t@3"
-                }
-              },
-              {
-                "$ref": "#/$defs/constrains~1openaiBaseApiUrl:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1enableOpenaiApi:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1openaiBaseApiUrls:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1openaiBaseApiUrl:t"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "not": {
-                  "$ref": "#/$defs/constrains~1enableOpenaiApi:t+openaiBaseApiUrl:t+openaiBaseApiUrls:t+pipelines.enabled:t"
-                }
-              },
-              {
-                "$ref": "#/$defs/constrains~1enableOpenaiApi:t"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/constrains~1enableOpenaiApi:t+openaiBaseApiUrl:t+openaiBaseApiUrls:t+pipelines.enabled:t@3"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "pipelines": {
-            "type": "object"
-          }
-        }
-      }
     },
     {
       "if": {
@@ -27267,7 +27591,8 @@
                   "limits": {
                     "anyOf": [
                       {
-                        "$ref": "#/$defs/values~1terminals.global"
+                        "additionalProperties": {},
+                        "type": "object"
                       },
                       {
                         "$ref": "#/$defs/constrains~1accessModes:t~1not~1:t"
@@ -29010,6 +29335,7 @@
             }
           }
         },
+        "global": {},
         "hostIPC": {
           "description": "Use the host’s ipc namespace."
         },
@@ -29405,8 +29731,7 @@
         "volumes": {
           "description": "Additional volumes on the output Deployment definition."
         }
-      },
-      "type": "object"
+      }
     },
     "ollamaUrls": {
       "description": "A list of Ollama API endpoints. These can be added in lieu of automatically installing the Ollama Helm chart, or in addition to it."
@@ -31431,6 +31756,7 @@
         "fullnameOverride": {
           "description": "Override the Pipelines subchart name. If not set, uses the release name with '-pipelines' suffix for multiple instance support"
         },
+        "global": {},
         "hostAliases": {
           "description": "HostAliases to be added to hosts-file of each container"
         },
@@ -31505,8 +31831,7 @@
         "volumes": {
           "description": "Configure pod volumes\nref: <https://kubernetes.io/docs/tasks/configure-pod-container/configure-volume-storage/>\n- name: \"\"\nconfigMap:\nname: \"\"\n- name: \"\"\nsecret:\nname: \"\"\n- name: \"\"\nemptyDir: {}"
         }
-      },
-      "type": "object"
+      }
     },
     "podAnnotations": {
       "anyOf": [
@@ -34748,9 +35073,7 @@
         "fullnameOverride": {
           "description": "Override the full name of the chart"
         },
-        "global": {
-          "$ref": "#/$defs/values~1terminals.global"
-        },
+        "global": {},
         "nameOverride": {
           "description": "Override the name of the chart"
         },
@@ -35588,24 +35911,13 @@
             "targetMemoryUtilizationPercentage": {}
           }
         },
-        "config": {
-          "additionalProperties": {},
-          "properties": {
-            "base_url": {
-              "type": "string"
-            }
-          },
-          "type": "object"
-        },
         "enabled": {
           "description": "Automatically install Apache Tika to extend Open WebUI",
           "type": "boolean"
         },
         "env": {},
         "fullnameOverride": {},
-        "global": {
-          "$ref": "#/$defs/values~1terminals.global"
-        },
+        "global": {},
         "image": {
           "$ref": "#/$defs/values~1pipelines.image"
         },

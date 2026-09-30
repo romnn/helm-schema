@@ -3756,64 +3756,58 @@
   ],
   "properties": {
     "env": {
-      "allOf": [
+      "anyOf": [
         {
+          "additionalProperties": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1labels:t~1not~1:t"
+              },
+              {
+                "$ref": "#/$defs/values~1env~1null;data-contains-the-secret"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "properties": {
+            "IMGPROXY_PATH_PREFIX": {},
+            "IMGPROXY_PROMETHEUS_BIND": {
+              "$ref": "#/$defs/values~1anyOf~1integer:int32;number-of-port-to+not~1:t+string;pattern-0-1-9"
+            },
+            "IMGPROXY_SECRET": {}
+          },
           "type": "object"
         },
         {
-          "anyOf": [
-            {
-              "additionalProperties": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1labels:t~1not~1:t"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1env~1null;data-contains-the-secret"
-                  },
-                  {
-                    "type": "string"
-                  }
-                ]
+          "items": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/constrains~1labels:t~1not~1:t"
               },
-              "properties": {
-                "IMGPROXY_PATH_PREFIX": {},
-                "IMGPROXY_PROMETHEUS_BIND": {
-                  "$ref": "#/$defs/values~1anyOf~1integer:int32;number-of-port-to+not~1:t+string;pattern-0-1-9"
-                },
-                "IMGPROXY_SECRET": {}
+              {
+                "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
               },
-              "type": "object"
-            },
-            {
-              "items": {
-                "anyOf": [
-                  {
-                    "$ref": "#/$defs/constrains~1labels:t~1not~1:t"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1string;pattern-t"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1string;pattern-null-null-null"
-                  },
-                  {
-                    "$ref": "#/$defs/values~1env~1null;data-contains-the-secret"
-                  }
-                ]
+              {
+                "$ref": "#/$defs/values~1string;pattern-t"
               },
-              "type": "array"
-            },
-            {
-              "type": "null"
-            }
-          ]
+              {
+                "$ref": "#/$defs/values~1string;pattern-null-null-null"
+              },
+              {
+                "$ref": "#/$defs/values~1env~1null;data-contains-the-secret"
+              }
+            ]
+          },
+          "type": "array"
+        },
+        {
+          "type": "null"
         }
       ],
-      "description": "Configure environment variables for the image proxy server\nsee https://docs.imgproxy.net/configuration"
+      "description": "Configure environment variables for the image proxy server\nsee https://docs.imgproxy.net/configuration",
+      "type": "object"
     },
     "fullnameOverride": {
       "anyOf": [
@@ -3910,6 +3904,7 @@
         }
       ]
     },
+    "global": {},
     "image": {
       "additionalProperties": {},
       "allOf": [

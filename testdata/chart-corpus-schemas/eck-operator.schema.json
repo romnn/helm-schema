@@ -2003,17 +2003,6 @@
       "then": false
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "eck-operator-crds": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
       "if": {
         "anyOf": [
           {
@@ -4450,79 +4439,73 @@
                   "description": "secureMode.enabled specifies whether to enable RBAC and TLS/HTTPs for the metrics endpoint.\n* This option makes most sense when using a ServiceMonitor to scrape the metrics and is therefore mutually exclusive with the podMonitor.enabled option.\n* This option also requires using cluster scoped resources (ClusterRole, ClusterRoleBinding) to\ngrant access to the /metrics endpoint. (createClusterScopedResources: true is required)"
                 },
                 "tls": {
-                  "allOf": [
-                    {
-                      "additionalProperties": {},
-                      "properties": {
-                        "certificateSecret": {
-                          "anyOf": [
+                  "additionalProperties": {},
+                  "properties": {
+                    "certificateSecret": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/$defs/values~1string@3"
+                        },
+                        {
+                          "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+                          "type": "null"
+                        },
+                        {
+                          "allOf": [
                             {
-                              "$ref": "#/$defs/values~1string@3"
+                              "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
                             },
                             {
-                              "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
-                              "type": "null"
+                              "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
                             },
                             {
-                              "allOf": [
-                                {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern@10"
-                                },
-                                {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern@4"
-                                },
-                                {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
-                                },
-                                {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
-                                },
-                                {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
-                                },
-                                {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
-                                },
-                                {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
-                                },
-                                {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern"
-                                },
-                                {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
-                                },
-                                {
-                                  "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
-                                }
-                              ],
-                              "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
-                              "type": "string"
+                              "$ref": "#/$defs/values~1not~1keywords~1pattern@9"
                             },
                             {
-                              "$ref": "#/$defs/values~1not~1:t"
+                              "$ref": "#/$defs/values~1not~1keywords~1pattern@2"
                             },
                             {
-                              "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                              "$ref": "#/$defs/values~1not~1keywords~1pattern@5"
                             },
                             {
-                              "$ref": "#/$defs/values~1object"
+                              "$ref": "#/$defs/values~1not~1keywords~1pattern@7"
                             },
                             {
-                              "$ref": "#/$defs/values~1string;pattern-t"
+                              "$ref": "#/$defs/values~1not~1keywords~1pattern@8"
                             },
                             {
-                              "$ref": "#/$defs/values~1string;pattern-null-null-null"
+                              "$ref": "#/$defs/values~1not~1keywords~1pattern"
+                            },
+                            {
+                              "$ref": "#/$defs/values~1not~1keywords~1pattern@3"
+                            },
+                            {
+                              "$ref": "#/$defs/values~1not~1keywords~1pattern@6"
                             }
                           ],
-                          "description": "certificateSecret is the name of the tls secret containing the custom TLS certificate and key for the secure metrics endpoint.\n* This is an optional setting and is only required if you are using a custom TLS certificate. A self-signed certificate will be generated by default.\n* TLS secret key must be named tls.crt.\n* TLS key's secret key must be named tls.key.\n* It is assumed to be in the same namespace as the ServiceMonitor.\nexample: kubectl create secret tls eck-metrics-tls-certificate -n elastic-system \\\n--cert=/path/to/tls.crt --key=/path/to/tls.key"
+                          "description": "secretName is the name of the secret in the pod's namespace to use. More info: https://kubernetes.io/docs/concepts/storage/volumes#secret",
+                          "type": "string"
+                        },
+                        {
+                          "$ref": "#/$defs/values~1not~1:t"
+                        },
+                        {
+                          "$ref": "#/$defs/values~1string;pattern-a-za-z0-9-t"
+                        },
+                        {
+                          "$ref": "#/$defs/values~1object"
+                        },
+                        {
+                          "$ref": "#/$defs/values~1string;pattern-t"
+                        },
+                        {
+                          "$ref": "#/$defs/values~1string;pattern-null-null-null"
                         }
-                      }
-                    },
-                    {
-                      "type": "object"
+                      ],
+                      "description": "certificateSecret is the name of the tls secret containing the custom TLS certificate and key for the secure metrics endpoint.\n* This is an optional setting and is only required if you are using a custom TLS certificate. A self-signed certificate will be generated by default.\n* TLS secret key must be named tls.crt.\n* TLS key's secret key must be named tls.key.\n* It is assumed to be in the same namespace as the ServiceMonitor.\nexample: kubectl create secret tls eck-metrics-tls-certificate -n elastic-system \\\n--cert=/path/to/tls.crt --key=/path/to/tls.key"
                     }
-                  ]
+                  },
+                  "type": "object"
                 }
               },
               "type": "object"
@@ -4700,9 +4683,7 @@
       "additionalProperties": {},
       "properties": {
         "global": {
-          "additionalProperties": {},
-          "description": "Globals meant for internal use only",
-          "type": "object"
+          "description": "Globals meant for internal use only"
         },
         "nameOverride": {}
       },
@@ -4833,10 +4814,6 @@
       "properties": {
         "createOperatorNamespace": {
           "description": "createOperatorNamespace defines whether the operator namespace manifest should be generated when in manifestGen mode.\nUsually we do want that to happen (e.g. all-in-one.yaml) but, sometimes we don't (e.g. E2E tests)."
-        },
-        "kubeVersion": {
-          "description": "kubeVersion is the effective Kubernetes version we target when generating the all-in-one.yaml.",
-          "type": "string"
         },
         "manifestGen": {
           "description": "manifestGen specifies whether the chart is running under manifest generator.\nThis is used for tasks specific to generating the all-in-one.yaml file."

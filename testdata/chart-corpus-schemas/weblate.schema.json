@@ -6578,10 +6578,40 @@
       ],
       "type": "object"
     },
+    "constrains/enabled!=false": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              false
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled!=null": {
       "properties": {
         "enabled": {
           "$ref": "#/$defs/constrains~1affinity!=null~1not~1=null"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=true": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              true
+            ]
+          }
         }
       },
       "required": [
@@ -6877,6 +6907,19 @@
         "enabled": {
           "enum": [
             null
+          ]
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled=true": {
+      "properties": {
+        "enabled": {
+          "enum": [
+            true
           ]
         }
       },
@@ -11131,7 +11174,7 @@
         "interval": {},
         "metricRelabelings": {},
         "params": {
-          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout+tlsConfig~1anyOf~1array+object@2"
+          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout+tlsConfig~1anyOf~1array+object"
         },
         "path": {},
         "port": {},
@@ -11143,10 +11186,15 @@
     "constrains/honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout+tlsConfig/anyOf/array+object": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1postgresql.common.global.compatibility.openshift"
+          "additionalProperties": {
+            "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout+tlsConfig~1anyOf~1array+object@2"
+          },
+          "type": "object"
         },
         {
-          "items": {},
+          "items": {
+            "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout+tlsConfig~1anyOf~1array+object@2"
+          },
           "type": "array"
         }
       ]
@@ -11154,15 +11202,11 @@
     "constrains/honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout+tlsConfig/anyOf/array+object@2": {
       "anyOf": [
         {
-          "additionalProperties": {
-            "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout+tlsConfig~1anyOf~1array+object"
-          },
+          "additionalProperties": {},
           "type": "object"
         },
         {
-          "items": {
-            "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout+tlsConfig~1anyOf~1array+object"
-          },
+          "items": {},
           "type": "array"
         }
       ]
@@ -11174,7 +11218,7 @@
         "interval": {},
         "metricRelabelings": {},
         "params": {
-          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout+tlsConfig~1anyOf~1array+object@2"
+          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout+tlsConfig~1anyOf~1array+object"
         },
         "path": {},
         "port": {},
@@ -11413,7 +11457,7 @@
       "additionalProperties": {},
       "properties": {
         "hosts": {
-          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout+tlsConfig~1anyOf~1array+object"
+          "$ref": "#/$defs/constrains~1honorLabels+interval+metricRelabelings+params+path+port+scrapeTimeout+tlsConfig~1anyOf~1array+object@2"
         },
         "secretName": {}
       },
@@ -18009,6 +18053,19 @@
         "type": "object"
       }
     },
+    "constrains/postgresql.enabled": {
+      "not": {
+        "properties": {
+          "postgresql": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "postgresql"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/postgresql.enabled+postgresql.enabled=null": {
       "properties": {
         "postgresql": {
@@ -24175,7 +24232,7 @@
           "$ref": "#/$defs/constrains~1redis.enabled:t"
         },
         {
-          "$ref": "#/$defs/constrains~1redis@3"
+          "$ref": "#/$defs/constrains~1redis@4"
         }
       ]
     },
@@ -24269,7 +24326,7 @@
           "$ref": "#/$defs/constrains~1redis.enabled+redis.enabled=null"
         },
         {
-          "$ref": "#/$defs/constrains~1redis@3"
+          "$ref": "#/$defs/constrains~1redis@4"
         }
       ]
     },
@@ -24924,6 +24981,19 @@
         "type": "object"
       }
     },
+    "constrains/redis.enabled": {
+      "not": {
+        "properties": {
+          "redis": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "redis"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/redis.enabled+redis.enabled=null": {
       "properties": {
         "redis": {
@@ -25035,7 +25105,7 @@
     "constrains/redis.global.compatibility.omitEmptySeLinuxOptions:t+1more": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1redis.replica.podSecurityContext.seLinuxOptions:t"
+          "$ref": "#/$defs/constrains~1redis.metrics.containerSecurityContext.seLinuxOptions:t"
         },
         {
           "not": {
@@ -25047,7 +25117,7 @@
     "constrains/redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2": {
       "anyOf": [
         {
-          "$ref": "#/$defs/constrains~1redis.metrics.containerSecurityContext.seLinuxOptions:t"
+          "$ref": "#/$defs/constrains~1redis.replica.podSecurityContext.seLinuxOptions:t"
         },
         {
           "not": {
@@ -28583,6 +28653,14 @@
       }
     },
     "constrains/redis@3": {
+      "additionalProperties": {},
+      "properties": {
+        "redis": {
+          "type": "object"
+        }
+      }
+    },
+    "constrains/redis@4": {
       "not": {
         "properties": {
           "redis": {
@@ -32118,48 +32196,49 @@
     "values/postgresql.backup.cronjob.fips.openssl": {
       "description": "Configure OpenSSL FIPS mode: '', 'restricted', 'relaxed', 'off'. If empty (\"\"), 'global.defaultFips' would be used"
     },
-    "values/postgresql.common.exampleValue": {
-      "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
-      "type": "string"
-    },
-    "values/postgresql.common.global.compatibility": {
+    "values/postgresql.common": {
       "additionalProperties": {},
       "properties": {
-        "openshift": {
-          "$ref": "#/$defs/values~1postgresql.common.global.compatibility.openshift"
-        }
+        "exampleValue": {
+          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
+          "type": "string"
+        },
+        "global": {}
       },
-      "type": "object"
-    },
-    "values/postgresql.common.global.compatibility.openshift": {
-      "additionalProperties": {},
       "type": "object"
     },
     "values/postgresql.diagnosticMode.enabled": {
       "description": "Enable diagnostic mode (all probes will be disabled and the command will be overridden)"
     },
-    "values/postgresql.global.compatibility.openshift": {
+    "values/postgresql.global.compatibility": {
       "additionalProperties": {},
-      "description": "Compatibility adaptations for Openshift",
+      "description": "Compatibility adaptations for Kubernetes platforms",
       "properties": {
-        "adaptSecurityContext": {
-          "anyOf": [
-            {
-              "enum": [
-                "force"
-              ]
-            },
-            {
-              "type": "null"
-            },
-            {
-              "type": "string"
+        "omitEmptySeLinuxOptions": {},
+        "openshift": {
+          "additionalProperties": {},
+          "description": "Compatibility adaptations for Openshift",
+          "properties": {
+            "adaptSecurityContext": {
+              "anyOf": [
+                {
+                  "enum": [
+                    "force"
+                  ]
+                },
+                {
+                  "type": "null"
+                },
+                {
+                  "type": "string"
+                }
+              ],
+              "description": "Adapt the securityContext sections of the deployment to make them compatible with Openshift restricted-v2 SCC: remove runAsUser, runAsGroup and fsGroup and let the platform use their allowed default IDs. Possible values: auto (apply if the detected running cluster is Openshift), force (perform the adaptation always), disabled (do not perform adaptation)"
             }
-          ],
-          "description": "Adapt the securityContext sections of the deployment to make them compatible with Openshift restricted-v2 SCC: remove runAsUser, runAsGroup and fsGroup and let the platform use their allowed default IDs. Possible values: auto (apply if the detected running cluster is Openshift), force (perform the adaptation always), disabled (do not perform adaptation)"
+          },
+          "type": "object"
         }
-      },
-      "type": "object"
+      }
     },
     "values/postgresql.global.defaultFips": {
       "description": "Default value for the FIPS configuration (allowed values: '', restricted, relaxed, off). Can be overridden by the 'fips' object\nConfigure FIPS mode: '', 'restricted', 'relaxed', 'off'"
@@ -37446,7 +37525,7 @@
             "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1redis@3"
+            "$ref": "#/$defs/constrains~1redis@4"
           }
         ]
       },
@@ -41149,7 +41228,7 @@
             "$ref": "#/$defs/constrains~1redis.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1redis@3"
+            "$ref": "#/$defs/constrains~1redis@4"
           }
         ]
       },
@@ -48074,7 +48153,7 @@
                 "$ref": "#/$defs/constrains~1redis.replica.podSecurityContext.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.sentinel.enabled:t@2"
@@ -48096,7 +48175,7 @@
                 "$ref": "#/$defs/constrains~1redis.replica.podSecurityContext.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.global.compatibility.openshift.adaptSecurityContext=force"
@@ -48127,7 +48206,7 @@
                 "$ref": "#/$defs/constrains~1redis.replica.podSecurityContext.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.sentinel.enabled:t@2"
@@ -48152,7 +48231,7 @@
                 "$ref": "#/$defs/constrains~1redis.replica.podSecurityContext.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
               }
             ]
           },
@@ -48220,7 +48299,7 @@
                 "$ref": "#/$defs/constrains~1redis.replica.podSecurityContext.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.global.compatibility.openshift.adaptSecurityContext=force"
@@ -48248,7 +48327,7 @@
                 "$ref": "#/$defs/constrains~1redis.replica.podSecurityContext.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
               }
             ]
           },
@@ -48390,7 +48469,7 @@
                 "$ref": "#/$defs/constrains~1redis.replica.podSecurityContext.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.global.compatibility.openshift.adaptSecurityContext=force"
@@ -48415,7 +48494,7 @@
                 "$ref": "#/$defs/constrains~1redis.replica.podSecurityContext.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.global.compatibility.openshift.adaptSecurityContext=force"
@@ -48751,7 +48830,7 @@
                 "$ref": "#/$defs/constrains~1redis.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1redis@3"
+                "$ref": "#/$defs/constrains~1redis@4"
               }
             ]
           }
@@ -54412,7 +54491,7 @@
             "$ref": "#/$defs/constrains~1redis.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1redis@3"
+            "$ref": "#/$defs/constrains~1redis@4"
           },
           {
             "$ref": "#/$defs/constrains~1redis+redis.architecture+redis.architecture!=replication+7more@3"
@@ -57640,6 +57719,66 @@
             }
           }
         }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1redis.enabled"
+                  },
+                  {
+                    "properties": {
+                      "redis": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "redis"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "redis": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "redis"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1redis.enabled"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "redis": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "redis"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1redis@3"
       }
     },
     {
@@ -62605,7 +62744,7 @@
             "$ref": "#/$defs/constrains~1redis.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1redis@3"
+            "$ref": "#/$defs/constrains~1redis@4"
           },
           {
             "allOf": [
@@ -65035,7 +65174,7 @@
                 "$ref": "#/$defs/constrains~1redis.global.compatibility.openshift:t"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.metrics.containerSecurityContext.enabled:t"
@@ -65088,7 +65227,7 @@
                 "$ref": "#/$defs/constrains~1redis.global.compatibility.openshift:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.sentinel.enabled:t@2"
@@ -65119,7 +65258,7 @@
                 "$ref": "#/$defs/constrains~1redis.global.compatibility.openshift:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.metrics.containerSecurityContext.enabled:t"
@@ -65147,7 +65286,7 @@
                 "$ref": "#/$defs/constrains~1redis.global.compatibility.openshift:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.sentinel.enabled:t@2"
@@ -65175,7 +65314,7 @@
                 "$ref": "#/$defs/constrains~1redis.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.metrics.containerSecurityContext.enabled:t"
@@ -65228,7 +65367,7 @@
                 "$ref": "#/$defs/constrains~1redis.architecture+redis.architecture!=replication+redis.sentinel.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.metrics.containerSecurityContext.enabled:t"
@@ -65253,7 +65392,7 @@
                 "$ref": "#/$defs/constrains~1redis.global.compatibility.openshift:t"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.sentinel.enabled:t@2"
@@ -65312,7 +65451,7 @@
                 "$ref": "#/$defs/constrains~1redis.global.compatibility.openshift:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.metrics.containerSecurityContext.enabled:t"
@@ -65389,7 +65528,7 @@
                 "$ref": "#/$defs/constrains~1redis.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.sentinel.enabled:t@2"
@@ -65447,7 +65586,7 @@
                 "$ref": "#/$defs/constrains~1redis.architecture+redis.architecture!=replication+redis.sentinel.enabled:t"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.metrics.containerSecurityContext.enabled:t"
@@ -65475,7 +65614,7 @@
                 "$ref": "#/$defs/constrains~1redis.global.compatibility.openshift:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.metrics.containerSecurityContext.enabled:t"
@@ -65553,7 +65692,7 @@
                 "$ref": "#/$defs/constrains~1redis.global.compatibility.openshift:t@2"
               },
               {
-                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more@2"
+                "$ref": "#/$defs/constrains~1redis.global.compatibility.omitEmptySeLinuxOptions:t+1more"
               },
               {
                 "$ref": "#/$defs/constrains~1redis.metrics.containerSecurityContext.enabled:t"
@@ -66413,12 +66552,7 @@
             "additionalProperties": {},
             "properties": {
               "global": {
-                "additionalProperties": {},
-                "properties": {
-                  "redis": {
-                    "type": "object"
-                  }
-                }
+                "$ref": "#/$defs/constrains~1redis@3"
               }
             }
           }
@@ -66823,7 +66957,7 @@
             "$ref": "#/$defs/constrains~1redis.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1redis@3"
+            "$ref": "#/$defs/constrains~1redis@4"
           }
         ]
       },
@@ -68421,7 +68555,7 @@
             "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+3more"
           },
           {
-            "$ref": "#/$defs/constrains~1redis@3"
+            "$ref": "#/$defs/constrains~1redis@4"
           }
         ]
       },
@@ -71001,7 +71135,7 @@
             "$ref": "#/$defs/constrains~1redis.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1redis@3"
+            "$ref": "#/$defs/constrains~1redis@4"
           }
         ]
       },
@@ -72074,7 +72208,7 @@
             "$ref": "#/$defs/constrains~1redis.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1redis@3"
+            "$ref": "#/$defs/constrains~1redis@4"
           }
         ]
       },
@@ -74946,6 +75080,71 @@
           {
             "allOf": [
               {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1postgresql.enabled"
+                  },
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1postgresql.enabled"
+                  },
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "postgresql": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "postgresql"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "postgresql": {
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
                 "$ref": "#/$defs/constrains~1redis.sentinel.enabled:t"
               },
               {
@@ -75166,7 +75365,7 @@
             "$ref": "#/$defs/constrains~1redis.enabled:t"
           },
           {
-            "$ref": "#/$defs/constrains~1redis@3"
+            "$ref": "#/$defs/constrains~1redis@4"
           },
           {
             "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.enabled+redis.enabled:t+7more"
@@ -78218,7 +78417,7 @@
             "$ref": "#/$defs/constrains~1redis+redis.architecture=replication+redis.configmapChecksumAnnotations:t+6more"
           },
           {
-            "$ref": "#/$defs/constrains~1redis@3"
+            "$ref": "#/$defs/constrains~1redis@4"
           }
         ]
       },
@@ -85255,7 +85454,8 @@
     "extraObjects": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1postgresql.common.global.compatibility.openshift"
+          "additionalProperties": {},
+          "type": "object"
         },
         {
           "items": {},
@@ -100659,8 +100859,7 @@
               }
             },
             "usePasswordFiles": {
-              "description": "Mount credentials as a files instead of using an environment variable",
-              "type": "boolean"
+              "description": "Mount credentials as a files instead of using an environment variable"
             },
             "userName": {
               "description": "PostgreSQL user should be a superuser to\nbe able to install pg_trgm extension. Alternatively you can install it\nmanually prior starting Weblate."
@@ -100810,49 +101009,7 @@
           "description": "Kubernetes Cluster Domain"
         },
         "common": {
-          "additionalProperties": {},
-          "properties": {
-            "exampleValue": {
-              "$ref": "#/$defs/values~1postgresql.common.exampleValue"
-            },
-            "global": {
-              "additionalProperties": {},
-              "properties": {
-                "compatibility": {
-                  "$ref": "#/$defs/values~1postgresql.common.global.compatibility"
-                },
-                "postgresql": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "auth": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "secretKeys": {
-                          "$ref": "#/$defs/values~1postgresql.common.global.compatibility.openshift"
-                        }
-                      },
-                      "type": "object"
-                    },
-                    "service": {
-                      "additionalProperties": {},
-                      "properties": {
-                        "ports": {
-                          "$ref": "#/$defs/values~1postgresql.common.global.compatibility.openshift"
-                        }
-                      },
-                      "type": "object"
-                    }
-                  },
-                  "type": "object"
-                },
-                "security": {
-                  "$ref": "#/$defs/values~1postgresql.common.global.compatibility.openshift"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/values~1postgresql.common"
         },
         "commonAnnotations": {
           "description": "Add annotations to all the deployed resources"
@@ -100898,14 +101055,7 @@
           "description": "Please, note that this will override the parameters, including dependencies, configured to use the global value",
           "properties": {
             "compatibility": {
-              "additionalProperties": {},
-              "description": "Compatibility adaptations for Kubernetes platforms",
-              "properties": {
-                "omitEmptySeLinuxOptions": {},
-                "openshift": {
-                  "$ref": "#/$defs/values~1postgresql.global.compatibility.openshift"
-                }
-              }
+              "$ref": "#/$defs/values~1postgresql.global.compatibility"
             },
             "defaultFips": {
               "$ref": "#/$defs/values~1postgresql.global.defaultFips"
@@ -100953,14 +101103,12 @@
                         "userPasswordKey": {
                           "description": "Name of key in existing secret to use for PostgreSQL credentials (overrides `auth.secretKeys.userPasswordKey`). Only used when `global.postgresql.auth.existingSecret` is set."
                         }
-                      },
-                      "type": "object"
+                      }
                     },
                     "username": {
                       "description": "Name for a custom user to create (overrides `auth.username`)"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "fullnameOverride": {
                   "description": "Full chart name (overrides `fullnameOverride`)"
@@ -100974,14 +101122,11 @@
                         "postgresql": {
                           "description": "PostgreSQL service port (overrides `service.ports.postgresql`)"
                         }
-                      },
-                      "type": "object"
+                      }
                     }
-                  },
-                  "type": "object"
+                  }
                 }
-              },
-              "type": "object"
+              }
             },
             "security": {
               "$ref": "#/$defs/values~1postgresql.global.security"
@@ -100989,15 +101134,13 @@
             "storageClass": {
               "$ref": "#/$defs/values~1postgresql.global.storageClass"
             }
-          },
-          "type": "object"
+          }
         },
         "image": {
           "$ref": "#/$defs/values~1postgresql.image"
         },
         "kubeVersion": {
-          "description": "Override Kubernetes version",
-          "type": "string"
+          "description": "Override Kubernetes version"
         },
         "ldap": {
           "additionalProperties": {},
@@ -101062,9 +101205,7 @@
           "additionalProperties": {},
           "properties": {
             "annotations": {
-              "additionalProperties": {},
-              "description": "[object] Add annotations to the job",
-              "type": "object"
+              "description": "[object] Add annotations to the job"
             },
             "args": {
               "description": "Override default container args on mysql Primary container(s) (useful when using custom images)"
@@ -101091,8 +101232,7 @@
               "description": "Custom startupProbe that overrides the default one"
             },
             "enabled": {
-              "description": "Enable password update job",
-              "type": "boolean"
+              "description": "Enable password update job"
             },
             "extraCommands": {
               "description": "Extra commands to pass to the generation job"
@@ -119835,8 +119975,7 @@
               "description": "Redis ACL restricts connections by limiting commands and key access with auth management.\nref: https://redis.io/docs/latest/operate/oss_and_stack/management/security/acl/",
               "properties": {
                 "enabled": {
-                  "description": "Enables the support of the Redis ACL system",
-                  "type": "boolean"
+                  "description": "Enables the support of the Redis ACL system"
                 },
                 "sentinel": {
                   "description": "Enables the support of the Redis ACL system for Sentinel Nodes"
@@ -119878,28 +120017,7 @@
           "description": "Kubernetes cluster domain name"
         },
         "common": {
-          "additionalProperties": {},
-          "properties": {
-            "exampleValue": {
-              "$ref": "#/$defs/values~1postgresql.common.exampleValue"
-            },
-            "global": {
-              "additionalProperties": {},
-              "properties": {
-                "compatibility": {
-                  "$ref": "#/$defs/values~1postgresql.common.global.compatibility"
-                },
-                "redis": {
-                  "$ref": "#/$defs/values~1postgresql.common.global.compatibility.openshift"
-                },
-                "security": {
-                  "$ref": "#/$defs/values~1postgresql.common.global.compatibility.openshift"
-                }
-              },
-              "type": "object"
-            }
-          },
-          "type": "object"
+          "$ref": "#/$defs/values~1postgresql.common"
         },
         "commonAnnotations": {
           "allOf": [
@@ -119927,8 +120045,7 @@
           "description": "Labels to add to all deployed objects"
         },
         "configmapChecksumAnnotations": {
-          "description": "Enable checksum annotations used to trigger rolling updates when ConfigMap(s) change",
-          "type": "boolean"
+          "description": "Enable checksum annotations used to trigger rolling updates when ConfigMap(s) change"
         },
         "db": {},
         "diagnosticMode": {
@@ -119962,15 +120079,7 @@
           "additionalProperties": {},
           "properties": {
             "compatibility": {
-              "additionalProperties": {},
-              "description": "Compatibility adaptations for Kubernetes platforms",
-              "properties": {
-                "omitEmptySeLinuxOptions": {},
-                "openshift": {
-                  "$ref": "#/$defs/values~1postgresql.global.compatibility.openshift"
-                }
-              },
-              "type": "object"
+              "$ref": "#/$defs/values~1postgresql.global.compatibility"
             },
             "defaultFips": {
               "$ref": "#/$defs/values~1postgresql.global.defaultFips"
@@ -120000,15 +120109,13 @@
             "storageClass": {
               "$ref": "#/$defs/values~1postgresql.global.storageClass"
             }
-          },
-          "type": "object"
+          }
         },
         "image": {
           "$ref": "#/$defs/values~1postgresql.image"
         },
         "kubeVersion": {
-          "description": "Override Kubernetes version",
-          "type": "string"
+          "description": "Override Kubernetes version"
         },
         "kubectl": {
           "additionalProperties": {},
@@ -120116,8 +120223,7 @@
               "description": "Don't require client label for connections\nWhen set to false, only pods with the correct client label will have network access to the ports\nRedis(R) is listening on. When true, Redis(R) will accept connections from any source\n(with the correct destination port)."
             },
             "allowExternalEgress": {
-              "description": "Allow the pod to access any range of port and all destinations.",
-              "type": "boolean"
+              "description": "Allow the pod to access any range of port and all destinations."
             },
             "enabled": {
               "description": "Enable creation of NetworkPolicy resources"
@@ -120227,8 +120333,7 @@
           "description": "Annotations to add to secret"
         },
         "secretChecksumAnnotations": {
-          "description": "Enable checksum annotations used to trigger rolling updates when Secret(s) change",
-          "type": "boolean"
+          "description": "Enable checksum annotations used to trigger rolling updates when Secret(s) change"
         },
         "sentinel": {
           "$ref": "#/$defs/values~1postgresql.image"
@@ -120307,8 +120412,7 @@
               ]
             },
             "enabled": {
-              "description": "Enable various syntax that would enable external-dns to work.  Note this requires a working installation of `external-dns` to be usable.",
-              "type": "boolean"
+              "description": "Enable various syntax that would enable external-dns to work.  Note this requires a working installation of `external-dns` to be usable."
             },
             "suffix": {
               "description": "The DNS suffix utilized when `external-dns` is enabled.  Note that we prepend the suffix with the full name of the release."
@@ -120316,8 +120420,7 @@
           }
         },
         "useHostnames": {
-          "description": "Use hostnames internally when announcing replication. If false, the hostname will be resolved to an IP address",
-          "type": "boolean"
+          "description": "Use hostnames internally when announcing replication. If false, the hostname will be resolved to an IP address"
         },
         "volumePermissions": {
           "additionalProperties": {},

@@ -5691,10 +5691,6 @@
       "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
       "type": "string"
     },
-    "values/common.global.compatibility.openshift": {
-      "additionalProperties": {},
-      "type": "object"
-    },
     "values/commonLabels": {
       "anyOf": [
         {
@@ -6784,23 +6780,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "description": "Kubernetes service type",
-          "properties": {
-            "ports": {
-              "required": [
-                "epmd"
-              ],
-              "type": "object"
-            }
-          }
-        }
-      }
     },
     {
       "if": {
@@ -9803,7 +9782,8 @@
           "commonLabels": {
             "anyOf": [
               {
-                "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+                "additionalProperties": {},
+                "type": "object"
               },
               {
                 "type": "string"
@@ -9866,28 +9846,6 @@
         ]
       },
       "then": false
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "description": "Kubernetes service type",
-          "properties": {
-            "ports": {
-              "additionalProperties": {},
-              "properties": {
-                "dist": {
-                  "description": "Erlang distribution service port",
-                  "not": {
-                    "type": "null"
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
     },
     {
       "if": {
@@ -11818,17 +11776,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
-        }
-      }
-    },
-    {
       "if": {
         "not": {
           "$ref": "#/$defs/constrains~1resources:t"
@@ -12010,23 +11957,6 @@
       }
     },
     {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "description": "Kubernetes service type",
-          "properties": {
-            "ports": {
-              "required": [
-                "dist"
-              ],
-              "type": "object"
-            }
-          }
-        }
-      }
-    },
-    {
       "if": {
         "allOf": [
           {
@@ -12054,6 +11984,228 @@
             "type": "object"
           }
         }
+      }
+    },
+    {
+      "if": {
+        "$ref": "#/$defs/constrains~1networkPolicy.allowExternalEgress:t+networkPolicy.enabled:t"
+      },
+      "then": {
+        "allOf": [
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "Kubernetes service type",
+                "properties": {
+                  "ports": {
+                    "required": [
+                      "epmd"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "Kubernetes service type",
+                "properties": {
+                  "ports": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "dist": {
+                        "description": "Erlang distribution service port",
+                        "oneOf": [
+                          {
+                            "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "Kubernetes service type",
+                "properties": {
+                  "ports": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "epmd": {
+                        "description": "EPMD Discovery service port\nService ports name",
+                        "oneOf": [
+                          {
+                            "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "Kubernetes service type",
+                "properties": {
+                  "ports": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "dist": {
+                        "description": "Erlang distribution service port",
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "Kubernetes service type",
+                "properties": {
+                  "ports": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "amqpTls": {
+                        "description": "Amqp TLS service port",
+                        "oneOf": [
+                          {
+                            "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "Kubernetes service type",
+                "properties": {
+                  "ports": {
+                    "required": [
+                      "dist"
+                    ],
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "Kubernetes service type",
+                "properties": {
+                  "ports": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "amqp": {
+                        "description": "Amqp service port",
+                        "oneOf": [
+                          {
+                            "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "Kubernetes service type",
+                "properties": {
+                  "ports": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "epmd": {
+                        "description": "EPMD Discovery service port\nService ports name",
+                        "not": {
+                          "type": "null"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            "additionalProperties": {},
+            "properties": {
+              "service": {
+                "additionalProperties": {},
+                "description": "Kubernetes service type",
+                "properties": {
+                  "ports": {
+                    "additionalProperties": {},
+                    "properties": {
+                      "manager": {
+                        "description": "RabbitMQ Manager service port",
+                        "oneOf": [
+                          {
+                            "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
+                          },
+                          {
+                            "$ref": "#/$defs/values~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
       }
     },
     {
@@ -12385,150 +12537,6 @@
     },
     {
       "if": {
-        "$ref": "#/$defs/constrains~1networkPolicy.allowExternalEgress:t+networkPolicy.enabled:t"
-      },
-      "then": {
-        "allOf": [
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "description": "Kubernetes service type",
-                "properties": {
-                  "ports": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "dist": {
-                        "description": "Erlang distribution service port",
-                        "oneOf": [
-                          {
-                            "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
-                          }
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "description": "Kubernetes service type",
-                "properties": {
-                  "ports": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "epmd": {
-                        "description": "EPMD Discovery service port\nService ports name",
-                        "oneOf": [
-                          {
-                            "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
-                          }
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "description": "Kubernetes service type",
-                "properties": {
-                  "ports": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "amqpTls": {
-                        "description": "Amqp TLS service port",
-                        "oneOf": [
-                          {
-                            "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
-                          }
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "description": "Kubernetes service type",
-                "properties": {
-                  "ports": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "amqp": {
-                        "description": "Amqp service port",
-                        "oneOf": [
-                          {
-                            "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
-                          }
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            "additionalProperties": {},
-            "properties": {
-              "service": {
-                "additionalProperties": {},
-                "description": "Kubernetes service type",
-                "properties": {
-                  "ports": {
-                    "additionalProperties": {},
-                    "properties": {
-                      "manager": {
-                        "description": "RabbitMQ Manager service port",
-                        "oneOf": [
-                          {
-                            "$ref": "#/$defs/values~1anyOf~1null+object+string+string;pattern-a-za-z0-9-t+string;pattern-null-null-null+1more"
-                          },
-                          {
-                            "$ref": "#/$defs/values~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more"
-                          }
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          }
-        ]
-      }
-    },
-    {
-      "if": {
         "$ref": "#/$defs/constrains~1auth.tls.enabled:t+metrics+service.distPortEnabled:t+service.epmdPortEnabled:t+5more"
       },
       "then": {
@@ -12771,28 +12779,6 @@
                         ]
                       }
                     }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "service": {
-          "additionalProperties": {},
-          "description": "Kubernetes service type",
-          "properties": {
-            "ports": {
-              "additionalProperties": {},
-              "properties": {
-                "epmd": {
-                  "description": "EPMD Discovery service port\nService ports name",
-                  "not": {
-                    "type": "null"
                   }
                 }
               }
@@ -16005,24 +15991,7 @@
           "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
           "type": "string"
         },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "compatibility": {
-              "additionalProperties": {},
-              "properties": {
-                "openshift": {
-                  "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-                }
-              },
-              "type": "object"
-            },
-            "security": {
-              "$ref": "#/$defs/values~1common.global.compatibility.openshift"
-            }
-          },
-          "type": "object"
-        }
+        "global": {}
       },
       "type": "object"
     },
@@ -16461,7 +16430,8 @@
     "extraDeploy": {
       "anyOf": [
         {
-          "$ref": "#/$defs/values~1common.global.compatibility.openshift"
+          "additionalProperties": {},
+          "type": "object"
         },
         {
           "items": {},
@@ -18263,8 +18233,7 @@
         "storageClass": {
           "description": "DEPRECATED: use global.defaultStorageClass instead"
         }
-      },
-      "type": "object"
+      }
     },
     "hostAliases": {
       "anyOf": [
@@ -18331,14 +18300,8 @@
       "type": "object"
     },
     "image": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "additionalProperties": {}
-        }
-      ]
+      "additionalProperties": {},
+      "type": "object"
     },
     "ingress": {
       "additionalProperties": {},
@@ -19210,37 +19173,31 @@
           "$ref": "#/$defs/values~1ldap.servers"
         },
         "tls": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "CAFilename": {
+              "description": "CA certificate filename. Should match with the CA entry key in the ldap.tls.certificatesSecret."
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "CAFilename": {
-                  "description": "CA certificate filename. Should match with the CA entry key in the ldap.tls.certificatesSecret."
-                },
-                "certFilename": {
-                  "description": "Client certificate filename to authenticate against the LDAP server. Should match with certificate the entry key in the ldap.tls.certificatesSecret."
-                },
-                "certificatesMountPath": {
-                  "description": "Where LDAP certifcates are mounted."
-                },
-                "certificatesSecret": {
-                  "description": "Secret with LDAP certificates."
-                },
-                "enabled": {
-                  "description": "Enabled TLS configuration."
-                },
-                "skipVerify": {
-                  "description": "Skip any SSL verification (hostanames or certificates)"
-                },
-                "verify": {
-                  "description": "Verify connection. Valid values are 'verify_peer' or 'verify_none'"
-                }
-              }
+            "certFilename": {
+              "description": "Client certificate filename to authenticate against the LDAP server. Should match with certificate the entry key in the ldap.tls.certificatesSecret."
+            },
+            "certificatesMountPath": {
+              "description": "Where LDAP certifcates are mounted."
+            },
+            "certificatesSecret": {
+              "description": "Secret with LDAP certificates."
+            },
+            "enabled": {
+              "description": "Enabled TLS configuration."
+            },
+            "skipVerify": {
+              "description": "Skip any SSL verification (hostanames or certificates)"
+            },
+            "verify": {
+              "description": "Verify connection. Valid values are 'verify_peer' or 'verify_none'"
             }
-          ]
+          },
+          "type": "object"
         },
         "uidField": {
           "description": "Field used to match with the user name (uid, samAccountName, cn, etc). It matches with 'dn_lookup_attribute' in RabbitMQ configuration\nField used to match with the user name (uid, samAccountName, cn, etc). It matches with 'dn_lookup_attribute' in RabbitMQ configuration"
@@ -22593,50 +22550,48 @@
           "type": "object"
         },
         "ports": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "amqp": {
+              "description": "Amqp service port"
             },
-            {
-              "additionalProperties": {},
-              "properties": {
-                "amqp": {
-                  "description": "Amqp service port"
+            "amqpTls": {
+              "description": "Amqp TLS service port"
+            },
+            "dist": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
                 },
-                "amqpTls": {
-                  "description": "Amqp TLS service port"
-                },
-                "dist": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1string;pattern-0-1-9"
-                    }
-                  ],
-                  "description": "Erlang distribution service port"
-                },
-                "epmd": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1string;pattern-0-1-9"
-                    }
-                  ],
-                  "description": "EPMD Discovery service port\nService ports name"
-                },
-                "manager": {
-                  "description": "RabbitMQ Manager service port"
-                },
-                "metrics": {
-                  "description": "RabbitMQ Prometheues metrics service port"
+                {
+                  "$ref": "#/$defs/values~1string;pattern-0-1-9"
                 }
-              }
+              ],
+              "description": "Erlang distribution service port"
+            },
+            "epmd": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1integer:int32;the-port-that-will"
+                },
+                {
+                  "$ref": "#/$defs/values~1string;pattern-0-1-9"
+                }
+              ],
+              "description": "EPMD Discovery service port\nService ports name"
+            },
+            "manager": {
+              "description": "RabbitMQ Manager service port"
+            },
+            "metrics": {
+              "description": "RabbitMQ Prometheues metrics service port"
             }
-          ]
+          },
+          "required": [
+            "dist",
+            "epmd"
+          ],
+          "type": "object"
         },
         "sessionAffinity": {
           "anyOf": [
@@ -23345,18 +23300,14 @@
       "description": "Mount credentials as files instead of using environment variables"
     },
     "volumePermissions": {
+      "additionalProperties": {},
       "allOf": [
         {
-          "type": "object"
-        },
-        {
           "$ref": "#/$defs/when~1image+image=null~1then~1fail"
-        },
-        {
-          "additionalProperties": {}
         }
       ],
-      "description": "Init Container parameters\nChange the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each component\nvalues from the securityContext section of the component"
+      "description": "Init Container parameters\nChange the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each component\nvalues from the securityContext section of the component",
+      "type": "object"
     }
   },
   "type": "object"

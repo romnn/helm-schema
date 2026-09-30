@@ -5887,10 +5887,40 @@
       ],
       "type": "object"
     },
+    "constrains/enabled!=false": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              false
+            ]
+          }
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled!=null": {
       "properties": {
         "enabled": {
           "$ref": "#/$defs/constrains~1affinity!=null~1not~1=null"
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled!=true": {
+      "properties": {
+        "enabled": {
+          "not": {
+            "enum": [
+              true
+            ]
+          }
         }
       },
       "required": [
@@ -6768,6 +6798,19 @@
         "enabled": {
           "enum": [
             null
+          ]
+        }
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
+    "constrains/enabled=true": {
+      "properties": {
+        "enabled": {
+          "enum": [
+            true
           ]
         }
       },
@@ -10320,7 +10363,7 @@
     "constrains/image.repository": {
       "properties": {
         "image": {
-          "$ref": "#/$defs/constrains~1repository@4"
+          "$ref": "#/$defs/constrains~1repository@3"
         }
       },
       "required": [
@@ -11869,6 +11912,19 @@
         "properties": {
           "mariadb": {
             "$ref": "#/$defs/constrains~1diagnosticMode.enabled:t@2"
+          }
+        },
+        "required": [
+          "mariadb"
+        ],
+        "type": "object"
+      }
+    },
+    "constrains/mariadb.enabled": {
+      "not": {
+        "properties": {
+          "mariadb": {
+            "$ref": "#/$defs/constrains~1enabled"
           }
         },
         "required": [
@@ -17566,6 +17622,19 @@
         "type": "object"
       }
     },
+    "constrains/postgresql.enabled": {
+      "not": {
+        "properties": {
+          "postgresql": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "postgresql"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/postgresql.enabled+postgresql.enabled=null": {
       "properties": {
         "postgresql": {
@@ -22226,15 +22295,6 @@
       }
     },
     "constrains/repository@3": {
-      "additionalProperties": {},
-      "properties": {
-        "repository": {
-          "description": "[default: REPOSITORY_NAME/redmine] Redmine image repository",
-          "type": "string"
-        }
-      }
-    },
-    "constrains/repository@4": {
       "properties": {
         "repository": {}
       },
@@ -24379,6 +24439,17 @@
     "values/command": {
       "description": "Override default container command (useful when using custom images)"
     },
+    "values/common": {
+      "additionalProperties": {},
+      "properties": {
+        "exampleValue": {
+          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
+          "type": "string"
+        },
+        "global": {}
+      },
+      "type": "object"
+    },
     "values/commonLabels": {
       "anyOf": [
         {
@@ -24461,8 +24532,9 @@
     "values/global.imagePullSecrets": {
       "description": "Global Docker registry secret names as an array\nE.g.\nimagePullSecrets:\n- myRegistryKeySecretName"
     },
-    "values/global.postgresql": {
-      "additionalProperties": {}
+    "values/image.repository": {
+      "description": "[default: REPOSITORY_NAME/redmine] Redmine image repository",
+      "type": "string"
     },
     "values/integer": {
       "maximum": 0,
@@ -30376,35 +30448,6 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "$ref": "#/$defs/constrains~1databaseType=mariadb"
-          },
-          {
-            "allOf": [
-              {
-                "$ref": "#/$defs/constrains~1networkPolicy.enabled:t"
-              },
-              {
-                "not": {
-                  "$ref": "#/$defs/constrains~1networkPolicy.allowExternalEgress:t"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "mariadb": {
-            "type": "object"
           }
         }
       }
@@ -44402,7 +44445,12 @@
         "additionalProperties": {},
         "properties": {
           "image": {
-            "$ref": "#/$defs/constrains~1repository@3"
+            "additionalProperties": {},
+            "properties": {
+              "repository": {
+                "$ref": "#/$defs/values~1image.repository"
+              }
+            }
           }
         }
       }
@@ -44492,14 +44540,6 @@
               }
             }
           }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "$ref": "#/$defs/constrains~1containerSecurityContext~1null,object"
         }
       }
     },
@@ -57632,44 +57672,6 @@
           {
             "allOf": [
               {
-                "$ref": "#/$defs/constrains~1databaseType=mariadb+mariadb.enabled:t"
-              },
-              {
-                "$ref": "#/$defs/constrains~1databaseType=postgresql"
-              }
-            ]
-          },
-          {
-            "allOf": [
-              {
-                "anyOf": [
-                  {
-                    "not": {
-                      "$ref": "#/$defs/constrains~1databaseType=mariadb"
-                    }
-                  },
-                  {
-                    "$ref": "#/$defs/constrains~1mariadb.enabled:t"
-                  }
-                ]
-              },
-              {
-                "$ref": "#/$defs/constrains~1databaseType=postgresql"
-              }
-            ]
-          }
-        ]
-      },
-      "then": {
-        "$ref": "#/$defs/constrains~1postgresql@3"
-      }
-    },
-    {
-      "if": {
-        "anyOf": [
-          {
-            "allOf": [
-              {
                 "not": {
                   "anyOf": [
                     {
@@ -58326,6 +58328,86 @@
                 "description": "Add annotations to all the deployed resources"
               }
             }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "properties": {
+                      "mariadb": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "mariadb"
+                    ],
+                    "type": "object"
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1mariadb.enabled"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1mariadb.enabled"
+                  },
+                  {
+                    "properties": {
+                      "mariadb": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "mariadb"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "mariadb": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "mariadb"
+            ],
+            "type": "object"
+          },
+          {
+            "$ref": "#/$defs/constrains~1databaseType=mariadb"
+          },
+          {
+            "allOf": [
+              {
+                "$ref": "#/$defs/constrains~1networkPolicy.enabled:t"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/constrains~1networkPolicy.allowExternalEgress:t"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "mariadb": {
+            "type": "object"
           }
         }
       }
@@ -61484,6 +61566,95 @@
           {
             "allOf": [
               {
+                "$ref": "#/$defs/constrains~1databaseType=mariadb+mariadb.enabled:t"
+              },
+              {
+                "$ref": "#/$defs/constrains~1databaseType=postgresql"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "not": {
+                      "$ref": "#/$defs/constrains~1databaseType=mariadb"
+                    }
+                  },
+                  {
+                    "$ref": "#/$defs/constrains~1mariadb.enabled:t"
+                  }
+                ]
+              },
+              {
+                "$ref": "#/$defs/constrains~1databaseType=postgresql"
+              }
+            ]
+          },
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1postgresql.enabled"
+                  },
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "$ref": "#/$defs/constrains~1enabled!=false"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1postgresql.enabled"
+                  },
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "$ref": "#/$defs/constrains~1enabled!=true"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "postgresql": {
+                "$ref": "#/$defs/constrains~1enabled=true"
+              }
+            },
+            "required": [
+              "postgresql"
+            ],
+            "type": "object"
+          }
+        ]
+      },
+      "then": {
+        "$ref": "#/$defs/constrains~1postgresql@3"
+      }
+    },
+    {
+      "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
                 "$ref": "#/$defs/constrains~1postgresql.volumePermissions.resources:t"
               },
               {
@@ -62174,78 +62345,66 @@
         },
         "customCAs": {},
         "customCertificate": {
-          "allOf": [
-            {
-              "type": "object"
+          "additionalProperties": {},
+          "properties": {
+            "certificateLocation": {
+              "description": "Location in the container to store the certificate"
             },
-            {
+            "certificateSecret": {
+              "anyOf": [
+                {
+                  "$ref": "#/$defs/constrains~1containerPort~1string@3"
+                },
+                {
+                  "$ref": "#/$defs/values~1null;secretname-is-the-name"
+                },
+                {
+                  "$ref": "#/$defs/values~1string;secretname-is-the-name"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1containerPort~1string;pattern-a-za-z0-9-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1containerPort~1object"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1containerPort~1string;pattern-t"
+                },
+                {
+                  "$ref": "#/$defs/constrains~1containerPort~1string;pattern-null-null-null"
+                }
+              ],
+              "description": "Secret containing the certificate and key to add"
+            },
+            "chainLocation": {
+              "description": "Location in the container to store the certificate chain"
+            },
+            "chainSecret": {
               "additionalProperties": {},
               "properties": {
-                "certificateLocation": {
-                  "description": "Location in the container to store the certificate"
+                "key": {
+                  "description": "Key of the certificate chain file inside the secret\ne.g.:\nkey: secret-key"
                 },
-                "certificateSecret": {
-                  "anyOf": [
-                    {
-                      "$ref": "#/$defs/constrains~1containerPort~1string@3"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1null;secretname-is-the-name"
-                    },
-                    {
-                      "$ref": "#/$defs/values~1string;secretname-is-the-name"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1@items.appProtocol+@items.name+@items.nodePort+@items.port+@items.protocol+1more~1not~1:t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1containerPort~1string;pattern-a-za-z0-9-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1containerPort~1object"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1containerPort~1string;pattern-t"
-                    },
-                    {
-                      "$ref": "#/$defs/constrains~1containerPort~1string;pattern-null-null-null"
-                    }
-                  ],
-                  "description": "Secret containing the certificate and key to add"
-                },
-                "chainLocation": {
-                  "description": "Location in the container to store the certificate chain"
-                },
-                "chainSecret": {
-                  "additionalProperties": {},
-                  "properties": {
-                    "key": {
-                      "description": "Key of the certificate chain file inside the secret\ne.g.:\nkey: secret-key"
-                    },
-                    "name": {
-                      "description": "Name of the secret containing the certificate chain\ne.g.:\nname: secret-key"
-                    }
-                  }
-                },
-                "keyLocation": {
-                  "description": "Location in the container to store the private key"
+                "name": {
+                  "description": "Name of the secret containing the certificate chain\ne.g.:\nname: secret-key"
                 }
               }
+            },
+            "keyLocation": {
+              "description": "Location in the container to store the private key"
             }
-          ]
+          },
+          "type": "object"
         },
         "extraEnvVars": {
           "description": "[array] Container sidecar extra environment variables (e.g. proxy)\n- name: myvar\nvalue: myval"
         },
         "image": {
-          "allOf": [
-            {
-              "type": "object"
-            },
-            {
-              "$ref": "#/$defs/values~1global.postgresql"
-            }
-          ]
+          "additionalProperties": {},
+          "type": "object"
         }
       },
       "type": "object"
@@ -62257,34 +62416,7 @@
       "$ref": "#/$defs/values~1command"
     },
     "common": {
-      "additionalProperties": {},
-      "properties": {
-        "exampleValue": {
-          "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
-          "type": "string"
-        },
-        "global": {
-          "additionalProperties": {},
-          "properties": {
-            "compatibility": {
-              "additionalProperties": {},
-              "properties": {
-                "openshift": {
-                  "additionalProperties": {},
-                  "type": "object"
-                }
-              },
-              "type": "object"
-            },
-            "security": {
-              "additionalProperties": {},
-              "type": "object"
-            }
-          },
-          "type": "object"
-        }
-      },
-      "type": "object"
+      "$ref": "#/$defs/values~1common"
     },
     "commonAnnotations": {
       "anyOf": [
@@ -62666,7 +62798,7 @@
         },
         "kubeVersion": {},
         "postgresql": {
-          "$ref": "#/$defs/values~1global.postgresql"
+          "additionalProperties": {}
         },
         "security": {
           "additionalProperties": {},
@@ -62680,8 +62812,7 @@
           "type": "object"
         },
         "storageClass": {}
-      },
-      "type": "object"
+      }
     },
     "hostAliases": {
       "anyOf": [
@@ -62701,6 +62832,7 @@
       "description": "Redmine pod host aliases\nhttps://kubernetes.io/docs/concepts/services-networking/add-entries-to-pod-etc-hosts-with-host-aliases/"
     },
     "image": {
+      "additionalProperties": {},
       "allOf": [
         {
           "if": {
@@ -62728,7 +62860,7 @@
             "anyOf": [
               {
                 "not": {
-                  "$ref": "#/$defs/constrains~1repository@4"
+                  "$ref": "#/$defs/constrains~1repository@3"
                 }
               },
               {
@@ -62737,14 +62869,14 @@
             ]
           },
           "then": false
-        },
-        {
-          "$ref": "#/$defs/constrains~1repository@3"
-        },
-        {
-          "type": "object"
         }
-      ]
+      ],
+      "properties": {
+        "repository": {
+          "$ref": "#/$defs/values~1image.repository"
+        }
+      },
+      "type": "object"
     },
     "ingress": {
       "additionalProperties": {},
@@ -71449,6 +71581,9 @@
         "clusterDomain": {
           "description": "Default Kubernetes cluster domain"
         },
+        "common": {
+          "$ref": "#/$defs/values~1common"
+        },
         "commonAnnotations": {
           "description": "Common annotations to add to all MariaDB resources (sub-charts are not considered)"
         },
@@ -71504,7 +71639,7 @@
           }
         },
         "image": {
-          "$ref": "#/$defs/values~1global.postgresql"
+          "additionalProperties": {}
         },
         "initdbScripts": {
           "description": "Dictionary of initdb scripts\nSpecify dictionary of scripts to be run at first boot\nExample:\ninitdbScripts:\nmy_init_script.sh: |\n!/bin/bash\necho \"Do something.\""
@@ -71825,8 +71960,7 @@
           "additionalProperties": {},
           "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume mountpoint to runAsUser:fsGroup values from the securityContext section."
         }
-      },
-      "type": "object"
+      }
     },
     "nameOverride": {
       "$ref": "#/$defs/values~1nameOverride"
@@ -82540,7 +82674,7 @@
                   "description": "Node labels for PostgreSQL backup CronJob pod assignment\nref: https://kubernetes.io/docs/tasks/configure-pod-container/assign-pods-nodes/"
                 },
                 "podLabels": {
-                  "$ref": "#/$defs/values~1global.postgresql"
+                  "additionalProperties": {}
                 },
                 "podSecurityContext": {
                   "additionalProperties": {},
@@ -82618,6 +82752,9 @@
         },
         "clusterDomain": {
           "description": "Kubernetes Cluster Domain"
+        },
+        "common": {
+          "$ref": "#/$defs/values~1common"
         },
         "commonAnnotations": {
           "description": "Add annotations to all the deployed resources"
@@ -82706,14 +82843,12 @@
                         "userPasswordKey": {
                           "description": "Name of key in existing secret to use for PostgreSQL credentials (overrides `auth.secretKeys.userPasswordKey`). Only used when `global.postgresql.auth.existingSecret` is set."
                         }
-                      },
-                      "type": "object"
+                      }
                     },
                     "username": {
                       "description": "Name for a custom user to create (overrides `auth.username`)"
                     }
-                  },
-                  "type": "object"
+                  }
                 },
                 "fullnameOverride": {
                   "description": "Full chart name (overrides `fullnameOverride`)"
@@ -82727,14 +82862,11 @@
                         "postgresql": {
                           "description": "PostgreSQL service port (overrides `service.ports.postgresql`)"
                         }
-                      },
-                      "type": "object"
+                      }
                     }
-                  },
-                  "type": "object"
+                  }
                 }
-              },
-              "type": "object"
+              }
             },
             "security": {
               "$ref": "#/$defs/values~1mariadb.global.security"
@@ -82742,11 +82874,10 @@
             "storageClass": {
               "description": "DEPRECATED: use global.defaultStorageClass instead"
             }
-          },
-          "type": "object"
+          }
         },
         "image": {
-          "$ref": "#/$defs/values~1global.postgresql"
+          "additionalProperties": {}
         },
         "kubeVersion": {
           "description": "Override Kubernetes version"
@@ -82793,7 +82924,7 @@
               "description": "String to append to the user name when forming the DN to bind"
             },
             "tls": {
-              "$ref": "#/$defs/values~1global.postgresql"
+              "additionalProperties": {}
             },
             "uri": {
               "description": "LDAP URL beginning in the form `ldap[s]://host[:port]/basedn`. If provided, all the other LDAP parameters will be ignored.\nRef: https://www.postgresql.org/docs/current/auth-ldap.html"
@@ -82802,7 +82933,7 @@
           }
         },
         "metrics": {
-          "$ref": "#/$defs/values~1global.postgresql"
+          "additionalProperties": {}
         },
         "nameOverride": {
           "description": "String to partially override common.names.fullname template (will maintain the release name)"
@@ -82908,7 +83039,7 @@
           "description": "Shared preload libraries (comma-separated list)"
         },
         "primary": {
-          "$ref": "#/$defs/values~1global.postgresql"
+          "additionalProperties": {}
         },
         "psp": {
           "additionalProperties": {},
@@ -82930,7 +83061,7 @@
           }
         },
         "readReplicas": {
-          "$ref": "#/$defs/values~1global.postgresql"
+          "additionalProperties": {}
         },
         "replication": {
           "additionalProperties": {},
@@ -83017,8 +83148,7 @@
           "additionalProperties": {},
           "description": "Init containers parameters:\nvolumePermissions: Change the owner and group of the persistent volume(s) mountpoint(s) to 'runAsUser:fsGroup' on each node"
         }
-      },
-      "type": "object"
+      }
     },
     "priorityClassName": {
       "description": "Redmine pods' Priority Class Name\nref: https://kubernetes.io/docs/concepts/configuration/pod-priority-preemption/"
@@ -83777,15 +83907,9 @@
       "$ref": "#/$defs/values~1mariadb.auth.usePasswordFiles"
     },
     "volumePermissions": {
-      "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/values~1global.postgresql"
-        }
-      ],
-      "description": "'volumePermissions' init container parameters\nChanges the owner and group of the persistent volume mount point to runAsUser:fsGroup values\nbased on the podSecurityContext/containerSecurityContext parameters"
+      "additionalProperties": {},
+      "description": "'volumePermissions' init container parameters\nChanges the owner and group of the persistent volume mount point to runAsUser:fsGroup values\nbased on the podSecurityContext/containerSecurityContext parameters",
+      "type": "object"
     }
   },
   "type": "object"

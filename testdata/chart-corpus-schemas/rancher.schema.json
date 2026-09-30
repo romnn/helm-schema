@@ -5944,6 +5944,7 @@
         }
       }
     },
+    "global": {},
     "hostNetwork": {
       "description": "Enable host networking for Rancher pods.\nRequired for EKS clusters using non-VPC CNIs (e.g. Calico)."
     },
@@ -6290,13 +6291,8 @@
     },
     "rancherImageTag": {},
     "rancherNamespaces": {
+      "additionalProperties": {},
       "allOf": [
-        {
-          "type": "object"
-        },
-        {
-          "additionalProperties": {}
-        },
         {
           "if": {
             "$ref": "#/$defs/constrains~1enabled:t"
@@ -6306,7 +6302,8 @@
           }
         }
       ],
-      "description": "Control additional labels and annotations on namespaces create by Rancher."
+      "description": "Control additional labels and annotations on namespaces create by Rancher.",
+      "type": "object"
     },
     "readinessProbe": {
       "$ref": "#/$defs/values~1livenessProbe"

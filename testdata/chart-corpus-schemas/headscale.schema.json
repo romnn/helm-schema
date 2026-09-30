@@ -6510,6 +6510,15 @@
         "null"
       ]
     },
+    "constrains/enabled": {
+      "properties": {
+        "enabled": {}
+      },
+      "required": [
+        "enabled"
+      ],
+      "type": "object"
+    },
     "constrains/enabled!=null": {
       "properties": {
         "enabled": {
@@ -6546,13 +6555,7 @@
       "anyOf": [
         {
           "not": {
-            "properties": {
-              "enabled": {}
-            },
-            "required": [
-              "enabled"
-            ],
-            "type": "object"
+            "$ref": "#/$defs/constrains~1enabled"
           }
         },
         {
@@ -12968,6 +12971,19 @@
         "type": "object"
       }
     },
+    "constrains/postgresql.enabled": {
+      "not": {
+        "properties": {
+          "postgresql": {
+            "$ref": "#/$defs/constrains~1enabled"
+          }
+        },
+        "required": [
+          "postgresql"
+        ],
+        "type": "object"
+      }
+    },
     "constrains/postgresql.enabled+postgresql.enabled=null": {
       "properties": {
         "postgresql": {
@@ -18078,22 +18094,6 @@
     },
     "values/common.termination.messagePath": {
       "description": "[[ref](https://kubernetes.io/docs/reference/kubernetes-api/workload-resources/pod-v1/#lifecycle-1)]"
-    },
-    "values/ingress/anyOf/array+keywords/additionalProperties+null+object": {
-      "anyOf": [
-        {
-          "type": "object"
-        },
-        {
-          "$ref": "#/$defs/values~1common.configMaps@additionalProperties"
-        },
-        {
-          "type": "null"
-        },
-        {
-          "type": "array"
-        }
-      ]
     },
     "values/integer:int32;partition-indicates-the-ordinal": {
       "description": "Partition indicates the ordinal at which the StatefulSet should be partitioned for updates. During a rolling update, all pods from ordinal Replicas-1 to Partition are updated. All pods from ordinal Partition-1 to 0 remain untouched. This is helpful in being able to do a canary based deployment. The default value is 0.",
@@ -28717,37 +28717,6 @@
     },
     {
       "if": {
-        "allOf": [
-          {
-            "properties": {
-              "postgresql": {
-                "$ref": "#/$defs/constrains~1auth:t~1anyOf~1:t+object"
-              }
-            },
-            "required": [
-              "postgresql"
-            ],
-            "type": "object"
-          },
-          {
-            "not": {
-              "$ref": "#/$defs/constrains~1postgresql+postgresql=null"
-            }
-          }
-        ]
-      },
-      "then": {
-        "additionalProperties": {},
-        "properties": {
-          "postgresql": {
-            "description": "Enable and configure postgresql database subchart under this key.\nFor more options see [postgresql chart documentation](https://github.com/bitnami/charts/tree/main/bitnami/postgresql)",
-            "type": "object"
-          }
-        }
-      }
-    },
-    {
-      "if": {
         "anyOf": [
           {
             "allOf": [
@@ -34832,17 +34801,6 @@
               }
             }
           }
-        }
-      }
-    },
-    {
-      "additionalProperties": {},
-      "properties": {
-        "common": {
-          "type": [
-            "null",
-            "object"
-          ]
         }
       }
     },
@@ -45971,6 +45929,126 @@
     },
     {
       "if": {
+        "anyOf": [
+          {
+            "allOf": [
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1postgresql.enabled"
+                  },
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                false
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              },
+              {
+                "anyOf": [
+                  {
+                    "$ref": "#/$defs/constrains~1postgresql.enabled"
+                  },
+                  {
+                    "properties": {
+                      "postgresql": {
+                        "properties": {
+                          "enabled": {
+                            "not": {
+                              "enum": [
+                                true
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "type": "object"
+                      }
+                    },
+                    "required": [
+                      "postgresql"
+                    ],
+                    "type": "object"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "properties": {
+              "postgresql": {
+                "properties": {
+                  "enabled": {
+                    "enum": [
+                      true
+                    ]
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "type": "object"
+              }
+            },
+            "required": [
+              "postgresql"
+            ],
+            "type": "object"
+          },
+          {
+            "allOf": [
+              {
+                "properties": {
+                  "postgresql": {
+                    "$ref": "#/$defs/constrains~1auth:t~1anyOf~1:t+object"
+                  }
+                },
+                "required": [
+                  "postgresql"
+                ],
+                "type": "object"
+              },
+              {
+                "not": {
+                  "$ref": "#/$defs/constrains~1postgresql+postgresql=null"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "additionalProperties": {},
+        "properties": {
+          "postgresql": {
+            "description": "Enable and configure postgresql database subchart under this key.\nFor more options see [postgresql chart documentation](https://github.com/bitnami/charts/tree/main/bitnami/postgresql)",
+            "type": "object"
+          }
+        }
+      }
+    },
+    {
+      "if": {
         "$ref": "#/$defs/constrains~1common+common.controller.enabled:t+controller.type=cronjob+1more"
       },
       "then": {
@@ -48401,24 +48479,29 @@
     },
     "imagePullSecrets": {},
     "ingress": {
-      "allOf": [
-        {
-          "$ref": "#/$defs/values~1ingress~1anyOf~1array+keywords~1additionalProperties+null+object"
-        },
+      "anyOf": [
         {
           "type": "object"
+        },
+        {
+          "$ref": "#/$defs/values~1common.configMaps@additionalProperties"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "array"
         }
-      ]
+      ],
+      "type": "object"
     },
     "initContainers": {},
     "lifecycle": {},
     "nameOverride": {},
     "nodeSelector": {},
     "persistence": {
+      "additionalProperties": {},
       "allOf": [
-        {
-          "type": "object"
-        },
         {
           "if": {
             "anyOf": [
@@ -48433,11 +48516,9 @@
             ]
           },
           "then": false
-        },
-        {
-          "$ref": "#/$defs/values~1common.configMaps@additionalProperties"
         }
-      ]
+      ],
+      "type": "object"
     },
     "podAnnotations": {},
     "podLabels": {},
@@ -58782,6 +58863,17 @@
         "clusterDomain": {
           "description": "Kubernetes Cluster Domain"
         },
+        "common": {
+          "additionalProperties": {},
+          "properties": {
+            "exampleValue": {
+              "description": "bitnami/common\nIt is required by CI/CD tools and processes.",
+              "type": "string"
+            },
+            "global": {}
+          },
+          "type": "object"
+        },
         "commonAnnotations": {
           "description": "Add annotations to all the deployed resources"
         },
@@ -60172,12 +60264,6 @@
     "service": {
       "allOf": [
         {
-          "$ref": "#/$defs/values~1ingress~1anyOf~1array+keywords~1additionalProperties+null+object"
-        },
-        {
-          "type": "object"
-        },
-        {
           "if": {
             "anyOf": [
               {
@@ -60326,7 +60412,22 @@
             }
           }
         }
-      ]
+      ],
+      "anyOf": [
+        {
+          "type": "object"
+        },
+        {
+          "$ref": "#/$defs/values~1common.configMaps@additionalProperties"
+        },
+        {
+          "type": "null"
+        },
+        {
+          "type": "array"
+        }
+      ],
+      "type": "object"
     },
     "serviceAccount": {
       "additionalProperties": {},
