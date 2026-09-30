@@ -7199,6 +7199,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   command had in fact finished; 43 uncommitted fixture edits left in round8-w4-rebase, untouched). Disk 167 GB
   after pruning the superseded W4/F1 targets. Orchestrator.
 
+- 13:55 (Sep 30) — **Session-wide stall 11:55 → 13:50.** Both builders' transcripts end on a tool result at 11:54:5x
+  with no next turn and no live process, and the orchestrator's 11:44 wakeup fired only at ~13:50 — an API/usage
+  stall on the personal account, not a work failure. Both builders nudged to resume (W4 replacement at e5ce8aa9:
+  battery-v14 status battery=100, fixture_diff=1, size_table=1, moves_vs_main=0 — to be explained in its
+  hand-back; W1 on R29–R31). The two W1 reviews (Codex account) were unaffected and are running. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
