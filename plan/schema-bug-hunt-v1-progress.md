@@ -7231,6 +7231,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   callables under --exclude-tests. `final-v10.patch` sha256 ea13cad1…. Reviews: astra follow_up 7422b55d turn
   4, sol(6.1) follow_up 419cfbc0 turn 2. On LAND ×2 → landing 10. Orchestrator.
 
+- 15:18 (Sep 30) — **W4 rework 9: REWORK ×2, both object to landing 10 as is. W1 rework 7: REWORK ×2.** W4
+  (`review-w4-rework9-{astra,sol}.md`): R40/R41, the size gate, the nacos F1 roster and the rebase are confirmed;
+  blocking: R50 the callable-argument recogniser consumes one character of a non-double-quoted name and the
+  complemented language turns that into a missing-callable claim (14 cells render, main accepts, r10 rejects:
+  dynamic `$h`, `(print …)`, raw backtick literals, `$d.n`, trims); R51 `templates/tests` names dropped from the
+  callable registry (grafana, fluent-bit include-of-test-file cells); R52 the blanket and/or exemption admits
+  `{{ or false (include "missing" .) }}`; R53 n16/n18 output-kind false acceptances; R54 fixture-move labels and
+  Loki matrix controls → `brief-w4-rework10.md`. W1 (`review-w1-rework7-{astra,sol}.md`): the R29 abstention rule
+  is sound with a boundary (when_true False ≠ dead; references must not authorise default typing); synapse must be
+  fixed (the chart quotes merged annotations); okteto's null cell IS a genuine false rejection (nil source members
+  omitted by the merge — the prober was right); R24 still loses `dig`/`pluck` aliases (the dropped test must
+  return); the matrix baseline binary was contaminated with W1 code (rebuild a pinned main); the battery's
+  new-reason screening must normalise combinator relocations; the 137 roster rows accepted → `brief-w1-rework8.md`
+  (R29–R35). Both builders resumed. k8s: K16 prep starts now in parallel (fresh builder, own clone round8-k8s-r8 and
+  target; battery expected to fail only on the 8 nacos cells until W4 lands) so landing 11 is ready when landing 10
+  merges. Landing-10 clone stays staged at 1c3601cb (to be re-staged on the rework-10 tip). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
