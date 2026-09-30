@@ -7155,6 +7155,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   F73/F80 CLOSED-BY-POLICY (separate); L1/L2 closed but outside the 83; F1 itself stays open (common umbrella
   witness, nginx D1); F23 and F79 keep an unfrozen witness each; F69 keeps one KnownFalseAcceptance. Orchestrator.
 
+- 07:27 (Sep 30) — **Post-merge gates on main b51c8589 all green** (own target, one at a time; logs in
+  `round8-landing9-run2/postmerge/`): `cargo fmt --check` 0; `task lint` 0 (clippy checked every crate, 22 s on a
+  warm sccache); `task lint:fc` 0 (51 combinations); `cargo nextest run --workspace` 0 (1699/1699);
+  `task test:integration` 0 (923 passed, 24 skipped, 241 s). Not run on main: `task test:all` (live network) and
+  the luup2 gate — owed at the next natural checkpoint; hand-off §6 rewritten (6f1ce577). W4 and W1 rebase onto
+  b51c8589 for their final batteries; landing 10 = W4. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
