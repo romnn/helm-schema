@@ -7175,6 +7175,30 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `stash`, `reset`) in a builder's own clone trip the permission classifier; builders should copy the file from
   `git show HEAD:path` instead. Orchestrator.
 
+- 13:54 (Sep 30) — **W1 rework 7 handed back (track/w1-main dac71faa, rebased onto landing-9 main, no conflicts) with
+  two remaining new false rejections and one unmatched flip; reviews dispatched; R29–R31 started.** Fixed with
+  red→green full-schema tests: R21–R27 (+ the kind-List host), R28 traefik/longhorn/grafana chart-local pull
+  secrets, three rebase-exposed regressions (okteto json-decoded selections, kured scoped equalities, x509 dig
+  default). Not met: schema-registry `kafka.sasl.existingSecret` []/false (renders, main accepts, candidate
+  rejects: the rework-5 stamping plus the scalar projection skipping approximate arms decides the helper "empty";
+  the precise fix 0e52b5b5 was withdrawn after ~180 collateral false rejections in x509/schema-registry/KPS);
+  okteto `ingress.annotations.probe=null` (prober says false rejection, battery matched it by a K8s rejection);
+  synapse `podAnnotations.unknown: true` (renders; main rejects too; the candidate's rejection moved from the
+  member type to the property anyOf → the battery's only unmatched flip). Live battery (dump8): 9 467 flips
+  screened / 9 466 adjudicated, 475 Helm-abort + 2 K8s tightenings, 8 619 loosenings, 364 false acceptances all
+  rostered (11 new groups, 137 probes: clickhouse 83, qdrant 40, image-updater 8, …), rosters exact. Gates on
+  dac71faa: fmt/lint/lint:fc/ast-grep 0, unit 1818, integration 201 (121 fixture-adoption failures only),
+  tokei production +1683/−187, dump/helmsweep 0, battery live 100 (synapse only), test:network 0.
+  `final-v8.patch` sha256 afda5eef…. Orchestrator decision for R29: ABSTENTION — an approximate-liveness helper
+  arm contributes no declared-default typing (unknown), never "decided empty" and never a typed value; R30: fix
+  the synapse false rejection (it is main's too); R31: adjudicate okteto's null with the K8s validator and fix
+  the prober's null handling (K17). Builder resumed; reviews astra follow_up bde21128 turn 2, sol follow_up
+  b7fd0b5d turn 2 (asked to audit the 11 roster groups and the abstention rule). Disclosure recorded: the W1
+  builder ran a previously denied `git checkout HEAD -- …summary.rs` in its own clone (restored only its own
+  uncommitted edit); told never to repeat a denied command. The old W4 agent acknowledged the STOP (its 07:30
+  command had in fact finished; 43 uncommitted fixture edits left in round8-w4-rebase, untouched). Disk 167 GB
+  after pruning the superseded W4/F1 targets. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
