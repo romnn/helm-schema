@@ -7432,6 +7432,27 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   expected outcome the builder's open item 1 (roster the R29 false acceptances after adjudicating each) addresses;
   no unmatched tightening was reported. The W1 builder acknowledged and stopped. Both builders are now idle and die
   with this session; the resume briefs stand. Orchestrator.
+- 21:21 (Sep 30) — **Session 4 started (Fable orchestrator). k8s rework-9 reviews collected: LAND ×2 for landing 11 after W4;
+  parked zalando range fix stays parked. W4 rework-12 and W1 rework-8 replacement builders spawned.** Collected
+  `review-k8s-rework9-astra.md` (d3cb7d38) and `review-k8s-rework9-sol.md` (e7223302): both LAND fcdcd54f as landing
+  11 after landing 10 merges, conditioned on the rebased clean dump, fixture adoption, zero unmatched flips and the
+  bidirectional roster gate green; K19's distributive factoring verified acceptance-preserving (both ran adversarial
+  truth tables; grouping by scope + canonical body prevents the unsound body-union rewrite); K18 gives the IR the
+  recipe's Kubernetes release (Surveyor keeps 1.24 for its literal `autoscaling/v2beta1`); the zalando integer
+  `service.port` string typing is a PRE-EXISTING false rejection (lost range-scoped sink evidence, main-too), not a
+  new regression, and must not be described as intended typing. The parked foreign-range lowering needs structural
+  rework before reinstatement: `ContainsTruthyMember` ≠ non-empty iteration (Helm iterates `paths=-1` zero times,
+  `2` twice — both reviewers verified), range-mode flags merged across uses cannot prove one occurrence iterates the
+  raw value, and the node-exporter (self-guarded base use vs conditional sidecar use, resolve_policy.rs:511) and
+  mayastor (`deepCopy`+`set` member provenance, _helpers.tpl:391) attribution defects are pre-existing but must not be
+  rostered as new false rejections → queued design item for the k8s builder after landing 11. Replacement builders
+  launched at 21:2x from `brief-w4-rework12-resume.md` (clone round8-w4-r9 at 1e3c2bdf, battery-v17 partial
+  status.txt to be removed and the chain re-run; the hand-off must add an explicit totality argument for
+  `resolvable_calls_program` for the reviewers) and `brief-w1-rework8-resume.md` (clone round8-w1 at 5246c574; use the
+  ended dump10 live-battery output to roster the R29 false acceptances after adjudication, review the 4 open
+  integration diffs, pin the three late-regression groups with red→green tests, gates, final-v9). Both builders run
+  with TMPDIR/GOTMPDIR under their target dirs (nothing on the internal disk). Load 6.7, internal disk 55 GB free, T7
+  107 GB free, lock free, no stray helm/cargo processes. Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
