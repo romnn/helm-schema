@@ -7527,6 +7527,29 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   pre-existing gaps; D needs per-row proof. Landing shape: R36 on W1, order W4 → k8s → W1 kept. The W1 builder was sent
   the review to verify the exact-loss claim with a fragment dump and to widen the R36 red tests to astra's boundary
   matrix; no fix before sol's review is merged into the R36 brief. Orchestrator.
+- 22:40 (Sep 30) — **W1 blocker A: design review = REWORK ×2 with the same diagnosis (`design-w1-blockerA-{astra,sol}.md`); merged
+  into `brief-w1-rework8-r36.md`; the builder's interim checkpoint (HEAD d14a2735) confirms the exact loss and adds 18 red
+  cells; prometheus (90 rows) already fixed; R36–R38 dispatched.** Sol independently reaches astra's location (the
+  output-metadata join: control.rs:2993/:3015/:3024, branch_join.rs:358-364, helper_meta.rs:265, lower.rs:187; empty
+  predicate set = fold identity but TRUE at lowering; main control.rs:2843 has the same skip), refutes the atom-based
+  diagnosis (same omitted key is the trigger) and the repro's `allOf`-presence check (s.json carries a root-level provider
+  conditional), and adds: keep selection/source/mode/transform metadata per alternative, over-approximate only by
+  widening, `omit`'s `with_effects` drops `proven_operands` (collections.rs:1362), and a counterexample to blanket
+  predicate clearing (`$a := dict; if c { $a = omit .Values.p "x" }; toYaml $a` must not impose `p`'s contract on
+  `!c`). Builder checkpoint: exact loss verified (matches both reviews); `tests/sequential_omit_arms.rs` 18 cells RED
+  (red-r36-head.log, every mismatch a false acceptance; Helm verdicts in r36-matrix/helm-verdicts.json incl.
+  `--api-versions security.openshift.io/v1`); (ii) an omitted key untyped where its exact arm does not run is main-too —
+  orchestrator decision: in scope (exact `!c` retains the key → provider typing; approximate arm → abstain). B: prometheus
+  = R29's input_channels change, fixed 4fab7916 (only placement approximate everywhere abstains; red→green
+  red/green-r29b-prometheus.log; 2 gen fixtures adopted, one sound tightening); filebeat = R29 token-claim coverage
+  (holes.rs:1097-1112) conditions hostPathRoot's independent YAML-parse constraint → R37 (residual arm + per-path
+  coverage); traefik cause not isolated → R38; vpa = R29 abstention (main pruned the `lookup` arm) → rosterable with the
+  per-row note. C rosterable with an isolated main control per error family (sol). D: alloy/jenkins/clickhouse/aws-nth/
+  cilium/jupyterhub/mariadb-galera/trino/vpa constructs named; argo-cd/rancher/vault have exact gates (not D); redis-ha,
+  nginx tls, rabbitmq unconfirmed; per-row proof after R36. `approximate_liveness.rs:289-355` pins the defect and changes
+  with R36 (controls kept, `{fsGroupChangePolicy:1}` rejected added). Disclosure: the builder's early non-`--offline`
+  runs fetched 6 untracked v1.35.0 files into round8-w1's testdata cache (left untracked, never staged; repro now
+  `--offline`) — reported to the user. final-v9.patch refreshed sha256 79e4255b…. Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
