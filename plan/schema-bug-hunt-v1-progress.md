@@ -7298,6 +7298,33 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   operand bounded, CR-bearing raw literals unknown, nested forced and/or) and its battery-v16 pipeline is running
   (lint:fc/ast-grep/tokei/unit/dialect green so far). Load 22, disk 128 GB. Orchestrator.
 
+- 19:45 (Sep 30) — **W4 rework 11 handed back (w4-rebase 4fc19662, 51 commits on b51c8589; production tip 0376512a);
+  re-checks running; landing-10 clone re-staged on it (c6f9f663). k8s K18/K19 handed back (k8s-rebase fcdcd54f,
+  61 commits; zalando port fix PARKED); fresh reviews running.** W4: R55 a CR-bearing backtick literal is an
+  unknown name and not a truthy operand; R56 an unknown operand covers exactly one operand (escaped literal, CR
+  backtick literal, variable/field chain, or parenthesised pipeline ≤ 3 deep) so a later `| include "missing"`
+  keeps its claim; R57 the forced grammar composes ≤ 2 deep with `not` of a literal; test
+  `tpl_program_claims_bound_each_operand` (12 cells, red 9 → green 813/813); matrix v12 191 rows: exactly the 16
+  target cells moved, the only non-main disagreements are the waived n16/n18; gates fmt/lint/lint:fc/ast-grep/
+  tokei/nextest 1760/dialect 0, integration 201 = 160 fixture-equality only, dump-0376512a/verify/Go-regexp/
+  helmsweep 0, live battery 0 (9 687 flips, 0 unmatched, 309 rostered false acceptances); 182 moves; Helm-ready
+  forms all fit (openebs 4.57 MB); new residual: a name built from a pipeline nested > 3 parentheses deep may still
+  be claimed missing (no corpus cell reaches it). `final-v12.patch` sha256 d3539ea9… (the review prompts cite the
+  earlier b2f52032… of 0376512a; the difference is the test-only fixture carry). Reviews: astra follow_up 7422b55d
+  turn 6, sol follow_up 419cfbc0 turn 4. k8s: K18 template recipes pin the IR's Kubernetes version (v1.29 like the
+  corpus; Surveyor's HPA keeps v1.24), signoz_zookeeper red → green; the zalando `service.port` fix (lowering a
+  range over a foreign path to "non-empty or integer > 0") was reverted after the battery showed new false
+  rejections it unmasked (prometheus-node-exporter containerSecurityContext falsy branch dropped by a conditional
+  sidecar use — main-too with an `if`; openebs mayastor `render_init_containers` deep-copy + `set` attributed to
+  the whole initContainers slot) — saved as rework9/k18-foreign-range-lowering.parked.patch, design review
+  requested; K19 exact distributive factoring of guard disjunctions (conditional_constraints.rs:222/:242/:887):
+  signoz readable pretty 6.63 → 4.19 MB (main 4.48), openebs 13.49 → 8.77 MB, truth-table test; the CLI's default
+  output is readable pretty and the sample test lints it. Gates: fmt/lint/lint:fc 0, nextest 1722/1722, FULL
+  integration 100 = 126 moves only, tokei 78061; battery exactly the 9 W4-dependent failures, matched counts
+  identical to K16. `final-v9.patch` sha256 77cf404e…. Reviews: fresh astra 20260930T174441-d3cb7d38, sol(6.1)
+  20260930T174500-e7223302 (`review-k8s-rework9-{astra,sol}.md`, to be collected by the next session if this one
+  has ended). Landing order stays W4 (10) → k8s (11) → W1 (12). Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
