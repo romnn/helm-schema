@@ -7112,6 +7112,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   29337, step dump, token e2367f55…); load 10, disk 128 GB. Expected: 156 fixture moves adopted by the dump step,
   every flip live-adjudicated by the battery (ALLOW_MATCHED_FLIPS=1, roster baseline f7be7ba5). Orchestrator.
 
+- 04:38 (Sep 30) — **Landing 9 run1 FAILED at dump (03:53 → ~04:30): the runner's manifest grammar did not know F1's
+  sixth artifact kind.** `ABORT: dump/manifest.json: BAD-KEY authoring/datadog.open-root, BAD-KEY
+  authoring/redis-ha.declared-types-annotate` — F1 adds `ArtifactKind::Authoring` (corpus charts generated under a
+  non-default caller authoring policy, fixtures in testdata/chart-corpus-policy-schemas), and landing.py's
+  `MANIFEST_KINDS` (v6.11) listed only chart/gen/ir/lean/final/template/final-policy. The producer wrote all 205
+  artifacts; only the runner's key check refused. Fix: runner v6.12 adds `authoring` to MANIFEST_KINDS with a unit
+  test `test_authoring_kind_is_a_manifest_kind` (red on the committed tree: BAD-KEY; green; unit suite OK;
+  test_lock 0; run-all with guard-src-v6 running → green/v612-run-all.log). Per the restart rule (runner changed →
+  fresh evidence dir) landing-9.env now points at E=round8-landing9-run2 with the run1 note; relaunch after
+  run-all. Process note: the runner should learn artifact kinds from the producer (a registry listing or a
+  harness_version bump) instead of a hand-kept set — queued as a small runner item. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
