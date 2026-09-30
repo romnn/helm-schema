@@ -7212,6 +7212,25 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   battery under round8-w4-r9-target; W1 at dac71faa on R29–R31; both W1 reviews in turn 2. Memory updated:
   JSONL timestamps are UTC like agentmux run ids. Orchestrator.
 
+- 14:43 (Sep 30) — **W4 rework 9 handed back by the replacement builder (round8-w4-r9, w4-rebase 482f42f8, 45 commits
+  on b51c8589); reviews dispatched. R46 decision corrected: the tpl program is the user's VALUE, so the render-
+  failure claims can only be JSON-Schema patterns on that string — the branch derives them from Go's template
+  lexer grammar (words, lazy and/or, callables from defines + template files, 240/240 Helm/sprig/Go builtins);
+  the reviewers are asked to judge the patterns' soundness, not to demand an AST.** Matrix v10 (124 rows, Helm
+  4.2.3 + kubeconform): r9's 5 false rejections (Unicode identifiers, lazy and/or) fixed; no false rejection main
+  lacks; nacos defaults render and pass kubeconform (main rejected) → nacos promoted out of
+  QUARANTINED_FALSE_REJECTIONS, 4 nacos `global` cells rostered as F1 rows (Helm aborts). Mechanism: R40
+  contract_rows.rs:383 + provider_requirement_synthesis.rs:327 (Traefik mountPath presence restored); R41
+  input_channels.rs:231 scope merging + Helm-ready size gate chart_corpus.rs:250; R42–R44/R47 tpl_programs.rs;
+  R45/R49 resolve_policy.rs:70 + scalar_preimage.rs:312; R48 pattern_dialect.rs:141/:183. Gates on 482f42f8:
+  fmt/lint/lint:fc/ast-grep/tokei 0, nextest 1757/1757, integration 201 = 160 fixture-equality only, dump/verify
+  0, Go-regexp compile 0, helmsweep 0, live battery 0 (160 charts, 270 494 probes, 9 687 flips, 0 unmatched, 0
+  unrostered). 182 fixture moves vs main. Sizes: every Helm-ready form under Helm's limit (openebs 4.43 MB
+  largest); pretty synapse/airflow newly over (product item queued). Residuals: `or false (include "missing" .)`
+  accepted (abstains on and/or), KPS `{a: "", b: "c"}` and NEL-in-comment main-too, n16/n18, `templates/tests`
+  callables under --exclude-tests. `final-v10.patch` sha256 ea13cad1…. Reviews: astra follow_up 7422b55d turn
+  4, sol(6.1) follow_up 419cfbc0 turn 2. On LAND ×2 → landing 10. Orchestrator.
+
 Next: the semantic landings in the round-8 hand-off §6 (W1 rework re-review, frontend phase 1
 review, F75, F1/F2 checkpoints, k8s D1–D3, B6 stack after the agent-container fix); decide the
 roster-baseline advance before the first semantic landing. d3f23 landed as landing 1. Standing
