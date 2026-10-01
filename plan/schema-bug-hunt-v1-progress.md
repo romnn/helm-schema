@@ -7622,6 +7622,33 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   dump → unit → lint → battery → integration → sweep → finalize; expected ~1 h; 182 fixture moves expected. On "chain
   green": adopt `$E/adopted.tsv`, merge `--no-ff` into main naming the components + receipt sha256, post-merge gates on
   main one at a time, retire the env, remove the landing target, rewrite hand-off §6. Orchestrator.
+- 05:37 (Oct 1) — **W1 rework 8 CHECKPOINT at 42998ee7 (R36–R38 + R29 refinements done; live battery on dump15 = 0 adjudication
+  failures, 0 stale rows, exactly 2 HELD redis-ha rows); R39 dispatched; fresh pre-landing reviews running on both
+  models.** Commits (each red→green, logs in rework8/): c8195a86/e26e360c R36 output-metadata join by outcome selection
+  with typed absent/unconditional/unknown states, omission-survival guards for if/with/range/else, `omit` records every
+  identity alternative; 1c163d4a a disjunction that merely covers every state keeps its branches (bitnami
+  `commonLabels: null` false rejections in 20 charts exposed by dump11); 2010ce6b/6928a097 printf formatter flag keeps
+  its own branch coverage, a formatted-after-text operand drops it, a proven-mutation map input is excluded (nack 5 cells
+  = Helm, main gets 2 wrong; nats rejects null repository); 87c4ca80 R37 per-path token claims (filebeat); R38 traefik
+  isolated as an R29 abstention; 4fab7916 / 773da900 / c146b657 R29 refined: a path abstains from its declared default
+  only when EVERY use and navigation is approximately live, visibility seeds authorise nothing (argo-cd 18, vault 9,
+  nginx 6, cilium 5, aws-nth 9, mariadb-galera 3, jupyterhub 9 rejected again; the 4 open explain/nacos diffs pass with
+  their original fixtures; k-e-e/clickhouse autoscaling false rejections fixed); 42998ee7 roster +273 probes in 23
+  groups each with a bypass witness (clickhouse 99, trino 62, synapse C 36 with isolated main controls, rabbitmq 18,
+  rancher 12, redis-ha runAsUser 10 under decision (ii), traefik 10, vpa 10, alloy 8, jenkins 6, jupyterhub 2) −16 stale
+  redmine. Tests: sequential_omit_arms 22, approximate_liveness 6. Gates on 42998ee7: fmt/lint/lint:fc/ast-grep 0, tokei
+  78 777 (+2 037 vs main), nextest 1827/1827, dialect 2/2, FULL integration 201 = 155 fixture equality + 13 cell_matrix
+  (provider-bundle digest changed by the 6 untracked v1.35.0 cache files the builder may not delete — reported to the
+  user; they do not reach the landing clone) + consume 1 + lean 1; battery15 live 100 = 2 held; matrix10 360 cells:
+  candidate wrong 43 (= matrix9), main wrong 72; dump10 1455 false acceptances → dump15 275 (273 rostered, 2 held).
+  `final-v10.patch` sha256 accd079f762a0387eabd263b71d12e0a11666dc3adc36aa40ca0aa793f04d21b; hand-off FINAL-format 43 lines;
+  D proofs `rework8/dproof/`. Held: redis-ha `securityContext`/`containerSecurityContext` ← {"unknown": true} accepted
+  (K8s rejects): contract_rows.rs:762-778 marks the whole SOURCE context approximately used for an undecidable omitted
+  member → R39 (prune only the undecidable member from the source's declared default, keep the source typing; the
+  member-only experiment re-typed `runAsUser`, breaking decision (ii)) → clean dump, battery, final-v11. Reviews (fresh):
+  astra 20261001T033616-8c4a53c9, sol(6.1) 20261001T033641-8d519810 → `review-w1-rework8-{astra,sol}.md` (R29 rule
+  soundness with counterexamples, R36 vs the design requirements, R37/R38, a roster audit of ≥ 6 groups, R39 direction).
+  Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
