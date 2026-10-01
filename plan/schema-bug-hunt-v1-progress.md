@@ -7719,6 +7719,24 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   bitnami-redis ~30 s on W1 vs ~13 s on main (predates rework 9) → perf item to profile before landing 12. Follow-ups:
   astra 8c4a53c9 turn 2, sol 8d519810 turn 2 → `review-w1-rework9-{astra,sol}.md`. Final dump/battery/matrix/patch wait
   for the rebase onto the main carrying landing 10 (rework 14 pending). Orchestrator.
+- 09:20 (Oct 1) — **W1 R46 (performance) located, not fixed: bitnami-redis costs 2.26× the user CPU of main on W1; design
+  review dispatched to both models; W1's target trimmed (T7 73 → 123 GB free).** Measured back to back, debug,
+  medians (`round8-w1-evidence/rework9/perf.txt`): bitnami-redis 4.1 s → 9.2 s user (wall 5.2 → 15.0 s);
+  kube-prometheus-stack 37.4 → 37.6 s (1.01×); openebs 93.1 → 87.6 s (0.94×). Mechanism: the mutation-aware bound-helper
+  memo from rework 5/6 (1ada51b2, e03aa8ac): analysis_db.rs:1234 accumulates every in-place mutation the caller has seen
+  into the call resolution and the memo key carries the whole set (:1348/:1380); `MutationFacts.values`
+  (eval_effect.rs:26-36) clones every visited map → memo misses after any `set`/`unset`/merge (helper summaries 1169 →
+  2078) and huge keys (~40 % of samples drop value trees). An unsound experiment (mutations out of the key) recovers about
+  half with identical output on this chart; the remaining ~2.8 s is heavier per-body evaluation (candidates: R36's
+  unminimized coverage, R37's per-arm claim products). Not fixed locally because mutation identity is structural
+  equality (an empty dict built inside a helper counts as mutated when an equal map was mutated outside), so narrowing the
+  key changes results. Proposal: per call, the observable mutation subset (reachable from dot/root context/arguments),
+  evaluate with exactly that subset and key on it; `MutationFacts` behind `Rc`. Design review (soundness of
+  reachability, identity by provenance vs structural equality, a simpler mutation-independent summary, the residual,
+  and whether to fix inside W1 or right after): astra 20261001T071934-15289c38, sol(6.1) 20261001T071947-8f7b06b1 →
+  `design-w1-r46-{astra,sol}.md`. Housekeeping: the W1 builder ran `cargo clean -p` on the 14 workspace crates in
+  round7-f9/target (63.6 → 13.5 GB). Side datum: generating openebs takes ~90 s user / 250 s wall in a debug build on main
+  and W1 alike. W4 rework 14 (R68) still in progress; the W1 turn-2 re-checks still running. Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
