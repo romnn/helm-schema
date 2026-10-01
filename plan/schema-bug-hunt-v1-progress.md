@@ -7550,6 +7550,38 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   with R36 (controls kept, `{fsGroupChangePolicy:1}` rejected added). Disclosure: the builder's early non-`--offline`
   runs fetched 6 untracked v1.35.0 files into round8-w1's testdata cache (left untracked, never staged; repro now
   `--offline`) — reported to the user. final-v9.patch refreshed sha256 79e4255b…. Orchestrator.
+- 03:34 (Oct 1) — **W4 rework 13 (R62–R66) CHECKPOINT on 0e751783: full chain GREEN, production final; 21 in-test fixtures
+  still pre-R62 (the builder's regeneration route was denied); fresh re-checks dispatched on both models in parallel
+  with the sanctioned regeneration.** Four R62 iterations, each a ~1 h chain: 18964ef3 (first positive trie) →
+  ec3e4c21 bounded trie depth (49 schemas hit Rust regex's 250-level nest limit) → eac022ec 32 printable characters
+  (signoz pretty went over 5 MiB and failed `helm lint`; the `go_regexp=1` there was the old checker's /private/tmp
+  directory having vanished — recreated under the target, 0 bad) → 0e751783 control characters (a raw name holding LF
+  was wrongly accepted, cell a2). Mechanism: R62 positive pattern = include/template word, blanks, then a literal naming
+  no callable, spelled by a 32-character name trie with printable-ASCII leave classes plus control-character, escape
+  and non-ASCII alternatives; `resolvable_calls_program` and its complement deleted; the builder argues the bound cannot
+  claim wrongly (at depth 32 a node offers only "leave here", so a longer name's literal is UNKNOWN). R63/R65 define
+  names decoded as Go's parser does (`decode_go_string_literal`, helm-schema-ast); undecodable → registry None →
+  abstain. R66 positive parse-error claims from lex.go; zero-arg include only under the eager guard. Matrix v14
+  (`rebase/r13/matrix-v14.txt`): m13 `template "foo"print`, the `define ""` witnesses e1/e2 and the reviewers' define-name
+  witnesses n1, n3–n6, n8 now ACCEPT (Helm renders); malformed-token cells m1–m5, m7, m8, m10, m18 REJECT (Helm aborts);
+  intended UNKNOWN: identifier/number/bool/char operands (z1, z2, p1, p2, e3) and a literal sharing > 32 characters with
+  a name (l2); retained limits o12, m19–m23. Gates on 0e751783 (battery-v18/): fmt/lint/lint:fc/ast-grep/tokei 0
+  (78 974 production lines, +188 this round), dialect 2/2, nextest 100 = 23 full-schema fixture-equality failures only,
+  FULL integration 201 = 161 fixture equality only, dump/verify 205, Go-regexp 17 465 patterns 0 bad, helmsweep 0, live
+  battery `1 passed`, 0 unmatched, matrix v14 0; 182 moves (same set as rework 12); openebs Helm-ready 4 552 668 B,
+  signoz pretty 5 216 010 B (compact ships); claim patterns openebs 132.9 KB, oncall 101.3, datadog 82.8. Tests:
+  `tpl_program_claims_{are_positive_patterns,read_long_callable_names_to_a_bound,read_define_names_as_go_does,
+  reject_malformed_tokens}` (tpl_plain_slot.rs), red/green in rebase/r13/. `final-v14.patch` sha256 4aa0d3d4…
+  (production final; to be re-exported after the fixture commit). Blocker: 21 `include_str!` fixtures under
+  helm-schema-gen/src/tests/fixtures + go-lexer + CLI fixtures hold pre-R62 bytes; the builder's attempt to add a
+  temporary file-writing hook to `sim_assert_eq!` in test-util was denied by the permission classifier — orchestrator
+  ruling: no harness modification; regenerate through a temporary, uncommitted scratch test module in the gen crate
+  (the campaign's precedent) that reuses the tests' own builders, then unit + FULL integration (test-only, dump stands),
+  one fixture commit, re-export. Re-checks (fresh runs, told the fixtures are regenerating): astra
+  20261001T013326-7cb09804, sol(6.1) 20261001T013344-c93683c5 → `review-w4-rework13-{astra,sol}.md` (soundness of the
+  32-char trie, completeness vs main, R65 decoding, R66 scoping, shipped sizes). User (03:0x): asked why nothing landed
+  in 4 h; answered (nothing landable at start; each W4 iteration = a 1 h chain; k8s-first would land 9 W4-dependent
+  false rejections behind a quarantine entry — offered as the user's call, not taken). Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
