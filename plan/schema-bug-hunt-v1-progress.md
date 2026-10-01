@@ -7672,6 +7672,31 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   red→green commits, unit-level gates, CHECKPOINT hand-back for follow-up re-checks; the final dump + battery + matrix
   + patch come after the rebase onto the main carrying landing 10. The W1 builder's turn at 05:4x died on an expired
   login (user re-logged in at 05:5x; builder resumed, context intact). Orchestrator.
+- 08:23 (Oct 1) — **Landing 10 run1 FAILED at the sweep gate (08:1x): 19 NEW real-`helm lint` failures, all oauth2-proxy with the
+  redis-ha subchart enabled — a W4 false rejection that the live battery and both reviews missed; NOT merged; rework 14
+  (R68) dispatched to the W4 builder.** Chain timings (`round8-landing10-run1/chain.log`): dump 05:29→05:5x OK (182 of 204
+  artifacts adopted), unit OK, lint OK, battery OK (`1 test run: 1 passed`, 1 390 s; 9 687 flips screened and adjudicated:
+  292 Helm-abort + 96 Kubernetes-rejection tightenings matched, 8 959 + 25 loosenings matched), integration OK, sweep
+  06:46→08:1x FAIL: `sweep rows=2036 roster=2036 charts=156 new-lint-failures=19 unresolved=0 accepted-unresolved=2
+  differential-cells=561 parity-disagreements=0`. Failures (`sweep/new-lint-failures.tsv`): oauth2-proxy overrides with
+  `redis-ha.enabled: true` (alone and combined with one more flag): baseline schema passes, schema-free lint passes,
+  candidate rejects `[ERROR] values.yaml: - at '/redis-ha': 'allOf' failed - at '/redis-ha': false schema`. First look
+  (orchestrator, adopted fixture in the landing clone): properties.redis-ha.allOf carries ~18 `then: false` conditionals;
+  six combine `enabled:t` with `redis.masterGroupName` not truthy OR an action-free string failing `^[\w\-\.]+$`
+  (helper charts/redis-ha/templates/_helpers.tpl:75-81: `tpl (.Values.redis.masterGroupName | default "") .`,
+  `regexMatch`, else `required … ""`), where main's fixture has only the truthiness def — which conditional fires for the
+  document `helm lint` actually validates (CoalesceValues without dependency processing) is the builder's first task.
+  R68: reproduce with real Helm, name the firing claim (file:line), fix structurally (a claim must hold for the document
+  Helm validates in lint and in template/install), chart-level red→green test, the same check for standalone redis-ha and
+  other dependency copies, an explanation of why its helmsweep step and the battery missed it, and a runner-equivalent
+  real-lint check over EVERY roster override row of each affected chart before hand-back. Sweep timing note: fast pass
+  29 min, real-Helm stage ~60 min — the long cells were openebs's BASELINE cells (main's schema): a single real `helm
+  lint` of openebs with main's Helm-ready schema takes 675 s and fails on the known mayastor initContainers false
+  rejection (measured separately: /Volumes/T7/dev/round8-timing/openebs-main.lint.time; landing 9's sweep took 27 + 27
+  min) → queued product item: validation time of shipped schemas under real Helm (openebs ~11 min per lint, main-too).
+  Lock released by the runner. After the fix: follow-ups on both reviewer sessions, then run2 with a fresh evidence dir
+  (generation inputs change → restart from dump; ~2.5–3 h because of the sweep). k8s (landing 11) and W1 (landing 12)
+  stay queued behind it. Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
