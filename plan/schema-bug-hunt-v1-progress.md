@@ -7611,6 +7611,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   hand-off `rebase/r13/handoff.md` FINAL (57 lines). Astra turn 2 (7cb09804): R67 closed, regression verified live,
   scope of 7e38cbfd/8beef538 matches, patch hash verified → LAND. Landing chain launches on sol's LAND (lock free, load 9).
   Not run by the builder: `task test:all`, luup2 (owed on main after the merge). Orchestrator.
+- 05:30 (Oct 1) — **W4 rework 13 (R58–R67) = LAND ×2; landing-10 chain LAUNCHED at 05:29 (run1).** Sol turn 2 (c93683c5): R67
+  resolved (both node kinds share body extraction, Go name decoding and undecodable abstention, analysis_db.rs:1478),
+  regression and Helm cells re-verified live, the 19 regenerated fixtures identical outside claim blocks, the go-lexer
+  fixture's constant-helper token-break pattern justifiably widened by R65/R67 names, patch sha and 63-commit range
+  verified → LAND. Chain: clone `/Volumes/T7/dev/round8-landing10` landing-10 f6b94e28 (= main 4e6dc5ab + 63 cherry-picks
+  of w4-rebase f9da148e, clean), env `runner/landing-10.env` (19f3f55; TARGET round8-landing10-target, BASELINE f7be7ba5,
+  DUMP_MODE=producer, SWEEP_DIFF_CAP=3, kube 1.29.0 with okteto/jupyterhub 1.33.0, accepted unresolved cert-manager loader
+  + common library-chart), evidence `/Volumes/T7/dev/round8-landing10-run1/` (chain.log), lock taken, load 14.7. Steps
+  dump → unit → lint → battery → integration → sweep → finalize; expected ~1 h; 182 fixture moves expected. On "chain
+  green": adopt `$E/adopted.tsv`, merge `--no-ff` into main naming the components + receipt sha256, post-merge gates on
+  main one at a time, retire the env, remove the landing target, rewrite hand-off §6. Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
