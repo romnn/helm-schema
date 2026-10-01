@@ -7649,6 +7649,29 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   astra 20261001T033616-8c4a53c9, sol(6.1) 20261001T033641-8d519810 → `review-w1-rework8-{astra,sol}.md` (R29 rule
   soundness with counterexamples, R36 vs the design requirements, R37/R38, a roster audit of ≥ 6 groups, R39 direction).
   Orchestrator.
+- 06:24 (Oct 1) — **W1 rework 8 = REWORK ×2 (`review-w1-rework8-{astra,sol}.md`) → `brief-w1-rework9.md` (R39–R45) sent to the
+  builder; landing-10 chain: dump (182 of 204 artifacts adopted), unit, lint OK, battery running.** Confirmed by the
+  reviewers: R36's join shape (astra replayed all 224 saved matrix cells, zero disagreement; the different-source
+  cells), 1c163d4a, the printf coverage (sol 32 nats/nack probes, astra 15: no acceptance of a Helm abort), R37's
+  per-path union on the reviewed cases, c146b657, the sampled roster families (clickhouse, trino, rabbitmq, rancher,
+  redis-ha runAsUser, vpa) and synapse C with its isolated main controls; R39's direction (whole-source marking at
+  contract_rows.rs:762 affects every source with an undecidable omission). Blocking: R40 (both) an exact use/navigation
+  authorises a declared default only under its own execution guard — `saw_exact_navigation` (requirements.rs:2296) is an
+  existential bit and final_signals.rs:298-304 then revives approximate-only descendant defaults; argo-cd
+  `{"redis":{"enabled":false,"metrics":false}}`, `…"pdb":false`, and metrics:false with redis-ha enabled render under Helm
+  and are rejected (main-too; dump12 accepted them); R41 (sol) `unnarrowed` (branch_join.rs:491-509) is not a coverage
+  proof (entry {a}, selections b/¬b, coverage {b}/{a} gives `a` instead of `a ∨ b`; the opposite direction imposes a
+  contract where the empty dict renders); R42 (sol) R37's residual unknown-text arm must stop subsequent quote-context
+  claims (holes.rs:271/:1111/:1130); R43 (both) jupyterhub's 2 rows rest on a wrong "sound arm" (inherited paired guard
+  defects: hook disabled + deletion renders but is rejected; `pullOnlyOnChanges:false` + deletion accepted though Helm
+  aborts) — orchestrator: fix if local, else a truthful roster note + recorded Helm cell; R44 (both) the matrix ran at the
+  CLI default v1.35 (cellfns.sh:51), redo at v1.29.0-standalone-strict (dstnull accepts in both; srcint is a correct
+  rejection); R45 traefik (astra holds for the isolation evidence, sol accepts the abstention because both consumers
+  sit behind unresolved accumulator gates with no exact consumer) — orchestrator: supply that proof (dump8's constraint was
+  declared-default typing only; consumers' own firing conditions with file:line) or fix. Sequence: R39–R45 as separate
+  red→green commits, unit-level gates, CHECKPOINT hand-back for follow-up re-checks; the final dump + battery + matrix
+  + patch come after the rebase onto the main carrying landing 10. The W1 builder's turn at 05:4x died on an expired
+  login (user re-logged in at 05:5x; builder resumed, context intact). Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
