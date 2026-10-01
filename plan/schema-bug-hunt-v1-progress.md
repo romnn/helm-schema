@@ -7842,11 +7842,40 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   11:3x on f375cde6) continues only for roster feedback; the final dump/battery/matrix/patch restart after R48. Process
   note: agentmux transcript files on disk lag the service state — use `status`/`result`, not file sizes, to detect a
   finished turn. W4 rework 15 (R69–R71) in progress, no commit yet. Orchestrator.
-Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
-d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
-re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
-commit `landing-10.env`, then launch the chain; first run
-`LANDING_ENV=/Volumes/T7/dev/round8/runner/landing-10.env ./run-landing.sh dump` inside the
-`for s in dump unit lint battery integration sweep finalize` loop from the hand-off. Then k8s (landing 11) rebases
-onto the new main, then W1 (landing 12). Standing rules: the schema must pass `helm lint` on the raw root
-values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test.
+- 12:27 (Oct 1) — **Session 4 ends (user decision 12:1x: bring the work to a checkpoint and pause with a hand-off). NOTHING LANDED:
+  main's code is still b51c8589, strict closures 4/83 (F17, F30, F54, F77). Both builders checkpointed with clean trees,
+  no process left running, lock free; hand-off §6 rewritten with the session-5 resume prompt; the self-attack rule is now
+  mandatory.** W4 rework 15 checkpoint: w4-rebase b10d54b3 (67 commits on b51c8589): R69 84193438 (a numeric guard reads
+  an absent value as 0; openebs lint document accepted again, test `openebs_lint_document_keeps_the_dependency_cpu_count_open`),
+  R71 e888412e (`Absent`/`TypeIs` read explicit null as the encoding does; table test
+  `guard_evaluation_agrees_with_the_emitted_encoding`, 49 mismatches on 5325b7d1 → green; floats like `1.0` still disagree,
+  outside the brief's table), R70 b10d54b3 (the declared sample never narrows a branch a range runs in,
+  resolve_policy.rs:1174; datadog byte-identical to pre-R68; real-Helm test
+  `datadog_trace_agent_env_dict_keeps_the_range_domain`); clean dump `dump-r15` verified; lint-document check over
+  dependency rows: 4 rows newly rejected, schema-free Helm aborts on all 4 → 0 false rejections; fmt 0, nextest 1766/1766.
+  Open: test-level red runs on 5325b7d1, the `then`-branch classification over the 32 changed artifacts, task lint,
+  lint:fc, ast-grep, FULL integration, the live battery, final-v17.patch (`round8-w4-evidence/rebase/r15/handoff.md`, 42
+  lines). W1 rework 9 checkpoint: track/w1-main 8e98b12c = `W1 rework 9 (wip): R48 …`, DOES NOT COMPILE (last green
+  f375cde6): `TextProvenance` (Unknown/Verbatim/Templated/StrictText/Alphabet) replaces the negative flag, helper rows
+  carry it, classifier drafted in `fragment_eval/hole_text.rs`; none of the R48 counterexamples (a)–(d) fixed, no R48
+  tests; the final-evidence battery on f375cde6 was stopped mid-run (73 adjudications, no verdict)
+  (`round8-w1-evidence/rework8/handoff.md`, 59 lines). k8s unchanged (fcdcd54f, LAND ×2, waits for landing 10). Landing 10
+  run2 staged but stale (clone at 6808a8a1 = 5325b7d1; env 741e1eb E=run2). Written for session 5:
+  `round8/brief-w4-rework15-resume.md`, `round8/brief-w1-rework9-resume.md`, `round8/brief-k8s-rework10-resume.md`,
+  `round8/brief-r46-perf.md`. Process lesson recorded on the user's instruction (playbook section "Self-attack before every
+  hand-back", the three resume briefs, hand-off §6 and the resume prompt): builders attack their own patch with the
+  reviewers' methods before every hand-back — lint-document check over dependency rows, multi-path probes in non-default
+  contexts, positive claims only, evaluator == emitted encoding, every emitter, compose-and-invert, registry completeness,
+  `then`-branch diff classification, generation-time comparison — and record it in a `## Self-attack` section; a hand-back
+  without it is returned unread. Session tally: 4 W4 review rounds (12→15), 1 landing chain (2.8 h, failed at sweep), 3 W1
+  review rounds + 2 design reviews (blocker A, R46), k8s LAND ×2; ~40 real defects found and fixed or recorded on candidate
+  branches, none on main. Disk at close: internal 62 GB, T7 80 GB. Orchestrator.
+Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
+`round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
+battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
+(finish R48 from the non-compiling wip 8e98b12c; last green f375cde6); re-check each with both Codex models; whichever is LAND
+×2 first lands first (W4: re-stage `round8-landing10`, update `runner/landing-10.env`, launch the chain; W1: fresh clone
+`round8-landing12` + `landing-12.env`); k8s (landing 11) follows W4; then R46. First run `git status --short; git log --oneline
+-5; ls /Volumes/T7/dev/round8/heavy.lock; uptime; df -h / /Volumes/T7`. Standing rules: the schema must pass `helm lint` on the
+raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test; no hand-back
+without a Self-attack section.

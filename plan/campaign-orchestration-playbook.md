@@ -28,7 +28,7 @@ hand-off, then the ledger's last entries.
   clone with an exclusive `CARGO_TARGET_DIR`. Resume the same agent with
   `SendMessage` for rework (its context survives quota kills); start fresh only
   when a transcript is very large or the task changes.
-- **Reviewers and designers: Codex via agentmux** (`gpt-6-sol` / `gpt-6-astra`,
+- **Reviewers and designers: Codex via agentmux** (astra = `gpt-6-astra`, sol = `gpt-6.1-sol` — never `gpt-6-sol`;
   effort `xhigh`, sandbox `read_only`, cwd `/Volumes/T7/dev`). Cheap relative to
   Claude quota and cross-vendor, so they find what same-vendor review misses.
   Use them for pre-landing reviews, designs, landing-order plans, and "why did
@@ -102,11 +102,42 @@ hand-off, then the ledger's last entries.
 - Report closures strictly (verified closures only; policy closures separately).
 
 - Every pre-landing review, design and diagnosis goes to BOTH Codex reviewers
-  (`gpt-6-sol` and `gpt-6-astra`, xhigh, read-only) in parallel; Codex quota is plentiful and
+  (`gpt-6.1-sol` and `gpt-6-astra`, xhigh, read-only) in parallel; Codex quota is plentiful and
   the two catch different defects. Merge their findings before resuming the builder.
 - Test harnesses and tools never write bulk scratch to the system temp folder on the small
   internal disk: temp roots live under the target volume (`$TARGET/tmp`, `GOTMPDIR`) and stale
   ones are swept at start. Killed battery runs once left 70 GB in `/var/folders/.../T`.
+
+## Self-attack before every hand-back (mandatory since round 8, session 4)
+
+Session 4 landed nothing in ~15 hours because every review round and one landing chain found defects the builders could have
+found themselves with the reviewers' own methods. A hand-back without a `## Self-attack` section in its `handoff.md` (cells
+tried, method, result) goes back to the builder unread. The checklist — a builder runs every item that applies to its change:
+
+1. **Lint document.** `helm lint` validates `CoalesceTables(overrides, values.yaml)` WITHOUT dependency defaults; `helm template`
+   has them. For every chart with dependencies and every roster row that enables, disables or deletes a dependency, validate
+   the lint document against the new Helm-ready schema with the Rust prober: zero rows rejected that main's schema accepts
+   (landing 10 run1 failed its sweep gate on exactly this after 2.5 hours).
+2. **Multi-path probes.** The battery probes single paths over defaults and adjudicates with template semantics. For every new
+   or changed conditional, build a probe that makes its condition true in a non-default context and vary the constrained path
+   (absent, null, false, 0, "", [], {}, wrong type); adjudicate with Helm + kubeconform (the datadog `envDict: []` regression).
+3. **Positive claims only.** A rejection claim derived from a complement, a bound or "everything not recognised" is wrong by
+   default: express it as a positive pattern and list what stays UNKNOWN (W4 needed five rounds for this).
+4. **Evaluator equals encoding.** Wherever Rust code evaluates a guard that is also emitted as schema, table-test evaluator ==
+   JSON-Schema evaluation of the emitted guard over every guard kind × {absent, null, wrong type, matching, non-matching}.
+5. **Every emitter.** When a flag or provenance gates a claim, enumerate every path that produces the gated thing (helper
+   bodies, inline arms, extra splices, locals, helper returns) and test one cell per path; prefer a positive provenance set
+   at one place over a negative mark that emitters can bypass (W1's quote claims).
+6. **Compose and invert.** For text mechanisms, compose each transform with its inverse and with a second splice
+   (`b64enc | b64dec`, `tpl (trunc …)`, a lookup key bound to a local).
+7. **Registry completeness.** A "name does not exist" claim needs every way the language registers names (define AND block,
+   Go-decoded names, whitespace, empty names) or it abstains.
+8. **Branch diff.** Diff the previous dump against the new one per changed artifact and classify every `then` change:
+   presence condition added / redundant alternative removed / NEW restriction — each new restriction needs its Helm cell.
+9. **Cost.** Time generation main vs candidate on three charts (one bitnami); never run real `helm lint` over the whole roster
+   (openebs takes ~11 minutes per lint) — use the prober for breadth and real Helm for named witnesses.
+
+The orchestrator repeats this list in every builder brief and asks the reviewers to check the self-attack section first.
 
 ## Mistakes worth not repeating
 
