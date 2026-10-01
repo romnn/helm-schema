@@ -7737,6 +7737,21 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `design-w1-r46-{astra,sol}.md`. Housekeeping: the W1 builder ran `cargo clean -p` on the 14 workspace crates in
   round7-f9/target (63.6 → 13.5 GB). Side datum: generating openebs takes ~90 s user / 250 s wall in a debug build on main
   and W1 alike. W4 rework 14 (R68) still in progress; the W1 turn-2 re-checks still running. Orchestrator.
+- 09:41 (Oct 1) — **R46 design reviews (`design-w1-r46-{astra,sol}.md`): both reject key pruning inside W1; decision: W1 lands
+  with the measured regression recorded, R46 follows as its own landing (`round8/brief-r46-perf.md`); W4's R68 fix is
+  committed (5325b7d1) and under verification.** Reviewers: the observable-subset proposal is internally consistent but
+  not proven equivalent — mutation identity is structural value equality (counterexample: an external empty dict mutated,
+  then a helper's fresh `len (dict)` loses its constant) and the evaluator resolves `.Values` through an implicit root
+  shortcut (expr_eval.rs:226/:446) that argument reachability does not cover; Helm's `$` inside an include is the passed
+  argument, not the caller's root. Plan: step 1 representation-only — keep the full memo key, share `MutationFacts`
+  immutably behind `Rc`, return only newly produced mutation deltas from helper summaries; fixtures byte-identical,
+  memo-enabled = memo-bypassed; measure. Step 2 (semantic, own review + dump + adjudication) only if needed: typed object
+  identities with alias edges and copy cuts, reachability over runtime references, fix the implicit `.Values` shortcut.
+  Also under R46: `joined_coverage` (branch_join.rs:490-560) can multiply conjunctions; R37 claims are capped at eight arms
+  but copy prefixes quadratically (holes.rs:277/:950/:1133). W4 R68: 5325b7d1 `fix(gen): a pattern guard is false where
+  its value is absent` — the redis-ha `not pattern` failure claim fired on a document lacking
+  `redis-ha.redis.masterGroupName`; the builder is running the real-lint verification over the roster rows. W1 turn-2
+  re-checks still running. Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
