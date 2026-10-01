@@ -7752,6 +7752,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   its value is absent` — the redis-ha `not pattern` failure claim fired on a document lacking
   `redis-ha.redis.masterGroupName`; the builder is running the real-lint verification over the roster rows. W1 turn-2
   re-checks still running. Orchestrator.
+- 10:03 (Oct 1) — **W1 rework 9 re-checks (turn 2, `review-w1-rework9-{astra,sol}.md`): R39–R45 PASS ×2; REWORK on one item, R47
+  (the reviewers' "R46"; renumbered because R46 is the perf item) → sent to the builder; W4's R68 gates in progress.**
+  Passed: R39 (closure restored, `runAsUser` abstains; whole-source marking stays widen-only — inspect in the final dump),
+  R40 (conservative and sound; argo-cd's six cells = Helm `ARRAAA`), R41 (both counterexamples closed; astra 112 fresh
+  Helm+K8s cells and the 224 omission cells, zero disagreement; sol's helper/inline/snapshot cells match), R42 (the Taint
+  cut), R43 (truthful note), R44 (prepared), R45 (proof accepted; the alias comparison unnecessary). R47 (blocking, both):
+  R37/R42 treat lookup dependencies and decoded text as rendered text — `index .Values.m .Values.k` with a quote-bearing key
+  renders (`k: "okabc"` / `k: "abc"`), main accepts, the candidate rejects `/k` (and `/m`): holes.rs:858 promotes dependency
+  paths into splices the scanner (:1062-1064) claims as raw; and `t | b64dec` text can change delimiters (candidate rejects
+  `/x`; astra: that one is main-too). Fix: a quote claim needs proven text identity; dependencies keep execution
+  requirements only; decoded text is unknown text and ends forward claims; red→green tests for both. Recorded for the
+  catalog (inherited, main-too): redis-ha accepts `securityContext.privileged: true` although the helper always renders it
+  and Kubernetes rejects it (schema_tree.rs:1698). W4 rework 14 gates on 5325b7d1 so far: fmt/lint/lint:fc/ast-grep/unit 0,
+  integration 201 (classification pending in the builder's hand-off). Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
