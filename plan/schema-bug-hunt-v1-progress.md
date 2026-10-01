@@ -7697,6 +7697,28 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Lock released by the runner. After the fix: follow-ups on both reviewer sessions, then run2 with a fresh evidence dir
   (generation inputs change → restart from dump; ~2.5–3 h because of the sweep). k8s (landing 11) and W1 (landing 12)
   stay queued behind it. Orchestrator.
+- 08:39 (Oct 1) — **W1 rework 9 CHECKPOINT at 6ee6ff0b (R39–R45, one commit each, unit-level gates green, not rebased);
+  follow-ups running on both reviewer sessions.** R39 8a42b170: root cause was not the declared default — with the
+  default dropped the provider slot keeps Kubernetes' `type:[object,null]` and inserting the omitted member row took the
+  union fragment merge, opening PodSecurityContext; fix in schema_tree (a nullable closed object hosts descendants like
+  an object-only slot): redis-ha securityContext/containerSecurityContext closed again, runAsUser untyped; the
+  whole-source marking (contract_rows.rs:762) unchanged because the member-only variant broke the R36 disabled-context
+  cells. R40 58013844: beside an approximate use only an UNCONDITIONAL exact use/navigation authorises the declared
+  default; a local bound to a raw literal-key lookup keeps exact member truth; argo-cd active cells rejected, the three
+  disabled controls accepted (red-r40.log); limit: under the exact condition the default is not applied (abstains). R41
+  3dff3d8d: the unnarrowed shortcut requires per-outcome coverage ∧ selection to equal the entry's; both directions,
+  helper + inline, rendered snapshot. R42 01ff4e27: unknown text ends a token's forward quote claims (expected corpus
+  loosening: helper literal text is still Taint). R43 c7be90bb: note only — inherited `define_block_from_node`
+  whitespace defect (an arm ending in a newline renders "\n" truthy), repro rework9/r43/c4, rows stay rostered with a
+  truthful note, the hook-disabled false rejection recorded with its Helm cell. R44: cellfns.sh pins
+  `--k8s-version v1.29.0-standalone-strict --offline` and adjudicates with kubeconform 1.29 (matrix11 after the rebase).
+  R45 b6685e30: `rework9/r45-proof.txt` (dump8's rejection was the unguarded declared-default shape; consumers behind the
+  accumulator gates; no guarded observation). Gates on 6ee6ff0b: fmt/lint/lint:fc/ast-grep 0, nextest 1828/1828, dialect
+  2/2, tokei 78 861, FULL integration 100 = fixture equality + 13 cell_matrix (untracked v1.35.0 files). Side findings
+  (not fixed): `t | b64dec` and `index .Values.m .Values.k` arms lowered as raw splices; debug-build generation of
+  bitnami-redis ~30 s on W1 vs ~13 s on main (predates rework 9) → perf item to profile before landing 12. Follow-ups:
+  astra 8c4a53c9 turn 2, sol 8d519810 turn 2 → `review-w1-rework9-{astra,sol}.md`. Final dump/battery/matrix/patch wait
+  for the rebase onto the main carrying landing 10 (rework 14 pending). Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
