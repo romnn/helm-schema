@@ -7826,6 +7826,22 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   final W1 dump + live battery + matrix11 + final-v11.patch therefore run now, in parallel with the re-checks; the later
   lander rebases onto the earlier one. W1 lands with the R46 perf regression recorded (bitnami-redis 2.26× user CPU) and
   R46 queued as its own landing. Orchestrator.
+- 12:02 (Oct 1) — **W1 R47 re-checks (turn 3, `review-w1-rework9b-{astra,sol}.md`): REWORK ×2 — four more counterexamples in the
+  quote-claim mechanism, merged as ONE item R48 (positive verbatim-identity proof) and sent to the builder.** The R47
+  cells and the five R42 controls pass. Counterexamples: (a) the encoding exception trusts an `encoded` flag that outlives
+  the encoding (`b64enc | b64dec` then a second splice; strict_operands.rs:112-118, holes.rs:1164); (b) `tpl` text still
+  claims — through a helper (`rework9/r42/ptpl`: Helm renders, candidate rejects /t and /x) and `tpl (trunc 1 .Values.t) .`
+  (serialization.rs:527-534, holes.rs:1143); (c) inline lowering (inline_regions.rs:822) and extra splices appended after
+  the marking pass (holes.rs:906) bypass `derived_text`; (d) a lookup key bound to a local returns through
+  `local_source_paths` → `output_value_paths` (traversal.rs:289, eval_effect.rs:795-801). Orchestrator rule (the W4 lesson
+  applied here: positive proof, everything else UNKNOWN): a splice is claimable only with a `verbatim` provenance
+  established where a values path's own text is emitted and preserved only by identity-preserving steps (selector chain,
+  local alias, helper return of the same splice, per-arm selection); every function application drops it unless it has
+  an alphabet guarantee on its FINAL output (b64enc, sha*sum, adler32sum applied last); one shared lowering invariant for
+  helper bodies, inline arms and extra splices; the negative flags go if subsumed. The W1 final-evidence run (started
+  11:3x on f375cde6) continues only for roster feedback; the final dump/battery/matrix/patch restart after R48. Process
+  note: agentmux transcript files on disk lag the service state — use `status`/`result`, not file sizes, to detect a
+  finished turn. W4 rework 15 (R69–R71) in progress, no commit yet. Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
