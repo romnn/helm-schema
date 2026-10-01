@@ -7582,6 +7582,22 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   32-char trie, completeness vs main, R65 decoding, R66 scoping, shipped sizes). User (03:0x): asked why nothing landed
   in 4 h; answered (nothing landable at start; each W4 iteration = a 1 h chain; k8s-first would land 9 W4-dependent
   false rejections behind a quarantine entry — offered as the user's call, not taken). Orchestrator.
+- 04:09 (Oct 1) — **W4 rework 13 re-checks: REWORK ×2 on exactly ONE item, R67 (`review-w4-rework13-{astra,sol}.md`); everything
+  else verified by both.** R67: `collect_define_blocks()` (analysis_db.rs:1479) collects only `define_action`, while Go
+  also registers `{{ block "slot" . }}` names (grammar block_action, parse.go:658/660), so a chart with a block in
+  _helpers.tpl and `name: 'x{{ include "slot" . }}'` renders `xok(ok)` under Helm but 0e751783 claims a missing callable
+  (tpl_programs.rs:502) — a source-derived chart-level false rejection; fix = collect Go-decoded block names like define
+  names (or abstain), one chart regression. Verified by both: the 32-character trie is sound relative to the supplied
+  registry (names cannot leave their own branch; truncation removes continuations without inventing leaves; a 67-char
+  name renders and validates) — wording correction: the node at depth 32 still tests ONE leave character (a miss at
+  character 33 is rejected, at 34 UNKNOWN); R65 witnesses pass (` foo `, decoded `bar`, octal `foo2`, raw-CR, empty;
+  `\x00` exact; invalid escapes/surrogates clear `exact`; raw-LF names disable the claim); R66 cells m1–m5, m7, m8, m10,
+  m18 reject, 47+ valid-syntax controls accepted, zero-arg include stays under the eager/control guards; no corpus claim
+  vanished (all 88 tpl charts keep the mechanism; redis-ha marker removals are main-accepted programs); shipped sizes all
+  < 5 242 880 (openebs 4 552 668, oncall 4 498 786, signoz ships compact 1 718 241). R67 was sent to the builder at 03:5x
+  (after its fixture regeneration: R67 + chart test + doc wording, fmt/lint/lint:fc/ast-grep/unit/FULL integration, NO
+  builder dump/battery — the landing chain's dump → battery → sweep is the evidence; final-v15.patch; hand-off FINAL);
+  then a follow_up on both reviewer sessions for the R67 commit, and on LAND ×2 landing 10 launches. Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
