@@ -7598,6 +7598,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (after its fixture regeneration: R67 + chart test + doc wording, fmt/lint/lint:fc/ast-grep/unit/FULL integration, NO
   builder dump/battery — the landing chain's dump → battery → sweep is the evidence; final-v15.patch; hand-off FINAL);
   then a follow_up on both reviewer sessions for the R67 commit, and on LAND ×2 landing 10 launches. Orchestrator.
+- 05:27 (Oct 1) — **W4 rework 13 FINAL at f9da148e (63 commits on b51c8589): fixtures regenerated through the sanctioned scratch
+  module (7e38cbfd), R67 block names (8beef538), trie wording (f9da148e); astra follow-up = LAND; sol follow-up running;
+  landing 10 re-staged on it (round8-landing10 landing-10 f6b94e28 = main + 63 cherry-picks, clean; env header 19f3f55).**
+  R67: `collect_define_blocks` (analysis_db.rs:1481) takes `block_action` like `define_action` with the same Go decoding and
+  abstain-on-undecodable rule; test `tpl_program_claims_read_block_names` (tpl_plain_slot.rs:944) red on 7e38cbfd
+  (rebase/r13/red-r67.log, 2 wrong verdicts) → green; Helm cells `rebase/r13/cells/tpl-block-name.cases` (`include
+  "slot"`/`template "slot"` render `xok`, `"slots"` aborts). Gates on f9da148e (battery-v18/status.txt r67_*): fmt/lint/
+  lint:fc/ast-grep 0, nextest 1765/1765, FULL integration 201 = the same 160 corpus fixture-equality failures as before
+  R67 (no corpus chart uses `block`); no builder dump/battery after R67 by orchestrator instruction — the landing chain's
+  dump → battery → sweep is the evidence. `final-v15.patch` sha256 20123b29f5929b94f031977bf27c2a9c7d57b7dc4cd98141b050a024a975844d;
+  hand-off `rebase/r13/handoff.md` FINAL (57 lines). Astra turn 2 (7cb09804): R67 closed, regression verified live,
+  scope of 7e38cbfd/8beef538 matches, patch hash verified → LAND. Landing chain launches on sol's LAND (lock free, load 9).
+  Not run by the builder: `task test:all`, luup2 (owed on main after the merge). Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
