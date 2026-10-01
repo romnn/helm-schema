@@ -7810,6 +7810,22 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (`1 test run: 1 passed`, 1 799 s) and did not see the datadog rejection — it needs a non-default context (apiKey +
   portEnabled), which single-path probes over defaults never compose → a second battery-coverage gap beside the
   lint-document one (queued process item). Orchestrator.
+- 11:32 (Oct 1) — **W1 R47 CHECKPOINT at f375cde6 (unit-level gates green); turn-3 re-checks running; orchestrator decision: W1
+  produces its FINAL evidence now on the current base, and the landing order between W4 and W1 becomes first-ready-first
+  (k8s still follows W4).** R47: a quote claim needs the path's own rendered text — `eval_index` (traversal.rs) no longer
+  counts the map and its keys as rendered output (they only select the member, like a selector); a hole applying a string
+  transform marks its splices `SpliceMeta.derived_text` (carried by helper rows, caller splices and helper unknown-text
+  rows); the scanner claims quoted content only from unmarked splices, keeps the token-start claim for transforms, and
+  stops after any splice it cannot claim except base64 and digest output. Tests `token_claims_skip_lookup_dependencies`,
+  `token_claims_stop_after_decoded_text`: red on 6ee6ff0b (`rework9/red-r47.log`), green; the three cells match Helm 4.2.3
+  + kubeconform 1.29. Gates on f375cde6 (`rework9/gates2/`): fmt/lint/lint:fc/ast-grep 0, nextest 1830/1830, dialect 2/2.
+  Catalog item recorded with its cell: redis-ha `securityContext.privileged: true` accepted by main and W1, rendered into
+  the pod securityContext, rejected by kubeconform (inherited). Follow-ups: astra 8c4a53c9 turn 3, sol 8d519810 turn 3 →
+  `review-w1-rework9b-{astra,sol}.md`. Reason for the order change: main's code is still b51c8589 (= W1's base), landing 10
+  is in rework 15 with a ~3 h chain behind it, and W1 has no dependency on W4 (k8s does: its 9 W4-dependent cells); the
+  final W1 dump + live battery + matrix11 + final-v11.patch therefore run now, in parallel with the re-checks; the later
+  lander rebases onto the earlier one. W1 lands with the R46 perf regression recorded (bitnami-redis 2.26× user CPU) and
+  R46 queued as its own landing. Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
