@@ -7766,6 +7766,30 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   catalog (inherited, main-too): redis-ha accepts `securityContext.privileged: true` although the helper always renders it
   and Kubernetes rejects it (schema_tree.rs:1698). W4 rework 14 gates on 5325b7d1 so far: fmt/lint/lint:fc/ast-grep/unit 0,
   integration 201 (classification pending in the builder's hand-off). Orchestrator.
+- 10:32 (Oct 1) — **W4 rework 14 (R68) FINAL at 5325b7d1 (64 commits on b51c8589); reviewer follow-ups running; landing 10
+  re-staged for run2 (landing-10 6808a8a1, env 6-line header + E=run2 committed in the runner repo); the builder runs a live
+  battery on its post-fix dump for early flip feedback.** Root cause: Helm 4.2.3 `lint` (pkg/chart/v2/lint/rules/values.go:62-68)
+  validates CoalesceTables(overrides, values.yaml) WITHOUT dependency defaults, so with `{"redis-ha":{"enabled":true}}` the
+  key `redis-ha.redis.masterGroupName` is absent (while `helm template` reads the subchart default `mymaster`); the firing
+  conditional was properties.redis-ha.allOf[61] (one of six new versus main) from redis-ha's masterGroupName helper
+  (_helpers.tpl:75-81), decidable since W4's tpl identity-domain precision; the uncoalesced-root lint gate
+  (helm-schema-gen/src/uncoalesced_root.rs:26-60, `holds_on` :428) should have relaxed it, but
+  `evaluate_guard_on_values` (condition_encoding.rs:1050) returned "unknown" for a pattern guard on an absent value.
+  Fix: an absent or non-string value makes the pattern guard false (matching its `required` + `type: string` encoding);
+  empty and invalid names still reject; a null name becomes UNKNOWN (a missed abort). Test
+  `oauth2_proxy_redis_ha_name_claim_holds_for_the_lint_document` (helm-schema-cli/tests/chart_oauth2_proxy.rs:142; real
+  helm lint + template), red `rebase/r14/red-r68.log`, green `green-r68.log`. Gates on 5325b7d1: fmt/lint/lint:fc/ast-grep
+  0, nextest 1765/1765, FULL integration 201 = the same 160 corpus fixture-equality failures. Real `helm lint`: all 22
+  oauth2-proxy rows (the 19 failures now pass), redis-ha, and 435 further rows over 10 charts, zero new failures (the
+  1 367-row real-lint breadth run was stopped by the orchestrator after 87 min — real Helm over every row is hours; the
+  landing's sweep covers every row). Why missed before: the builder's chain only BUILT helmsweep and never linted roster
+  rows; the live battery adjudicates with coalesce + render (`helm template` semantics, subchart defaults present), so a
+  lint-only rejection is outside what it checks → queued process item: the battery (or a cheap pre-chain step) should
+  also validate the lint document for dependency-enable rows. 33 corpus artifacts change versus f9da148e's dump (29
+  charts + authoring, lean, two signoz templates). `final-v16.patch` sha256
+  8d1b3c264d474a930491cff7246ac2b0001c737c80140609674c8ac801deddbc; hand-off `rebase/r14/handoff.md` (54 lines).
+  Follow-ups (turn 3): astra 7cb09804, sol c93683c5 → `review-w4-rework14-{astra,sol}.md` (is the three-valued fix right,
+  do other guard kinds share the absent-value defect, risk in the 33 artifacts). Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
