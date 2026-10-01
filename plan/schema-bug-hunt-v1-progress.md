@@ -7790,6 +7790,26 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   8d1b3c264d474a930491cff7246ac2b0001c737c80140609674c8ac801deddbc; hand-off `rebase/r14/handoff.md` (54 lines).
   Follow-ups (turn 3): astra 7cb09804, sol c93683c5 → `review-w4-rework14-{astra,sol}.md` (is the three-valued fix right,
   do other guard kinds share the absent-value defect, risk in the 33 artifacts). Orchestrator.
+- 11:04 (Oct 1) — **W4 rework 14 (R68) = REWORK ×2 (`review-w4-rework14-{astra,sol}.md`); run2 stays staged and UNLAUNCHED;
+  rework 15 (`brief-w4-rework15.md`: R69–R71) sent to the builder.** Both confirm R68's pattern fix is correct and
+  structural (absent/non-string cannot satisfy the required-string pattern guard; the null-name UNKNOWN loses no main
+  rejection: main accepts it too). New: R69 (both) numeric guards — `IntLt`/`IntGt` evaluate an absent value as false
+  (condition_encoding.rs:1029) while the encoding coerces absence to zero (:197-199), defeating the lint-floor projection
+  (uncoalesced_root.rs:259); witness openebs `engines.replicated.mayastor.enabled: null`: schema-free Helm lint/template
+  pass, main's schema accepts the lint document, the post-R68 schema rejects at `/allOf/1686/then` (absent
+  `mayastor.io_engine.cpuCount` < 1; the render reads the dependency default "2"). R70 (sol) R68 INTRODUCED a datadog
+  false rejection: with `datadog.apiKey` set, `apm.portEnabled: true` and `agents.containers.traceAgent.envDict: []`
+  main and pre-R68 accept, post-R68 rejects under real helm lint and template (new object restriction at allOf[284];
+  the helper's `range` at _helpers.tpl:1289 accepts an empty array). R71 (astra) `Absent` evaluates explicit null as
+  false although its encoding counts null as absent (:1013 vs :240), no corpus witness. Orchestrator rule for all three:
+  `evaluate_guard_on_values` must return exactly what the emitted guard schema evaluates to for every guard kind on
+  absent/null/wrong-typed values (one source of truth if feasible; in any case an exhaustive kind × value table test),
+  chart-level red→green tests for the openebs and datadog witnesses, a classification of every `then`-branch change in
+  the changed artifacts, a lint-document check over every dependency enable/disable/delete roster row with the Rust
+  prober, and one clean dump + live battery before hand-back. Note: the builder's live battery on dump-post-r68 PASSED
+  (`1 test run: 1 passed`, 1 799 s) and did not see the datadog rejection — it needs a non-default context (apiKey +
+  portEnabled), which single-path probes over defaults never compose → a second battery-coverage gap beside the
+  lint-document one (queued process item). Orchestrator.
 Next: session 4 resumes from hand-off §6 (the resume prompt there is verbatim): collect the k8s reviews
 d3cb7d38/e7223302; collect W4's rework-12 hand-back (`round8-w4-evidence/rebase/r12/handoff.md`), fresh
 re-checks on both Codex models, and on LAND ×2 re-stage `round8-landing10` on the new w4-rebase tip, update and
