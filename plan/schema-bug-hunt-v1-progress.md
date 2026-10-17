@@ -8018,6 +8018,21 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   two-file fix (tree == transfer patch sha256 62e56a67) as 396a9c70 and applied the skill-docs patch as ac867354
   (`docs(skills)`). Re-checks as follow_ups on the same sessions: sol b2180698 (turn 2 from byte 9 473), astra a86ea30f (from 8 869).
   Orchestrator.
+- 01:36 (Oct 18) — **Battery re-checks = REWORK ×2 on a narrower set (`review-battery-p1r1-{sol,astra}.md`); rework 2 sent;
+  runner v7 started in parallel.** R2–R5 confirmed fixed with named tests; roster v2 identity "coherent for runner export" (both).
+  Remaining: R6 (P1 both) a broken CONTROL can still certify a payload tightening — sol: violation identity includes the scalar
+  value (adjudication.rs:784), so a context rendering `data: "0"` and a payload `data: "1"` (same /data type assertion) count as
+  new; astra: control Kubernetes uncertainty is discarded (adjudication.rs:1102), hiding the control's own violation → required:
+  usability of the context against defaults first (proved violation or uncertainty ⇒ unusable ⇒ unresolved), violations by
+  assertion identity; R7 (P2 astra) template composition now depends on a `.helmignore`d raw values.yaml
+  (helm_values/mod.rs:189); R8 (P3) docs describe the cap by overlay instead of original-file bytes. Brief
+  `round8/brief-battery-lanes-rework2.md`, follow_up turn 3 on 20261017T185515-78d55437 (from byte 36 968). Runner v7 (roster
+  freeze before `run_battery`, roster v2 export via SCHEMA_ACCEPTANCE_CONTEXT_ROSTER, shared 5 MiB baseline byte policy,
+  `battery_coverage` verifying hash/origins/document counts, sweep reusing the frozen roster, fail-closed) delegated to a Codex
+  builder: sol xhigh workspace_write kept 20261017T233557-09272de5 in a CLONE of the runner (`round8/runner-v7-dev`, branch
+  runner-v7-roster-export from 741e1eb; the live runner is untouched), brief `round8/brief-runner-v7-codex.md`, tests via
+  run-all.sh with GUARD_SRC v7. W4 committed 3b92c53d (R72: only typed alternatives join the runtime domain). Heartbeat 01:35:
+  load 27, T7 98 GB. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
