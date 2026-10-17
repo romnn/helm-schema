@@ -7897,6 +7897,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   20261017T184253-c130b496 → `design-battery-gaps-*.md`. Plan: forward (1) and (2) to the builders as soon as they arrive;
   if (3) is BUILDABLE ×2, a Codex builder (workspace_write, own clone and target) implements it as test infrastructure.
   Orchestrator.
+- 20:44 (Oct 17) — **First Codex BUILDER (process change, orchestrator): sol(6.1) xhigh, sandbox workspace_write,
+  kept session 20261017T184428-efd665aa, on the queued inherited `define_block_from_node` trim-whitespace defect
+  (analysis_db.rs:1413; a define body keeps the newline its `{{- end }}` trims, so `if (include "h" .)` reads "\n" as truthy;
+  jupyterhub prePuller hook guard pair, W1's R43 note).** Clone `/Volumes/T7/dev/round8-defblock`, branch fix/define-block-trim
+  from main 6c83b647 (mise trusted), default target inside the clone, evidence `.codex-evidence/` (never staged); repro
+  `round8-defblock-evidence/repro-c4` (copied from W1's rework9/r43/c4). Brief `round8/brief-defblock-codex.md`: Helm matrix
+  first, red→green tests, structural fix from tree-sitter ranges + trim markers, gates, moved-fixture classification, Self-
+  attack section. It is a fixture-moving candidate and queues behind W4/W1 for landing; both Claude reviewers' roles stay with
+  Codex (the other model reviews it). Three cargo-heavy builders now (W4, W1, this). Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
