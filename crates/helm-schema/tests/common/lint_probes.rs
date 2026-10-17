@@ -9,7 +9,8 @@ use helm_schema_test_support::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
-use test_util::helm_values::{AcceptanceDocument, AcceptanceInputs, ValuesError};
+use test_util::helm_values::{AcceptanceDocument, AcceptanceInputs, ValuesError, ValuesOptions};
+use test_util::scratch::ScratchDir;
 
 use crate::harness::ProfileSchemas;
 
@@ -28,7 +29,11 @@ pub(crate) struct ContextRow {
     pub(crate) chart_sha256: String,
     pub(crate) baseline_sha256: String,
     pub(crate) candidate_sha256: String,
-    pub(crate) overlay_sha256: String,
+    pub(crate) canonical_overlay_sha256: String,
+    pub(crate) values_file: String,
+    pub(crate) values_file_sha256: String,
+    pub(crate) context_overlay: Value,
+    pub(crate) context_overlay_sha256: String,
 }
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -52,11 +57,12 @@ impl ImportedRoster {
         let bytes = std::fs::read(path)?;
         let roster: ContextRoster = serde_json::from_slice(&bytes)?;
         eyre::ensure!(
-            roster.version == 1,
+            roster.version == 2,
             "unsupported context roster version {}",
             roster.version
         );
         eyre::ensure!(!roster.rows.is_empty(), "empty context roster");
+        let scratch = ScratchDir::new("context-roster")?;
         let mut rows = BTreeMap::<String, Vec<ContextRow>>::new();
         let mut identities = BTreeSet::new();
         for row in roster.rows {
@@ -87,8 +93,32 @@ impl ImportedRoster {
                 row.id
             );
             eyre::ensure!(
-                sha256_hex(&serde_json::to_vec(&row.overlay)?) == row.overlay_sha256,
+                sha256_hex(&serde_json::to_vec(&row.overlay)?) == row.canonical_overlay_sha256,
                 "context row {} overlay hash mismatch",
+                row.id
+            );
+            eyre::ensure!(
+                sha256_hex(row.values_file.as_bytes()) == row.values_file_sha256,
+                "context row {} original values-file hash mismatch",
+                row.id
+            );
+            let values_file = tempfile::NamedTempFile::new_in(scratch.path())?;
+            std::fs::write(values_file.path(), row.values_file.as_bytes())?;
+            let parsed = ValuesOptions {
+                value_files: vec![values_file.path().to_owned()],
+                ..ValuesOptions::default()
+            }
+            .merge_values()?;
+            eyre::ensure!(
+                parsed == row.overlay,
+                "context row {} original values file differs from overlay",
+                row.id
+            );
+            eyre::ensure!(
+                row.context_overlay.is_object()
+                    && sha256_hex(&serde_json::to_vec(&row.context_overlay)?)
+                        == row.context_overlay_sha256,
+                "context row {} context overlay or hash mismatch",
                 row.id
             );
             let chart_rows = rows.entry(row.chart.clone()).or_default();
@@ -122,14 +152,31 @@ impl LintSchemas {
         candidate: &Value,
         candidate_path: Option<&Path>,
     ) -> eyre::Result<Self> {
-        let baseline = helm_ready(baseline)?;
+        Self::compile_bytes(&serde_json::to_vec(baseline)?, candidate, candidate_path)
+    }
+
+    pub(crate) fn compile_bytes(
+        baseline: &[u8],
+        candidate: &Value,
+        candidate_path: Option<&Path>,
+    ) -> eyre::Result<Self> {
+        // The sweep ships committed bytes unchanged unless Helm's per-file limit
+        // requires shortening.
+        let baseline = if baseline.len() <= helm_schema::output::HELM_MAX_CHART_FILE_BYTES {
+            baseline.to_vec()
+        } else {
+            helm_ready(&serde_json::from_slice(baseline)?)?
+        };
         let candidate = if let Some(path) = candidate_path {
             verified_companion(path, candidate)?
         } else {
             helm_ready(candidate)?
         };
+        // Regex respelling is validator policy, never part of the shipped bytes or their identity.
+        let mut validation_baseline = serde_json::from_slice(&baseline)?;
+        helm_schema_core::normalize_schema_pattern_dialects(&mut validation_baseline);
         let profiles = ProfileSchemas::compile(
-            &serde_json::from_slice(&baseline)?,
+            &validation_baseline,
             &serde_json::from_slice(&candidate)?,
             json!({}),
         )?;
@@ -245,8 +292,17 @@ pub(crate) struct LintCoverage {
 #[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
 pub(crate) struct RowEvidence {
     pub(crate) origins: Vec<String>,
-    pub(crate) overlay_sha256: String,
+    pub(crate) canonical_overlay_sha256: String,
+    pub(crate) values_file_sha256: String,
     pub(crate) kubernetes_version: String,
+    pub(crate) contexts: Vec<ContextEvidence>,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Eq, Serialize)]
+pub(crate) struct ContextEvidence {
+    pub(crate) origin: String,
+    pub(crate) overlay: Value,
+    pub(crate) canonical_overlay_sha256: String,
 }
 
 impl LintCoverage {
@@ -281,8 +337,10 @@ impl LintCoverage {
             );
             eyre::ensure!(
                 counts.screened > 0
-                    || (kind == AcceptanceDocument::LintRaw
-                        && counts.not_validated == self.distinct_overlays),
+                    || (matches!(
+                        kind,
+                        AcceptanceDocument::LintRaw | AcceptanceDocument::LintCoalescedTwice
+                    ) && counts.not_validated == self.distinct_overlays),
                 "no {kind:?} documents screened"
             );
         }
@@ -320,12 +378,16 @@ pub(crate) struct ScreenedDocument {
     pub(crate) defaults: Option<Value>,
     pub(crate) kubernetes_version: String,
     pub(crate) origins: Vec<String>,
+    pub(crate) values_file: Vec<u8>,
+    pub(crate) control_overlays: Vec<Value>,
 }
 
 struct OverlayRow {
     overlay: Value,
+    values_file: Vec<u8>,
     kubernetes_version: String,
     origins: Vec<String>,
+    contexts: Vec<ContextEvidence>,
 }
 
 pub(crate) struct LintScreen {
@@ -353,32 +415,7 @@ pub(crate) fn screen(request: &ScreenRequest<'_>) -> eyre::Result<LintScreen> {
         ..LintCoverage::default()
     };
     let inputs = AcceptanceInputs::load(request.chart)?;
-    let probes = inputs.dependency_probes()?;
-    coverage.builtin_rows = probes.len();
-    let mut rows = BTreeMap::<String, OverlayRow>::new();
-    for probe in probes {
-        insert_row(
-            &mut rows,
-            probe.overlay,
-            request.kubernetes_version.to_string(),
-            format!("dependency:{:?}:{:?}", probe.scope, probe.kind),
-        )?;
-    }
-    for row in request.imported {
-        eyre::ensure!(
-            row.chart_sha256 == coverage.chart_sha256
-                && row.baseline_sha256 == coverage.baseline_sha256
-                && row.candidate_sha256 == coverage.candidate_sha256,
-            "context row {} input hashes mismatch",
-            row.id
-        );
-        insert_row(
-            &mut rows,
-            row.overlay.clone(),
-            row.kubernetes_version.clone(),
-            format!("roster:{}", row.id),
-        )?;
-    }
+    let rows = screening_rows(request, &inputs, &mut coverage)?;
     coverage.distinct_overlays = rows.len();
     let mut flips = Vec::new();
     if rows.len() > MAX_OVERLAYS || rows.len().saturating_mul(3) > request.available_probes {
@@ -394,8 +431,10 @@ pub(crate) fn screen(request: &ScreenRequest<'_>) -> eyre::Result<LintScreen> {
         coverage.rows_screened += row.origins.len();
         coverage.rows.push(RowEvidence {
             origins: row.origins.clone(),
-            overlay_sha256: sha256_hex(&serde_json::to_vec(&row.overlay)?),
+            canonical_overlay_sha256: sha256_hex(&serde_json::to_vec(&row.overlay)?),
+            values_file_sha256: sha256_hex(&row.values_file),
             kubernetes_version: row.kubernetes_version.clone(),
+            contexts: row.contexts.clone(),
         });
         for kind in AcceptanceDocument::ALL {
             let counts = coverage.documents.entry(format!("{kind:?}")).or_default();
@@ -420,6 +459,19 @@ pub(crate) fn screen(request: &ScreenRequest<'_>) -> eyre::Result<LintScreen> {
                                 defaults: defaults.get(&kind).cloned().flatten(),
                                 kubernetes_version: row.kubernetes_version.clone(),
                                 origins: row.origins.clone(),
+                                values_file: row.values_file.clone(),
+                                control_overlays: row
+                                    .contexts
+                                    .iter()
+                                    .map(|context| {
+                                        (
+                                            context.canonical_overlay_sha256.clone(),
+                                            context.overlay.clone(),
+                                        )
+                                    })
+                                    .collect::<BTreeMap<_, _>>()
+                                    .into_values()
+                                    .collect(),
                             }),
                         });
                     }
@@ -442,18 +494,67 @@ pub(crate) fn screen(request: &ScreenRequest<'_>) -> eyre::Result<LintScreen> {
     Ok(LintScreen { coverage, flips })
 }
 
+fn screening_rows(
+    request: &ScreenRequest<'_>,
+    inputs: &AcceptanceInputs,
+    coverage: &mut LintCoverage,
+) -> eyre::Result<BTreeMap<String, OverlayRow>> {
+    let probes = inputs.dependency_probes()?;
+    coverage.builtin_rows = probes.len();
+    let mut rows = BTreeMap::<String, OverlayRow>::new();
+    for probe in probes {
+        insert_row(
+            &mut rows,
+            &probe.overlay,
+            serde_json::to_vec(&probe.overlay)?,
+            request.kubernetes_version.to_string(),
+            format!("dependency:{:?}:{:?}", probe.scope, probe.kind),
+            None,
+        )?;
+    }
+    for row in request.imported {
+        eyre::ensure!(
+            row.chart_sha256 == coverage.chart_sha256
+                && row.baseline_sha256 == coverage.baseline_sha256
+                && row.candidate_sha256 == coverage.candidate_sha256,
+            "context row {} input hashes mismatch",
+            row.id
+        );
+        insert_row(
+            &mut rows,
+            &row.overlay,
+            row.values_file.as_bytes().to_vec(),
+            row.kubernetes_version.clone(),
+            format!("roster:{}", row.id),
+            Some(&row.context_overlay),
+        )?;
+    }
+    Ok(rows)
+}
+
 fn insert_row(
     rows: &mut BTreeMap<String, OverlayRow>,
-    overlay: Value,
+    overlay: &Value,
+    values_file: Vec<u8>,
     kubernetes_version: String,
     origin: String,
+    context: Option<&Value>,
 ) -> eyre::Result<()> {
-    let key = serde_json::to_string(&json!([kubernetes_version, overlay]))?;
+    let key = serde_json::to_string(&json!([kubernetes_version, sha256_hex(&values_file)]))?;
     let row = rows.entry(key).or_insert(OverlayRow {
-        overlay,
+        overlay: overlay.clone(),
+        values_file,
         kubernetes_version,
         origins: Vec::new(),
+        contexts: Vec::new(),
     });
+    if let Some(context) = context {
+        row.contexts.push(ContextEvidence {
+            origin: origin.clone(),
+            overlay: context.clone(),
+            canonical_overlay_sha256: sha256_hex(&serde_json::to_vec(context)?),
+        });
+    }
     row.origins.push(origin);
     Ok(())
 }

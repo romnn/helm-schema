@@ -22,6 +22,15 @@ use lint_adjudication::adjudicate_lint_flip;
 #[path = "common/lint_lane_tests.rs"]
 mod lint_lane_tests;
 
+#[path = "common/lint_identity_tests.rs"]
+mod lint_identity_tests;
+
+#[path = "common/lint_completeness_tests.rs"]
+mod lint_completeness_tests;
+
+#[path = "common/lint_applicability_tests.rs"]
+mod lint_applicability_tests;
+
 use helm_schema_test_support::helm::adjudication as helm_adjudication;
 use helm_schema_test_support::helm::invocation as helm_invocation;
 use helm_schema_test_support::{generate, registry};
@@ -116,13 +125,11 @@ impl ProbeCoverageReport {
         eyre::ensure!(charts_checked > 0, "no charts checked");
         for chart in &self.charts {
             validate_probe_coverage(chart)?;
-            let lint = chart.lint.as_ref().ok_or_eyre("lint lane was not run")?;
-            if self.helm_adjudication.enabled {
-                lint.validate_live()?;
-            } else {
-                lint.validate()?;
-            }
         }
+        AcceptanceComparison::validate_lint_coverages(
+            &self.charts,
+            self.helm_adjudication.enabled,
+        )?;
         eprintln!(
             "charts_checked={charts_checked} probes_checked={probes_checked} lint_documents={} lint_flips={}",
             self.charts
@@ -1175,6 +1182,28 @@ struct AcceptanceComparison {
     pool: Option<PoolReport>,
 }
 
+impl AcceptanceComparison {
+    fn validate_lint_completeness(&self, live: bool) -> eyre::Result<()> {
+        Self::validate_lint_coverages(&self.coverage, live)
+    }
+
+    fn validate_lint_coverages(charts: &[ProbeCoverage], live: bool) -> eyre::Result<()> {
+        eyre::ensure!(
+            !charts.is_empty(),
+            "no charts checked for lint completeness"
+        );
+        for chart in charts {
+            let lint = chart.lint.as_ref().ok_or_eyre("lint lane was not run")?;
+            if live {
+                lint.validate_live()?;
+            } else {
+                lint.validate()?;
+            }
+        }
+        Ok(())
+    }
+}
+
 /// What one chart's comparison cost, for the Helm invocation report.
 #[derive(Debug, Serialize)]
 struct ChartCost {
@@ -2099,14 +2128,7 @@ fn round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed() -> eyre:
         charts: coverage,
         helm_adjudication,
     };
-    let report_path = coverage_report_path()?;
-    if let Some(parent) = report_path.parent() {
-        std::fs::create_dir_all(parent).wrap_err_with(|| format!("create {}", parent.display()))?;
-    }
-    let mut bytes = serde_json::to_vec_pretty(&report).wrap_err("serialize probe coverage")?;
-    bytes.push(b'\n');
-    std::fs::write(&report_path, bytes)
-        .wrap_err_with(|| format!("write {}", report_path.display()))?;
+    report.write_and_validate(charts_checked, probes_checked)?;
     eyre::ensure!(
         helm_adjudication_failures.is_empty(),
         "Round 73 Helm adjudication failures:\n{}",
@@ -2244,14 +2266,13 @@ fn external_schema_pair_flips_are_helm_adjudicated() -> eyre::Result<()> {
         std::env::var_os(EXTERNAL_CHART_VAR)
             .ok_or_else(|| eyre::eyre!("{EXTERNAL_CHART_VAR} must name the chart directory"))?,
     );
-    let baseline: serde_json::Value = serde_json::from_str(
-        &std::fs::read_to_string(
-            std::env::var_os(BASELINE_SCHEMA_VAR)
-                .ok_or_else(|| eyre::eyre!("{BASELINE_SCHEMA_VAR} must name a schema"))?,
-        )
-        .wrap_err("read external baseline schema")?,
+    let baseline_bytes = std::fs::read(
+        std::env::var_os(BASELINE_SCHEMA_VAR)
+            .ok_or_else(|| eyre::eyre!("{BASELINE_SCHEMA_VAR} must name a schema"))?,
     )
-    .wrap_err("parse external baseline schema")?;
+    .wrap_err("read external baseline schema")?;
+    let baseline: serde_json::Value =
+        serde_json::from_slice(&baseline_bytes).wrap_err("parse external baseline schema")?;
     let candidate: serde_json::Value = serde_json::from_str(
         &std::fs::read_to_string(
             std::env::var_os(CANDIDATE_SCHEMA_VAR)
@@ -2269,10 +2290,25 @@ fn external_schema_pair_flips_are_helm_adjudicated() -> eyre::Result<()> {
         chart_relative_path: chart.to_string(),
         inputs: ChartInputs::Given {
             baseline,
+            baseline_bytes,
             candidate,
             defaults,
         },
     }])?;
+    validate_external_comparison(&comparison)?;
+    eprintln!(
+        "probes_checked={} flips={}",
+        comparison.probes_checked,
+        comparison.flips.len()
+    );
+    for flip in comparison.flips {
+        eprintln!("ADJUDICATED {flip}");
+    }
+    Ok(())
+}
+
+fn validate_external_comparison(comparison: &AcceptanceComparison) -> eyre::Result<()> {
+    comparison.validate_lint_completeness(true)?;
     for coverage in &comparison.coverage {
         validate_probe_coverage(coverage)?;
     }
@@ -2286,19 +2322,12 @@ fn external_schema_pair_flips_are_helm_adjudicated() -> eyre::Result<()> {
         KNOWN_FALSE_ACCEPTANCES,
         KNOWN_UNDECIDED_ACCEPTANCES,
     )?;
-    eprintln!(
-        "probes_checked={} flips={}",
-        comparison.probes_checked,
-        comparison.flips.len()
-    );
-    for flip in comparison.flips {
-        eprintln!("ADJUDICATED {flip}");
-    }
     Ok(())
 }
 
 fn corpus_acceptance_flips() -> eyre::Result<(usize, usize, Vec<String>, Vec<ProbeCoverage>)> {
     let comparison = corpus_acceptance_comparison()?;
+    comparison.validate_lint_completeness(comparison.helm_adjudication.enabled)?;
     Ok((
         comparison.charts_checked,
         comparison.probes_checked,
@@ -2372,6 +2401,14 @@ fn corpus_acceptance_comparison() -> eyre::Result<AcceptanceComparison> {
 /// The schema passes through the same exact respelling that provider
 /// ingestion now applies, so it accepts the same values and still compiles.
 fn read_schema_at_ref(reference: &str, relative_path: &str) -> eyre::Result<serde_json::Value> {
+    let bytes = read_schema_bytes_at_ref(reference, relative_path)?;
+    let mut schema = serde_json::from_slice(&bytes)
+        .wrap_err_with(|| format!("parse {reference}:{relative_path}"))?;
+    helm_schema_core::normalize_schema_pattern_dialects(&mut schema);
+    Ok(schema)
+}
+
+fn read_schema_bytes_at_ref(reference: &str, relative_path: &str) -> eyre::Result<Vec<u8>> {
     let output = std::process::Command::new("git")
         .args(["show", &format!("{reference}:{relative_path}")])
         .output()
@@ -2381,10 +2418,7 @@ fn read_schema_at_ref(reference: &str, relative_path: &str) -> eyre::Result<serd
         "git show failed for {reference}:{relative_path}: {}",
         String::from_utf8_lossy(&output.stderr)
     );
-    let mut schema = serde_json::from_slice(&output.stdout)
-        .wrap_err_with(|| format!("parse {reference}:{relative_path}"))?;
-    helm_schema_core::normalize_schema_pattern_dialects(&mut schema);
-    Ok(schema)
+    Ok(output.stdout)
 }
 
 /// The producer dump the candidate schemas come from. Every mode requires it:
@@ -2430,9 +2464,17 @@ enum ChartInputs {
     },
     Given {
         baseline: serde_json::Value,
+        baseline_bytes: Vec<u8>,
         candidate: serde_json::Value,
         defaults: serde_json::Value,
     },
+}
+
+struct LoadedInputs {
+    baseline: serde_json::Value,
+    baseline_bytes: Vec<u8>,
+    candidate: serde_json::Value,
+    defaults: serde_json::Value,
 }
 
 /// The whole-chart recipe the registry generates `dump_name` from.
@@ -2462,26 +2504,36 @@ impl ChartInputs {
     }
 
     /// The baseline schema, the candidate schema and the chart's defaults.
-    fn load(
-        self,
-        chart: &str,
-    ) -> eyre::Result<(serde_json::Value, serde_json::Value, serde_json::Value)> {
+    fn load(self, chart: &str) -> eyre::Result<LoadedInputs> {
         match self {
             Self::Fixture {
                 baseline_ref,
                 relative_path,
                 candidate_path,
             } => {
-                let baseline = read_schema_at_ref(&baseline_ref, &relative_path)?;
+                let baseline_bytes = read_schema_bytes_at_ref(&baseline_ref, &relative_path)?;
+                let mut baseline = serde_json::from_slice(&baseline_bytes)?;
+                helm_schema_core::normalize_schema_pattern_dialects(&mut baseline);
                 let candidate = read_acceptance_candidate(&candidate_path)?;
                 let defaults = read_coalesced_defaults(chart)?;
-                Ok((baseline, candidate, defaults))
+                Ok(LoadedInputs {
+                    baseline,
+                    baseline_bytes,
+                    candidate,
+                    defaults,
+                })
             }
             Self::Given {
                 baseline,
+                baseline_bytes,
                 candidate,
                 defaults,
-            } => Ok((baseline, candidate, defaults)),
+            } => Ok(LoadedInputs {
+                baseline,
+                baseline_bytes,
+                candidate,
+                defaults,
+            }),
         }
     }
 }
@@ -2761,11 +2813,21 @@ struct ScreenedProbes {
 impl ScreenedProbes {
     fn append_lint(
         &mut self,
-        lint: lint_probes::LintScreen,
+        lint: eyre::Result<lint_probes::LintScreen>,
         schemas: &LintSchemas,
         coverage: &mut ProbeCoverage,
         adjudicate_live: bool,
     ) {
+        let lint = match lint {
+            Ok(lint) => lint,
+            Err(err) => {
+                coverage.lint = Some(lint_probes::LintCoverage {
+                    failures: vec![err.to_string()],
+                    ..Default::default()
+                });
+                return;
+            }
+        };
         self.probes_checked += lint.coverage.probes();
         for probe in lint.flips {
             if adjudicate_live {
@@ -2859,10 +2921,16 @@ fn screen_chart(
         ChartInputs::Fixture { candidate_path, .. } => Some(candidate_path.clone()),
         ChartInputs::Given { .. } => None,
     };
-    let (baseline, current, defaults) = inputs.load(&chart_relative_path)?;
+    let LoadedInputs {
+        baseline,
+        baseline_bytes,
+        candidate: current,
+        defaults,
+    } = inputs.load(&chart_relative_path)?;
     let profiles = ProfileSchemas::compile(&baseline, &current, defaults.clone())?;
     let lint_compilation = std::time::Instant::now();
-    let lint_schemas = LintSchemas::compile(&baseline, &current, candidate_path.as_deref())?;
+    let lint_schemas =
+        LintSchemas::compile_bytes(&baseline_bytes, &current, candidate_path.as_deref())?;
     let lint_compilation_ms = elapsed_ms(lint_compilation);
     let (probes, mut coverage) = structural_probe_battery_with_coverage(
         &chart_relative_path,
@@ -2906,15 +2974,7 @@ fn screen_chart(
         roster_sha256: roster.map(|roster| roster.sha256.clone()),
         available_probes: harness::MAX_PROBES_PER_CHART.saturating_sub(result.probes_checked),
     });
-    match lint {
-        Ok(lint) => result.append_lint(lint, &lint_schemas, &mut coverage, adjudicate_live),
-        Err(err) => {
-            coverage.lint = Some(lint_probes::LintCoverage {
-                failures: vec![err.to_string()],
-                ..Default::default()
-            });
-        }
-    }
+    result.append_lint(lint, &lint_schemas, &mut coverage, adjudicate_live);
     cost.lint_screening_ms = elapsed_ms(lint_started);
     cost.screening_ms = elapsed_ms(screening);
     let ScreenedProbes {

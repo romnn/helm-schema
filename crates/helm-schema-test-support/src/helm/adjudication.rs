@@ -1075,21 +1075,93 @@ impl OfflineKubernetesValidator {
         self.compare_evaluated_defaults(chart, probe, &defaults)
     }
 
+    /// Judges a probe against every supplied defaults/context render at the same Kubernetes version.
+    /// A violation is new only when it is new against every control, with multiplicity preserved.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when a control did not render, a render cannot be decoded, or no control exists.
+    pub fn compare_with_controls(
+        &self,
+        chart: &PinnedHelmChart,
+        probe: &HelmProbe,
+        controls: &[HelmProbe],
+    ) -> eyre::Result<DefaultsComparison> {
+        let documents = Self::decode_probe(chart, probe)?;
+        let mut comparison: Option<DefaultsComparison> = None;
+        for control in controls {
+            eyre::ensure!(
+                control.rendered.success(),
+                "unusable context render control"
+            );
+            let mut evaluated = Vec::new();
+            for document in Self::decode_probe(chart, control)? {
+                if document.is_null() {
+                    continue;
+                }
+                let mut evidence = ResourceEvidence::default();
+                self.validate_document(&document, "control", &mut evidence);
+                evaluated.push((
+                    document,
+                    evidence
+                        .invalid
+                        .into_iter()
+                        .map(|violation| violation.key)
+                        .collect(),
+                ));
+            }
+            let contextual = self.compare_documents(&documents, &evaluated);
+            let Some(current) = &mut comparison else {
+                comparison = Some(contextual);
+                continue;
+            };
+            let mut unmatched = contextual.new_violations;
+            current.new_violations.retain(|violation| {
+                if let Some(index) = unmatched
+                    .iter()
+                    .position(|other| other.key == violation.key)
+                {
+                    unmatched.remove(index);
+                    true
+                } else {
+                    false
+                }
+            });
+            current
+                .inherited_violations
+                .extend(contextual.inherited_violations);
+            current.uncertain.extend(contextual.uncertain);
+        }
+        comparison.ok_or_eyre("missing defaults/context render control")
+    }
+
+    fn decode_probe(chart: &PinnedHelmChart, probe: &HelmProbe) -> eyre::Result<Vec<Value>> {
+        let decoded = decode(chart.runner, &probe.rendered.stdout, &probe.evidence_dir)?;
+        if let Some(record) = &decoded.record {
+            chart.record(record);
+        }
+        decoded
+            .documents
+            .map_err(|rejection| eyre::eyre!("{rejection}"))
+    }
+
     fn compare_evaluated_defaults(
         &self,
         chart: &PinnedHelmChart,
         probe: &HelmProbe,
         defaults: &[EvaluatedDocument],
     ) -> eyre::Result<DefaultsComparison> {
+        let documents = Self::decode_probe(chart, probe)?;
+        Ok(self.compare_documents(&documents, defaults))
+    }
+
+    fn compare_documents(
+        &self,
+        documents: &[Value],
+        defaults: &[EvaluatedDocument],
+    ) -> DefaultsComparison {
         let mut unpaired: Vec<&(Value, Vec<ViolationKey>)> = defaults.iter().collect();
         let mut changed = ResourceEvidence::default();
-        let decoded = decode(chart.runner, &probe.rendered.stdout, &probe.evidence_dir)?;
-        if let Some(record) = &decoded.record {
-            chart.record(record);
-        }
-        let documents = decoded
-            .documents
-            .map_err(|rejection| eyre::eyre!("{rejection}"))?;
         for (index, document) in documents.iter().enumerate() {
             if document.is_null() {
                 continue;
@@ -1127,7 +1199,7 @@ impl OfflineKubernetesValidator {
                 _ => comparison.new_violations.push(violation),
             }
         }
-        Ok(comparison)
+        comparison
     }
 
     /// The defaults render's documents with their violations, computed once

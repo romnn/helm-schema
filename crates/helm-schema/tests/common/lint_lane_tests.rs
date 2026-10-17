@@ -149,6 +149,7 @@ fn openebs_mayastor_condition_null_distinguishes_both_lint_documents() -> eyre::
 
 fn null_chart() -> eyre::Result<ScratchDir> {
     let chart = ScratchDir::new("lint-null-documents")?;
+    fs::create_dir(chart.path().join("templates"))?;
     fs::write(
         chart.path().join("Chart.yaml"),
         indoc::indoc! {"
@@ -217,6 +218,7 @@ fn null_document_flip_is_retained_even_when_template_has_no_flip() -> eyre::Resu
 }
 
 fn context_row(chart: &Path, schemas: &LintSchemas, overlay: Value) -> eyre::Result<ContextRow> {
+    let values_file = serde_json::to_string(&overlay)?;
     Ok(ContextRow {
         id: "activation".into(),
         chart: "control".into(),
@@ -225,7 +227,11 @@ fn context_row(chart: &Path, schemas: &LintSchemas, overlay: Value) -> eyre::Res
         chart_sha256: tree_sha256(chart)?,
         baseline_sha256: sha256_hex(&schemas.baseline),
         candidate_sha256: sha256_hex(&schemas.candidate),
-        overlay_sha256: sha256_hex(&serde_json::to_vec(&overlay)?),
+        canonical_overlay_sha256: sha256_hex(&serde_json::to_vec(&overlay)?),
+        values_file_sha256: sha256_hex(values_file.as_bytes()),
+        values_file,
+        context_overlay: json!({}),
+        context_overlay_sha256: sha256_hex(b"{}"),
         overlay,
     })
 }
@@ -268,7 +274,7 @@ fn context_roster_rejects_stale_unknown_unsupported_and_duplicate_inputs() -> ey
     fs::write(
         &roster_path,
         serde_json::to_vec(&ContextRoster {
-            version: 1,
+            version: 2,
             rows: vec![row.clone()],
         })?,
     )?;
@@ -295,7 +301,7 @@ fn context_roster_rejects_stale_unknown_unsupported_and_duplicate_inputs() -> ey
         (
             {
                 let mut changed = row.clone();
-                changed.overlay_sha256 = "stale".into();
+                changed.canonical_overlay_sha256 = "stale".into();
                 vec![changed]
             },
             "overlay hash mismatch",
@@ -304,7 +310,7 @@ fn context_roster_rejects_stale_unknown_unsupported_and_duplicate_inputs() -> ey
     ] {
         fs::write(
             &roster_path,
-            serde_json::to_vec(&ContextRoster { version: 1, rows })?,
+            serde_json::to_vec(&ContextRoster { version: 2, rows })?,
         )?;
         let failure = ImportedRoster::read(&roster_path, &selected)
             .err()
@@ -437,9 +443,9 @@ fn real_lint_rejecting_a_renderable_raw_document_is_a_false_rejection() -> eyre:
 }
 
 #[test]
-fn real_schema_free_lint_semantic_error_matches_a_tightening() -> eyre::Result<()> {
+fn inherited_schema_free_parse_error_cannot_match_a_tightening() -> eyre::Result<()> {
     let source = null_chart()?;
-    fs::create_dir(source.path().join("templates"))?;
+    fs::create_dir_all(source.path().join("templates"))?;
     fs::write(
         source.path().join("templates/invalid.yaml"),
         "{{ missingSemanticControlFunction }}",
@@ -473,14 +479,224 @@ fn real_schema_free_lint_semantic_error_matches_a_tightening() -> eyre::Result<(
         cache.path(),
         super::helm_adjudication::KUBERNETES_RELEASE,
     )?;
-    let (verdict, _) = super::adjudicate_lint_flip(
+    let error = super::adjudicate_lint_flip(
         &chart,
         probe,
         probe.document.as_ref().ok_or_eyre("raw document absent")?,
         &schemas,
         &kubernetes,
+    )
+    .err()
+    .ok_or_eyre("inherited parse error certified an unrelated tightening")?;
+    assert!(error.to_string().contains("control"), "{error}");
+    Ok(())
+}
+
+fn raw_flip_error(
+    chart_path: &Path,
+    schemas: &LintSchemas,
+    overlay: &Value,
+) -> eyre::Result<String> {
+    let screened = screen(&ScreenRequest {
+        chart: chart_path,
+        schemas,
+        kubernetes_version: "1.33.0",
+        imported: &[],
+        roster_sha256: None,
+        available_probes: usize::MAX,
+    })?;
+    let probe = screened
+        .flips
+        .iter()
+        .find(|probe| {
+            &probe.overlay == overlay
+                && probe
+                    .document
+                    .as_ref()
+                    .is_some_and(|document| document.kind == AcceptanceDocument::LintRaw)
+        })
+        .ok_or_eyre("raw flip absent")?;
+    let chart =
+        super::PinnedHelmChart::prepare(super::helm_invocation::HelmRunner::shared()?, chart_path)?;
+    let kubernetes = super::OfflineKubernetesValidator::with_crd_catalog(
+        &test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+        &test_util::workspace_testdata().join("provider-bundle/crds-catalog-cache"),
+        super::helm_adjudication::KUBERNETES_RELEASE,
     )?;
-    sim_assert_eq!(have: verdict, want: super::HelmFlipVerdict::TighteningMatchedLintRejection);
+    let error = super::adjudicate_lint_flip(
+        &chart,
+        probe,
+        probe.document.as_ref().ok_or_eyre("raw document absent")?,
+        schemas,
+        &kubernetes,
+    )
+    .err()
+    .ok_or_eyre("unrelated chart failure certified a tightening")?;
+    Ok(error.to_string())
+}
+
+#[test]
+fn inherited_library_template_abort_cannot_match_a_lint_tightening() -> eyre::Result<()> {
+    let schemas = LintSchemas::compile(&json!({}), &json!({"required": ["missing"]}), None)?;
+    let error = raw_flip_error(&corpus_chart("common"), &schemas, &json!({}))?;
+    assert!(error.contains("control"), "{error}");
+    Ok(())
+}
+
+fn write_inherited_filename_error(chart: &Path) -> eyre::Result<()> {
+    fs::create_dir_all(chart.join("templates"))?;
+    fs::write(
+        chart.join("templates/config.json"),
+        indoc::indoc! {"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: fixed-extension-control
+        data:
+          fixed: valid
+    "},
+    )?;
+    Ok(())
+}
+
+#[test]
+fn inherited_lint_filename_error_cannot_match_a_tightening() -> eyre::Result<()> {
+    let source = null_chart()?;
+    write_inherited_filename_error(source.path())?;
+    let schemas = LintSchemas::compile(&json!({}), &json!({"required": ["missing"]}), None)?;
+    let error = raw_flip_error(source.path(), &schemas, &json!({}))?;
+    assert!(error.contains("inherited"), "{error}");
+    Ok(())
+}
+
+#[test]
+fn oauth_activation_stays_a_false_rejection_with_inherited_lint_error() -> eyre::Result<()> {
+    let source = ScratchDir::new("oauth-inherited-lint-control")?;
+    test_util::scratch::copy_tree(&corpus_chart("oauth2-proxy"), source.path())?;
+    write_inherited_filename_error(source.path())?;
+    let error = raw_flip_error(
+        source.path(),
+        &activation_schemas()?,
+        &json!({"redis-ha":{"enabled":true}}),
+    )?;
+    assert!(
+        error.contains("tightening rejects a lint document"),
+        "{error}"
+    );
+    assert!(error.contains("inherited"), "{error}");
+    Ok(())
+}
+
+fn context_probe_verdict(
+    template: &str,
+    context_overlay: Value,
+) -> eyre::Result<Result<super::HelmFlipVerdict, String>> {
+    let source = null_chart()?;
+    fs::write(
+        source.path().join("values.yaml"),
+        "{\"gate\":false,\"payload\":0}",
+    )?;
+    fs::write(source.path().join("templates/config.yaml"), template)?;
+    let schemas = LintSchemas::compile(
+        &json!({}),
+        &json!({"properties":{"payload":{"maximum":0}}}),
+        None,
+    )?;
+    let overlay = json!({"gate":true,"payload":1});
+    let mut row = context_row(source.path(), &schemas, overlay.clone())?;
+    row.context_overlay_sha256 = sha256_hex(&serde_json::to_vec(&context_overlay)?);
+    row.context_overlay = context_overlay;
+    let screened = screen(&ScreenRequest {
+        chart: source.path(),
+        schemas: &schemas,
+        kubernetes_version: "1.29.0",
+        imported: &[row],
+        roster_sha256: None,
+        available_probes: usize::MAX,
+    })?;
+    let probe = screened
+        .flips
+        .iter()
+        .find(|probe| {
+            probe.overlay == overlay
+                && probe
+                    .document
+                    .as_ref()
+                    .is_some_and(|document| document.kind == AcceptanceDocument::LintRaw)
+        })
+        .ok_or_eyre("context raw flip absent")?;
+    let chart = super::PinnedHelmChart::prepare(
+        super::helm_invocation::HelmRunner::shared()?,
+        source.path(),
+    )?;
+    let kubernetes = super::OfflineKubernetesValidator::new(
+        &test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+        super::helm_adjudication::KUBERNETES_RELEASE,
+    )?;
+    Ok(super::adjudicate_lint_flip(
+        &chart,
+        probe,
+        probe
+            .document
+            .as_ref()
+            .ok_or_eyre("context raw document absent")?,
+        &schemas,
+        &kubernetes,
+    )
+    .map(|(verdict, _)| verdict)
+    .map_err(|err| err.to_string()))
+}
+
+#[test]
+fn context_render_abort_cannot_justify_a_payload_tightening() -> eyre::Result<()> {
+    let template = "{{ if .Values.gate }}{{ fail \"activation blocked\" }}{{ end }}";
+    let error = context_probe_verdict(template, json!({"gate":true}))?
+        .err()
+        .ok_or_eyre("unusable context certified a payload tightening")?;
+    assert!(
+        error.contains("unusable defaults/context render control"),
+        "{error}"
+    );
+    sim_assert_eq!(
+        have: context_probe_verdict(template, json!({}))?,
+        want: Ok(super::HelmFlipVerdict::TighteningMatchedHelmAbort)
+    );
+    Ok(())
+}
+
+#[test]
+fn attributable_schema_free_lint_error_matches_a_tightening() -> eyre::Result<()> {
+    sim_assert_eq!(
+        have: context_probe_verdict("{{ if .Values.gate }}invalid scalar manifest{{ end }}", json!({}))?,
+        want: Ok(super::HelmFlipVerdict::TighteningMatchedLintRejection)
+    );
+    Ok(())
+}
+
+#[test]
+fn context_kubernetes_violation_cannot_justify_a_payload_tightening() -> eyre::Result<()> {
+    let template = indoc::indoc! {"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: context-control
+        {{ if .Values.gate }}
+        data: []
+        {{ else }}
+        data: {}
+        {{ end }}
+    "};
+    let error = context_probe_verdict(template, json!({"gate":true}))?
+        .err()
+        .ok_or_eyre("inherited Kubernetes violation certified a payload tightening")?;
+    assert!(
+        error.contains("tightening rejects a lint document"),
+        "{error}"
+    );
+    sim_assert_eq!(
+        have: context_probe_verdict(template, json!({}))?,
+        want: Ok(super::HelmFlipVerdict::TighteningMatchedKubernetesRejection)
+    );
     Ok(())
 }
 
@@ -498,9 +714,9 @@ fn landing_lint_activation_is_screened_and_adjudicated() -> eyre::Result<()> {
     let candidate_path = PathBuf::from(std::env::var_os(super::CANDIDATE_SCHEMA_VAR).ok_or_eyre(
         "SCHEMA_ACCEPTANCE_CANDIDATE_SCHEMA must name the historical candidate schema",
     )?);
-    let baseline: Value = serde_json::from_slice(&fs::read(&baseline_path)?)?;
+    let baseline_bytes = fs::read(&baseline_path)?;
     let candidate: Value = serde_json::from_slice(&fs::read(&candidate_path)?)?;
-    let schemas = LintSchemas::compile(&baseline, &candidate, None)?;
+    let schemas = LintSchemas::compile_bytes(&baseline_bytes, &candidate, None)?;
     let version =
         helm_schema_test_support::helm::kubernetes_version::chart_kubernetes_version(&chart_path)?;
     let started = std::time::Instant::now();
