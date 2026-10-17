@@ -566,6 +566,54 @@ fn inherited_lint_filename_error_cannot_match_a_tightening() -> eyre::Result<()>
     let schemas = LintSchemas::compile(&json!({}), &json!({"required": ["missing"]}), None)?;
     let error = raw_flip_error(source.path(), &schemas, &json!({}))?;
     assert!(error.contains("inherited"), "{error}");
+    assert_portable_control_evidence(&error)?;
+    Ok(())
+}
+
+fn assert_portable_control_evidence(error: &str) -> eyre::Result<()> {
+    let (_, directory) = error
+        .rsplit_once("; evidence=")
+        .ok_or_eyre("no preserved evidence path")?;
+    let directory = Path::new(directory);
+    let verdict: Value =
+        serde_json::from_slice(&fs::read(directory.join("schema-verdicts.json"))?)?;
+    let controls = verdict
+        .get("controls")
+        .and_then(Value::as_array)
+        .ok_or_eyre("no controls in evidence")?;
+    assert!(!controls.is_empty());
+    for control in controls {
+        for field in ["lint_evidence", "render_evidence"] {
+            let relative = Path::new(
+                control
+                    .get(field)
+                    .and_then(Value::as_str)
+                    .ok_or_eyre("control path absent")?,
+            );
+            assert!(!relative.is_absolute());
+            let bundle = directory.join(relative);
+            let mut records = 0;
+            for entry in fs::read_dir(&bundle)? {
+                let path = entry?.path();
+                if !path.to_string_lossy().ends_with(".invocation.json") {
+                    continue;
+                }
+                records += 1;
+                let record: Value = serde_json::from_slice(&fs::read(path)?)?;
+                for input in ["chart", "values"] {
+                    let relative = Path::new(
+                        record
+                            .get(input)
+                            .and_then(Value::as_str)
+                            .ok_or_eyre("control input absent")?,
+                    );
+                    assert!(!relative.is_absolute());
+                    assert!(bundle.join(relative).exists());
+                }
+            }
+            assert!(records > 0);
+        }
+    }
     Ok(())
 }
 

@@ -206,13 +206,11 @@ fn controls(
         let class = classified(&lint.schema_free)?;
         semantic_rejection(&class)?;
         let rendered = chart.adjudicate_file(&bytes, &document.kubernetes_version)?;
-        let directory = evidence_dir.join("controls").join(sha256_hex(&bytes));
+        let directory = PathBuf::from("controls").join(sha256_hex(&bytes));
         let lint_evidence = directory.join("lint");
         let render_evidence = directory.join("render");
-        std::fs::create_dir_all(&lint_evidence)?;
-        std::fs::create_dir_all(&render_evidence)?;
-        copy_execution_evidence(&lint.evidence_dir, &lint_evidence)?;
-        copy_execution_evidence(&rendered.evidence_dir, &render_evidence)?;
+        preserve_control_execution(&lint.evidence_dir, &evidence_dir.join(&lint_evidence))?;
+        preserve_control_execution(&rendered.evidence_dir, &evidence_dir.join(&render_evidence))?;
         evidence["controls"]
             .as_array_mut()
             .ok_or_eyre("controls are not an array")?
@@ -328,6 +326,20 @@ fn copy_execution_evidence(from: &std::path::Path, to: &std::path::Path) -> eyre
             std::fs::copy(entry.path(), to.join(entry.file_name()))?;
         }
     }
+    Ok(())
+}
+
+fn preserve_control_execution(from: &std::path::Path, to: &std::path::Path) -> eyre::Result<()> {
+    std::fs::create_dir_all(to)?;
+    copy_execution_evidence(from, to)?;
+    // The ordinary bundle preserver rewrites top-level invocation records only.
+    // Preserve each control independently before nesting its portable inputs here.
+    let preserved = preserve_failure(to);
+    eyre::ensure!(
+        preserved != to,
+        "could not preserve defaults/context control inputs"
+    );
+    test_util::scratch::copy_tree(&preserved, to)?;
     Ok(())
 }
 
