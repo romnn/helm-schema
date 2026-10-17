@@ -7906,6 +7906,24 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   first, red→green tests, structural fix from tree-sitter ranges + trim markers, gates, moved-fixture classification, Self-
   attack section. It is a fixture-moving candidate and queues behind W4/W1 for landing; both Claude reviewers' roles stay with
   Codex (the other model reviews it). Three cargo-heavy builders now (W4, W1, this). Orchestrator.
+- 20:55 (Oct 17) — **Five Codex runs collected; findings forwarded; second Codex builder started.** (1) W4 pre-review
+  sol (`review-w4-rework15pre-sol.md`): FIX-FIRST — P1 the integral-float normalisation (condition_encoding.rs:1141) also
+  changes `has` membership (Helm 4.2.3 keeps Go int vs float64 apart: `has 1 .Values.v` with v=[1.0] renders) and feeds the
+  encoder's absence decision (:388), so it is not evaluator-only; P2 ContainsMemberEquals(…, Null) encoding requires the member
+  while Helm/evaluator treat missing as nil (:335 vs :1159); P2 integers beyond i64 and 1.0e20. **This revises my 20:23
+  decision 1:** keep Go type semantics for membership/equality, integral-float reading only where the emitted keyword is
+  numeric, abstain where the distinction cannot be encoded. Forwarded to the W4 builder at 20:56; astra's pre-review still
+  running. (2) W1 R48 matrix: DESIGN-FLAWED ×2 (`review-w1-r48matrix-{astra,sol}.md`; astra P1s: provenance merge can
+  resurrect a disproved guarantee, an unproven root-context shortcut, the shared lowering invariant not implemented; P2s:
+  path→provenance map cannot express the selected-arm invariant, identity transport through locals/args/range vars, alphabet on
+  paths instead of output, enum mixes identity with execution facts) — forwarded to the W1 builder with "every matrix row is a
+  test cell or a justified abstention". (3) Battery-gap design: BUILDABLE ×2 (`design-battery-gaps-{astra,sol}.md`; sol's is
+  primary: typed `ScreenedProbe` with document kinds, `LintRaw`/`LintCoalescedTwice` via test-util's CoalesceTables port,
+  `dependency_probes`, `SCHEMA_ACCEPTANCE_CONTEXT_ROSTER`, `adjudicate_lint_flip` with a pinned `helm lint` (1 200 s), changed-
+  guard context probes with bounded witnesses, coverage that fails on omitted changed work). Codex builder astra xhigh
+  workspace_write kept 20261017T185515-78d55437 on PHASE 1 (lint-document lane) in `/Volumes/T7/dev/round8-battery` (branch
+  test/battery-lint-and-context-lanes), brief `round8/brief-battery-lanes-codex.md`; runner changes stay with the
+  orchestrator. Four builders now (two Claude, two Codex), all `uptime`-gated at load 40; load 21 at 20:55. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
