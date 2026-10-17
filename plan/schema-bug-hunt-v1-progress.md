@@ -7882,6 +7882,10 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   where main accepts gets a schema-free `helm template`/`helm lint` cell; conditionals the solver cannot witness are counted
   per artifact and classified structurally, and any NEW restriction among them needs a hand-built Helm cell. Spawning the
   W4 (rework 15 finish) and W1 (R48) replacement builders in parallel. Orchestrator.
+- 20:23 (Oct 17) — **Builders spawned (native Opus subagents, session 5):** W4 from `round8/brief-w4-rework15-resume.md`
+  (finish rework 15 to a FINAL hand-back with final-v17.patch and a Self-attack section; the two decisions above included) and
+  W1 from `round8/brief-w1-rework9-resume.md` (R48 only, then a ≤ 20-line CHECKPOINT for review before any final evidence).
+  Both told not to rebase. Agent ids are session-local and not recorded. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
