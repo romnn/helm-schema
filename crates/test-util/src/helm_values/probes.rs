@@ -89,6 +89,14 @@ impl AcceptanceInputs {
                     activate(&mut ancestors, ancestor, true);
                 }
             }
+            let row_count = control.conditions.len().saturating_mul(3)
+                + usize::from(!control.tags.is_empty()) * 2
+                + 1;
+            if probes.len().saturating_add(row_count) > 8192 {
+                return Err(ValuesError::Unmodelled(
+                    "dependency row cap exceeded: more than 8192 rows".to_string(),
+                ));
+            }
             for PlannedProbe {
                 overlay,
                 kind,

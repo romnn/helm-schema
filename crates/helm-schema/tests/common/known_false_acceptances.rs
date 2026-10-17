@@ -16,11 +16,14 @@
 
 use std::str::FromStr;
 
+use color_eyre::eyre;
 use serde::Serialize;
 
 /// How the render of an accepted document fails.
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
 pub(crate) enum Rejection {
+    /// Schema-free `helm lint` rejects the input semantically.
+    LintRejects,
     /// `helm template` aborts.
     HelmAborts,
     /// Helm renders, and the pinned Kubernetes bundle rejects the render.
@@ -387,6 +390,58 @@ pub(crate) struct KnownFalseAcceptances {
     pub(crate) family: Family,
     pub(crate) probes: &'static [Probe],
 }
+
+/// A schema document's exact values-file context, independent of legacy path classes.
+#[derive(Clone, Copy, Debug)]
+pub(crate) struct ContextSelector {
+    pub(crate) document: test_util::helm_values::AcceptanceDocument,
+    /// Complete JSON object; object key order does not change its identity.
+    pub(crate) overlay: &'static str,
+    pub(crate) transport: ContextTransport,
+    pub(crate) kubernetes_version: &'static str,
+}
+
+/// The supported transport for contextual roster witnesses.
+#[derive(Clone, Copy, Debug, Default)]
+pub(crate) enum ContextTransport {
+    #[default]
+    ValuesFile,
+}
+
+impl ContextSelector {
+    pub(crate) fn case(&self, chart: &str) -> eyre::Result<String> {
+        let overlay: serde_json::Value = serde_json::from_str(self.overlay)?;
+        eyre::ensure!(
+            overlay.is_object(),
+            "context selector overlay is not an object"
+        );
+        eyre::ensure!(
+            !self.kubernetes_version.is_empty(),
+            "context selector has no Kubernetes version"
+        );
+        let transport = match self.transport {
+            ContextTransport::ValuesFile => "values-file",
+        };
+        Ok(format!(
+            "{chart}: document={:?} transport={transport} kube={} overlay={}",
+            self.document,
+            self.kubernetes_version,
+            serde_json::to_string(&overlay)?
+        ))
+    }
+}
+
+/// An explicitly adjudicated contextual false acceptance.
+pub(crate) struct ContextFalseAcceptance {
+    pub(crate) chart: &'static str,
+    pub(crate) selector: ContextSelector,
+    pub(crate) rejection: Rejection,
+    pub(crate) baseline: Baseline,
+    pub(crate) family: Family,
+}
+
+/// Contextual allowances are separate from every legacy path/class row.
+pub(crate) const KNOWN_CONTEXT_FALSE_ACCEPTANCES: &[ContextFalseAcceptance] = &[];
 
 /// The baseline commit every roster row was adjudicated against. A row is
 /// a cell that baseline rejected and the candidate accepts, so the battery

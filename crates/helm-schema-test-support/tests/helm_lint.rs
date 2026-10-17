@@ -88,7 +88,11 @@ fn lint_uses_cli_identity_schema_validation_and_its_own_replay_key() -> eyre::Re
     let staged = runner.staging_dir()?;
     fs::write(
         staged.join("Chart.yaml"),
-        "apiVersion: v2\nname: lint-test\nversion: 1.0.0\n",
+        indoc::indoc! {"
+            apiVersion: v2
+            name: lint-test
+            version: 1.0.0
+        "},
     )?;
     let chart = runner.publish_tree(&staged)?;
     let case = scratch.path().join("case");

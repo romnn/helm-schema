@@ -58,6 +58,33 @@ fn inventory_preserves_aliases_tags_and_undeclared_charts() -> eyre::Result<()> 
 }
 
 #[test]
+fn repeated_conditions_cannot_bypass_the_dependency_work_cap() -> eyre::Result<()> {
+    let scratch = ScratchDir::new("dependency-row-cap")?;
+    std::fs::create_dir_all(scratch.path().join("charts/child"))?;
+    std::fs::write(
+        scratch.path().join("Chart.yaml"),
+        serde_json::to_vec(&json!({
+            "apiVersion": "v2", "name": "root", "version": "1.0.0",
+            "dependencies": [{
+                "name": "child", "version": "1.0.0",
+                "condition": vec!["child.enabled"; 3_000].join(",")
+            }]
+        }))?,
+    )?;
+    std::fs::write(
+        scratch.path().join("charts/child/Chart.yaml"),
+        serde_json::to_vec(&json!({
+            "apiVersion": "v2", "name": "child", "version": "1.0.0"
+        }))?,
+    )?;
+    let inputs = AcceptanceInputs::load(scratch.path())?;
+    assert!(
+        matches!(inputs.dependency_probes(), Err(test_util::helm_values::ValuesError::Unmodelled(reason)) if reason.contains("row cap"))
+    );
+    Ok(())
+}
+
+#[test]
 fn replacement_requirements_and_nested_fallbacks_activate_ancestors() -> eyre::Result<()> {
     let scratch = ScratchDir::new("dependency-controls")?;
     let root = scratch.path();

@@ -7,7 +7,7 @@
 //! must be removed. Rows are adjudicated against the same baseline as the
 //! false-acceptance roster (`ROSTER_BASELINE`).
 
-use crate::known_false_acceptances::Probe;
+use crate::known_false_acceptances::{ContextSelector, Probe};
 
 /// The known accepted cells of one chart that Helm renders and whose
 /// changed resources the pinned evidence cannot decide, for the same
@@ -19,6 +19,15 @@ pub(crate) struct KnownUndecidedAcceptances {
     pub(crate) uncertain: &'static [&'static str],
     pub(crate) probes: &'static [Probe],
 }
+
+/// An exact contextual acceptance left undecided for these ordered reasons.
+pub(crate) struct ContextUndecidedAcceptance {
+    pub(crate) chart: &'static str,
+    pub(crate) selector: ContextSelector,
+    pub(crate) uncertain: &'static [&'static str],
+}
+
+pub(crate) const KNOWN_CONTEXT_UNDECIDED_ACCEPTANCES: &[ContextUndecidedAcceptance] = &[];
 
 pub(crate) const KNOWN_UNDECIDED_ACCEPTANCES: &[KnownUndecidedAcceptances] = &[
     // A truthy `openshift.enabled` adds the `route.openshift.io/v1` Route of

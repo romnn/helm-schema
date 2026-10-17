@@ -35,7 +35,9 @@ use family_witnesses::{
     ObligationExpectation, OracleExpectation, Overrides, PolicyOption, SchemaExpectation,
     SchemaVerdict, SetPair, SetValue, SizeObligation, Witness,
 };
-use known_false_acceptances::{Family, KNOWN_FALSE_ACCEPTANCES, ROSTER_BASELINE};
+use known_false_acceptances::{
+    Family, KNOWN_CONTEXT_FALSE_ACCEPTANCES, KNOWN_FALSE_ACCEPTANCES, ROSTER_BASELINE, Rejection,
+};
 
 /// Schema errors printed beside a failing row.
 const CONTEXT_ERRORS: usize = 5;
@@ -150,6 +152,12 @@ enum Fixture {
 
 #[test]
 fn fixture_verdicts() -> eyre::Result<()> {
+    eyre::ensure!(
+        KNOWN_FALSE_ACCEPTANCES
+            .iter()
+            .all(|group| group.rejection != Rejection::LintRejects),
+        "legacy path/class roster rows cannot identify lint documents; use exact context selectors"
+    );
     let layout = Layout::corpus();
     let run = run_gate(FAMILY_WITNESSES, &layout)?;
     println!("{}", family_report(FAMILY_WITNESSES, &run)?);
@@ -904,12 +912,38 @@ fn family_tallies(catalog: &[FamilyWitnesses], run: &GateRun) -> BTreeMap<Family
     for group in KNOWN_FALSE_ACCEPTANCES {
         tallies.entry(group.family).or_default().roster += group.probes.len();
     }
+    for row in KNOWN_CONTEXT_FALSE_ACCEPTANCES {
+        tallies.entry(row.family).or_default().roster += 1;
+    }
     for conflict in &run.conflicts {
         for family in &conflict.families {
             tallies.entry(*family).or_default().conflicts += 1;
         }
     }
     tallies
+}
+
+fn write_roster_report(report: &mut String) -> eyre::Result<()> {
+    for group in KNOWN_FALSE_ACCEPTANCES {
+        for probe in group.probes {
+            writeln!(
+                report,
+                "roster {:?}: {}: {} <- {} ({:?}, baseline {:?} at {ROSTER_BASELINE})",
+                group.family, group.chart, probe.path, probe.value, group.rejection, group.baseline
+            )?;
+        }
+    }
+    for row in KNOWN_CONTEXT_FALSE_ACCEPTANCES {
+        writeln!(
+            report,
+            "roster {:?}: {} ({:?}, baseline {:?} at {ROSTER_BASELINE})",
+            row.family,
+            row.selector.case(row.chart)?,
+            row.rejection,
+            row.baseline
+        )?;
+    }
+    Ok(())
 }
 
 /// The deterministic per-family report and the campaign metric.
@@ -991,15 +1025,7 @@ fn family_report(catalog: &[FamilyWitnesses], run: &GateRun) -> eyre::Result<Str
             writeln!(report, "unfrozen {:?}: {note}", entry.family)?;
         }
     }
-    for group in KNOWN_FALSE_ACCEPTANCES {
-        for probe in group.probes {
-            writeln!(
-                report,
-                "roster {:?}: {}: {} <- {} ({:?}, baseline {:?} at {ROSTER_BASELINE})",
-                group.family, group.chart, probe.path, probe.value, group.rejection, group.baseline
-            )?;
-        }
-    }
+    write_roster_report(&mut report)?;
     for conflict in &run.conflicts {
         writeln!(
             report,

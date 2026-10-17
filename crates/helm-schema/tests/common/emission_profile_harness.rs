@@ -16,7 +16,7 @@ use vfs::VfsPath;
 
 use crate::helm_adjudication::ViolationKey;
 
-const MAX_PROBES_PER_CHART: usize = 50_000;
+pub(crate) const MAX_PROBES_PER_CHART: usize = 50_000;
 const MAX_THIRD_LEVEL_DELETIONS_PER_CHART: usize = 2_048;
 const MAX_GUARD_STATE_PAIRS_PER_CHART: usize = 8;
 const MAX_GUARD_ARMS_ATTEMPTED_PER_CHART: usize = 24;
@@ -33,6 +33,8 @@ pub(crate) enum GuardSamplingStrategy {
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
 pub(crate) struct ProbeCoverage {
     pub(crate) label: String,
+    #[serde(default)]
+    pub(crate) lint: Option<crate::lint_probes::LintCoverage>,
     pub(crate) base_candidates: usize,
     pub(crate) base_emitted: usize,
     pub(crate) base_dropped: usize,
@@ -253,15 +255,20 @@ impl ProfileSchemas {
     /// behind an old one.
     pub(crate) fn screens_a_flip(&self, probe: &ProbeInstance) -> bool {
         let instance = self.compose(probe);
-        let before = self.full.is_valid(&instance);
-        let after = self.lean.is_valid(&instance);
+        self.screen_document(&instance)
+    }
+
+    /// Screens an already composed document without applying template defaults.
+    pub(crate) fn screen_document(&self, instance: &Value) -> bool {
+        let before = self.full.is_valid(instance);
+        let after = self.lean.is_valid(instance);
         if before != after {
             return true;
         }
         !after
             && rejects_for_a_new_reason(
-                &violations(&self.full, &instance),
-                &violations(&self.lean, &instance),
+                &violations(&self.full, instance),
+                &violations(&self.lean, instance),
             )
     }
 
@@ -304,7 +311,7 @@ impl ProfileSchemas {
         judged.into_iter().collect::<BTreeSet<_>>() == defaults.into_iter().collect()
     }
 
-    fn errors(&self, instance: &Value) -> (Vec<ViolationKey>, Vec<ViolationKey>) {
+    pub(crate) fn errors(&self, instance: &Value) -> (Vec<ViolationKey>, Vec<ViolationKey>) {
         (
             violations(&self.full, instance),
             violations(&self.lean, instance),

@@ -10,6 +10,18 @@ use test_util::scratch::ScratchDir;
 #[path = "common/emission_profile_harness.rs"]
 mod harness;
 
+#[path = "common/lint_probes.rs"]
+mod lint_probes;
+
+use lint_probes::{LintSchemas, ScreenedProbe};
+
+#[path = "common/lint_adjudication.rs"]
+mod lint_adjudication;
+use lint_adjudication::adjudicate_lint_flip;
+
+#[path = "common/lint_lane_tests.rs"]
+mod lint_lane_tests;
+
 use helm_schema_test_support::helm::adjudication as helm_adjudication;
 use helm_schema_test_support::helm::invocation as helm_invocation;
 use helm_schema_test_support::{generate, registry};
@@ -26,10 +38,13 @@ mod known_undecided_acceptances;
 use helm_adjudication::{KubernetesVerdict, OfflineKubernetesValidator, PinnedHelmChart};
 use helm_pool::{PoolLimits, PoolPeaks, run_ordered};
 use known_false_acceptances::{
-    Baseline, Family, KNOWN_FALSE_ACCEPTANCES, KnownFalseAcceptances, Probe, ROSTER_BASELINE,
-    Rejection,
+    Baseline, ContextFalseAcceptance, Family, KNOWN_CONTEXT_FALSE_ACCEPTANCES,
+    KNOWN_FALSE_ACCEPTANCES, KnownFalseAcceptances, Probe, ROSTER_BASELINE, Rejection,
 };
-use known_undecided_acceptances::{KNOWN_UNDECIDED_ACCEPTANCES, KnownUndecidedAcceptances};
+use known_undecided_acceptances::{
+    ContextUndecidedAcceptance, KNOWN_CONTEXT_UNDECIDED_ACCEPTANCES, KNOWN_UNDECIDED_ACCEPTANCES,
+    KnownUndecidedAcceptances,
+};
 
 use harness::{
     ContractVerdict, ControlCategory, GuardSamplingStrategy, HelmChartDir, ProbeCoverage,
@@ -87,6 +102,45 @@ struct ProbeCoverageReport {
     helm_adjudication: HelmAdjudicationCoverage,
 }
 
+impl ProbeCoverageReport {
+    fn write_and_validate(&self, charts_checked: usize, probes_checked: usize) -> eyre::Result<()> {
+        let report_path = coverage_report_path()?;
+        if let Some(parent) = report_path.parent() {
+            std::fs::create_dir_all(parent)
+                .wrap_err_with(|| format!("create {}", parent.display()))?;
+        }
+        let mut bytes = serde_json::to_vec_pretty(self).wrap_err("serialize probe coverage")?;
+        bytes.push(b'\n');
+        std::fs::write(&report_path, bytes)
+            .wrap_err_with(|| format!("write {}", report_path.display()))?;
+        eyre::ensure!(charts_checked > 0, "no charts checked");
+        for chart in &self.charts {
+            validate_probe_coverage(chart)?;
+            let lint = chart.lint.as_ref().ok_or_eyre("lint lane was not run")?;
+            if self.helm_adjudication.enabled {
+                lint.validate_live()?;
+            } else {
+                lint.validate()?;
+            }
+        }
+        eprintln!(
+            "charts_checked={charts_checked} probes_checked={probes_checked} lint_documents={} lint_flips={}",
+            self.charts
+                .iter()
+                .filter_map(|chart| chart.lint.as_ref())
+                .map(lint_probes::LintCoverage::probes)
+                .sum::<usize>(),
+            self.charts
+                .iter()
+                .filter_map(|chart| chart.lint.as_ref())
+                .flat_map(|lint| lint.documents.values())
+                .map(|counts| counts.flips)
+                .sum::<usize>()
+        );
+        Ok(())
+    }
+}
+
 // A non-zero allowance must land before the live run whose widening relies on it.
 const PREREGISTERED_ACCEPTANCE_FLIP_ALLOWANCE: usize = 0;
 
@@ -142,6 +196,8 @@ struct HelmAdjudicationCoverage {
     screened_flips_collapsed: usize,
     flips_adjudicated: usize,
     tightenings_matched_helm_abort: usize,
+    tightenings_matched_lint_rejection: usize,
+    loosenings_matched_lint_validation: usize,
     tightenings_matched_kubernetes_rejection: usize,
     loosenings_matched_kubernetes_validation: usize,
     loosenings_matched_defaults_violations: usize,
@@ -152,6 +208,9 @@ struct HelmAdjudicationCoverage {
     /// Accepted cells Helm renders whose changed resources Kubernetes cannot
     /// decide.
     loosenings_with_uncertain_kubernetes: Vec<ObservedUndecidedAcceptance>,
+    /// Exact contextual identities actually examined by live adjudication.
+    #[serde(skip)]
+    examined_contexts: std::collections::BTreeSet<String>,
     /// Labels of the charts whose flips were adjudicated live.
     charts_adjudicated: std::collections::BTreeSet<String>,
     /// Accepted cells Helm or Kubernetes reject.
@@ -197,6 +256,23 @@ impl HelmAdjudicationCoverage {
             HelmFlipVerdict::Collapsed => {
                 self.screened_flips_collapsed += 1;
                 return None;
+            }
+            HelmFlipVerdict::TighteningMatchedLintRejection => {
+                self.tightenings_matched_lint_rejection += 1;
+                false
+            }
+            HelmFlipVerdict::LooseningMatchedLintValidation => {
+                self.loosenings_matched_lint_validation += 1;
+                true
+            }
+            HelmFlipVerdict::CandidateAcceptsLintRejects => {
+                self.false_acceptances.push(ObservedFalseAcceptance {
+                    case,
+                    rejection: Rejection::LintRejects,
+                    baseline: Baseline::RejectsUnlikeItsDefaults,
+                    evidence: evidence.clone(),
+                });
+                true
             }
             HelmFlipVerdict::TighteningMatchedHelmAbort => {
                 self.tightenings_matched_helm_abort += 1;
@@ -325,9 +401,34 @@ fn validate_helm_adjudication_coverage(
     roster: &[KnownFalseAcceptances],
     undecided_roster: &[KnownUndecidedAcceptances],
 ) -> eyre::Result<()> {
+    validate_helm_adjudication_coverage_with_contexts(
+        coverage,
+        roster,
+        undecided_roster,
+        KNOWN_CONTEXT_FALSE_ACCEPTANCES,
+        KNOWN_CONTEXT_UNDECIDED_ACCEPTANCES,
+    )
+}
+
+fn validate_helm_adjudication_coverage_with_contexts(
+    coverage: &HelmAdjudicationCoverage,
+    roster: &[KnownFalseAcceptances],
+    undecided_roster: &[KnownUndecidedAcceptances],
+    contextual_false: &[ContextFalseAcceptance],
+    contextual_undecided: &[ContextUndecidedAcceptance],
+) -> eyre::Result<()> {
     let mut problems = Vec::new();
+    if coverage.enabled
+        && coverage.screened_flips != coverage.flips_adjudicated + coverage.screened_flips_collapsed
+    {
+        problems.push(format!(
+            "screened flip outcome accounting mismatch: {coverage:?}"
+        ));
+    }
     if coverage.flips_adjudicated
-        != coverage.tightenings_matched_helm_abort
+        != coverage.tightenings_matched_lint_rejection
+            + coverage.loosenings_matched_lint_validation
+            + coverage.tightenings_matched_helm_abort
             + coverage.tightenings_matched_kubernetes_rejection
             + coverage.tightenings_attributed_to_declared_types.len()
             + coverage.loosenings_matched_kubernetes_validation
@@ -343,7 +444,8 @@ fn validate_helm_adjudication_coverage(
     for observed in &coverage.loosenings_with_uncertain_kubernetes {
         let listed = undecided_roster
             .iter()
-            .any(|group| group.lists(&observed.case, &observed.uncertain));
+            .any(|group| group.lists(&observed.case, &observed.uncertain))
+            || context_undecided_lists(contextual_undecided, observed)?;
         if !listed {
             unlisted_undecided.push(format!(
                 "{} ({:?}){}",
@@ -363,7 +465,8 @@ fn validate_helm_adjudication_coverage(
     for observed in &coverage.false_acceptances {
         let listed = roster
             .iter()
-            .any(|group| group.lists(&observed.case, observed.rejection, observed.baseline));
+            .any(|group| group.lists(&observed.case, observed.rejection, observed.baseline))
+            || context_false_lists(contextual_false, observed)?;
         if !listed {
             unlisted.push(format!(
                 "{} ({:?}, {:?}){}",
@@ -400,6 +503,11 @@ fn validate_helm_adjudication_coverage(
             }
         }
     }
+    fixed.extend(context_rows_not_observed(
+        coverage,
+        contextual_false,
+        contextual_undecided,
+    )?);
     if !fixed.is_empty() {
         problems.push(format!(
             "roster entries that no longer fail alike; remove or re-adjudicate them: {fixed:?}"
@@ -407,6 +515,72 @@ fn validate_helm_adjudication_coverage(
     }
     eyre::ensure!(problems.is_empty(), "{}", problems.join("\n"));
     Ok(())
+}
+
+fn context_false_lists(
+    rows: &[ContextFalseAcceptance],
+    observed: &ObservedFalseAcceptance,
+) -> eyre::Result<bool> {
+    for row in rows {
+        if row.selector.case(row.chart)? == observed.case
+            && row.rejection == observed.rejection
+            && row.baseline == observed.baseline
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
+fn context_undecided_lists(
+    rows: &[ContextUndecidedAcceptance],
+    observed: &ObservedUndecidedAcceptance,
+) -> eyre::Result<bool> {
+    for row in rows {
+        if row.selector.case(row.chart)? == observed.case
+            && row.uncertain == observed.uncertain.as_slice()
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
+fn context_rows_not_observed(
+    coverage: &HelmAdjudicationCoverage,
+    contextual_false: &[ContextFalseAcceptance],
+    contextual_undecided: &[ContextUndecidedAcceptance],
+) -> eyre::Result<Vec<String>> {
+    let mut fixed = Vec::new();
+    for row in contextual_false {
+        let case = row.selector.case(row.chart)?;
+        if coverage.examined_contexts.contains(&case)
+            && !coverage.false_acceptances.iter().any(|observed| {
+                observed.case == case
+                    && observed.rejection == row.rejection
+                    && observed.baseline == row.baseline
+            })
+        {
+            fixed.push(format!(
+                "{case} ({:?}, {:?}, {:?})",
+                row.rejection, row.baseline, row.family
+            ));
+        }
+    }
+    for row in contextual_undecided {
+        let case = row.selector.case(row.chart)?;
+        if coverage.examined_contexts.contains(&case)
+            && !coverage
+                .loosenings_with_uncertain_kubernetes
+                .iter()
+                .any(|observed| {
+                    observed.case == case && observed.uncertain.as_slice() == row.uncertain
+                })
+        {
+            fixed.push(format!("{case} (undecided: {:?})", row.uncertain));
+        }
+    }
+    Ok(fixed)
 }
 
 #[test]
@@ -710,6 +884,7 @@ fn helm_adjudication_records_each_outcome_once() {
         "enabled": false, "screening_is_exact": false, "screened_flips": 0,
         "screened_flips_collapsed": 1, "flips_adjudicated": 9,
         "tightenings_matched_helm_abort": 1, "tightenings_matched_kubernetes_rejection": 1,
+        "tightenings_matched_lint_rejection": 0, "loosenings_matched_lint_validation": 0,
         "loosenings_matched_kubernetes_validation": 1,
         "loosenings_matched_defaults_violations": 1,
         "tightenings_attributed_to_declared_types": ["case"],
@@ -1007,6 +1182,8 @@ struct ChartCost {
     /// Reading both schemas, compiling them and generating the probe battery.
     context_ms: u64,
     screening_ms: u64,
+    lint_screening_ms: u64,
+    lint_compilation_ms: u64,
     preparation_ms: u64,
     /// Helm executions and Kubernetes judgement of every screened flip.
     adjudication_ms: u64,
@@ -1916,9 +2093,6 @@ fn round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed() -> eyre:
         costs: _,
         pool: _,
     } = corpus_acceptance_comparison()?;
-    for chart in &coverage {
-        validate_probe_coverage(chart)?;
-    }
     let baseline_ref = baseline_ref()?;
     let report = ProbeCoverageReport {
         baseline_ref,
@@ -2004,23 +2178,13 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
         pool,
     } = corpus_acceptance_comparison()?;
     write_invocation_report(&costs, pool.as_ref())?;
-    for chart in &coverage {
-        validate_probe_coverage(chart)?;
-    }
     let baseline_ref = baseline_ref()?;
     let report = ProbeCoverageReport {
         baseline_ref,
         charts: coverage,
         helm_adjudication,
     };
-    let report_path = coverage_report_path()?;
-    if let Some(parent) = report_path.parent() {
-        std::fs::create_dir_all(parent).wrap_err_with(|| format!("create {}", parent.display()))?;
-    }
-    let mut bytes = serde_json::to_vec_pretty(&report).wrap_err("serialize probe coverage")?;
-    bytes.push(b'\n');
-    std::fs::write(&report_path, bytes)
-        .wrap_err_with(|| format!("write {}", report_path.display()))?;
+    report.write_and_validate(charts_checked, probes_checked)?;
     eyre::ensure!(
         helm_adjudication_failures.is_empty(),
         "Round 74 Helm adjudication failures:\n{}",
@@ -2329,7 +2493,8 @@ struct LiveChart {
     path: std::path::PathBuf,
     profiles: ProfileSchemas,
     /// Each screened probe's name and Helm values file, in probe order.
-    flips: Vec<(String, serde_json::Value)>,
+    flips: Vec<ScreenedProbe>,
+    lint_schemas: LintSchemas,
     helm: std::sync::Arc<ChartHelm>,
     /// The chart under `--declared-types=annotate`, when a registry recipe
     /// generates the candidate.
@@ -2400,6 +2565,7 @@ struct ScreenedChart {
 
 struct AdjudicatedProbe {
     case: String,
+    document_kind: Option<test_util::helm_values::AcceptanceDocument>,
     outcome: Result<(HelmFlipVerdict, std::path::PathBuf), String>,
     adjudication_ms: u64,
 }
@@ -2407,6 +2573,14 @@ struct AdjudicatedProbe {
 /// Screens every chart and adjudicates every screened flip on the pool,
 /// then folds the outcomes in chart and probe order.
 fn compare_charts(charts: Vec<ComparedChart>) -> eyre::Result<AcceptanceComparison> {
+    eyre::ensure!(
+        !charts.is_empty(),
+        "no charts selected for acceptance screening"
+    );
+    let selected = charts.iter().map(|chart| chart.label.clone()).collect();
+    let roster = std::env::var_os(lint_probes::CONTEXT_ROSTER_VAR)
+        .map(|path| lint_probes::ImportedRoster::read(std::path::Path::new(&path), &selected))
+        .transpose()?;
     let adjudicate_live = adjudicates_live();
     let limits = PoolLimits::from_env()?;
     // Custom resources are judged by the CRD schemas pinned beside the bundle.
@@ -2438,7 +2612,8 @@ fn compare_charts(charts: Vec<ComparedChart>) -> eyre::Result<AcceptanceComparis
         },
         |(chart_index, _), job, submitter| match job {
             AcceptanceJob::Chart(chart) => {
-                let (screened, live) = match screen_chart(*chart, adjudicate_live) {
+                let (screened, live) = match screen_chart(*chart, adjudicate_live, roster.as_ref())
+                {
                     Ok(screened) => screened,
                     Err(error) => return AcceptanceResult::Chart(Err(error)),
                 };
@@ -2506,6 +2681,25 @@ fn fold_results(
                 helm_charts.push(screened.helm);
             }
             AcceptanceResult::Probe(probe) => {
+                if probe.document_kind.is_some() {
+                    comparison
+                        .helm_adjudication
+                        .examined_contexts
+                        .insert(probe.case.clone());
+                }
+                if let Some(kind) = probe.document_kind
+                    && let Some(lint) = comparison
+                        .coverage
+                        .last_mut()
+                        .and_then(|chart| chart.lint.as_mut())
+                    && let Some(counts) = lint.documents.get_mut(&format!("{kind:?}"))
+                {
+                    if probe.outcome.is_ok() {
+                        counts.adjudicated += 1;
+                    } else {
+                        counts.adjudication_failures += 1;
+                    }
+                }
                 if let Some(cost) = comparison.costs.last_mut() {
                     cost.adjudication_ms += probe.adjudication_ms;
                 }
@@ -2557,38 +2751,46 @@ struct PoolReport {
     wall_ms: u64,
 }
 
-/// Compiles both profiles, generates the chart's probe battery and screens
-/// it, returning the screened flips for Helm when `adjudicate_live`.
-fn screen_chart(
-    chart: ComparedChart,
+struct ScreenedProbes {
+    probes_checked: usize,
+    flips: Vec<String>,
+    failures: Vec<String>,
+    screened: Vec<ScreenedProbe>,
+}
+
+impl ScreenedProbes {
+    fn append_lint(
+        &mut self,
+        lint: lint_probes::LintScreen,
+        schemas: &LintSchemas,
+        coverage: &mut ProbeCoverage,
+        adjudicate_live: bool,
+    ) {
+        self.probes_checked += lint.coverage.probes();
+        for probe in lint.flips {
+            if adjudicate_live {
+                self.screened.push(probe);
+            } else if let Some(document) = probe.document {
+                let (before, after) = schemas.profiles.document_verdicts(&document.values);
+                self.flips.push(format!(
+                    "{}: {}: before={before}, after={after}",
+                    coverage.label, probe.name
+                ));
+            }
+        }
+        coverage.lint = Some(lint.coverage);
+    }
+}
+
+fn screen_template_probes(
+    chart_dir: &std::path::Path,
+    profiles: &ProfileSchemas,
+    defaults: &serde_json::Value,
+    probes: Vec<(String, ProbeInstance)>,
+    coverage: &mut ProbeCoverage,
     adjudicate_live: bool,
-) -> eyre::Result<(ScreenedChart, Option<LiveChart>)> {
-    let started = std::time::Instant::now();
-    let ComparedChart {
-        label,
-        chart_relative_path,
-        inputs,
-    } = chart;
-    let annotation = inputs.declared_types_annotation();
-    let (baseline, current, defaults) = inputs.load(&chart_relative_path)?;
-    let profiles = ProfileSchemas::compile(&baseline, &current, defaults.clone())?;
-    let (probes, mut coverage) = structural_probe_battery_with_coverage(
-        &chart_relative_path,
-        &defaults,
-        &[&baseline, &current],
-    )?;
-    coverage.label = label.clone();
-    let chart_dir = HelmChartDir::stage(&chart_relative_path)?;
-    let mut cost = ChartCost {
-        label: label.clone(),
-        context_ms: elapsed_ms(started),
-        screening_ms: 0,
-        preparation_ms: 0,
-        adjudication_ms: 0,
-        prepared_trees: None,
-        helm: std::collections::BTreeMap::new(),
-    };
-    let screening = std::time::Instant::now();
+) -> ScreenedProbes {
+    let label = &coverage.label;
     let probes_checked = probes.len();
     let mut flips = Vec::new();
     let mut failures = Vec::new();
@@ -2597,7 +2799,7 @@ fn screen_chart(
         if matches!(probe, ProbeInstance::Coalesced(_)) {
             coverage.composed_probes += 1;
         }
-        let (overlay, probe) = match probe.helm_values_file(chart_dir.path(), &defaults) {
+        let (overlay, probe) = match probe.helm_values_file(chart_dir, defaults) {
             Ok(ProbeValuesFile::Reachable(overlay)) => (overlay, probe),
             Ok(ProbeValuesFile::ReachableAs { values, document }) => {
                 (values, ProbeInstance::Coalesced(document))
@@ -2619,7 +2821,11 @@ fn screen_chart(
         }
         if adjudicate_live {
             // Screening proposes an overlay; only Helm can establish its coalesced document.
-            screened.push((probe_name, overlay));
+            screened.push(ScreenedProbe {
+                name: probe_name,
+                overlay,
+                document: None,
+            });
         } else {
             let (before, after) = profiles.verdicts(&probe);
             flips.push(format!(
@@ -2627,7 +2833,96 @@ fn screen_chart(
             ));
         }
     }
+    ScreenedProbes {
+        probes_checked,
+        flips,
+        failures,
+        screened,
+    }
+}
+
+/// Compiles both profiles, generates the chart's probe battery and screens
+/// it, returning the screened flips for Helm when `adjudicate_live`.
+fn screen_chart(
+    chart: ComparedChart,
+    adjudicate_live: bool,
+    roster: Option<&lint_probes::ImportedRoster>,
+) -> eyre::Result<(ScreenedChart, Option<LiveChart>)> {
+    let started = std::time::Instant::now();
+    let ComparedChart {
+        label,
+        chart_relative_path,
+        inputs,
+    } = chart;
+    let annotation = inputs.declared_types_annotation();
+    let candidate_path = match &inputs {
+        ChartInputs::Fixture { candidate_path, .. } => Some(candidate_path.clone()),
+        ChartInputs::Given { .. } => None,
+    };
+    let (baseline, current, defaults) = inputs.load(&chart_relative_path)?;
+    let profiles = ProfileSchemas::compile(&baseline, &current, defaults.clone())?;
+    let lint_compilation = std::time::Instant::now();
+    let lint_schemas = LintSchemas::compile(&baseline, &current, candidate_path.as_deref())?;
+    let lint_compilation_ms = elapsed_ms(lint_compilation);
+    let (probes, mut coverage) = structural_probe_battery_with_coverage(
+        &chart_relative_path,
+        &defaults,
+        &[&baseline, &current],
+    )?;
+    coverage.label = label.clone();
+    let chart_dir = HelmChartDir::stage(&chart_relative_path)?;
+    let mut cost = ChartCost {
+        label: label.clone(),
+        context_ms: elapsed_ms(started),
+        screening_ms: 0,
+        lint_screening_ms: 0,
+        lint_compilation_ms,
+        preparation_ms: 0,
+        adjudication_ms: 0,
+        prepared_trees: None,
+        helm: std::collections::BTreeMap::new(),
+    };
+    let screening = std::time::Instant::now();
+    let mut result = screen_template_probes(
+        chart_dir.path(),
+        &profiles,
+        &defaults,
+        probes,
+        &mut coverage,
+        adjudicate_live,
+    );
+    let lint_started = std::time::Instant::now();
+    let version = helm_schema_test_support::helm::kubernetes_version::chart_kubernetes_version(
+        chart_dir.path(),
+    )?;
+    let imported = roster
+        .and_then(|roster| roster.rows.get(&label))
+        .map_or(&[][..], Vec::as_slice);
+    let lint = lint_probes::screen(&lint_probes::ScreenRequest {
+        chart: chart_dir.path(),
+        schemas: &lint_schemas,
+        kubernetes_version: version,
+        imported,
+        roster_sha256: roster.map(|roster| roster.sha256.clone()),
+        available_probes: harness::MAX_PROBES_PER_CHART.saturating_sub(result.probes_checked),
+    });
+    match lint {
+        Ok(lint) => result.append_lint(lint, &lint_schemas, &mut coverage, adjudicate_live),
+        Err(err) => {
+            coverage.lint = Some(lint_probes::LintCoverage {
+                failures: vec![err.to_string()],
+                ..Default::default()
+            });
+        }
+    }
+    cost.lint_screening_ms = elapsed_ms(lint_started);
     cost.screening_ms = elapsed_ms(screening);
+    let ScreenedProbes {
+        probes_checked,
+        flips,
+        failures,
+        screened,
+    } = result;
     let live = (!screened.is_empty()).then(|| LiveChart {
         label: label.clone(),
         path: test_util::workspace_testdata()
@@ -2635,6 +2930,7 @@ fn screen_chart(
             .join(&chart_relative_path),
         profiles,
         flips: screened,
+        lint_schemas,
         helm: std::sync::Arc::default(),
         annotation,
     });
@@ -2658,28 +2954,37 @@ fn adjudicate_probe(
     kubernetes: Option<&OfflineKubernetesValidator>,
 ) -> AdjudicatedProbe {
     let started = std::time::Instant::now();
-    let Some((probe_name, overlay)) = live.flips.get(flip) else {
+    let Some(probe) = live.flips.get(flip) else {
         return AdjudicatedProbe {
             case: format!("{}: flip {flip}", live.label),
+            document_kind: None,
             outcome: Err(format!("{}: no screened flip {flip}", live.label)),
             adjudication_ms: 0,
         };
     };
-    let case = format!("{}: {probe_name}", live.label);
+    let case = format!("{}: {}", live.label, probe.name);
     let outcome = match (live.helm.chart(&live.path), kubernetes) {
         (Err(error), _) => Err(format!("{case}: {error}")),
         (Ok(_), None) => Err(format!("{case}: no Kubernetes validator")),
-        (Ok(chart), Some(kubernetes)) => adjudicate_flip(
-            chart,
-            overlay,
-            &live.profiles,
-            kubernetes,
-            live.annotation.as_ref(),
-        )
-        .map_err(|error| format!("{case}: {error}")),
+        (Ok(chart), Some(kubernetes)) => {
+            let outcome = match &probe.document {
+                Some(document) => {
+                    adjudicate_lint_flip(chart, probe, document, &live.lint_schemas, kubernetes)
+                }
+                None => adjudicate_flip(
+                    chart,
+                    &probe.overlay,
+                    &live.profiles,
+                    kubernetes,
+                    live.annotation.as_ref(),
+                ),
+            };
+            outcome.map_err(|error| format!("{case}: {error}"))
+        }
     };
     AdjudicatedProbe {
         case,
+        document_kind: probe.document.as_ref().map(|document| document.kind),
         outcome,
         adjudication_ms: elapsed_ms(started),
     }
@@ -2692,6 +2997,9 @@ fn elapsed_ms(started: std::time::Instant) -> u64 {
 #[derive(Clone, Debug, PartialEq, Eq)]
 enum HelmFlipVerdict {
     Collapsed,
+    TighteningMatchedLintRejection,
+    LooseningMatchedLintValidation,
+    CandidateAcceptsLintRejects,
     TighteningMatchedHelmAbort,
     TighteningMatchedKubernetesRejection,
     /// Helm renders and Kubernetes proves no new violation, but the
