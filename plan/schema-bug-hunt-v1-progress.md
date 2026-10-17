@@ -7924,6 +7924,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   workspace_write kept 20261017T185515-78d55437 on PHASE 1 (lint-document lane) in `/Volumes/T7/dev/round8-battery` (branch
   test/battery-lint-and-context-lanes), brief `round8/brief-battery-lanes-codex.md`; runner changes stay with the
   orchestrator. Four builders now (two Claude, two Codex), all `uptime`-gated at load 40; load 21 at 20:55. Orchestrator.
+- 21:21 (Oct 17) — **astra's W4 pre-review = FIX-FIRST (`review-w4-rework15pre-astra.md`, on e050b8ae + dump-r15b): two
+  NEW corpus false rejections from the R68/R70 declared-sample mechanism**, both Helm-verified (schema-free lint+template pass,
+  main and pre-R68 accept): consul `client.enabled: true, extraEnvironmentVars: []` rejected at /allOf/320/then/…/type
+  (resolve_policy.rs:1157; helper _helpers.tpl:344 skips the empty list) and jenkins `controller.ingress.enabled: true,
+  servicePort: "8080"` rejected at /allOf/125/then/…/type (resolve_policy.rs:1207; port emitted unquoted). P2: an empty
+  positive window at extreme bounds falls into `Excluding(...)` (condition_encoding.rs:615; `"x"` vs IntGt i64::MAX reads
+  true, Helm false); integers beyond i64 / 1e20 and null-member equality (= sol's P2s). Forwarded 21:22 with the instruction
+  to treat "the declared sample narrows a then-branch below main's domain" as a CLASS (witness-prober search, fix at the merge,
+  consul + jenkins chart tests). The builder had already committed ad774606 (integer-literal equality abstains, null members,
+  integer domain) for sol's items. The pre-review paid for itself: these would otherwise have surfaced only after the final
+  hand-back's review round. Heartbeat 21:21: load 8, T7 156 GB free; W1 working (23 modified files); battery builder 2
+  commits (dependency controls, pinned lint adjudication); defblock builder working. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
