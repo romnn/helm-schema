@@ -94,17 +94,25 @@ live run it covers.
   required whether or not Helm adjudicates; without it the battery fails
   immediately, before reading any schema. The committed fixtures are never a
   candidate. Run one clean producer run of the final build:
-  `cargo run -p helm-schema-test-support --bin corpus_generation -- --out <dump>`
+  `cargo run -p helm-schema-test-support --bin corpus_generation -- --out <dump> --helm-ready`
   (`--jobs <n>` overrides the host-sized default).
   It writes `helm-schema.cli.chart-corpus.<chart>.schema.json` and
   `helm-schema.emission-profile.lean.<chart>.schema.json` flat into `<dump>`,
   which is exactly what the battery reads. See `corpus-fixtures`. Never mix
   dumps from different builds.
+- **Producer manifest and Helm-ready companion (every mode).** Produce with
+  `--helm-ready` and retain `manifest.json` and its companion paths.
+  The lint lane verifies artifact sizes and hashes and checks that the companion
+  equals the candidate's Helm-ready spelling, without rerunning inference.
+  Lean controls have no shipped companion and use the equivalent spelling directly.
 - **Helm engine (live only).** Run `task build:helmsweep`, which needs the
   pinned Go through mise and writes `helmsweep` into the cargo target
   directory. Alternatively set `HELM_SCHEMA_HELMSWEEP=<path>`, or use
   `SCHEMA_HELM_ENGINE=cli` with Helm v4.2.3 on `PATH`, which is slower. The
   runner refuses any other Helm build.
+  Live lint also requires the pinned Helm v4.2.3 CLI on `PATH`, including when
+  rendering uses helmsweep.
+  Lint has a separate 1,200-second timeout; timeouts and unknown diagnostics fail.
 - **Room under the cargo target directory.** Evidence and Helm roots live in
   `<target>/scratch/<crate>/<label>-<pid>-<nonce>-<n>` (`crates/test-util/src/scratch.rs`)
   and are swept after the run's process exits, by the next test process;
@@ -137,9 +145,9 @@ SCHEMA_ACCEPTANCE_ALLOW_MATCHED_FLIPS=1 ADJUDICATE_WITH_HELM=1 \
 "${BATTERY[@]}" > "$RUN/battery-<chart>.log" 2>&1; echo "battery exit $?"
 ```
 
-To iterate on the code, `corpus_generation --out <scratch> --only chart/<chart>`
-regenerates just that chart's artifact. The battery reads dump files by name
-and needs no manifest. The final evidence must still come from the one clean
+To iterate on the code, `corpus_generation --out <scratch> --only chart/<chart> --helm-ready`
+regenerates just that chart's artifact. The lint lane verifies candidate bytes and the Helm-ready companion against the
+producer manifest; keep the manifest and companion paths with the dump. The final evidence must still come from the one clean
 full dump.
 
 **2. Full live run.** Use the same command without `SCHEMA_ACCEPTANCE_CHART`.
@@ -177,6 +185,57 @@ free cores on a shared machine. Size the memory to what Helm children may use
 without swapping. Raise workers only if the invocation report shows the
 memory peak well under budget. Lower both when the host is loaded or other
 heavy jobs share it. The values change only speed, never verdicts.
+
+## Dependency and imported-context documents
+
+Every chart screens defaults (`{}`) and deterministic dependency enable, disable,
+ordered-condition fallback, condition-null, tag, and scope-null rows.
+Controls come from the typed loader, including aliases, archives,
+`requirements.yaml` replacement, undeclared dependencies, and ancestor activation.
+The dependency processor verifies activation; null is a deletion operation, not a
+claim that a dependency becomes disabled.
+Parsed inputs are cached per chart with fresh mutable tables per composition.
+
+Each distinct original values file and Kubernetes version screens three documents:
+
+- `LintRaw`: the first root `values.yaml` document under overrides using Helm's
+  `CoalesceTables`, without dependency defaults, imports, or inherited globals.
+- `LintCoalescedTwice`: lint's values-rule mutations, dependency processing, and
+  two coalescence passes, including defaults restored by the second pass.
+- `Template`: dependency processing and one coalescence pass.
+
+Missing root `values.yaml` makes `LintRaw` `NotValidated`.
+An absent root `templates/` makes `LintCoalescedTwice` `NotValidated`: Helm skips
+that lint rule instead of validating a hypothetical document.
+Intrinsic Helm aborts are recorded as inapplicable documents.
+Unsupported inputs and composition errors fail coverage.
+The structural template lane also runs; there is no lane-disable switch.
+
+Optionally import `SCHEMA_ACCEPTANCE_CONTEXT_ROSTER` using the version-2 JSON
+format in [references/env-vars.md](references/env-vars.md).
+Every supplied selected-chart row is imported, including activation plus child
+controls; no dependency-key filter applies.
+Rows naming unselected charts fail, so filter the roster when filtering charts.
+Execution deduplication uses the exact original values-file bytes and Kubernetes
+version, retaining every contributing origin and its explicit context control.
+Every imported row supplies the complete tested overlay and a context-only overlay;
+`{}` is the defaults-only context, and contexts are never reconstructed from paths.
+
+Omitted work fails coverage: limits are 8,192 generated dependency rows and 8,192 distinct overlays per chart within
+the existing 50,000 total document/probe budget, dependency depth 64, and 8,192
+imported rows per chart in a file no larger than 64 MiB.
+All row origins and each document's composed, screened, inapplicable, and error
+counts must balance; errors and empty chart selections fail.
+Both the corpus and external-pair entry points enforce this completeness check,
+even when no flips were screened.
+
+Unchanged rows invoke no Helm.
+Measure `lint_compilation_ms` and `lint_screening_ms` in the invocation report;
+the sum is per-chart elapsed work and overlaps across workers.
+A screened overlay can need baseline, candidate, and schema-free lints, shared
+across document flips. Defaults and explicit context controls require the same
+operations; expensive cold charts can add tens of minutes.
+Existing worker, memory, and invocation-cache controls apply.
 
 ## Reading the result
 
@@ -248,7 +307,8 @@ bytes. Suspect a vacuous run when:
   unset variable no longer falls back to the on-disk fixtures: the run fails.)
 - A chart's `guards_discovered` equals what one schema alone yields. Guard arms
   are deduplicated across both schemas, so a real pair usually discovers more.
-- `charts_checked=0`: `SCHEMA_ACCEPTANCE_CHART` matched no fixture stem.
+- An empty chart selection now fails immediately; `charts_checked=0` is never
+  successful evidence.
 - A live run against the roster baseline reports few or no flips. The roster
   rows alone guarantee thousands of matched flips there.
 - The whole roster reports "no longer fail alike": wrong baseline or stale dump.

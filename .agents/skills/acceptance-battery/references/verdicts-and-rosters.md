@@ -13,7 +13,7 @@ profile comparison the harness was first built for.
 
 ## The probe battery (per chart)
 
-All probes are judged against the **coalesced** values document. Sparse
+The legacy structural probes are judged against the **coalesced** values document. Sparse
 overrides are composed over the chart's coalesced defaults with Helm's
 `CoalesceTables` semantics, where a `null` deletes the value it meets
 (`test_util::helm_values`). A bare `{}` is not "defaults apply".
@@ -52,6 +52,34 @@ is excluded from screening and listed under `unreachable_probes`.
 Guards skipped by the cap are disclosed in the coverage report but do not fail
 the run.
 
+## Dependency and context document coverage
+
+`common/lint_probes.rs` adds defaults and typed dependency controls plus every row
+from the optional context roster (see `env-vars.md`).
+Each overlay/version pair screens `LintRaw`, `LintCoalescedTwice`, and `Template`
+through cached `AcceptanceInputs`, without sharing mutable tables across calls.
+The overlay `{}` means defaults for these input rows; do not confuse it with the
+legacy all-keys-deleted composed-document probe.
+Missing `values.yaml` makes the raw rule inapplicable.
+An absent root `templates/` makes the twice-coalesced lint rule inapplicable,
+matching Helm's early return before schema validation.
+Intrinsic Helm aborts are counted as `not_validated`; `Unmodelled` and other
+errors fail coverage.
+
+`charts[].lint` reports built-in/imported rows, distinct overlays, contributing
+origins and hashes, and per-document `composed`, `not_validated`, `errors`,
+`screened`, and `flips` counts.
+Every row must be accounted for; composed documents must all be screened, and
+composed plus inapplicable documents must equal the distinct overlay count.
+An empty lane, omitted work, or document errors fail in both the corpus and
+external-pair entry points, including comparisons with zero screened flips.
+Caps are 8,192 combined distinct overlay/version entries per chart, three
+attempts per entry within the remaining 50,000 total budget, dependency depth 64,
+and 8,192 imported rows per chart in a roster of at most 64 MiB.
+The chart selection must be nonempty.
+Existing unchanged-guard sampling remains disclosed sampling; these document-row
+caps never silently certify a prefix as complete.
+
 ## Screening, then adjudication
 
 1. **Screening** (Rust, every probe): `screens_a_flip` is true when the
@@ -70,6 +98,36 @@ the run.
    the offline Kubernetes validator (v1.29 strict bundle plus the CRD
    catalog). Flip strings are `<chart>: <probe>: candidate accepts=<bool>`.
 
+### Document-specific live adjudication
+
+A screened document retains its kind through adjudication.
+Baseline-schema, candidate-schema, and schema-free chart copies install schemas
+only at the root and strip dependency schemas.
+The candidate uses the producer's hash-verified Helm-ready companion; the
+baseline preserves committed bytes through 5 MiB and shortens only above that
+limit, exactly as the sweep does, without regenerating inference.
+Validator-only normalization is separate from shipped-byte identity.
+Lint uses the pinned CLI, the normal cleared environment and replay machinery,
+and a separate 1,200-second timeout.
+Timeouts, signals, loader failures, unresolved diagnostics, and disagreement
+between the Rust prediction and the corresponding real lint rule are failures.
+
+Rule-qualified errors distinguish raw-values and template-rule schema failures.
+Equal overall lint exits never collapse a document flip: another lint rule may
+already reject the chart.
+Schema-free lint and the existing template/Kubernetes oracle compare the tested
+input with defaults and every explicit context-only control under the same
+Kubernetes version.
+A lint or template rejection justifies a tightening only when attributable to the
+tested input; an inherited control error never certifies a new schema restriction.
+A control that cannot render, including a non-installable library chart, is
+unresolved and fails adjudication.
+Inherited filename-extension lint errors do not hide a false rejection when the
+tested render and controls remain usable and add no Kubernetes violation.
+Changed diagnostics behind inherited lint errors are unresolved, not matched.
+A candidate rejection with usable renders and no attributable lint/template failure
+or proved new Kubernetes violation is a false rejection and fails; it cannot be rostered.
+
 ## Verdicts (live mode)
 
 A **tightening** means the candidate rejects, whether the baseline accepted or
@@ -84,6 +142,9 @@ something Helm renders cleanly is a false rejection, which is a regression.
 | `TighteningMatchedHelmAbort` | candidate rejects, Helm aborts | matched |
 | `TighteningMatchedKubernetesRejection` | candidate rejects, render adds a new Kubernetes violation beyond the defaults render | matched |
 | `TighteningMatchedDeclaredTypesPolicy` | the candidate rejects, Helm renders with no proved Kubernetes violation, the candidate is the chart's `--declared-types=assert` regeneration, its `annotate` regeneration accepts the document outright, and every value the assert regeneration rejects is a path explain C1 reports unread; whatever the baseline rejects is irrelevant, and no failures are compared | matched, listed in `tightenings_attributed_to_declared_types`; never rostered |
+| `TighteningMatchedLintRejection` | candidate rejects and schema-free lint identifies a semantic rejection attributable to the tested input versus usable defaults and context controls | matched, `tightenings_matched_lint_rejection` |
+| `LooseningMatchedLintValidation` | candidate accepts, schema-free lint and render succeed, and there is no new Kubernetes violation or unresolved resource | matched, `loosenings_matched_lint_validation` |
+| `CandidateAcceptsLintRejects` | candidate accepts while schema-free lint identifies an attributable semantic rejection | false acceptance, `Rejection::LintRejects`; requires exact roster handling |
 | `LooseningMatchedKubernetesValidation` | candidate accepts, render valid, every changed resource decided | matched |
 | `LooseningMatchedDefaultsViolations` | candidate accepts, and every violation is one the defaults render already carries (counted with multiplicity) | matched |
 | `LooseningWithUncertainKubernetes` | candidate accepts, Helm renders, some new or changed resource has no decidable schema | must be listed **exactly** (same uncertainty strings, in order) in `KNOWN_UNDECIDED_ACCEPTANCES` |
@@ -120,18 +181,41 @@ fails, every adjudicated flip. The copied `prepared.json` names the charts by bu
   `candidate_rejects_for_a_new_reason`, the Helm exit, new, inherited and
   uncertain Kubernetes errors, and per-acceptance-document verdicts.
 
+Lint evidence also retains the three lint executions and invocation records,
+rule-qualified diagnostics, exact document JSON, overlay origins, schema hashes,
+and a document-specific `schema-verdicts.json` under the shared lint evidence.
+The verdict evidence also records defaults/context controls and inherited diagnostics;
+unusable controls and inherited-only rejection evidence are unresolved failures.
+Each saved control sub-bundle includes chart and values inputs with relative paths,
+so replay does not depend on scratch directories surviving.
+
 Adjudicate a flip from these files. Never rebuild a probe document by splitting
 the dotted probe label.
 
 ## Rosters
 
 `KNOWN_FALSE_ACCEPTANCES` groups rows by chart, `Rejection` (`HelmAborts` /
-`KubernetesRejects`), `Baseline` (`RejectsItsDefaults` /
+`KubernetesRejects` / `LintRejects`), `Baseline` (`RejectsItsDefaults` /
 `RejectsUnlikeItsDefaults`) and suspected defect `Family`. Each row is a
 `Probe { path, value }`. It matches a case whose probe name is
 `<path> <- <value>`, or a targeted guard probe ending in
 `[targeted: <path> <- <value>]`. `KNOWN_UNDECIDED_ACCEPTANCES` rows carry the
 exact `uncertain` strings.
+
+Document/context probe names instead bind the document kind, canonical complete
+JSON overlay, transport, and Kubernetes version:
+`document=<kind> transport=values-file kube=<version> overlay=<json>`.
+Legacy path/class selectors do not authorize these names.
+Add explicit `ContextSelector` rows to `KNOWN_CONTEXT_FALSE_ACCEPTANCES` or
+`KNOWN_CONTEXT_UNDECIDED_ACCEPTANCES`, with the full document kind, JSON overlay,
+`ContextTransport::ValuesFile`, and Kubernetes version. Both lists start empty.
+False-acceptance rows also bind rejection, baseline class, and family; undecided
+rows bind the exact ordered uncertainty reasons. Stale contextual rows are checked
+only when that complete identity was actually examined.
+Do not invent a dotted-path selector for a complete context or treat a legacy
+roster row as permission for a new lint false acceptance.
+False rejections are never rosterable, and this lane does not change
+`ROSTER_BASELINE` or `SCHEMA_ACCEPTANCE_ALLOW_MATCHED_FLIPS`.
 
 For every chart the live run adjudicated, which is every screened chart, the
 run fails on:
