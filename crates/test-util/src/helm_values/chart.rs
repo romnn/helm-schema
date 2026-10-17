@@ -372,12 +372,8 @@ fn load_values(bytes: &[u8], file: &str) -> Result<Map<String, Value>, ValuesErr
 
 /// `common.ReadValuesFile`, which `helm lint`'s values rule uses: the
 /// FIRST YAML document only.
-pub(super) fn read_values_file(path: &Path) -> Result<Map<String, Value>, ValuesError> {
-    let bytes = std::fs::read(path).map_err(|source| ValuesError::Io {
-        path: path.display().to_string(),
-        source,
-    })?;
-    match yaml::documents(&bytes, "values.yaml")?.into_iter().next() {
+pub(super) fn read_values_bytes(bytes: &[u8]) -> Result<Map<String, Value>, ValuesError> {
+    match yaml::documents(bytes, "values.yaml")?.into_iter().next() {
         None | Some(Value::Null) => Ok(Map::new()),
         Some(Value::Object(values)) => Ok(values),
         Some(_) => Err(ValuesError::NotValidated(
@@ -588,4 +584,17 @@ fn import_values(imports: Option<&Value>) -> Result<Vec<ImportValue>, ValuesErro
         }
     }
     Ok(imports)
+}
+
+impl Chart {
+    pub(super) fn deep_copy(&self) -> Self {
+        Self {
+            name: self.name.clone(),
+            version: self.version.clone(),
+            values: super::go_value::deep_copy(&self.values),
+            dependencies: self.dependencies.iter().map(Self::deep_copy).collect(),
+            unordered: self.unordered,
+            requirements: self.requirements.clone(),
+        }
+    }
 }
