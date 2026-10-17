@@ -7980,6 +7980,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   on the kept builder session 20261017T185515-78d55437 (turn 2 starts at byte 18 156). The orchestrator applies the docs patch
   itself (sandbox cannot write `.agents/skills`). Heartbeat 23:10: load 6, T7 101 GB; W4 no new commits since 68c8ad27 (pruning +
   class search); defblock builder 13 modified files, no commit yet. Orchestrator.
+- 00:25 (Oct 18) — **Disk + W1 review status.** T7 fell to 84 GB (W4 had already dropped dump-post-r68 and dump-r15d,
+  which freed little). The orchestrator ran `cargo clean -p <every workspace crate>` in the IDLE W1 target
+  `/Volumes/T7/dev/round7-f9/target` (dependencies kept; the next W1 builder rebuilds the workspace crates anyway): 126 431 files,
+  44.2 GiB removed → 111 GB free. astra's W1 R48 review = REWORK (`review-w1-r48-astra.md`): P1 Helm-verified false rejections in the
+  quoted grammar — backslash + physical line break (contract_signals.rs:812/:829), escapes completed by a later splice (`\x4`+`1`,
+  `\u00`+`41`; :839, holes.rs:1117), a quote closed into valid flow syntax (`[ "…", "…" ]`; :829, holes.rs:1205); P1 suspected
+  range-variable provenance resurrection after reassignment (hole_text.rs:340/:385); P2 selected-arm proofs discarded (ternary),
+  helper-argument provenance dropped at entry (summary.rs:272), captured scalar invalidated by a later `set`. On the claim losses:
+  the `tpl … $` barrier is necessary only for genuinely unknown programs, helper-argument loss is unnecessary, `trunc` is
+  necessary. All 15 prior findings re-checked (most fixed; selected arms / helper args / ordered helper output still open).
+  sol's review still running (since 23:00); the fresh W1 builder starts once it lands. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
