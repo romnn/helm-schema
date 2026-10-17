@@ -70,6 +70,9 @@ const HELMSWEEP_HELM_LINES: [&str; 2] = [
 /// a harness failure.
 pub const RENDER_TIMEOUT: Duration = Duration::from_secs(600);
 
+/// Maximum duration of a real CLI lint, including large dependency charts.
+pub const LINT_TIMEOUT: Duration = Duration::from_mins(20);
+
 /// A resident server holding more than this after a render is retired, not
 /// kept idle: idle servers stay small beside the pool's memory budget.
 const RETIRE_ABOVE_BYTES: u64 = 128 << 20;
@@ -553,6 +556,41 @@ impl HelmRunner {
         stage: &str,
         cacheability: &Cacheability,
     ) -> eyre::Result<HelmExecution> {
+        self.invoke(request, case, stage, cacheability, false)
+    }
+
+    /// Runs pinned real-CLI `helm lint`, including values and template schema rules.
+    /// The resident render engine is never used, and the deadline is [`LINT_TIMEOUT`].
+    /// Outputs, evidence and replay identities follow [`Self::template`].
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for an unavailable or unpinned CLI, abnormal termination,
+    /// timeout, or inaccessible inputs, evidence or replay storage.
+    pub fn lint(
+        &self,
+        request: &TemplateRequest<'_>,
+        case: &Path,
+        stage: &str,
+        cacheability: &Cacheability,
+    ) -> eyre::Result<HelmExecution> {
+        let program = if self.resident.is_some() {
+            find_helm()?
+        } else {
+            self.program.clone()
+        };
+        let cli = Self::with_program_within(&self.root, self.replay, program, LINT_TIMEOUT)?;
+        cli.invoke(request, case, stage, cacheability, true)
+    }
+
+    fn invoke(
+        &self,
+        request: &TemplateRequest<'_>,
+        case: &Path,
+        stage: &str,
+        cacheability: &Cacheability,
+        lint: bool,
+    ) -> eyre::Result<HelmExecution> {
         let (values_path, values_sha256) = self.publish_input(request.values)?;
         let chart = utf8(&request.chart.path)?;
         let values = utf8(&values_path)?;
@@ -564,7 +602,20 @@ impl HelmRunner {
             kubernetes_version: request.kubernetes_version.to_string(),
             values: values.to_string(),
         };
-        let arguments = call.arguments();
+        let arguments = if lint {
+            [
+                "lint",
+                &call.chart,
+                "--kube-version",
+                &call.kubernetes_version,
+                "-f",
+                &call.values,
+            ]
+            .map(str::to_string)
+            .to_vec()
+        } else {
+            call.arguments()
+        };
         let engine = if self.resident.is_some() {
             RESIDENT_ENGINE
         } else {

@@ -51,8 +51,43 @@ pub struct HelmProbe {
     pub evidence_dir: PathBuf,
 }
 
+/// Exact inputs for comparing Helm lint with two root schemas.
+pub struct LintProbeRequest<'a> {
+    /// The values file bytes read unchanged by all three executions.
+    pub values: &'a [u8],
+    /// The explicit Kubernetes context used for all executions.
+    pub kubernetes_version: &'a str,
+    /// The root baseline `values.schema.json` bytes.
+    pub baseline_schema: &'a [u8],
+    /// The root candidate `values.schema.json` bytes.
+    pub candidate_schema: &'a [u8],
+}
+
+/// Three real lint executions over identical chart and values inputs.
+pub struct HelmLintProbe {
+    /// Lint with the root baseline schema installed.
+    pub baseline: HelmExecution,
+    /// Lint with the root candidate schema installed.
+    pub candidate: HelmExecution,
+    /// Lint with all chart and dependency schemas removed.
+    pub schema_free: HelmExecution,
+    /// The directory retaining the exact overlay and invocation evidence.
+    pub evidence_dir: PathBuf,
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct LintProbeKey {
+    values: Vec<u8>,
+    kubernetes_version: String,
+    baseline_tree: String,
+    candidate_tree: String,
+}
+
 /// A defaults document with the violations it carries.
 type EvaluatedDocument = (Value, Vec<ViolationKey>);
+
+/// A version-specific defaults control, shared by every probe using that version.
+type DefaultsEvaluation = Result<Arc<Vec<EvaluatedDocument>>, String>;
 
 /// Private copies share chart inputs and differ only in their template bodies.
 pub struct PinnedHelmChart {
@@ -70,6 +105,12 @@ pub struct PinnedHelmChart {
     /// by the first probe that needs them; empty when Helm refuses the
     /// defaults, an error when the attempt itself failed.
     defaults_evaluation: OnceLock<Result<Vec<EvaluatedDocument>, String>>,
+    /// Defaults controls rendered under the exact imported Kubernetes context.
+    defaults_by_version: Mutex<BTreeMap<String, DefaultsEvaluation>>,
+    /// Immutable schema-bearing trees, prepared only when lint needs them.
+    lint_trees: Mutex<BTreeMap<Vec<u8>, PreparedTree>>,
+    /// Successful harness executions shared across document kinds in this process.
+    lint_probes: Mutex<BTreeMap<LintProbeKey, Arc<HelmLintProbe>>>,
     /// Every Helm child this chart's adjudication ran, in execution order.
     invocations: Mutex<Vec<InvocationRecord>>,
     /// The largest peak resident set size among those children.
@@ -173,6 +214,9 @@ impl PinnedHelmChart {
             kubernetes_version,
             render_cacheability,
             defaults_evaluation: OnceLock::new(),
+            defaults_by_version: Mutex::new(BTreeMap::new()),
+            lint_trees: Mutex::new(BTreeMap::new()),
+            lint_probes: Mutex::new(BTreeMap::new()),
             invocations: Mutex::new(Vec::new()),
             peak_child_rss: AtomicU64::new(0),
         })
@@ -291,6 +335,104 @@ impl PinnedHelmChart {
             rendered,
             evidence_dir,
         })
+    }
+
+    /// Runs pinned CLI lint with baseline, candidate, and no root schema.
+    ///
+    /// Dependency schemas are absent in every execution.
+    /// Deterministic charts share the complete result for identical values bytes,
+    /// Kubernetes version, and schema bytes within this prepared chart's lifetime.
+    /// Each actual invocation is included in [`Self::invocations`].
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when chart preparation or a lint invocation fails operationally.
+    /// A normal lint rejection remains an execution result for rule classification.
+    pub fn adjudicate_lint(
+        &self,
+        request: &LintProbeRequest<'_>,
+    ) -> eyre::Result<Arc<HelmLintProbe>> {
+        let baseline_chart = self.lint_tree(request.baseline_schema)?;
+        let candidate_chart = self.lint_tree(request.candidate_schema)?;
+        let key = LintProbeKey {
+            values: request.values.to_vec(),
+            kubernetes_version: request.kubernetes_version.to_owned(),
+            baseline_tree: baseline_chart.sha256().to_owned(),
+            candidate_tree: candidate_chart.sha256().to_owned(),
+        };
+        // Keep lookup and execution together so concurrent document kinds cannot duplicate lint.
+        let mut probes = self
+            .lint_probes
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        let cacheable = matches!(self.render_cacheability.replay(), Replay::Cacheable);
+        if cacheable && let Some(probe) = probes.get(&key) {
+            return Ok(Arc::clone(probe));
+        }
+        let evidence_dir = self.new_case()?;
+        fs::write(evidence_dir.join("values.json"), request.values)?;
+        let baseline = self.lint_in(&baseline_chart, request, &evidence_dir, "lint-baseline")?;
+        let candidate = self.lint_in(&candidate_chart, request, &evidence_dir, "lint-candidate")?;
+        let schema_free = self.lint_in(
+            &self.render_chart,
+            request,
+            &evidence_dir,
+            "lint-schema-free",
+        )?;
+        let probe = Arc::new(HelmLintProbe {
+            baseline,
+            candidate,
+            schema_free,
+            evidence_dir,
+        });
+        if cacheable {
+            probes.insert(key, Arc::clone(&probe));
+        }
+        Ok(probe)
+    }
+
+    fn lint_tree(&self, schema: &[u8]) -> eyre::Result<PreparedTree> {
+        let mut trees = self
+            .lint_trees
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        if let Some(tree) = trees.get(schema) {
+            return Ok(tree.clone());
+        }
+        let staged = self.runner.staging_dir()?;
+        copy_chart_tree(
+            self.render_chart.path(),
+            &staged,
+            self.render_chart.path(),
+            false,
+            &mut ArchiveBudget::default(),
+            0,
+        )?;
+        fs::write(staged.join("values.schema.json"), schema)?;
+        let tree = self.runner.publish_tree(&staged)?;
+        trees.insert(schema.to_vec(), tree.clone());
+        Ok(tree)
+    }
+
+    fn lint_in(
+        &self,
+        chart: &PreparedTree,
+        request: &LintProbeRequest<'_>,
+        case: &Path,
+        stage: &str,
+    ) -> eyre::Result<HelmExecution> {
+        let execution = self.runner.lint(
+            &TemplateRequest {
+                chart,
+                values: request.values,
+                kubernetes_version: request.kubernetes_version,
+            },
+            case,
+            stage,
+            &self.render_cacheability,
+        )?;
+        self.record(&execution.record);
+        Ok(execution)
     }
 
     /// The documents Helm's schema checks validate for `overlay`, composed
@@ -896,6 +1038,49 @@ impl OfflineKubernetesValidator {
         probe: &HelmProbe,
     ) -> eyre::Result<DefaultsComparison> {
         let defaults = self.defaults_evaluation(chart)?;
+        self.compare_evaluated_defaults(chart, probe, defaults)
+    }
+
+    /// Judges the probe against defaults rendered under `kubernetes_version`.
+    ///
+    /// Defaults evidence is shared only with controls using that exact version.
+    /// The probe must have been rendered under the same version.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when Helm cannot render or decode the defaults or the probe.
+    pub fn compare_with_defaults_at(
+        &self,
+        chart: &PinnedHelmChart,
+        probe: &HelmProbe,
+        kubernetes_version: &str,
+    ) -> eyre::Result<DefaultsComparison> {
+        let defaults = {
+            let mut by_version = chart
+                .defaults_by_version
+                .lock()
+                .unwrap_or_else(PoisonError::into_inner);
+            let evaluated = by_version
+                .entry(kubernetes_version.to_owned())
+                .or_insert_with(|| {
+                    self.evaluate_defaults(chart, kubernetes_version)
+                        .map(Arc::new)
+                        .map_err(|err| format!("{err:?}"))
+                });
+            evaluated
+                .as_ref()
+                .map(Arc::clone)
+                .map_err(|err| eyre::eyre!("defaults render could not be adjudicated: {err}"))?
+        };
+        self.compare_evaluated_defaults(chart, probe, &defaults)
+    }
+
+    fn compare_evaluated_defaults(
+        &self,
+        chart: &PinnedHelmChart,
+        probe: &HelmProbe,
+        defaults: &[EvaluatedDocument],
+    ) -> eyre::Result<DefaultsComparison> {
         let mut unpaired: Vec<&(Value, Vec<ViolationKey>)> = defaults.iter().collect();
         let mut changed = ResourceEvidence::default();
         let decoded = decode(chart.runner, &probe.rendered.stdout, &probe.evidence_dir)?;
@@ -955,7 +1140,9 @@ impl OfflineKubernetesValidator {
         chart
             .defaults_evaluation
             .get_or_init(|| {
-                self.evaluate_defaults(chart)
+                chart
+                    .default_version()
+                    .and_then(|version| self.evaluate_defaults(chart, version))
                     .map_err(|error| format!("{error:?}"))
             })
             .as_deref()
@@ -965,11 +1152,12 @@ impl OfflineKubernetesValidator {
     fn evaluate_defaults(
         &self,
         chart: &PinnedHelmChart,
+        kubernetes_version: &str,
     ) -> eyre::Result<Vec<(Value, Vec<ViolationKey>)>> {
         let probe = chart.adjudicate_as(
             &serde_json::to_vec_pretty(&serde_json::json!({}))?,
             "control",
-            chart.default_version()?,
+            kubernetes_version,
         )?;
         if !probe.rendered.success() {
             return Ok(Vec::new());
