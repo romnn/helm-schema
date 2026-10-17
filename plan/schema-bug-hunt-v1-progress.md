@@ -7953,6 +7953,21 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   if it is LAND ×2 before W4 is ready it goes as landing 10a, fixture-neutral, and the runner gains the roster export
   (orchestrator-owned change). Disk 101 GB at 22:44 → W4 asked to prune superseded dumps in its target. W1 committed
   7a90f271 `fix(ir): quote claims need positive text provenance (R48)`; checkpoint expected. Orchestrator.
+- 23:00 (Oct 17) — **W1 R48 CHECKPOINT (af11f35f; R48 = 7a90f271; Self-attack present at rework8/handoff.md:37).**
+  `fragment_eval/hole_text.rs` classifies each action's text as unknown / the path's own text / base64-or-checksum output and feeds
+  ONE splice constructor for helper bodies, inline arms and extra splices; removed: the negative `derived_text` mark, the scanner's
+  `encoded` exception, the run-wide tpl path set, StrictText/Templated, the `index`/`toString` exceptions, R47's traversal.rs
+  change. Both matrices' P1s addressed (absorbing Unknown on merge; root-context proof for `.Values`; helper splice keeps proof
+  only as the whole output; locals carry proof from their binding). Self-attack found eight more false rejections that main
+  also has (quoted-grammar escapes per Helm's YAML: `\/` rejected, `\'` and tab accepted; quotes closed by values; trailing `\`
+  before a further splice; helper bodies scanning their own quotes; empty-range arm) — fixed. Matrix test text_provenance.rs:
+  122 cells / 170 instances with Helm 4.2.3 verdicts, 18 annotated abstentions; real-CLI false rejections over the 170: main 65,
+  f375cde6 40, candidate 0. Gates on af11f35f: fmt/lint/lint:fc/ast-grep 0, nextest 1 832/1 832, dialect 2/2. Cost of
+  soundness: claim references fall (bitnami-redis 17→0, cilium 61→39, argo-cd 22→5) — reviewers asked which abstentions are
+  necessary. Frozen CLI `round8-w1-evidence/bin/helm-schema-w9-7a90f271`. Reviews: astra 20261017T210034-d488ec1f, sol
+  20261017T210034-81ac1109 → `review-w1-r48-*.md`. The W1 builder ended at 671 k tokens; the final-evidence phase gets a
+  FRESH builder. Also: the exact `task test:integration` on the battery clone c022a9cb, run by the orchestrator outside the
+  sandbox: exit 0, 950 passed, 26 skipped (`round8-battery-evidence/orch-integration.log`). Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
