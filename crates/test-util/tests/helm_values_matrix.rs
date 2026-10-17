@@ -53,6 +53,8 @@ fn chart(root_values: &str, child: &Child<'_>) -> eyre::Result<ScratchDir> {
     }
     fs::write(root.join("Chart.yaml"), manifest)?;
     fs::write(root.join("values.yaml"), root_values)?;
+    // The pinned matrix renders a values-dumping template, so its lint rule runs.
+    fs::create_dir(root.join("templates"))?;
     let sub_manifest = indoc! {"
         apiVersion: v2
         name: sub

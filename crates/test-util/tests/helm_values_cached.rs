@@ -245,3 +245,75 @@ fn dependency_inventory_depth_cap_fails_instead_of_omitting_controls() -> eyre::
     );
     Ok(())
 }
+
+#[test]
+fn lint_twice_is_not_validated_without_templates_for_gate_null_overlay() -> eyre::Result<()> {
+    let scratch = ScratchDir::new("lint-no-templates-gate")?;
+    let root = scratch.path();
+    std::fs::write(
+        root.join("Chart.yaml"),
+        indoc! {"
+        apiVersion: v2
+        name: gate
+        version: 1.0.0
+    "},
+    )?;
+    std::fs::write(
+        root.join("values.yaml"),
+        indoc! {"
+        gate: false
+        nested:
+          'n': 3
+    "},
+    )?;
+    let overlay = json!({"gate": true, "nested": {"n": null}});
+    let inputs = AcceptanceInputs::load(root)?;
+    sim_assert_eq!(
+        have: inputs.compose(overlay.clone(), AcceptanceDocument::LintRaw)?.root,
+        want: json!({"gate": true, "nested": {}})
+    );
+    sim_assert_eq!(
+        have: inputs.compose(overlay.clone(), AcceptanceDocument::Template)?.root,
+        want: json!({"gate": true, "nested": {}})
+    );
+    // Helm skips the template lint rule before a second pass could restore n: 3.
+    assert!(matches!(
+        inputs.compose(overlay.clone(), AcceptanceDocument::LintCoalescedTwice),
+        Err(test_util::helm_values::ValuesError::NotValidated(_))
+    ));
+    assert!(matches!(
+        acceptance_values(
+            root,
+            overlay.clone(),
+            AcceptanceDocument::LintCoalescedTwice
+        ),
+        Err(test_util::helm_values::ValuesError::NotValidated(_))
+    ));
+    std::fs::create_dir(root.join("templates"))?;
+    assert!(matches!(
+        inputs.compose(overlay.clone(), AcceptanceDocument::LintCoalescedTwice),
+        Err(test_util::helm_values::ValuesError::NotValidated(_))
+    ));
+    sim_assert_eq!(
+        have: AcceptanceInputs::load(root)?.compose(overlay, AcceptanceDocument::LintCoalescedTwice)?.root,
+        want: json!({"gate": true, "nested": {"n": 3}})
+    );
+    Ok(())
+}
+
+#[test]
+fn lint_twice_is_not_validated_for_prometheus_operator_crds() -> eyre::Result<()> {
+    let chart = test_util::workspace_testdata().join("charts/prometheus-operator-crds");
+    assert!(!chart.join("templates").exists());
+    let inputs = AcceptanceInputs::load(&chart)?;
+    inputs.compose(json!({}), AcceptanceDocument::LintRaw)?;
+    assert!(matches!(
+        inputs.compose(json!({}), AcceptanceDocument::LintCoalescedTwice),
+        Err(test_util::helm_values::ValuesError::NotValidated(_))
+    ));
+    assert!(matches!(
+        acceptance_values(&chart, json!({}), AcceptanceDocument::LintCoalescedTwice),
+        Err(test_util::helm_values::ValuesError::NotValidated(_))
+    ));
+    Ok(())
+}
