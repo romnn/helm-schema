@@ -7968,6 +7968,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   20261017T210034-81ac1109 → `review-w1-r48-*.md`. The W1 builder ended at 671 k tokens; the final-evidence phase gets a
   FRESH builder. Also: the exact `task test:integration` on the battery clone c022a9cb, run by the orchestrator outside the
   sandbox: exit 0, 950 passed, 26 skipped (`round8-battery-evidence/orch-integration.log`). Orchestrator.
+- 23:10 (Oct 17) — **Battery lint lane phase 1 = REWORK ×2 (`review-battery-p1-{sol,astra}.md`), converging.** P1 both:
+  lint_adjudication.rs:142/:148 accepts any schema-free lint rejection or template abort as matching a tightening (library chart
+  `common`: template exits 1 while lint passes; a pre-existing `templates/config.json` extension error) — evidence must be
+  attributable via defaults/context controls, otherwise unresolved; and the external-pair entry point (schema_emission_profiles.rs
+  :2276/:2911) can pass with zero lint documents (stale chart hash, exhausted budget). P2 both: `LintCoalescedTwice` built where
+  Helm skips the template rule (no `templates/`, e.g. prometheus-operator-crds); baseline identity differs from the sweep's shipped
+  bytes (oauth2-proxy `116ec490` vs `a88cd6fa`) and overlay hashes differ (canonical JSON vs file bytes); skill docs only as an
+  untracked patch. Both confirm: LintRaw merge follows pinned Helm, 79.6 s is the added screening cost (not a live bound), rosters/
+  ROSTER_BASELINE untouched, test layout OK. Merged brief `round8/brief-battery-lanes-rework1.md` (R1–R5) sent as a follow_up turn
+  on the kept builder session 20261017T185515-78d55437 (turn 2 starts at byte 18 156). The orchestrator applies the docs patch
+  itself (sandbox cannot write `.agents/skills`). Heartbeat 23:10: load 6, T7 101 GB; W4 no new commits since 68c8ad27 (pruning +
+  class search); defblock builder 13 modified files, no commit yet. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
