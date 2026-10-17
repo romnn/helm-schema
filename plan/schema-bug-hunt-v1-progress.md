@@ -7886,6 +7886,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (finish rework 15 to a FINAL hand-back with final-v17.patch and a Self-attack section; the two decisions above included) and
   W1 from `round8/brief-w1-rework9-resume.md` (R48 only, then a ≤ 20-line CHECKPOINT for review before any final evidence).
   Both told not to rebase. Agent ids are session-local and not recorded. Orchestrator.
+- 20:43 (Oct 17) — **Codex used in parallel with the builders, not only at hand-back (user, 20:4x: Codex quota is
+  nearly unlimited next to Claude's; account at 28 % of its weekly window).** Six fresh xhigh read-only runs, both models per
+  task, questions in `round8/q/`: (1) W4 pre-review of the in-flight rework 15 (562cab09: R69–R71 + the integral-float fix)
+  with the self-attack methods, so findings reach the builder before its final hand-back — astra 20261017T184245-254a1949, sol
+  20261017T184247-5aafa219 → `review-w4-rework15pre-*.md`; (2) the W1 R48 test matrix (every emitter path × verbatim
+  provenance, concrete Helm cells, compose-and-invert, wip design flaws) — astra 20261017T184249-2a5035a0, sol
+  20261017T184250-a0d57f4f → `review-w1-r48matrix-*.md`; (3) a design for the two battery coverage gaps (lint document without
+  dependency defaults; non-default-context probes) that cost landing 10 run1 — astra 20261017T184252-f557f5c8, sol
+  20261017T184253-c130b496 → `design-battery-gaps-*.md`. Plan: forward (1) and (2) to the builders as soon as they arrive;
+  if (3) is BUILDABLE ×2, a Codex builder (workspace_write, own clone and target) implements it as test infrastructure.
+  Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
