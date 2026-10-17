@@ -7991,6 +7991,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   the `tpl … $` barrier is necessary only for genuinely unknown programs, helper-argument loss is unnecessary, `trunc` is
   necessary. All 15 prior findings re-checked (most fixed; selected arms / helper args / ordered helper output still open).
   sol's review still running (since 23:00); the fresh W1 builder starts once it lands. Orchestrator.
+- 00:47 (Oct 18) — **sol's W1 R48 review had FAILED on a content filter at 23:06 (5 min in; "adversarial reviewer"
+  wording), but `collect-codex.py` reported it "running" for 1 h 40 min because it only looked for last-message.md.** Process
+  fix (orchestrator): the collector now checks the delegate pid from `turns/0000/launch.json` and prints
+  `FAILED-NO-ANSWER (check agentmux status)` for a dead run without an answer (backup `collect-codex.py.bak-20261018`);
+  the failed registry row is commented. Retry with neutral wording (`q/w1-r48-review-neutral.md`): sol 20261017T224639-cb0afa73.
+  Rule for future questions: no "adversarial" in Codex prompts — "code reviewer", "render-failure claims". W1 not left idle: a
+  FRESH W1 builder spawned 00:47 from `round8/brief-w1-rework10-resume.md` on `brief-w1-rework10.md` (R49–R55 from astra's
+  review: three quoted-grammar false rejections, range-variable provenance resurrection, selected-arm and helper-argument
+  provenance, captured scalars after `set`; the `tpl` barrier narrowed to unknown programs; `trunc` stays); sol's items are
+  forwarded when they land. W4 committed 34bf67da (R72: an untyped branch's declared stand-in widens by the runtime domain).
+  Heartbeat 00:46: load 9, T7 111 GB. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
