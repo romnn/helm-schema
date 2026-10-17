@@ -8002,6 +8002,22 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   provenance, captured scalars after `set`; the `tpl` barrier narrowed to unknown programs; `trunc` stays); sol's items are
   forwarded when they land. W4 committed 34bf67da (R72: an untyped branch's declared stand-in widens by the runtime domain).
   Heartbeat 00:46: load 9, T7 111 GB. Orchestrator.
+- 01:14 (Oct 18) — **sol's W1 R48 review (retry) = REWORK; battery rework 1 done and re-check sent.** sol
+  (`review-w1-r48-sol.md`, replayed all 170 instances): confirms astra's P1s with more variants (`\U`+`00000041`, flow
+  `"a\"] # "`) and adds R56 (P1) transformed literals escape sealing through helper returns (holes.rs:494/:979, hole_text.rs:106 —
+  the value projection, syntax classifier and sealed claim copy are parallel representations), R57 (P1) recursive collection
+  validation (quoted_serialization.rs:50) rejects text an earlier member already hid behind a comment, R58 (P2) resolve rebound
+  `.Values` instead of abstaining; forwarded to the fresh W1 builder. Battery rework (Codex astra turn 2): R1–R5 each red→green;
+  verdicts compare against defaults/explicit context controls (inherited failures cannot certify), lint completeness enforced at
+  corpus AND external entry points, template-rule applicability (`NotValidated` without `templates/`, real Helm confirms), shipped
+  baseline bytes kept through 5 MiB (oauth2-proxy `a88cd6fa…` = the sweep's), roster v2 binds original file bytes + canonical overlay
+  + context control. Final-tree gates: fmt 0, lint 0, lint:fc 0 (51), nextest 1 699 0, exact `task test:integration` 0 (967 passed, 26
+  skipped; Go caches now clone-local), clean `--helm-ready` dump 0, schema-only battery A/B 0/0 byte-identical coverage (160 charts,
+  273 155 probes, LintRaw 957 / Twice 847 / Template 883 documents, 184 NotValidated), tokei core delta 0, historical proof 22 LintRaw
+  flips, live OAuth witness exit 0. The sandbox could not create `.git/index.lock`, so the orchestrator committed the builder's last
+  two-file fix (tree == transfer patch sha256 62e56a67) as 396a9c70 and applied the skill-docs patch as ac867354
+  (`docs(skills)`). Re-checks as follow_ups on the same sessions: sol b2180698 (turn 2 from byte 9 473), astra a86ea30f (from 8 869).
+  Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
