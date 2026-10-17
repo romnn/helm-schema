@@ -1,5 +1,8 @@
-# schema-bug-hunt-v1 — round 8 hand-off (2026-09-26)
+# schema-bug-hunt-v1 — round 8 hand-off (started 2026-09-26; §6 current as of 2026-10-01, end of session 4)
 
+> **§6 is the current state and ends with the resume prompt — read it first.** §1–§5 are the history of the
+> round as of 2026-09-26 (earlier landing plans, superseded statuses); use them only when §6 or the ledger points there.
+>
 > **Start here:** `plan/campaign-orchestration-playbook.md` explains how the campaign is run (roles, landing loop, standing decisions, mistakes to avoid, resume checklist). The builder protocol is `plan/schema-bug-hunt-protocol-v2.md`.
 
 Written at the end of the round-8 orchestration session. It is the resume point for the next
@@ -234,6 +237,29 @@ prompt for session 5 is at the end of this section.
   between 75 and 125 GB with other activity on the volume (floor 80; builders trim with `cargo clean -p`); six untracked
   Kubernetes 1.35 cache files in `round8-w1/testdata/provider-bundle/...` (never stage; the user may delete them);
   `/Volumes/T7/dev/round8-timing` and `/Volumes/T7/dev/round8-landing10-target` are disposable with the user's approval.
+
+### How to call the Codex reviewers (agentmux mechanics)
+
+- The agentmux tools are deferred: load them first with ToolSearch, e.g.
+  `select:mcp__agentmux__start,mcp__agentmux__status,mcp__agentmux__result,mcp__agentmux__follow_up,mcp__agentmux__list`.
+- Start each review with `mcp__agentmux__start` and these arguments: `delegate: codex`,
+  `model: gpt-6-astra` or `model: gpt-6.1-sol` (never `gpt-6-sol`), `effort: xhigh`, `sandbox: read_only`,
+  `cwd: /Volumes/T7/dev`. The question must be self-contained: exact paths, the patch and its sha256, the evidence, explicit
+  questions, and the requested output (numbered findings with file:line and a final `VERDICT:` line). Always start both
+  models in parallel.
+- Register every run in `/Volumes/T7/dev/round8/codex-runs.tsv`. Each line is `<run id>\t<label>\t<destination .md path>`,
+  exactly three tab-separated columns; a fourth column crashes the collector.
+- Watch runs with `mcp__agentmux__status`; a review at xhigh takes 20–60 minutes. Collect them with
+  `python3 /Volumes/T7/dev/round8/collect-codex.py`, which saves each finished run to its registered path, or with
+  `mcp__agentmux__result`.
+- For a re-check, use `mcp__agentmux__follow_up` on the same run id; it keeps the reviewer's context and takes minutes
+  instead of an hour. A follow-up cannot change the model, and a session expires 24 h after its start. Read a follow-up's
+  answer with `result` and `offset` = the previous byte count, then save it yourself: the collector re-saves the previous
+  turn while a follow-up is unfinished, and transcript files on disk lag the service state.
+- **All reviewer sessions named in this section started on 2026-09-30 or 2026-10-01 and have EXPIRED.** Every re-check in
+  session 5 is a FRESH run pointed at the earlier review files (`/Volumes/T7/dev/round8/review-w4-rework{11,12,13,14}-*.md`,
+  `review-w1-rework{8,9,9b}-*.md`, `review-k8s-rework9-*.md`) plus the builder's current hand-off.
+- If a run stops on a content filter, rephrase neutrally ("render-failure claims") and do not escalate.
 
 ### Resume prompt for session 5 (copy verbatim)
 
