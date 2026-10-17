@@ -7936,6 +7936,23 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   integer domain) for sol's items. The pre-review paid for itself: these would otherwise have surfaced only after the final
   hand-back's review round. Heartbeat 21:21: load 8, T7 156 GB free; W1 working (23 modified files); battery builder 2
   commits (dependency controls, pinned lint adjudication); defblock builder working. Orchestrator.
+- 22:44 (Oct 17) — **Battery lint-document lane PHASE 1 handed back by the Codex builder (astra,
+  `round8-battery` 4119dd72/9f44321d/c022a9cb on be92e163; `.codex-evidence/handoff.md`, Self-attack present).** Built:
+  test-util `AcceptanceInputs` + `dependency_probes`; `lint_probes.rs:screen` (LintRaw, LintCoalescedTwice, Template),
+  `SCHEMA_ACCEPTANCE_CONTEXT_ROSTER` import with hash checks; `HelmRunner::lint` + `PinnedHelmChart::adjudicate_lint` (1 200 s);
+  `lint_adjudication.rs:adjudicate_lint_flip`; completeness checks in schema_emission_profiles.rs. Proof: all 19 landing-10
+  run1 oauth2-proxy sweep failures screened individually (21 LintRaw flips on the combined roster, 0 in other kinds); real Helm
+  re-confirms the activation false rejection (witness test exit 0). Builder gates: fmt 0, lint 0, lint:fc 0 (51 combos),
+  nextest 1 699 0, `task test:integration` 201 (Go module downloads need DNS the workspace_write sandbox lacks) — fallback
+  integration profile 950 passed 0; clean dump 0; schema-only battery twice 0/0 (160 charts, 273 191 probes, 2 723 new
+  lint documents, 0 flips; coverage byte-identical with 1 vs 3 workers); lane cost 79.6 s serial. Skill-docs patch prepared
+  but unapplied (`.agents/skills/` read-only in its sandbox). Orchestrator actions: the exact `task test:integration` re-run
+  OUTSIDE the sandbox in the clone (log `round8-battery-evidence/orch-integration.log`); reviews sol
+  20261017T204436-b2180698 (other model) + astra 20261017T204436-a86ea30f (fresh, own model) → `review-battery-p1-*.md`.
+  Landing position: test infrastructure lands FIRST per the landing workflow (it changes what every later battery checks);
+  if it is LAND ×2 before W4 is ready it goes as landing 10a, fixture-neutral, and the runner gains the roster export
+  (orchestrator-owned change). Disk 101 GB at 22:44 → W4 asked to prune superseded dumps in its target. W1 committed
+  7a90f271 `fix(ir): quote claims need positive text provenance (R48)`; checkpoint expected. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
