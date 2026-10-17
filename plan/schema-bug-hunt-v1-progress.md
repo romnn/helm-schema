@@ -7870,6 +7870,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   without it is returned unread. Session tally: 4 W4 review rounds (12→15), 1 landing chain (2.8 h, failed at sweep), 3 W1
   review rounds + 2 design reviews (blocker A, R46), k8s LAND ×2; ~40 real defects found and fixed or recorded on candidate
   branches, none on main. Disk at close: internal 62 GB, T7 80 GB. Orchestrator.
+- 20:23 (Oct 17) — **Session 5 started (orchestrator Opus 5.5; user-pasted resume prompt).** State checked: main
+  91842d41 clean (code b51c8589, unmoved since landing 9), heavy lock absent, load 3, T7 189 GB free. W4 clone `round8-w4-r9`
+  clean at b10d54b3 (R69/R71/R70 on R68 5325b7d1); W1 clone `round8-w1` at 8e98b12c (R48 wip, does not compile; last green
+  f375cde6; the six untracked v1.35 cache files still present, not staged, not deleted). `round8-landing10-run2` does not
+  exist yet, so landing-10.env's E is still fresh. All reviewer sessions expired (Oct 1); every re-check is a fresh run on
+  both models. Orchestrator decisions on W4's two open questions: (1) the integral-float gap (`1.0` in IntGt/IntLt, Eq/NotEq
+  Int, TypeIs integer) is inside rule 4 (evaluator == emitted encoding): fix it evaluator-side, extend the table test with
+  integral-float cells, and if Helm's own reading of `1.0` makes the ENCODING wrong, record that as a residual with its Helm
+  cell instead of widening scope; (2) the `then`-branch check: the witness prober is the breadth method; every RESTRICT row
+  where main accepts gets a schema-free `helm template`/`helm lint` cell; conditionals the solver cannot witness are counted
+  per artifact and classified structurally, and any NEW restriction among them needs a hand-built Helm cell. Spawning the
+  W4 (rework 15 finish) and W1 (R48) replacement builders in parallel. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
