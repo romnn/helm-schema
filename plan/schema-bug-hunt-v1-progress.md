@@ -8511,6 +8511,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Template 883 documents), tokei:core delta 0 (test support excluded). Orchestrator committed ce4f7ddb (transfer c0ce6c20…) and
   20b29c3b (skill docs e3be35aa…) in round8-battery. The rework-5 reviewer sessions expired (24 h), so fresh runs:
   202423-800b1d2c (astra), 202423-f3e14ed1 (sol), question `round8/q/battery-p1r6-review.md`. Orchestrator.
+- 22:32 (Oct 18) — **Battery rework 6 = REWORK ×2 (`round8/review-battery-p1r6-{astra,sol}.md`), one new P1 each; rework 7 sent as a
+  CLASS fix.** Both confirm R17's original cells and R13–R16 pass, one identity/comparison implementation, hashes and byte-identical
+  coverage. astra R18: the pinned validator's propertyNames wrapper rebuilds the outer path from the child's resource-relative path,
+  so the proof resolves an unrelated root keyword and merges two embedded resources (new=0, inherited=1 both lanes). sol R19: an
+  embedded `$id` can shadow the retrieval URI, so route replay starts at a substituted resource and merges distinct constraints.
+  Orchestrator direction (follow_up turn 9 on 78d55437): a registry-integrity precondition (unique, non-shadowing base URI / IDs /
+  anchors, else the resource fails unresolved), an enumerated list of every rebuilt-path keyword from the validator source with
+  child-provenance proof or unresolved, a measured count of unresolved assertions on the real Kubernetes bundle + CRD catalog (zero or
+  explained), both cells red→green in both lanes, docs corrected; prefer deletion. Note: both counterexamples are hand-built schemas;
+  the open question for landing is whether the real pinned schemas trigger either class (step 3 measures it). Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
