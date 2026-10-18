@@ -8237,6 +8237,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   …-44605823 → `round8/analysis-chain-time-{sol,astra}.md`; the plan becomes a runner/perf item (Codex builder, reviewed) and a
   per-step budget guard. Rule for the next chains: launch them only while builders are below load 40 so receipts measure the chain,
   not the host. Orchestrator.
+- 14:44 (Oct 18) — **USER DECISION: launch chains without waiting for an idle machine; tell the user when a perf pass is
+  needed.** Verbatim: "just keep going, and dont wait for an idle machine (it wont be) - at some point when it gets too slow we might
+  need to do another performance optimization pass - let me know when that is the case". This replaces the 14:40 rule (launch only
+  while load < 40): a chain launches as soon as its candidate is LAND ×2 and the heavy lock is absent and T7 is above its floor.
+  Alert trigger (orchestrator): a full chain > 3 h, or any step > 50 % slower than landing 9 run2 (7/9/9/26/9/56 min). The chain-time
+  analyses keep running and become the plan for that pass; no perf work is started before the trigger. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
