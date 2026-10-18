@@ -530,6 +530,92 @@ fn wrapped_property_names_cannot_borrow_an_unrelated_root_constraint() -> eyre::
 }
 
 #[test]
+fn nested_regex_execution_failure_is_unresolved_in_both_lanes() -> eyre::Result<()> {
+    assert_unresolved_in_both_lanes(
+        &json!({"properties": {"data": {"anyOf": [
+            {"pattern": "^(?:(a|b|ab)*(?=c)c|.*)$"},
+            {"type": "integer"}
+        ]}}}),
+        &json!({"data": ""}),
+        &json!({"data": "ab".repeat(64)}),
+        DATA_TEMPLATE,
+        "execution failure",
+    )
+}
+
+#[test]
+fn execution_preflight_covers_referenced_and_inactive_patterns() -> eyre::Result<()> {
+    let pattern = json!({"pattern": "^(?:(a|b|ab)*(?=c)c|.*)$"});
+    for schema in [
+        json!({
+            "x-hidden": {"if": {"const": ""}, "else": {"not": pattern}},
+            "properties": {"data": {"$ref": "#/x-hidden"}}
+        }),
+        // Inactive pairs also fail unresolved because execution preflight is conservative.
+        json!({"properties": {"unused": pattern}}),
+    ] {
+        assert_unresolved_in_both_lanes(
+            &schema,
+            &json!({"data": ""}),
+            &json!({"data": "ab".repeat(64)}),
+            DATA_TEMPLATE,
+            "execution failure",
+        )?;
+    }
+    Ok(())
+}
+
+#[test]
+fn boolean_applicators_cannot_hide_regex_execution_failure() -> eyre::Result<()> {
+    let pattern = json!({"pattern": "^(?:(a|b|ab)*(?=c)c|.*)$"});
+    for (constraint, defaults, payload) in [
+        (
+            json!({"if": {"const": ""}, "else": {"not": pattern}}),
+            json!(""),
+            json!("ab".repeat(64)),
+        ),
+        (
+            json!({"if": pattern, "then": {"const": ""}, "else": {}}),
+            json!(""),
+            json!("ab".repeat(64)),
+        ),
+        (
+            json!({"oneOf": [pattern, {"minLength": 1}]}),
+            json!(""),
+            json!("ab".repeat(64)),
+        ),
+        (
+            json!({"contains": pattern}),
+            json!([""]),
+            json!(["ab".repeat(64)]),
+        ),
+    ] {
+        assert_unresolved_in_both_lanes(
+            &json!({"properties": {"data": constraint}}),
+            &json!({"data": defaults}),
+            &json!({"data": payload}),
+            DATA_TEMPLATE,
+            "execution failure",
+        )?;
+    }
+    Ok(())
+}
+
+#[test]
+fn pattern_property_dispatch_cannot_hide_regex_execution_failure() -> eyre::Result<()> {
+    assert_unresolved_in_both_lanes(
+        &json!({"properties": {"data": {
+            "patternProperties": {"^(?:(a|b|ab)*(?=c)c|.*)$": {"type": "integer"}},
+            "additionalProperties": false
+        }}}),
+        &json!({"data": {"": 0}}),
+        &json!({"data": {"ab".repeat(64): 0}}),
+        DATA_TEMPLATE,
+        "execution failure",
+    )
+}
+
+#[test]
 fn shadowed_registry_resources_cannot_substitute_constraint_provenance() -> eyre::Result<()> {
     assert_unresolved_in_both_lanes(
         &json!({

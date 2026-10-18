@@ -112,7 +112,7 @@ struct CompilerSource<'a> {
 pub(super) fn verify_compiler_locations(
     registry: &jsonschema::Registry<'_>,
     root_uri: &str,
-) -> eyre::Result<()> {
+) -> eyre::Result<BTreeSet<String>> {
     let resolver = registry.resolver(jsonschema::uri::from_str(root_uri)?);
     let (root, resolver, draft) = resolver.lookup(root_uri)?.into_inner();
     let resolver = resolver.in_subresource(draft.create_resource_ref(root))?;
@@ -126,6 +126,7 @@ pub(super) fn verify_compiler_locations(
     // The compiler cache omits source identity and the reference base used to store nested suffixes.
     // Ignoring dynamic scope is conservative: a collision never becomes permission to disambiguate.
     let mut locations = BTreeMap::<(String, String), CompilerSource<'_>>::new();
+    let mut patterns = BTreeSet::new();
     while let Some(CompilerPosition {
         node,
         draft,
@@ -158,6 +159,12 @@ pub(super) fn verify_compiler_locations(
             node.get("$dynamicRef").is_none() && node.get("$recursiveRef").is_none(),
             "unproved dynamic reference correspondence"
         );
+        if let Some(pattern) = node.get("pattern").and_then(Value::as_str) {
+            patterns.insert(pattern.to_string());
+        }
+        if let Some(properties) = node.get("patternProperties").and_then(Value::as_object) {
+            patterns.extend(properties.keys().cloned());
+        }
         if let Some(reference) = node.get("$ref").and_then(Value::as_str) {
             let alias = jsonschema::uri::resolve_against(&base.borrow(), reference)?;
             let target_pointer = match alias.fragment() {
@@ -204,6 +211,28 @@ pub(super) fn verify_compiler_locations(
             });
         }
     }
+    Ok(patterns)
+}
+
+pub(crate) fn verify_execution(error: &jsonschema::ValidationError<'_>) -> eyre::Result<()> {
+    use jsonschema::error::ValidationErrorKind;
+
+    match error.kind() {
+        ValidationErrorKind::BacktrackLimitExceeded { .. }
+        | ValidationErrorKind::RegexEngineFailure { .. }
+        | ValidationErrorKind::Referencing(_) => {
+            eyre::bail!("unresolved validator execution failure: {error}");
+        }
+        ValidationErrorKind::AnyOf { context }
+        | ValidationErrorKind::OneOfNotValid { context }
+        | ValidationErrorKind::OneOfMultipleValid { context } => {
+            for child in context.iter().flatten() {
+                verify_execution(child)?;
+            }
+        }
+        ValidationErrorKind::PropertyNames { error } => verify_execution(error)?,
+        _ => {}
+    }
     Ok(())
 }
 
@@ -226,14 +255,10 @@ pub(crate) fn canonical_schema_location(
 ) -> eyre::Result<String> {
     use jsonschema::error::ValidationErrorKind;
 
+    verify_execution(error)?;
     eyre::ensure!(
-        !matches!(
-            error.kind(),
-            ValidationErrorKind::FalseSchema
-                | ValidationErrorKind::Referencing(_)
-                | ValidationErrorKind::BacktrackLimitExceeded { .. }
-                | ValidationErrorKind::RegexEngineFailure { .. }
-        ) && error.evaluation_path().as_str().rsplit('/').next() == Some(error.kind().keyword()),
+        !matches!(error.kind(), ValidationErrorKind::FalseSchema)
+            && error.evaluation_path().as_str().rsplit('/').next() == Some(error.kind().keyword()),
         "{} does not prove a complete constraint route",
         error.kind().keyword()
     );

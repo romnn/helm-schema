@@ -1,6 +1,6 @@
 //! Adjudicates values against pinned Helm execution and offline Kubernetes schemas.
 
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, BTreeSet};
 use std::fmt;
 use std::fs;
 use std::io::Read as _;
@@ -19,13 +19,13 @@ use helm_schema_k8s::{
 };
 use indoc::indoc;
 use serde::Deserialize as _;
-use serde_json::Value;
+use serde_json::{Value, json};
 use test_util::helm_values::{AcceptanceDocument, ValuesError, acceptance_values};
 use test_util::scratch::ScratchDir;
 
 use crate::helm::assertion_identity::{
     InstanceSegment, assertion_provenance, canonical_instance_path, canonical_schema_location,
-    verify_compiler_locations, verify_registry_integrity,
+    verify_compiler_locations, verify_execution, verify_registry_integrity,
 };
 use crate::helm::cache_policy::render_cacheability;
 use crate::helm::invocation::{
@@ -1049,7 +1049,7 @@ pub const KUBERNETES_RELEASE: &str = "v1.29.0-standalone-strict";
 
 /// How resource schemas are compiled and judged. Changing the compilation
 /// options or the identity proof must change this.
-const VALIDATOR_POLICY: &str = "helm-schema/offline-kubernetes-validator/v5";
+const VALIDATOR_POLICY: &str = "helm-schema/offline-kubernetes-validator/v6";
 
 /// Base for anonymous schemas; resource API/kind separately qualify every assertion.
 const ANONYMOUS_SCHEMA_URI: &str = "https://helm-schema.invalid/resource";
@@ -1058,6 +1058,8 @@ const ANONYMOUS_SCHEMA_URI: &str = "https://helm-schema.invalid/resource";
 pub(crate) struct ResourceSchema {
     pub(crate) validator: jsonschema::Validator,
     pub(crate) registry: jsonschema::Registry<'static>,
+    pattern_execution: Option<jsonschema::Validator>,
+    pattern_count: usize,
 }
 
 impl ResourceSchema {
@@ -1076,17 +1078,67 @@ impl ResourceSchema {
                 == schema,
             "registry retrieval URI does not identify the pinned root"
         );
-        verify_compiler_locations(&registry, ANONYMOUS_SCHEMA_URI)?;
+        let patterns = verify_compiler_locations(&registry, ANONYMOUS_SCHEMA_URI)?;
         let validator = jsonschema::options()
             .with_base_uri(ANONYMOUS_SCHEMA_URI)
             .with_draft(draft)
             .with_retriever(NoRemoteSchemas)
             .with_registry(&registry)
             .build(schema)?;
+        let pattern_count = patterns.len();
+        let pattern_execution = if patterns.is_empty() {
+            None
+        } else {
+            let checks: Vec<_> = patterns
+                .into_iter()
+                .map(|pattern| json!({"pattern": pattern}))
+                .collect();
+            Some(
+                jsonschema::options()
+                    .with_draft(draft)
+                    .build(&json!({"allOf": checks}))?,
+            )
+        };
         Ok(Self {
             validator,
             registry,
+            pattern_execution,
+            pattern_count,
         })
+    }
+
+    pub(crate) fn verify_pattern_execution(&self, document: &Value) -> eyre::Result<usize> {
+        let Some(checker) = &self.pattern_execution else {
+            return Ok(0);
+        };
+        // Boolean applicators discard engine errors, so certify every possible string/key pairing.
+        // Ordinary mismatches are irrelevant here; this pass never decides schema acceptance.
+        let mut pending = vec![document];
+        let mut strings = BTreeSet::new();
+        while let Some(node) = pending.pop() {
+            match node {
+                Value::Object(properties) => {
+                    strings.extend(properties.keys().map(String::as_str));
+                    pending.extend(properties.values());
+                }
+                Value::Array(items) => pending.extend(items),
+                Value::String(value) => {
+                    strings.insert(value.as_str());
+                }
+                _ => {}
+            }
+        }
+        let pairs = strings.len().saturating_mul(self.pattern_count);
+        eyre::ensure!(
+            pairs <= 1_000_000,
+            "unresolved pattern execution budget exceeded"
+        );
+        for value in strings {
+            for error in checker.iter_errors(&Value::String(value.to_string())) {
+                verify_execution(&error)?;
+            }
+        }
+        Ok(pairs)
     }
 }
 
@@ -1486,6 +1538,7 @@ impl OfflineKubernetesValidator {
             .map(str::to_string);
         match &validator {
             Ok(validator) => {
+                validator.verify_pattern_execution(document)?;
                 evidence.collect_violations(document, location, validator)?;
             }
             Err(error) => {

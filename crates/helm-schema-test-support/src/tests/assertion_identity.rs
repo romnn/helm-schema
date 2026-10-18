@@ -12,7 +12,41 @@ use sha2::{Digest as _, Sha256};
 use test_util::prelude::sim_assert_eq;
 
 use crate::helm::adjudication::{KUBERNETES_RELEASE, ResourceSchema};
-use crate::helm::assertion_identity::{canonical_schema_location, verify_registry_integrity};
+use crate::helm::assertion_identity::{
+    canonical_schema_location, verify_execution, verify_registry_integrity,
+};
+
+#[test]
+fn execution_failure_check_descends_into_aggregate_and_property_name_errors() -> eyre::Result<()> {
+    let pattern = json!({"pattern": "^(?:(a|b|ab)*(?=c)c|.*)$"});
+    let text = "ab".repeat(64);
+    for schema in [
+        json!({"anyOf": [pattern, {"type": "integer"}]}),
+        json!({"oneOf": [pattern, {"type": "integer"}]}),
+        json!({"oneOf": [pattern, {"type": "string"}, {"minLength": 1}]}),
+        json!({"anyOf": [{"oneOf": [pattern, {"type": "integer"}]}]}),
+    ] {
+        for document in [json!(text), json!({text.clone(): 0})] {
+            let schema = if document.is_object() {
+                json!({"propertyNames": schema})
+            } else {
+                schema.clone()
+            };
+            let wrapped = jsonschema::validator_for(&schema)?;
+            let errors: Vec<_> = wrapped.iter_errors(&document).collect();
+            eyre::ensure!(!errors.is_empty(), "missing execution failure control");
+            for error in errors {
+                assert!(verify_execution(&error).is_err(), "{error:?}");
+            }
+        }
+    }
+    for error in jsonschema::validator_for(&json!({"anyOf": [{"type": "integer"}]}))?
+        .iter_errors(&json!("ordinary mismatch"))
+    {
+        verify_execution(&error)?;
+    }
+    Ok(())
+}
 
 #[test]
 fn pinned_bundle_assertion_provenance_audit() -> eyre::Result<()> {
@@ -23,6 +57,7 @@ fn pinned_bundle_assertion_provenance_audit() -> eyre::Result<()> {
     let mut nodes = 0;
     let mut keywords = BTreeMap::<String, usize>::new();
     let mut errors_checked = 0;
+    let mut pattern_pairs_checked = 0;
     let mut compilation_failures = BTreeMap::new();
     let mut kubernetes = 0;
     let mut crds = 0;
@@ -45,21 +80,10 @@ fn pinned_bundle_assertion_provenance_audit() -> eyre::Result<()> {
         let compiled = match ResourceSchema::compile(&schema, Draft::Draft7) {
             Ok(compiled) => compiled,
             Err(error) => {
-                let mut failures = Vec::new();
-                for pattern in survey.patterns {
-                    if let Err(pattern_error) = jsonschema::options()
-                        .with_draft(Draft::Draft7)
-                        .build(&json!({"pattern": pattern}))
-                    {
-                        failures.push(pattern_error.to_string());
-                    }
-                }
-                if failures.is_empty() {
-                    failures.push(error.to_string());
-                }
-                failures.sort();
-                failures.dedup();
-                compilation_failures.insert(relative.to_string_lossy().to_string(), failures);
+                compilation_failures.insert(
+                    relative.to_string_lossy().to_string(),
+                    pattern_compilation_diagnostics(survey.patterns, &error),
+                );
                 continue;
             }
         };
@@ -68,10 +92,12 @@ fn pinned_bundle_assertion_provenance_audit() -> eyre::Result<()> {
             json!(true),
             json!(0),
             json!(""),
+            json!("ab".repeat(64)),
             json!([]),
             json!({}),
             json!({"metadata": false, "spec": false, "data": false, "unexpected": false}),
         ] {
+            pattern_pairs_checked += compiled.verify_pattern_execution(&document)?;
             for error in compiled.validator.iter_errors(&document) {
                 canonical_schema_location(&compiled.registry, base, &error)?;
                 eyre::ensure!(
@@ -108,6 +134,7 @@ fn pinned_bundle_assertion_provenance_audit() -> eyre::Result<()> {
             "kubernetes_schemas": kubernetes, "crd_schemas": crds,
             "schema_nodes": nodes, "schema_keywords": keywords,
             "reported_errors_checked": errors_checked,
+            "pattern_execution_pairs_checked": pattern_pairs_checked,
             "compilation_failures": compilation_failures,
             "registry_failures": 0, "unresolved_errors": 0,
             "potentially_new_unresolved_constraints": 0,
@@ -115,6 +142,24 @@ fn pinned_bundle_assertion_provenance_audit() -> eyre::Result<()> {
         })
     );
     Ok(())
+}
+
+fn pattern_compilation_diagnostics(patterns: Vec<&Value>, error: &eyre::Report) -> Vec<String> {
+    let mut failures = Vec::new();
+    for pattern in patterns {
+        if let Err(pattern_error) = jsonschema::options()
+            .with_draft(Draft::Draft7)
+            .build(&json!({"pattern": pattern}))
+        {
+            failures.push(pattern_error.to_string());
+        }
+    }
+    if failures.is_empty() {
+        failures.push(error.to_string());
+    }
+    failures.sort();
+    failures.dedup();
+    failures
 }
 
 struct SchemaSurvey<'a> {
