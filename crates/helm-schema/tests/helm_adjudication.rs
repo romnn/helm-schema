@@ -339,7 +339,8 @@ fn contextual_assertion_counts_preserve_multiplicity_without_scalar_identity() -
     write_configmap_schema(cache.path())?;
     let validator =
         OfflineKubernetesValidator::new(cache.path(), helm_adjudication::KUBERNETES_RELEASE)?;
-    for (defaults_count, context_count, probe_count) in [(1, 2, 2), (1, 1, 2), (2, 1, 3)] {
+    for (defaults_count, context_count, probe_count) in [(1, 2, 2), (1, 1, 2), (2, 1, 2), (2, 1, 3)]
+    {
         let root = ScratchDir::new("context-assertions")?;
         write_chart(
             root.path(),
@@ -363,7 +364,7 @@ fn contextual_assertion_counts_preserve_multiplicity_without_scalar_identity() -
         let chart = PinnedHelmChart::prepare(helm_invocation::HelmRunner::shared()?, root.path())?;
         let defaults = chart.adjudicate(&json!({}))?;
         let context = chart.adjudicate(&json!({"copies":context_count,"token":1}))?;
-        let checked = validator.check_controls(&chart, &defaults, &[context]);
+        let checked = validator.check_controls(&chart, &defaults, &[&context]);
         if context_count > defaults_count {
             let error = checked
                 .err()
@@ -376,10 +377,12 @@ fn contextual_assertion_counts_preserve_multiplicity_without_scalar_identity() -
         } else {
             let checked = checked?;
             let probe = chart.adjudicate(&json!({"copies":probe_count,"token":2}))?;
-            let comparison = validator.compare_with_controls(&chart, &probe, &checked)?;
+            let mut comparisons = validator.compare_with_controls(&chart, &probe, &checked)?;
+            sim_assert_eq!(have: comparisons.len(), want: 1);
+            let comparison = comparisons.pop().ok_or_eyre("missing context comparison")?;
             // Changing each scalar does not hide a genuinely additional assertion.
-            sim_assert_eq!(have: comparison.new_violations.len(), want: probe_count - defaults_count);
-            sim_assert_eq!(have: comparison.inherited_violations.len(), want: defaults_count);
+            sim_assert_eq!(have: comparison.new_violations.len(), want: probe_count - context_count);
+            sim_assert_eq!(have: comparison.inherited_violations.len(), want: context_count);
             assert!(comparison.uncertain.is_empty());
         }
     }

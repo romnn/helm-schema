@@ -664,17 +664,32 @@ fn screened_context_verdict(
     overlay: &Value,
     context_overlay: Value,
 ) -> eyre::Result<Result<super::HelmFlipVerdict, String>> {
-    let mut row = context_row(source, schemas, overlay.clone())?;
-    row.context_overlay_sha256 = sha256_hex(&serde_json::to_vec(&context_overlay)?);
-    row.context_overlay = context_overlay;
+    screened_contexts_verdict(source, schemas, overlay, &[context_overlay])
+}
+
+fn screened_contexts_verdict(
+    source: &Path,
+    schemas: &LintSchemas,
+    overlay: &Value,
+    contexts: &[Value],
+) -> eyre::Result<Result<super::HelmFlipVerdict, String>> {
+    let mut rows = Vec::new();
+    for (index, context) in contexts.iter().enumerate() {
+        let mut row = context_row(source, schemas, overlay.clone())?;
+        row.id = format!("context-{index}");
+        row.context_overlay_sha256 = sha256_hex(&serde_json::to_vec(context)?);
+        row.context_overlay = context.clone();
+        rows.push(row);
+    }
     let screened = screen(&ScreenRequest {
         chart: source,
         schemas,
         kubernetes_version: "1.29.0",
-        imported: &[row],
+        imported: &rows,
         roster_sha256: None,
         available_probes: usize::MAX,
     })?;
+    screened.coverage.validate()?;
     let probe = screened
         .flips
         .iter()
@@ -949,6 +964,213 @@ fn inherited_scalar_assertion_does_not_become_new_in_a_context() -> eyre::Result
         "{error}"
     );
     assert!(!error.contains("unusable"), "{error}");
+    Ok(())
+}
+
+fn structural_loosening_verdict(
+    template: &str,
+    context: Value,
+) -> eyre::Result<Result<super::HelmFlipVerdict, String>> {
+    let source = null_chart()?;
+    fs::write(
+        source.path().join("values.yaml"),
+        r#"{"gate":false,"payload":0}"#,
+    )?;
+    fs::write(source.path().join("templates/config.yaml"), template)?;
+    let schemas = LintSchemas::compile(
+        &json!({"properties":{"payload":{"maximum":0}}}),
+        &json!({}),
+        None,
+    )?;
+    screened_context_verdict(
+        source.path(),
+        &schemas,
+        &json!({"gate":true,"payload":1}),
+        context,
+    )
+}
+
+fn forbidden_member_template(existing: &str, added: &str) -> String {
+    indoc::formatdoc! {r"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: forbidden-members
+        {existing}: present
+        {{{{ if .Values.payload }}}}
+        {added}: added
+        {{{{ end }}}}
+    "}
+}
+
+#[test]
+fn added_forbidden_member_is_a_new_contextual_violation() -> eyre::Result<()> {
+    let template = forbidden_member_template("existingUnexpected", "addedUnexpected");
+    sim_assert_eq!(
+        have: structural_loosening_verdict(&template, json!({"gate":true}))?,
+        want: Ok(super::HelmFlipVerdict::CandidateAcceptsKubernetesRejects)
+    );
+    Ok(())
+}
+
+#[test]
+fn forbidden_x_does_not_hide_added_y_with_defaults_context() -> eyre::Result<()> {
+    let template = forbidden_member_template("x", "y");
+    sim_assert_eq!(
+        have: structural_loosening_verdict(&template, json!({}))?,
+        want: Ok(super::HelmFlipVerdict::CandidateAcceptsKubernetesRejects)
+    );
+    Ok(())
+}
+
+#[test]
+fn added_forbidden_member_makes_context_unusable() -> eyre::Result<()> {
+    let template = forbidden_member_template("existingUnexpected", "addedUnexpected");
+    let error = structural_loosening_verdict(&template, json!({"payload":1}))?
+        .err()
+        .ok_or_eyre("new forbidden member was inherited from defaults")?;
+    assert!(
+        error.contains("unusable context Kubernetes control"),
+        "{error}"
+    );
+    assert!(error.contains("/addedUnexpected"), "{error}");
+    Ok(())
+}
+
+const REQUIRED_PROPERTY_SWAP: &str = indoc::indoc! {r"
+    apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    metadata:
+      name: required-swap
+    roleRef:
+      kind: Role
+      {{ if .Values.payload }}
+      apiGroup: rbac.authorization.k8s.io
+      {{ else }}
+      name: reader
+      {{ end }}
+"};
+
+#[test]
+fn changed_missing_required_property_is_a_new_contextual_violation() -> eyre::Result<()> {
+    sim_assert_eq!(
+        have: structural_loosening_verdict(REQUIRED_PROPERTY_SWAP, json!({}))?,
+        want: Ok(super::HelmFlipVerdict::CandidateAcceptsKubernetesRejects)
+    );
+    Ok(())
+}
+
+#[test]
+fn changed_missing_required_property_makes_context_unusable() -> eyre::Result<()> {
+    let error = structural_loosening_verdict(REQUIRED_PROPERTY_SWAP, json!({"payload":1}))?
+        .err()
+        .ok_or_eyre("different missing required property was inherited from defaults")?;
+    assert!(
+        error.contains("unusable context Kubernetes control"),
+        "{error}"
+    );
+    assert!(error.contains("name"), "{error}");
+    Ok(())
+}
+
+const CONTEXT_REDUCES_FAILURES: &str = indoc::indoc! {r"
+        {{ $copies := 2 }}
+        {{ if .Values.gate }}{{ $copies = 1 }}{{ end }}
+        {{ if .Values.payload }}{{ $copies = 2 }}{{ end }}
+        {{ range $index := until $copies }}
+        ---
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: duplicate-{{ $index }}
+        data:
+          token: {{ $index }}
+        {{ end }}
+    "};
+
+#[test]
+fn payload_cannot_spend_defaults_violations_removed_by_context() -> eyre::Result<()> {
+    // Defaults emit two invalid resources, the context one, and the payload two again.
+    sim_assert_eq!(
+        have: structural_loosening_verdict(CONTEXT_REDUCES_FAILURES, json!({"gate":true}))?,
+        want: Ok(super::HelmFlipVerdict::CandidateAcceptsKubernetesRejects)
+    );
+    Ok(())
+}
+
+#[test]
+fn merged_contexts_cannot_borrow_each_others_failure_allowances() -> eyre::Result<()> {
+    let source = null_chart()?;
+    fs::write(
+        source.path().join("values.yaml"),
+        r#"{"gate":false,"payload":0}"#,
+    )?;
+    fs::write(
+        source.path().join("templates/config.yaml"),
+        CONTEXT_REDUCES_FAILURES,
+    )?;
+    let restrictive = json!({"properties":{"payload":{"maximum":0}}});
+    let tightening = LintSchemas::compile(&json!({}), &restrictive, None)?;
+    let loosening = LintSchemas::compile(&restrictive, &json!({}), None)?;
+    // The same payload has a new failure relative to one origin, but none relative to the other.
+    for contexts in [
+        vec![json!({"gate":true}), json!({})],
+        vec![json!({}), json!({"gate":true})],
+        vec![json!({"gate":true}), json!({"gate":false})],
+    ] {
+        let overlay = json!({"gate":true,"payload":1});
+        let error = screened_contexts_verdict(source.path(), &tightening, &overlay, &contexts)?
+            .err()
+            .ok_or_eyre("one context's rejection certified every origin")?;
+        assert!(error.contains("every applicable context"), "{error}");
+        sim_assert_eq!(
+            have: screened_contexts_verdict(source.path(), &loosening, &overlay, &contexts)?,
+            want: Ok(super::HelmFlipVerdict::CandidateAcceptsKubernetesRejects)
+        );
+    }
+    Ok(())
+}
+
+#[test]
+fn builtin_defaults_context_survives_imported_execution_deduplication() -> eyre::Result<()> {
+    let source = null_chart()?;
+    let schemas = LintSchemas::compile(&json!({}), &json!({"required":["absent"]}), None)?;
+    let mut row = context_row(source.path(), &schemas, json!({}))?;
+    row.context_overlay = json!({"gate":true});
+    row.context_overlay_sha256 = sha256_hex(&serde_json::to_vec(&row.context_overlay)?);
+    let screened = screen(&ScreenRequest {
+        chart: source.path(),
+        schemas: &schemas,
+        kubernetes_version: "1.29.0",
+        imported: &[row],
+        roster_sha256: None,
+        available_probes: usize::MAX,
+    })?;
+    screened.coverage.validate()?;
+    let document = screened
+        .flips
+        .iter()
+        .find(|probe| probe.overlay == json!({}))
+        .and_then(|probe| probe.document.as_ref())
+        .ok_or_eyre("deduplicated defaults flip absent")?;
+    let contexts: BTreeSet<_> = document
+        .control_overlays
+        .iter()
+        .map(serde_json::to_string)
+        .collect::<Result<_, _>>()?;
+    sim_assert_eq!(have: contexts, want: BTreeSet::from(["{}".to_string(), r#"{"gate":true}"#.to_string()]));
+    assert!(
+        document
+            .origins
+            .iter()
+            .any(|origin| origin.starts_with("dependency:"))
+    );
+    assert!(
+        document
+            .origins
+            .iter()
+            .any(|origin| origin.starts_with("roster:"))
+    );
     Ok(())
 }
 

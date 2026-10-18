@@ -1,6 +1,6 @@
 //! Live evidence for document-specific flips, without collapsing them to template values.
 
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 
 use color_eyre::eyre::{self, OptionExt as _};
@@ -177,7 +177,7 @@ fn judge(
 
 struct Controls {
     defaults: HelmProbe,
-    contexts: Vec<HelmProbe>,
+    contexts: BTreeMap<Vec<u8>, HelmProbe>,
     lint_errors: BTreeSet<String>,
 }
 
@@ -193,7 +193,7 @@ fn controls(
         overlays.insert(serde_json::to_vec(overlay)?);
     }
     let mut defaults = None;
-    let mut contexts = Vec::new();
+    let mut contexts = BTreeMap::new();
     let mut lint_errors = BTreeSet::new();
     evidence["controls"] = json!([]);
     for bytes in overlays {
@@ -231,7 +231,7 @@ fn controls(
         if bytes == b"{}" {
             defaults = Some(rendered);
         } else {
-            contexts.push(rendered);
+            contexts.insert(bytes, rendered);
         }
     }
     Ok(Controls {
@@ -265,7 +265,19 @@ fn judge_independent(
         evidence_dir,
     } = request;
     let controls = controls(chart, document, schemas, evidence, evidence_dir)?;
-    let checked = kubernetes.check_controls(chart, &controls.defaults, &controls.contexts)?;
+    let mut applicable = Vec::new();
+    for overlay in &document.control_overlays {
+        let bytes = serde_json::to_vec(overlay)?;
+        applicable.push(if bytes == b"{}" {
+            &controls.defaults
+        } else {
+            controls
+                .contexts
+                .get(&bytes)
+                .ok_or_eyre("missing applicable context render")?
+        });
+    }
+    let checked = kubernetes.check_controls(chart, &controls.defaults, &applicable)?;
     let lint_rejects = semantic_rejection(plain_lint)?;
     let inherited_lint = !controls.lint_errors.is_empty();
     evidence["inherited_lint_errors"] = json!(controls.lint_errors);
@@ -296,7 +308,49 @@ fn judge_independent(
             Rejection::HelmAborts,
         ));
     }
-    let comparison = kubernetes.compare_with_controls(chart, rendered, &checked)?;
+    judge_kubernetes_contexts(
+        kubernetes.compare_with_controls(chart, rendered, &checked)?,
+        document,
+        after,
+        uninformative,
+        inherited_lint,
+        evidence,
+    )
+}
+
+fn judge_kubernetes_contexts(
+    mut comparisons: Vec<DefaultsComparison>,
+    document: &ScreenedDocument,
+    after: bool,
+    uninformative: bool,
+    inherited_lint: bool,
+    evidence: &mut Value,
+) -> eyre::Result<HelmFlipVerdict> {
+    evidence["kubernetes_contexts"] = json!(comparisons.iter().enumerate().map(|(index, comparison)| json!({
+        "overlay": document.control_overlays.get(index).cloned().unwrap_or_else(|| json!({})),
+        "new_kubernetes_errors": comparison.new_violations.iter().map(ToString::to_string).collect::<Vec<_>>(),
+        "inherited_kubernetes_errors": comparison.inherited_violations.iter().map(ToString::to_string).collect::<Vec<_>>(),
+        "kubernetes_uncertainty": comparison.uncertain,
+    })).collect::<Vec<_>>());
+    // Every origin must justify a tightening; one rejecting context disproves an acceptance.
+    if !after
+        && comparisons
+            .iter()
+            .any(|comparison| comparison.new_violations.is_empty())
+    {
+        eyre::bail!(
+            "tightening rejects a lint document without a new Kubernetes violation in every applicable context; inherited errors cannot establish attribution"
+        );
+    }
+    let index = comparisons
+        .iter()
+        .position(|comparison| !comparison.new_violations.is_empty())
+        .unwrap_or(0);
+    eyre::ensure!(
+        !comparisons.is_empty(),
+        "missing applicable Kubernetes comparison"
+    );
+    let comparison = comparisons.remove(index);
     if inherited_lint && comparison.new_violations.is_empty() {
         eyre::bail!(
             "{}; schema-free lint has only inherited errors from defaults/context controls",

@@ -509,7 +509,7 @@ fn screening_rows(
             serde_json::to_vec(&probe.overlay)?,
             request.kubernetes_version.to_string(),
             format!("dependency:{:?}:{:?}", probe.scope, probe.kind),
-            None,
+            &json!({}),
         )?;
     }
     for row in request.imported {
@@ -526,7 +526,7 @@ fn screening_rows(
             row.values_file.as_bytes().to_vec(),
             row.kubernetes_version.clone(),
             format!("roster:{}", row.id),
-            Some(&row.context_overlay),
+            &row.context_overlay,
         )?;
     }
     Ok(rows)
@@ -538,7 +538,7 @@ fn insert_row(
     values_file: Vec<u8>,
     kubernetes_version: String,
     origin: String,
-    context: Option<&Value>,
+    context: &Value,
 ) -> eyre::Result<()> {
     let key = serde_json::to_string(&json!([kubernetes_version, sha256_hex(&values_file)]))?;
     let row = rows.entry(key).or_insert(OverlayRow {
@@ -548,13 +548,11 @@ fn insert_row(
         origins: Vec::new(),
         contexts: Vec::new(),
     });
-    if let Some(context) = context {
-        row.contexts.push(ContextEvidence {
-            origin: origin.clone(),
-            overlay: context.clone(),
-            canonical_overlay_sha256: sha256_hex(&serde_json::to_vec(context)?),
-        });
-    }
+    row.contexts.push(ContextEvidence {
+        origin: origin.clone(),
+        overlay: context.clone(),
+        canonical_overlay_sha256: sha256_hex(&serde_json::to_vec(context)?),
+    });
     row.origins.push(origin);
     Ok(())
 }

@@ -769,6 +769,7 @@ pub struct ViolationKey {
     /// What tells violations of one assertion apart: the property a
     /// `required` misses, the properties `additionalProperties` rejects,
     /// else the offending value when it is a scalar and its type when not.
+    /// Contextual comparisons retain property identities and normalize scalar values to JSON types.
     pub detail: String,
 }
 
@@ -809,7 +810,7 @@ impl fmt::Display for ViolationKey {
 }
 
 /// One schema violation of a rendered resource.
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct KubernetesViolation {
     /// Position in the rendered stream, such as `document 2/items/0`.
     pub location: String,
@@ -875,53 +876,118 @@ pub struct DefaultsComparison {
     pub uncertain: Vec<String>,
 }
 
-/// Defaults and contextual renders whose Kubernetes assertions can establish attribution.
-/// Contexts introduce no assertions beyond defaults and every control is decidable.
+/// Applicable context assertions after checking their usability against defaults.
+///
+/// Each context is decidable and introduces no assertions beyond defaults.
+/// Payload inheritance uses each context's own multiset independently.
 pub struct UsableKubernetesControls {
-    assertions: BTreeMap<AssertionIdentity, usize>,
+    contexts: Vec<BTreeMap<ViolationKey, usize>>,
 }
 
-// Context attribution follows the assertion, not the particular invalid scalar.
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
-struct AssertionIdentity {
-    api_version: String,
-    kind: String,
-    instance_path: String,
-    schema_path: String,
+#[derive(Clone, Copy)]
+enum ViolationIdentity {
+    Legacy,
+    Contextual,
 }
 
-impl AssertionIdentity {
-    fn of(key: &ViolationKey) -> Self {
-        Self {
-            api_version: key.api_version.clone(),
-            kind: key.kind.clone(),
-            instance_path: key.instance_path.clone(),
-            schema_path: key.schema_path.clone(),
+impl ViolationIdentity {
+    fn unidentified(self, document: &Value, location: &str) -> Vec<KubernetesViolation> {
+        if matches!(self, Self::Legacy) {
+            return vec![KubernetesViolation::unidentified(location)];
+        }
+        let mut violations = Vec::new();
+        for property in ["apiVersion", "kind"] {
+            if document.get(property).and_then(Value::as_str).is_some() {
+                continue;
+            }
+            let mut violation = KubernetesViolation::unidentified(location);
+            violation.key.instance_path = format!("/{property}");
+            violation.key.detail = Value::String(property.to_string()).to_string();
+            if document.get(property).is_some() {
+                violation.key.keyword = "type".to_string();
+                violation.key.schema_path = format!("/properties/{property}/type");
+            }
+            violations.push(violation);
+        }
+        violations
+    }
+
+    fn keys(
+        self,
+        api_version: &str,
+        kind: &str,
+        error: &jsonschema::ValidationError<'_>,
+    ) -> Vec<ViolationKey> {
+        use jsonschema::error::ValidationErrorKind;
+
+        let mut key = ViolationKey::new(api_version, kind, error);
+        if matches!(self, Self::Legacy) {
+            return vec![key];
+        }
+        // Keep the evaluated assertion distinct when several references share a schema location.
+        key.schema_path = error.evaluation_path().to_string();
+        match error.kind() {
+            ValidationErrorKind::AdditionalProperties { unexpected }
+            | ValidationErrorKind::UnevaluatedProperties { unexpected } => {
+                let mut keys = Vec::new();
+                for property in unexpected {
+                    let mut member = key.clone();
+                    member.instance_path =
+                        error.instance_path().join(property.as_str()).to_string();
+                    member.detail = Value::String(property.clone()).to_string();
+                    keys.push(member);
+                }
+                keys
+            }
+            ValidationErrorKind::Required { .. } => vec![key],
+            ValidationErrorKind::PropertyNames { error: name_error } => {
+                // A property name is structural identity even though its JSON value is a string.
+                key.detail = name_error.instance().to_string();
+                if let Some(property) = name_error.instance().as_str() {
+                    key.instance_path = error.instance_path().join(property).to_string();
+                }
+                vec![key]
+            }
+            _ => {
+                key.detail = match error.instance().as_ref() {
+                    Value::Null => "null",
+                    Value::Bool(_) => "boolean",
+                    Value::Number(_) => "number",
+                    Value::String(_) => "string",
+                    Value::Array(_) => "array",
+                    Value::Object(_) => "object",
+                }
+                .to_string();
+                vec![key]
+            }
         }
     }
 }
 
 impl UsableKubernetesControls {
-    fn compare(&self, evidence: ResourceEvidence) -> DefaultsComparison {
-        let mut remaining = self.assertions.clone();
+    fn compare(
+        assertions: &BTreeMap<ViolationKey, usize>,
+        evidence: &ResourceEvidence,
+    ) -> DefaultsComparison {
+        let mut remaining = assertions.clone();
         let mut comparison = DefaultsComparison {
-            uncertain: evidence.uncertain,
+            uncertain: evidence.uncertain.clone(),
             ..DefaultsComparison::default()
         };
-        for violation in evidence.invalid {
-            match remaining.get_mut(&AssertionIdentity::of(&violation.key)) {
+        for violation in &evidence.invalid {
+            match remaining.get_mut(&violation.key) {
                 Some(count) if *count > 0 => {
                     *count -= 1;
-                    comparison.inherited_violations.push(violation);
+                    comparison.inherited_violations.push(violation.clone());
                 }
-                _ => comparison.new_violations.push(violation),
+                _ => comparison.new_violations.push(violation.clone()),
             }
         }
         comparison
     }
 }
 
-#[derive(Default)]
+#[derive(Clone, Default)]
 struct ResourceEvidence {
     invalid: Vec<KubernetesViolation>,
     uncertain: Vec<String>,
@@ -1054,7 +1120,12 @@ impl OfflineKubernetesValidator {
         let mut evidence = ResourceEvidence::default();
         for (index, document) in documents.iter().enumerate() {
             if !document.is_null() {
-                self.validate_document(document, &format!("document {index}"), &mut evidence);
+                self.validate_document(
+                    document,
+                    &format!("document {index}"),
+                    &mut evidence,
+                    ViolationIdentity::Legacy,
+                );
             }
         }
         if !evidence.invalid.is_empty() {
@@ -1122,9 +1193,12 @@ impl OfflineKubernetesValidator {
     }
 
     /// Establishes control usability before attributing any lint or template rejection.
+    ///
     /// Defaults may violate Kubernetes, but must have no uncertainty.
     /// Contexts must have no uncertainty or new violated assertion relative to defaults.
-    /// Assertions use resource API/kind, schema location and instance path, with multiplicity.
+    /// Assertions retain resource API/kind, evaluated schema location, instance path and
+    /// structural property identity, with multiplicity and normalized scalar values.
+    /// Empty `contexts` uses defaults; otherwise only the supplied contexts are applicable.
     ///
     /// # Errors
     ///
@@ -1133,20 +1207,24 @@ impl OfflineKubernetesValidator {
         &self,
         chart: &PinnedHelmChart,
         defaults: &HelmProbe,
-        contexts: &[HelmProbe],
+        contexts: &[&HelmProbe],
     ) -> eyre::Result<UsableKubernetesControls> {
-        let defaults = self.control_evidence(chart, defaults, "defaults")?;
-        let mut controls = UsableKubernetesControls {
-            assertions: BTreeMap::new(),
-        };
-        for violation in defaults.invalid {
-            *controls
-                .assertions
-                .entry(AssertionIdentity::of(&violation.key))
+        let defaults_evidence = self.control_evidence(chart, defaults, "defaults")?;
+        let mut defaults_assertions = BTreeMap::new();
+        for violation in &defaults_evidence.invalid {
+            *defaults_assertions
+                .entry(violation.key.clone())
                 .or_default() += 1;
         }
+        let mut applicable = Vec::new();
         for context in contexts {
-            let comparison = controls.compare(self.control_evidence(chart, context, "context")?);
+            // An explicit defaults context reuses the decoded usability control.
+            let evidence = if std::ptr::eq(*context, defaults) {
+                defaults_evidence.clone()
+            } else {
+                self.control_evidence(chart, context, "context")?
+            };
+            let comparison = UsableKubernetesControls::compare(&defaults_assertions, &evidence);
             eyre::ensure!(
                 comparison.new_violations.is_empty(),
                 "unusable context Kubernetes control: new assertions versus defaults: {}",
@@ -1157,8 +1235,18 @@ impl OfflineKubernetesValidator {
                     .collect::<Vec<_>>()
                     .join("; ")
             );
+            let mut assertions = BTreeMap::new();
+            for violation in evidence.invalid {
+                *assertions.entry(violation.key).or_default() += 1;
+            }
+            applicable.push(assertions);
         }
-        Ok(controls)
+        if applicable.is_empty() {
+            applicable.push(defaults_assertions);
+        }
+        Ok(UsableKubernetesControls {
+            contexts: applicable,
+        })
     }
 
     fn control_evidence(
@@ -1182,7 +1270,8 @@ impl OfflineKubernetesValidator {
 
     /// Judges a probe against previously checked defaults/context controls.
     /// All renders must use the same Kubernetes version.
-    /// Usable contexts introduce no assertions beyond defaults, so defaults bound inheritance.
+    /// Returns one comparison per applicable context, in the supplied order.
+    /// Defaults establish usability and supply no allowances to a non-default context.
     ///
     /// # Errors
     ///
@@ -1192,8 +1281,13 @@ impl OfflineKubernetesValidator {
         chart: &PinnedHelmChart,
         probe: &HelmProbe,
         controls: &UsableKubernetesControls,
-    ) -> eyre::Result<DefaultsComparison> {
-        Ok(controls.compare(self.probe_evidence(chart, probe)?))
+    ) -> eyre::Result<Vec<DefaultsComparison>> {
+        let evidence = self.probe_evidence(chart, probe)?;
+        Ok(controls
+            .contexts
+            .iter()
+            .map(|assertions| UsableKubernetesControls::compare(assertions, &evidence))
+            .collect())
     }
 
     fn probe_evidence(
@@ -1204,7 +1298,12 @@ impl OfflineKubernetesValidator {
         let mut evidence = ResourceEvidence::default();
         for (index, document) in Self::decode_probe(chart, probe)?.iter().enumerate() {
             if !document.is_null() {
-                self.validate_document(document, &format!("document {index}"), &mut evidence);
+                self.validate_document(
+                    document,
+                    &format!("document {index}"),
+                    &mut evidence,
+                    ViolationIdentity::Contextual,
+                );
             }
         }
         Ok(evidence)
@@ -1251,7 +1350,12 @@ impl OfflineKubernetesValidator {
                     unpaired.remove(position);
                 }
                 None => {
-                    self.validate_document(document, &format!("document {index}"), &mut changed);
+                    self.validate_document(
+                        document,
+                        &format!("document {index}"),
+                        &mut changed,
+                        ViolationIdentity::Legacy,
+                    );
                 }
             }
         }
@@ -1322,7 +1426,12 @@ impl OfflineKubernetesValidator {
                 continue;
             }
             let mut evidence = ResourceEvidence::default();
-            self.validate_document(&document, "defaults", &mut evidence);
+            self.validate_document(
+                &document,
+                "defaults",
+                &mut evidence,
+                ViolationIdentity::Legacy,
+            );
             let keys = evidence
                 .invalid
                 .into_iter()
@@ -1362,7 +1471,13 @@ impl OfflineKubernetesValidator {
         .clone()
     }
 
-    fn validate_document(&self, document: &Value, location: &str, evidence: &mut ResourceEvidence) {
+    fn validate_document(
+        &self,
+        document: &Value,
+        location: &str,
+        evidence: &mut ResourceEvidence,
+        identity: ViolationIdentity,
+    ) {
         if let Some(error) = document.get("Error") {
             evidence.uncertain.push(format!(
                 "{location}: Helm fromYaml reported an error: {error}"
@@ -1383,7 +1498,7 @@ impl OfflineKubernetesValidator {
         ) else {
             evidence
                 .invalid
-                .push(KubernetesViolation::unidentified(location));
+                .extend(identity.unidentified(document, location));
             return;
         };
         if api_version == "v1"
@@ -1391,7 +1506,12 @@ impl OfflineKubernetesValidator {
             && let Some(items) = document.get("items").and_then(Value::as_array)
         {
             for (index, item) in items.iter().enumerate() {
-                self.validate_document(item, &format!("{location}/items/{index}"), evidence);
+                self.validate_document(
+                    item,
+                    &format!("{location}/items/{index}"),
+                    evidence,
+                    identity,
+                );
             }
         }
         let validator = self.compiled_validator(api_version, kind);
@@ -1406,13 +1526,15 @@ impl OfflineKubernetesValidator {
         match &validator {
             Ok(validator) => {
                 for error in validator.iter_errors(document) {
-                    evidence.invalid.push(KubernetesViolation {
-                        location: location.to_string(),
-                        namespace: namespace.clone(),
-                        name: name.clone(),
-                        key: ViolationKey::new(api_version, kind, &error),
-                        message: error.to_string(),
-                    });
+                    for key in identity.keys(api_version, kind, &error) {
+                        evidence.invalid.push(KubernetesViolation {
+                            location: location.to_string(),
+                            namespace: namespace.clone(),
+                            name: name.clone(),
+                            key,
+                            message: error.to_string(),
+                        });
+                    }
                 }
             }
             Err(error) => {
