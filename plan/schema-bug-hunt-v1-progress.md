@@ -8312,6 +8312,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   battery, zero flips). W4 rework 16 committed f0d03fe1/2f52f1a0/141c9453/8b9e6aab (R73 own-operation widening; guards evaluated
   through their emitted encodings — the audit's top consolidation); W1 rework 13 committed R77 e51f7892 (a write to a values path is
   what later reads see) and deleted MemberHostConversion. T7 109 GB. Orchestrator.
+- 17:33 (Oct 18) — **User: Claude quota resets in ~16 h with 38 % left; extra Opus or Fable reviewers allowed "only if it helps".**
+  Orchestrator decision: add a Fable complexity challenger (native read-only subagent) as a THIRD reviewer at the next W1 and W4
+  hand-backs — the two tracks with repeated non-convergence and multi-thousand-line growth — asking for the simpler model that ends a
+  defect class, not more counterexamples. No extra Opus builders for now: T7 at 109 GB and falling (targets 30–45 GB each), four
+  builders active, and the next semantic work is blocked (k8s on W4, R46 on W1) or in design review (definitions emission). Revisit
+  if disk frees up or a track lands. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
