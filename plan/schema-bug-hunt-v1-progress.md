@@ -8154,6 +8154,21 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (nextest 1 834, dialect 2/2); +721 prod LOC; bitnami-redis CPU 3.44 / 8.81 / 9.51 s. Open, main-too (probe s3): requirements on an
   input overwritten by an earlier `set .Values k v` survive — proposed as its own item (value-overlay model); the broad-staleness
   attempt broke 9 tests pinning precise `set` models. Re-checks as follow_ups turn 4: astra d488ec1f, sol cb0afa73. Orchestrator.
+- 08:46 (Oct 18) — **Three results: W4's live battery PASSED; battery rework 3 committed and in re-check; W1 rework 12 = REWORK ×2 →
+  rework 13 with a coarse rule.** W4: `round74…` 1 test run: 1 passed (1 397 s; `round8-w4-evidence/rebase/r15/battery-live.log`);
+  its final hand-back is still pending. Battery lane rework 3 (R9 structural ViolationIdentity: forbidden member paths, required and
+  invalid property names, assertion locations, scalars normalised to JSON types; R10 defaults establish usability only, payloads
+  compared with their own context's multiset; gates 0, exact integration 991 passed, battery A/B byte-identical): committed by the
+  orchestrator as d72825f4 (transfer patch sha256 b7952740, reverse-apply-checked; it adds tests/contextual_assertions.rs) and
+  db634f23 (docs patch sha256 22033691); re-checks as follow_ups turn 4 (sol b2180698, astra a86ea30f). W1 (`review-w1-r12-{astra,
+  sol}.md`): all 486 verdicts and 161 grammar productions replay, every rework-11 witness fixed when executed, 95 extra probes clean,
+  sol withdrew its citation finding; s3 accepted by BOTH as a separately recorded inherited false rejection (value-overlay item).
+  Open: astra five in-action mutation cases (inline outputs bypass ordered_action, protected helper contexts, piped helper
+  contexts, root `.Values` replacement, captured locals), astra literal helper whitespace, sol guarded alternatives coalesced at
+  lower.rs:881. Orchestrator decision: stop refining in-action ordering per path; ONE coarse rule at one shared action-evaluation
+  boundary — an action containing any write makes every read in that action Unknown, earlier captures keep binding-time facts —
+  and delete the fine-grained machinery. Brief `round8/brief-w1-rework13.md` (R73–R76), fresh Claude builder spawned 08:48.
+  Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
