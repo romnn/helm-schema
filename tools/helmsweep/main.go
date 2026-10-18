@@ -1,9 +1,10 @@
 // Command helmsweep reproduces the verdicts of `helm lint` and
 // `helm template --skip-schema-validation` in-process with Helm v4.2.3's own
-// code, for helm-schema's landing sweep gate. The only deviations from the
-// Helm CLI are performance: a memoized schema compile (the one patch in
-// PATCH.md), a bounded worker pool and a fail-closed on-disk
-// verdict cache. See README.md for the command contract.
+// code, for helm-schema's landing sweep gate.
+// The only deviations from the Helm CLI are performance: a memoized schema
+// compile and indexed compiler queue (PATCH.md), a bounded worker pool and a
+// fail-closed on-disk verdict cache.
+// See README.md for the command contract.
 package main
 
 import (
@@ -25,11 +26,13 @@ import (
 var helmPatch []byte
 
 const (
-	helmModule       = "helm.sh/helm/v4"
-	helmVersion      = "v4.2.3"
-	helmReplacement  = "./third_party/helm-v4.2.3"
-	jsonschemaModule = "github.com/santhosh-tekuri/jsonschema/v6"
-	jsonschemaVer    = "v6.0.2"
+	helmModule               = "helm.sh/helm/v4"
+	helmVersion              = "v4.2.3"
+	helmReplacement          = "./third_party/helm-v4.2.3"
+	jsonschemaModule         = "github.com/santhosh-tekuri/jsonschema/v6"
+	jsonschemaVer            = "v6.0.2"
+	jsonschemaReplacement    = "github.com/romnn/jsonschema/v6"
+	jsonschemaReplacementVer = "v6.0.3-0.20261018154229-cb4d114ec4c7"
 	// helmReleaseBuild is `helm version` of the pinned v4.2.3 release binary
 	// (version, Git commit, tree state, Go), linked in by build:helmsweep.
 	helmReleaseBuild = "v4.2.3 43e8b7feece8beb0fcba47059ec9b522fd929a64 clean go1.26.5"
@@ -100,13 +103,13 @@ func buildIdentity() (identity, error) {
 				id.Helm = dep.Version + " => " + dep.Replace.Path
 			}
 		case jsonschemaModule:
-			if dep.Version == jsonschemaVer && dep.Replace == nil {
-				id.JSONSchema = dep.Version
+			if dep.Version == jsonschemaVer && dep.Replace != nil && dep.Replace.Path == jsonschemaReplacement && dep.Replace.Version == jsonschemaReplacementVer {
+				id.JSONSchema = dep.Version + " => " + dep.Replace.Path + " " + dep.Replace.Version
 			}
 		}
 	}
 	if id.Helm == "" || id.JSONSchema == "" {
-		return identity{}, fmt.Errorf("binary is not built from %s %s => %s and %s %s", helmModule, helmVersion, helmReplacement, jsonschemaModule, jsonschemaVer)
+		return identity{}, fmt.Errorf("binary is not built from %s %s => %s and %s %s => %s %s", helmModule, helmVersion, helmReplacement, jsonschemaModule, jsonschemaVer, jsonschemaReplacement, jsonschemaReplacementVer)
 	}
 	exe, err := os.Executable()
 	if err != nil {

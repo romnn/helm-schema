@@ -216,7 +216,7 @@ func TestBuildIdentityPinsHelmJSONSchemaAndPatch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if id.Helm != "v4.2.3 => ./third_party/helm-v4.2.3" || id.JSONSchema != "v6.0.2" || id.Patch != patch || len(id.Executable) != 64 {
+	if id.Helm != "v4.2.3 => ./third_party/helm-v4.2.3" || id.JSONSchema != "v6.0.2 => github.com/romnn/jsonschema/v6 v6.0.3-0.20261018154229-cb4d114ec4c7" || id.Patch != patch || len(id.Executable) != 64 {
 		t.Fatalf("identity %+v (patch file %s)", id, patch)
 	}
 }

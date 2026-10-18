@@ -1,4 +1,4 @@
-# Helm v4.2.3 and its one patch
+# Helm v4.2.3, its memo patch and the validator fork
 
 The source tree holds no Helm sources. `go.mod` requires the tagged module
 `helm.sh/helm/v4 v4.2.3`, pinned by `go.sum`
@@ -48,3 +48,33 @@ into `compileMemoized`:
 
 Nothing else changes: no `slog` default, `log` output, `URNResolver`, archive
 limit or environment setting is touched by the patch.
+
+## Validator queue index
+
+`go.mod` replaces `github.com/santhosh-tekuri/jsonschema/v6 v6.0.2` with
+`github.com/romnn/jsonschema/v6 v6.0.3-0.20261018154229-cb4d114ec4c7`
+([commit cb4d114ec4c7ffa5a1bbc3ee02cbd0346c477b09](https://github.com/romnn/jsonschema/commit/cb4d114ec4c7ffa5a1bbc3ee02cbd0346c477b09),
+branch `perf/indexed-queue`).
+This is one commit on upstream v6.0.2: an index keyed by the existing `urlPtr`
+sits beside the ordered compile queue, replacing its linear lookup while
+preserving traversal order and schema reuse identity.
+Helm's required dependency versions and validator options stay pinned.
+The fork retains the upstream module declaration; Go accepts a versioned
+replacement at the fork's repository path without changing Helm's imports.
+
+The OnCall profile attributed 27.40% of compile/validation CPU samples to
+the queue's `slices.IndexFunc` scan, alongside a separate definition-discovery
+cost that this override does not address.
+The index avoids quadratic lookup work on broad guarded schema graphs.
+`helmsweep version` and verdict-cache keys include both the required upstream
+version and the effective replacement path/version, and the build refuses an
+absent or different replacement.
+Go downloads the immutable pseudo-version and verifies `go.sum`; landing
+clones do not need a fork checkout.
+
+To drop the override, remove the jsonschema `replace` directive, run
+`go mod tidy`, and update `main.go`, `TestBuildIdentityPinsHelmJSONSchemaAndPatch`,
+the `build:helmsweep` version check in `taskfile.yaml`, and the README's
+identity to the chosen upstream validator.
+Re-run the stock-versus-replacement corpus compile/verdict comparison and
+`task build:helmsweep` / `task test:helmsweep` before landing.

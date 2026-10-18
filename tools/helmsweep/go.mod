@@ -4,6 +4,8 @@ go 1.26.0
 
 toolchain go1.26.5
 
+replace github.com/santhosh-tekuri/jsonschema/v6 => github.com/romnn/jsonschema/v6 v6.0.3-0.20261018154229-cb4d114ec4c7
+
 require helm.sh/helm/v4 v4.2.3
 
 require (

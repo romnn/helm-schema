@@ -6,6 +6,7 @@ The landing sweep's Helm oracle, in-process: `helm lint` and
 It deviates from the Helm CLI only in performance:
 
 - a schema compile memo, the one Helm patch (`PATCH.md`);
+- an indexed compiler queue from our jsonschema/v6 fork (`PATCH.md`);
 - a bounded worker pool with one schema compile at a time;
 - a fail-closed on-disk verdict cache.
 
@@ -21,8 +22,15 @@ stages the patched Helm module and this module's sources in
 `mise exec go@1.26.5`, `GOTOOLCHAIN=local`, `-trimpath` and `-buildvcs=false`
 (so its sha256, the cache's build id, depends only on sources and toolchain), then checks
 `helmsweep version`: Go 1.26.5, `helm.sh/helm/v4 v4.2.3 => ./third_party/helm-v4.2.3`,
-`github.com/santhosh-tekuri/jsonschema/v6 v6.0.2` and the sha256 of
+`github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 => github.com/romnn/jsonschema/v6 v6.0.3-0.20261018154229-cb4d114ec4c7`
+and the sha256 of
 `helm-memo.patch`.
+
+The versioned validator replacement is fetched by Go and verified against
+`go.sum`; a landing clone needs no local fork checkout.
+It is based on upstream v6.0.2 and removes the linear compiler-queue scan
+that accounted for 27.40% of the measured OnCall compile/validation CPU.
+`PATCH.md` records the change and how to remove the override.
 
 ## Commands
 
