@@ -2172,6 +2172,7 @@ fn a_live_battery_needs_the_roster_baseline() {
 #[ignore = "maintenance: compares the Round 74 dump and records probe coverage"]
 fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
+    helm_schema_test_support::init_perfetto_from_env()?;
     if adjudicates_live() {
         // The shared runner checks the pinned Helm release once per process.
         helm_invocation::HelmRunner::shared()?;
@@ -2624,6 +2625,7 @@ struct AdjudicatedProbe {
 
 /// Screens every chart and adjudicates every screened flip on the pool,
 /// then folds the outcomes in chart and probe order.
+#[tracing::instrument(target = "helm_schema::acceptance", skip_all, fields(charts = charts.len()))]
 fn compare_charts(charts: Vec<ComparedChart>) -> eyre::Result<AcceptanceComparison> {
     eyre::ensure!(
         !charts.is_empty(),
@@ -2905,6 +2907,11 @@ fn screen_template_probes(
 
 /// Compiles both profiles, generates the chart's probe battery and screens
 /// it, returning the screened flips for Helm when `adjudicate_live`.
+#[tracing::instrument(
+    target = "helm_schema::acceptance",
+    skip_all,
+    fields(chart = %chart.label, lane = "screen", adjudicate_live)
+)]
 fn screen_chart(
     chart: ComparedChart,
     adjudicate_live: bool,
@@ -3008,6 +3015,11 @@ fn screen_chart(
 }
 
 /// Adjudicates screened flip `flip` of `live` with Helm and Kubernetes.
+#[tracing::instrument(
+    target = "helm_schema::acceptance",
+    skip_all,
+    fields(chart = %live.label, lane = "adjudicate", row = flip)
+)]
 fn adjudicate_probe(
     live: &LiveChart,
     flip: usize,

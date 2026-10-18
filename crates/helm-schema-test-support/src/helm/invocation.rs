@@ -464,6 +464,7 @@ impl HelmRunner {
     }
 
     /// The engine program's stdout for `arguments` under the child environment.
+    #[tracing::instrument(skip_all, fields(command = "version"))]
     fn program_output(&self, arguments: &[&str]) -> eyre::Result<String> {
         let output = output_within(
             Command::new(&self.program)
@@ -648,6 +649,10 @@ impl HelmRunner {
         )
     }
 
+    #[tracing::instrument(
+        skip_all,
+        fields(command = "template", chart = %call.chart, lane = stage, engine = %invocation.engine)
+    )]
     fn run(
         &self,
         invocation: &InvocationRequest,
@@ -738,6 +743,7 @@ impl HelmRunner {
         })
     }
 
+    #[tracing::instrument(skip_all, fields(command = "template", engine = "cli", lane = stage))]
     fn execute(
         &self,
         invocation: &InvocationRequest,
@@ -930,6 +936,10 @@ impl ResidentPool {
     /// lifetime peak. Anything but the answer to this request within the
     /// timeout (the server ending, a malformed line, another id, an error, a
     /// status Helm never uses) is a harness failure.
+    #[tracing::instrument(
+        skip_all,
+        fields(command = "template", engine = "helmsweep", chart = %call.chart, lane = stage)
+    )]
     fn execute(
         &self,
         runner: &HelmRunner,
@@ -984,6 +994,7 @@ impl ResidentPool {
 }
 
 impl Resident {
+    #[tracing::instrument(skip_all, fields(command = "serve"))]
     fn start(runner: &HelmRunner) -> eyre::Result<Self> {
         let mut child = Command::new(&runner.program)
             .env_clear()
@@ -1234,6 +1245,7 @@ pub struct TimedOut(pub String);
 /// # Errors
 ///
 /// Returns an error when `command` cannot start, cannot be waited for, or outlives `timeout`.
+#[tracing::instrument(skip_all, fields(command = %command.get_program().to_string_lossy(), class = what))]
 pub fn output_within(command: &mut Command, timeout: Duration, what: &str) -> eyre::Result<Output> {
     let deadline = Instant::now() + timeout;
     own_process_group(command);

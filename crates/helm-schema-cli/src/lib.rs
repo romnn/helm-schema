@@ -20,8 +20,6 @@ use helm_schema::output::{
 };
 use helm_schema::{AnalysisSession, EngineResult};
 use serde_json::Value;
-use tracing_subscriber::Layer as _;
-use tracing_subscriber::layer::SubscriberExt as _;
 
 pub use cli::Cli;
 pub use helm_schema::generation::{GenerateOptions, SchemaProfile};
@@ -38,6 +36,14 @@ pub use helm_schema::{CliError, flatten, schema_override};
 /// read/parsed, the schema cannot be generated, output cannot be written, or
 /// Helm cannot be run.
 pub fn run(cli: Cli, interrupt: &AtomicUsize) -> EngineResult<Option<ExitStatus>> {
+    if let Some(trace_output) = &cli.perf.trace_output {
+        let dispatch = helm_schema::trace::perfetto_dispatch(create_output_file(trace_output)?);
+        return tracing::dispatcher::with_default(&dispatch, || run_command(cli, interrupt));
+    }
+    run_command(cli, interrupt)
+}
+
+fn run_command(cli: Cli, interrupt: &AtomicUsize) -> EngineResult<Option<ExitStatus>> {
     let helm = match &cli.command {
         Some(cli::Command::Shorten(args)) => {
             return shorten(args, cli.diag.diag_format).map(|()| None);
@@ -55,23 +61,6 @@ pub fn run(cli: Cli, interrupt: &AtomicUsize) -> EngineResult<Option<ExitStatus>
             .ok_or_else(|| CliError::CliValidation("a chart directory is required".to_string()))?;
         return Ok(Some(helm_schema::helm::run(&options, interrupt)?));
     }
-    let trace_output = cli.perf.trace_output.clone();
-    if let Some(trace_output) = trace_output {
-        let trace_file = create_output_file(&trace_output)?;
-        let perfetto_layer =
-            tracing_perfetto::PerfettoLayer::new(std::sync::Mutex::new(trace_file))
-                .with_debug_annotations(true)
-                .with_filter(tracing_subscriber::filter::filter_fn(|metadata| {
-                    metadata.target().starts_with("helm_schema")
-                        || metadata
-                            .target()
-                            .starts_with("helm_schema_json_schema_minify")
-                }));
-        let subscriber = tracing_subscriber::registry().with(perfetto_layer);
-        let dispatch = tracing::Dispatch::new(subscriber);
-        return tracing::dispatcher::with_default(&dispatch, || run_inner(cli)).map(|()| None);
-    }
-
     run_inner(cli).map(|()| None)
 }
 

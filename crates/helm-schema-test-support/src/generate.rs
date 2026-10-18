@@ -83,6 +83,7 @@ pub fn generate_options_at(chart_dir: &Path, recipe: &ChartRecipe) -> GenerateOp
 /// # Errors
 ///
 /// Returns an error when analysis or generation fails.
+#[tracing::instrument(skip_all, fields(chart = recipe.chart, lane = ?recipe.profile))]
 pub fn chart_schema(recipe: &ChartRecipe) -> eyre::Result<Value> {
     session_schema(&AnalysisSession::new(generate_options(recipe)), recipe)
 }
@@ -396,6 +397,7 @@ fn produce_locked(
 /// # Errors
 ///
 /// Returns an error listing every artifact that failed.
+#[tracing::instrument(skip_all, fields(artifacts = specs.len(), jobs, helm_ready))]
 pub fn produce_entries(
     specs: &[ArtifactSpec],
     out: &Path,
@@ -457,6 +459,7 @@ pub fn produce_entries(
     Ok(entries)
 }
 
+#[tracing::instrument(skip_all, fields(artifact = %spec.id.key()))]
 fn produce_one(
     spec: &ArtifactSpec,
     inputs: &str,

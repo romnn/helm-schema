@@ -26,6 +26,7 @@ const USAGE: &str = "usage: corpus_generation (--out <dir> [--jobs <n>] [--helm-
 
 fn main() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;
+    helm_schema_test_support::init_perfetto_from_env()?;
     let mut out = None;
     let mut verify = None;
     let mut only = Vec::new();

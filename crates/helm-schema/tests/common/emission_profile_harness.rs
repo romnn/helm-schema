@@ -217,6 +217,7 @@ pub(crate) struct ProfileSchemas {
 }
 
 impl ProfileSchemas {
+    #[tracing::instrument(target = "helm_schema::acceptance", skip_all)]
     pub(crate) fn compile(
         full_schema: &Value,
         lean_schema: &Value,
@@ -496,6 +497,11 @@ pub(crate) fn structural_probe_battery(
         .map(|(probes, _)| probes)
 }
 
+#[tracing::instrument(
+    target = "helm_schema::acceptance",
+    skip_all,
+    fields(chart = chart_relative_path)
+)]
 pub(crate) fn structural_probe_battery_with_coverage(
     chart_relative_path: &str,
     defaults: &Value,

@@ -20,6 +20,7 @@ mod provider_builder;
 /// Deterministic merge policy for caller-supplied override schemas.
 pub mod schema_override;
 mod session;
+pub mod trace;
 mod values_roots;
 
 #[cfg(test)]
