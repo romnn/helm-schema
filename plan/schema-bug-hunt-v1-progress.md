@@ -8382,6 +8382,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   gate. Battery rework 5 committed (f6a26677 + docs f3e67f3d; −174 implementation lines; legacy split deleted); re-checks as follow_ups
   turn 7. helmsweep → fork committed (ece244bb; parity 156 schemas / 281 133 documents / 0 mismatches); orchestrator fresh-cache
   `task build:helmsweep` running; reviews astra 20261018T173744-ebd26ac5, sol …-c44b94a0. Orchestrator.
+- 20:04 (Oct 18) — **Fresh-cache fork build green; battery rework 5 = REWORK ×2 on one P1 (R17); fork switch = REWORK ×2 on P2 parity.**
+  Orchestrator `task build:helmsweep` with an EMPTY module cache and normal network: exit 0, fetched github.com/romnn/jsonschema/v6
+  v6.0.3-0.20261018154229-cb4d114ec4c7, version check confirms the replacement (`round8-perf-scratch/fork-build-helmsweep.log`) — this
+  resolves both fork reviewers' build P2. Fork (`review-fork-{astra,sol}.md`): queue equivalence, traversal, reuse/concurrency, build
+  identity and removal docs sound; P2 parity used synthetic merges (nulls kept, no dependency defaults/globals; 11 charts without a
+  passing sample) → follow_up turn 2: capture the documents Helm actually validates (both lint documents and the template document,
+  e.g. a helmsweep dump at ValidateAgainstSingleSchema) and compare stock vs fork on them. Battery (`review-battery-p1r5-{sol,astra}.md`):
+  R13–R16 confirmed, simplification "substantive"; R17 (P1 both) constraint identity/dedupe by relative `schema_path()` lets two embedded
+  `$id` resources with the same relative path collide → resource-qualified key or unresolved; follow_up turn 9. The battery reviewer
+  sessions expire ~20:44, so the next battery re-check uses fresh runs pointed at review-battery-p1r*-*.md. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
