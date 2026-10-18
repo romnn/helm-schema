@@ -8145,6 +8145,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   done / running / DEAD (pid gone without an answer); every heartbeat runs it. W4 (Claude) killed its two runaway classification
   scripts after the 07:11 time-box, committed aec89944 (R72: widen only an untyped branch that kept the declared sample) and started
   its live battery; W1 rework 12 committed R67–R72 work in progress (b0a708ac). Load 12, T7 235 GB. Orchestrator.
+- 08:17 (Oct 18) — **W1 rework 12 CHECKPOINT (b0a708ac, 4 commits on 9a7e05fe; Self-attack in rework8/handoff.md).** A: escape state
+  carried across every part (R67); literal-only helpers return their ordered concatenation (R68); `HoleText::Empty` from a byte-level
+  walk (R69). B: new `action_order.rs` lowers every action and header in Go order before any lane reads it — selection, truth, text
+  proofs and requirements read that one lowering; the R64 voiding rule and `mutates_in_place` deleted (R70); root sets joined over
+  every arm plus the no-arm fallthrough (R71, previously last-write-wins); exact v2.4.0 citations (R72). Matrix 226 cells / 486
+  instances (62 abstentions; all 404 old verdicts unchanged); real-CLI false rejections main 186 / w11 34 / candidate 0; gates 0
+  (nextest 1 834, dialect 2/2); +721 prod LOC; bitnami-redis CPU 3.44 / 8.81 / 9.51 s. Open, main-too (probe s3): requirements on an
+  input overwritten by an earlier `set .Values k v` survive — proposed as its own item (value-overlay model); the broad-staleness
+  attempt broke 9 tests pinning precise `set` models. Re-checks as follow_ups turn 4: astra d488ec1f, sol cb0afa73. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
