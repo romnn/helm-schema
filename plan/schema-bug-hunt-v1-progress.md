@@ -8228,6 +8228,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   that delete special cases while keeping every Helm-verified verdict): W1 astra 20261018T123335-72bd30c1 / sol …-75ba6285, W4 astra
   …-0e53eab2 / sol …-379791d3 → `round8/arch-audit-{w1,w4}-{astra,sol}.md`; their proposals become the next rework targets.
   Orchestrator.
+- 14:40 (Oct 18) — **Landing chain time regressed ~2–2.5× (user asked to keep it from regressing).** Per-step minutes from the receipts
+  (dump/unit/lint/battery/integration/sweep): landing 3 run2 4/2/2/14/4/31 ≈ 57 min; landing 5 9/8/3/14/2/33 ≈ 69 min; landing 7
+  9/6/7/18/4/70 ≈ 1 h 54; landing 9 run2 7/9/9/26/9/56 ≈ 1 h 56; landing 10 run1 18/10/10/25/9/90 ≈ 2 h 42 (failed in sweep; ran beside
+  three builders). Sweep is the main driver (31 → 90 min; openebs ~11 min per real lint, main-too), then battery (14 → 26); the new
+  battery lint lane adds ~2–3 min but moves sweep-class failures 2.5 h earlier. Analysis on both models (attribution, sound
+  content-addressed speed-ups keyed by every input, a per-step time budget for the runner): sol 20261018T124015-98be052a, astra
+  …-44605823 → `round8/analysis-chain-time-{sol,astra}.md`; the plan becomes a runner/perf item (Codex builder, reviewed) and a
+  per-step budget guard. Rule for the next chains: launch them only while builders are below load 40 so receipts measure the chain,
+  not the host. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
