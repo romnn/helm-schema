@@ -8535,6 +8535,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (1,700), integration (1,024 + 26 skipped), clean dump, schema-only battery A/B (byte-identical coverage), tokei:core delta 0 all 0.
   Test-support code grows +234 (tests +349) — recorded. Orchestrator committed 1fa7463d (transfer b9680160…) and 230865a7 (docs
   53b009b2…); follow_ups on 202423-800b1d2c (astra) and 202423-f3e14ed1 (sol). Orchestrator.
+- 00:11 (Oct 19) — **Battery rework 7 re-reviews: sol LAND (P3 only), astra REWORK (one P1); rework 8 sent.** Both confirm R18/R19 fixed in
+  both lanes, no further identity merge/split, and independently re-ran the pinned audit (141 schemas, zero newly unresolved). astra
+  R20: regex execution failures count as uncertain only as the outer error; the pinned validator nests them in AnyOf.context, so a
+  backtrack-limit failure inside anyOf becomes a proved "new violation" though the value satisfies the pattern (false tightening
+  evidence). Rework 8: one recursive check — any execution failure anywhere in an error's context tree is unresolved — plus an audit of
+  boolean-path applicators; sol's P3: the audit receipt hashes 37 of 41 keyword files (Draft 4 legacy handlers missing). sol's first
+  re-review turn was content-flagged ("cybersecurity risk") on wording; rephrased as a plain correctness check it ran (memory note
+  added). Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
