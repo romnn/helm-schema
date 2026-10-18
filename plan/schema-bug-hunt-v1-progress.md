@@ -8112,6 +8112,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   the legacy battery mode, so the battery lint lane must land first (landing 10a) before W4 — the planned order. The live suite
   re-run (`round8-runner-evidence/live-v7-run-all.log`) is in progress. Known limitation recorded by both: a concurrent
   change-and-restore entirely between two hash checks. Battery rework 3 still running. Orchestrator.
+- 06:18 (Oct 18) — **Live runner v7 suite green; W1 rework 11 = REWORK ×2 (`review-w1-r11-{astra,sol}.md`), rework 12 spawned.**
+  `tests/run-all.sh` on the live runner c472aae: exit 0 (all shell suites, 106 Python tests; `round8-runner-evidence/live-v7-run-all.log`).
+  W1: both replayed all 404 verdicts and the 161 grammar productions; no grammar false rejection in 59 extra probes (astra) or a
+  composition search (sol); parallel lowering confirmed deleted. Remaining root causes: (A) rendered bytes not carried in order —
+  pending escape state dropped at part boundaries (holes.rs:1249), helper literal pieces unioned by project_node (summary.rs:958),
+  known-empty helper output loses the next claim; (B) evaluation order — `ternary` reads its condition before mutating operands
+  (comparisons.rs:33/:151), so a TYPE requirement on `flag` survives although Helm never reads the original (sol: flag="not-bool"
+  renders, candidate rejects /flag — a requirement-lane false rejection), stale control truth, root-context writes outside
+  mutation invalidation (summary.rs:224), no-arm fallthrough lost in the join (control.rs:524/:3288). Orchestrator direction: fix A
+  by one ordered byte sequence scanned once with state carried across all parts; fix B by making the evaluator follow Go
+  text/template order (arguments left to right before the call, header before arm) so selection, truth, text proofs and
+  requirements share one execution-ordered state; abstain where order is not structural. Accepted precision debt: coarse
+  `set .Values k` staleness, tpl/trunc. Brief `round8/brief-w1-rework12.md` (R67–R72), fresh Claude builder spawned 06:18.
+  Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
