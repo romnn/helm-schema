@@ -8369,6 +8369,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   fixes so each span lives exactly its scope on one thread, the checker kept as a regression test, re-recorded trace with 0 misplaced
   ends and corrected top self times (re-verifies the append_selected_constraints hotspot). The fix goes into landing 10a with the rest
   of the tracing change (another review round). Orchestrator.
+- 19:37 (Oct 18) — **PRODUCT BUG FOUND ON MAIN: stock Helm 4.2.3 rejects main's shipped oncall and airflow schemas before any
+  value is checked.** Landing 10 run1 sweep results.tsv: every oncall row (200) and airflow row (45) has base_class=reject with
+  `"file:///values.schema.json#" is not valid against metaschema` — a pattern (airflow `config.api.base_url`, sha256 6c154496…) uses `\u`,
+  which Go's regexp dialect (Helm uses the stock compiler, pkg/chart/common/util/jsonschema.go:147) does not accept; all three airflow
+  artifacts incl. the Helm-ready companion contain it. Users' `helm lint`/`install` of those charts with our schema fail on main. The
+  W4 candidate passes those rows (cand_class pass), so landing W4 fixes it. Gate gap: the sweep counts only NEW failures, so a broken
+  baseline never alarms — queue a sweep check that the CANDIDATE compiles under stock Helm for every chart (and a corpus test).
+  Consequences: the `definitions` builder (astra 20261018T155756-28e5b20a) stopped correctly at its scope limit on exactly this —
+  its work is otherwise strong (schema-only battery 160 charts / 270 476 probes / zero flips; 167 Helm-ready ≤ 5 MiB; one generated
+  representation; +61 prod LOC; transfer patch sha256 e7b059ee) — so it waits for W4 to land, then rebases and reruns the stock-compile
+  gate. Battery rework 5 committed (f6a26677 + docs f3e67f3d; −174 implementation lines; legacy split deleted); re-checks as follow_ups
+  turn 7. helmsweep → fork committed (ece244bb; parity 156 schemas / 281 133 documents / 0 mismatches); orchestrator fresh-cache
+  `task build:helmsweep` running; reviews astra 20261018T173744-ebd26ac5, sol …-c44b94a0. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
