@@ -128,9 +128,22 @@ each context must have no uncertainty or new violated assertion versus defaults.
 An unusable control fails with its uncertainty or violation evidence preserved.
 All Kubernetes comparisons, including defaults-only and explicit-context lanes,
 use one canonical assertion representation and one multiset comparison. A key
-contains resource API/kind, canonical constraint location (`schema_path`, independent
-of the `$ref` traversal route), keyword and structural details, and a canonical
-instance path. Homogeneous array indices become `*`; tuple `items[n]` and
+contains resource API/kind, the resource-qualified canonical constraint location,
+keyword and structural details, and a canonical instance path. Constraint identity
+is the resolved schema-resource URI plus the actual keyword's pointer within that
+resource. Relative `schema_path` alone is insufficient: different embedded `$id`
+resources can both report `/type`. The validator and identity proof share one
+prepared offline registry. The evaluation route resolves the actual schema node;
+it is provenance, never identity. The node's origin in the pinned schema determines
+its canonical location through dialect-defined resource boundaries, independently
+of retrieval aliases. Pointer, URI and anchor references to the same node inherit
+once. The resulting keyword URI must resolve back to that exact node. The
+validator's reported absolute resource must agree with resolution of the evaluation
+route; its pointer and chosen retrieval alias are not assumed canonical. Anonymous
+roots receive a stable base URI. Missing location evidence, conflicting resources
+or unproved reference correspondence (including dynamic/recursive references) fail
+unresolved. The same qualified location is used for occurrence deduplication and
+multiset comparison. Homogeneous array indices become `*`; tuple `items[n]` and
 `prefixItems[n]` positions remain fixed, even when slots share a `$ref` target.
 Map keys become `*` only at `additionalProperties` or `patternProperties` positions.
 Fixed property names remain fixed. Typed path segments distinguish a literal `*`
