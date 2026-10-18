@@ -8543,6 +8543,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   boolean-path applicators; sol's P3: the audit receipt hashes 37 of 41 keyword files (Draft 4 legacy handlers missing). sol's first
   re-review turn was content-flagged ("cybersecurity risk") on wording; rephrased as a plain correctness check it ran (memory note
   added). Orchestrator.
+- 00:29 (Oct 19) — **Tracing: user supplies their fork romnn/tracing-perfetto (git only, 0.2.0); W1 rework 13 WIP hand-back; 132 GB of idle targets
+  deleted (user's standing approval).** The fork streams slice begins as they happen, uses a monotonic per-sequence clock and gives
+  every root span its own track — likely fixing the equal-timestamp misplaced ends. Cloned to /Volumes/T7/dev/tracing-perfetto
+  (main d4c54ab); sol (follow_up on f9ee6567) switches round8-tracing to it as a path dependency, re-records redis ×3 and the
+  five-chart trace, targets misplaced_end_event = 0, then recomputes self times; if the fork still misplaces ends, the orchestrator
+  opens a GitHub issue and fixes it on a fix/ branch (user). W1 rework 13 (7f9522ea, WIP): R73 coarse write rule, R74, R75 (overlap
+  partition deleted), R77; −94 LOC; CLI matrix 614 instances, 0 false rejections (main 238). The 20:53 host crash was likely W1's
+  R75 overlap partition growing exponentially on nats (40+ GB swap), fixed in 8c800ef1. Blockers: nats `.merge`/`.patch` and falco
+  `[{}]` false rejections in the live battery; bitnami-redis +50% cost (queued for rework 14 as a landing blocker). Builder sent on
+  to FINAL with ≤ 2 dump jobs and an 8 GB per-chart RSS stop. Deleted: round8-k8s-r8-target, round7-f78, round8-definitions,
+  round8-defblock, round8-jsonschema-fork, round8-landing10-target, r7-lint/reddiag/base targets → T7 231 GB free. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
