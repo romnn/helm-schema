@@ -8086,6 +8086,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   sol 20261018T021246-f0df760c resumes from the on-disk work with `round8/brief-defblock-codex-resume.md`, which requires
   separating (a) the trim fix from (b) the broadened omission/uncertainty changes and justifying (b) cell by cell or naming it for a
   separate track. W4: no commit since 3b92c53d (01:3x); its hand-back is pending. Orchestrator.
+- 05:15 (Oct 18) — **Runner v7 rework handed back and committed (c472aae in `round8/runner-v7-dev`; transfer patch sha256
+  fd6ccb46, tree verified with `git apply -R --check`).** build_roster/verify_prepared freeze and check the prepared
+  base/cand/plain chart and schema digests; sweep_row/fast_execution/sweep_collect/execution_problems keep execution identities
+  through cleanup (CLI sweeps included); staged_chart applies one Chart.template.yaml policy; both regressions red→green;
+  run-all.sh 0 (12 shell suites, 106 Python tests). Re-checks as follow_ups: astra 7f28f782 (turn 2 from byte 4 666), sol
+  a84f816e (from 2 696). Battery rework 3 and defblock resume still running; W4 gates green on 3b92c53d except expected
+  fixture-equality integration failures, now classifying R72 branch changes; W1 rework 11 running. Load 14, T7 264 GB.
+  Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
