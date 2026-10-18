@@ -8169,6 +8169,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   boundary — an action containing any write makes every read in that action Unknown, earlier captures keep binding-time facts —
   and delete the fine-grained machinery. Brief `round8/brief-w1-rework13.md` (R73–R76), fresh Claude builder spawned 08:48.
   Orchestrator.
+- 09:14 (Oct 18) — **Battery re-checks turn 4 = REWORK ×2 (`review-battery-p1r3-{sol,astra}.md`): R9/R10 fixed, identity now TOO
+  FINE.** Exact instance paths keep list indices and free-form map keys, so an inherited violation that moves (astra: a prepended valid
+  container shifts `/spec/containers/0/image` → `/1/image`; sol: reversed env entries, a renamed ConfigMap data key) counts as new
+  and certifies a tightening; identity also uses the `$ref` evaluation route (adjudication.rs:928), and a test expects that. Sent as
+  R11/R12 (follow_up turn 6) with an orchestrator design: canonical key = resource + canonical schema location of the violated
+  constraint + keyword details + instance path with list indices abstracted and map keys abstracted only under
+  additionalProperties/patternProperties; per-key multiset counts (payload > context ⇒ new, equal ⇒ inherited); ambiguous ⇒
+  unresolved. Observation: this lane has oscillated between too coarse and too fine for three rounds; the canonical-key design is
+  the fixed point both reviewers describe. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
