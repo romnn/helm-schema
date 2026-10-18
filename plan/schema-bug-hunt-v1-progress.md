@@ -8289,6 +8289,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   constraint at the same concrete position, R15 grouped additionalItems/unevaluatedItems multiplicity or unresolved, R16 ONE identity
   and comparison for both lanes (delete the Legacy/Contextual split and concrete ViolationKey matching; also the user's simplicity
   rule) — follow_up turn 7 on the battery builder. T7 132 GB (down 60 GB in 3 h: builders' dumps). Orchestrator.
+- 16:40 (Oct 18) — **User approved cancelling the runner-v8 timing builder ("go, cancel it and start the tracing spans"); tracing
+  builder started.** The cancel found the run already failed on its own (request timeout after 2 messages, 47 min), so nothing was
+  lost; registry row commented. Codex builder sol xhigh workspace_write kept 20261018T143958-f9ee6567 in `/Volumes/T7/dev/round8-tracing`
+  (branch perf/tracing-spans from main cbf8e736), brief `round8/brief-tracing-spans-codex.md`: reuse the CLI's existing tracing_perfetto
+  layer (lib.rs:59–71) from `corpus_generation` and the battery harness behind ONE env var, `#[tracing::instrument]` spans per chart
+  (generation), per chart screening and per flip adjudication (battery), and per Helm subprocess/driver call; byte-identical output;
+  demonstration traces for openebs/oncall/kps/milvus/bitnami-redis and an openebs battery run; HARD SCOPE LIMIT tracing only. The
+  orchestrator analyses the traces with the perfetto MCP. Clarification for the record: the user had NOT cancelled anything; the two
+  rejections were of my cancel calls, and the user then explicitly approved this one. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
