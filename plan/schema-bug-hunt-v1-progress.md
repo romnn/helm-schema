@@ -8318,6 +8318,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   defect class, not more counterexamples. No extra Opus builders for now: T7 at 109 GB and falling (targets 30–45 GB each), four
   builders active, and the next semantic work is blocked (k8s on W4, R46 on W1) or in design review (definitions emission). Revisit
   if disk frees up or a track lands. Orchestrator.
+- 17:44 (Oct 18) — **User: fork santhosh-tekuri/jsonschema, fix the queue slowdown there and point our go.mod at it ("we can later
+  decide if we want to upstream it"). Done on the fork; helmsweep switch with parity proof in progress.** `gh repo fork` → github.com/
+  romnn/jsonschema (user-requested, outward-facing). Local clone `/Volumes/T7/dev/jsonschema-fork`, branch perf/indexed-queue on tag
+  v6.0.2: commit cb4d114 replaces `queue []*Schema` + `slices.IndexFunc` with an ordered slice plus `map[urlPtr]*Schema` (sound: the only
+  append site runs after `get` misses, so each urlPtr is queued once and the map returns what the first-match scan did; traversal order
+  unchanged). Upstream v6.0.3 does not touch compiler.go/root.go/roots.go. `go vet` 0; `go test ./...` 0 with the JSON-Schema-Test-
+  Suite submodule populated (TestSuites PASS across drafts; 33 tests pass; 2 Windows-path skips) — the first run had silently skipped the
+  suite because the submodule was empty. Branch pushed to the FORK only (user-requested; nothing pushed to helm-schema). Scope note: the
+  fork speeds helmsweep (sweep fast pass + battery Helm adjudication); the sweep's stock-Helm CLI differential stays stock and benefits
+  only from the `definitions` emission. helm-schema side: Codex builder sol 20261018T154418-1b2bb946 in `round8-jsonschema-fork`
+  (branch perf/jsonschema-fork; brief `round8/brief-jsonschema-fork-codex.md`): go.mod replace at the cb4d114 pseudo-version, build
+  identity shows the fork, PATCH.md/README, stock-vs-fork parity over every corpus schema (identical compile errors and verdicts) with
+  timings; fixture-neutral tooling landing. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
