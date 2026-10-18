@@ -156,11 +156,32 @@ the outer error reconstructs a route from the child's resource-relative path;
 identity and instance roles instead use the wrapped child's retained evaluation
 route. Other supported errors must identify their actual keyword and instance.
 Boolean-schema errors, omitted dependency-required triggers, `minContains` /
-`maxContains` aggregates without complete keyword correspondence, reference errors,
-and regex evaluation failures fail unresolved. Grouped unevaluated diagnostics
-continue to fail when member correspondence is unproved. Custom keywords are not
-registered. This boundary follows the pinned validator's error constructors;
-resolving a selected node back to itself is never sufficient evidence of provenance.
+`maxContains` aggregates without complete keyword correspondence and reference errors
+fail unresolved. Grouped unevaluated diagnostics continue to fail when member
+correspondence is unproved. Custom keywords are not registered. This boundary follows
+the pinned validator's error constructors; resolving a selected node back to itself
+is never sufficient evidence of provenance.
+
+Execution certainty is a separate precondition. One recursive check rejects
+`BacktrackLimitExceeded`, `RegexEngineFailure` or reference errors anywhere in returned
+`anyOf` / `oneOf` contexts or wrapped `propertyNames` errors. Boolean applicators and
+pattern-key dispatch can discard these errors before constructing a diagnostic, so
+returned errors alone cannot establish certainty. Before resource validation, a shared
+execution preflight checks every distinct document string value and object key against
+every distinct `pattern` / `patternProperties` regex discovered by the compiler-location
+traversal, including reference targets. It uses the pinned validator's default engine,
+translation and limits, ignores ordinary mismatches, and fails unresolved on execution
+errors or more than 1,000,000 regex/string pairs. The original resource validator remains
+the sole source of acceptance decisions and canonical assertions.
+
+This deliberately conservative check also rejects failures in inactive pairs; it does
+not interpret applicators or claim to intercept every internal engine call. Literal
+pattern optimizations use infallible predicates; mixed pattern-key dispatch may execute
+the backend for the equivalent literal forms. The guarantee is specific to the audited
+pinned implementations, not hypothetical future backend bugs. Record the boolean-path
+audit with source locations and hashes, including Draft 4 handlers. Measure execution
+preflight results alongside the pinned-bundle assertion audit and full schema-only
+battery; report newly unresolved cases and existing compilation failures separately.
 
 After these preconditions, the intact route resolves the constraint node. Its origin
 in the pinned schema determines the resource URI and keyword pointer through
