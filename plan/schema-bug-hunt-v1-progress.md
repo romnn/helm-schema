@@ -8454,6 +8454,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   report "launch failed … agentmux was not its parent"), the two native builders by SendMessage to their ids — this works after a
   crash + resume of the same conversation (memory updated). Each was told background jobs died and to re-run what was in flight.
   T7 118 GB free. Orchestrator.
+- 21:28 (Oct 18) — **Fork switch = LAND ×2 (astra, sol re-reviews, `round8/review-fork-r1-{astra,sol}.md`); added to landing 10a.** Both
+  independently re-verified the 6,100 boundary captures (3,185 accepted / 2,180 rejected identical under stock, fork and live Helm; 735
+  identical compile errors; 8 absent boundaries explained), the fresh-cache build log, and that the capture overlay is evidence-only
+  (shipped binary hash unchanged, no capture symbols). Landing 10a clone now: main 7c28756f + tracing aafc68b7/a1a44ee0 + fork
+  61ec552f/b5d04aba; the battery lane follows at LAND ×2.
+- 21:28 (Oct 18) — **W4 rework 17 design handed back (`round8-w4-evidence/rebase/r17/design.md`); design review sent to astra + sol.** Helm
+  matrix: plain interpolation renders ""/null/~ as null and a mapping as `map[k:v]`; keyed reads need only "is a map". Re-adjudicating
+  the 224 rows with helm template + kubeconform (r16 judged lint rows by lint's exit only): Z 60 stay rejected (9 Helm aborts, 51 k8s
+  rejections), A 96 (""/null into an unresolved scalar sink), B 28 (redis path/subPathExpr mappings), C 36 (falco port members via
+  `{{ $key1 }}: {{ $value1 }}`), D 4 (milvus). The reviewers' row-39 premise (integer|null sink) is wrong: that sink is only in
+  the sentinel branch. Rule: per-use contributions intersected per branch; declared stand-in only for an unresolved scalar use under
+  Assert; no declared-shape merge; IR range-key iteration fact and falco Not(ContainsMemberEquals). Open: D1 (stand-in admits null),
+  D2 (range-key `{*}` resolves per sink property). Planned −150 to −350 LOC vs r16. Runs 192749-529e20b2 (astra), 192750-0416e02b
+  (sol), question `round8/q/w4-r17-design.md`. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
