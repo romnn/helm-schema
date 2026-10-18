@@ -19,3 +19,6 @@ pub mod source_digest;
 
 pub use consume::consume;
 pub use registry::{ArtifactId, ChartId, IrId, LeanId, PolicyId, TemplateId};
+
+#[cfg(test)]
+mod tests;

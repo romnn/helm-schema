@@ -400,48 +400,6 @@ fn changing_an_invalid_values_json_type_preserves_the_canonical_assertion() -> e
 }
 
 #[test]
-fn dependent_required_triggers_keep_their_canonical_constraint_identity() -> eyre::Result<()> {
-    let root = ScratchDir::new("canonical-dependent-required")?;
-    let cache = ScratchDir::new("canonical-dependent-required")?;
-    write_chart(root.path(), &json!({"first": true}))?;
-    write_schema(
-        cache.path(),
-        &json!({
-            "$schema": "https://json-schema.org/draft/2020-12/schema",
-            "type": "object",
-            "properties": {"data": {
-                "type": "object",
-                "allOf": [
-                    {"dependentRequired": {"first": ["token"]}},
-                    {"dependentRequired": {"second": ["token"]}}
-                ]
-            }}
-        }),
-    )?;
-    let chart = PinnedHelmChart::prepare(HelmRunner::shared()?, root.path())?;
-    let validator = OfflineKubernetesValidator::new(cache.path(), KUBERNETES_RELEASE)?;
-    let defaults = chart.adjudicate(&json!({}))?;
-    let checked = validator.check_controls(&chart, &defaults, &[&defaults])?;
-    let payload = chart.adjudicate(&json!({"data": {"first": false}}))?;
-    let comparisons = validator.compare_with_controls(&chart, &payload, &checked)?;
-    let comparison = comparisons
-        .first()
-        .ok_or_eyre("missing context comparison")?;
-    sim_assert_eq!(have: comparison.inherited_violations.len(), want: 1);
-    assert!(comparison.new_violations.is_empty() && comparison.uncertain.is_empty());
-
-    // Equal missing-member names do not merge different triggering assertions.
-    let payload = chart.adjudicate(&json!({"data": {"first": null, "second": true}}))?;
-    let comparisons = validator.compare_with_controls(&chart, &payload, &checked)?;
-    let comparison = comparisons
-        .first()
-        .ok_or_eyre("missing context comparison")?;
-    sim_assert_eq!(have: comparison.new_violations.len(), want: 1);
-    assert!(comparison.inherited_violations.is_empty() && comparison.uncertain.is_empty());
-    Ok(())
-}
-
-#[test]
 fn ambiguous_unevaluated_members_block_attribution_despite_a_known_fixed_failure()
 -> eyre::Result<()> {
     // The validator groups forbidden names and invalid dynamic values into the same error kind.

@@ -24,7 +24,8 @@ use test_util::helm_values::{AcceptanceDocument, ValuesError, acceptance_values}
 use test_util::scratch::ScratchDir;
 
 use crate::helm::assertion_identity::{
-    InstanceSegment, canonical_instance_path, canonical_schema_location,
+    InstanceSegment, assertion_provenance, canonical_instance_path, canonical_schema_location,
+    verify_compiler_locations, verify_registry_integrity,
 };
 use crate::helm::cache_policy::render_cacheability;
 use crate::helm::invocation::{
@@ -909,15 +910,17 @@ impl ResourceEvidence {
 
         let mut occurrences: Vec<KubernetesViolation> = Vec::new();
         for error in schema.validator.iter_errors(document) {
-            let schema_location =
-                canonical_schema_location(&schema.registry, ANONYMOUS_SCHEMA_URI, &error).map_err(
-                    |reason| {
-                        eyre::eyre!(
-                            "unresolved assertion identity: {location} via {}: {reason}",
-                            error.evaluation_path()
-                        )
-                    },
-                )?;
+            let schema_location = canonical_schema_location(
+                &schema.registry,
+                ANONYMOUS_SCHEMA_URI,
+                assertion_provenance(&error),
+            )
+            .map_err(|reason| {
+                eyre::eyre!(
+                    "unresolved assertion identity: {location} via {}: {reason}",
+                    error.evaluation_path()
+                )
+            })?;
             let members = match error.kind() {
                 ValidationErrorKind::AdditionalProperties { unexpected } => unexpected.clone(),
                 ValidationErrorKind::AdditionalItems { limit } => {
@@ -1046,24 +1049,34 @@ pub const KUBERNETES_RELEASE: &str = "v1.29.0-standalone-strict";
 
 /// How resource schemas are compiled and judged. Changing the compilation
 /// options or the identity proof must change this.
-const VALIDATOR_POLICY: &str = "helm-schema/offline-kubernetes-validator/v4";
+const VALIDATOR_POLICY: &str = "helm-schema/offline-kubernetes-validator/v5";
 
 /// Base for anonymous schemas; resource API/kind separately qualify every assertion.
 const ANONYMOUS_SCHEMA_URI: &str = "https://helm-schema.invalid/resource";
 
 /// The validator and the same offline registry used to prove constraint locations.
-struct ResourceSchema {
-    validator: jsonschema::Validator,
-    registry: jsonschema::Registry<'static>,
+pub(crate) struct ResourceSchema {
+    pub(crate) validator: jsonschema::Validator,
+    pub(crate) registry: jsonschema::Registry<'static>,
 }
 
 impl ResourceSchema {
-    fn compile(schema: &Value, draft: jsonschema::Draft) -> eyre::Result<Self> {
+    pub(crate) fn compile(schema: &Value, draft: jsonschema::Draft) -> eyre::Result<Self> {
+        verify_registry_integrity(schema, draft, ANONYMOUS_SCHEMA_URI)?;
         let registry = jsonschema::Registry::new()
             .draft(draft)
             .retriever(NoRemoteSchemas)
             .add(ANONYMOUS_SCHEMA_URI, draft.create_resource(schema.clone()))?
             .prepare()?;
+        eyre::ensure!(
+            registry
+                .resolver(jsonschema::uri::from_str(ANONYMOUS_SCHEMA_URI)?)
+                .lookup(ANONYMOUS_SCHEMA_URI)?
+                .contents()
+                == schema,
+            "registry retrieval URI does not identify the pinned root"
+        );
+        verify_compiler_locations(&registry, ANONYMOUS_SCHEMA_URI)?;
         let validator = jsonschema::options()
             .with_base_uri(ANONYMOUS_SCHEMA_URI)
             .with_draft(draft)

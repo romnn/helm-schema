@@ -436,11 +436,7 @@ fn assert_distinct_schema_resources(
     second_type: &Value,
     payload: &Value,
 ) -> eyre::Result<()> {
-    let root = ScratchDir::new("distinct-schema-resources")?;
-    let cache = ScratchDir::new("distinct-schema-resources")?;
-    write_chart(root.path(), &json!({"data": "ok"}), DATA_TEMPLATE)?;
-    write_schema(
-        cache.path(),
+    assert_new_in_both_lanes(
         &json!({
             "$defs": {
                 "a": {"$id": format!("{resource_base}a"), "type": first_type},
@@ -451,18 +447,32 @@ fn assert_distinct_schema_resources(
                 {"$ref": format!("{resource_base}b")}
             ]}}
         }),
-    )?;
+        &json!({"data": "ok"}),
+        &json!({"data": payload}),
+        DATA_TEMPLATE,
+    )
+}
+
+fn assert_new_in_both_lanes(
+    schema: &Value,
+    defaults: &Value,
+    overlay: &Value,
+    template: &str,
+) -> eyre::Result<()> {
+    let root = ScratchDir::new("distinct-schema-resources")?;
+    let cache = ScratchDir::new("distinct-schema-resources")?;
+    write_chart(root.path(), defaults, template)?;
+    write_schema(cache.path(), schema)?;
     let chart = PinnedHelmChart::prepare(HelmRunner::shared()?, root.path())?;
     let validator = OfflineKubernetesValidator::new(cache.path(), KUBERNETES_RELEASE)?;
     let defaults = chart.adjudicate(&json!({}))?;
     let checked = validator.check_controls(&chart, &defaults, &[&defaults])?;
-    let overlay = json!({"data": payload});
-    let payload = chart.adjudicate(&overlay)?;
+    let payload = chart.adjudicate(overlay)?;
     let mut comparisons = validator.compare_with_controls(&chart, &payload, &checked)?;
-    let payload = chart.adjudicate(&overlay)?;
+    let payload = chart.adjudicate(overlay)?;
     comparisons.push(validator.compare_with_defaults(&chart, &payload)?);
 
-    // Both constraints use /type at /data, but belong to different schema resources.
+    // Different constraints retain separate occurrences even at the same instance position.
     sim_assert_eq!(
         have: comparisons.iter().map(|comparison| (
             comparison.new_violations.len(), comparison.inherited_violations.len()
@@ -475,7 +485,7 @@ fn assert_distinct_schema_resources(
             .all(|comparison| comparison.uncertain.is_empty())
     );
     let defaults = chart.adjudicate(&json!({}))?;
-    let payload = chart.adjudicate(&overlay)?;
+    let payload = chart.adjudicate(overlay)?;
     assert!(
         validator
             .check_controls(&chart, &defaults, &[&payload])
@@ -486,39 +496,226 @@ fn assert_distinct_schema_resources(
 
 #[test]
 fn unproved_schema_resource_correspondence_fails_in_both_lanes() -> eyre::Result<()> {
-    for schema in [
-        json!({
-            "$defs": {"token": {"$dynamicAnchor": "token", "type": "string"}},
-            "properties": {"data": {"$dynamicRef": "#token"}}
+    assert_unresolved_in_both_lanes(
+        &json!({
+            "$defs": {"token": {"$id": "token", "$dynamicAnchor": "token", "type": "string"}},
+            "properties": {"data": {"$dynamicRef": "token#token"}}
         }),
-        json!({"properties": {"data": {"allOf": [
-            {"$id": "", "type": "string"},
-            {"$id": "", "type": "string"}
-        ]}}}),
-        json!({"properties": {"data": {"allOf": [
-            {"$id": "https://helm-schema.invalid/resource", "type": "string"},
-            {"$id": "https://helm-schema.invalid/resource", "type": "string"}
-        ]}}}),
+        &json!({"data": "ok"}),
+        &json!({"data": false}),
+        DATA_TEMPLATE,
+        "unproved dynamic reference correspondence",
+    )
+}
+
+#[test]
+fn wrapped_property_names_cannot_borrow_an_unrelated_root_constraint() -> eyre::Result<()> {
+    assert_new_in_both_lanes(
+        &json!({
+            "$defs": {
+                "a": {"$id": "https://review.test/a", "minLength": 2},
+                "b": {"$id": "https://review.test/b", "minLength": 3}
+            },
+            "minLength": 0,
+            "if": {"properties": {"data": {"const": 0}}},
+            "then": {"propertyNames": {"$ref": "https://review.test/a"}},
+            "else": {"propertyNames": {"allOf": [
+                {"$ref": "https://review.test/a"}, {"$ref": "https://review.test/b"}
+            ]}}
+        }),
+        &json!({"data": 0}),
+        &json!({"data": 1}),
+        &format!("{DATA_TEMPLATE}x: 0"),
+    )
+}
+
+#[test]
+fn shadowed_registry_resources_cannot_substitute_constraint_provenance() -> eyre::Result<()> {
+    assert_unresolved_in_both_lanes(
+        &json!({
+            "$id": "https://review.test/root",
+            "$defs": {"shadow": {
+                "$id": "https://helm-schema.invalid/resource",
+                "$defs": {"target": {
+                    "$id": "https://review.test/root",
+                    "$defs": {
+                        "a": {"type": "integer"}, "b": {"type": "string"},
+                        "shared": {"type": "string"}
+                    }
+                }},
+                "properties": {"data": {"allOf": [
+                    {"$ref": "https://review.test/root#/$defs/shared"},
+                    {"$ref": "https://review.test/root#/$defs/shared"}
+                ]}}
+            }},
+            "properties": {"data": {"allOf": [
+                {"$ref": "https://review.test/root#/$defs/a"},
+                {"$ref": "https://review.test/root#/$defs/b"}
+            ]}}
+        }),
+        &json!({"data": "ok"}),
+        &json!({"data": false}),
+        DATA_TEMPLATE,
+        "registry identity collision",
+    )
+}
+
+fn assert_unresolved_in_both_lanes(
+    schema: &Value,
+    defaults: &Value,
+    overlay: &Value,
+    template: &str,
+    reason: &str,
+) -> eyre::Result<()> {
+    let root = ScratchDir::new("unproved-assertion-provenance")?;
+    let cache = ScratchDir::new("unproved-assertion-provenance")?;
+    write_chart(root.path(), defaults, template)?;
+    write_schema(cache.path(), schema)?;
+    let chart = PinnedHelmChart::prepare(HelmRunner::shared()?, root.path())?;
+    let validator = OfflineKubernetesValidator::new(cache.path(), KUBERNETES_RELEASE)?;
+    let defaults = chart.adjudicate(&json!({}))?;
+    let payload = chart.adjudicate(overlay)?;
+    let contextual = validator
+        .check_controls(&chart, &defaults, &[&defaults])
+        .and_then(|checked| validator.compare_with_controls(&chart, &payload, &checked));
+    let payload = chart.adjudicate(overlay)?;
+    let defaults_only = validator
+        .compare_with_defaults(&chart, &payload)
+        .map(|value| vec![value]);
+    for result in [&contextual, &defaults_only] {
+        eprintln!("provenance result: {result:?}");
+    }
+    for result in [contextual, defaults_only] {
+        let error = result
+            .err()
+            .ok_or_eyre("unproved provenance reached comparison")?;
+        assert!(format!("{error:?}").contains(reason), "{error:?}");
+    }
+    Ok(())
+}
+
+#[test]
+fn ambiguous_anchor_compilation_locations_fail_unresolved() -> eyre::Result<()> {
+    assert_unresolved_in_both_lanes(
+        &json!({
+            "$defs": {
+                "a": {"$anchor": "a", "type": "integer"},
+                "b": {"$anchor": "b", "type": "string"}
+            },
+            "properties": {"data": {"allOf": [{"$ref": "#a"}, {"$ref": "#b"}]}}
+        }),
+        &json!({"data": "ok"}),
+        &json!({"data": false}),
+        DATA_TEMPLATE,
+        "compiler location collision",
+    )
+}
+
+#[test]
+fn pointer_targets_cannot_share_a_compiler_location_across_resource_boundaries() -> eyre::Result<()>
+{
+    assert_unresolved_in_both_lanes(
+        &json!({
+            "$defs": {"outer": {
+                "$id": "https://review.test/u", "type": "integer",
+                "$defs": {"outer": {"type": "string"}}
+            }},
+            "properties": {"data": {"allOf": [
+                {"$ref": "#/$defs/outer"},
+                {"$ref": "https://review.test/u#/$defs/outer"}
+            ]}}
+        }),
+        &json!({"data": "ok"}),
+        &json!({"data": false}),
+        DATA_TEMPLATE,
+        "compiler location collision",
+    )
+}
+
+#[test]
+fn cached_reference_suffixes_cannot_change_the_replayed_constraint() -> eyre::Result<()> {
+    assert_unresolved_in_both_lanes(
+        &json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "definitions": {
+                "c": {"type": "integer"}, "d": {"type": "string"},
+                "a": {"allOf": [{"$ref": "#/definitions/c", "allOf": [{"$ref": "#/definitions/d"}]}]}
+            },
+            "properties": {"data": {
+                "if": {"type": "string"},
+                "then": {"allOf": [{"$ref": "#/definitions/a"}, {"$ref": "#/definitions/a/allOf/0"}]},
+                "else": {"allOf": [{"$ref": "#/definitions/a"}, {"$ref": "#/definitions/d"}]}
+            }}
+        }),
+        &json!({"data": "ok"}),
+        &json!({"data": false}),
+        DATA_TEMPLATE,
+        "compiler location collision",
+    )
+}
+
+#[test]
+fn identifiers_inside_instance_literals_do_not_pollute_the_registry() -> eyre::Result<()> {
+    let root = ScratchDir::new("literal-schema-identifiers")?;
+    let cache = ScratchDir::new("literal-schema-identifiers")?;
+    write_chart(root.path(), &json!({"data": "ok"}), DATA_TEMPLATE)?;
+    write_schema(
+        cache.path(),
+        &json!({
+            "default": {"$id": "https://helm-schema.invalid/resource", "$anchor": "same"},
+            "examples": [{"$id": "https://helm-schema.invalid/resource", "$anchor": "same"}],
+            "properties": {"data": {"type": "string"}}
+        }),
+    )?;
+    let chart = PinnedHelmChart::prepare(HelmRunner::shared()?, root.path())?;
+    let validator = OfflineKubernetesValidator::new(cache.path(), KUBERNETES_RELEASE)?;
+    let defaults = chart.adjudicate(&json!({}))?;
+    validator.check_controls(&chart, &defaults, &[&defaults])?;
+    Ok(())
+}
+
+#[test]
+fn registry_collisions_reject_even_valid_documents() -> eyre::Result<()> {
+    for schema in [
+        json!({"$defs": {"a": {"$id": ""}}}),
+        json!({"$defs": {"a": {"$id": "https://helm-schema.invalid/resource"}}}),
+        json!({"$defs": {"a": {"$id": "https://review.test/a"}, "b": {"$id": "https://review.test/a"}}}),
+        json!({"$defs": {"a": {"$id": "https://review.test/a"}, "b": {"$id": "https://review.test/./a"}}}),
+        json!({"$defs": {"a": {"$anchor": "same"}, "b": {"$anchor": "same"}}}),
+        json!({"$defs": {"a": {"$anchor": "same"}, "b": {"$dynamicAnchor": "same"}}}),
+        json!({"$schema": "http://json-schema.org/draft-07/schema#", "definitions": {
+            "a": {"$id": "#same"}, "b": {"$id": "#same"}
+        }}),
+        json!({"$schema": "http://json-schema.org/draft-04/schema#", "definitions": {
+            "a": {"id": "#same"}, "b": {"id": "#same"}
+        }}),
     ] {
-        let root = ScratchDir::new("contextual-unproved-reference")?;
-        let cache = ScratchDir::new("contextual-unproved-reference")?;
-        write_chart(root.path(), &json!({"data": "ok"}), DATA_TEMPLATE)?;
-        write_schema(cache.path(), &schema)?;
-        let chart = PinnedHelmChart::prepare(HelmRunner::shared()?, root.path())?;
-        let validator = OfflineKubernetesValidator::new(cache.path(), KUBERNETES_RELEASE)?;
-        let defaults = chart.adjudicate(&json!({}))?;
-        let checked = validator.check_controls(&chart, &defaults, &[&defaults])?;
-        let payload = chart.adjudicate(&json!({"data": false}))?;
-        let contextual = validator.compare_with_controls(&chart, &payload, &checked);
-        let payload = chart.adjudicate(&json!({"data": false}))?;
-        let defaults_only = validator.compare_with_defaults(&chart, &payload);
-        for error in [contextual.err(), defaults_only.err()] {
-            let error = error.ok_or_eyre("unproved schema correspondence reached comparison")?;
-            assert!(
-                error.to_string().contains("unresolved assertion identity"),
-                "{error:?}"
-            );
-        }
+        assert_unresolved_in_both_lanes(
+            &schema,
+            &json!({"data": "ok"}),
+            &json!({"data": "also ok"}),
+            DATA_TEMPLATE,
+            "registry identity collision",
+        )?;
+    }
+    Ok(())
+}
+
+#[test]
+fn incomplete_keyword_routes_fail_in_both_lanes() -> eyre::Result<()> {
+    for constraint in [
+        json!({"propertyNames": false}),
+        json!({"additionalProperties": false}),
+        json!({"dependentRequired": {"first": ["token"], "second": ["token"]}}),
+        json!({"dependencies": {"first": ["token"], "second": ["token"]}}),
+    ] {
+        assert_unresolved_in_both_lanes(
+            &json!({"properties": {"data": constraint}}),
+            &json!({"data": {"first": 0}}),
+            &json!({"data": {"second": 0}}),
+            DATA_TEMPLATE,
+            "unresolved assertion identity",
+        )?;
     }
     Ok(())
 }
@@ -533,7 +730,10 @@ fn repeated_references_to_one_constraint_count_one_occurrence() -> eyre::Result<
             "https://review.test/shared",
         ),
         (json!({"$id": "shared", "type": "string"}), "shared"),
-        (json!({"$anchor": "token", "type": "string"}), "#token"),
+        (
+            json!({"$id": "shared", "$anchor": "token", "type": "string"}),
+            "shared#token",
+        ),
         (
             json!({"type": "string"}),
             "https://helm-schema.invalid/resource#/definitions/token",

@@ -1,5 +1,6 @@
 //! Schema-directed constraint and instance identity, separate from diagnostic paths.
 
+use std::collections::{BTreeMap, BTreeSet};
 use std::iter::Peekable;
 use std::str::Split;
 
@@ -7,11 +8,235 @@ use color_eyre::eyre::{self, OptionExt as _};
 use jsonschema::paths::Location;
 use serde_json::Value;
 
-pub(super) fn canonical_schema_location(
+pub(crate) fn verify_registry_integrity(
+    schema: &Value,
+    draft: jsonschema::Draft,
+    root_uri: &str,
+) -> eyre::Result<()> {
+    struct Pending<'a> {
+        schema: &'a Value,
+        draft: jsonschema::Draft,
+        base: jsonschema::Uri<String>,
+    }
+    let retrieval = jsonschema::uri::from_str(root_uri)?;
+    let mut identities = BTreeSet::from([retrieval.to_string()]);
+    let mut pending = vec![Pending {
+        schema,
+        draft,
+        base: retrieval.clone(),
+    }];
+    while let Some(Pending {
+        schema: node,
+        draft,
+        mut base,
+    }) = pending.pop()
+    {
+        eyre::ensure!(
+            draft != jsonschema::Draft::Unknown,
+            "unproved schema dialect"
+        );
+        if let Some(id) = draft.create_resource_ref(node).id() {
+            base = jsonschema::uri::resolve_against(&base.borrow(), id)?;
+            eyre::ensure!(
+                base.fragment()
+                    .map(jsonschema::uri::EncodedString::as_str)
+                    .is_none_or(str::is_empty),
+                "unproved fragment-bearing schema resource ID: {base}"
+            );
+            base = base.strip_fragment().to_owned();
+            eyre::ensure!(
+                identities.insert(base.to_string())
+                    || (std::ptr::eq(node, schema) && base == retrieval),
+                "registry identity collision: {base}"
+            );
+        }
+        let anchors: Vec<&str> = match draft {
+            jsonschema::Draft::Draft4 => node
+                .get("id")
+                .and_then(Value::as_str)
+                .and_then(|id| id.strip_prefix('#'))
+                .into_iter()
+                .collect(),
+            jsonschema::Draft::Draft6 | jsonschema::Draft::Draft7 => node
+                .get("$id")
+                .and_then(Value::as_str)
+                .and_then(|id| id.strip_prefix('#'))
+                .into_iter()
+                .collect(),
+            jsonschema::Draft::Draft201909 => node
+                .get("$anchor")
+                .and_then(Value::as_str)
+                .into_iter()
+                .collect(),
+            _ => ["$anchor", "$dynamicAnchor"]
+                .into_iter()
+                .filter_map(|keyword| node.get(keyword).and_then(Value::as_str))
+                .collect(),
+        };
+        for anchor in anchors {
+            let identity = jsonschema::uri::resolve_against(&base.borrow(), &format!("#{anchor}"))?;
+            let identity = if anchor.is_empty() {
+                identity.strip_fragment().to_string()
+            } else {
+                identity.to_string()
+            };
+            eyre::ensure!(
+                identities.insert(identity.clone()),
+                "registry identity collision: {identity}"
+            );
+        }
+        for child in draft.subresources_of(node) {
+            pending.push(Pending {
+                schema: child,
+                draft: draft.detect(child),
+                base: base.clone(),
+            });
+        }
+    }
+    Ok(())
+}
+
+struct CompilerPosition<'a> {
+    node: &'a Value,
+    draft: jsonschema::Draft,
+    base: jsonschema::Uri<String>,
+    pointer: String,
+    resource_base: String,
+}
+struct CompilerSource<'a> {
+    node: &'a Value,
+    draft: jsonschema::Draft,
+    resource_base: String,
+}
+
+pub(super) fn verify_compiler_locations(
+    registry: &jsonschema::Registry<'_>,
+    root_uri: &str,
+) -> eyre::Result<()> {
+    let resolver = registry.resolver(jsonschema::uri::from_str(root_uri)?);
+    let (root, resolver, draft) = resolver.lookup(root_uri)?.into_inner();
+    let resolver = resolver.in_subresource(draft.create_resource_ref(root))?;
+    let mut pending = vec![CompilerPosition {
+        node: root,
+        draft,
+        base: resolver.base_uri().as_ref().clone(),
+        pointer: String::new(),
+        resource_base: String::new(),
+    }];
+    // The compiler cache omits source identity and the reference base used to store nested suffixes.
+    // Ignoring dynamic scope is conservative: a collision never becomes permission to disambiguate.
+    let mut locations = BTreeMap::<(String, String), CompilerSource<'_>>::new();
+    while let Some(CompilerPosition {
+        node,
+        draft,
+        base,
+        pointer,
+        resource_base,
+    }) = pending.pop()
+    {
+        if let Some(previous) = locations.insert(
+            (base.to_string(), pointer.clone()),
+            CompilerSource {
+                node,
+                draft,
+                resource_base: resource_base.clone(),
+            },
+        ) {
+            eyre::ensure!(
+                std::ptr::eq(previous.node, node)
+                    && previous.draft == draft
+                    && previous.resource_base == resource_base,
+                "compiler location collision: {base}#{pointer}"
+            );
+            continue;
+        }
+        eyre::ensure!(
+            locations.len() <= 100_000,
+            "compiler provenance proof exceeds its position budget"
+        );
+        eyre::ensure!(
+            node.get("$dynamicRef").is_none() && node.get("$recursiveRef").is_none(),
+            "unproved dynamic reference correspondence"
+        );
+        if let Some(reference) = node.get("$ref").and_then(Value::as_str) {
+            let alias = jsonschema::uri::resolve_against(&base.borrow(), reference)?;
+            let target_pointer = match alias.fragment() {
+                Some(fragment) if fragment.as_str().starts_with('/') => fragment
+                    .decode()
+                    .to_string()
+                    .map_err(|_| eyre::eyre!("reference fragment is not UTF-8"))?
+                    .into_owned(),
+                _ => String::new(),
+            };
+            let (target, target_resolver, target_draft) = registry
+                .resolver(base.clone())
+                .lookup(reference)?
+                .into_inner();
+            pending.push(CompilerPosition {
+                node: target,
+                draft: target_draft,
+                base: target_resolver.base_uri().as_ref().clone(),
+                resource_base: target_pointer.clone(),
+                pointer: target_pointer,
+            });
+        }
+        for child in draft.subresources_of(node) {
+            let suffix = schema_node_pointer(node, child, Location::new())
+                .ok_or_eyre("schema child has no source position")?;
+            // Definitions compile only when referenced; their declaration path is not a compiler address.
+            if matches!(
+                suffix.as_str().split('/').nth(1),
+                Some("definitions" | "$defs")
+            ) {
+                continue;
+            }
+            let child_draft = draft.detect(child);
+            let child_base = match child_draft.create_resource_ref(child).id() {
+                Some(id) => jsonschema::uri::resolve_against(&base.borrow(), id)?,
+                None => base.clone(),
+            };
+            pending.push(CompilerPosition {
+                node: child,
+                draft: child_draft,
+                base: child_base,
+                pointer: format!("{pointer}{suffix}"),
+                resource_base: resource_base.clone(),
+            });
+        }
+    }
+    Ok(())
+}
+
+pub(super) fn assertion_provenance<'a, 'i>(
+    error: &'a jsonschema::ValidationError<'i>,
+) -> &'a jsonschema::ValidationError<'i> {
+    // propertyNames rebuilds the outer route from a child-relative path; the child retains its tracker.
+    match error.kind() {
+        jsonschema::error::ValidationErrorKind::PropertyNames { error } => {
+            assertion_provenance(error)
+        }
+        _ => error,
+    }
+}
+
+pub(crate) fn canonical_schema_location(
     registry: &jsonschema::Registry<'_>,
     root_uri: &str,
     error: &jsonschema::ValidationError<'_>,
 ) -> eyre::Result<String> {
+    use jsonschema::error::ValidationErrorKind;
+
+    eyre::ensure!(
+        !matches!(
+            error.kind(),
+            ValidationErrorKind::FalseSchema
+                | ValidationErrorKind::Referencing(_)
+                | ValidationErrorKind::BacktrackLimitExceeded { .. }
+                | ValidationErrorKind::RegexEngineFailure { .. }
+        ) && error.evaluation_path().as_str().rsplit('/').next() == Some(error.kind().keyword()),
+        "{} does not prove a complete constraint route",
+        error.kind().keyword()
+    );
     let reported = error
         .absolute_keyword_location()
         .ok_or_eyre("missing absolute keyword location")?;
@@ -166,6 +391,9 @@ pub(super) fn canonical_instance_path(
     error: &jsonschema::ValidationError<'_>,
     diagnostic_path: &str,
 ) -> Result<Vec<InstanceSegment>, String> {
+    if document.pointer(error.instance_path().as_str()) != Some(error.instance().as_ref()) {
+        return Err("reported instance does not match its path".to_string());
+    }
     // These grouped errors do not identify which concrete members failed.
     if matches!(
         error.kind(),
@@ -180,7 +408,7 @@ pub(super) fn canonical_instance_path(
     // Validator paths are escaped JSON pointers.
     // Keep empty and numeric property tokens intact;
     // only the evaluated keyword route and actual JSON container establish their roles.
-    let mut route = error
+    let mut route = assertion_provenance(error)
         .evaluation_path()
         .as_str()
         .split('/')
