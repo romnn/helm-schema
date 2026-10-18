@@ -8298,6 +8298,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   demonstration traces for openebs/oncall/kps/milvus/bitnami-redis and an openebs battery run; HARD SCOPE LIMIT tracing only. The
   orchestrator analyses the traces with the perfetto MCP. Clarification for the record: the user had NOT cancelled anything; the two
   rejections were of my cancel calls, and the user then explicitly approved this one. Orchestrator.
+- 17:11 (Oct 18) — **Schema-shape investigation = ACTIONABLE (`round8/perf-schema-shape-astra.md`, report
+  `/Volumes/T7/dev/round8-perf-scratch/report.md`, 48 timed commands, CPU profiles).** Helm 4.2.3 validates with
+  santhosh-tekuri/jsonschema v6.0.2; under draft-07 it recognises `definitions`, not `$defs`, and discovers `$defs` targets lazily —
+  each discovery clones the growing subschemasProcessed map (54.65 % of oncall CPU in root.clone) — plus a linear queue search
+  (27.40 %, compiler.go:153). Emitting root `definitions` instead of `$defs` (internal pointers rewritten): oncall compile 369 → 129 s,
+  real `helm lint` 673 → 343 s, 2 339/2 339 probe verdicts identical (1 606 accept / 733 reject); with an experimental queue index as
+  well, compile 1.6 s (upstream library opportunity — outward-facing, user's call). Byte size is not the cost model (the rename grows
+  oncall 7.4 %); the broad allOf/conditional graph is. Sound runner reuse: one validation per distinct (schema bytes, exact document,
+  validator build/options, root URI, resource closure); whole Helm invocations and the CLI differential are NOT cacheable as such.
+  Next: design review of a native `definitions` emission on both models (astra 20261018T151140-fd4dc9dd, sol …-a5b384d7 →
+  `design-definitions-*.md`) before any builder; it moves every fixture containing `$defs` and must be acceptance-neutral (schema-only
+  battery, zero flips). W4 rework 16 committed f0d03fe1/2f52f1a0/141c9453/8b9e6aab (R73 own-operation widening; guards evaluated
+  through their emitted encodings — the audit's top consolidation); W1 rework 13 committed R77 e51f7892 (a write to a values path is
+  what later reads see) and deleted MemberHostConversion. T7 109 GB. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
