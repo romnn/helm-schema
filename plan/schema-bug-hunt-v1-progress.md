@@ -8178,6 +8178,24 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   additionalProperties/patternProperties; per-key multiset counts (payload > context ⇒ new, equal ⇒ inherited); ambiguous ⇒
   unresolved. Observation: this lane has oscillated between too coarse and too fine for three rounds; the canonical-key design is
   the fixed point both reviewers describe. Orchestrator.
+- 09:51 (Oct 18) — **W4 rework 15 FINAL (aec89944, 77 commits on b51c8589; Self-attack in rebase/r15/handoff.md; final-v17.patch
+  sha256 a033d82d…).** Contract (Helm 4.2.3): values numbers are float64 (`has 1` false, `eq .x 1` aborts), `eq .k nil` true over
+  `[{}]`, Helm validates `1.0` as integer, `gt (int v) 0` holds for 2^63 and 1e20; consul/jenkins overrides render. Commits: R69
+  84193438 + a4654f19 (sign selects the string lane; extreme bounds claim no string); R69/R71 562cab09/ad774606/e050b8ae (evaluator ==
+  encoding, integer-literal equality abstains on numbers, null literal matches a missing member, u64 + integral floats; the shared-
+  helper float normalisation deleted); R71 e888412e; R70 b10d54b3/125b8ebe; R72 (the consul/jenkins CLASS) 68c8ad27…aec89944: an
+  untyped branch that kept the declared sample widens to anyOf [sample, typed alternatives other branches prove] — a superset of
+  pre-R72 by construction. Tests red→green: condition_encoding table + three new tests, int_cast_preimages extreme bounds, chart_
+  openebs/datadog/consul/jenkins. Gates: fmt/lint/lint:fc/ast-grep 0, tokei 79 119 vs 76 692, nextest 1 769, integration 201 =
+  fixture equality only (160, same set as r14), dump --verify 0 (205). Live battery on dump-r15-final3: 1 passed, 9 754 flips, 0
+  unmatched; 182 artifacts move vs main (R72 alone 60, all loosening); two earlier R72 attempts failed the battery (62 and 4 false
+  acceptances). Self-attack: lint document over 5 640 dependency rows (only the 4 known rows, all schema-free Helm aborts), witness
+  prober 0 new restrictions, R72 classification time-boxed (20/63 structural; openebs 60 conditionals unclassified apart from 2
+  agreeing cells; counts in handoff). Residuals: (a) 5 cells / 8 overrides main accepts, candidate rejects (PSP runAsUser/fsGroup
+  family; consul OpenShift client.hostNetwork) under the `assert` policy where the sample is the only typing — orchestrator: treat as
+  policy-attributed per the standing decision (battery attributed them), reviewers asked to confirm; (b) integer-literal eq/ne vs
+  non-numbers (pre-existing). Builder disclosed `rm -r`/`rm -rf` on its own scratch copies only; freed ~8 GB. Reviews as follow_ups
+  on the still-live pre-review sessions: astra 254a1949, sol 5aafa219. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
