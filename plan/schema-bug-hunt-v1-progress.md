@@ -8500,6 +8500,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   AcceptanceDocument::ALL on full documents (the script's precedence is wrong); closed keys constrain the RENDERED key (quoted /
   trailing-space positive controls); per-contract rejection gate. LOC estimate −140..+290 vs r16: growth only where it closes the four
   classes that had no contract (values-derived keys, resource headers, lint-null deletion, host presence). Orchestrator.
+- 22:24 (Oct 18) — **Battery rework 6 (R17) handed back (astra builder, run 78d55437 turn 8, resumed after the crash); committed; FRESH
+  re-reviews started.** Kubernetes constraint identity is now resource-qualified: `canonical_schema_location` resolves the evaluated
+  constraint through the validator's offline registry to the node's origin (resource URI + keyword pointer), verified to resolve back
+  to the same node, unproved correspondence fails unresolved; used for dedup and the canonical key in both lanes; the relative-only key
+  deleted. Red→green: both reviewers' distinct-`$id` cells failed (exit 100) before, pass after; alias controls (pointer/URI/anchor,
+  declared-root-ID vs retrieval URI) inherit once. Gates on the final tree: fmt 0, lint 0, lint:fc 0, unit 0 (1,699), integration 0
+  (1,017 + 26 skipped; one fake-Helm startup timeout passed on isolated retry and the exact rerun), clean `--helm-ready` dump 0,
+  schema-only battery A/B 0 with byte-identical coverage (160 charts, 273,155 probes; LintRaw 957 / LintCoalescedTwice 847 /
+  Template 883 documents), tokei:core delta 0 (test support excluded). Orchestrator committed ce4f7ddb (transfer c0ce6c20…) and
+  20b29c3b (skill docs e3be35aa…) in round8-battery. The rework-5 reviewer sessions expired (24 h), so fresh runs:
+  202423-800b1d2c (astra), 202423-f3e14ed1 (sol), question `round8/q/battery-p1r6-review.md`. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
