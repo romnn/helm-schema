@@ -8256,6 +8256,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   4.50 MB and now reaches a passing lint); both need phase timers to finish. Trigger: landing 10 run1's sweep (90 min) is +61 % over
   landing 9 (56) — reported to the user with a proposed perf pass (runner phase timers + content-addressed sweep reuse + shipped-
   schema size/shape, which also slows users' own `helm lint`). Orchestrator.
+- 15:26 (Oct 18) — **Battery lane rework 4 committed (canonical assertion identity) and in re-check.** New
+  `assertion_identity.rs`: keys keep apiVersion/kind, schema_path, keyword and structural details; array indices and schema-proven map
+  positions are typed wildcards; fixed property names stay; per-key multisets decide new vs inherited; ambiguous correspondence and
+  contextual unevaluatedProperties errors fail unresolved. Red→green for prepend, env reorder, data-key rename, $ref route switch,
+  second violation, fixed and positional constraints; gates fmt/lint/lint:fc 0, unit 1 699, exact integration 1 007 passed, battery
+  A/B byte-identical. Committed by the orchestrator as dd05f24b (transfer sha256 0e7475fd, reverse-apply-checked) + 032f187a (docs,
+  sha256 10c28c27). Re-checks as follow_ups turn 6 (sol b2180698, astra a86ea30f; they expire ~20:44), asking for the opposite
+  failure (wildcards hiding a genuinely new violation) and the simplicity judgement. W1 rework 13 committed 3f04efd5 (one coarse
+  action boundary R73, literal helper output from its rendered bytes R74, guarded alternatives R75) and 2b0b490d (one action lowering
+  for holes, inline outputs and helper bytes; in-expression mutation advancement deleted). Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
