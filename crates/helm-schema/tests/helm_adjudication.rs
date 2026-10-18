@@ -333,6 +333,59 @@ fn defaults_violations_are_keyed_by_resource_not_position() -> eyre::Result<()> 
     Ok(())
 }
 
+#[test]
+fn contextual_assertion_counts_preserve_multiplicity_without_scalar_identity() -> eyre::Result<()> {
+    let cache = ScratchDir::new("context-assertions")?;
+    write_configmap_schema(cache.path())?;
+    let validator =
+        OfflineKubernetesValidator::new(cache.path(), helm_adjudication::KUBERNETES_RELEASE)?;
+    for (defaults_count, context_count, probe_count) in [(1, 2, 2), (1, 1, 2), (2, 1, 3)] {
+        let root = ScratchDir::new("context-assertions")?;
+        write_chart(
+            root.path(),
+            "assertions",
+            &format!("{{\"copies\":{defaults_count},\"token\":0}}"),
+        )?;
+        fs::write(
+            root.path().join("templates/resources.yaml"),
+            indoc! {r"
+            {{ range $index := until (int .Values.copies) }}
+            ---
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: duplicate-{{ $index }}
+            data:
+              token: {{ $.Values.token }}
+            {{ end }}
+        "},
+        )?;
+        let chart = PinnedHelmChart::prepare(helm_invocation::HelmRunner::shared()?, root.path())?;
+        let defaults = chart.adjudicate(&json!({}))?;
+        let context = chart.adjudicate(&json!({"copies":context_count,"token":1}))?;
+        let checked = validator.check_controls(&chart, &defaults, &[context]);
+        if context_count > defaults_count {
+            let error = checked
+                .err()
+                .ok_or_eyre("extra contextual assertion was treated as inherited")?;
+            assert!(
+                error
+                    .to_string()
+                    .contains("unusable context Kubernetes control")
+            );
+        } else {
+            let checked = checked?;
+            let probe = chart.adjudicate(&json!({"copies":probe_count,"token":2}))?;
+            let comparison = validator.compare_with_controls(&chart, &probe, &checked)?;
+            // Changing each scalar does not hide a genuinely additional assertion.
+            sim_assert_eq!(have: comparison.new_violations.len(), want: probe_count - defaults_count);
+            sim_assert_eq!(have: comparison.inherited_violations.len(), want: defaults_count);
+            assert!(comparison.uncertain.is_empty());
+        }
+    }
+    Ok(())
+}
+
 /// A changed document carrying another invalid value at the defaults'
 /// violating pointer violates the assertion anew: the offending value is
 /// part of the violation.

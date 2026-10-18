@@ -650,13 +650,26 @@ fn context_probe_verdict(
         &json!({"properties":{"payload":{"maximum":0}}}),
         None,
     )?;
-    let overlay = json!({"gate":true,"payload":1});
-    let mut row = context_row(source.path(), &schemas, overlay.clone())?;
+    screened_context_verdict(
+        source.path(),
+        &schemas,
+        &json!({"gate":true,"payload":1}),
+        context_overlay,
+    )
+}
+
+fn screened_context_verdict(
+    source: &Path,
+    schemas: &LintSchemas,
+    overlay: &Value,
+    context_overlay: Value,
+) -> eyre::Result<Result<super::HelmFlipVerdict, String>> {
+    let mut row = context_row(source, schemas, overlay.clone())?;
     row.context_overlay_sha256 = sha256_hex(&serde_json::to_vec(&context_overlay)?);
     row.context_overlay = context_overlay;
     let screened = screen(&ScreenRequest {
-        chart: source.path(),
-        schemas: &schemas,
+        chart: source,
+        schemas,
         kubernetes_version: "1.29.0",
         imported: &[row],
         roster_sha256: None,
@@ -666,17 +679,15 @@ fn context_probe_verdict(
         .flips
         .iter()
         .find(|probe| {
-            probe.overlay == overlay
+            &probe.overlay == overlay
                 && probe
                     .document
                     .as_ref()
                     .is_some_and(|document| document.kind == AcceptanceDocument::LintRaw)
         })
         .ok_or_eyre("context raw flip absent")?;
-    let chart = super::PinnedHelmChart::prepare(
-        super::helm_invocation::HelmRunner::shared()?,
-        source.path(),
-    )?;
+    let chart =
+        super::PinnedHelmChart::prepare(super::helm_invocation::HelmRunner::shared()?, source)?;
     let kubernetes = super::OfflineKubernetesValidator::new(
         &test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
         super::helm_adjudication::KUBERNETES_RELEASE,
@@ -688,7 +699,7 @@ fn context_probe_verdict(
             .document
             .as_ref()
             .ok_or_eyre("context raw document absent")?,
-        &schemas,
+        schemas,
         &kubernetes,
     )
     .map(|(verdict, _)| verdict)
@@ -738,13 +749,206 @@ fn context_kubernetes_violation_cannot_justify_a_payload_tightening() -> eyre::R
         .err()
         .ok_or_eyre("inherited Kubernetes violation certified a payload tightening")?;
     assert!(
-        error.contains("tightening rejects a lint document"),
+        error.contains("unusable context Kubernetes control"),
         "{error}"
     );
     sim_assert_eq!(
         have: context_probe_verdict(template, json!({}))?,
         want: Ok(super::HelmFlipVerdict::TighteningMatchedKubernetesRejection)
     );
+    Ok(())
+}
+
+fn unusable_control_error(
+    defaults: &Value,
+    template: &str,
+    context: Value,
+    inherited_lint: bool,
+) -> eyre::Result<String> {
+    let source = null_chart()?;
+    fs::write(
+        source.path().join("values.yaml"),
+        serde_json::to_vec(defaults)?,
+    )?;
+    fs::write(source.path().join("templates/config.yaml"), template)?;
+    if inherited_lint {
+        fs::write(source.path().join("templates/fixed.json"), "")?;
+    }
+    let schemas = LintSchemas::compile(
+        &json!({}),
+        &json!({"properties":{"payload":{"minimum":2}}}),
+        None,
+    )?;
+    screened_context_verdict(
+        source.path(),
+        &schemas,
+        &json!({"gate":true,"payload":1}),
+        context,
+    )?
+    .err()
+    .ok_or_eyre("unusable Kubernetes control certified a payload tightening")
+}
+
+const SCALAR_CONTEXT: &str = indoc::indoc! {r"
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: context-control
+    data: {{ if .Values.gate }}{{ .Values.payload | quote }}{{ else }}{}{{ end }}
+"};
+
+#[test]
+fn unusable_changing_scalar_context_cannot_certify_tightening() -> eyre::Result<()> {
+    let error = unusable_control_error(
+        &json!({"gate":false,"payload":0}),
+        SCALAR_CONTEXT,
+        json!({"gate":true}),
+        false,
+    )?;
+    assert!(
+        error.contains("unusable context Kubernetes control"),
+        "{error}"
+    );
+    assert!(error.contains("/data"), "{error}");
+    Ok(())
+}
+
+#[test]
+fn unusable_changing_scalar_context_with_inherited_lint_cannot_certify_tightening()
+-> eyre::Result<()> {
+    let error = unusable_control_error(
+        &json!({"gate":false,"payload":0}),
+        SCALAR_CONTEXT,
+        json!({"gate":true}),
+        true,
+    )?;
+    assert!(
+        error.contains("unusable context Kubernetes control"),
+        "{error}"
+    );
+    Ok(())
+}
+
+const UNCERTAIN_CONTROL: &str = indoc::indoc! {r"
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: precision-control
+      generation: {{ .Values.payload }}
+    data:
+      fixed: []
+"};
+
+#[test]
+fn unusable_uncertain_defaults_cannot_certify_tightening() -> eyre::Result<()> {
+    let error = unusable_control_error(
+        &json!({"payload":9_007_199_254_740_992_u64}),
+        UNCERTAIN_CONTROL,
+        json!({}),
+        false,
+    )?;
+    assert_preserved_control_uncertainty(&error)
+}
+
+#[test]
+fn unusable_uncertain_defaults_with_inherited_lint_cannot_certify_tightening() -> eyre::Result<()> {
+    let error = unusable_control_error(
+        &json!({"payload":9_007_199_254_740_992_u64}),
+        UNCERTAIN_CONTROL,
+        json!({}),
+        true,
+    )?;
+    assert_preserved_control_uncertainty(&error)
+}
+
+#[test]
+fn unusable_uncertain_context_cannot_certify_tightening() -> eyre::Result<()> {
+    let error = unusable_control_error(
+        &json!({"payload":0}),
+        UNCERTAIN_CONTROL,
+        json!({"payload":9_007_199_254_740_992_u64}),
+        false,
+    )?;
+    assert!(
+        error.contains("unusable context Kubernetes control"),
+        "{error}"
+    );
+    assert!(error.contains("numeric magnitude"), "{error}");
+    Ok(())
+}
+
+fn assert_preserved_control_uncertainty(error: &str) -> eyre::Result<()> {
+    assert!(
+        error.contains("unusable defaults Kubernetes control"),
+        "{error}"
+    );
+    assert!(error.contains("numeric magnitude"), "{error}");
+    let (_, directory) = error
+        .rsplit_once("; evidence=")
+        .ok_or_eyre("no evidence path")?;
+    let evidence: Value = serde_json::from_slice(&fs::read(
+        Path::new(directory).join("schema-verdicts.json"),
+    )?)?;
+    let failure = evidence
+        .get("failure")
+        .and_then(Value::as_str)
+        .ok_or_eyre("no saved control failure")?;
+    assert!(failure.contains("numeric magnitude"), "{failure}");
+    Ok(())
+}
+
+#[test]
+fn unusable_controls_are_checked_before_lint_rejection() -> eyre::Result<()> {
+    let template = indoc::indoc! {r"
+        {{ if eq (int .Values.payload) 1 }}invalid scalar manifest{{ else }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: precision-control
+          generation: {{ .Values.payload }}
+        {{ end }}
+    "};
+    let error = unusable_control_error(
+        &json!({"payload":9_007_199_254_740_992_u64}),
+        template,
+        json!({}),
+        false,
+    )?;
+    assert_preserved_control_uncertainty(&error)
+}
+
+#[test]
+fn unusable_controls_are_checked_before_template_abort() -> eyre::Result<()> {
+    let template = indoc::indoc! {r#"
+        {{ if eq (int .Values.payload) 1 }}{{ fail "payload blocked" }}{{ end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: precision-control
+          generation: {{ .Values.payload }}
+    "#};
+    let error = unusable_control_error(
+        &json!({"payload":9_007_199_254_740_992_u64}),
+        template,
+        json!({}),
+        false,
+    )?;
+    assert_preserved_control_uncertainty(&error)
+}
+
+#[test]
+fn inherited_scalar_assertion_does_not_become_new_in_a_context() -> eyre::Result<()> {
+    let error = unusable_control_error(
+        &json!({"gate":true,"payload":0}),
+        SCALAR_CONTEXT,
+        json!({"payload":2}),
+        false,
+    )?;
+    assert!(
+        error.contains("tightening rejects a lint document"),
+        "{error}"
+    );
+    assert!(!error.contains("unusable"), "{error}");
     Ok(())
 }
 

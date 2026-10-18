@@ -206,12 +206,21 @@ pub fn acceptance_values(
 /// Parsed chart inputs reused with isolated mutable values for every composition.
 pub struct AcceptanceInputs {
     chart: Chart,
-    raw_values: Option<serde_json::Map<String, Value>>,
+    raw_values: Option<RawValues>,
     templates_directory: bool,
+}
+
+// Raw lint reads even ignored files; its parse failures must not reject template inputs.
+enum RawValues {
+    Parsed(serde_json::Map<String, Value>),
+    NotValidated(String),
+    Unmodelled(String),
 }
 
 impl AcceptanceInputs {
     /// Load chart metadata, dependencies, root values, and lint applicability once.
+    ///
+    /// Raw-rule parse failures are cached and reported only when composing lint documents.
     ///
     /// # Errors
     ///
@@ -220,12 +229,16 @@ impl AcceptanceInputs {
         let chart = chart::load_directory(chart_dir)?;
         let path = chart_dir.join("values.yaml");
         let raw_values = if path.exists() {
-            Some(chart::read_values_bytes(&std::fs::read(&path).map_err(
-                |source| ValuesError::Io {
-                    path: path.display().to_string(),
-                    source,
-                },
-            )?)?)
+            let bytes = std::fs::read(&path).map_err(|source| ValuesError::Io {
+                path: path.display().to_string(),
+                source,
+            })?;
+            Some(match chart::read_values_bytes(&bytes) {
+                Ok(values) => RawValues::Parsed(values),
+                Err(ValuesError::NotValidated(reason)) => RawValues::NotValidated(reason),
+                Err(ValuesError::Unmodelled(reason)) => RawValues::Unmodelled(reason),
+                Err(err) => return Err(err),
+            })
         } else {
             None
         };
@@ -299,7 +312,13 @@ impl AcceptanceInputs {
                 "lint's values rule needs values.yaml".to_string(),
             ));
         };
-        Ok(lint_values_tables(values.clone(), overrides, warnings))
+        match values {
+            RawValues::Parsed(values) => {
+                Ok(lint_values_tables(values.clone(), overrides, warnings))
+            }
+            RawValues::NotValidated(reason) => Err(ValuesError::NotValidated(reason.clone())),
+            RawValues::Unmodelled(reason) => Err(ValuesError::Unmodelled(reason.clone())),
+        }
     }
 }
 

@@ -875,6 +875,52 @@ pub struct DefaultsComparison {
     pub uncertain: Vec<String>,
 }
 
+/// Defaults and contextual renders whose Kubernetes assertions can establish attribution.
+/// Contexts introduce no assertions beyond defaults and every control is decidable.
+pub struct UsableKubernetesControls {
+    assertions: BTreeMap<AssertionIdentity, usize>,
+}
+
+// Context attribution follows the assertion, not the particular invalid scalar.
+#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
+struct AssertionIdentity {
+    api_version: String,
+    kind: String,
+    instance_path: String,
+    schema_path: String,
+}
+
+impl AssertionIdentity {
+    fn of(key: &ViolationKey) -> Self {
+        Self {
+            api_version: key.api_version.clone(),
+            kind: key.kind.clone(),
+            instance_path: key.instance_path.clone(),
+            schema_path: key.schema_path.clone(),
+        }
+    }
+}
+
+impl UsableKubernetesControls {
+    fn compare(&self, evidence: ResourceEvidence) -> DefaultsComparison {
+        let mut remaining = self.assertions.clone();
+        let mut comparison = DefaultsComparison {
+            uncertain: evidence.uncertain,
+            ..DefaultsComparison::default()
+        };
+        for violation in evidence.invalid {
+            match remaining.get_mut(&AssertionIdentity::of(&violation.key)) {
+                Some(count) if *count > 0 => {
+                    *count -= 1;
+                    comparison.inherited_violations.push(violation);
+                }
+                _ => comparison.new_violations.push(violation),
+            }
+        }
+        comparison
+    }
+}
+
 #[derive(Default)]
 struct ResourceEvidence {
     invalid: Vec<KubernetesViolation>,
@@ -1075,64 +1121,93 @@ impl OfflineKubernetesValidator {
         self.compare_evaluated_defaults(chart, probe, &defaults)
     }
 
-    /// Judges a probe against every supplied defaults/context render at the same Kubernetes version.
-    /// A violation is new only when it is new against every control, with multiplicity preserved.
+    /// Establishes control usability before attributing any lint or template rejection.
+    /// Defaults may violate Kubernetes, but must have no uncertainty.
+    /// Contexts must have no uncertainty or new violated assertion relative to defaults.
+    /// Assertions use resource API/kind, schema location and instance path, with multiplicity.
     ///
     /// # Errors
     ///
-    /// Returns an error when a control did not render, a render cannot be decoded, or no control exists.
+    /// Returns control uncertainty or new violations, or an error rendering or decoding a control.
+    pub fn check_controls(
+        &self,
+        chart: &PinnedHelmChart,
+        defaults: &HelmProbe,
+        contexts: &[HelmProbe],
+    ) -> eyre::Result<UsableKubernetesControls> {
+        let defaults = self.control_evidence(chart, defaults, "defaults")?;
+        let mut controls = UsableKubernetesControls {
+            assertions: BTreeMap::new(),
+        };
+        for violation in defaults.invalid {
+            *controls
+                .assertions
+                .entry(AssertionIdentity::of(&violation.key))
+                .or_default() += 1;
+        }
+        for context in contexts {
+            let comparison = controls.compare(self.control_evidence(chart, context, "context")?);
+            eyre::ensure!(
+                comparison.new_violations.is_empty(),
+                "unusable context Kubernetes control: new assertions versus defaults: {}",
+                comparison
+                    .new_violations
+                    .iter()
+                    .map(ToString::to_string)
+                    .collect::<Vec<_>>()
+                    .join("; ")
+            );
+        }
+        Ok(controls)
+    }
+
+    fn control_evidence(
+        &self,
+        chart: &PinnedHelmChart,
+        control: &HelmProbe,
+        label: &str,
+    ) -> eyre::Result<ResourceEvidence> {
+        eyre::ensure!(
+            control.rendered.success(),
+            "unusable {label} render control"
+        );
+        let evidence = self.probe_evidence(chart, control)?;
+        eyre::ensure!(
+            evidence.uncertain.is_empty(),
+            "unusable {label} Kubernetes control: uncertainty: {}",
+            evidence.uncertain.join("; ")
+        );
+        Ok(evidence)
+    }
+
+    /// Judges a probe against previously checked defaults/context controls.
+    /// All renders must use the same Kubernetes version.
+    /// Usable contexts introduce no assertions beyond defaults, so defaults bound inheritance.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when the probe cannot be decoded.
     pub fn compare_with_controls(
         &self,
         chart: &PinnedHelmChart,
         probe: &HelmProbe,
-        controls: &[HelmProbe],
+        controls: &UsableKubernetesControls,
     ) -> eyre::Result<DefaultsComparison> {
-        let documents = Self::decode_probe(chart, probe)?;
-        let mut comparison: Option<DefaultsComparison> = None;
-        for control in controls {
-            eyre::ensure!(
-                control.rendered.success(),
-                "unusable context render control"
-            );
-            let mut evaluated = Vec::new();
-            for document in Self::decode_probe(chart, control)? {
-                if document.is_null() {
-                    continue;
-                }
-                let mut evidence = ResourceEvidence::default();
-                self.validate_document(&document, "control", &mut evidence);
-                evaluated.push((
-                    document,
-                    evidence
-                        .invalid
-                        .into_iter()
-                        .map(|violation| violation.key)
-                        .collect(),
-                ));
+        Ok(controls.compare(self.probe_evidence(chart, probe)?))
+    }
+
+    fn probe_evidence(
+        &self,
+        chart: &PinnedHelmChart,
+        probe: &HelmProbe,
+    ) -> eyre::Result<ResourceEvidence> {
+        let mut evidence = ResourceEvidence::default();
+        for (index, document) in Self::decode_probe(chart, probe)?.iter().enumerate() {
+            if !document.is_null() {
+                self.validate_document(document, &format!("document {index}"), &mut evidence);
             }
-            let contextual = self.compare_documents(&documents, &evaluated);
-            let Some(current) = &mut comparison else {
-                comparison = Some(contextual);
-                continue;
-            };
-            let mut unmatched = contextual.new_violations;
-            current.new_violations.retain(|violation| {
-                if let Some(index) = unmatched
-                    .iter()
-                    .position(|other| other.key == violation.key)
-                {
-                    unmatched.remove(index);
-                    true
-                } else {
-                    false
-                }
-            });
-            current
-                .inherited_violations
-                .extend(contextual.inherited_violations);
-            current.uncertain.extend(contextual.uncertain);
         }
-        comparison.ok_or_eyre("missing defaults/context render control")
+        Ok(evidence)
     }
 
     fn decode_probe(chart: &PinnedHelmChart, probe: &HelmProbe) -> eyre::Result<Vec<Value>> {

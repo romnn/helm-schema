@@ -351,6 +351,55 @@ fn an_ignored_values_file_is_no_default_except_to_lint_raw() -> eyre::Result<()>
     Ok(())
 }
 
+#[test]
+fn ignored_sequence_raw_failure_does_not_block_template_composition() -> eyre::Result<()> {
+    let ignored = chart("[]", &Child::None)?;
+    fs::write(
+        ignored.path().join(".helmignore"),
+        indoc! {"
+        values.yaml
+    "},
+    )?;
+    assert!(matches!(
+        acceptance_values(ignored.path(), json!({}), AcceptanceDocument::LintRaw),
+        Err(ValuesError::NotValidated(_))
+    ));
+    sim_assert_eq!(have: template(ignored.path(), &json!({}))?, want: json!({}));
+    let inputs = test_util::helm_values::AcceptanceInputs::load(ignored.path())?;
+    sim_assert_eq!(
+        have: inputs.compose(json!({}), AcceptanceDocument::Template)?.root,
+        want: json!({})
+    );
+    assert!(matches!(
+        inputs.compose(json!({}), AcceptanceDocument::LintRaw),
+        Err(ValuesError::NotValidated(_))
+    ));
+    sim_assert_eq!(
+        have: inputs.compose(json!({}), AcceptanceDocument::LintCoalescedTwice)?.root,
+        want: json!({})
+    );
+    sim_assert_eq!(
+        have: inputs.compose(json!({}), AcceptanceDocument::Template)?.root,
+        want: json!({})
+    );
+    // Cached raw failure and ignored defaults stay bound to the loaded inputs.
+    fs::write(ignored.path().join("values.yaml"), "{later: 1}")?;
+    assert!(matches!(
+        inputs.compose(json!({}), AcceptanceDocument::LintRaw),
+        Err(ValuesError::NotValidated(_))
+    ));
+    sim_assert_eq!(
+        have: inputs.compose(json!({}), AcceptanceDocument::Template)?.root,
+        want: json!({})
+    );
+    sim_assert_eq!(
+        have: test_util::helm_values::AcceptanceInputs::load(ignored.path())?
+            .compose(json!({}), AcceptanceDocument::LintRaw)?.root,
+        want: json!({"later": 1})
+    );
+    Ok(())
+}
+
 /// Helm's lint-versus-template witness: `{"not": {"required": ["x"]}}`
 /// passes `helm template --set-json x=null` and fails `helm lint`, whose
 /// second pass restores `x`.

@@ -176,7 +176,8 @@ fn judge(
 }
 
 struct Controls {
-    renders: Vec<HelmProbe>,
+    defaults: HelmProbe,
+    contexts: Vec<HelmProbe>,
     lint_errors: BTreeSet<String>,
 }
 
@@ -191,10 +192,9 @@ fn controls(
     for overlay in &document.control_overlays {
         overlays.insert(serde_json::to_vec(overlay)?);
     }
-    let mut controls = Controls {
-        renders: Vec::new(),
-        lint_errors: BTreeSet::new(),
-    };
+    let mut defaults = None;
+    let mut contexts = Vec::new();
+    let mut lint_errors = BTreeSet::new();
     evidence["controls"] = json!([]);
     for bytes in overlays {
         let lint = chart.adjudicate_lint(&LintProbeRequest {
@@ -226,13 +226,19 @@ fn controls(
             "unusable defaults/context render control; template abort cannot establish an attributable rejection"
         );
         if let LintClassification::Reject { errors } = class {
-            controls
-                .lint_errors
-                .extend(errors.into_iter().map(|error| error.diagnostic));
+            lint_errors.extend(errors.into_iter().map(|error| error.diagnostic));
         }
-        controls.renders.push(rendered);
+        if bytes == b"{}" {
+            defaults = Some(rendered);
+        } else {
+            contexts.push(rendered);
+        }
     }
-    Ok(controls)
+    Ok(Controls {
+        defaults: defaults.ok_or_eyre("missing defaults control")?,
+        contexts,
+        lint_errors,
+    })
 }
 
 struct OracleRequest<'a> {
@@ -259,6 +265,7 @@ fn judge_independent(
         evidence_dir,
     } = request;
     let controls = controls(chart, document, schemas, evidence, evidence_dir)?;
+    let checked = kubernetes.check_controls(chart, &controls.defaults, &controls.contexts)?;
     let lint_rejects = semantic_rejection(plain_lint)?;
     let inherited_lint = !controls.lint_errors.is_empty();
     evidence["inherited_lint_errors"] = json!(controls.lint_errors);
@@ -289,7 +296,7 @@ fn judge_independent(
             Rejection::HelmAborts,
         ));
     }
-    let comparison = kubernetes.compare_with_controls(chart, rendered, &controls.renders)?;
+    let comparison = kubernetes.compare_with_controls(chart, rendered, &checked)?;
     if inherited_lint && comparison.new_violations.is_empty() {
         eyre::bail!(
             "{}; schema-free lint has only inherited errors from defaults/context controls",
