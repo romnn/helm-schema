@@ -78,3 +78,14 @@ the `build:helmsweep` version check in `taskfile.yaml`, and the README's
 identity to the chosen upstream validator.
 Re-run the stock-versus-replacement corpus compile/verdict comparison and
 `task build:helmsweep` / `task test:helmsweep` before landing.
+
+The parity comparison must include the documents Helm actually validates:
+the values lint rule's defaults plus overrides, the template lint rule's
+coalesced values, and the template/install action's coalesced values.
+Capture `values.AsMap()` at `ValidateAgainstSingleSchema`, before compilation
+so failed schemas remain visible, and replay the captured JSON under both
+validators with the same schema bytes.
+Synthetic merges cannot replace this coverage: Helm deletes null overrides
+and coalesces dependency defaults and globals differently at these boundaries.
+Report accepted and rejected counts per chart and boundary, identical compile
+errors separately, and commands that exit before reaching a boundary.
