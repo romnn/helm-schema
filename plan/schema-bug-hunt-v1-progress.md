@@ -8074,6 +8074,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   verify_sweep_inputs; red on 741e1eb, run-all.sh 0 (12 shell suites, 96 Python tests); committed by the orchestrator in the
   runner CLONE `round8/runner-v7-dev` as 9904514 (tree == transfer patch sha256 64c2aed4); fresh reviews astra 20261018T014606-
   7f28f782, sol 20261018T014608-a84f816e. The live runner is untouched. Orchestrator.
+- 04:13 (Oct 18) — **Battery re-checks turn 3 = REWORK ×2 on one class; runner v7 split (sol LAND, astra REWORK); defblock
+  resumed.** T7 recovered to 296 GB (other activity on the volume freed space). Battery (`review-battery-p1r2-{sol,astra}.md`):
+  adjudication.rs:894 now drops ALL violation detail, so a payload adding a second forbidden property (`y`/`addedUnexpected`) next
+  to an inherited one is hidden; sol also: unused defaults allowances can absorb failures new after a usable context
+  (:1142/:1196). Sent as R9/R10 (follow_up turn 4, from byte 59 629): keep structural discriminators, normalise only scalar
+  values; compare against the context's own multiset. Runner v7 (`review-runner-v7-{astra,sol}.md`): astra P1 the prepared
+  w/<chart>/{base,cand,plain} copies Helm executes are never hash-checked (landing.py:1820; replacing the candidate schema with {}
+  still passes), P2 chart staging differs between battery hashing (:1757, Chart.template.yaml → Chart.yaml) and sweep preparation
+  (:1929) — sent as a follow_up on the runner builder. Defblock: a cancelled agentmux run cannot be followed up, so a NEW kept run
+  sol 20261018T021246-f0df760c resumes from the on-disk work with `round8/brief-defblock-codex-resume.md`, which requires
+  separating (a) the trim fix from (b) the broadened omission/uncertainty changes and justifying (b) cell by cell or naming it for a
+  separate track. W4: no commit since 3b92c53d (01:3x); its hand-back is pending. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
