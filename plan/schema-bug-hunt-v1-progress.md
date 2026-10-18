@@ -8266,6 +8266,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   failure (wildcards hiding a genuinely new violation) and the simplicity judgement. W1 rework 13 committed 3f04efd5 (one coarse
   action boundary R73, literal helper output from its rendered bytes R74, guarded alternatives R75) and 2b0b490d (one action lowering
   for holes, inline outputs and helper bytes; in-expression mutation advancement deleted). Orchestrator.
+- 15:51 (Oct 18) — **Perf pass started NOW in parallel (user: "you decide! … if the reviews … turn out real actionable improvements
+  that speed up the gates without weakening correctness its worth it to do asap … you can already start letting codex investigate").**
+  Orchestrator decision: measurement and investigation first, both Codex, neither touching the landings in flight. (1) Runner v8 timing
+  (sol builder, kept 20261018T135051-3273c682, clone `round8/runner-v8-dev` branch runner-v8-timing from c472aae, brief
+  `round8/brief-runner-v8-timing-codex.md`): monotonic phase timers per step/phase, per chart and per real-Helm row, load at step
+  boundaries, a finalize budget report vs `TIME_REFERENCE_RECEIPT` that WARNS (never fails) on > 50 % per step / > 100 % per chart,
+  and `landing.py time-report` that reconstructs old receipts. (2) Schema-shape investigation (astra, kept 20261018T135051-d0d2c0d5,
+  writable scratch `/Volumes/T7/dev/round8-perf-scratch`, question `round8/q/perf-helm-schema-shape.md`): which shipped-schema shapes
+  make Helm 4.2.3's validator slow (openebs/oncall/kps/milvus; bisect against the pinned library), equivalence-preserving emission
+  changes, and whether a (schema bytes, values document) validation reuse is sound. Speed-ups go through design review on both models
+  before any builder implements them. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
