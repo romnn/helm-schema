@@ -8331,6 +8331,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (branch perf/jsonschema-fork; brief `round8/brief-jsonschema-fork-codex.md`): go.mod replace at the cb4d114 pseudo-version, build
   identity shows the fork, PATCH.md/README, stock-vs-fork parity over every corpus schema (identical compile errors and verdicts) with
   timings; fixture-neutral tooling landing. Orchestrator.
+- 17:58 (Oct 18) — **`definitions` emission = BUILDABLE ×2 (`design-definitions-{astra,sol}.md`); Codex builder started; disk managed.**
+  Both reviewers independently proved universal preservation FALSE: under stock v6.0.2 an unused invalid `$defs` entry is ignored but
+  compiled under `definitions` — so every emitted definition must be valid and dead definitions must stay pruned; collisions with
+  caller/provider/override `definitions`, scope preconditions, old `$defs` baselines (battery + runner shortening), the 5 MiB Helm-ready
+  limit (+7.4 % on oncall) and under-keyed caches are the named risks. Builder astra xhigh workspace_write kept 20261018T155756-28e5b20a in
+  `/Volumes/T7/dev/round8-definitions` (branch perf/draft07-definitions), brief `round8/brief-definitions-codex.md`: native emission (one
+  representation, delete `$defs`-specific code), stock-library compile check over every corpus artifact, fixtures regenerated once,
+  schema-only battery ZERO flips vs the pre-change baseline, before/after `helm lint` on oncall/openebs, size table. Disk: T7 at 102 GB;
+  orchestrator `cargo clean -p` of the workspace crates in the PARKED defblock target freed 27.1 GiB (→ 110 GB); W1 (60 GB target) and
+  W4 (53 GB) asked to prune superseded dumps/profiles at their next step boundary. Codex builders now active: battery rework 5, tracing
+  spans, helmsweep→fork, definitions; Claude: W1 rework 13, W4 rework 16. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
