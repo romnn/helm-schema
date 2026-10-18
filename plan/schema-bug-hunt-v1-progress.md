@@ -8392,6 +8392,21 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   R13–R16 confirmed, simplification "substantive"; R17 (P1 both) constraint identity/dedupe by relative `schema_path()` lets two embedded
   `$id` resources with the same relative path collide → resource-qualified key or unresolved; follow_up turn 9. The battery reviewer
   sessions expire ~20:44, so the next battery re-check uses fresh runs pointed at review-battery-p1r*-*.md. Orchestrator.
+- 20:18 (Oct 18) — **W4 rework 16 FINAL (3332041a; final-v18.patch sha256 4a26da1e…; Self-attack in rebase/r16/handoff.md); three
+  reviewers dispatched.** All 358 R72 LOOSEN rows adjudicated with schema-free Helm 4.2.3 + kubeconform 1.29: 59 accepted and rendered,
+  74 now rejected matching Helm/K8s (falco 45, cilium 18, …), 1 accepted although K8s rejects every value (oncall extraEnvVarsCM —
+  the template is invalid for any value), 224 back to the pre-R72 rejection although Helm renders (221 main-too, 3 = residual (a)).
+  Mechanism: R73 (f0d03fe1/141c9453/3332041a) the declared stand-in widens only through the branch's own operations
+  (`provider_schema_for_value_use` per unresolved use; a range-key render proves its iteration domain only); R74–R76
+  (2f52f1a0/8b9e6aab) generator decisions evaluate the EMITTED narrow/wide encodings — the separate evaluator is deleted, `has <int>`
+  never claimed, int-cast lanes bounded to |v| ≤ 2^53, absent lanes via the guard leaf. Deleted: path_runtime_domain,
+  typed_alternatives, the JSON-equality stand-in check, evaluate_guard_on_values + 3 numeric helpers, the second walk in
+  guard_encodes_fully, 9 absent-lane helpers; production −83 lines. Gates: fmt/lint/lint:fc/ast-grep/dialect 0, nextest 1 770,
+  integration 201 = 160 fixture equality + 1 cell_matrix load timeout (passed on rerun), dump --verify 0; live battery 1 passed, 9 714
+  flips, 0 unmatched; target 53 → 20 GB. Not taken: four audit proposals (listed). Under the user's rule the 224 rendered-but-rejected
+  rows (221 main-too) are in scope — reviewers asked for the simple fix. Reviews: astra 20261018T181747-a73e2885, sol …-7a9fa92c (fresh;
+  the pre-review sessions expire ~20:42), plus the first FABLE complexity challenger (native read-only subagent, quota note 17:33)
+  asked for the simpler model behind the reopened classes. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
