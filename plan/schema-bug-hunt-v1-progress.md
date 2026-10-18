@@ -8491,6 +8491,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   three Helm-validated documents and over guards (astra's hasKey cell); R80 through `default` fallbacks (descheduler controls);
   skipped resources stay UNKNOWN even when the baseline skips them; full diagnostics. LOC corrected to −210..+160 before the
   dynamic-key contract. Orchestrator.
+- 22:13 (Oct 18) — **W4 rework 17 design revision 3 = BUILDABLE ×2 (`round8/design3-w4-r17-{astra,sol}.md`); builder told to implement.**
+  Revision 3 adds one shared resolved-slot key model serving D2 and a new dynamic-key contract (milvus 209–214 rejected on their real
+  failure), a null-as-deletion lane covering typing, presence and guards, and R80 as an ordinary required `{type:string,minLength:1}`
+  slot through each use's transformation (descheduler null/"" accepted). Expected: 81 of the 224 rows accepted (5 UNKNOWN), A-empty 86
+  POLICY-ATTRIBUTED, all 57 Z rows tied to a named rejecting contract (both reviewers' ledger: R80 5, dynamic key 5, D2 41, required
+  member/host 2, Assert integer 4 — open-webui 220–223 added). Implementation obligations: verify null rows through test-util
+  AcceptanceDocument::ALL on full documents (the script's precedence is wrong); closed keys constrain the RENDERED key (quoted /
+  trailing-space positive controls); per-contract rejection gate. LOC estimate −140..+290 vs r16: growth only where it closes the four
+  classes that had no contract (values-derived keys, resource headers, lint-null deletion, host presence). Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
