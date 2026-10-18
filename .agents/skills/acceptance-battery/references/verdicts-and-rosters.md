@@ -126,27 +126,37 @@ unresolved and fails adjudication. Before any lint, template, or Kubernetes
 rejection can be attributed, defaults must have no Kubernetes uncertainty and
 each context must have no uncertainty or new violated assertion versus defaults.
 An unusable control fails with its uncertainty or violation evidence preserved.
-Contextual comparisons identify each violation by resource API/kind, the canonical
-schema location (`schema_path`, independent of the `$ref` traversal route), keyword
-and structural details, and a canonical instance path. Array indices become `*`;
-map keys become `*` only at `additionalProperties` or `patternProperties` positions.
+All Kubernetes comparisons, including defaults-only and explicit-context lanes,
+use one canonical assertion representation and one multiset comparison. A key
+contains resource API/kind, canonical constraint location (`schema_path`, independent
+of the `$ref` traversal route), keyword and structural details, and a canonical
+instance path. Homogeneous array indices become `*`; tuple `items[n]` and
+`prefixItems[n]` positions remain fixed, even when slots share a `$ref` target.
+Map keys become `*` only at `additionalProperties` or `patternProperties` positions.
 Fixed property names remain fixed. Typed path segments distinguish a literal `*`
-property from a wildcard, and preserve empty, numeric and escaped property names.
-Distinct positional constraints retain their distinct canonical schema locations.
+property from a wildcard and preserve empty, numeric and escaped property names.
 Each forbidden property remains a separate assertion with its member name;
 missing required properties and invalid property names also retain their names.
 Offending values and their JSON types do not distinguish occurrences of the same
 constraint. Concrete instance paths and validator messages remain in diagnostics.
-Moving an array element, renaming a permitted map member, or reaching the same
-constraint through another reference route does not create a new violation.
+Before counting, repeated reports of the same canonical constraint at the same
+concrete position within one resource are deduplicated. Distinct positions and
+resources retain multiplicity. Conflicting schema roles for the same occurrence
+fail unresolved. Grouped `additionalItems` errors expand to one occurrence for
+each forbidden tail member, using the validator's proven tuple limit.
+Moving a homogeneous array element, renaming a permitted map member, or reaching
+the same constraint through another reference route does not create a new violation.
+Moving a failure between positional tuple/prefix slots does create a new violation.
 Comparison is per canonical key as a multiset: payload counts above the applicable
-context's count are new; the remaining occurrences are inherited.
+control's count are new; the remaining occurrences are inherited.
 The evaluated keyword route establishes instance-position provenance only; it is
-never part of identity. Unsupported or ambiguous correspondence fails unresolved,
-even when other violations are proved, and cannot certify a matched tightening.
-In particular, contextual `unevaluatedProperties` errors remain unresolved: the
-validator groups forbidden names and invalid member values into the same error,
-so it does not prove which member identities must be retained or abstracted.
+never part of constraint identity. Unsupported or ambiguous correspondence fails
+unresolved, even when other violations are proved, and cannot certify a matched
+result. Grouped `unevaluatedItems` and `unevaluatedProperties` errors remain
+unresolved: the validator does not expose enough concrete member provenance to
+prove the occurrence identities. Unchanged resources undergo the same validation;
+unknown or inexact defaults cannot establish a usable control by document equality.
+Cached controls are bound to the render version and validator policy/bundle content.
 Defaults establish context usability only. Payloads are compared independently
 against each applicable context's own assertion multiset, with no unused defaults
 allowances. A loosening fails when any applicable context exposes a new violation;
@@ -154,7 +164,6 @@ a tightening needs new rejection evidence in every applicable context.
 Mixed tightening outcomes are unresolved. Explicit defaults contexts remain
 applicable alongside non-default contexts, including deduplicated built-in origins.
 Per-context Kubernetes evidence records each overlay and its new/inherited errors.
-Legacy roster comparisons retain their existing detailed violation identity.
 Inherited filename-extension lint errors do not hide a false rejection when the
 tested render and controls remain usable and add no Kubernetes violation.
 Changed diagnostics behind inherited lint errors are unresolved, not matched.
