@@ -8360,6 +8360,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   inside it and a fix of the misplaced-end sites (queued with the next perf step). Landing: tracing cannot land alone — live runner v7
   refuses the legacy battery main still has — so it rides in landing 10a with the battery lane (and helmsweep→fork if LAND ×2 by then).
   Orchestrator.
+- 19:09 (Oct 18) — **Misplaced span ends explained (user asked whether it is a tracing bug): partly our usage.** Perfetto stats:
+  `misplaced_end_event` = 4 984, severity data_loss. tracing-perfetto 0.1.5 writes SliceBegin in `on_new_span` and SliceEnd in `on_close`
+  (last handle dropped), each on the CURRENT thread's track — not on enter/exit — so spans that do not nest LIFO on one thread (created
+  early and entered later, stored/cloned handles closing late, cross-thread closes, manual `drop(guard)` out of order) produce misplaced
+  ends and unreliable self times; the new phase spans are unaffected (reviewers checked raw packets). Sent as follow_up turn 2 on the
+  tracing builder (20261018T143958-f9ee6567): a test-side layer that reports non-LIFO / cross-thread closes with callsites, minimal
+  fixes so each span lives exactly its scope on one thread, the checker kept as a regression test, re-recorded trace with 0 misplaced
+  ends and corrected top self times (re-verifies the append_selected_constraints hotspot). The fix goes into landing 10a with the rest
+  of the tracing change (another review round). Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
