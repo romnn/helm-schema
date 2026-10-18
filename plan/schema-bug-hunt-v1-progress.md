@@ -8447,6 +8447,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   test:helmsweep, fmt, lint, unit (1,699), integration (923 + 24 skipped) all 0; fixtures unchanged. Orchestrator committed the
   PATCH.md parity contract as 4aa02cc2 in round8-jsonschema-fork (patch sha db318d03…). Landing 10a clone pre-staged at
   /Volumes/T7/dev/round8-landing10a (main 7c28756f + tracing aafc68b7, a1a44ee0); the battery lane and, if LAND ×2, the fork follow.
+- 21:26 (Oct 18) — **Host crash (~20:53, reboot) killed every running agent; all resumed, nothing lost.** Killed: Codex battery rework 6 (R17,
+  run 78d55437 turn 7; uncommitted edits intact in round8-battery on f3e67f3d), both fork re-reviews (ebd26ac5, c44b94a0 turn 1), the
+  W1 rework 13 builder (clone round8-w1 at wip 7c587a43) and the W4 rework 17 builder (design step; partial matrix in rebase/r17/).
+  No chain or heavy lock was live; landing 10a clone (a1a44ee0) intact. Resumed: the three Codex runs by agentmux follow_up (they
+  report "launch failed … agentmux was not its parent"), the two native builders by SendMessage to their ids — this works after a
+  crash + resume of the same conversation (memory updated). Each was told background jobs died and to re-run what was in flight.
+  T7 118 GB free. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
