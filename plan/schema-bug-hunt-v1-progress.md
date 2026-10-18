@@ -8196,6 +8196,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   policy-attributed per the standing decision (battery attributed them), reviewers asked to confirm; (b) integer-literal eq/ne vs
   non-numbers (pre-existing). Builder disclosed `rm -r`/`rm -rf` on its own scratch copies only; freed ~8 GB. Reviews as follow_ups
   on the still-live pre-review sessions: astra 254a1949, sol 5aafa219. Orchestrator.
+- 14:24 (Oct 18) — **Codex silence was a pause, not a hang (user stopped my cancels); W4 rework 15 FINAL = REWORK ×2; rework 16
+  spawned.** From 10:56 to ~12:50 three Codex runs (both W4 reviews, the battery builder) emitted nothing at 0 % CPU; at 11:5x I tried
+  to cancel all three and the USER REJECTED the cancels ("please continue"). They resumed: sol answered 12:52, astra 13:56, the
+  battery builder is writing again. Rule recorded (memory `codex-pauses-are-not-hangs`): silence is a pause; act only on watch-codex
+  DEAD or an agentmux `failed` state, and ask the user before cancelling a long-silent run. W4 (`review-w4-rework15-{astra,sol}.md`):
+  both confirm consul/jenkins fixed with negative controls, null members fixed, no further R72 false rejection, residual (a)
+  POLICY-ATTRIBUTED under the standing `assert` decision, residual (b) pre-existing. Open: R73 (P1 astra) R72 borrows another use's
+  input domain → false acceptances: falco keyed index of `ports` (Helm lint+template exit 1) and cilium caBundle `key: true` (renders,
+  kubeconform rejects) — both already LOOSEN rows in witness-probe-r72.tsv; R74 (P1 sol) `contains: {enum: [1]}` still emitted for
+  ContainsEquals(v, Int(1)) while the evaluator abstains (`has 1` over [1.0] renders, schema rejects); R75 (P1 sol) int coercion
+  saturates in Go (1e20 → i64::MAX) but schema/evaluator read beyond-bound true; R76 (P2 astra) integral floats > 2^53 compared via
+  decimal spelling. Brief `round8/brief-w4-rework16.md`, fresh Claude builder from `brief-w4-rework16-resume.md` (no rebase until
+  landing 10a merges; every R72 LOOSEN row adjudicated). Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
