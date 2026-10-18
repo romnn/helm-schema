@@ -8480,6 +8480,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   diagnostic (Z rows 212/216/218 are the inherited milvus duplicate key under another ConfigMap name), skipped resources are UNKNOWN,
   literal-null LintRaw rows judged on the coalesced instance. Keep union_of_string_variants; delete the range-priority union
   (overlay_lowering.rs:659). Orchestrator.
+- 21:58 (Oct 18) — **W4 rework 17 design revision 2 = REDESIGN ×2 (`round8/design2-w4-r17-{astra,sol}.md`), converged on one P1;
+  revision 3 dispatched (`round8/brief-w4-rework17-design3.md`).** Revision 2 re-partitioned the 224 rows with the corrected
+  adjudication (9 aborts / 48 k8s rejections / 116 no-new-failure / 51 unknown; both reviewers recount it) and proposed accepting 81
+  (B 28 mappings, C 36 via D2, 17 literal-null rows via a null-is-deletion lane); D1, D2, keyed-host presence, R80 and the ownership
+  correction are confirmed. P1 (both, independently, with in-memory schema edits): the null lane exposes milvus Z rows
+  209/210/211/213/214 — their only rejection is `component: null`, their real failure a values-derived mapping key
+  (`affinity.type` "x" → forbidden `podAntiAffinity.x`; "" → abort). Fix: a structural dynamic-key contract (permitted property
+  names of the resolved parent, non-empty key, under guards), sharing D2's per-sink-property resolution. P2s: the null lane over all
+  three Helm-validated documents and over guards (astra's hasKey cell); R80 through `default` fallbacks (descheduler controls);
+  skipped resources stay UNKNOWN even when the baseline skips them; full diagnostics. LOC corrected to −210..+160 before the
+  dynamic-key contract. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
