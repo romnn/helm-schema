@@ -133,16 +133,49 @@ keyword and structural details, and a canonical instance path. Constraint identi
 is the resolved schema-resource URI plus the actual keyword's pointer within that
 resource. Relative `schema_path` alone is insufficient: different embedded `$id`
 resources can both report `/type`. The validator and identity proof share one
-prepared offline registry. The evaluation route resolves the actual schema node;
-it is provenance, never identity. The node's origin in the pinned schema determines
-its canonical location through dialect-defined resource boundaries, independently
-of retrieval aliases. Pointer, URI and anchor references to the same node inherit
-once. The resulting keyword URI must resolve back to that exact node. The
-validator's reported absolute resource must agree with resolution of the evaluation
-route; its pointer and chosen retrieval alias are not assumed canonical. Anonymous
-roots receive a stable base URI. Missing location evidence, conflicting resources
-or unproved reference correspondence (including dynamic/recursive references) fail
-unresolved. The same qualified location is used for occurrence deduplication and
+prepared offline registry. Before compilation, the retrieval/base URI and every
+dialect-defined resource ID and registered anchor must be unique after URI
+resolution; embedded declarations may not shadow the retrieval alias or each
+other. Any collision makes the entire pinned schema unresolved, even for otherwise
+valid documents. Instance literals such as `default` are not schema declarations.
+The retrieval entry must also equal the independently supplied pinned root.
+The pinned validator also caches compiled nodes by resource base and compiler
+pointer, omitting source-node identity. Before building it, a bounded traversal
+checks that every such address denotes one source node, dialect and reference
+base across validation descendants and reference targets. The reference base is
+needed because cached nested reference suffixes depend on it. Definitions are
+visited when referenced. The check ignores dynamic scope conservatively and rejects
+any collision; it does not disambiguate or rewrite schemas. This covers both anchor
+aliases compiled at the empty pointer and pointer aliases crossing embedded IDs.
+The proof stops unresolved if it exceeds 100,000 positions. Noncolliding aliases
+remain supported. Fragment-bearing resource IDs with a nonempty fragment and
+schemas containing dynamic/recursive references remain unproved.
+
+Only an intact validator route is node-resolution evidence. For `propertyNames`,
+the outer error reconstructs a route from the child's resource-relative path;
+identity and instance roles instead use the wrapped child's retained evaluation
+route. Other supported errors must identify their actual keyword and instance.
+Boolean-schema errors, omitted dependency-required triggers, `minContains` /
+`maxContains` aggregates without complete keyword correspondence, reference errors,
+and regex evaluation failures fail unresolved. Grouped unevaluated diagnostics
+continue to fail when member correspondence is unproved. Custom keywords are not
+registered. This boundary follows the pinned validator's error constructors;
+resolving a selected node back to itself is never sufficient evidence of provenance.
+
+After these preconditions, the intact route resolves the constraint node. Its origin
+in the pinned schema determines the resource URI and keyword pointer through
+dialect-defined resource boundaries, independently of retrieval aliases. Pointer,
+URI and supported anchor references to one node inherit once. The resulting URI
+must resolve back to that node, and the reported absolute resource must agree with
+route resolution. The reported pointer and retrieval alias are not assumed
+canonical. Anonymous roots receive a stable base URI. Missing location evidence,
+conflicting resources or unproved reference correspondence (including dynamic /
+recursive references) fail unresolved. A bundle preflight visits every schema node
+in the pinned Kubernetes release and CRD catalog, checks registry integrity and
+newly unsupported error shapes, and exercises reported errors with negative
+instances. Run it alongside the full schema-only battery and report compilation
+failures separately; a zero flip count alone does not measure assertion provenance.
+The same qualified location is used for occurrence deduplication and
 multiset comparison. Homogeneous array indices become `*`; tuple `items[n]` and
 `prefixItems[n]` positions remain fixed, even when slots share a `$ref` target.
 Map keys become `*` only at `additionalProperties` or `patternProperties` positions.
