@@ -107,6 +107,21 @@ A cap that would omit work fails coverage; there is no lane-disable variable.
 | `SCHEMA_HELM_MEMORY_MIB` | `PoolLimits::from_env` | Memory budget in MiB for concurrently admitted Helm renders. A probe reserves 1.3x the largest Helm child measured for its chart, or the whole budget until one was measured, so each chart's first probe runs alone. Screening jobs reserve nothing. | host-sized: a third of total memory (`Machine::helm_memory_bytes`) |
 | `SCHEMA_HELM_INVOCATION_REPORT` | `round74_…` | Optional JSON file with the pool limits and peaks, wall time, and per-chart costs (screening, preparation, adjudication, Helm stage totals). Use it to tune workers and memory. | unset: not written |
 
+## Perfetto traces
+
+Set `HELM_SCHEMA_TRACE_OUTPUT=/absolute/path/run.perfetto` for `corpus_generation`
+or `round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced`.
+The parent directory must exist; the file is overwritten.
+Unset leaves tracing unchanged.
+This uses the CLI's `--trace-output` layer, `helm_schema*` target filter and
+field annotations, installed process-wide so worker threads are captured.
+Use a distinct path per process and select just the battery test when tracing it.
+
+Corpus traces include artifact, chart and profile spans around generation phases.
+Battery traces include chart screening, schema compilation, probe construction,
+per-flip adjudication and Helm driver calls with command, chart and stage fields.
+Read the `.perfetto` files in Perfetto or through the Perfetto MCP.
+
 ## Process environment
 
 | Variable | Why it matters |
