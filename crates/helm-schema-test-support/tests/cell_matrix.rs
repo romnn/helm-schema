@@ -546,9 +546,9 @@ fn the_real_cli_generates_from_relative_paths_and_reproduces() -> eyre::Result<(
     sim_assert_eq!(
         have: run.file("diagnostics.tsv")?,
         want: "cell_id\tcolumn\tinstance_ptr\tkeyword\tdetail\tschema_ptr\n\
-               s4\tk8s\tpolicy/v1/PodDisruptionBudget /spec/minAvailable\toneOf\tarray\t/properties/spec/properties/minAvailable/oneOf\n\
+               s4\tk8s\tpolicy/v1/PodDisruptionBudget /spec/minAvailable\toneOf\t[1] is not valid under any of the schemas listed in the 'oneOf' keyword\t/properties/spec/properties/minAvailable/oneOf\n\
                s4\treal\t/podDisruptionBudget/minAvailable\toneOf\tarray\t/$defs/values~1podDisruptionBudget~1oneOf~1anyOf~1integer+null+string;pattern-0-1-9+string;pattern-a-za-z0-9-t+2more+1more@2/oneOf\n\
-               s5\tk8s\tnetworking.k8s.io/v1/Ingress /spec/ingressClassName\ttype\t5\t/properties/spec/properties/ingressClassName/type\n\
+               s5\tk8s\tnetworking.k8s.io/v1/Ingress /spec/ingressClassName\ttype\t5 is not of types \"null\", \"string\"\t/properties/spec/properties/ingressClassName/type\n\
                s5\treal\t/ingress/className\tanyOf\t5\t/properties/ingress/allOf/0/then/properties/className/anyOf\n",
     );
     let check = run.run(

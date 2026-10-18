@@ -3409,7 +3409,7 @@ fn adjudicate_flip(
             "kubernetes_uncertainty".to_string(),
             json!(comparison.uncertain),
         );
-        // A new violation is decisive; otherwise every changed resource must be decided.
+        // A new violation is decisive; otherwise every resource must be decided.
         if !comparison.new_violations.is_empty() {
             if after && uninformative {
                 Ok(HelmFlipVerdict::UninformativeBaselineFalseAcceptance(
@@ -3737,17 +3737,17 @@ fn exact_flip_adjudication_uses_coalesced_values_and_kubernetes_evidence() -> ey
         have: adjudicate_round74_flip(&chart, &json!({}), &accept_all, &kubernetes)?,
         want: HelmFlipVerdict::LooseningMatchedKubernetesValidation,
     );
-    // A render identical to the defaults render needs no schema; a changed one does.
-    sim_assert_eq!(
-        have: adjudicate_round74_flip(&chart, &json!({}), &accept_all, &missing)?,
-        want: HelmFlipVerdict::LooseningMatchedKubernetesValidation,
-    );
-    sim_assert_eq!(
-        have: adjudicate_round74_flip(&chart, &json!({"name": "changed"}), &accept_all, &missing)?,
-        want: HelmFlipVerdict::LooseningWithUncertainKubernetes(vec![
-            "document 0: v1/ConfigMap changed: pinned resource schema not found".to_string(),
-        ]),
-    );
+    // Defaults evidence from a different schema bundle cannot make an unknown control usable.
+    for overlay in [json!({}), json!({"name": "changed"})] {
+        let err = adjudicate_round74_flip(&chart, &overlay, &accept_all, &missing)
+            .err()
+            .ok_or_eyre("cached defaults concealed the missing provider bundle")?;
+        assert!(
+            err.to_string()
+                .contains("unusable defaults Kubernetes control"),
+            "{err:?}"
+        );
+    }
 
     // The actual probe aborts even though this chart's unmodified defaults render.
     let invalid_yaml = json!({"name": "["});
@@ -4549,8 +4549,28 @@ fn declared_types_attribution_requires_an_unread_type_only_rejection() -> eyre::
     )?;
     let defaults = test_util::helm_values::coalesce_chart_values(source.path(), json!({}))?;
     let chart = PinnedHelmChart::prepare(helm_invocation::HelmRunner::shared()?, source.path())?;
-    let kubernetes = OfflineKubernetesValidator::new(
+    // Keep the oracle decidable without giving the generator a schema for the Widget sink.
+    let catalog = ScratchDir::new("declared-types-oracle")?;
+    let group = catalog
+        .path()
+        .join(helm_schema_k8s::cache::default_source_id())
+        .join("example.com");
+    std::fs::create_dir_all(&group)?;
+    std::fs::write(
+        catalog
+            .path()
+            .join(helm_schema_k8s::cache::LAYOUT_MARKER_FILENAME),
+        format!("{}\n", helm_schema_k8s::cache::CACHE_LAYOUT_VERSION),
+    )?;
+    std::fs::write(
+        group.join("widget_v1.json"),
+        serde_json::to_vec(&json!({
+            "type": "object", "properties": {"spec": {"type": "object", "properties": {"size": {}}}}
+        }))?,
+    )?;
+    let kubernetes = OfflineKubernetesValidator::with_crd_catalog(
         &test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+        catalog.path(),
         helm_adjudication::KUBERNETES_RELEASE,
     )?;
     let draft7 = "http://json-schema.org/draft-07/schema#";

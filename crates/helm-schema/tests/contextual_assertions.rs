@@ -106,11 +106,11 @@ fn forbidden_members_keep_escaped_paths_and_comma_names() -> eyre::Result<()> {
     // One grouped validator error contains both inherited and newly forbidden members.
     sim_assert_eq!(have: comparisons.len(), want: 1);
     sim_assert_eq!(
-        have: comparison.new_violations.iter().map(|violation| violation.key.instance_path.as_str()).collect::<Vec<_>>(),
+        have: comparison.new_violations.iter().map(|violation| violation.instance_path.as_str()).collect::<Vec<_>>(),
         want: vec!["/added~1~0"],
     );
     sim_assert_eq!(
-        have: comparison.inherited_violations.iter().map(|violation| violation.key.instance_path.as_str()).collect::<BTreeSet<_>>(),
+        have: comparison.inherited_violations.iter().map(|violation| violation.instance_path.as_str()).collect::<BTreeSet<_>>(),
         want: BTreeSet::from(["/a, b", "/existing~1~0"]),
     );
     assert!(comparison.uncertain.is_empty());
@@ -122,7 +122,7 @@ fn forbidden_members_keep_escaped_paths_and_comma_names() -> eyre::Result<()> {
         .first()
         .ok_or_eyre("missing context comparison")?;
     sim_assert_eq!(
-        have: comparison.new_violations.iter().map(|violation| violation.key.instance_path.as_str()).collect::<BTreeSet<_>>(),
+        have: comparison.new_violations.iter().map(|violation| violation.instance_path.as_str()).collect::<BTreeSet<_>>(),
         want: BTreeSet::from(["/a", "/b"]),
     );
     sim_assert_eq!(have: comparison.inherited_violations.len(), want: 1);
@@ -226,7 +226,7 @@ fn unidentified_list_members_retain_each_missing_identity_field() -> eyre::Resul
         .first()
         .ok_or_eyre("missing context comparison")?;
     sim_assert_eq!(
-        have: comparison.new_violations.iter().map(|violation| violation.key.instance_path.as_str()).collect::<Vec<_>>(),
+        have: comparison.new_violations.iter().map(|violation| violation.instance_path.as_str()).collect::<Vec<_>>(),
         want: vec!["/apiVersion"],
     );
     assert!(comparison.inherited_violations.is_empty() && comparison.uncertain.is_empty());
@@ -238,11 +238,11 @@ fn unidentified_list_members_retain_each_missing_identity_field() -> eyre::Resul
         .first()
         .ok_or_eyre("missing context comparison")?;
     sim_assert_eq!(
-        have: comparison.new_violations.iter().map(|violation| violation.key.instance_path.as_str()).collect::<Vec<_>>(),
+        have: comparison.new_violations.iter().map(|violation| violation.instance_path.as_str()).collect::<Vec<_>>(),
         want: vec!["/apiVersion"],
     );
     sim_assert_eq!(
-        have: comparison.inherited_violations.iter().map(|violation| violation.key.instance_path.as_str()).collect::<Vec<_>>(),
+        have: comparison.inherited_violations.iter().map(|violation| violation.instance_path.as_str()).collect::<Vec<_>>(),
         want: vec!["/kind"],
     );
     assert!(comparison.uncertain.is_empty());
@@ -282,7 +282,7 @@ fn property_names_remain_structural_even_when_the_validator_reports_a_string() -
         .first()
         .ok_or_eyre("missing context comparison")?;
     sim_assert_eq!(
-        have: comparison.new_violations.iter().map(|violation| violation.key.instance_path.as_str()).collect::<Vec<_>>(),
+        have: comparison.new_violations.iter().map(|violation| violation.instance_path.as_str()).collect::<Vec<_>>(),
         want: vec!["/data/new~1~0"],
     );
     assert!(comparison.inherited_violations.is_empty() && comparison.uncertain.is_empty());
@@ -411,7 +411,7 @@ fn references_preserve_the_canonical_assertion_while_scalar_values_normalize() -
 }
 
 #[test]
-fn repeated_references_to_one_constraint_keep_multiplicity() -> eyre::Result<()> {
+fn repeated_references_to_one_constraint_count_one_occurrence() -> eyre::Result<()> {
     let root = ScratchDir::new("contextual-repeated-references")?;
     let cache = ScratchDir::new("contextual-repeated-references")?;
     write_chart(
@@ -442,7 +442,66 @@ fn repeated_references_to_one_constraint_keep_multiplicity() -> eyre::Result<()>
         .first()
         .ok_or_eyre("missing context comparison")?;
     sim_assert_eq!(have: comparison.inherited_violations.len(), want: 1);
-    sim_assert_eq!(have: comparison.new_violations.len(), want: 1);
-    assert!(comparison.uncertain.is_empty());
+    assert!(comparison.new_violations.is_empty() && comparison.uncertain.is_empty());
+
+    let payload = chart.adjudicate(&json!({"data": {"branch": 1, "token": 2}}))?;
+    let comparison = validator.compare_with_defaults(&chart, &payload)?;
+    sim_assert_eq!(have: comparison.inherited_violations.len(), want: 1);
+    assert!(comparison.new_violations.is_empty() && comparison.uncertain.is_empty());
+
+    let defaults = chart.adjudicate(&json!({}))?;
+    let context = chart.adjudicate(&json!({"data": {"branch": 1, "token": 2}}))?;
+    validator.check_controls(&chart, &defaults, &[&context])?;
+    Ok(())
+}
+
+#[test]
+fn duplicate_reports_preserve_occurrences_at_distinct_positions_and_resources() -> eyre::Result<()>
+{
+    let root = ScratchDir::new("distinct-repeated-references")?;
+    let cache = ScratchDir::new("distinct-repeated-references")?;
+    write_chart(
+        root.path(),
+        &json!({"copies": 1, "data": {"token": 0}}),
+        indoc! {r"
+            {{ range $index := until (int .Values.copies) }}
+            ---
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: occurrence-{{ $index }}
+            data: {{ $.Values.data | toJson }}
+            {{ end }}
+        "},
+    )?;
+    write_schema(
+        cache.path(),
+        &json!({
+            "definitions": {"token": {"type": "string"}},
+            "properties": {"data": {"additionalProperties": {"allOf": [
+                {"$ref": "#/definitions/token"}, {"$ref": "#/definitions/token"}
+            ]}}}
+        }),
+    )?;
+    let chart = PinnedHelmChart::prepare(HelmRunner::shared()?, root.path())?;
+    let validator = OfflineKubernetesValidator::new(cache.path(), KUBERNETES_RELEASE)?;
+    let defaults = chart.adjudicate(&json!({}))?;
+    let checked = validator.check_controls(&chart, &defaults, &[&defaults])?;
+    for overlay in [json!({"data": {"extra": 1}}), json!({"copies": 2})] {
+        let payload = chart.adjudicate(&overlay)?;
+        let comparisons = validator.compare_with_controls(&chart, &payload, &checked)?;
+        let comparison = comparisons
+            .first()
+            .ok_or_eyre("missing context comparison")?;
+        sim_assert_eq!(have: comparison.inherited_violations.len(), want: 1);
+        sim_assert_eq!(have: comparison.new_violations.len(), want: 1);
+        assert!(comparison.uncertain.is_empty());
+
+        let payload = chart.adjudicate(&overlay)?;
+        let comparison = validator.compare_with_defaults(&chart, &payload)?;
+        sim_assert_eq!(have: comparison.inherited_violations.len(), want: 1);
+        sim_assert_eq!(have: comparison.new_violations.len(), want: 1);
+        assert!(comparison.uncertain.is_empty());
+    }
     Ok(())
 }

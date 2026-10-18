@@ -39,7 +39,7 @@ fn write_chart(root: &Path, name: &str, values: &str) -> eyre::Result<()> {
 }
 
 #[test]
-fn unchanged_unknown_resources_pair_with_their_defaults() -> eyre::Result<()> {
+fn unknown_defaults_are_unusable_even_when_unchanged() -> eyre::Result<()> {
     let root = ScratchDir::new("helm_adjudication")?;
     let cache = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "differential", "token: original\n")?;
@@ -65,16 +65,18 @@ fn unchanged_unknown_resources_pair_with_their_defaults() -> eyre::Result<()> {
         )?,
         KubernetesVerdict::Uncertain(_)
     ));
-    let unchanged = validator.compare_with_defaults(&chart, &probe)?;
-    assert!(
-        unchanged.uncertain.is_empty() && unchanged.new_violations.is_empty(),
-        "{unchanged:?}"
-    );
     let changed = chart.adjudicate(&json!({"token": "changed"}))?;
-    sim_assert_eq!(
-        have: validator.compare_with_defaults(&chart, &changed)?.uncertain,
-        want: vec!["document 0: example.test/v1/Unknown sample: pinned resource schema not found".to_string()],
-    );
+    for payload in [&probe, &changed] {
+        let err = validator
+            .compare_with_defaults(&chart, payload)
+            .err()
+            .ok_or_eyre("unknown defaults passed usability")?;
+        assert!(
+            err.to_string()
+                .contains("unusable defaults Kubernetes control"),
+            "{err:?}"
+        );
+    }
     Ok(())
 }
 
@@ -220,12 +222,11 @@ fn compiled_schemas_are_shared_by_bundle_content() -> eyre::Result<()> {
     Ok(())
 }
 
-/// Identical documents pair one to one, so a copy the defaults render lacks
-/// stays unproved even when it repeats a paired document.
+/// Repeated unknown resources cannot establish a decidable defaults control.
 #[test]
-fn duplicate_documents_pair_with_multiplicity() -> eyre::Result<()> {
+fn duplicate_unknown_documents_cannot_bypass_control_usability() -> eyre::Result<()> {
     let cache = ScratchDir::new("helm_adjudication")?;
-    for (defaults, overlay, uncertain) in [(1, 2, 1), (2, 1, 0), (2, 2, 0), (1, 3, 2)] {
+    for (defaults, overlay) in [(1, 2), (2, 1), (2, 2), (1, 3)] {
         let root = ScratchDir::new("helm_adjudication")?;
         write_chart(root.path(), "duplicates", &format!("copies: {defaults}\n"))?;
         fs::write(
@@ -245,14 +246,20 @@ fn duplicate_documents_pair_with_multiplicity() -> eyre::Result<()> {
         let probe = chart.adjudicate(&json!({"copies": overlay}))?;
         let comparison =
             OfflineKubernetesValidator::new(cache.path(), helm_adjudication::KUBERNETES_RELEASE)?
-                .compare_with_defaults(&chart, &probe)?;
-        sim_assert_eq!(have: comparison.uncertain.len(), want: uncertain);
+                .compare_with_defaults(&chart, &probe)
+                .err()
+                .ok_or_eyre("duplicate unknown defaults passed usability")?;
+        assert!(
+            comparison
+                .to_string()
+                .contains("unusable defaults Kubernetes control")
+        );
     }
     Ok(())
 }
 
 #[test]
-fn a_changed_resource_violation_is_new_beside_an_unchanged_unknown() -> eyre::Result<()> {
+fn known_payload_violation_cannot_conceal_unusable_defaults() -> eyre::Result<()> {
     let root = ScratchDir::new("helm_adjudication")?;
     let cache = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "invalid", "token: valid\n")?;
@@ -277,14 +284,14 @@ fn a_changed_resource_violation_is_new_beside_an_unchanged_unknown() -> eyre::Re
     let probe = chart.adjudicate(&json!({"token": true}))?;
     let validator =
         OfflineKubernetesValidator::new(cache.path(), helm_adjudication::KUBERNETES_RELEASE)?;
-    let comparison = validator.compare_with_defaults(&chart, &probe)?;
+    let err = validator
+        .compare_with_defaults(&chart, &probe)
+        .err()
+        .ok_or_eyre("known failure concealed an uncertain control")?;
     assert!(
-        comparison.uncertain.is_empty() && comparison.inherited_violations.is_empty(),
-        "{comparison:?}"
-    );
-    sim_assert_eq!(
-        have: comparison.new_violations.iter().map(ToString::to_string).collect::<Vec<_>>(),
-        want: vec![r#"document 0: v1/ConfigMap invalid: /data/token: true is not of type "string""#.to_string()],
+        err.to_string()
+            .contains("unusable defaults Kubernetes control"),
+        "{err:?}"
     );
     Ok(())
 }
@@ -389,11 +396,9 @@ fn contextual_assertion_counts_preserve_multiplicity_without_scalar_identity() -
     Ok(())
 }
 
-/// A changed document carrying another invalid value at the defaults'
-/// violating pointer violates the assertion anew: the offending value is
-/// part of the violation.
+/// Different invalid scalar values still violate the same canonical assertion.
 #[test]
-fn a_different_invalid_value_is_a_new_violation() -> eyre::Result<()> {
+fn a_different_invalid_value_inherits_the_same_assertion() -> eyre::Result<()> {
     let root = ScratchDir::new("helm_adjudication")?;
     let cache = ScratchDir::new("helm_adjudication")?;
     write_chart(root.path(), "revalued", "token: true\n")?;
@@ -415,11 +420,11 @@ fn a_different_invalid_value_is_a_new_violation() -> eyre::Result<()> {
         OfflineKubernetesValidator::new(cache.path(), helm_adjudication::KUBERNETES_RELEASE)?
             .compare_with_defaults(&chart, &probe)?;
     assert!(
-        comparison.inherited_violations.is_empty() && comparison.uncertain.is_empty(),
+        comparison.new_violations.is_empty() && comparison.uncertain.is_empty(),
         "{comparison:?}"
     );
     sim_assert_eq!(
-        have: comparison.new_violations.iter().map(ToString::to_string).collect::<Vec<_>>(),
+        have: comparison.inherited_violations.iter().map(ToString::to_string).collect::<Vec<_>>(),
         want: vec![r#"document 0: v1/ConfigMap revalued: /data/token: 5 is not of type "string""#.to_string()],
     );
     Ok(())
@@ -459,7 +464,7 @@ fn a_renamed_resource_inherits_the_defaults_violations() -> eyre::Result<()> {
 }
 
 /// A number beyond Helm's exact integer range hides what the document was,
-/// so a changed one stays undecided.
+/// so it cannot establish a decidable defaults control.
 #[test]
 fn inexact_documents_stay_uncertain() -> eyre::Result<()> {
     let cache = ScratchDir::new("helm_adjudication")?;
@@ -486,8 +491,14 @@ fn inexact_documents_stay_uncertain() -> eyre::Result<()> {
         )?,
         KubernetesVerdict::Uncertain(_)
     ));
-    let comparison = validator.compare_with_defaults(&chart, &probe)?;
-    sim_assert_eq!(have: comparison.uncertain.len(), want: 1);
+    let err = validator
+        .compare_with_defaults(&chart, &probe)
+        .err()
+        .ok_or_eyre("inexact defaults passed usability")?;
+    assert!(
+        err.to_string()
+            .contains("unusable defaults Kubernetes control")
+    );
     Ok(())
 }
 
@@ -829,7 +840,7 @@ fn offline_validator_distinguishes_invalid_resources_from_missing_schemas() -> e
             && errors
                 .iter()
                 .any(|error| error.location == "document 0/items/0"
-                    && error.key.instance_path == "/metadata/name"),
+                    && error.instance_path == "/metadata/name"),
         "unexpected evidence: {errors:?}"
     );
     let missing = json!({"apiVersion": "example.test/v1", "kind": "Missing", "metadata": {"name": "unknown"}});

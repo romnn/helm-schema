@@ -14,7 +14,7 @@ use test_util::helm_values::ValuesError;
 use test_util::scratch::ScratchDir;
 use vfs::VfsPath;
 
-use crate::helm_adjudication::ViolationKey;
+use crate::helm_adjudication::ValuesViolationKey;
 
 pub(crate) const MAX_PROBES_PER_CHART: usize = 50_000;
 const MAX_THIRD_LEVEL_DELETIONS_PER_CHART: usize = 2_048;
@@ -275,7 +275,7 @@ impl ProfileSchemas {
     pub(crate) fn coalesced_errors(
         &self,
         values: &crate::helm_adjudication::CoalescedValues,
-    ) -> (Vec<ViolationKey>, Vec<ViolationKey>) {
+    ) -> (Vec<ValuesViolationKey>, Vec<ValuesViolationKey>) {
         self.errors(values.as_json())
     }
 
@@ -283,7 +283,7 @@ impl ProfileSchemas {
     pub(crate) fn override_errors(
         &self,
         overlay: &Value,
-    ) -> (Vec<ViolationKey>, Vec<ViolationKey>) {
+    ) -> (Vec<ValuesViolationKey>, Vec<ValuesViolationKey>) {
         self.errors(&self.compose(&ProbeInstance::SparseOverride(overlay.clone())))
     }
 
@@ -311,7 +311,10 @@ impl ProfileSchemas {
         judged.into_iter().collect::<BTreeSet<_>>() == defaults.into_iter().collect()
     }
 
-    pub(crate) fn errors(&self, instance: &Value) -> (Vec<ViolationKey>, Vec<ViolationKey>) {
+    pub(crate) fn errors(
+        &self,
+        instance: &Value,
+    ) -> (Vec<ValuesViolationKey>, Vec<ValuesViolationKey>) {
         (
             violations(&self.full, instance),
             violations(&self.lean, instance),
@@ -826,10 +829,10 @@ fn synthesized_guard_witness_candidates(
 }
 
 /// The violations `validator` reports on a values document.
-fn violations(validator: &Validator, instance: &Value) -> Vec<ViolationKey> {
+fn violations(validator: &Validator, instance: &Value) -> Vec<ValuesViolationKey> {
     validator
         .iter_errors(instance)
-        .map(|error| ViolationKey::new("", "", &error))
+        .map(|error| ValuesViolationKey::new(&error))
         .collect()
 }
 
@@ -838,8 +841,8 @@ fn violations(validator: &Validator, instance: &Value) -> Vec<ViolationKey> {
 /// different keyword locations, so the violated keyword and its detail
 /// identify it.
 pub(crate) fn rejects_for_a_new_reason(
-    baseline: &[ViolationKey],
-    candidate: &[ViolationKey],
+    baseline: &[ValuesViolationKey],
+    candidate: &[ValuesViolationKey],
 ) -> bool {
     candidate.iter().any(|violation| {
         !baseline.iter().any(|known| {

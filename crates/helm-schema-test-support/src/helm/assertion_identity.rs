@@ -1,11 +1,9 @@
-//! Canonical contextual assertion identity, separate from concrete diagnostic paths.
+//! Schema-directed instance identity, separate from concrete diagnostic paths.
 
 use std::iter::Peekable;
 use std::str::Split;
 
 use serde_json::Value;
-
-use super::adjudication::ViolationKey;
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(super) enum InstanceSegment {
@@ -13,44 +11,12 @@ pub(super) enum InstanceSegment {
     Wildcard,
 }
 
-#[derive(Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub(super) struct CanonicalViolationKey {
-    assertion: ViolationKey,
-    instance: Vec<InstanceSegment>,
-}
-
-impl CanonicalViolationKey {
-    pub(super) fn new(key: &ViolationKey, path: Option<&[InstanceSegment]>) -> Self {
-        let instance = path.map_or_else(
-            || {
-                key.instance_path
-                    .split('/')
-                    .skip(1)
-                    .map(|token| InstanceSegment::Fixed(token.to_string()))
-                    .collect()
-            },
-            <[InstanceSegment]>::to_vec,
-        );
-        let mut assertion = key.clone();
-        assertion.instance_path.clear();
-        if !matches!(
-            assertion.keyword.as_str(),
-            "required" | "additionalProperties" | "unevaluatedProperties" | "propertyNames"
-        ) {
-            assertion.detail.clear();
-        }
-        Self {
-            assertion,
-            instance,
-        }
-    }
-}
-
 #[derive(Clone, Copy)]
 enum InstanceStep<'a> {
     Property(&'a str),
     MapValue,
     ArrayItem,
+    TupleItem(&'a str),
 }
 
 struct InstanceCursor<'a> {
@@ -74,6 +40,7 @@ impl InstanceCursor<'_> {
             InstanceStep::Property(expected) if container.is_object() && token == expected => false,
             InstanceStep::MapValue if container.is_object() => true,
             InstanceStep::ArrayItem if container.is_array() => true,
+            InstanceStep::TupleItem(expected) if container.is_array() && token == expected => false,
             _ => return Err("schema route does not identify the instance position".to_string()),
         };
         self.concrete.push('/');
@@ -95,12 +62,16 @@ pub(super) fn canonical_instance_path(
     error: &jsonschema::ValidationError<'_>,
     diagnostic_path: &str,
 ) -> Result<Vec<InstanceSegment>, String> {
-    // This grouped error conflates forbidden names with failures of permitted member values.
+    // These grouped errors do not identify which concrete members failed.
     if matches!(
         error.kind(),
         jsonschema::error::ValidationErrorKind::UnevaluatedProperties { .. }
+            | jsonschema::error::ValidationErrorKind::UnevaluatedItems { .. }
     ) {
-        return Err("unevaluatedProperties does not prove member correspondence".to_string());
+        return Err(format!(
+            "{} does not prove member correspondence",
+            error.kind().keyword()
+        ));
     }
     // Validator paths are escaped JSON pointers.
     // Keep empty and numeric property tokens intact;
@@ -133,14 +104,17 @@ pub(super) fn canonical_instance_path(
                 }
             }
             "items" | "prefixItems" | "additionalItems" | "unevaluatedItems" | "contains" => {
-                if route
-                    .peek()
-                    .is_some_and(|token| token.parse::<usize>().is_ok())
+                let step = if matches!(keyword, "items" | "prefixItems")
+                    && route
+                        .peek()
+                        .is_some_and(|token| token.parse::<usize>().is_ok())
                 {
-                    route.next();
-                }
+                    InstanceStep::TupleItem(route.next().ok_or("missing tuple position")?)
+                } else {
+                    InstanceStep::ArrayItem
+                };
                 if instance.tokens.peek().is_some() {
-                    instance.consume(InstanceStep::ArrayItem)?;
+                    instance.consume(step)?;
                 }
             }
             "allOf" | "anyOf" | "oneOf" => {
@@ -168,12 +142,18 @@ pub(super) fn canonical_instance_path(
     if !suffix.is_empty() && !suffix.starts_with('/') {
         return Err("structural violation has an ambiguous member path".to_string());
     }
-    // Forbidden members and invalid property names are structural identities, never wildcards.
-    instance.canonical.extend(
-        suffix
-            .split('/')
-            .skip(1)
-            .map(|token| InstanceSegment::Fixed(token.to_string())),
-    );
+    // AdditionalItems identifies every forbidden tail member; property names stay structural.
+    for token in suffix.split('/').skip(1) {
+        instance.canonical.push(
+            if matches!(
+                error.kind(),
+                jsonschema::error::ValidationErrorKind::AdditionalItems { .. }
+            ) {
+                InstanceSegment::Wildcard
+            } else {
+                InstanceSegment::Fixed(token.to_string())
+            },
+        );
+    }
     Ok(instance.canonical)
 }
