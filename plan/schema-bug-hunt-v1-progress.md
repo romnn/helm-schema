@@ -8568,6 +8568,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   error tree is unresolved; a regex/string preflight catches failures that boolean applicators discard; all 41 keyword files hashed.
   Gates 0 (unit 1,701, integration 1,028 + 26 skipped); pinned audit zero newly unresolved. Schema-only battery 463 s vs ~250 s last
   round — asked reviewers whether the preflight explains it. Orchestrator.
+- 01:38 (Oct 19) — **Battery lane LAND ×2 and tracing-perfetto fork switch LAND ×2; landing 10a assembled and its chain LAUNCHED.**
+  Reviews: `round8/review-battery-p1r8-{astra,sol}.md` (no findings; both re-ran the pinned audit; the 463 s schema-only battery
+  is screening time under host load, not the preflight — the audit costs ~2 s; slowdown cause to be measured separately),
+  `round8/review-tracing-fork-{astra,sol}.md` (no findings; locked offline metadata resolves the pinned rev; self-time method
+  valid). Assembly in /Volumes/T7/dev/round8-landing10a branch landing-10a-v2 from main 7c28756f: battery be92e163..5c1dde69 (21
+  commits, clean), jsonschema fork 3bb2e353/9ed24133, tracing spans 4d8d9bf2 (ONE hand-resolved conflict: battery restructured
+  `screen_chart` and lib.rs; kept the battery side and re-added the span attribute and `init_perfetto_from_env`), docs 2fe25467,
+  tracing-perfetto fork 7de0d96f. The first attempt (spans before battery) conflicted per battery commit and was aborted. Env
+  `runner/landing-10a.env` committed 905b532 (BASELINE f7be7ba5 = ROSTER_BASELINE; no generator change, zero fixture moves
+  expected). Lock absent, T7 203 GB; chain started 01:38, evidence /Volumes/T7/dev/round8-landing10a-run1. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
