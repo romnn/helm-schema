@@ -8243,6 +8243,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   while load < 40): a chain launches as soon as its candidate is LAND ×2 and the heavy lock is absent and T7 is above its floor.
   Alert trigger (orchestrator): a full chain > 3 h, or any step > 50 % slower than landing 9 run2 (7/9/9/26/9/56 min). The chain-time
   analyses keep running and become the plan for that pass; no perf work is started before the trigger. Orchestrator.
+- 14:55 (Oct 18) — **Architecture audits = CONSOLIDATE ×4; chain-time analyses = NEEDS-DATA ×2; the perf-alert trigger is met.**
+  W1 (`arch-audit-w1-{astra,sol}.md`): +5 346 net production lines vs main; both propose making ordered rendered alternatives (incl.
+  helper output) the one authoritative representation (−500 to −1 000), sharing the three action-output lowering paths, removing the
+  fine-grained action-order simulator, one execution state across control flow, declared-default authority decided once — forwarded
+  (overlapping items in rework 13, the rest as a dedicated consolidation round 14). W4 (`arch-audit-w4-{astra,sol}.md`): both rank
+  FIRST "compile each condition once and evaluate the emitted representation" — deletes the separate guard evaluator and with it the
+  evaluator-vs-encoding class behind R74–R76 — and "replace R72's path-wide widening with per-use evidence" (= R73); forwarded as the
+  way to do rework 16. Chain time (`analysis-chain-time-{sol,astra}.md`): rows constant (156 charts, 2 036 rows); the sweep's real-
+  Helm CLI differential explains ~73 % of the landing 5 → 10 growth; it scales with SHIPPED SCHEMA SIZE/shape, not row count —
+  openebs CLI 10.8 → 37.7 min, kube-prometheus-stack 6.6 → 17.2, milvus 4.2 → ~14, oncall ~0 → 19 (its landing-10 schema grew 3.66 →
+  4.50 MB and now reaches a passing lint); both need phase timers to finish. Trigger: landing 10 run1's sweep (90 min) is +61 % over
+  landing 9 (56) — reported to the user with a proposed perf pass (runner phase timers + content-addressed sweep reuse + shipped-
+  schema size/shape, which also slows users' own `helm lint`). Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
