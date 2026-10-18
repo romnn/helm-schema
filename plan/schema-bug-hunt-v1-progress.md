@@ -8126,6 +8126,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   requirements share one execution-ordered state; abstain where order is not structural. Accepted precision debt: coarse
   `set .Values k` staleness, tpl/trunc. Brief `round8/brief-w1-rework12.md` (R67–R72), fresh Claude builder spawned 06:18.
   Orchestrator.
+- 06:44 (Oct 18) — **Define-block track PARKED (orchestrator decision): the Codex builder's resume reports the candidate NOT ready.**
+  Hand-back `round8/builder-defblock-sol.md`, evidence `round8-defblock/.codex-evidence/resume-final/` (final.patch sha256 8679f5a7,
+  split into a-define-trim.patch and b-uncertainty-omission.patch which replay exactly; 125 moved fixtures individually classified
+  with A/B attribution; residuals.md). Gates fmt/lint/lint:fc 0, unit 1 732 0; sandbox-limited: integration/test:all/network 201,
+  fallback integration 100 (122 fixture-equality only), luup2 taskfile absent; live battery 100: 9 414 screened, 364 false-acceptance
+  observations, 52 unmatched tightenings. Its own self-attack (336 Helm cells): 133 NEW false acceptances vs the current baseline,
+  three new openebs false rejections, and the trim patch A ALONE introduces nine false rejections. Lessons: a Codex builder given a
+  one-line defect without a design review widened into an uncertainty refactor; Codex builders need the same design-review-first
+  discipline as semantic tracks, and a hard scope rule ("stop and report if the fix moves more than the named charts"). Re-entry
+  plan: a design review on both models for a minimal trim-only fix from a-define-trim.patch and its nine false rejections; until
+  then the clone stays as evidence (target ~34 GB is disposable with the user's approval). Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
