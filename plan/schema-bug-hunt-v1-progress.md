@@ -8418,6 +8418,26 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   decision: W4's next round is a CONSOLIDATION round built on P1+P2 (+P3) merged with astra/sol's correctness findings when they land;
   this also addresses the 224 rendered-but-rejected rows the reviewers were asked about. The Fable challenger earned its quota on the
   first use. Orchestrator.
+- 20:31 (Oct 18) — **W4 rework 16 FINAL = REWORK ×2 (astra, sol), converging with the Fable challenge; W4 rework 17 dispatched as a
+  CONSOLIDATION round with a mandatory design gate.** Both Codex reviewers confirm R73–R76 fixed (falco/cilium negative controls,
+  condition-encoding table, terminal numeric regression) and the deleted second evaluator a real simplification, but return P1: the 224
+  rejections in `rebase/r16/r72-loosen-adjudicated-final.tsv` (221 main-too, in scope) are false rejections of the R72 family —
+  independently reproduced: redis rows 39/52/56 (`failureThreshold: ""` renders null into `integer|null`; mappings rendered as strings),
+  falco row 235 (`targetPort: 1`; the keyed read needs the map, not the default's member type). Fix all three agree on: each use's sink
+  contract projected through its render transformation with its execution guard, intersected across simultaneous uses; the declared
+  sample only for an unresolved sink; no domain borrowing; IR-produced iteration/member facts. Orchestrator merged this with Fable
+  P1–P3 into `round8/brief-w4-rework17.md` (W4-R77 one typing rule + Fable's deletion list, W4-R78 sample independent of evaluator
+  decidability + caller context for the evaluator, W4-R79 one tpl claim representation). Step 1 is a Helm projection matrix and a
+  ≤ 60-line design, reviewed by astra + sol BEFORE code (lesson from the define-block track and 16 reworks). Fresh native Opus builder
+  (resume brief `brief-w4-rework17-resume.md`, clone round8-w4-r9 at 3332041a). Reviews: `round8/review-w4-rework16-{astra,sol}.md`.
+- 20:31 (Oct 18) — **Tracing misplaced span ends: NOT a bug in our span usage (sol builder, run f9ee6567 turn 1).** A span-lifetime checker over
+  five charts saw 65,639 spans with zero non-LIFO, cross-thread or unclosed spans (negative controls detect both). Cause: tracing-perfetto
+  0.1.5 (latest on crates.io) buffers a span's packets until close and timestamps at microsecond resolution here; a parent and child that
+  begin in the same microsecond are written child-first, and Perfetto's stable sort then misplaces the ends (4,990 reconstructed, all with
+  equal begins; 0 strictly crossing intervals). Proposed fix is a 57-line exporter patch (per-thread monotonic tie-break by 1 ns) —
+  needs a fork of tracing-perfetto: a user-level dependency decision, asked. Gates on the checker tree: fmt/lint/lint:fc/unit/integration
+  0, test:all 201 (4 live-fetch failures), tokei 0. Self times (incl. `append_selected_constraints`) stay UNVERIFIED until then. The
+  LAND ×2 span commits 447e9858 + 3b1b123b are unaffected and stay in landing 10a. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
