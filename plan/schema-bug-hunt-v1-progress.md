@@ -8277,6 +8277,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   make Helm 4.2.3's validator slow (openebs/oncall/kps/milvus; bisect against the pinned library), equivalence-preserving emission
   changes, and whether a (schema bytes, values document) validation reuse is sound. Speed-ups go through design review on both models
   before any builder implements them. Orchestrator.
+- 16:38 (Oct 18) — **User redirected the perf instrumentation and rejected a second cancel; battery rework 4 = REWORK ×2 → rework 5.**
+  User: "instead of complex phase timing infra, id suggest using our existing perfetto tracing … simple tracing::instrument should be
+  enough … that approach also help find performance issues in our helm-schema code alongside". Plan changed: no runner phase-timer
+  infrastructure; spans via `#[tracing::instrument]` at natural boundaries (corpus_generation per chart, battery screen/adjudicate per
+  chart, each Helm subprocess call as a span) written through the existing `--trace-output` tracing_perfetto layer
+  (crates/helm-schema-cli/src/lib.rs:61), analysed with the perfetto MCP. I then tried to cancel the now-redundant runner-v8 Codex
+  builder (20261018T135051-3273c682); the USER REJECTED that cancel as well. Rule (memory updated): never cancel Codex runs — let the
+  turn finish and redirect with follow_up or do not adopt the output. Battery (`review-battery-p1r4-{sol,astra}.md`): relocation,
+  rename and route fixes confirmed; open R13 positional identity for tuple items/prefixItems sharing a $ref, R14 dedupe same canonical
+  constraint at the same concrete position, R15 grouped additionalItems/unevaluatedItems multiplicity or unresolved, R16 ONE identity
+  and comparison for both lanes (delete the Legacy/Contextual split and concrete ViolationKey matching; also the user's simplicity
+  rule) — follow_up turn 7 on the battery builder. T7 132 GB (down 60 GB in 3 h: builders' dumps). Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
