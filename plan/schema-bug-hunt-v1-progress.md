@@ -8342,6 +8342,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   orchestrator `cargo clean -p` of the workspace crates in the PARKED defblock target freed 27.1 GiB (→ 110 GB); W1 (60 GB target) and
   W4 (53 GB) asked to prune superseded dumps/profiles at their next step boundary. Codex builders now active: battery rework 5, tracing
   spans, helmsweep→fork, definitions; Claude: W1 rework 13, W4 rework 16. Orchestrator.
+- 18:30 (Oct 18) — **Tracing spans handed back, committed, analysed, in review; first generation hotspot found.** Codex builder
+  (sol): one switch reuses the CLI's tracing_perfetto layer (moved into helm-schema's trace module) for corpus_generation and the battery;
+  `#[instrument]` spans per chart, per screening/adjudication, per Helm execution; output byte-identical; overhead +0.5 % (bitnami-redis,
+  within run-to-run spread); gates fmt/lint/lint:fc/unit/integration 0 (test:all 201 = four live-fetch failures in its sandbox).
+  Committed by the orchestrator in `round8-tracing` as 447e9858 (code; reverse-apply-checked against transfer patch sha256 d47653b6
+  excluding `.agents/`) + 3b1b123b (docs): 16 files, +112/−23. Perfetto MCP over corpus-five.perfetto (5 charts, one worker): by SELF
+  time `append_selected_constraints` 95.4 s of 138.5 s total generation (openebs alone 40.5 s of its 83 s chart span), then
+  `collect_conditional_schemas` 21.7 s, `minimize_schema` 9.5 s, `append_terminal_clauses` 7.4 s, `extract_repeated_provider_payloads`
+  7.2 s, `derive_schema_signals_from_contract_parts` 7.2 s. Next perf step: spans one level inside append_selected_constraints. Reviews:
+  astra 20261018T163006-5868724e, sol …-2a8ccdeb. Landing plan: bundle fixture-neutral tooling (battery lane, tracing, helmsweep→fork)
+  into ONE chain where readiness allows, to amortise the 2–2.75 h chain. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
