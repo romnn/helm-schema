@@ -8106,6 +8106,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   LOC; claims bitnami-redis 7/0/0, cilium 43/28/30, argo-cd 12/2/2; debug CPU bitnami-redis 3.18 / 7.16 / 7.75 s (+8 % vs w10).
   Residuals: ternary test read first (proof voided), header root-set effects not replayed when no arm runs, `set .Values k` stales
   all root members. Re-checks as follow_ups turn 3: astra d488ec1f, sol cb0afa73. Orchestrator.
+- 05:51 (Oct 18) — **Runner v7 = LAND ×2 (`review-runner-v7r1-{astra,sol}.md`, no new findings) and merged into the live runner.**
+  `/Volumes/T7/dev/round8/runner` fast-forwarded 741e1eb → c472aae (9904514 roster v2 export + c472aae prepared-copy identities and
+  one staging policy) from `round8/runner-v7-dev`; heavy lock absent, no chain running. Consequence: the live runner now REFUSES
+  the legacy battery mode, so the battery lint lane must land first (landing 10a) before W4 — the planned order. The live suite
+  re-run (`round8-runner-evidence/live-v7-run-all.log`) is in progress. Known limitation recorded by both: a concurrent
+  change-and-restore entirely between two hash checks. Battery rework 3 still running. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
