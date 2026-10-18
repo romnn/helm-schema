@@ -8042,6 +8042,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   integration consumers found Helm-confirmed regressions (datadog scalar hosts, vault empty list, external-secrets security
   contexts) it is fixing — scope creep beyond the brief, to be judged in review. Its sandbox also blocks proxy.golang.org (as the
   battery builder's did). Orchestrator.
+- 03:24 (Oct 18) — **Disk contingency executed; W1 rework 10 checkpoint in review.** T7 hit 69 GB at 02:27 (floor 80).
+  The orchestrator cancelled the defblock Codex run 20261017T184428-efd665aa (it had NOT completed: it was in its final
+  feature-lint pass after 1 731/1 731 unit tests and a green 13-cell security matrix; its work — 26 modified files, uncommitted
+  because the sandbox's git index is read-only, plus a review patch in `.codex-evidence/` — stays on disk) and ran
+  `cargo clean -p <workspace crates>` in its clone: 225 408 files, 53.7 GiB removed; free space only reached 73 GB, so other
+  writers on T7 are consuming space too. The defblock run widened far beyond its brief (helper omission metadata, 114 moved
+  artifacts); it resumes as a follow_up on its kept session when disk allows, and its review must judge the scope. W1 rework 10
+  CHECKPOINT (c163870f; fix 1d09fc00, cost fix c163870f; Self-attack at handoff.md:32): `HoleText::Selected` per-alternative
+  proofs, Helm's quoted grammar (escaped line breaks, unfinished `\x`/`\u`/`\U`, flow separators), collection members,
+  range/captured/helper-argument provenance, `b64dec` literal = unknown, rebound `.Values`, narrowed tpl barrier; matrix 153
+  cells / 261 instances; real-CLI false rejections main 101 / r48 23 / candidate 0, accepted Helm failures 30 / 44 / 20 (the
+  abstentions); gates fmt/lint/lint:fc/ast-grep 0, nextest 1 832, dialect 2/2; +407 prod LOC; bitnami-redis CPU 5.5 / 11.4 /
+  12.2 s; proposed residual R59 (helper output `{{ " # " | quote }}`, inherited). Re-checks as follow_ups: astra d488ec1f (turn
+  2 from byte 14 007), sol cb0afa73 (from 14 306). Nothing has landed in session 5 yet; strict closures 4/83. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
