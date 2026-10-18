@@ -221,9 +221,10 @@ version, retaining every contributing origin and its explicit context control.
 Every imported row supplies the complete tested overlay and a context-only overlay;
 `{}` is the defaults-only context, and contexts are never reconstructed from paths.
 
-Omitted work fails coverage: limits are 8,192 generated dependency rows and 8,192 distinct overlays per chart within
-the existing 50,000 total document/probe budget, dependency depth 64, and 8,192
-imported rows per chart in a file no larger than 64 MiB.
+Omitted work fails coverage: limits are 8,192 generated dependency rows and 8,192
+distinct original-file-bytes/version inputs per chart within the existing 50,000
+total document/probe budget, dependency depth 64, and 8,192 imported rows per chart
+in a file no larger than 64 MiB. Whitespace variants consume separate input slots.
 All row origins and each document's composed, screened, inapplicable, and error
 counts must balance; errors and empty chart selections fail.
 Both the corpus and external-pair entry points enforce this completeness check,

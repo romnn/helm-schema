@@ -66,15 +66,16 @@ matching Helm's early return before schema validation.
 Intrinsic Helm aborts are counted as `not_validated`; `Unmodelled` and other
 errors fail coverage.
 
-`charts[].lint` reports built-in/imported rows, distinct overlays, contributing
+`charts[].lint` reports built-in/imported rows, distinct original-file-bytes/version
+inputs (the `distinct_overlays` field), contributing
 origins and hashes, and per-document `composed`, `not_validated`, `errors`,
 `screened`, and `flips` counts.
 Every row must be accounted for; composed documents must all be screened, and
-composed plus inapplicable documents must equal the distinct overlay count.
+composed plus inapplicable documents must equal that distinct input count.
 An empty lane, omitted work, or document errors fail in both the corpus and
 external-pair entry points, including comparisons with zero screened flips.
-Caps are 8,192 combined distinct overlay/version entries per chart, three
-attempts per entry within the remaining 50,000 total budget, dependency depth 64,
+Caps are 8,192 combined distinct original-file-bytes/version inputs per chart,
+including whitespace variants of the same overlay, with three attempts per input within the remaining 50,000 total budget, dependency depth 64,
 and 8,192 imported rows per chart in a roster of at most 64 MiB.
 The chart selection must be nonempty.
 Existing unchanged-guard sampling remains disclosed sampling; these document-row
@@ -121,7 +122,13 @@ Kubernetes version.
 A lint or template rejection justifies a tightening only when attributable to the
 tested input; an inherited control error never certifies a new schema restriction.
 A control that cannot render, including a non-installable library chart, is
-unresolved and fails adjudication.
+unresolved and fails adjudication. Before any lint, template, or Kubernetes
+rejection can be attributed, defaults must have no Kubernetes uncertainty and
+each context must have no uncertainty or new violated assertion versus defaults.
+An unusable control fails with its uncertainty or violation evidence preserved.
+Contextual comparisons identify assertions by resource API/kind, schema location
+and instance path, ignoring the offending scalar value and retaining multiplicity.
+Legacy roster comparisons retain their existing detailed violation identity.
 Inherited filename-extension lint errors do not hide a false rejection when the
 tested render and controls remain usable and add no Kubernetes violation.
 Changed diagnostics behind inherited lint errors are unresolved, not matched.
