@@ -967,6 +967,157 @@ fn inherited_scalar_assertion_does_not_become_new_in_a_context() -> eyre::Result
     Ok(())
 }
 
+fn relocation_tightening_verdict(
+    template: &str,
+) -> eyre::Result<Result<super::HelmFlipVerdict, String>> {
+    let source = null_chart()?;
+    fs::write(source.path().join("values.yaml"), r#"{"extra":false}"#)?;
+    fs::write(source.path().join("templates/config.yaml"), template)?;
+    let schemas = LintSchemas::compile(
+        &json!({}),
+        &json!({"properties":{"extra":{"const":false}}}),
+        None,
+    )?;
+    screened_context_verdict(source.path(), &schemas, &json!({"extra":true}), json!({}))
+}
+
+fn assert_tightening_has_only_inherited_failures(template: &str) -> eyre::Result<()> {
+    let error = relocation_tightening_verdict(template)?
+        .err()
+        .ok_or_eyre("an inherited failure certified a tightening")?;
+    assert!(
+        error.contains("tightening rejects a lint document"),
+        "{error}"
+    );
+    assert!(!error.contains("unusable"), "{error}");
+    let (_, directory) = error
+        .rsplit_once("; evidence=")
+        .ok_or_eyre("no evidence path")?;
+    let evidence: Value = serde_json::from_slice(&fs::read(
+        Path::new(directory).join("schema-verdicts.json"),
+    )?)?;
+    let contexts = evidence
+        .get("kubernetes_contexts")
+        .and_then(Value::as_array)
+        .ok_or_eyre("no saved Kubernetes context comparisons")?;
+    sim_assert_eq!(have: contexts.len(), want: 1);
+    let context = contexts.first().ok_or_eyre("no saved context comparison")?;
+    sim_assert_eq!(have: context.get("new_kubernetes_errors"), want: Some(&json!([])));
+    sim_assert_eq!(
+        have: context.get("inherited_kubernetes_errors").and_then(Value::as_array).ok_or_eyre("missing inherited errors")?.len(),
+        want: 1,
+    );
+    Ok(())
+}
+
+#[test]
+fn prepending_valid_container_cannot_turn_inherited_image_failure_into_tightening()
+-> eyre::Result<()> {
+    assert_tightening_has_only_inherited_failures(indoc::indoc! {r"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: container-insertion
+        spec:
+          containers:
+            {{ if .Values.extra }}
+            - name: good
+              image: busybox
+            {{ end }}
+            - name: bad
+              image: 42
+    "})
+}
+
+#[test]
+fn reordering_environment_cannot_turn_inherited_value_failure_into_tightening() -> eyre::Result<()>
+{
+    assert_tightening_has_only_inherited_failures(indoc::indoc! {r"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: environment-reordering
+        spec:
+          containers:
+            - name: example
+              image: busybox
+              env:
+                {{ if .Values.extra }}
+                - name: VALID
+                  value: valid
+                {{ end }}
+                - name: BROKEN
+                  value: []
+                {{ if not .Values.extra }}
+                - name: VALID
+                  value: valid
+                {{ end }}
+    "})
+}
+
+#[test]
+fn renaming_permitted_data_key_cannot_turn_inherited_failure_into_tightening() -> eyre::Result<()> {
+    assert_tightening_has_only_inherited_failures(indoc::indoc! {r"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: data-key-renaming
+        data:
+          {{ if .Values.extra }}renamed{{ else }}original{{ end }}: []
+    "})
+}
+
+#[test]
+fn changing_invalid_image_scalar_type_cannot_certify_tightening() -> eyre::Result<()> {
+    assert_tightening_has_only_inherited_failures(indoc::indoc! {r"
+        apiVersion: v1
+        kind: Pod
+        metadata:
+          name: invalid-image-type
+        spec:
+          containers:
+            - name: bad
+              image: {{ if .Values.extra }}true{{ else }}42{{ end }}
+    "})
+}
+
+#[test]
+fn a_second_invalid_data_member_still_proves_a_new_violation() -> eyre::Result<()> {
+    let template = indoc::indoc! {r"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: added-data-failure
+        data:
+          original: []
+          {{ if .Values.extra }}
+          added: []
+          {{ end }}
+    "};
+    sim_assert_eq!(
+        have: relocation_tightening_verdict(template)?,
+        want: Ok(super::HelmFlipVerdict::TighteningMatchedKubernetesRejection),
+    );
+    Ok(())
+}
+
+#[test]
+fn moving_failure_between_fixed_data_properties_remains_a_new_violation() -> eyre::Result<()> {
+    let template = indoc::indoc! {r"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: fixed-property-failure
+        data: {{ if .Values.extra }}{}{{ else }}[]{{ end }}
+        binaryData: {{ if .Values.extra }}[]{{ else }}{}{{ end }}
+    "};
+    sim_assert_eq!(
+        have: relocation_tightening_verdict(template)?,
+        want: Ok(super::HelmFlipVerdict::TighteningMatchedKubernetesRejection),
+    );
+    Ok(())
+}
+
 fn structural_loosening_verdict(
     template: &str,
     context: Value,

@@ -23,6 +23,9 @@ use serde_json::Value;
 use test_util::helm_values::{AcceptanceDocument, ValuesError, acceptance_values};
 use test_util::scratch::ScratchDir;
 
+use crate::helm::assertion_identity::{
+    CanonicalViolationKey, InstanceSegment, canonical_instance_path,
+};
 use crate::helm::cache_policy::render_cacheability;
 use crate::helm::invocation::{
     Cacheability, HelmExecution, HelmRunner, InvocationRecord, PreparedTree, Replay,
@@ -769,7 +772,8 @@ pub struct ViolationKey {
     /// What tells violations of one assertion apart: the property a
     /// `required` misses, the properties `additionalProperties` rejects,
     /// else the offending value when it is a scalar and its type when not.
-    /// Contextual comparisons retain property identities and normalize scalar values to JSON types.
+    /// Contextual diagnostics retain property identities and normalize values to JSON types.
+    /// Canonical comparison keys retain structural details and omit offending values and types.
     pub detail: String,
 }
 
@@ -822,6 +826,7 @@ pub struct KubernetesViolation {
     pub key: ViolationKey,
     /// The validator's message.
     pub message: String,
+    canonical_path: Option<Vec<InstanceSegment>>,
 }
 
 impl KubernetesViolation {
@@ -840,7 +845,12 @@ impl KubernetesViolation {
                 detail: "apiVersion, kind".to_string(),
             },
             message: "a resource needs a string apiVersion and kind".to_string(),
+            canonical_path: None,
         }
+    }
+
+    fn canonical_key(&self) -> CanonicalViolationKey {
+        CanonicalViolationKey::new(&self.key, self.canonical_path.as_deref())
     }
 }
 
@@ -881,7 +891,7 @@ pub struct DefaultsComparison {
 /// Each context is decidable and introduces no assertions beyond defaults.
 /// Payload inheritance uses each context's own multiset independently.
 pub struct UsableKubernetesControls {
-    contexts: Vec<BTreeMap<ViolationKey, usize>>,
+    contexts: Vec<BTreeMap<CanonicalViolationKey, usize>>,
 }
 
 #[derive(Clone, Copy)]
@@ -891,6 +901,62 @@ enum ViolationIdentity {
 }
 
 impl ViolationIdentity {
+    fn canonical_path(
+        self,
+        document: &Value,
+        error: &jsonschema::ValidationError<'_>,
+        key: &ViolationKey,
+    ) -> Result<Option<Vec<InstanceSegment>>, String> {
+        match self {
+            Self::Legacy => Ok(None),
+            Self::Contextual => {
+                canonical_instance_path(document, error, &key.instance_path).map(Some)
+            }
+        }
+    }
+
+    fn collect_violations(
+        self,
+        document: &Value,
+        location: &str,
+        api_version: &str,
+        kind: &str,
+        validator: &jsonschema::Validator,
+        evidence: &mut ResourceEvidence,
+    ) {
+        let name = document
+            .pointer("/metadata/name")
+            .and_then(Value::as_str)
+            .map(str::to_string);
+        let namespace = document
+            .pointer("/metadata/namespace")
+            .and_then(Value::as_str)
+            .map(str::to_string);
+        for error in validator.iter_errors(document) {
+            for key in self.keys(api_version, kind, &error) {
+                let canonical_path = match self.canonical_path(document, &error, &key) {
+                    Ok(path) => path,
+                    Err(reason) => {
+                        evidence.ambiguous_identity.push(format!(
+                            "{location}: {api_version}/{kind} at {} via {}: {reason}",
+                            key.instance_path,
+                            error.evaluation_path()
+                        ));
+                        continue;
+                    }
+                };
+                evidence.invalid.push(KubernetesViolation {
+                    location: location.to_string(),
+                    namespace: namespace.clone(),
+                    name: name.clone(),
+                    key,
+                    message: error.to_string(),
+                    canonical_path,
+                });
+            }
+        }
+    }
+
     fn unidentified(self, document: &Value, location: &str) -> Vec<KubernetesViolation> {
         if matches!(self, Self::Legacy) {
             return vec![KubernetesViolation::unidentified(location)];
@@ -924,8 +990,6 @@ impl ViolationIdentity {
         if matches!(self, Self::Legacy) {
             return vec![key];
         }
-        // Keep the evaluated assertion distinct when several references share a schema location.
-        key.schema_path = error.evaluation_path().to_string();
         match error.kind() {
             ValidationErrorKind::AdditionalProperties { unexpected }
             | ValidationErrorKind::UnevaluatedProperties { unexpected } => {
@@ -966,7 +1030,7 @@ impl ViolationIdentity {
 
 impl UsableKubernetesControls {
     fn compare(
-        assertions: &BTreeMap<ViolationKey, usize>,
+        assertions: &BTreeMap<CanonicalViolationKey, usize>,
         evidence: &ResourceEvidence,
     ) -> DefaultsComparison {
         let mut remaining = assertions.clone();
@@ -975,7 +1039,7 @@ impl UsableKubernetesControls {
             ..DefaultsComparison::default()
         };
         for violation in &evidence.invalid {
-            match remaining.get_mut(&violation.key) {
+            match remaining.get_mut(&violation.canonical_key()) {
                 Some(count) if *count > 0 => {
                     *count -= 1;
                     comparison.inherited_violations.push(violation.clone());
@@ -991,6 +1055,7 @@ impl UsableKubernetesControls {
 struct ResourceEvidence {
     invalid: Vec<KubernetesViolation>,
     uncertain: Vec<String>,
+    ambiguous_identity: Vec<String>,
 }
 
 /// The Kubernetes release the corpus's offline bundle validates against.
@@ -998,7 +1063,7 @@ pub const KUBERNETES_RELEASE: &str = "v1.29.0-standalone-strict";
 
 /// How resource schemas are compiled and judged. Changing the compilation
 /// options or the identity proof must change this.
-const VALIDATOR_POLICY: &str = "helm-schema/offline-kubernetes-validator/v1";
+const VALIDATOR_POLICY: &str = "helm-schema/offline-kubernetes-validator/v2";
 
 /// A compiled resource schema, or why the resource cannot be decided.
 type CompiledSchema = Arc<OnceLock<Result<Arc<jsonschema::Validator>, String>>>;
@@ -1196,8 +1261,10 @@ impl OfflineKubernetesValidator {
     ///
     /// Defaults may violate Kubernetes, but must have no uncertainty.
     /// Contexts must have no uncertainty or new violated assertion relative to defaults.
-    /// Assertions retain resource API/kind, evaluated schema location, instance path and
-    /// structural property identity, with multiplicity and normalized scalar values.
+    /// Assertions retain resource API/kind, canonical schema location and structural
+    /// property identity.
+    /// Array indices and schema-declared map positions are abstracted;
+    /// fixed property names and multiplicity remain distinct, independent of offending values.
     /// Empty `contexts` uses defaults; otherwise only the supplied contexts are applicable.
     ///
     /// # Errors
@@ -1213,7 +1280,7 @@ impl OfflineKubernetesValidator {
         let mut defaults_assertions = BTreeMap::new();
         for violation in &defaults_evidence.invalid {
             *defaults_assertions
-                .entry(violation.key.clone())
+                .entry(violation.canonical_key())
                 .or_default() += 1;
         }
         let mut applicable = Vec::new();
@@ -1237,7 +1304,7 @@ impl OfflineKubernetesValidator {
             );
             let mut assertions = BTreeMap::new();
             for violation in evidence.invalid {
-                *assertions.entry(violation.key).or_default() += 1;
+                *assertions.entry(violation.canonical_key()).or_default() += 1;
             }
             applicable.push(assertions);
         }
@@ -1275,7 +1342,7 @@ impl OfflineKubernetesValidator {
     ///
     /// # Errors
     ///
-    /// Returns an error when the probe cannot be decoded.
+    /// Returns an error when the probe cannot be decoded or assertion correspondence is ambiguous.
     pub fn compare_with_controls(
         &self,
         chart: &PinnedHelmChart,
@@ -1306,6 +1373,11 @@ impl OfflineKubernetesValidator {
                 );
             }
         }
+        eyre::ensure!(
+            evidence.ambiguous_identity.is_empty(),
+            "unresolved contextual assertion identity: {}",
+            evidence.ambiguous_identity.join("; ")
+        );
         Ok(evidence)
     }
 
@@ -1525,17 +1597,14 @@ impl OfflineKubernetesValidator {
             .map(str::to_string);
         match &validator {
             Ok(validator) => {
-                for error in validator.iter_errors(document) {
-                    for key in identity.keys(api_version, kind, &error) {
-                        evidence.invalid.push(KubernetesViolation {
-                            location: location.to_string(),
-                            namespace: namespace.clone(),
-                            name: name.clone(),
-                            key,
-                            message: error.to_string(),
-                        });
-                    }
-                }
+                identity.collect_violations(
+                    document,
+                    location,
+                    api_version,
+                    kind,
+                    validator,
+                    evidence,
+                );
             }
             Err(error) => {
                 // The bundle records a built-in group's kind as absent
@@ -1565,6 +1634,7 @@ impl OfflineKubernetesValidator {
                         message: format!(
                             "{api_version}/{kind} is not served by the pinned Kubernetes version"
                         ),
+                        canonical_path: None,
                     });
                     return;
                 }

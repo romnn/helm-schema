@@ -360,7 +360,7 @@ fn every_applicable_context_retains_its_own_assertion_count() -> eyre::Result<()
 }
 
 #[test]
-fn references_preserve_the_evaluated_assertion_while_scalar_values_normalize() -> eyre::Result<()> {
+fn references_preserve_the_canonical_assertion_while_scalar_values_normalize() -> eyre::Result<()> {
     let root = ScratchDir::new("contextual-references")?;
     let cache = ScratchDir::new("contextual-references")?;
     write_chart(
@@ -396,24 +396,53 @@ fn references_preserve_the_evaluated_assertion_while_scalar_values_normalize() -
     sim_assert_eq!(have: comparison.inherited_violations.len(), want: 1);
     assert!(comparison.new_violations.is_empty() && comparison.uncertain.is_empty());
 
-    // Both references resolve to one schema, but the active assertion is a different use site.
+    // Both routes apply the same canonical constraint to the same member.
     let defaults = chart.adjudicate(&json!({}))?;
-    let different_assertion = chart.adjudicate(&json!({"data": {"branch": 1, "token": 2}}))?;
-    let err = validator
-        .check_controls(&chart, &defaults, &[&different_assertion])
-        .err()
-        .ok_or_eyre("a different reference use site passed context usability")?;
-    assert!(
-        err.to_string()
-            .contains("unusable context Kubernetes control"),
-        "{err:?}"
-    );
-    let different_assertion = chart.adjudicate(&json!({"data": {"branch": 1, "token": 2}}))?;
-    let comparisons = validator.compare_with_controls(&chart, &different_assertion, &checked)?;
+    let other_route = chart.adjudicate(&json!({"data": {"branch": 1, "token": 2}}))?;
+    validator.check_controls(&chart, &defaults, &[&other_route])?;
+    let other_route = chart.adjudicate(&json!({"data": {"branch": 1, "token": 2}}))?;
+    let comparisons = validator.compare_with_controls(&chart, &other_route, &checked)?;
     let comparison = comparisons
         .first()
         .ok_or_eyre("missing context comparison")?;
+    sim_assert_eq!(have: comparison.inherited_violations.len(), want: 1);
+    assert!(comparison.new_violations.is_empty() && comparison.uncertain.is_empty());
+    Ok(())
+}
+
+#[test]
+fn repeated_references_to_one_constraint_keep_multiplicity() -> eyre::Result<()> {
+    let root = ScratchDir::new("contextual-repeated-references")?;
+    let cache = ScratchDir::new("contextual-repeated-references")?;
+    write_chart(
+        root.path(),
+        &json!({"data": {"branch": 0, "token": 0}}),
+        DATA_TEMPLATE,
+    )?;
+    write_schema(
+        cache.path(),
+        &json!({
+            "definitions": {"token": {"type": "string"}},
+            "properties": {"data": {
+                "if": {"properties": {"branch": {"const": 0}}},
+                "then": {"properties": {"token": {"$ref": "#/definitions/token"}}},
+                "else": {"properties": {"token": {"allOf": [
+                    {"$ref": "#/definitions/token"}, {"$ref": "#/definitions/token"}
+                ]}}}
+            }}
+        }),
+    )?;
+    let chart = PinnedHelmChart::prepare(HelmRunner::shared()?, root.path())?;
+    let validator = OfflineKubernetesValidator::new(cache.path(), KUBERNETES_RELEASE)?;
+    let defaults = chart.adjudicate(&json!({}))?;
+    let checked = validator.check_controls(&chart, &defaults, &[&defaults])?;
+    let payload = chart.adjudicate(&json!({"data": {"branch": 1, "token": 2}}))?;
+    let comparisons = validator.compare_with_controls(&chart, &payload, &checked)?;
+    let comparison = comparisons
+        .first()
+        .ok_or_eyre("missing context comparison")?;
+    sim_assert_eq!(have: comparison.inherited_violations.len(), want: 1);
     sim_assert_eq!(have: comparison.new_violations.len(), want: 1);
-    assert!(comparison.inherited_violations.is_empty() && comparison.uncertain.is_empty());
+    assert!(comparison.uncertain.is_empty());
     Ok(())
 }
