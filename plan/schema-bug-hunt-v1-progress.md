@@ -8525,6 +8525,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Process fix: `round8/watch-codex.py` reported it "running" because the exited codex CLI stayed a zombie (kill(pid,0) succeeds);
   it now reads `ps` state (Z → DEAD) and reports FAILED when the turn's events end in `turn.failed`.** T7 99 GB free (floor 80); asked
   the user to approve clearing 49 GB of idle targets (round8-tracing 20, round8-defblock 16, round8-jsonschema-fork 13). Orchestrator.
+- 00:05 (Oct 19) — **Battery rework 7 (R18 + R19 class fix) handed back after two capacity restarts; committed; re-reviews sent.**
+  Registry-integrity precondition (colliding retrieval/resource IDs or anchors reject the whole schema unresolved), compiler-address
+  proof (one source node, dialect and reference base per address), propertyNames children resolved on their intact route; a keyword
+  audit over all 41 pinned-validator keyword files sends other incomplete diagnostics (false-schema groups, dependency-required,
+  min/maxContains) unresolved. Measured on the real pinned schemas: 36 Kubernetes + 105 CRDs, 49,972 nodes, 1,067 sampled errors —
+  zero new unresolved, zero registry failures (4 pre-existing CRD regex compile failures unchanged). Red→green: R18 now new=1 /
+  inherited=1, R19 fails unresolved; extra two-anchor / pointer-target / cached-suffix controls. Gates: fmt, lint, lint:fc, unit
+  (1,700), integration (1,024 + 26 skipped), clean dump, schema-only battery A/B (byte-identical coverage), tokei:core delta 0 all 0.
+  Test-support code grows +234 (tests +349) — recorded. Orchestrator committed 1fa7463d (transfer b9680160…) and 230865a7 (docs
+  53b009b2…); follow_ups on 202423-800b1d2c (astra) and 202423-f3e14ed1 (sol). Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
