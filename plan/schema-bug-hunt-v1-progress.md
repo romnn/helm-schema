@@ -8137,6 +8137,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   discipline as semantic tracks, and a hard scope rule ("stop and report if the fix moves more than the named charts"). Re-entry
   plan: a design review on both models for a minimal trim-only fix from a-define-trim.patch and its nine false rejections; until
   then the clone stays as evidence (target ~34 GB is disposable with the user's approval). Orchestrator.
+- 08:07 (Oct 18) — **Battery rework 3 had FAILED unseen at ~05:00 ("Selected model is at capacity"); resumed; process fix.**
+  The failure hit while schema-only battery run A was running; everything before it was done (final-tree gates incl. exact
+  `task test:integration` 991 passed, clean `--helm-ready` dump, source/patch hash receipts). My heartbeats looked only for a
+  last-message.md, so a dead follow-up turn read as "pending" for three hours. Resumed as follow_up turn 5 (re-run only battery A/B,
+  then hand back). Process fix (orchestrator): `round8/watch-codex.py` reports the LATEST turn of every registered run as
+  done / running / DEAD (pid gone without an answer); every heartbeat runs it. W4 (Claude) killed its two runaway classification
+  scripts after the 07:11 time-box, committed aec89944 (R72: widen only an untyped branch that kept the declared sample) and started
+  its live battery; W1 rework 12 committed R67–R72 work in progress (b0a708ac). Load 12, T7 235 GB. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
