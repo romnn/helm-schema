@@ -8056,6 +8056,24 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   abstentions); gates fmt/lint/lint:fc/ast-grep 0, nextest 1 832, dialect 2/2; +407 prod LOC; bitnami-redis CPU 5.5 / 11.4 /
   12.2 s; proposed residual R59 (helper output `{{ " # " | quote }}`, inherited). Re-checks as follow_ups: astra d488ec1f (turn
   2 from byte 14 007), sol cb0afa73 (from 14 306). Nothing has landed in session 5 yet; strict closures 4/83. Orchestrator.
+- 03:46 (Oct 18) — **W1 rework 10 = REWORK ×2 (`review-w1-r10-{astra,sol}.md`); battery rework 2 and runner v7 committed and
+  in review.** W1: both reproduced 153 cells / 261 instances and 101/23/0; both accept the cost (+7 % vs R48; R46 separate).
+  Open: Unicode line breaks (NEL/LS/PS) in escapes and after closing quotes (P1 both); Go's collection separators completing
+  escapes across members (P1 astra, main-too); a trailing backslash before a later literal quote (P1 sol); header side effects lost
+  by the arm reset (P1 astra); stale ternary selector after eager-argument mutation (P1 astra); R59 is IN scope, the same rendered-
+  bytes boundary as R56 (P1 both); helper summaries still consume a parallel lowering where selected proofs collapse (P2 both).
+  Orchestrator decision for rework 11: derive the quoted-scalar grammar in ONE place from go-yaml v2.4.0's scanner (break set,
+  escape table, flow indicators), table-test each production against Helm, abstain where the remaining output is not structural;
+  delete the parallel lowering. Brief `round8/brief-w1-rework11.md` (R60–R66), fresh Claude builder spawned 03:46 from
+  `brief-w1-rework11-resume.md`. Battery rework 2 (R6 usable controls: decidable, no assertions beyond defaults, violations by
+  resource+schema location+instance path; R7 template composition independent of an ignored values.yaml; R8 docs): gates all 0,
+  exact integration 977 passed, battery A/B byte-identical; committed by the orchestrator as a5779bff (transfer patch sha256
+  bebfaea4 verified) + eca4ebd9 docs; re-checks as follow_ups turn 3 (sol b2180698 from byte 16 636, astra a86ea30f from 15 821).
+  Runner v7 (Codex sol): freeze_roster/build_roster before nextest in run_battery, roster v2 with SCHEMA_ACCEPTANCE_CONTEXT_ROSTER,
+  ship_baseline 5 MiB policy shared by battery and sweep, battery_coverage/lint_coverage_problem, sweep reuse with
+  verify_sweep_inputs; red on 741e1eb, run-all.sh 0 (12 shell suites, 96 Python tests); committed by the orchestrator in the
+  runner CLONE `round8/runner-v7-dev` as 9904514 (tree == transfer patch sha256 64c2aed4); fresh reviews astra 20261018T014606-
+  7f28f782, sol 20261018T014608-a84f816e. The live runner is untouched. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
