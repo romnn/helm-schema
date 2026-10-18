@@ -8353,6 +8353,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   7.2 s, `derive_schema_signals_from_contract_parts` 7.2 s. Next perf step: spans one level inside append_selected_constraints. Reviews:
   astra 20261018T163006-5868724e, sol …-2a8ccdeb. Landing plan: bundle fixture-neutral tooling (battery lane, tracing, helmsweep→fork)
   into ONE chain where readiness allows, to amortise the 2–2.75 h chain. Orchestrator.
+- 19:01 (Oct 18) — **Tracing spans = LAND ×2 (`review-tracing-{astra,sol}.md`; no findings).** Both independently confirmed
+  byte parity (204 untraced + 5 traced artifacts), the shared layer, filter, unset-env behaviour and runner compatibility. Caveat (both):
+  the corpus trace has 4 984 misplaced-end events at EXISTING finer span sites; the new phase spans match raw packets, but self times of
+  pre-existing spans (incl. append_selected_constraints's 95 s) may be misattributed — the hotspot must be confirmed with spans one level
+  inside it and a fix of the misplaced-end sites (queued with the next perf step). Landing: tracing cannot land alone — live runner v7
+  refuses the legacy battery main still has — so it rides in landing 10a with the battery lane (and helmsweep→fork if LAND ×2 by then).
+  Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
