@@ -8407,6 +8407,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   rows (221 main-too) are in scope — reviewers asked for the simple fix. Reviews: astra 20261018T181747-a73e2885, sol …-7a9fa92c (fresh;
   the pre-review sessions expire ~20:42), plus the first FABLE complexity challenger (native read-only subagent, quota note 17:33)
   asked for the simpler model behind the reopened classes. Orchestrator.
+- 20:27 (Oct 18) — **First Fable complexity challenge (W4 r16) = SIMPLIFY-FIRST (`round8/challenge-w4-rework16-fable.md`).** Diagnosis:
+  the declared sample's narrowing is gated on guard-evaluator decidability (resolve_policy.rs:1204), so each evaluator fix moved which
+  branches took the sample (R68→R70); R72/R73 then reconciled in the generator facts the IR owns in two projections (range_domain vs
+  range_key; MemberAccess vs scope-free keyed_reads, which also hides a latent falco false rejection; JSON-emptiness typing). Proposals:
+  P1 one rule — an unresolved sink is typed by the declared sample, nothing borrows; the IR key render produces the iteration fact;
+  delete R73's four reconciliation fields and R72's anyOf wrap (≈ −100 to −130); falco's real fix is lowering `not $hasConfig` to
+  Not(ContainsMemberEquals) in the IR; P2 decouple the sample from evaluator decidability and give the evaluator the caller's
+  AbsenceDefaults/values doc (≈ −15); P3 one tpl claim body representation (≈ −40); plus older patch layers to replace. Orchestrator
+  decision: W4's next round is a CONSOLIDATION round built on P1+P2 (+P3) merged with astra/sol's correctness findings when they land;
+  this also addresses the 224 rendered-but-rejected rows the reviewers were asked about. The Fable challenger earned its quota on the
+  first use. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
