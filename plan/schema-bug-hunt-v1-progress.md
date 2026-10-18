@@ -8554,6 +8554,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `[{}]` false rejections in the live battery; bitnami-redis +50% cost (queued for rework 14 as a landing blocker). Builder sent on
   to FINAL with ≤ 2 dump jobs and an 8 GB per-chart RSS stop. Deleted: round8-k8s-r8-target, round7-f78, round8-definitions,
   round8-defblock, round8-jsonschema-fork, round8-landing10-target, r7-lint/reddiag/base targets → T7 231 GB free. Orchestrator.
+- 01:20 (Oct 19) — **Tracing with the user's fork is CLEAN; self times are now trustworthy — `append_selected_constraints` is ~50% of worker
+  self time.** sol (f9ee6567 turn 2): with romnn/tracing-perfetto d4c54ab (no API change in trace.rs), all four traces show 0
+  misplaced ends, 0 unclosed slices, 0 data-loss counters; overhead +5.5% (3.98 → 4.20 s redis medians); 204 fixtures byte-identical
+  with tracing off; gates fmt/lint/lint:fc/unit/integration 0 (test:all 201 = 4 live fetches). Ranking (`fork-tracing/self-time-
+  ranking.md`): five-chart corpus — append_selected_constraints 74.7 s self (49.7% of worker self time), collect_conditional_schemas
+  15.7, collect_manifest_contract_for_template 7.8, minimize_schema 5.8; redis — 1.1 s (27%). Orchestrator pinned the fork as a git rev
+  dependency (not the local path), dropped the builder's source_digest workaround (unneeded with a git dep; test passes), ran fmt 0,
+  task lint 0, source_digest + span_lifetimes 7/7, and committed 98d19df7 in round8-tracing; re-review follow_ups on the tracing
+  reviewers 163006-5868724e (astra) and 163006-2a8ccdeb (sol). Perf analysis of append_selected_constraints started read-only: sol
+  231953-f448078a (`round8/q/perf-append-selected-constraints.md`).
+- 01:20 (Oct 19) — **Battery rework 8 (R20) committed (2d167d14 code, 5c1dde69 docs); re-reviews sent.** An execution failure anywhere in an
+  error tree is unresolved; a regex/string preflight catches failures that boolean applicators discard; all 41 keyword files hashed.
+  Gates 0 (unit 1,701, integration 1,028 + 26 skipped); pinned audit zero newly unresolved. Schema-only battery 463 s vs ~250 s last
+  round — asked reviewers whether the preflight explains it. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
