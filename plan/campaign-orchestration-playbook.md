@@ -137,6 +137,12 @@ tried, method, result) goes back to the builder unread. The checklist — a buil
 9. **Cost.** Time generation main vs candidate on three charts (one bitnami); never run real `helm lint` over the whole roster
    (openebs takes ~11 minutes per lint) — use the prober for breadth and real Helm for named witnesses.
 
+10. **Simpler, not bigger (user, 2026-10-18).** A fix must not be a hotfix patch or a per-cell special case. Fix the root cause
+   in the shared representation so the code gets simpler and more correct together: name the representation, pass, flag or
+   special case the fix DELETES or merges, report the net production LOC delta (`task tokei:core`) and justify any growth by the
+   class of defects it closes. A fix that adds an exception per counterexample, a parallel representation or a new flag beside
+   an existing one goes back. Reviewers are asked to judge this explicitly (VERDICT may be REWORK on architecture alone).
+
 The orchestrator repeats this list in every builder brief and asks the reviewers to check the self-attack section first.
 
 ## Mistakes worth not repeating

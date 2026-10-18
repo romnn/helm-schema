@@ -8218,6 +8218,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   unless rework 13 already covers it. Speed-ups kept within the bar: fix by class with one structural rule (W1 rework 13's coarse
   in-action rule), smaller landable slices, Codex pre-reviews before hand-back, more parallel Codex builders on bug-hunt families
   with design review first and a hard scope limit. Orchestrator.
+- 14:33 (Oct 18) — **USER REQUIREMENT: fixes must simplify the architecture, not pile up special cases.** Verbatim: "make sure the
+  fixes of those defects are not hotfix patches but ideally simplify and improve the architecture alongside correctness so the code
+  becomes more simple and more correct and not a pile to thousands of special cases". Evidence it is needed: W1 grew +407/+398/+721
+  production LOC over three reworks; W4 is ~2.4k above main (79 119 vs 76 692). Actions: playbook self-attack item 10 "Simpler, not
+  bigger" (name what the fix deletes or merges; net `task tokei:core` delta; justify growth by the class closed; reviewers may REWORK
+  on architecture alone); messages to the W1 (rework 13 + R77: s3 is in scope after the 14:31 decision) and W4 (rework 16) builders;
+  the battery Codex builder gets it in its next follow_up. Architecture audits on both models for both big tracks (consolidations
+  that delete special cases while keeping every Helm-verified verdict): W1 astra 20261018T123335-72bd30c1 / sol …-75ba6285, W4 astra
+  …-0e53eab2 / sol …-379791d3 → `round8/arch-audit-{w1,w4}-{astra,sol}.md`; their proposals become the next rework targets.
+  Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
