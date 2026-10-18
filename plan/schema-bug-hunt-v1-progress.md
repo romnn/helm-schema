@@ -8033,6 +8033,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   runner-v7-roster-export from 741e1eb; the live runner is untouched), brief `round8/brief-runner-v7-codex.md`, tests via
   run-all.sh with GUARD_SRC v7. W4 committed 3b92c53d (R72: only typed alternatives join the runtime domain). Heartbeat 01:35:
   load 27, T7 98 GB. Orchestrator.
+- 02:11 (Oct 18) — **Resource squeeze: T7 81 GB (floor 80), load 40 with five builders.** Targets: W4 44 GB, defblock
+  34 GB, battery 28 GB (holds superseded phase1-dump / rework1-dump / rework1-integration-dump), W1 28 GB (rebuilding). Builders
+  self-pause at load 40. Directory deletions need the user (standing rule), so no dumps were removed by the orchestrator.
+  Contingency (orchestrator): below 80 GB, cancel the defblock Codex run (its work stays on disk) and `cargo clean -p` its workspace
+  crates. Defblock status from its transcript: trim/registration/block cases 111/111 against Helm, unit 1 724, fmt/lint/lint:fc 0,
+  BUT its verified dump moves 114 artifacts because it broadened into "preserving uncertainty in helper-controlled reads"; the
+  integration consumers found Helm-confirmed regressions (datadog scalar hosts, vault empty list, external-secrets security
+  contexts) it is fixing — scope creep beyond the brief, to be judged in review. Its sandbox also blocks proxy.golang.org (as the
+  battery builder's did). Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
