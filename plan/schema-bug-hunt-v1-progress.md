@@ -8468,6 +8468,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Assert; no declared-shape merge; IR range-key iteration fact and falco Not(ContainsMemberEquals). Open: D1 (stand-in admits null),
   D2 (range-key `{*}` resolves per sink property). Planned −150 to −350 LOC vs r16. Runs 192749-529e20b2 (astra), 192750-0416e02b
   (sol), question `round8/q/w4-r17-design.md`. Orchestrator.
+- 21:40 (Oct 18) — **W4 rework 17 design = REDESIGN ×2 (astra, sol; `round8/design-w4-r17-{astra,sol}.md`), same direction; revision 2
+  dispatched (`round8/brief-w4-rework17-design2.md`).** Both endorse the architecture (guarded per-use requirements intersected per
+  branch, Assert only for otherwise-missing evidence, no borrowing) and most deletions, and both reproduce the class counts. Blocking:
+  D1 (nullable stand-in) — astra's counterexample: redis `containerPorts.redis: ""` with a dynamic kind renders `containerPort: null`,
+  kubeconform rejects; nullable output types admit surviving `""`/`"~"`. Orchestrator decision: D1 = NO (class A 86 ""+10 null rows stay
+  POLICY-ATTRIBUTED under the standing Assert decision); D2 = YES only on the RangeKey(P) + same-iteration member identity fact,
+  with required members (resolve_ctx.rs:348 `{*}` never provider-required) and the int-or-string oneOf kept. New W4-R80 (sol P1): a
+  values path rendered into `kind`/`apiVersion` must be a present non-empty string, structurally — redis `replica.kind: ""` is only
+  rejected today by an unrelated replicaCount restriction. Adjudication-method corrections: compare k8s failures by template source +
+  diagnostic (Z rows 212/216/218 are the inherited milvus duplicate key under another ConfigMap name), skipped resources are UNKNOWN,
+  literal-null LintRaw rows judged on the coalesced instance. Keep union_of_string_variants; delete the range-priority union
+  (overlay_lowering.rs:659). Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
