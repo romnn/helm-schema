@@ -8209,6 +8209,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   saturates in Go (1e20 → i64::MAX) but schema/evaluator read beyond-bound true; R76 (P2 astra) integral floats > 2^53 compared via
   decimal spelling. Brief `round8/brief-w4-rework16.md`, fresh Claude builder from `brief-w4-rework16-resume.md` (no rebase until
   landing 10a merges; every R72 LOOSEN row adjudicated). Orchestrator.
+- 14:31 (Oct 18) — **USER DECISION: keep fixing defects main already has; the landing bar stays.** Asked why every round
+  ends in REWORK, the orchestrator reported that the findings are real (Helm-executed counterexamples; W4 R72 introduced falco/cilium
+  false acceptances) but that the bar also blocks on inherited (main-too) and constructed cases, and proposed blocking only on
+  regressions vs main. The user declined: "keep fixing defects that main already has! even if it takes longer it will hopefully
+  become less over time right?" Consequences: every Helm-verified counterexample stays blocking; W1's s3 (statement-level
+  `set .Values` requirement, a main-too false rejection) is to be FIXED, not deferred — it goes into W1's next rework after rework 13
+  unless rework 13 already covers it. Speed-ups kept within the bar: fix by class with one structural rule (W1 rework 13's coarse
+  in-action rule), smaller landable slices, Codex pre-reviews before hand-back, more parallel Codex builders on bug-hunt families
+  with design review first and a hard scope limit. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
