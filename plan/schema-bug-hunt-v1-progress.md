@@ -8438,6 +8438,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   needs a fork of tracing-perfetto: a user-level dependency decision, asked. Gates on the checker tree: fmt/lint/lint:fc/unit/integration
   0, test:all 201 (4 live-fetch failures), tokei 0. Self times (incl. `append_selected_constraints`) stay UNVERIFIED until then. The
   LAND ×2 span commits 447e9858 + 3b1b123b are unaffected and stay in landing 10a. Orchestrator.
+- 20:48 (Oct 18) — **Fork parity rework back (sol builder, run 1b2bb946 turn 1); re-review sent to astra + sol.** Parity now uses the documents
+  Helm actually validates: an evidence-only observer captures `values.AsMap()` at `ValidateAgainstSingleSchema` (values lint, template
+  lint, template/install) over all 156 schemas and 2,036 sweep rows — 6,100 documents; 5,365 replayed with 3,185 accepted / 2,180
+  rejected, identical under stock and fork and matching live Helm; 735 blocked by identical oncall/airflow compile errors (the
+  pre-existing main `\u` metaschema bug); 8 absent boundaries explained. Compile seconds stock 456 / fork 236 (shared host). The
+  fresh-cache P2 is closed by the orchestrator's empty-module-cache `task build:helmsweep` (exit 0). Gates: build:helmsweep,
+  test:helmsweep, fmt, lint, unit (1,699), integration (923 + 24 skipped) all 0; fixtures unchanged. Orchestrator committed the
+  PATCH.md parity contract as 4aa02cc2 in round8-jsonschema-fork (patch sha db318d03…). Landing 10a clone pre-staged at
+  /Volumes/T7/dev/round8-landing10a (main 7c28756f + tracing aafc68b7, a1a44ee0); the battery lane and, if LAND ×2, the fork follow.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
