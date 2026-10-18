@@ -1002,7 +1002,7 @@ fn k8s_column(
                         ),
                         violation.key.keyword.clone(),
                         violation.message,
-                        violation.key.schema_path.clone(),
+                        violation.key.schema_location.clone(),
                     ]);
                 }
                 "invalid"

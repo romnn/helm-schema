@@ -1,9 +1,113 @@
-//! Schema-directed instance identity, separate from concrete diagnostic paths.
+//! Schema-directed constraint and instance identity, separate from diagnostic paths.
 
 use std::iter::Peekable;
 use std::str::Split;
 
+use color_eyre::eyre::{self, OptionExt as _};
+use jsonschema::paths::Location;
 use serde_json::Value;
+
+pub(super) fn canonical_schema_location(
+    registry: &jsonschema::Registry<'_>,
+    root_uri: &str,
+    error: &jsonschema::ValidationError<'_>,
+) -> eyre::Result<String> {
+    let reported = error
+        .absolute_keyword_location()
+        .ok_or_eyre("missing absolute keyword location")?;
+    let root_resolver = registry.resolver(jsonschema::uri::from_str(root_uri)?);
+    let (root, root_resolver, root_draft) = root_resolver.lookup(root_uri)?.into_inner();
+    let root_resolver = root_resolver.in_subresource(root_draft.create_resource_ref(root))?;
+    let (mut node, mut resolver, mut draft) = (root, root_resolver.clone(), root_draft);
+    let mut schema = node;
+    for token in error.evaluation_path().as_str().split('/').skip(1) {
+        let child = node
+            .pointer(&format!("/{token}"))
+            .ok_or_eyre("evaluation route does not identify a schema node")?;
+        if std::ptr::eq(node, schema) && matches!(token, "$ref" | "$dynamicRef" | "$recursiveRef") {
+            eyre::ensure!(
+                token == "$ref",
+                "dynamic reference correspondence is unproved"
+            );
+            let reference = child.as_str().ok_or_eyre("reference is not a string")?;
+            (node, resolver, draft) = resolver.lookup(reference)?.into_inner();
+            schema = node;
+        } else {
+            node = child;
+            if draft
+                .subresources_of(schema)
+                .any(|child| std::ptr::eq(child, node))
+            {
+                draft = draft.detect(node);
+                resolver = resolver.in_subresource(draft.create_resource_ref(node))?;
+                schema = node;
+            }
+        }
+    }
+    eyre::ensure!(
+        reported.strip_fragment() == resolver.base_uri().strip_fragment(),
+        "reported keyword resource disagrees with its resolved evaluation route"
+    );
+    // Reference lookup can retain either a retrieval alias or the declared resource ID.
+    // Derive one location from the node's source origin, independent of that choice.
+    let origin = schema_node_pointer(root, node, Location::new())
+        .ok_or_eyre("constraint has no proven origin in the pinned schema")?;
+    (node, resolver, draft) = (root, root_resolver, root_draft);
+    schema = root;
+    let mut pointer = Location::new();
+    for token in origin.as_str().split('/').skip(1) {
+        node = node
+            .pointer(&format!("/{token}"))
+            .ok_or_eyre("schema origin is missing")?;
+        pointer = pointer.join(token.replace("~1", "/").replace("~0", "~").as_str());
+        if draft
+            .subresources_of(schema)
+            .any(|child| std::ptr::eq(child, node))
+        {
+            draft = draft.detect(node);
+            let resource = draft.create_resource_ref(node);
+            if resource.id().is_some() {
+                resolver = resolver.in_subresource(resource)?;
+                pointer = Location::new();
+            }
+            schema = node;
+        }
+    }
+    let resource_uri = resolver.base_uri();
+    let mut fragment = jsonschema::uri::EncodedBuffer::new();
+    fragment.encode_str::<jsonschema::uri::Path>(pointer.as_str());
+    let location = resource_uri.with_fragment(Some(fragment.as_estr()));
+    eyre::ensure!(
+        std::ptr::eq(resolver.lookup(location.as_str())?.contents(), node),
+        "canonical keyword location does not identify the resolved schema node"
+    );
+    Ok(location.to_string())
+}
+
+fn schema_node_pointer(root: &Value, target: &Value, pointer: Location) -> Option<Location> {
+    if std::ptr::eq(root, target) {
+        return Some(pointer);
+    }
+    match root {
+        Value::Object(properties) => {
+            for (name, child) in properties {
+                if let Some(found) = schema_node_pointer(child, target, pointer.join(name.as_str()))
+                {
+                    return Some(found);
+                }
+            }
+        }
+        Value::Array(items) => {
+            for (index, child) in items.iter().enumerate() {
+                if let Some(found) = schema_node_pointer(child, target, pointer.join(index)) {
+                    return Some(found);
+                }
+            }
+        }
+        _ => {}
+    }
+    None
+}
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub(super) enum InstanceSegment {

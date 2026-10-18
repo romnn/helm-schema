@@ -23,7 +23,9 @@ use serde_json::Value;
 use test_util::helm_values::{AcceptanceDocument, ValuesError, acceptance_values};
 use test_util::scratch::ScratchDir;
 
-use crate::helm::assertion_identity::{InstanceSegment, canonical_instance_path};
+use crate::helm::assertion_identity::{
+    InstanceSegment, canonical_instance_path, canonical_schema_location,
+};
 use crate::helm::cache_policy::render_cacheability;
 use crate::helm::invocation::{
     Cacheability, HelmExecution, HelmRunner, InvocationRecord, PreparedTree, Replay,
@@ -805,8 +807,8 @@ pub struct KubernetesAssertion {
     pub api_version: String,
     /// The resource's kind.
     pub kind: String,
-    /// Canonical location of the violated constraint, independent of reference routes.
-    pub schema_path: String,
+    /// Absolute keyword URI, including its schema resource, independent of reference routes.
+    pub schema_location: String,
     /// The violated keyword.
     pub keyword: String,
     /// Structural property identity; offending scalar values are excluded.
@@ -901,12 +903,21 @@ impl ResourceEvidence {
         &mut self,
         document: &Value,
         location: &str,
-        validator: &jsonschema::Validator,
+        schema: &ResourceSchema,
     ) -> eyre::Result<()> {
         use jsonschema::error::ValidationErrorKind;
 
         let mut occurrences: Vec<KubernetesViolation> = Vec::new();
-        for error in validator.iter_errors(document) {
+        for error in schema.validator.iter_errors(document) {
+            let schema_location =
+                canonical_schema_location(&schema.registry, ANONYMOUS_SCHEMA_URI, &error).map_err(
+                    |reason| {
+                        eyre::eyre!(
+                            "unresolved assertion identity: {location} via {}: {reason}",
+                            error.evaluation_path()
+                        )
+                    },
+                )?;
             let members = match error.kind() {
                 ValidationErrorKind::AdditionalProperties { unexpected } => unexpected.clone(),
                 ValidationErrorKind::AdditionalItems { limit } => {
@@ -958,7 +969,7 @@ impl ResourceEvidence {
                         .and_then(Value::as_str)
                         .unwrap_or_default()
                         .to_string(),
-                    schema_path: error.schema_path().to_string(),
+                    schema_location: schema_location.clone(),
                     keyword: error.kind().keyword().to_string(),
                     detail,
                     instance,
@@ -967,7 +978,7 @@ impl ResourceEvidence {
                 // Different canonical roles for that same occurrence do not prove correspondence.
                 if let Some(previous) = occurrences.iter().find(|previous| {
                     previous.instance_path == instance_path
-                        && previous.key.schema_path == key.schema_path
+                        && previous.key.schema_location == key.schema_location
                         && previous.key.keyword == key.keyword
                         && previous.key.detail == key.detail
                 }) {
@@ -1010,10 +1021,10 @@ impl ResourceEvidence {
                 key: KubernetesAssertion {
                     api_version: String::new(),
                     kind: String::new(),
-                    schema_path: if present {
-                        format!("/properties/{property}/type")
+                    schema_location: if present {
+                        format!("urn:helm-schema:resource-identity#/properties/{property}/type")
                     } else {
-                        "/required".to_string()
+                        "urn:helm-schema:resource-identity#/required".to_string()
                     },
                     keyword: if present { "type" } else { "required" }.to_string(),
                     detail: if present {
@@ -1035,10 +1046,39 @@ pub const KUBERNETES_RELEASE: &str = "v1.29.0-standalone-strict";
 
 /// How resource schemas are compiled and judged. Changing the compilation
 /// options or the identity proof must change this.
-const VALIDATOR_POLICY: &str = "helm-schema/offline-kubernetes-validator/v3";
+const VALIDATOR_POLICY: &str = "helm-schema/offline-kubernetes-validator/v4";
+
+/// Base for anonymous schemas; resource API/kind separately qualify every assertion.
+const ANONYMOUS_SCHEMA_URI: &str = "https://helm-schema.invalid/resource";
+
+/// The validator and the same offline registry used to prove constraint locations.
+struct ResourceSchema {
+    validator: jsonschema::Validator,
+    registry: jsonschema::Registry<'static>,
+}
+
+impl ResourceSchema {
+    fn compile(schema: &Value, draft: jsonschema::Draft) -> eyre::Result<Self> {
+        let registry = jsonschema::Registry::new()
+            .draft(draft)
+            .retriever(NoRemoteSchemas)
+            .add(ANONYMOUS_SCHEMA_URI, draft.create_resource(schema.clone()))?
+            .prepare()?;
+        let validator = jsonschema::options()
+            .with_base_uri(ANONYMOUS_SCHEMA_URI)
+            .with_draft(draft)
+            .with_retriever(NoRemoteSchemas)
+            .with_registry(&registry)
+            .build(schema)?;
+        Ok(Self {
+            validator,
+            registry,
+        })
+    }
+}
 
 /// A compiled resource schema, or why the resource cannot be decided.
-type CompiledSchema = Arc<OnceLock<Result<Arc<jsonschema::Validator>, String>>>;
+type CompiledSchema = Arc<OnceLock<Result<Arc<ResourceSchema>, String>>>;
 
 /// Compiled schemas by `(apiVersion, kind)`, compiled once each.
 #[derive(Default)]
@@ -1363,7 +1403,7 @@ impl OfflineKubernetesValidator {
         &self,
         api_version: &str,
         kind: &str,
-    ) -> Result<Arc<jsonschema::Validator>, String> {
+    ) -> Result<Arc<ResourceSchema>, String> {
         let key = (api_version.to_string(), kind.to_string());
         let group = api_version.split_once('/').map_or("", |(group, _)| group);
         // Hold the map only to find the cell; compile outside it.
@@ -1456,7 +1496,7 @@ impl OfflineKubernetesValidator {
                             api_version: api_version.to_string(),
                             kind: kind.to_string(),
                             instance: vec![InstanceSegment::Fixed("apiVersion".to_string())],
-                            schema_path: "/served".to_string(),
+                            schema_location: "urn:helm-schema:api-presence#/served".to_string(),
                             keyword: "served".to_string(),
                             detail: String::new(),
                         },
@@ -1593,16 +1633,13 @@ fn compile_crd_validator(
     crds: &CrdsCatalogSchemaProvider,
     api_version: &str,
     kind: &str,
-) -> Result<jsonschema::Validator, String> {
+) -> Result<ResourceSchema, String> {
     let resource = ResourceRef::concrete(api_version.to_string(), kind.to_string());
     let ProviderLookupResult::Found { schema, .. } = crds.lookup(&resource, &YamlPath::default())
     else {
         return Err("pinned CRD schema not found".to_string());
     };
-    jsonschema::options()
-        .with_retriever(NoRemoteSchemas)
-        .with_draft(jsonschema::Draft::Draft7)
-        .build(schema.schema())
+    ResourceSchema::compile(schema.schema(), jsonschema::Draft::Draft7)
         .map_err(|error| format!("pinned CRD schema did not compile: {error}"))
 }
 
@@ -1610,7 +1647,7 @@ fn compile_resource_validator(
     provider: &KubernetesJsonSchemaProvider,
     api_version: &str,
     kind: &str,
-) -> Result<jsonschema::Validator, String> {
+) -> Result<ResourceSchema, String> {
     let resource = ResourceRef::concrete(api_version.to_string(), kind.to_string());
     let fragment = match provider.lookup(&resource, &YamlPath::default()) {
         ProviderLookupResult::Found { schema, .. } => schema,
@@ -1634,7 +1671,6 @@ fn compile_resource_validator(
     let (_, source) = fragment.into_source_parts();
     let source =
         source.ok_or_else(|| "provider did not preserve the original schema source".to_string())?;
-    let mut options = jsonschema::options().with_retriever(NoRemoteSchemas);
     let mut draft = jsonschema::Draft::default().detect(source.source_schema());
     // The pinned Kubernetes bundle uses an unversioned legacy meta-schema URI.
     // Interpret that URI under the corpus's fixed Draft 7 policy.
@@ -1645,15 +1681,13 @@ fn compile_resource_validator(
         == Some("http://json-schema.org/schema#")
     {
         draft = jsonschema::Draft::Draft7;
-        options = options.with_draft(draft);
     }
     if !schema_declares_resource(source.source_schema(), api_version, kind, draft) {
         return Err(format!(
             "original schema does not prove exact identity {api_version}/{kind}"
         ));
     }
-    options
-        .build(source.source_schema())
+    ResourceSchema::compile(source.source_schema(), draft)
         .map_err(|error| format!("original resource schema did not compile: {error}"))
 }
 

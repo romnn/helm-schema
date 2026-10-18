@@ -411,47 +411,176 @@ fn references_preserve_the_canonical_assertion_while_scalar_values_normalize() -
 }
 
 #[test]
-fn repeated_references_to_one_constraint_count_one_occurrence() -> eyre::Result<()> {
-    let root = ScratchDir::new("contextual-repeated-references")?;
-    let cache = ScratchDir::new("contextual-repeated-references")?;
-    write_chart(
-        root.path(),
-        &json!({"data": {"branch": 0, "token": 0}}),
-        DATA_TEMPLATE,
-    )?;
+fn distinct_schema_resources_preserve_integer_and_string_constraints() -> eyre::Result<()> {
+    assert_distinct_schema_resources(
+        "https://review.test/",
+        &json!("integer"),
+        &json!("string"),
+        &json!(false),
+    )
+}
+
+#[test]
+fn distinct_schema_resources_preserve_overlapping_union_constraints() -> eyre::Result<()> {
+    assert_distinct_schema_resources(
+        "https://example.test/",
+        &json!(["string", "integer"]),
+        &json!(["integer", "boolean"]),
+        &json!([]),
+    )
+}
+
+fn assert_distinct_schema_resources(
+    resource_base: &str,
+    first_type: &Value,
+    second_type: &Value,
+    payload: &Value,
+) -> eyre::Result<()> {
+    let root = ScratchDir::new("distinct-schema-resources")?;
+    let cache = ScratchDir::new("distinct-schema-resources")?;
+    write_chart(root.path(), &json!({"data": "ok"}), DATA_TEMPLATE)?;
     write_schema(
         cache.path(),
         &json!({
-            "definitions": {"token": {"type": "string"}},
-            "properties": {"data": {
-                "if": {"properties": {"branch": {"const": 0}}},
-                "then": {"properties": {"token": {"$ref": "#/definitions/token"}}},
-                "else": {"properties": {"token": {"allOf": [
-                    {"$ref": "#/definitions/token"}, {"$ref": "#/definitions/token"}
-                ]}}}
-            }}
+            "$defs": {
+                "a": {"$id": format!("{resource_base}a"), "type": first_type},
+                "b": {"$id": format!("{resource_base}b"), "type": second_type}
+            },
+            "properties": {"data": {"allOf": [
+                {"$ref": format!("{resource_base}a")},
+                {"$ref": format!("{resource_base}b")}
+            ]}}
         }),
     )?;
     let chart = PinnedHelmChart::prepare(HelmRunner::shared()?, root.path())?;
     let validator = OfflineKubernetesValidator::new(cache.path(), KUBERNETES_RELEASE)?;
     let defaults = chart.adjudicate(&json!({}))?;
     let checked = validator.check_controls(&chart, &defaults, &[&defaults])?;
-    let payload = chart.adjudicate(&json!({"data": {"branch": 1, "token": 2}}))?;
-    let comparisons = validator.compare_with_controls(&chart, &payload, &checked)?;
-    let comparison = comparisons
-        .first()
-        .ok_or_eyre("missing context comparison")?;
-    sim_assert_eq!(have: comparison.inherited_violations.len(), want: 1);
-    assert!(comparison.new_violations.is_empty() && comparison.uncertain.is_empty());
+    let overlay = json!({"data": payload});
+    let payload = chart.adjudicate(&overlay)?;
+    let mut comparisons = validator.compare_with_controls(&chart, &payload, &checked)?;
+    let payload = chart.adjudicate(&overlay)?;
+    comparisons.push(validator.compare_with_defaults(&chart, &payload)?);
 
-    let payload = chart.adjudicate(&json!({"data": {"branch": 1, "token": 2}}))?;
-    let comparison = validator.compare_with_defaults(&chart, &payload)?;
-    sim_assert_eq!(have: comparison.inherited_violations.len(), want: 1);
-    assert!(comparison.new_violations.is_empty() && comparison.uncertain.is_empty());
-
+    // Both constraints use /type at /data, but belong to different schema resources.
+    sim_assert_eq!(
+        have: comparisons.iter().map(|comparison| (
+            comparison.new_violations.len(), comparison.inherited_violations.len()
+        )).collect::<Vec<_>>(),
+        want: vec![(1, 1), (1, 1)],
+    );
+    assert!(
+        comparisons
+            .iter()
+            .all(|comparison| comparison.uncertain.is_empty())
+    );
     let defaults = chart.adjudicate(&json!({}))?;
-    let context = chart.adjudicate(&json!({"data": {"branch": 1, "token": 2}}))?;
-    validator.check_controls(&chart, &defaults, &[&context])?;
+    let payload = chart.adjudicate(&overlay)?;
+    assert!(
+        validator
+            .check_controls(&chart, &defaults, &[&payload])
+            .is_err()
+    );
+    Ok(())
+}
+
+#[test]
+fn unproved_schema_resource_correspondence_fails_in_both_lanes() -> eyre::Result<()> {
+    for schema in [
+        json!({
+            "$defs": {"token": {"$dynamicAnchor": "token", "type": "string"}},
+            "properties": {"data": {"$dynamicRef": "#token"}}
+        }),
+        json!({"properties": {"data": {"allOf": [
+            {"$id": "", "type": "string"},
+            {"$id": "", "type": "string"}
+        ]}}}),
+        json!({"properties": {"data": {"allOf": [
+            {"$id": "https://helm-schema.invalid/resource", "type": "string"},
+            {"$id": "https://helm-schema.invalid/resource", "type": "string"}
+        ]}}}),
+    ] {
+        let root = ScratchDir::new("contextual-unproved-reference")?;
+        let cache = ScratchDir::new("contextual-unproved-reference")?;
+        write_chart(root.path(), &json!({"data": "ok"}), DATA_TEMPLATE)?;
+        write_schema(cache.path(), &schema)?;
+        let chart = PinnedHelmChart::prepare(HelmRunner::shared()?, root.path())?;
+        let validator = OfflineKubernetesValidator::new(cache.path(), KUBERNETES_RELEASE)?;
+        let defaults = chart.adjudicate(&json!({}))?;
+        let checked = validator.check_controls(&chart, &defaults, &[&defaults])?;
+        let payload = chart.adjudicate(&json!({"data": false}))?;
+        let contextual = validator.compare_with_controls(&chart, &payload, &checked);
+        let payload = chart.adjudicate(&json!({"data": false}))?;
+        let defaults_only = validator.compare_with_defaults(&chart, &payload);
+        for error in [contextual.err(), defaults_only.err()] {
+            let error = error.ok_or_eyre("unproved schema correspondence reached comparison")?;
+            assert!(
+                error.to_string().contains("unresolved assertion identity"),
+                "{error:?}"
+            );
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn repeated_references_to_one_constraint_count_one_occurrence() -> eyre::Result<()> {
+    // Pointer, URI and anchor aliases must prove the same actual constraint node.
+    for (token_schema, token_ref) in [
+        (json!({"type": "string"}), "#/definitions/token"),
+        (
+            json!({"$id": "https://review.test/shared", "type": "string"}),
+            "https://review.test/shared",
+        ),
+        (json!({"$id": "shared", "type": "string"}), "shared"),
+        (json!({"$anchor": "token", "type": "string"}), "#token"),
+        (
+            json!({"type": "string"}),
+            "https://helm-schema.invalid/resource#/definitions/token",
+        ),
+    ] {
+        let root = ScratchDir::new("contextual-repeated-references")?;
+        let cache = ScratchDir::new("contextual-repeated-references")?;
+        write_chart(
+            root.path(),
+            &json!({"data": {"branch": 0, "token": 0}}),
+            DATA_TEMPLATE,
+        )?;
+        write_schema(
+            cache.path(),
+            &json!({
+                "$id": "https://review.test/root",
+                "definitions": {"token": token_schema},
+                "properties": {"data": {
+                    "if": {"properties": {"branch": {"const": 0}}},
+                    "then": {"properties": {"token": {"$ref": "#/definitions/token"}}},
+                    "else": {"properties": {"token": {"allOf": [
+                        {"$ref": token_ref}, {"$ref": token_ref}
+                    ]}}}
+                }}
+            }),
+        )?;
+        let chart = PinnedHelmChart::prepare(HelmRunner::shared()?, root.path())?;
+        let validator = OfflineKubernetesValidator::new(cache.path(), KUBERNETES_RELEASE)?;
+        let defaults = chart.adjudicate(&json!({}))?;
+        let checked = validator.check_controls(&chart, &defaults, &[&defaults])?;
+        let payload = chart.adjudicate(&json!({"data": {"branch": 1, "token": 2}}))?;
+        let comparisons = validator.compare_with_controls(&chart, &payload, &checked)?;
+        let comparison = comparisons
+            .first()
+            .ok_or_eyre("missing context comparison")?;
+        sim_assert_eq!(have: comparison.inherited_violations.len(), want: 1);
+        assert!(comparison.new_violations.is_empty() && comparison.uncertain.is_empty());
+
+        let payload = chart.adjudicate(&json!({"data": {"branch": 1, "token": 2}}))?;
+        let comparison = validator.compare_with_defaults(&chart, &payload)?;
+        sim_assert_eq!(have: comparison.inherited_violations.len(), want: 1);
+        assert!(comparison.new_violations.is_empty() && comparison.uncertain.is_empty());
+
+        let defaults = chart.adjudicate(&json!({}))?;
+        let context = chart.adjudicate(&json!({"data": {"branch": 1, "token": 2}}))?;
+        validator.check_controls(&chart, &defaults, &[&context])?;
+    }
     Ok(())
 }
 
