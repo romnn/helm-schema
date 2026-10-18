@@ -8521,6 +8521,10 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   child-provenance proof or unresolved, a measured count of unresolved assertions on the real Kubernetes bundle + CRD catalog (zero or
   explained), both cells red→green in both lanes, docs corrected; prefer deletion. Note: both counterexamples are hand-built schemas;
   the open question for landing is whether the real pinned schemas trigger either class (step 3 measures it). Orchestrator.
+- 23:37 (Oct 18) — **Battery rework 7 stalled 28 min unseen: astra hit "model at capacity" at 23:09 mid-unit-gate; resumed (turn 10).
+  Process fix: `round8/watch-codex.py` reported it "running" because the exited codex CLI stayed a zombie (kill(pid,0) succeeds);
+  it now reads `ps` state (Z → DEAD) and reports FAILED when the turn's events end in `turn.failed`.** T7 99 GB free (floor 80); asked
+  the user to approve clearing 49 GB of idle targets (round8-tracing 20, round8-defblock 16, round8-jsonschema-fork 13). Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
