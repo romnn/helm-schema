@@ -126,8 +126,18 @@ unresolved and fails adjudication. Before any lint, template, or Kubernetes
 rejection can be attributed, defaults must have no Kubernetes uncertainty and
 each context must have no uncertainty or new violated assertion versus defaults.
 An unusable control fails with its uncertainty or violation evidence preserved.
-Contextual comparisons identify assertions by resource API/kind, schema location
-and instance path, ignoring the offending scalar value and retaining multiplicity.
+Contextual comparisons retain resource API/kind, evaluated schema location and
+instance path. Each forbidden property is a separate assertion at its escaped member
+path; missing required properties and invalid property names retain their names.
+Only offending scalar values are normalized to their JSON type; structural
+assertions and multiplicity remain distinct.
+Defaults establish context usability only. Payloads are compared independently
+against each applicable context's own assertion multiset, with no unused defaults
+allowances. A loosening fails when any applicable context exposes a new violation;
+a tightening needs new rejection evidence in every applicable context.
+Mixed tightening outcomes are unresolved. Explicit defaults contexts remain
+applicable alongside non-default contexts, including deduplicated built-in origins.
+Per-context Kubernetes evidence records each overlay and its new/inherited errors.
 Legacy roster comparisons retain their existing detailed violation identity.
 Inherited filename-extension lint errors do not hide a false rejection when the
 tested render and controls remain usable and add no Kubernetes violation.

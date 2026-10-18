@@ -220,6 +220,8 @@ Execution deduplication uses the exact original values-file bytes and Kubernetes
 version, retaining every contributing origin and its explicit context control.
 Every imported row supplies the complete tested overlay and a context-only overlay;
 `{}` is the defaults-only context, and contexts are never reconstructed from paths.
+Built-in rows explicitly retain this defaults context, including when execution
+deduplication combines them with imported rows that have other contexts.
 
 Omitted work fails coverage: limits are 8,192 generated dependency rows and 8,192
 distinct original-file-bytes/version inputs per chart within the existing 50,000
