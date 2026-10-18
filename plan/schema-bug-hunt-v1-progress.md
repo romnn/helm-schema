@@ -8094,6 +8094,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   a84f816e (from 2 696). Battery rework 3 and defblock resume still running; W4 gates green on 3b92c53d except expected
   fixture-equality integration failures, now classifying R72 branch changes; W1 rework 11 running. Load 14, T7 264 GB.
   Orchestrator.
+- 05:37 (Oct 18) — **W1 rework 11 CHECKPOINT (9a7e05fe on c163870f; Self-attack in rework8/handoff.md).** R60: core
+  `yaml_quoted_grammar.rs` derived from go-yaml v2.4.0's scanner (five breaks, escape table, post-quote follow set; source lines
+  cited), 161 productions table-tested against Helm 4.2.3 with Rust/ECMA pattern agreement, read by the IR scanner too; R61
+  collection members may end in a bare `\`; R62 abstain unless the remaining literal output certainly fails (precision cost:
+  `"{{ x }}"` accepts a trailing `\`); R63 arms start from every preceding header's effects; R64 mutating operands void the
+  selection proof; R65/R66 ONE guarded rendering — each action lowered once per text alternative with its proof,
+  `StringPart::Unproven` for unproven literals, helper text from returned arms; deleted `claim_arms`, `HelperOutputMeta::text`,
+  `returned_output`. Matrix 187 cells / 404 instances (44 abstentions); real-CLI false rejections main 148 / w10 29 / candidate 0,
+  accepted Helm failures 41 / 36 / 44 (the abstentions); gates fmt/lint/lint:fc/ast-grep 0, nextest 1 834, dialect 2/2; +398 prod
+  LOC; claims bitnami-redis 7/0/0, cilium 43/28/30, argo-cd 12/2/2; debug CPU bitnami-redis 3.18 / 7.16 / 7.75 s (+8 % vs w10).
+  Residuals: ternary test read first (proof voided), header root-set effects not replayed when no arm runs, `set .Values k` stales
+  all root members. Re-checks as follow_ups turn 3: astra d488ec1f, sol cb0afa73. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
