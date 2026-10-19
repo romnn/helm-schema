@@ -8812,4 +8812,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   audit (R72 wrap, R73 fields, range-priority union, R78/R79 duplicates deleted; two still outstanding). The orchestrator stopped
   the builder's stale filtered battery PID 76815 at its request (sandbox denied the kill). Follow_up turn 1 on 2803bf0c.
   Orchestrator.
+- 18:32 (Oct 19) — **Size-aware output = LAND ×2 after rework (`round8/review-size-r1-{astra,sol}.md`); added to landing 10a. Runner v10
+  handed back, committed, in review.** Size rework (sol builder a71f3fa5 turn 1): S1 F74 obligations measured on the final emitted CLI
+  bytes (annotations, layout, newline; boundary regression family_witnesses.rs:1609), S2 the shortener reports whether it shortened
+  and the note says so (naming.rs:138, format_text.rs:155); red→green both; fmt/lint/lint:fc (51 PASS)/unit 1,709/integration
+  1,038 + 27 skipped all 0; 204 fixtures unchanged; +17 prod LOC. Committed by the orchestrator in round8-size as e70be667 (S1 patch
+  sha256 1bd7dbe0…) + d7ab4078 (S2 f2a6e1bb…); landing-10a-v2 fast-forwarded 0e7a601c → d7ab4078 (5640581b, e70be667, d7ab4078).
+  Runner v10 (sol builder 43ab1824; transfer-09 sha256 bbbb5092…, reverse-apply-checked; committed 638ef16 in runner-v10-dev):
+  `check_defaults_failures` + `sweep_gate` fail (exit 10) when a renderable defaults row is rejected regardless of baseline;
+  `producer_manifest` fails (exit 11) when verified shipped bytes exceed 5,242,880 at dump time; shrink-only
+  `ACCEPTED_DEFAULTS_FAILURES` bound in the receipt (stale → fail, malformed → 2); run-all 14/14, 134 Python tests; the historical
+  run-all exit-0 not reproduced (`gate-honesty.txt`); +313 net LOC. Its proposed list for main's state: 17 charts, each with its cause
+  (airflow, aws-ebs-csi-driver, eck-stack, gitea, headscale, imgproxy, kube-starrocks, milvus, nacos, netbox, nginx-ingress, oncall,
+  openebs, openldap-stack-ha, stacks-blockchain-api, synapse, yourls); all five formerly oversized schemas fit compact — no oversize
+  waivers. Reviews sol 20261019T163209-78a08a6a, astra 20261019T163210-fd4d13fe (`round8/q/runner-v10-review.md`). Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
