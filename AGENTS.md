@@ -1,448 +1,90 @@
 # Agents
 
-## Design goal: structural static analysis first
+## Goal
 
-helm-schema should recover a chart's meaning through typed, structural static analysis whenever that is possible, and only fall back to heuristics when the chart has genuinely run out of precise static signals.
+Recover chart meaning through typed, structural static analysis first. Preserve exact alternatives
+and ambiguity; prefer an explicit unknown over a wrong guess. Use bounded, explicit heuristics
+only after precise structural signals run out, and never let them override structural facts.
+Prefer simplicity by deletion: one semantic model per fact, fewer representations and fallback layers.
+Generate fast, deterministic, ordered output; key caches by every semantic input. Upstream is
+authoritative: caches are fetch-on-miss optimizations, never correctness or capability oracles.
+Treat shipped chart/dependency `values.schema.json` as output, never inference evidence; do not
+ingest it or intersect it with generated output. Explicit override schemas are caller policy.
 
-This is a core design principle of the project, not an implementation detail. The point of helm-schema is not to approximate Helm templates with string tricks; it is to understand, as precisely as possible, what the chart structurally means and then generate JSON Schema from that understanding.
+## Every session
 
-In practice, that means:
-
-- If something can be known from the parsed Helm/YAML structure, helper bodies, control flow, or explicit manifest shape, helm-schema should derive it from that structure deterministically.
-- If the chart is genuinely ambiguous, helm-schema should preserve that ambiguity instead of collapsing it into a convenient but potentially wrong guess.
-- If the chart does not provide enough information for a precise answer, helm-schema may use bounded heuristics, but only as a last resort and never as the primary source of truth.
-
-A good shorthand for this is:
-
-> helm-schema is a static analyzer first and a heuristic inference engine second.
-
-Or even more strictly:
-
-> No heuristic should exist for a problem that can be solved by typed structural analysis.
-
-### What this means concretely
-
-helm-schema should prefer:
-
-- typed Helm expression analysis over regexes or text scanning
-- YAML / AST structure over line-shape heuristics
-- helper expansion over filename guessing
-- explicit candidate preservation over premature collapsing
-- "unknown" or "ambiguous" over a wrong deterministic-looking answer
-
-Examples of the kind of precision we want:
-
-- If a manifest writes `kind:` before `apiVersion:`, that should still be detected correctly from structure.
-- If `apiVersion` is chosen through `if` / `else` branches, helm-schema should analyze those branches structurally instead of guessing from nearby text.
-- If `apiVersion` comes from a helper like `{{ include "grafana.hpa.apiVersion" . }}`, and that helper statically resolves to a finite set of literals, helm-schema should derive those exact candidates from helper analysis.
-- If a template emits `kind: List` and then places real Kubernetes objects under `items:`, helm-schema should treat the contained objects as the meaningful resources rather than stopping at the wrapper.
-- If a `.Values.*` path is guarded by `if`, `with`, `range`, `default`, `eq`, `not`, or `or`, the resulting schema should reflect those semantics because the typed control-flow analysis says so, not because a text pattern happened to match.
-
-### When heuristics are appropriate
-
-Heuristics are still useful, but only after structural analysis has gone as far as it can.
-
-Good examples of acceptable heuristic fallback:
-
-- inferring a likely apiVersion for a known kind only after the chart itself failed to statically reveal it
-- scanning configured cache roots for candidate schemas only after exact structural resolution failed
-- using a bounded shortlist for well-known resource kinds when no stronger signal exists
-- using version fallback to reach older Kubernetes schema bundles for removed APIs
-
-Even then, heuristics should be:
-
-- bounded
-- explicit
-- lower-priority than structural facts
-- willing to abstain
-
-That means heuristics should never silently override a precise structural result, and they should never replace real ambiguity with a false sense of certainty. When a heuristic materially affects resolution, it should be diagnosable.
-
-### Project standard
-
-The standard for helm-schema should be:
-
-- use precise static analysis wherever the chart makes precision possible
-- preserve exact alternatives when the chart expresses alternatives
-- use heuristics only for the residual cases that cannot be solved structurally
-- prefer a principled "ambiguous" or "unknown" result over a wrong guess
-
-That is the bar that keeps helm-schema aligned with its purpose: a smart, typed, template-aware static analyzer for Helm charts, not a pile of ad hoc text heuristics.
-
-## Design goal: simplicity by deletion
-
-Precision is the primary goal, but the preferred way to reach that precision is
-through a design with fewer moving parts, fewer parallel representations, and
-fewer compatibility layers.
-
-This matters because helm-schema has historically accumulated multiple partial
-models for the same idea: line-driven trackers beside parser-backed structure,
-parallel helper/fragment value shapes, generator-side reassembly of facts that
-the IR already knew, and fallback layers that survived long after the precise
-path was available. That kind of architecture makes correctness harder to
-reason about, not easier.
-
-The standard should be:
-
-- prefer one semantic model over multiple projections of the same fact
-- prefer immutable precomputed structure over mutable incremental state where possible
-- prefer parser-backed structural models over line-shape or text-shape recovery
-- prefer deleting obsolete fallback paths once the structural path is good enough
-- prefer a small, explicit bounded fallback over a stack of overlapping rescue heuristics
-
-In practice, when choosing between two designs with similar correctness:
-
-- choose the one with fewer representations to keep in sync
-- choose the one that removes code rather than adding another layer
-- choose the one whose invariants can be explained in terms of the parsed
-  language structure rather than incidental source layout
-
-If a new abstraction does not make the system both easier to reason about and
-more structurally correct, it is probably the wrong abstraction.
-
-### Architecture guideline: compiler-style phases, not clever plumbing
-
-helm-schema is closest to a small compiler or interpreter: it parses Helm/YAML,
-lowers that structure into semantic facts, analyzes effects, then emits schema.
-Keep complexity manageable the same way good compilers do:
-
-- make each phase explicit and give it one clear input and output
-- prefer typed semantic facts over loosely shaped maps, projections, or DTOs
-- keep lowering, analysis, and emission separate enough that each phase has
-  simple invariants
-- use shared semantic IR only when multiple consumers truly need the same facts
-- delete compatibility facades once their callers can consume the real semantic
-  model directly
-
-Do not replace messy local code with generic plumbing that only moves the
-complexity elsewhere. A compiler-style refactor should make the dataflow easier
-to draw and should usually remove a representation, adapter, or pass.
-
-### Rust guideline: do not be cleverer than necessary
-
-For Rust code in this repo, follow the KISS principle strictly.
-
-- Do not introduce generic helpers, iterator tricks, macros, wrapper
-  functions, or tiny adapter layers unless they clearly remove real
-  duplication or make the control flow easier to understand.
-- Prefer the obvious local loop or direct `match` when it says the thing more
-  plainly than a reusable helper.
-- If an abstraction saves only a few repeated lines but makes the call site
-  harder to read, do not add it.
-- If a helper needs a closure or type parameter just to spell an otherwise
-  obvious operation, that is a strong sign it may be cleverer than necessary.
-
-In short: the simpler Rust is usually the better Rust here. Prefer direct,
-boring code over abstraction that does not materially improve correctness or
-clarity.
-
-### Multiline Rust strings
-
-Use `indoc!` for Rust string literals that intentionally contain line breaks,
-so the source can follow the surrounding indentation without adding that
-indentation to the value. Use `formatdoc!` instead when the multiline string
-also interpolates values.
-
-This applies to ordinary and raw string literals. A string split across source
-lines with Rust's trailing-backslash continuation does not contain a line break
-and does not need either macro.
-
-Keep a direct literal where Rust syntax or an outer macro requires a literal
-token, such as an attribute, a pattern, or a macro argument matched as
-`$literal`. `indoc!` and `formatdoc!` expand as expressions and cannot replace
-those forms.
-
-## Design goal: fast, deterministic, cache-safe output
-
-helm-schema should be fast enough for normal interactive use. Most schemas
-should generate in less than a second, and very large charts should stay within
-a few seconds. Performance work should be architectural: cache phase artifacts
-at natural boundaries, use efficient algorithms and data structures, and avoid
-repeated whole-schema rewrites when a typed structure can be updated directly.
-
-Output must be deterministic and ordered. With the same chart inputs, options,
-and stable network fetches, repeated runs should produce the same schema. Use
-stable maps, stable sets, and explicit sorting wherever iteration order can
-affect emitted JSON or diagnostics.
-
-Any cache that can affect analysis or generation must be keyed by every input
-that can change the result: source identity, version, schema pointer or path,
-policy/options, and any chart-local context that changes semantics. A stale,
-partial, or under-keyed cache hit must never become evidence that changes the
-inferred schema. Prefer recomputation or an explicit unknown result over
-serving a potentially inaccurate cached answer.
-
-### Rust test layout and source LOC hygiene
-
-Keep production `src/` files focused on production code so source LOC remains a
-useful simplicity metric.
-
-- Public API and end-to-end behavior tests belong in the crate's `tests/`
-  directory.
-- Private API tests may live under `src/tests/` so they can access crate-private
-  items without mixing test bodies into production modules.
-- Do not add Rust sibling test files such as `foo_test.rs`, `foo_tests.rs`, or
-  `foo.spec.rs` next to `foo.rs`. That is idiomatic in other ecosystems, but not
-  the layout we want here. If an integration test mirrors one production file,
-  it may use that production file's name inside `tests/`.
-- Avoid inline `#[cfg(test)] mod tests { ... }` blocks in production source
-  files. Move those tests to `src/tests/` when they need private access, or to
-  `tests/` when they only need public APIs. A minimal `#[cfg(test)] mod tests;`
-  declaration is acceptable only as a bridge to a `src/tests/` module tree.
-- Do not put test-only helpers in production modules behind `#[cfg(test)]`.
-  Shared test helpers belong in `tests/common.rs`, `tests/util.rs`, or the
-  crate's `src/tests/` module tree when private access is required.
-- `src/tests/**` is test code, not production source. Core LOC metrics should
-  be able to exclude it along with crate-level `tests/` directories.
-- Test functions and shared test helpers that can fail during setup, parsing,
-  fixture loading, serialization, or external command execution should return
-  `eyre::Result<T>` and propagate errors with `?` and useful context. Do not
-  add `expect`, `unwrap`, or explicit `panic!` calls with lint suppressions for
-  failures that can be represented as normal errors.
-
-### `values.schema.json` is output, not inference evidence
-
-helm-schema generates a `values.schema.json`-shaped artifact, but it must not
-automatically read an existing chart or dependency `values.schema.json` as
-input evidence for inference.
-
-From first principles, the accepted input schema should be recovered from what
-the chart actually does:
-
-- Helm templates and helper bodies
-- structural control flow over `.Values`
-- composed `values.yaml` defaults and user-supplied values files
-- comments/descriptions as metadata only
-- resource schemas for rendered Kubernetes/CRD sinks
-
-A `values.schema.json` file shipped by a chart dependency is an external
-author assertion. It may be stale, incomplete, hand-written for a different
-purpose, or generated by another tool. Treating it as analyzer evidence would
-silently replace static analysis with trust in another author.
-
-Therefore:
-
-- Do not ingest chart/dependency `values.schema.json` files during inference.
-- Do not intersect generated output with shipped `values.schema.json` files.
-- Do not use shipped `values.schema.json` to infer types, shapes,
-  nullability, requiredness, or guards.
-- User-provided override schemas are allowed only as explicit caller policy
-  inputs, not as discovered chart facts.
-
-## Running tests
-
-- Use `cargo nextest run --workspace` (debug mode) for the full suite. Do not use `--release`.
+- Parse structured input with proper parsers instead of regexes or prefix chains. For action text,
+  use `helm_schema_ast::parse_action_expressions` and match `TemplateExpr`; for Helm/YAML structure,
+  use the tree-sitter-backed `helm_schema_ast::TreeSitterParser` and `HelmAst`.
+- Keep Rust direct and simple: prefer local loops and `match`; add abstractions only for real
+  duplication or clearer control flow.
+- Use `indoc!` for multiline ordinary/raw Rust strings and `formatdoc!` when interpolating.
+  Trailing-backslash continuations need neither; retain direct literals where syntax or a macro
+  requires a literal token (attributes, patterns, `$literal` arguments).
+- Put public API/end-to-end tests in crate `tests/`, private tests in `src/tests/`. No sibling
+  `foo_test.rs`/`foo_tests.rs`/`foo.spec.rs` files or inline test modules in production files;
+  only a minimal `#[cfg(test)] mod tests;` bridge to `src/tests/` is allowed.
+  Mirrored integration tests may reuse production filenames under `tests/`.
+- Keep test-only helpers out of production modules; use `tests/common.rs`, `tests/util.rs`, or
+  `src/tests/` for private access. Exclude `src/tests/**` and crate `tests/` from production LOC.
+- Import `use test_util::prelude::sim_assert_eq;` in each test module/integration-test file and
+  assert equality with `sim_assert_eq!(have: actual, want: expected)`. `std::assert_eq!` is denied.
+  Add `test-util.workspace = true` under dev-dependencies if missing.
+- Assert full JSON schema equality in schema integration tests, never selected fields or snapshots.
+  Update full expected fixtures explicitly for intentional changes; do not auto-regenerate expectations.
+- Use typed `thiserror` enums throughout production libraries/binaries, including `main`;
+  reserve `color_eyre` reports for tests and shared test support.
+- In tests, import `color_eyre::eyre` and write `eyre::Result<T>`, never the fully qualified type
+  inline. Import extension traits anonymously, e.g. `use color_eyre::eyre::{self, OptionExt as _};`.
+  Use `ok_or_eyre(...)` for missing options; reserve `ok_or_else` for genuinely lazy/dynamic errors.
+  Avoid importing a bare `Result` alias; keep result types explicit.
+- Return `eyre::Result<T>` from fallible tests/helpers and propagate failures with `?` and useful
+  context; do not add suppressed `expect`, `unwrap`, or `panic!` for representable errors.
+- Before adding/changing Rust lint suppressions, load `rust-lint`; every `#[allow]` needs a
+  concrete `reason = "…"` per the [lint policy](.agents/skills/verification-gates/SKILL.md#lint-policy-pointers).
+- Run tests in debug mode with `cargo nextest run --workspace`; never use `--release` for tests.
 
 ## Verification gates
 
-A round of analyzer/generator work is done only when every gate below has
-been run on the FINAL tree and its result reported individually. Never
-summarize with "all gates pass" without having executed each gate after
-the last code or fixture edit — a gate that was not run is a gate that
-failed. When checking a gate's outcome, check the gate command's own exit
-code: piping through `tail`/`grep` reports the pipe's exit, not the
-gate's.
+For analyzer/generator work, run every applicable gate on the FINAL tree after the last code or
+fixture edit and report each result individually. A gate not run is a failed gate; check the
+gate command's own exit code, never a trailing pipe's. Follow the
+[verification-gates skill](.agents/skills/verification-gates/SKILL.md) for profiles and result interpretation.
 
-1. `cargo fmt --check`.
-2. `task lint`. A clippy failure in one crate aborts checking of every
-   dependent crate, so lint is not green until the WHOLE workspace
-   compiles under clippy — fix the first failure and re-run to the end.
-3. `task lint:fc` (feature-combination lint via cargo-fc).
-4. `cargo nextest run --workspace` (unit suite).
-5. `task test:integration`. The corpus fixture suite lives ONLY in the
-   nextest `integration` profile; the default profile silently filters
-   it out, so a plain nextest run can be vacuously green while every
-   corpus fixture mismatches.
-6. `task test:all` before declaring a round final (includes the live
-   network tests).
-7. The downstream luup2 gate whenever schema semantics change:
-   `cargo install --path ./crates/helm-schema-cli/`, then
+1. `cargo fmt --check`
+2. `task lint` — fix failures and rerun until the whole workspace compiles under clippy.
+3. `task lint:fc`
+4. `cargo nextest run --workspace`
+5. `task test:integration` — corpus fixtures run ONLY in the nextest `integration` profile.
+6. `task test:all` — required before declaring a round final; includes live network tests.
+7. When schema semantics change: `cargo install --path ./crates/helm-schema-cli/`, then
    `task -t /home/roman/dev/branches/luup2/deployment/charts/taskfile.yaml check:local`.
-8. For refactors, report the production LOC delta via `task tokei:core`.
+8. For refactors, report the production LOC delta with `task tokei:core`.
 
-### Fixture regeneration and flip adjudication
+### Fixtures and acceptance
 
-- Regenerate fixtures with ONE clean dump run after the final build.
-  Never mix dump batches produced by different code states: a stale
-  binary fakes progressive drift and pins wrong output.
-- Every corpus acceptance flip must be adjudicated against real
-  `helm template` before a fixture is adopted. **A TIGHTEN is a
-  direction, not a verdict** — a tightening that rejects something helm
-  renders is a false rejection, and batteries that only count flip
-  directions hide exactly that.
-- The corpus battery
-  (`round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced`
-  in `crates/helm-schema/tests/schema_emission_profiles.rs`) reads its
-  CANDIDATE from `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP`, which is required in
-  every mode: without it the battery fails immediately, live
-  (`ADJUDICATE_WITH_HELM=1`) or schema-only; the committed fixtures are
-  never a candidate. The `acceptance-battery` skill has
-  the full procedure. **Any round
-  that changes a fixture byte MUST run the battery with
-  `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP` pointing at the one clean dump of
-  the final build, after that dump exists.** The harness refuses to run
-  without it (`preservation_battery_requires_candidate_dump`); before that
-  guard existed, a run without it compared a schema against itself and
-  proved nothing. Tell-tales of a vacuous run, still worth knowing:
-  `flips_adjudicated: 0` on a round that changed bytes, and a per-chart
-  `guards_discovered` count equal to the baseline-only count. The
-  performance v1 A3 round (2026-09-05) reported zero flips this way and
-  actually carried 73.
-- For old-vs-new acceptance probing use a compiled Rust prober (the
-  `jsonschema` crate in a scratch integration test) at three
-  granularities: top-level deletions, second-level deletions, and empty
-  member/item probes, all composed over chart defaults with
-  null-deletion merge semantics. Python jsonschema is ~100x too slow on
-  the large schemas.
-- Schemas validate the COALESCED values document: test instances must
-  compose over chart defaults, and a bare `{}` means every declared key
-  null-deleted, not "defaults apply".
+- Produce one clean dump after the final build; never mix code states ([corpus-fixtures](.agents/skills/corpus-fixtures/SKILL.md)).
+- Every fixture byte change requires the battery after that dump exists, with `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP` naming it in every mode; committed fixtures are never the candidate ([acceptance-battery](.agents/skills/acceptance-battery/SKILL.md)).
+- Adjudicate every corpus acceptance flip against real `helm template` before adopting fixtures; a tightening is a direction, not a verdict.
+- Probe coalesced values composed over chart defaults with null-deletion semantics; bare `{}` means every declared key null-deleted, not defaults applied.
 
-## Schema tests
+## Where to read more
 
-- Schema integration tests must assert full JSON schema equality using diff-based assertions (e.g. `sim_assert_eq!(actual, expected)`; see "Equality assertions in tests" below).
-- Do not replace full-schema equality with selective assertions of a few fields.
-- Avoid snapshot testing / auto-regeneration; if output changes intentionally, update the full expected schema fixtures explicitly.
+Start with the [ADR index](docs/adr/README.md); read the relevant decisions before changing a subsystem.
 
-## Equality assertions in tests
+- Analysis and ambiguity: [0001](docs/adr/0001-structural-static-analysis-first.md), [0002](docs/adr/0002-preserve-ambiguity-prefer-unknown-over-a-wrong-guess.md).
+- Simplicity and phases: [0004](docs/adr/0004-simplicity-by-deletion.md), [0005](docs/adr/0005-compiler-style-phases.md), [0023](docs/adr/0023-six-phase-pipeline-with-one-typed-artifact-per-phase.md).
+- Rust and tests: [0006](docs/adr/0006-kiss-rust-and-indoc-for-multiline-strings.md), [0077](docs/adr/0077-schema-tests-assert-full-schema-equality.md), [0100](docs/adr/0100-test-and-error-handling-conventions.md).
+- Inference inputs and parsing: [0007](docs/adr/0007-values-schema-json-is-output-not-evidence.md), [0009](docs/adr/0009-parsers-over-string-heuristics.md).
+- Caches and capability probes: [0041](docs/adr/0041-schema-cache-is-fetch-on-miss-never-an-oracle.md), [0043](docs/adr/0043-tri-state-upstream-first-capability-oracle.md), [0044](docs/adr/0044-declarative-capability-probe-table-as-bounded-debt.md); history: [0042](docs/adr/0042-resolve-capability-branches-by-first-successful-literal.md) (superseded).
+  Choose canonical probe kinds present from the API version's inception.
+- Helm adjudication and values: [0073](docs/adr/0073-real-helm-is-the-correctness-oracle.md), [0076](docs/adr/0076-validate-the-coalesced-values-document.md).
+- Dumps and probing: [0079](docs/adr/0079-one-verified-producer-one-clean-dump.md), [0080](docs/adr/0080-battery-requires-an-explicit-candidate-dump.md), [0081](docs/adr/0081-compiled-rust-prober-for-acceptance-probing.md).
+- Verification and performance: [0088](docs/adr/0088-verification-gates-run-on-the-final-tree.md), [0093](docs/adr/0093-deterministic-output-and-the-performance-law.md).
 
-- Tests must assert equality with `test_util::sim_assert_eq!`, **not** the std
-  `assert_eq!`. The workspace macro requires `have:` and `want:` labels and
-  delegates to `similar_asserts::assert_eq!`, which prints a readable
-  line-by-line diff instead of dumping two large opaque values.
-- Import the macro from the `test-util` prelude and call it with labeled
-  operands:
+Load the relevant skill for procedures:
 
-  ```rust
-  use test_util::prelude::sim_assert_eq;
-  // ...
-  sim_assert_eq!(have: actual, want: expected);
-  ```
-
-  The macro is defined once in `test-util` so every crate uses the same labels
-  and diff implementation. Add `test-util` as a `dev-dependency`
-  (`test-util.workspace = true`) if the crate does not already have it.
-- The import is **per-module**: a `use` in a parent module does not reach child `mod tests { … }` blocks, so each test module (and each integration-test file under `tests/`) needs its own `use test_util::prelude::sim_assert_eq;`.
-- This is enforced by clippy and the macro definition: `clippy.toml` disallows
-  `std::assert_eq!`, while `sim_assert_eq!` accepts only the exact `have:` and
-  `want:` labels. The workspace denies `clippy::all`, so a bare
-  `assert_eq!` fails `task lint`; do not reintroduce it in tests.
-
-## Result types
-
-- Use `color_eyre` only in tests and shared test-support code. Production
-  library and binary code should use typed error enums derived with
-  `thiserror`; do not use `color_eyre::Report` as an application error type.
-- In test code, import the module as `use color_eyre::eyre;` or import required
-  extension traits anonymously, for example
-  `use color_eyre::eyre::{self, OptionExt as _};`, and write return types as
-  `eyre::Result<T>`. Do not write `color_eyre::eyre::Result<T>` inline.
-- In test code, convert missing `Option` values with `ok_or_eyre(...)` from
-  `OptionExt` instead of spelling `ok_or_else(|| eyre!(...))`. Reserve
-  `ok_or_else` for errors whose construction is genuinely lazy or dynamic.
-- Prefer explicit result types and avoid bare `Result` aliases (do not import
-  `Result` as a local alias), to avoid shadowing or confusion with
-  `std::result::Result`.
-- Inside crates, prefer typed error enums (e.g. `std::result::Result<T, MyError>`) for precise variants.
-- Keep typed errors through production boundaries, including `main`; reserve
-  `color_eyre` reports for tests and shared test-support code.
-
-## Cache is a speed optimisation, not a correctness oracle
-
-The K8s schema cache (and the CRD catalog cache) exists solely to make
-repeat lookups fast. It is never the source of truth for what API
-versions or kinds exist. **Always treat the upstream source as
-authoritative; the cache is fetch-on-miss.**
-
-Concretely:
-
-- `has_resource(...)` / `cache_versions_holding(...)` reflect *what is
-  currently on disk*, not *what exists upstream*. On a cold cache they
-  return `false` / empty even for kinds that absolutely exist in the
-  configured K8s version. Treating them as a capability oracle ties
-  correctness to whether some previous run happened to warm the cache
-  — which is non-deterministic.
-- A "capability present" check (e.g. evaluating
-  `.Capabilities.APIVersions.Has "policy/v1"`) MUST NOT use cache
-  state as its only signal. Either trigger a real fetch (upstream is
-  the goto), or rely on a structural fact baked into the binary
-  (e.g. a static "K8s 1.X supports api Y" table derived from the
-  release notes).
-- If a code path could give a different answer on a cold cache vs a
-  warm cache, it is wrong. Make the behaviour cache-independent.
-
-**Historical note (round 7 → round 8 → round 10).** An early
-attempt at structural guard evaluation probed `has_resource` (which
-is local-cache-only, fetch-free by contract) as a capability oracle.
-On the first lookup of a cold cache the probe returned `false` for
-*every* API version, collapsing the chart to its `else`-branch
-fallback even for APIs that were present upstream — exactly the
-"cache-as-oracle" antipattern this section warns against. The
-short-lived round-7 fix removed capability evaluation entirely and
-relied on the chain's "iterate branch literals, return first
-success" semantics; round 8 reintroduced an explicit oracle
-implemented the right way:
-
-- `KubernetesJsonSchemaProvider::capability_has_at_primary_version`
-  consults `probe_at`, which is upstream-first — local cache hit →
-  `Found`; cache miss → fetch (if downloads are allowed); offline
-  cache miss with no negative-cache record → `Uncertain`.
-- The oracle returns a tri-state `Option<bool>`: `Some(true)` /
-  `Some(false)` only when there's an authoritative signal (positive
-  hit, or a confirmed upstream 404 recorded in the negative cache);
-  `None` whenever the cache alone can't tell. The branch selector
-  treats `None` as "potentially live" so uncertainty never silently
-  drops a branch.
-- Round 10 tightened the offline path: previously, an offline run
-  with a partial cache (one unrelated file at the primary version)
-  let the oracle promote "probe target absent" to `Some(false)`,
-  which is exactly the cache-completeness-as-oracle bug this
-  section forbids. The fix moved authoritative-vs-uncertain into
-  the `ProbeOutcome` enum so the offline path only returns
-  `Some(false)` when the negative cache says so, and `None`
-  otherwise.
-
-If you change the capability oracle: keep this contract intact.
-The regression tests in
-`crates/helm-schema-k8s/tests/capability_oracle_offline.rs` pin
-the offline-safety cases (partial cache, empty cache, authoritative
-404).
-
-## Known architectural debt: capability probe table
-
-The K8s capability oracle
-(`KubernetesJsonSchemaProvider::capability_has_at_primary_version`)
-needs to answer `.Capabilities.APIVersions.Has "group/version"` — the
-*group/version* form without a Kind suffix — by probing whether any
-kind exists at that api version. Since the upstream schema source is
-per-file (one JSON per kind, fetched on demand) with no bundle
-manifest we could enumerate, the probe needs a *canonical kind* to
-target. That table lives in
-`crates/helm-schema-k8s/src/kubernetes_openapi/capability_probe.rs`
-and is manually maintained.
-
-This is a defensible heuristic for the current cache architecture —
-each entry is the kind that anchors a given api group/version (e.g.
-`PodDisruptionBudget` for `policy/v1`, present from the version's
-inception so its existence proves the api version exists) — but it
-*is* a manual map, and that's structural debt:
-
-- new K8s api versions (and new api groups) require a table edit;
-- removing the table cleanly requires either an upstream bundle that
-  ships a `_index.json`-style manifest of all kinds per api version,
-  or a startup-time eager pre-fetch of the full primary-version
-  bundle so we can answer from on-disk enumeration.
-
-The `group/version/Kind` three-part form does *not* need the table —
-it probes the kind directly, which is fully structural. Only the
-two-part form has this dependency. Keep that in mind when extending
-guard decoding: if new guard shapes need a similar lookup, prefer to
-target the kind directly rather than grow the canonical-kind map.
-
-## Parsers over string heuristics
-
-- **Always prefer a proper parser over regex or `starts_with` / `strip_prefix` chains when parsing structured input** — Go template actions, YAML, JSON, schema-like text, etc. We have been deliberately migrating Go-template parsing from brittle regex to the tree-sitter Go-template grammar parser, and apply the same standard to new code.
-- For Go-template / Helm action text, use `helm_schema_ast::parse_action_expressions` and pattern-match on `TemplateExpr` (`Call`, `Pipeline`, `Selector`, `Literal`, …). The tree-sitter parser correctly handles quoting, pipelines, nested calls, and trim modifiers that hand-rolled string code routinely gets wrong.
-- For Helm template *structure* (define blocks, control flow, document boundaries), use `helm_schema_ast::HelmAst` rather than scanning lines for `{{- if … }}` / `{{- end }}` markers.
-- For Helm/YAML template structure, prefer the tree-sitter-backed AST (`helm_schema_ast::TreeSitterParser` and `HelmAst`) over line-oriented heuristics whenever the consumer needs to understand nesting, sequences, comments, multi-document boundaries, or template control flow.
-- Line-oriented detectors are acceptable for very narrow, local checks (single token on a single line), but the moment the logic needs to understand template control flow, pipelines, helper resolution, or multi-line composition, switch to the AST. "It works for the cases I tested" is not a sufficient argument — the brittle approach has bitten us repeatedly in the resource-detector / apiVersion-resolution path.
+- [verification-gates](.agents/skills/verification-gates/SKILL.md): gate ladder, lint policy, nextest profiles, tooling.
+- [corpus-fixtures](.agents/skills/corpus-fixtures/SKILL.md): producer, manifests, regeneration and adoption.
+- [acceptance-battery](.agents/skills/acceptance-battery/SKILL.md): baseline/candidate setup, flip adjudication, rosters, vacuous runs.
+- [landing-workflow](.agents/skills/landing-workflow/SKILL.md): campaigns, ledgers, hand-offs, landing chain and receipts.
