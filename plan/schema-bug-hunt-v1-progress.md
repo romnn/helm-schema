@@ -8653,6 +8653,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   patches, review pending; W1 design revision 2 (+410 LOC, all 325 rows addressed, aws-nth/nginx causes isolated) under re-review,
   W1 builder building the four R81 propagation repairs meanwhile; witness-freezing builder (Opus) started in round8-witness2 for the
   62 families without frozen rows; F15 investigation (astra 101925-b5015cb2). Orchestrator.
+- 12:28 (Oct 19) — **Perf fix for append_selected_constraints = LAND ×2 (`round8/review-perf-asc-r1-{astra,sol}.md`); runner v9 = REWORK ×2;
+  W1 design revision 2 = REDESIGN ×2.** Perf: both independently verified the 205 outputs, the 32 benchmark artifacts, the medians
+  (redis −10.7%, openebs −14.5%, every pair faster) and the duplicate-input census; LOC +50 combined over 98d19df7 (corrected);
+  9424072a + 8b540c3e join the next landing. Runner v9 (both, same findings): P2 the CLI differential cache still keys cells by the
+  plain-copy digest (landing.py:2173), replaying pre-v9 verdicts → key by the prepared copy's digest, bump the version, warm-cache test;
+  P3 deleting a leading .helmignore rule can promote a literal BOM to byte zero and change an unrelated rule → blank instead of delete;
+  rework sent (a347da0c turn 1). W1 design rev 2 (both accept the P3 join, R81 repairs and the architecture): falsy/absent source
+  members and mergeOverwrite-by-reference still break "interference ⇒ G"; aggregate reads (len, hasKey, toYaml) observe descendant
+  writes; Go's Unicode `lower` is not regex case folding; vault's all-writers union blocks recovery; nats keeps an escape clause.
+  Orchestrator direction for rev 3 (`round8/brief-w1-rework14-design3.md`): ONE faithful abstract model of mergo's merge algorithm
+  replaces per-path guard predicates; aggregate reads take descendant-write guards; `lower` as must-true/must-false partial subsets
+  reusing the direct contains/prefix/suffix lowering; vault unknown values under their guard; a real nats proof. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
