@@ -8694,6 +8694,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   and eck-stack schemas REJECT THEIR OWN CHART DEFAULTS (lint exit 1), and milvus's schema exceeds Helm's 5 MiB chart-file limit so
   Helm cannot load the chart at all. The landing sweep counts only NEW lint failures, so these inherited failures passed every
   landing. F74 (size) may therefore not be closed — asked the reviewers. A full-corpus defaults lint scan is running. Orchestrator.
+- 14:06 (Oct 19) — **Full-corpus defaults scan (orchestrator, `round8/defaults-lint-main-results.tsv`): main's shipped schemas break `helm lint`
+  on their OWN chart defaults for 15 of 156 corpus charts, and 5 schemas are too large for Helm to load at all.** Method: copy each
+  chart, install main's fixture as values.schema.json, `helm lint` (Helm 4.2.3) the defaults; control = the same without the schema
+  (`helm lint` + `helm template`). Schema rejects defaults while the schema-free render succeeds: aws-ebs-csi-driver, eck-stack,
+  headscale, imgproxy, kube-starrocks, nacos, netbox, nginx-ingress, openldap-stack-ha, stacks-blockchain-api, synapse, yourls, gitea;
+  airflow and oncall fail the draft-07 metaschema (`\u` patterns; fixed in W4). Over Helm's 5 MiB chart-file limit (chart unloadable):
+  openebs 13.5 MB, kube-prometheus-stack 11.0 MB, oncall 10.7 MB, milvus 6.8 MB, gitea 5.96 MB (airflow 5.03 MB, just under).
+  Correct rejections (chart aborts on defaults without a schema): aws-load-balancer-controller, karpenter, loki; cert-manager loader.
+  Every landing missed this because the sweep fails only on NEW lint failures. This is the most user-visible defect class (a shipped
+  schema breaks `helm install` with defaults) and is IN SCOPE (inherited defects stay blocking). Actions: sol triage
+  120647-2b0a20e5 attributes each chart's failing constraint to a family / W1 / W4 / new and analyses the size; next, a runner rule:
+  the sweep must fail when the shipped schema rejects the chart's defaults (control renders) or exceeds 5 MiB, regardless of main.
+  Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
