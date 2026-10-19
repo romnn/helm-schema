@@ -8614,6 +8614,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   not green. Rework: lazy validator preparation (zero builds with no instances), interleaved 7-run parent/candidate timing for redis and
   openebs, a measurement of byte-identical compilation inputs among the remaining 148,910 builds (decides whether generation-scoped
   reuse helps), and a deterministic fix for the timeout-harness test. Orchestrator.
+- 04:48 (Oct 19) — **W1 rework 14 design handed back (`round8-w1-evidence/rework14/design.md`); design review sent to astra + sol; a
+  .helmignore finding sent for a vacuity check.** Design: every detected write gets an exact guard G (when it can change what an input
+  read reaches); reads keep narrowing rows under ¬G; producers P1 merge into a fresh dict/pick, P2 tpl only with `{{`, P3 if-arm
+  conditions kept through joins and unset removes only its member; R80 bisect: 56 older losses (vault: root field set by other
+  templates = Helm's shared root map across templates, an inherited gap; cilium: helper output captured into a local; tpl / file-template
+  include abstention; oauth2-proxy two tpl calls) and 263 from rework 13; R81: one evaluation per action. Expected residue 1 row (nats
+  extraResources, JSON-patch round trip of .Values). LOC about +210. Orchestrator positions sent to the reviewers: model the round trip
+  if it is a structural identity, else a documented designed abstention; R80's extra mechanisms stay in this rework, one commit each;
+  implement only the chart-wide root-field fact vault needs and record the shared-root-map gap as its own item. Runs 024812-3222303f
+  (astra), 024812-bced61f6 (sol). Side finding by the W1 builder: `.helmignore` in nginx, mariadb, netbox, weblate, yourls and
+  bitnami-postgresql excludes values.schema.json, so Helm never loads the schema there (its own helm_accepts.sh was vacuous for them
+  through rework 13); astra 024822-7aa309f5 checks whether the landing sweep and the battery are vacuous for those charts. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
