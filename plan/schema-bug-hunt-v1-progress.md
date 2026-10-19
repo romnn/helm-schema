@@ -8732,6 +8732,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   builder, design gate first (`round8/brief-guards-d1-d5.md`, clone round8-guards on landing 10a); D4 and F4/F31 tracks queued (they
   touch W1's expr_eval/control files); imgproxy aliases → W4 or after; the shipping-size policy (compact + short handles by default?)
   asked to the user as a product decision. Orchestrator.
+- 14:41 (Oct 19) — **USER DECISION (F74 shipping size): a CLI output-layout option `auto` (default) / `pretty` / `compact`; auto writes pretty and
+  switches to compact JSON + short $defs handles only when the pretty schema would exceed Helm's 5,242,880-byte chart-file limit (note on
+  stderr); forced pretty/compact and an auto result still over the limit write the file with a WARNING and exit 0 — users feeding
+  their own validator are not bound by Helm's limit. Never fail on size.** Builder: sol 124058-a71f3fa5 in round8-size (branch
+  size-aware-output on landing 10a; brief `round8/brief-size-aware-output.md` + the user's refinement by follow_up): option + docs,
+  tests per mode incl. over-limit warnings, semantic-equivalence proof pretty vs compact for every corpus chart, F74 default-output
+  obligations Met, fixture adoption, gates, stock-Helm lint of the five charts. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
