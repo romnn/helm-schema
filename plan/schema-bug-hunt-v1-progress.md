@@ -8952,4 +8952,22 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   change (verdict lens 225607-282d3774, cache/simplicity lens 225608-42562258) and a classification of the red into inherited (roster-
   eligible per the roster rule) / oracle gap / introduced, with rule-compliant actions (225610-4ae1bf0c, `round8/q/battery-failures-
   classify.md`). Orchestrator.
+- 01:30 (Oct 20) — **Battery red classified; USER DECISION: landing 10a lands with an EXACT, SHRINK-ONLY inherited-failure list.**
+  Classification (sol 225610-4ae1bf0c, `round8/analysis-battery-red-sol.md`) of 10a's live run (schemas byte-identical to main's, so every
+  outcome is main's): 543 hard failures = A 54 inherited TIGHTENINGS (main rejects lint documents the roster baseline accepted and Helm
+  renders — openebs 19, oncall 12, lean temporal-wrapper 9, stacks-blockchain-api 4, goldilocks 3, metallb 3, datadog 2, nacos 1, redmine 1;
+  causes: lint-floor null deletion / dependency refill, dependency-scope abort guards, openebs init-container item typing — never rosterable),
+  B 471 oncall `\u` metaschema (W4 fixes), C 10 + D 8 signoz ClickHouseInstallation unusable control (oracle); 152 unrostered false
+  acceptances = 131 genuine inherited (roster-eligible) + 21 oracle false alarms (CRD v1 not-found read as API absent; the unlanded kube-version
+  v3 fix); 8 unrostered undecided (missing CRD schemas). Circularity: B is fixed only by W4, which needs 10a first. User chose the exact list:
+  sol builder 20261019T232915-c1fe95be in clone round8-inherited (from round8-battery c23467f4; `round8/brief-inherited-list-codex.md`):
+  one KNOWN_INHERITED_FAILURES list for hard failures (exact identities, owner track, stale entry ⇒ fail, no wildcards, one identity model with
+  the rosters) + roster rows for the 131 FAs and roster-eligible undecided rows; proof = full live battery exit 0 on the frozen 10a inputs.
+  Also: battery perf = REWORK ×2 (`round8/review-battery-perf-{verdicts,cache}.md`: P1 controls reused across groups ignore the
+  nondeterministic-render policy; P2 unbounded retained controls; P2 the two-entry memo changes helmsweep sweep warm-up) — brief
+  `round8/q/battery-perf-rework1.md` queued for the astra battery builder (continuing its own track) after its 275 GB target prune.
+  Chart-CRD oracle rev4: architecture BUILDABLE, Kubernetes REDESIGN on one P1 (status stripped before validation; SSA type-checks it) —
+  resolved by decision (any CR carrying `status` ⇒ Uncertain) and the implementation RELEASED to the Track G builder as its own
+  test-infrastructure change before Track G's fixtures. Queued: a generator track for group A (54 main-too false rejections in lint documents)
+  once a builder slot frees. Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
