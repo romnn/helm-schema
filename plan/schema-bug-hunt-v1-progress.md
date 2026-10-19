@@ -8937,4 +8937,19 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   apply; create-path metadata uid/resourceVersion/managedFields/generateName; internal CEL failures; environment premises), architecture
   lens BUILDABLE; revision 4 (57/57 matrix, StarRocks Accepted, the four metadata witnesses Uncertain, est. 440–560 LOC) re-checks sent
   on both sessions. Disk: the user freed space (T7 299 GB). Orchestrator.
+- 00:56 (Oct 20) — **Battery speed SOLVED (40m44s, verdict parity with the reference) but the live battery stays RED on landing 10a's tree:
+  543 adjudication failures + unrostered false acceptances that the reference run has too.** astra builder 78d55437 turn 13 (handoff
+  `round8-battery/.codex-evidence/handoff.md`): exact-input grouping of document flips sharing fresh observations, persistent exact controls,
+  one lint/template invocation boundary, resident pinned-Helm lint with memoized immutable compiled schemas (two-entry LRU, idle residents
+  share the memory budget); deleted unused control lints, memo locking, the lint-only CLI path, the fixed retirement cap, the unbounded schema
+  map; 6 workers / 6 GiB peak; same source took 47m01s in an earlier run. Coverage (sha256 d7fbafa6…) and 10,000 ordered verdicts (6a5632ff…)
+  byte-identical to the original-adjudication reference (2h12m); all 543 failure reasons equal. Gates: fmt, lint, lint:fc (51), unit 1,701,
+  integration 1,038 all 0; test:network/test:all 201 = sandbox DNS (orchestrator gate); +333 implementation / +871 test LOC, core 0.
+  Committed in round8-battery as 202cc26f (transfer sha256 44c58a8f…, reverse-checked) + c23467f4 (skill docs 929a8940…); landing-
+  compatible patch 277e43db… for 10a. Coverage counts: 10,543 screened, 10,000 adjudicated, 383 false acceptances, 14 Kubernetes-uncertain
+  loosenings, 120 unreachable. The red is NOT caused by the speed change: the new lint-document/context lanes surface outcomes of main's
+  schemas (10a has no generator change) — landing 10a's chain would fail at battery regardless. Dispatched (all sol): reviews of the perf
+  change (verdict lens 225607-282d3774, cache/simplicity lens 225608-42562258) and a classification of the red into inherited (roster-
+  eligible per the roster rule) / oracle gap / introduced, with rule-compliant actions (225610-4ae1bf0c, `round8/q/battery-failures-
+  classify.md`). Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
