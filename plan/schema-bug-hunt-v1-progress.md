@@ -8770,12 +8770,10 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   nindent width vs floating placement, empty-control adoption) — share only agreed layout facts; D1 direct-fail-stage rule sound,
   nested short-circuits excluded; adjudicate ALL changed schemas with the differential prober + Helm (not just defaults), incl. gitea
   and milvus, oversized after equivalent compaction; tally 27 not 26. Reviews `round8/design-guards-{astra,sol}.md`. Orchestrator.
-Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
-`round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
-battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
-(finish R48 from the non-compiling wip 8e98b12c; last green f375cde6); re-check each with both Codex models; whichever is LAND
-×2 first lands first (W4: re-stage `round8-landing10`, update `runner/landing-10.env`, launch the chain; W1: fresh clone
-`round8-landing12` + `landing-12.env`); k8s (landing 11) follows W4; then R46. First run `git status --short; git log --oneline
--5; ls /Volumes/T7/dev/round8/heavy.lock; uptime; df -h / /Volumes/T7`. Standing rules: the schema must pass `helm lint` on the
-raw root values.yaml as well as `helm template`; every fix lands with a minimal red-then-green regression test; no hand-back
-without a Self-attack section.
+- 16:38 (Oct 19) — **Session 5 ends (user request); hand-off §6 rewritten with the session-6 resume prompt.** Nothing landed; main code
+  b51c8589. Strict closures CORRECTED to 3/83 on main (F17 F54 F77; F30 has 19 roster cells, F74 open); 9/83 once landing 10a merges.
+  Landing 10a assembled + all parts LAND ×2, blocked on battery speed (Codex battery builder 78d55437 running). Size-aware output
+  committed (5640581b, reviews 143700-106056ac / -427a9774 running). Native builders (W1 part 2, W4 rework 17, Track G) asked to
+  checkpoint and rewrite their hand-offs; resume briefs: brief-w1-rework14-part2-resume.md, brief-w4-rework17-impl-resume.md,
+  brief-guards-resume.md. Orchestrator.
+Next: resume per plan/schema-bug-hunt-v1-round8-handoff.md §6 (session-6 resume prompt); first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.

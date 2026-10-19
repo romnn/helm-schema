@@ -1,4 +1,4 @@
-# schema-bug-hunt-v1 — round 8 hand-off (started 2026-09-26; §6 current as of 2026-10-01, end of session 4)
+# schema-bug-hunt-v1 — round 8 hand-off (started 2026-09-26; §6 current as of 2026-10-19, end of session 5)
 
 > **§6 is the current state and ends with the resume prompt — read it first.** §1–§5 are the history of the
 > round as of 2026-09-26 (earlier landing plans, superseded statuses); use them only when §6 or the ledger points there.
@@ -149,164 +149,98 @@ gates only, drop the stray mongodbcommunity hunk), regexp (`round8-regexp-eviden
   from different binaries; the Claude work account weekly limit (reset Oct 2, 01:00) kills agents
   mid-turn — resume them with SendMessage, their context survives.
 
-## 6. Status (rewritten 2026-10-01 12:30 local, end of session 4 — resume here)
+## 6. Status (rewritten 2026-10-19 ~16:45 local, end of session 5 — resume here)
 
-Read the ledger entries from "21:21 (Sep 30) — Session 4 started" onward for the detail; this section is the map. The resume
-prompt for session 5 is at the end of this section.
+Read the ledger entries from "Session 5" (2026-10-17) onward for detail; this section is the map. The resume prompt for session 6
+is at the end of this section.
 
-- **Nothing landed in session 4. main code = b51c8589** (landing 9; only plan/ commits since; nothing pushed). **Strict verified
-  closures 4/83 = F17, F30, F54, F77**, unchanged. Not run on main for landing 9: `task test:all`, luup2 — still owed.
-- **Why:** every review round and the one landing chain found genuine defects. W4 reached LAND ×2 once (rework 13, R58–R67);
-  its landing chain (run1) passed dump, unit, lint, battery and integration and FAILED the sweep gate after ~2.8 h: 19 new real
-  `helm lint` failures (oauth2-proxy with redis-ha enabled) — `helm lint` validates the values WITHOUT dependency defaults and a
-  claim fired on that document. Lesson, now mandatory (playbook section "Self-attack before every hand-back"): **builders
-  attack their own patch with the reviewers' methods before every hand-back** (lint-document check over dependency rows,
-  multi-path probes in non-default contexts, positive claims only, evaluator == emitted encoding, every emitter,
-  compose-and-invert, registry completeness, `then`-branch diff classification, generation-time comparison) and record it in a
-  `## Self-attack` section; a hand-back without it is returned unread, and reviewers are asked to check it first.
-- **Landing order: first-ready-first between W4 (landing 10) and W1 (landing 12); k8s (landing 11) follows W4** (its 9 failing
-  battery cells are W4-dependent). One fixture-moving landing at a time; the later lander rebases onto the earlier one before
-  its final dump + battery. Then R46 (perf) as its own landing, then frontend 2.2.
-- **Landing 10 (W4/F75) — run1 FAILED at the sweep gate; run2 STAGED, NOT launched; rework 15 CHECKPOINTED.** Clone
-  `/Volumes/T7/dev/round8-w4-r9`, branch w4-rebase, HEAD b10d54b3 (67 commits on b51c8589, clean), target
-  `round8-w4-r9-target`. History this session: rework 12 (R58–R61, complement by "totality" → refuted) → rework 13 (R62–R67:
-  positive missing-callable pattern via a 32-character name trie, Go-decoded define names, positive parse-error claims, block
-  names; LAND ×2 at f9da148e) → run1 failure → rework 14 (R68, 5325b7d1: a pattern guard is false where its value is absent;
-  REWORK ×2) → rework 15 (`brief-w4-rework15.md`): R69 84193438 numeric guards read an absent value as 0 (openebs
-  `engines.replicated.mayastor.enabled: null`), R71 e888412e `Absent`/`TypeIs` read explicit null as the encoding does, R70
-  b10d54b3 the declared sample never narrows a branch a range runs in (datadog `traceAgent.envDict: []`; datadog's schema is
-  byte-identical to pre-R68 again). Checkpoint state (`round8-w4-evidence/rebase/r15/handoff.md`, 42 lines, exact next
-  commands): table test `guard_evaluation_agrees_with_the_emitted_encoding` green (49 mismatches on 5325b7d1; floats like `1.0`
-  still disagree for numeric/Eq-int/TypeIs-integer — outside the brief's table, to decide), clean dump `dump-r15` verified,
-  lint-document check over dependency rows done (4 rows newly rejected, schema-free Helm aborts on all 4 → 0 false
-  rejections), unit 1766/1766, fmt 0. NOT done: test-level red runs on 5325b7d1 for R69/R70, the `then`-branch classification
-  over the 32 changed artifacts (prober exists; milvus/oncall/synapse/nacos conditionals unsatisfied), task lint, lint:fc,
-  ast-grep, FULL integration, live battery on dump-r15, final-v17.patch. Replacement builder: `round8/brief-w4-rework15-resume.md`.
-  After its FINAL hand-back: follow_up BOTH W4 reviewer sessions (astra 20261001T013326-7cb09804, sol
-  20261001T013344-c93683c5; they expire 24 h after start, i.e. ~03:30 on Oct 2 — after that, FRESH runs pointed at
-  review-w4-rework{11,12,13,14}-*.md). On LAND ×2: re-stage `/Volumes/T7/dev/round8-landing10` (currently landing-10 6808a8a1 =
-  main + the 64 commits up to 5325b7d1 — STALE), update the header of `runner/landing-10.env` (committed 741e1eb; E already
-  `/Volumes/T7/dev/round8-landing10-run2`), launch the chain. Evidence of run1: `/Volumes/T7/dev/round8-landing10-run1/`
-  (chain.log, sweep/new-lint-failures.tsv, battery: 9 687 flips, 1 passed). Reviews: `review-w4-rework{12,13,14}-{astra,sol}.md`.
-- **k8s D1–D3 (landing 11) — LAND ×2 (`review-k8s-rework9-{astra,sol}.md`), waits for landing 10.** Clone
-  `/Volumes/T7/dev/round8-k8s-r8`, k8s-rebase fcdcd54f (61 commits on b51c8589, clean), target `round8-k8s-r8-target`.
-  Conditions: rebase onto the main carrying W4, one clean dump, fixture adoption, zero unmatched flips, bidirectional roster
-  gate green. Builder brief ready: `round8/brief-k8s-rework10-resume.md`. The zalando foreign-range lowering stays PARKED
-  (`rework9/k18-foreign-range-lowering.parked.patch`): both reviewers require typed iteration facts per range occurrence
-  (`ContainsTruthyMember` ≠ non-empty iteration) and the node-exporter / mayastor attribution fixes first.
-- **W1 (landing 12) — rework 9 CHECKPOINTED mid-R48.** Clone `/Volumes/T7/dev/round8-w1`, track/w1-main, HEAD 8e98b12c =
-  `W1 rework 9 (wip): R48 …` which DOES NOT COMPILE; last green commit f375cde6 (unit gates 0, nextest 1830/1830); base
-  6f1ce577 (code == main b51c8589); target `round7-f9/target` (trimmed to ~14 GB). Done and reviewed PASS: R29–R35 (rework 8),
-  R36 (output-metadata join by outcome selection with typed absent/unconditional/unknown states — the pre-existing defect
-  behind 979 bitnami security-context false acceptances), R37 (per-path token claims), R38/R45 (traefik abstention proof),
-  R39–R44. Reviewed REWORK: R47 (f375cde6) → R48 = quote claims need a POSITIVE `verbatim` provenance (Addendum 2 of
-  `brief-w1-rework9.md`; counterexamples (a)–(d) in `review-w1-rework9b-{astra,sol}.md`): in the wip commit `TextProvenance`
-  (Unknown/Verbatim/Templated/StrictText/Alphabet) replaces the negative flag, helper rows carry it, the classifier
-  (`fragment_eval/hole_text.rs`) is a draft; none of (a)–(d) is fixed, no R48 tests yet. Hand-off
-  `round8-w1-evidence/rework8/handoff.md` (59 lines, exact next commands). The final-evidence run on f375cde6 was stopped
-  mid-battery (73 adjudications, no verdict). Replacement builder: `round8/brief-w1-rework9-resume.md`. Reviewer sessions
-  (astra 20261001T033616-8c4a53c9, sol 20261001T033641-8d519810) expire ~05:36 on Oct 2. Open with W1: the R46 perf
-  regression is recorded, not fixed (bitnami-redis 2.26× user CPU vs main; `rework9/perf.txt`).
-- **R46 (perf) — queued as its own landing right after W1** (`round8/brief-r46-perf.md`, `design-w1-r46-{astra,sol}.md`): step 1
-  representation-only (full memo key kept, `MutationFacts` shared behind `Rc`, helper summaries return only mutation deltas;
-  fixtures byte-identical); step 2 semantic only if needed (typed object identity, alias-aware reachability).
-- **Runner = v6.12** (`/Volumes/T7/dev/round8/runner`, branch runner-v3-fail-closed; last commit 741e1eb). A full chain now
-  takes ~2.8 h: dump+unit+lint ~45 min, battery ~25 min, integration ~10 min, sweep ~90 min (fast pass 29 min; the real-Helm
-  stage is dominated by openebs — one real `helm lint` of openebs takes ~11 min even with main's schema).
-- **Codex:** astra = `gpt-6-astra`, sol = `gpt-6.1-sol` (never `gpt-6-sol`), xhigh, read_only, cwd /Volumes/T7/dev; registry
-  `round8/codex-runs.tsv` (3 tab-separated columns). agentmux transcript FILES lag the service state: detect finished turns
-  with `status`/`result` (offset = previous byte count), not file sizes; `collect-codex.py` re-saves the previous turn for a
-  follow-up that has not finished. Follow-ups on the same session worked well (minutes instead of an hour).
-- **Builders:** native Opus subagents; ids die with the session — spawn replacements from the resume briefs above (same clone
-  and target). Both session-4 builders ended at 390–700 k tokens; start fresh ones, do not try to revive them. Rules that held:
-  restore files with `git show HEAD:path > path`; in-test fixtures regenerate through a temporary scratch test module, never
-  by editing `crates/test-util`; `rm`/`cargo clean` of whole dirs is denied by the permission classifier (builders may
-  `cargo clean -p` their workspace crates; other deletions need the user); a builder's login can expire mid-turn (resume with
-  SendMessage after `/login`).
-- **Queued items (owners to assign):** battery coverage gaps found this session — (1) lint-document validation for
-  dependency-enable rows, (2) probes in non-default contexts (conditional restrictions); validation time of shipped schemas
-  under real Helm (openebs ~11 min per lint, main-too); RenderedToken(YamlKind) vs provider schema (after landing 10); CLI
-  default output vs Helm's 5 MiB limit; the parked zalando lowering + node-exporter/mayastor attribution; inherited defects
-  recorded with cells: redis-ha `securityContext.privileged: true` accepted (K8s rejects), jupyterhub prePuller hook guard
-  pair (`define_block_from_node` keeps whitespace the closing `{{- end }}` trims), `t | b64dec` false quote rejection
-  (main-too), W4's retained UNKNOWN limits (o12, m19–m23, `include ("missing")`, null redis-ha name), float `1.0` in numeric
-  guard evaluation; an umbrella witness for `common`; D1 nginx `usageReport` guard; main's `eq`-form resourcesPreset false
-  rejection; F23/F79 unfrozen witnesses; F69's KnownFalseAcceptance; `task test:all` + luup2 on main; runner artifact-kind
-  discovery.
-- **Hazards:** `date` before every ledger entry; concurrent Bash calls share one shell (absolute paths); T7 free space swings
-  between 75 and 125 GB with other activity on the volume (floor 80; builders trim with `cargo clean -p`); six untracked
-  Kubernetes 1.35 cache files in `round8-w1/testdata/provider-bundle/...` (never stage; the user may delete them);
-  `/Volumes/T7/dev/round8-timing` and `/Volumes/T7/dev/round8-landing10-target` are disposable with the user's approval.
+- **Nothing landed in session 5. main code = b51c8589** (landing 9; only plan/ commits since; nothing pushed).
+- **Strict verified closures, CORRECTED: 3/83 on main = F17, F54, F77.** Earlier sessions reported 4 (F17, F30, F54, F77): F30 still
+  carries 19 roster cells and F74 is open (five fixtures exceed Helm's 5 MiB chart-file limit). After landing 10a merges: **9/83 =
+  F17 F32 F35 F45 F54 F57 F60 F61 F77** (witness freeze, LAND ×2). F73/F80 closed by policy (not counted).
+- **Critical defect class found this session (inherited from main, in scope):** main's shipped schemas break `helm lint` on their OWN
+  chart defaults for 13 charts (aws-ebs-csi-driver, eck-stack, headscale, imgproxy, kube-starrocks, nacos, netbox, nginx-ingress,
+  openldap-stack-ha, stacks-blockchain-api, synapse, yourls, gitea), airflow/oncall fail the draft-07 metaschema (`\u` patterns), and
+  five schemas exceed Helm's 5 MiB limit (openebs, kube-prometheus-stack, oncall, milvus, gitea). Scan: `round8/defaults-lint-main-results.tsv`;
+  attribution per chart: `round8/triage-defaults-sol.md`. The landing sweep never caught it because it fails only on NEW lint failures.
 
-### How to call the Codex reviewers (agentmux mechanics)
+### Landing 10a — assembled, approved, BLOCKED on battery speed
+- Clone `/Volumes/T7/dev/round8-landing10a`, branch `landing-10a-v2` (36 commits on main 7c28756f, HEAD 0e7a601c): battery lint-document
+  lane phase 1 (21 commits, 8 review rounds, LAND ×2), tracing spans + `trace.rs` recorded with the user's fork romnn/tracing-perfetto
+  (git rev d4c54ab), helmsweep validating with the romnn/jsonschema fork (indexed queue), perf fix for `append_selected_constraints`
+  (validator reuse, lazy; redis −10.7%, openebs −14.5%, outputs byte-identical), helmsweep v9 (reports the schema bytes Helm loaded),
+  witness freeze (117+ rows, traefik enrolment, F74 default-output obligations). Each part LAND ×2 (reviews in round8/review-*.md).
+  One hand-resolved conflict (tracing span on the battery's restructured `screen_chart`).
+- Run 1 (`round8-landing10a-run1`, env `runner/landing-10a.env`): dump 8 min (0 of 204 adopted), unit 7, lint 8 — OK; battery: killed by
+  an EXTERNAL SIGTERM at 03:29 (83 min; also killed W1's battery — never found who; all briefs now forbid pkill by name), then
+  TIMED OUT at nextest's 3 h ceiling (06:31). Landing 9's battery took 26 min: the lint lane's live Helm adjudication volume.
+- **Unblocking:** the battery builder (Codex astra, agentmux run `20261017T185515-78d55437`, turn 13, clone `/Volumes/T7/dev/round8-battery`,
+  14 uncommitted files = work in progress) measures per chart/lane and fixes the dominant cost WITHOUT weakening verdicts (target
+  ≤ 45 min, coverage verdicts byte-identical to a slow reference run). On hand-back: `git apply -R --check` its transfer patch, commit
+  in round8-battery (the sandbox cannot), re-review with astra + sol, cherry-pick into landing-10a-v2, then launch a FRESH chain
+  (runner is now v9 → fresh E, start at dump): derive E=`/Volumes/T7/dev/round8-landing10a-run2` in `runner/landing-10a.env`, commit it.
+- The live runner is **v9** (`/Volumes/T7/dev/round8/runner` c6a52a4: schema-bearing chart copies must LOAD the shipped schema despite
+  `.helmignore`; CLI cache keyed by the prepared copy); suite 14/14 green with
+  `GUARD_SRC=/Volumes/T7/dev/round8-target-guard/scripts/target-guard.py zsh tests/run-all.sh`.
 
-- The agentmux tools are deferred: load them first with ToolSearch, e.g.
-  `select:mcp__agentmux__start,mcp__agentmux__status,mcp__agentmux__result,mcp__agentmux__follow_up,mcp__agentmux__list`.
-- Start each review with `mcp__agentmux__start` and these arguments: `delegate: codex`,
-  `model: gpt-6-astra` or `model: gpt-6.1-sol` (never `gpt-6-sol`), `effort: xhigh`, `sandbox: read_only`,
-  `cwd: /Volumes/T7/dev`. The question must be self-contained: exact paths, the patch and its sha256, the evidence, explicit
-  questions, and the requested output (numbered findings with file:line and a final `VERDICT:` line). Always start both
-  models in parallel.
-- Register every run in `/Volumes/T7/dev/round8/codex-runs.tsv`. Each line is `<run id>\t<label>\t<destination .md path>`,
-  exactly three tab-separated columns; a fourth column crashes the collector.
-- Watch runs with `mcp__agentmux__status`; a review at xhigh takes 20–60 minutes. Collect them with
-  `python3 /Volumes/T7/dev/round8/collect-codex.py`, which saves each finished run to its registered path, or with
-  `mcp__agentmux__result`.
-- For a re-check, use `mcp__agentmux__follow_up` on the same run id; it keeps the reviewer's context and takes minutes
-  instead of an hour. A follow-up cannot change the model, and a session expires 24 h after its start. Read a follow-up's
-  answer with `result` and `offset` = the previous byte count, then save it yourself: the collector re-saves the previous
-  turn while a follow-up is unfinished, and transcript files on disk lag the service state.
-- **All reviewer sessions named in this section started on 2026-09-30 or 2026-10-01 and have EXPIRED.** Every re-check in
-  session 5 is a FRESH run pointed at the earlier review files (`/Volumes/T7/dev/round8/review-w4-rework{11,12,13,14}-*.md`,
-  `review-w1-rework{8,9,9b}-*.md`, `review-k8s-rework9-*.md`) plus the builder's current hand-off.
-- If a run stops on a content filter, rephrase neutrally ("render-failure claims") and do not escalate.
+### Semantic tracks
+- **W1 rework 14 (membership/emptiness; 317 false acceptances left vs roster f7be7ba5, 0 false rejections):** clone `/Volumes/T7/dev/round8-w1`
+  (track/w1-main; target `/Volumes/T7/dev/round7-f9/target`). R81 propagation repairs committed (31312880). Part 2 (R78–R80: abstract
+  mergo merge model, aggregate reads, ASCII `lower` partial truth, vault literal-tpl fact, nats NoMarker proof, nginx key/value boundary)
+  under BINDING OBLIGATIONS. Resume brief `round8/brief-w1-rework14-part2-resume.md`; current state in
+  `round8-w1-evidence/rework8/handoff.md`. Known landing blocker: bitnami-redis generation +50% (CPU gate within 10% of w12).
+- **W4 rework 17 (scalar preimages, CONSOLIDATION):** design rev 3 BUILDABLE ×2; implementing. Clone `/Volumes/T7/dev/round8-w4-r9`
+  (w4-rebase, base b51c8589). Resume brief `round8/brief-w4-rework17-impl-resume.md`; state `round8-w4-evidence/rebase/r17/handoff.md`.
+- **Track G (D1/D5 execution guards; fixes kube-starrocks, openldap-stack-ha, nginx-ingress defaults; milvus/openebs-loki):** design
+  released with binding obligations; red tests committed (21505846). Clone `/Volumes/T7/dev/round8-guards` (guards-d1-d5 on 10a).
+  Resume brief `round8/brief-guards-resume.md`; state `round8-guards-evidence/handoff.md`.
+- **Size-aware output (F74; USER DECISION):** `--output-layout auto|pretty|compact`, default auto = pretty unless > 5,242,880 bytes, then
+  compact + short `$defs` handles with a stderr note; forced modes or still-oversized output warn and exit 0 (never fail on size).
+  Committed 5640581b in `/Volumes/T7/dev/round8-size` (size-aware-output on 10a); equivalence 156 charts / 270,261 probes / 0 flips;
+  reviews running: astra `20261019T143700-106056ac`, sol `20261019T143700-427a9774` → on LAND ×2 add to the next landing.
+- **Investigated, queued:** F15 rabbitmq (`round8/investigation-f15-astra.md`; after W4 — same IR files); D4 subchart scope (netbox,
+  stacks-blockchain-api, yourls), F4/F31 provider projection (synapse, openebs), imgproxy aliases (F49), eck-stack F50, headscale /
+  aws-ebs (NEW) — all from the defaults triage; the k8s provider track (after W4); R46 perf (after W1); definitions emission (superseded
+  for size by the output layout; keep only if needed for other reasons).
+- **Process items queued:** a runner rule that FAILS when a shipped schema rejects its chart's defaults (control renders) or exceeds
+  5 MiB, regardless of main; investigate why `run-all.sh` once printed exit 0 with a failed suite; `perf`: the 22.7% duplicate
+  validator inputs in the conditional-constraint gate (generation-scoped reuse, keyed by every input) as the next perf step.
 
-### Resume prompt for session 5 (copy verbatim)
+### Standing decisions made this session (user)
+- Use Codex (astra, sol) extensively; Opus builders for large semantic builds; Fable/Opus complexity challengers only when they help.
+- Inherited (main-too) defects stay in scope and blocking; fixes must simplify the architecture (playbook self-attack item 10).
+- Never cancel Codex runs without the user's explicit go; resume FAILED/DEAD turns with follow_up (capacity → retry; content flag →
+  rephrase without security wording).
+- Launch chains without waiting for an idle host; tell the user when a chain > 3 h or a step > 50% slower than landing 9.
+- Delete idle build folders proactively (pgrep check first).
+- Forks: romnn/jsonschema (helmsweep) and romnn/tracing-perfetto (git dep, user-maintained; issues/fixes on fix/ branches there).
+- Output layout auto/pretty/compact as above.
+- Keep ~3 cargo-heavy builders busy; a builder waiting on review gets review-independent work.
 
-Resume as the ORCHESTRATOR (Fable) of the helm-schema `schema-bug-hunt-v1` campaign, round 8, session 5, in
-/Volumes/T7/dev/helm-schema. Read first, in order: plan/campaign-orchestration-playbook.md (incl. "Self-attack before every
-hand-back"); plan/schema-bug-hunt-v1-round8-handoff.md §6 (rewritten at the end of session 4 — the map, incl. this prompt); the
-ledger entries of plan/schema-bug-hunt-v1-progress.md from "21:21 (Sep 30) — Session 4 started" to the end;
-/Volumes/T7/dev/round8/PROTOCOL.md; CLAUDE.md; the skills landing-workflow, acceptance-battery, corpus-fixtures,
-verification-gates; the memory index. Rules: Claude builders only as native Opus subagents, few and focused (session 4's agent
-ids are dead: spawn replacements from round8/brief-w4-rework15-resume.md and round8/brief-w1-rework9-resume.md, reusing their
-clones and targets; the k8s builder from round8/brief-k8s-rework10-resume.md only after landing 10 merges); every review and
-design goes to BOTH Codex reviewers via agentmux (astra = gpt-6-astra, sol = gpt-6.1-sol, never gpt-6-sol; effort xhigh,
-sandbox read_only, cwd /Volumes/T7/dev; follow_up on the same session for re-checks — it cannot change models, sessions expire
-24 h after their start; detect finished turns with status/result, not transcript file sizes); merge findings into a brief
-before the builder resumes; NO hand-back is accepted without a `## Self-attack` section (lint-document check over dependency
-rows, multi-path probes in non-default contexts, positive claims only, evaluator == emitted encoding, every emitter,
-compose-and-invert, registry completeness, `then`-branch diff classification, generation-time comparison) and reviewers are
-asked to check that section first; landings run the runner chain (dump→unit→lint→battery→integration→sweep→finalize, ~2.8 h) in
-the staged clone with its own env and target and merge into main with `--no-ff` naming the components + receipt path +
-sha256; NEVER push; deletions need the user's approval; `date` before every ledger entry (python datetime.now(), insert before
-the trailing `Next:` line, commit `chore(plan)`); one fixture-moving landing at a time; first-ready-first between W4 and W1,
-k8s after W4; report closures strictly (4/83 = F17, F30, F54, F77). Do this first: (1) `git status --short`, `git log
---oneline -5`, `ls /Volumes/T7/dev/round8/heavy.lock` (must be absent), `uptime`, `df -h / /Volumes/T7`. (2) W4 (landing 10):
-read /Volumes/T7/dev/round8-w4-evidence/rebase/r15/handoff.md and `git -C /Volumes/T7/dev/round8-w4-r9 log --oneline
-5325b7d1..HEAD`; spawn the replacement builder from round8/brief-w4-rework15-resume.md to finish rework 15 (test-level red
-runs for R69/R70, the `then`-branch classification over the 32 changed artifacts, the float gap decision, all gates, the live
-battery on a clean dump, final-v17.patch, a Self-attack section); on its FINAL hand-back send the re-check to both models
-(follow_up on astra 20261001T013326-7cb09804 and sol 20261001T013344-c93683c5 if they are younger than 24 h, else FRESH runs
-pointed at round8/review-w4-rework{11,12,13,14}-*.md and the r15 hand-off); on LAND ×2: `git -C
-/Volumes/T7/dev/round8-landing10 fetch /Volumes/T7/dev/helm-schema +main:main && git checkout landing-10 && git reset --hard
-main && git fetch /Volumes/T7/dev/round8-w4-r9 +w4-rebase:w4-rebase && git cherry-pick main..w4-rebase`, update the header of
-/Volumes/T7/dev/round8/runner/landing-10.env (tip, commit count; E is already round8-landing10-run2 — if run2 exists use a
-fresh run3) and commit it in the runner repo, confirm the lock is absent and load < 40, `mkdir -p` the evidence dir, launch
-`(cd /Volumes/T7/dev/round8/runner && LANDING_ENV=/Volumes/T7/dev/round8/runner/landing-10.env nohup zsh -c 'for s in dump
-unit lint battery integration sweep finalize; do ./run-landing.sh $s || exit $?; done; echo chain green' >>
-<E>/chain.log 2>&1 &)`, heartbeat every ~25 min with `grep -E '^(OK|FAIL|REFUSE|chain green)' <E>/chain.log | tail`; on a
-step failure read only that step's log; on "chain green" adopt exactly column 1 of `<E>/adopted.tsv` (skip the header) in the
-clone, commit the fixtures, fetch the branch into main and `git merge --no-ff` with components + receipt sha256, run the
-post-merge gates on main one at a time (cargo fmt --check; task lint; task lint:fc; cargo nextest run --workspace; task
-test:integration; CARGO_TARGET_DIR=/Volumes/T7/dev/helm-schema/target), retire the env, rewrite §6, re-tally closures. (3) W1
-(landing 12), in parallel with (2): read /Volumes/T7/dev/round8-w1-evidence/rework8/handoff.md; spawn the replacement builder
-from round8/brief-w1-rework9-resume.md to finish R48 (HEAD 8e98b12c is a non-compiling wip; last green f375cde6), then re-check
-with both models (follow_up on astra 20261001T033616-8c4a53c9 and sol 20261001T033641-8d519810 if younger than 24 h, else
-FRESH runs pointed at round8/review-w1-rework{8,9,9b}-*.md), then the final evidence (integration, clean dump, live battery,
-matrix11, final-v11.patch); if W1 is LAND ×2 with a green battery before W4, land it first in a fresh clone
-/Volumes/T7/dev/round8-landing12 with runner/landing-12.env derived from landing-10.env. (4) k8s (landing 11): after landing
-10 merges, spawn the builder from round8/brief-k8s-rework10-resume.md (rebase, clean dump, live battery zero unmatched,
-final-v10), then its chain. (5) After W1: R46 per round8/brief-r46-perf.md. Keep T7 > 80 GB free and load < ~40, record every
-decision in the ledger, schedule wakeups (ScheduleWakeup, 20–30 min) while things run, and never launch tracks outside the
-hand-off's queue.
+### Resume prompt for session 6 (copy verbatim)
+
+Resume as the ORCHESTRATOR of the helm-schema `schema-bug-hunt-v1` campaign, round 8, session 6, in /Volumes/T7/dev/helm-schema.
+Read first, in order: plan/campaign-orchestration-playbook.md (incl. "Self-attack before every hand-back", item 10 "Simpler, not
+bigger"); plan/schema-bug-hunt-v1-round8-handoff.md §6 (this section); the ledger plan/schema-bug-hunt-v1-progress.md from the
+"Session 5" entries (2026-10-17) to the end; /Volumes/T7/dev/round8/PROTOCOL.md; CLAUDE.md; the skills landing-workflow,
+acceptance-battery, corpus-fixtures, verification-gates; the memory index. Session 5's native agent ids are DEAD: spawn fresh Opus
+builders from the resume briefs, reusing clones and targets. Codex runs survive: check them first with
+`python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'` and collect finished answers (turns/NNNN/last-message.md;
+`collect-codex.py` saves only turn 0000). Reviewers: astra = gpt-6-astra, sol = gpt-6.1-sol (never gpt-6-sol), effort xhigh,
+sandbox read_only, cwd /Volumes/T7/dev; follow_up for re-checks while the session is younger than 24 h; plain correctness wording.
+Do this first:
+(1) `git status --short; git log --oneline -5; ls /Volumes/T7/dev/round8/heavy.lock` (must be absent); `uptime; df -h /Volumes/T7`.
+(2) Battery speed (blocks landing 10a): the Codex battery builder `20261017T185515-78d55437`; when it hands back, commit its
+    transfer in /Volumes/T7/dev/round8-battery, review with astra + sol, cherry-pick into round8-landing10a (landing-10a-v2), set
+    E=/Volumes/T7/dev/round8-landing10a-run2 in runner/landing-10a.env, commit, and launch the full chain
+    `(cd /Volumes/T7/dev/round8/runner && LANDING_ENV=landing-10a.env nohup zsh -c 'for s in dump unit lint battery integration sweep finalize; do echo "=== step $s start $(date +%H:%M)"; ./run-landing.sh $s || { echo "=== step $s FAILED rc=$? $(date +%H:%M)"; exit 1; }; echo "=== step $s done $(date +%H:%M)"; done; echo chain green' >> <E>/chain.log 2>&1 &)`;
+    on "chain green" commit the adopted fixtures and `git merge --no-ff` into main with components + receipt sha256; never push;
+    then re-tally closures (expected 9/83).
+(3) Spawn fresh Opus builders: W1 from round8/brief-w1-rework14-part2-resume.md, W4 from round8/brief-w4-rework17-impl-resume.md,
+    Track G from round8/brief-guards-resume.md (≤ 3 cargo-heavy builders at once). Their FINAL hand-backs go to astra + sol
+    (W1 also a Fable challenger) before any landing; then rebase onto main after 10a merges.
+(4) Size-aware output: collect the two reviews (143700-106056ac astra, 143700-427a9774 sol); on LAND ×2 add 5640581b to the next
+    landing.
+(5) Add the runner rule (shipped schema must accept its chart's defaults and be ≤ 5 MiB) via a Codex builder in a runner dev clone,
+    applied between chains; then queue D4, F4/F31, F15, imgproxy per round8/triage-defaults-sol.md.
+Recreate the 20-minute heartbeat (CronCreate) on start; `date` before every ledger entry; commit ledger entries `chore(plan): …`.
