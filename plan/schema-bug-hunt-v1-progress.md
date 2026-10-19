@@ -8626,6 +8626,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (astra), 024812-bced61f6 (sol). Side finding by the W1 builder: `.helmignore` in nginx, mariadb, netbox, weblate, yourls and
   bitnami-postgresql excludes values.schema.json, so Helm never loads the schema there (its own helm_accepts.sh was vacuous for them
   through rework 13); astra 024822-7aa309f5 checks whether the landing sweep and the battery are vacuous for those charts. Orchestrator.
+- 04:53 (Oct 19) — **.helmignore check (astra, `round8/check-helmignore-astra.md`): a real gap in chart-LOADED schema checks for nginx, mariadb
+  and bitnami-postgresql (netbox/weblate/yourls do not exclude the schema).** Helm's values-lint rule reads values.schema.json directly
+  (lint/rules/values.go:70), so raw-values lint and the battery's LintRaw lane are effective; but the sweep's prepared copies keep
+  .helmignore unchanged and verify file hashes only (landing.py:602/:1944, sweep.go:219), so the template-lint / install schema
+  boundary never sees the shipped schema there, and the battery's LintCoalescedTwice lane is vacuous for them (its screened flips
+  that disagree with Helm fail rather than pass). The round-74 template lane is unaffected (Rust validates; Helm renders schema-free).
+  Pre-existing, not a landing-10a regression. Process fix dispatched: runner v9 (sol builder 025256-a347da0c in
+  round8/runner-v9-dev, brief `round8/brief-runner-v9-helmignore.md`): neutralise only the schema-excluding rule via Helm's own ignore
+  semantics, assert per copy that Helm LOADED the planned schema bytes, red/green runner tests. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
