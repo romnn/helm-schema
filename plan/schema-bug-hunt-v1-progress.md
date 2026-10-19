@@ -8578,6 +8578,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   tracing-perfetto fork 7de0d96f. The first attempt (spans before battery) conflicted per battery commit and was aborted. Env
   `runner/landing-10a.env` committed 905b532 (BASELINE f7be7ba5 = ROSTER_BASELINE; no generator change, zero fixture moves
   expected). Lock absent, T7 203 GB; chain started 01:38, evidence /Volumes/T7/dev/round8-landing10a-run1. Orchestrator.
+- 02:50 (Oct 19) — **Landing 10a: dump 8 min (0 of 204 adopted, as expected), unit 7, lint 8 — all OK; battery still running at 49 min
+  (landing 9: 26) — PERF TRIGGER met (step > 50% slower); user alerted.** The new lint-document lane live-adjudicates flips in up to
+  three documents per input (LintRaw, LintCoalescedTwice, Template) on top of the template probes against the roster baseline, so a
+  slower battery is expected; the cost is to be measured from this run's coverage/cost report and attacked in a battery perf pass
+  (candidate: one Helm render per distinct coalesced document across lanes). Perf fix for append_selected_constraints (sol,
+  f9ee6567 turn 4) running; W1 r13 and W4 r17 builders running. T7 172 GB. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
