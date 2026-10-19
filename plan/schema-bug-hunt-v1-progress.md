@@ -8685,6 +8685,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   differs") — or vault stays red, NOT rostered; all pending cells (Unicode/metachar/final-newline/pipeline, real mini/nats2), R81
   red/green before deleting the pre-pass, falco written arm, one model only, the perf gate. LOC ~+360 per the reviewers' sum.
   Reviews `round8/design3-w1-r14-{astra,sol}.md`. Orchestrator.
+- 13:55 (Oct 19) — **Witness freeze handed back (round8-witness2, 6 commits to eb5f4645, test data only): 117 rows in 60 families; claimed
+  strict closures 4 → 10 (new: F32 F35 F45 F57 F60 F61) — NOT counted until reviewed (astra 115455-b26e2a39, sol 115455-eac95535).**
+  Gates: fmt, task lint, family_witnesses 17/17, nextest workspace 1,701 — all pass. Builder notes: baseline closures on this branch
+  are F17/F54/F74/F77 (F30 carries 19 roster cells); F64/F72 have no rows (traefik cannot be enrolled: the gate's chart_problems parses
+  templates/requirements.yaml as a dependency manifest — a test-code defect); one `pkill -f` on its own watcher shells (rule slip,
+  recorded). CRITICAL SIDE FINDING, confirmed by the orchestrator with real `helm lint` on main's shipped fixtures: gitea, synapse
+  and eck-stack schemas REJECT THEIR OWN CHART DEFAULTS (lint exit 1), and milvus's schema exceeds Helm's 5 MiB chart-file limit so
+  Helm cannot load the chart at all. The landing sweep counts only NEW lint failures, so these inherited failures passed every
+  landing. F74 (size) may therefore not be closed — asked the reviewers. A full-corpus defaults lint scan is running. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
