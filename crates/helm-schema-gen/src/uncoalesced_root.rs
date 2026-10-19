@@ -1,6 +1,7 @@
 //! The documents `helm lint` validates, as further must-accept documents.
 
 use std::borrow::Cow;
+use std::cell::OnceCell;
 use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_core::{ConditionalGuard, Segment, ValuesPath};
@@ -24,10 +25,10 @@ pub(crate) struct GuardEncoding<'a> {
     pub(crate) polarity: ConditionPolarity,
 }
 
-/// The original condition and validator shared by one fact's lint checks.
+/// A condition whose successful or failed compilation is shared by one fact's checks.
 struct LintConstraint {
     condition: Value,
-    validator: Option<jsonschema::Validator>,
+    validator: OnceCell<Option<jsonschema::Validator>>,
 }
 
 /// Relaxes conditional constraints that `helm lint` documents fail.
@@ -117,10 +118,9 @@ impl<'a> UncoalescedRootGate<'a> {
                 .iter()
                 .map(|segment| Segment::from_encoded_component(segment)),
         );
-        let condition = condition.clone().into_value();
         let constraint = LintConstraint {
-            validator: self.constraint_validator(&condition, &then_value),
-            condition,
+            condition: condition.clone().into_value(),
+            validator: OnceCell::new(),
         };
         let mut instances = Vec::new();
         collect_anchored_instances(uncoalesced_root, ancestor_segments, &mut instances);
@@ -132,11 +132,7 @@ impl<'a> UncoalescedRootGate<'a> {
         );
         let mut document = None;
         let mut deciding_paths = BTreeSet::new();
-        if Self::fails_only_lint(
-            &instances,
-            &coalesced_instances,
-            constraint.validator.as_ref(),
-        ) {
+        if self.fails_only_lint(&instances, &coalesced_instances, &constraint, &then_value) {
             document = Some(LintDocument::Root);
             self.collect_deciding_paths(
                 uncoalesced_root,
@@ -167,11 +163,13 @@ impl<'a> UncoalescedRootGate<'a> {
         }
         let lacking = self.member_requirements_the_floor_lacks(&anchor, &then_value);
         if !lacking.is_empty()
-            && constraint.validator.as_ref().is_some_and(|validator| {
-                coalesced_instances
-                    .iter()
-                    .all(|instance| validator.is_valid(instance))
-            })
+            && self
+                .prepared_validator(&constraint, &then_value)
+                .is_some_and(|validator| {
+                    coalesced_instances
+                        .iter()
+                        .all(|instance| validator.is_valid(instance))
+                })
         {
             document.get_or_insert(LintDocument::Floor);
             deciding_paths.extend(lacking);
@@ -271,20 +269,21 @@ impl<'a> UncoalescedRootGate<'a> {
                 create_override_tables(&mut created, self.coalesced_defaults, parents);
             }
         }
-        let projection = SchemaNode::all_of(build_condition_clauses(
-            &held,
-            ancestor_segments,
-            encoding.values_yaml_doc,
-            encoding.absence,
-            encoding.polarity,
-        ))
-        .into_value();
-        let projected;
-        let validator = if projection == constraint.condition {
-            constraint.validator.as_ref()
+        let projected = LintConstraint {
+            condition: SchemaNode::all_of(build_condition_clauses(
+                &held,
+                ancestor_segments,
+                encoding.values_yaml_doc,
+                encoding.absence,
+                encoding.polarity,
+            ))
+            .into_value(),
+            validator: OnceCell::new(),
+        };
+        let constraint = if projected.condition == constraint.condition {
+            constraint
         } else {
-            projected = self.constraint_validator(&projection, then_value);
-            projected.as_ref()
+            &projected
         };
         let mut coalesced_instances = Vec::new();
         collect_anchored_instances(
@@ -296,7 +295,7 @@ impl<'a> UncoalescedRootGate<'a> {
         for document in [Cow::Borrowed(floor), created] {
             let mut instances = Vec::new();
             collect_anchored_instances(&document, ancestor_segments, &mut instances);
-            if Self::fails_only_lint(&instances, &coalesced_instances, validator) {
+            if self.fails_only_lint(&instances, &coalesced_instances, constraint, then_value) {
                 failing.push(document);
             }
         }
@@ -348,11 +347,16 @@ impl<'a> UncoalescedRootGate<'a> {
     /// `lint_instances` while every one of `coalesced_instances` satisfies
     /// it; both are values at the constraint's anchor.
     fn fails_only_lint(
+        &self,
         lint_instances: &[&Value],
         coalesced_instances: &[&Value],
-        validator: Option<&jsonschema::Validator>,
+        constraint: &LintConstraint,
+        then_value: &Value,
     ) -> bool {
-        let Some(validator) = validator else {
+        if lint_instances.is_empty() {
+            return false;
+        }
+        let Some(validator) = self.prepared_validator(constraint, then_value) else {
             return false;
         };
         lint_instances
@@ -361,6 +365,17 @@ impl<'a> UncoalescedRootGate<'a> {
             && coalesced_instances
                 .iter()
                 .all(|instance| validator.is_valid(instance))
+    }
+
+    fn prepared_validator<'b>(
+        &self,
+        constraint: &'b LintConstraint,
+        then_value: &Value,
+    ) -> Option<&'b jsonschema::Validator> {
+        constraint
+            .validator
+            .get_or_init(|| self.constraint_validator(&constraint.condition, then_value))
+            .as_ref()
     }
 
     /// The validator of `if condition then then_value`, or `None` when it

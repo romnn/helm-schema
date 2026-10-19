@@ -2,11 +2,14 @@
 //! on the presence of the paths that document lacks, or withdrawn.
 
 use std::collections::{BTreeMap, BTreeSet};
+use std::sync::Arc;
+use std::sync::atomic::{AtomicUsize, Ordering};
 
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_core::{ConditionalGuard, GuardValue, ValuesPath};
 use serde_json::{Value, json};
 use test_util::prelude::sim_assert_eq;
+use tracing_subscriber::prelude::*;
 
 use crate::condition_encoding::{
     AbsenceDefaults, ConditionPolarity, HELM_TRUTHY_DEFINITION_NAME, build_condition_clauses,
@@ -26,6 +29,73 @@ const NO_DEPENDENCIES: Dependencies<'static> = Dependencies {
     roots: &BTreeSet::new(),
     refill: &Value::Null,
 };
+
+struct ValidatorBuilds {
+    count: Arc<AtomicUsize>,
+}
+
+impl<S: tracing::Subscriber> tracing_subscriber::Layer<S> for ValidatorBuilds {
+    fn on_new_span(
+        &self,
+        attributes: &tracing::span::Attributes<'_>,
+        _id: &tracing::span::Id,
+        _context: tracing_subscriber::layer::Context<'_, S>,
+    ) {
+        if attributes.metadata().name() == "constraint_validator" {
+            self.count.fetch_add(1, Ordering::Relaxed);
+        }
+    }
+}
+
+/// Empty and absent anchors provide no instances to judge, even when the floor
+/// projection differs from the original condition.
+#[test]
+fn anchors_without_instances_do_not_build_validators() -> eyre::Result<()> {
+    let count = Arc::new(AtomicUsize::new(0));
+    let subscriber = tracing_subscriber::registry().with(ValidatorBuilds {
+        count: Arc::clone(&count),
+    });
+    tracing::subscriber::with_default(subscriber, || -> eyre::Result<()> {
+        // A positive control ensures the subscriber sees actual compilation attempts.
+        judge(
+            &json!({}),
+            &json!({}),
+            &[],
+            &[],
+            json!(true),
+            ConditionPolarity::Widen,
+            &NO_DEPENDENCIES,
+        )?;
+        sim_assert_eq!(have: count.swap(0, Ordering::Relaxed), want: 1);
+        for (values, anchor) in [
+            (json!({"members": {}}), vec!["members", "*"]),
+            (json!({"members": []}), vec!["members", "*"]),
+            (json!({}), vec!["members", "*"]),
+            (json!({}), vec!["members"]),
+        ] {
+            for guards in [
+                vec![],
+                vec![ConditionalGuard::Truthy {
+                    path: ValuesPath::parse("members.*.enabled"),
+                }],
+            ] {
+                let (document, relaxed) = judge(
+                    &values,
+                    &values,
+                    &anchor,
+                    &guards,
+                    json!(true),
+                    ConditionPolarity::Widen,
+                    &NO_DEPENDENCIES,
+                )?;
+                eyre::ensure!(document.is_some(), "an unjudged constraint was withdrawn");
+                sim_assert_eq!(have: relaxed, want: vec![]);
+                sim_assert_eq!(have: count.load(Ordering::Relaxed), want: 0);
+            }
+        }
+        Ok(())
+    })
+}
 
 /// Runs the gate on `if guards then then_schema`, anchored at `anchor`, and
 /// returns the kept constraint, placed at its anchor, as a validatable
@@ -416,6 +486,11 @@ fn a_constraint_no_lint_document_fails_is_kept() -> eyre::Result<()> {
 
 #[test]
 fn an_uncompilable_constraint_is_kept_without_relaxation() -> eyre::Result<()> {
+    let count = Arc::new(AtomicUsize::new(0));
+    let subscriber = tracing_subscriber::registry().with(ValidatorBuilds {
+        count: Arc::clone(&count),
+    });
+    let _subscriber = tracing::subscriber::set_default(subscriber);
     // An unresolved local reference makes both validator builds fail even
     // though the dependency supplies the key missing from the lint floor.
     let then_schema = json!({ "properties": { "kid": {
@@ -436,6 +511,7 @@ fn an_uncompilable_constraint_is_kept_without_relaxation() -> eyre::Result<()> {
     let document = document.ok_or_eyre("an uncompilable constraint was withdrawn")?;
     sim_assert_eq!(have: document.pointer("/allOf/0/then"), want: Some(&then_schema));
     sim_assert_eq!(have: relaxed, want: vec![]);
+    sim_assert_eq!(have: count.load(Ordering::Relaxed), want: 2);
     Ok(())
 }
 

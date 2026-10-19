@@ -9,7 +9,7 @@ use std::fs;
 use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 
-use color_eyre::eyre::{self, OptionExt as _};
+use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use helm_schema_test_support::helm::invocation::{find_helm, find_helmsweep};
 use helm_schema_test_support::registry::PROVIDER_BUNDLE;
 use indoc::{formatdoc, indoc};
@@ -564,13 +564,13 @@ fn the_real_cli_generates_from_relative_paths_and_reproduces() -> eyre::Result<(
 fn slow_generations_and_slow_helm_renders_time_out() -> eyre::Result<()> {
     let helm = find_helm()?;
     let helmsweep = find_helmsweep()?;
-    // Each fake leaves a background descendant, whose pid it records: `hang` never exits; `pipes_kept`
-    // exits normally but its descendant keeps the output pipes open.
+    // Each fake records a background descendant before blocking or exiting.
+    // Pipe holders emit fixed successful output and exit independently of external latency.
     let hang = "sleep 60 & echo $! > '@DESCENDANT_FILE@'; exec sleep 60";
-    let pipes_kept = |real: &Path| {
+    let pipes_kept = |output: &str| {
+        let output = output.replace('\'', "'\\''");
         format!(
-            "out=$('{}' \"$@\"); rc=$?; sleep 60 & echo $! > '@DESCENDANT_FILE@'; printf '%s' \"$out\"; exit $rc",
-            real.display()
+            "sleep 60 & echo $! > '@DESCENDANT_FILE@'; printf '%s' '{output}'; echo exited > '@PARENT_EXIT_FILE@'; exit 0"
         )
     };
     let wrapper = |on: &str, body: &str, real: &Path| {
@@ -582,8 +582,7 @@ fn slow_generations_and_slow_helm_renders_time_out() -> eyre::Result<()> {
             real = real.display(),
         }
     };
-    let generation_held =
-        "sleep 60 & echo $! > '@DESCENDANT_FILE@'; printf '%s' '{}' > \"$out\"; exit 0";
+    let generation_held = "sleep 60 & echo $! > '@DESCENDANT_FILE@'; printf '%s' '{}' > \"$out\"; echo exited > '@PARENT_EXIT_FILE@'; exit 0";
     // (case, generation, fake helm, fake helmsweep, what the failure must name)
     let cases = [
         (
@@ -610,7 +609,7 @@ fn slow_generations_and_slow_helm_renders_time_out() -> eyre::Result<()> {
         (
             "helm version holds its pipes",
             None,
-            Some(wrapper("version", &pipes_kept(&helm), &helm)),
+            Some(wrapper("version", &pipes_kept("v4.2.3"), &helm)),
             None,
             vec!["[\"version\"", "timed out"],
         ),
@@ -625,7 +624,7 @@ fn slow_generations_and_slow_helm_renders_time_out() -> eyre::Result<()> {
             "helmsweep version holds its pipes",
             None,
             None,
-            Some(wrapper("version", &pipes_kept(&helmsweep), &helmsweep)),
+            Some(wrapper("version", &pipes_kept("helmsweep"), &helmsweep)),
             vec!["version timed out"],
         ),
         (
@@ -639,7 +638,7 @@ fn slow_generations_and_slow_helm_renders_time_out() -> eyre::Result<()> {
             "helmsweep classify holds its pipes",
             None,
             None,
-            Some(wrapper("classify", &pipes_kept(&helmsweep), &helmsweep)),
+            Some(wrapper("classify", &pipes_kept("accept\n"), &helmsweep)),
             vec!["cell c1", "classify timed out"],
         ),
     ];
@@ -669,11 +668,16 @@ fn expect_timeout(
     chart(run.path(), "app", APP_VALUES, CONFIGMAP)?;
     // The children run under a cleared environment: the fakes learn the file from their text.
     let descendant_file = run.path().join("descendant");
+    let parent_exit_file = run.path().join("parent-exited");
     let descendant_path = descendant_file.to_string_lossy().to_string();
-    let generation = generation.map(|body| body.replace("@DESCENDANT_FILE@", &descendant_path));
-    let fake_helm = fake_helm.map(|script| script.replace("@DESCENDANT_FILE@", &descendant_path));
-    let fake_helmsweep =
-        fake_helmsweep.map(|script| script.replace("@DESCENDANT_FILE@", &descendant_path));
+    let paths = |script: &str| {
+        script
+            .replace("@DESCENDANT_FILE@", &descendant_path)
+            .replace("@PARENT_EXIT_FILE@", &parent_exit_file.to_string_lossy())
+    };
+    let generation = generation.map(paths);
+    let fake_helm = fake_helm.map(paths);
+    let fake_helmsweep = fake_helmsweep.map(paths);
     match generation.as_deref() {
         Some(body) => run.script_bin("A", body)?,
         None => run.bin("A", Some(ACCEPT_ALL))?,
@@ -703,8 +707,14 @@ fn expect_timeout(
         elapsed < std::time::Duration::from_secs(40),
         "{case}: took {elapsed:?}"
     );
-    let descendant = fs::read_to_string(&descendant_file)?.trim().to_string();
+    let descendant = fs::read_to_string(&descendant_file)
+        .wrap_err_with(|| format!("{case}: the fake never recorded its descendant"))?
+        .trim()
+        .to_string();
     eyre::ensure!(!descendant.is_empty(), "{case}: the fake never ran");
+    if case.ends_with("holds its pipes") {
+        sim_assert_eq!(have: fs::read_to_string(parent_exit_file)?, want: "exited\n", "{case}: the parent never reached exit");
+    }
     eyre::ensure!(
         process_is_gone(&descendant)?,
         "{case}: the fake's background descendant {descendant} survived the timeout"
