@@ -8739,6 +8739,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   size-aware-output on landing 10a; brief `round8/brief-size-aware-output.md` + the user's refinement by follow_up): option + docs,
   tests per mode incl. over-limit warnings, semantic-equivalence proof pretty vs compact for every corpus chart, F74 default-output
   obligations Met, fixture adoption, gates, stock-Helm lint of the five charts. Orchestrator.
+- 14:59 (Oct 19) — **Live runner v9 (c6a52a4) suite green: 14/14 suites, run-all exit 0, with GUARD_SRC=/Volumes/T7/dev/round8-target-guard/
+  scripts/target-guard.py.** The first run without GUARD_SRC failed test_target.sh (the interop tests need helm-schema's target-guard
+  script, which lives only in the round8-target-guard clone, never landed in main), yet the wrapper printed run-all=0 — unexplained
+  (the script ends with `(( failed == 0 ))` under bash); queued to investigate as a gate-honesty item. T7 fell to 113 GB: deleted
+  idle round8-tracing/target (55 GB) and round8-witness2-target (10 GB) → 176 GB. T7 disconnected briefly ~14:40 (user); all Codex
+  runs kept writing, all clones clean, no I/O errors seen. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
