@@ -8641,6 +8641,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   030350-314108f7, `round8/q/triage-open-findings.md`) lists open findings no active track covers and proposes 1–2 parallel tracks
   without file overlap with W1/W4; the next Opus builders start from it. Process lesson: a builder waiting on a review is idle
   capacity — always give it design-independent work. Orchestrator.
+- 12:20 (Oct 19) — **The orchestrator session sat idle from ~05:15 to 12:19 (no heartbeats fired); landing 10a's battery run 2 TIMED OUT at nextest's
+  3 h ceiling (10,800 s, 06:31).** The battery cannot finish inside the chain any more (landing 9: 26 min) — the lint-document lane's
+  live adjudication volume (one pool alone: 1,356 Helm probe dirs). This BLOCKS landing 10a. Dispatched the battery-lane builder
+  (astra, 78d55437 follow_up): measure per-chart/per-lane screened flips and Helm invocations (invocation report + Perfetto spans),
+  then fix the dominant cost without weakening any verdict (share identical renders/invocations across lanes, keyed by every input;
+  no sampling, no dropped flips); target ≤ 45 min for the full live battery, coverage verdicts byte-identical to a slow reference.
+  Meanwhile: perf rework committed 8b540c3e in round8-tracing (lazy validators; interleaved 7-run medians redis 3.331 → 2.976 s
+  −10.7%, openebs 55.24 → 47.22 s −14.5%; 205 outputs identical; test:all green but the 4 live fetches — the timeout-harness race
+  existed on main too and is fixed; LOC +14 total), re-reviews sent; runner v9 (.helmignore) handed back with runner + helmsweep
+  patches, review pending; W1 design revision 2 (+410 LOC, all 325 rows addressed, aws-nth/nginx causes isolated) under re-review,
+  W1 builder building the four R81 propagation repairs meanwhile; witness-freezing builder (Opus) started in round8-witness2 for the
+  62 families without frozen rows; F15 investigation (astra 101925-b5015cb2). Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
