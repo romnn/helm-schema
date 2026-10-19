@@ -8880,4 +8880,9 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   tie-breaker (running astra runs left untouched — user: "leave the current ones running"). Added to the design revision brief as C10–C13
   with orchestrator scope guidance: the smallest oracle that is never falsely decisive — abstain on any construct it does not model
   exactly, and measure whether StarRocks' defaults CR still becomes decidable. Orchestrator.
+- 22:35 (Oct 19) — **Track G: nginx explicit-null fix (main-too) committed; CRD design revision 2 dispatched.** Generation read `hasKey`
+  with a null member as absent; Helm 4.2.3 reads it as present. One shared `HasKey` replaces the non-null approximation; Helm matrix +
+  falsy controls 64/64 (`round8-guards/.codex-evidence/proxy-null/`); red→green guard tests 11, unit 1,712, fmt/lint/lint:fc 0;
+  +37 prod LOC (+125 vs landing 10a); moves 76 artifacts (to be covered by Track G's final battery). Committed 3ebdc547 (transfer-13
+  sha256 298b60c7…). Revision brief `round8/q/design-chart-crds-rev2.md` (C1–C13) sent as follow_up turn 3 on 536e8e16. Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
