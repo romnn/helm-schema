@@ -8665,6 +8665,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Orchestrator direction for rev 3 (`round8/brief-w1-rework14-design3.md`): ONE faithful abstract model of mergo's merge algorithm
   replaces per-path guard predicates; aggregate reads take descendant-write guards; `lower` as must-true/must-false partial subsets
   reusing the direct contains/prefix/suffix lowering; vault unknown values under their guard; a real nats proof. Orchestrator.
+- 12:48 (Oct 19) — **F15 investigation (astra, `round8/investigation-f15-astra.md`): CONFIRMED on main; cause corrected; QUEUED behind W4.**
+  Whole schema accepts `memoryHighWatermark.type: foo` (enabled true and false) while Helm exits 1 (validation.yaml:6, unconditional
+  type check). The literals are comparison evidence, not a lost enum: resolve_policy.rs:285 deliberately emits `anyOf [enum, string,
+  null]` per equality. The real gap is in the IR: the chart's validator aggregates messages through `append → without "" → join →
+  if $message → fail`; `without` has no modelled transfer (expr_call_eval/mod.rs:177) and `join` derives no output emptiness
+  (serialization.rs:851), so the fail condition stays approximate and never becomes a terminal clause. Counterfactual: one enum
+  conjunct rejects both foo cases and keeps all four valid controls. Fix touches fragment_eval/summary.rs, bound_helper_resolver.rs,
+  expr_call_eval/{mod,collections,serialization}.rs — overlapping W4's current IR edits, so it starts after W4 lands (12-line brief in
+  the file). W1 design rev 3 under re-review (abstract mergo model; +300 LOC); host load 38 (W1/witness builds, W4 tests, battery perf
+  run, runner v9 suite). Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
