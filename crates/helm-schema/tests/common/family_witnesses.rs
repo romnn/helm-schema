@@ -365,11 +365,42 @@ impl SetValue {
 const F1_POLICY: &str = "must a closed root admit the `global` map Helm injects into a chart \
      that never reads it?";
 
+const INT_OR_STRING_NULL_POLICY: &str = "the pinned strict v1.29.0 bundle types IntOrString as a `oneOf` that a null or empty targetPort matches twice, so it rejects the render exactly as the schema does, while the API server accepts an unset targetPort: is the pinned bundle the oracle for IntOrString nulls (F37/F39)?";
+
 const RENDERS: OracleExpectation = OracleExpectation::Renders {
     kubernetes: KubernetesExpectation::NotRelevant,
 };
 
 pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
+    FamilyWitnesses {
+        family: Family::F0,
+        witnesses: &[
+            Witness {
+                id: "tigera-operator-kubernetes-provider-kind",
+                chart: "tigera-operator",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F0/tigera-operator-kubernetes-provider-kind.yaml",
+                ),
+                oracle: RENDERS,
+                schema: SchemaExpectation::KnownFalseRejection,
+                adjudicated: "e97a05cab89aa859",
+            },
+            Witness {
+                id: "tigera-operator-linux-dataplane-nftables",
+                chart: "tigera-operator",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F0/tigera-operator-linux-dataplane-nftables.yaml",
+                ),
+                oracle: RENDERS,
+                schema: SchemaExpectation::KnownFalseRejection,
+                adjudicated: "16206054222a2c96",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
     FamilyWitnesses {
         family: Family::F1,
         witnesses: &[
@@ -485,6 +516,75 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 adjudicated: "b1ff9fbe794fa818",
             },
         ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F2,
+        witnesses: &[
+            Witness {
+                id: "kyverno-mode-null",
+                chart: "kyverno",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F2/kyverno-mode-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (kyverno/templates/validate.yaml:28:6): mode is not supported anymore, please remove it from your release and use admissionController.replicas instead.",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "3ab28f288921914f",
+            },
+            Witness {
+                id: "kyverno-mode-string",
+                chart: "kyverno",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F2/kyverno-mode-string.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (kyverno/templates/validate.yaml:28:6): mode is not supported anymore, please remove it from your release and use admissionController.replicas instead.",
+                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+                adjudicated: "18f961ecd61223d7",
+            },
+            Witness {
+                id: "bitnami-postgresql-resources-preset-huge",
+                chart: "bitnami-postgresql",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F2/bitnami-postgresql-resources-preset-huge.yaml",
+                ),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (postgresql/templates/primary/statefulset.yaml:483:25): ERROR: Preset key 'huge' invalid. Allowed values are nano,micro,small,medium,large,xlarge,2xlarge",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "b0cb14c01a95b58d",
+            },
+            Witness {
+                id: "bitnami-postgresql-resources-preset-small",
+                chart: "bitnami-postgresql",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F2/bitnami-postgresql-resources-preset-small.yaml",
+                ),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "e49deaff79548ef8",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F3,
+        witnesses: &[Witness {
+            id: "rabbitmq-cluster-operator-fullname-override-null",
+            chart: "rabbitmq-cluster-operator",
+            kubernetes_version: "1.29.0",
+            overrides: Overrides::ValuesFile(
+                "F3/rabbitmq-cluster-operator-fullname-override-null.yaml",
+            ),
+            oracle: RENDERS,
+            schema: SchemaExpectation::KnownFalseRejection,
+            adjudicated: "0d2f3169288ebbb9",
+        }],
         size_obligations: &[],
         unfrozen: &[],
     },
@@ -686,6 +786,88 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
         unfrozen: &[],
     },
     FamilyWitnesses {
+        family: Family::F7,
+        witnesses: &[
+            Witness {
+                id: "eck-operator-metrics-secure-mode-enabled",
+                chart: "eck-operator",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F7/eck-operator-metrics-secure-mode-enabled.yaml",
+                ),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (eck-operator/templates/statefulset.yaml:29:30): config.metrics.port must be greater than 0 when config.metrics.secureMode.enabled is true",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "bd460c2017e871cb",
+            },
+            Witness {
+                id: "eck-operator-passwords-length-3",
+                chart: "eck-operator",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F7/eck-operator-passwords-length-3.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (eck-operator/templates/statefulset.yaml:29:30): config.policies.passwords.length must be >= 6 and <= 72",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "63d3fcf506e1dbd0",
+            },
+            Witness {
+                id: "prometheus-redis-exporter-service-monitor-targets-string-disabled",
+                chart: "prometheus-redis-exporter",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F7/prometheus-redis-exporter-service-monitor-targets-string-disabled.yaml",
+                ),
+                oracle: RENDERS,
+                schema: SchemaExpectation::KnownFalseRejection,
+                adjudicated: "a59b73f6f30eba4f",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F8,
+        witnesses: &[
+            Witness {
+                id: "kafka-ui-ingress-host-null",
+                chart: "kafka-ui",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F8/kafka-ui-ingress-host-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: kafka-ui/templates/ingress.yaml:72:18 — wrong type for value; expected string; got interface {}",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "39f5d762a118c98a",
+            },
+            Witness {
+                id: "kafka-ui-ingress-host-number",
+                chart: "kafka-ui",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F8/kafka-ui-ingress-host-number.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: kafka-ui/templates/ingress.yaml:72:18 — wrong type for value; expected string; got float64",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "5e1201dc0dd4f4a9",
+            },
+            Witness {
+                id: "kafka-ui-ingress-preceding-paths-string",
+                chart: "kafka-ui",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F8/kafka-ui-ingress-preceding-paths-string.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: kafka-ui/templates/ingress.yaml:41:21 — can't evaluate field path in type interface {}",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "96445541bea3c27d",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
         family: Family::F9,
         witnesses: &[Witness {
             id: "cilium-extra-config-string",
@@ -697,6 +879,89 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
             },
             schema: SchemaExpectation::KnownFalseAcceptance,
             adjudicated: "7c6bac5f9751aabf",
+        }],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F10,
+        witnesses: &[
+            Witness {
+                id: "qdrant-api-key-secret-key-null",
+                chart: "qdrant",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F10/qdrant-api-key-secret-key-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: qdrant/templates/statefulset.yaml:31:28 — qdrant/templates/_helpers.tpl:89:31 — invalid value; expected string",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "6be9b68fce3fdf20",
+            },
+            Witness {
+                id: "qdrant-api-key-secret-key-string",
+                chart: "qdrant",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F10/qdrant-api-key-secret-key-string.yaml"),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "d685a53bb43349df",
+            },
+            Witness {
+                id: "qdrant-read-only-api-key-secret-key-null",
+                chart: "qdrant",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F10/qdrant-read-only-api-key-secret-key-null.yaml",
+                ),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: qdrant/templates/statefulset.yaml:31:28 — qdrant/templates/_helpers.tpl:106:39 — invalid value; expected string",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "7dfc1799509bb98d",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F11,
+        witnesses: &[
+            Witness {
+                id: "qdrant-readiness-probe-null",
+                chart: "qdrant",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F11/qdrant-readiness-probe-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: qdrant/templates/statefulset.yaml:139:28 — nil pointer evaluating interface {}.enabled",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "47ca7903c047eb03",
+            },
+            Witness {
+                id: "qdrant-liveness-probe-null",
+                chart: "qdrant",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F11/qdrant-liveness-probe-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: qdrant/templates/statefulset.yaml:119:28 — nil pointer evaluating interface {}.enabled",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "99b348b176335b1f",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F12,
+        witnesses: &[Witness {
+            id: "kibana-annotations-number-value",
+            chart: "kibana",
+            kubernetes_version: "1.29.0",
+            overrides: Overrides::ValuesFile("F12/kibana-annotations-number-value.yaml"),
+            oracle: RENDERS,
+            schema: SchemaExpectation::KnownFalseRejection,
+            adjudicated: "4106d1751ef83294",
         }],
         size_obligations: &[],
         unfrozen: &[],
@@ -714,6 +979,79 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
             schema: SchemaExpectation::KnownFalseAcceptance,
             adjudicated: "e7e60310ab316daf",
         }],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F14,
+        witnesses: &[
+            Witness {
+                id: "postgresql-ha-diagnostic-mode-enabled-null",
+                chart: "postgresql-ha",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F14/postgresql-ha-diagnostic-mode-enabled-null.yaml",
+                ),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: postgresql-ha/templates/postgresql/statefulset.yaml:185:89 — invalid value; expected bool",
+                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+                adjudicated: "9b4e2bff7a1b3269",
+            },
+            Witness {
+                id: "pgadmin4-image-registry-null",
+                chart: "pgadmin4",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F14/pgadmin4-image-registry-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: pgadmin4/templates/deployment.yaml:89:20 — pgadmin4/templates/_helpers.tpl:68:92 — invalid value; expected string",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "e2cb217faf7f483e",
+            },
+            Witness {
+                id: "pgadmin4-image-registry-null-global-registry",
+                chart: "pgadmin4",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F14/pgadmin4-image-registry-null-global-registry.yaml",
+                ),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "5ddf23a6ac6e98cf",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F15,
+        witnesses: &[
+            Witness {
+                id: "rabbitmq-memory-high-watermark-type-foo",
+                chart: "rabbitmq",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F15/rabbitmq-memory-high-watermark-type-foo.yaml",
+                ),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (rabbitmq/templates/validation.yaml:6:4): VALUES VALIDATION: rabbitmq: memoryHighWatermark.type",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "c5af181782a85a9a",
+            },
+            Witness {
+                id: "rabbitmq-memory-high-watermark-type-absolute",
+                chart: "rabbitmq",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F15/rabbitmq-memory-high-watermark-type-absolute.yaml",
+                ),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "a4d61175911e59c6",
+            },
+        ],
         size_obligations: &[],
         unfrozen: &[],
     },
