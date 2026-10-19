@@ -2037,6 +2037,77 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
         unfrozen: &[],
     },
     FamilyWitnesses {
+        family: Family::F52,
+        witnesses: &[
+            Witness {
+                id: "kubeshark-support-chat-enabled-null",
+                chart: "kubeshark",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F52/kubeshark-support-chat-enabled-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: kubeshark/templates/06-front-deployment.yaml:82:102 — invalid value; expected bool",
+                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+                adjudicated: "44a17068b049905b",
+            },
+            Witness {
+                id: "kubeshark-support-chat-enabled-false",
+                chart: "kubeshark",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F52/kubeshark-support-chat-enabled-false.yaml"),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "a67da0ca1bbb13cb",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[
+            "open-webui `persistence.enabled: null` (workload-manager.yaml:6, the plan's witness): open-webui declares `import-values`, which the gate's coalescer does not model, so the chart cannot be enrolled.",
+        ],
+    },
+    FamilyWitnesses {
+        family: Family::F53,
+        witnesses: &[
+            Witness {
+                id: "argocd-apps-applicationset-template-patch-map",
+                chart: "argocd-apps",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F53/argocd-apps-applicationset-template-patch-map.yaml",
+                ),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: argocd-apps/templates/applicationsets.yaml:103:20 — wrong type for value; expected string; got map[string]interface {}",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "876e0e0a87bcf973",
+            },
+            Witness {
+                id: "argocd-apps-applicationset-template-patch-string",
+                chart: "argocd-apps",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F53/argocd-apps-applicationset-template-patch-string.yaml",
+                ),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "d8a7b96e385ac21c",
+            },
+            Witness {
+                id: "argocd-apps-application-project-number",
+                chart: "argocd-apps",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F53/argocd-apps-application-project-number.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: argocd-apps/templates/applications.yaml:28:26 — wrong type for value; expected string; got float64",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "1103aa1f361f9c20",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
         family: Family::F54,
         witnesses: &[
             Witness {
@@ -2131,6 +2202,250 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
         ],
         size_obligations: &[],
         unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F55,
+        witnesses: &[
+            Witness {
+                id: "alloy-alloy-mounts-null",
+                chart: "alloy",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F55/alloy-alloy-mounts-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: alloy/templates/controllers/daemonset.yaml:27:8 — alloy/templates/containers/_agent.yaml:93:18 — nil pointer evaluating interface {}.varlog",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "1dbbb2392e50fb6c",
+            },
+            Witness {
+                id: "alloy-alloy-clustering-null",
+                chart: "alloy",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F55/alloy-alloy-clustering-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: alloy/templates/controllers/daemonset.yaml:27:8 — alloy/templates/containers/_agent.yaml:19:18 — nil pointer evaluating interface {}.enabled",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "bfb3e5574cdd0565",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F56,
+        witnesses: &[
+            Witness {
+                id: "alloy-hpa-config-reloader-requests-null",
+                chart: "alloy",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F56/alloy-hpa-config-reloader-requests-null.yaml",
+                ),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (alloy/templates/hpa.yaml:10:57): .Values.configReloader.resources.requests is required when using autoscaling.",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "b2fdfab3b6538584",
+            },
+            Witness {
+                id: "alloy-hpa-requests-set",
+                chart: "alloy",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F56/alloy-hpa-requests-set.yaml"),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "0d22cca203985626",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F57,
+        witnesses: &[
+            Witness {
+                id: "jenkins-config-auto-reload-image-null",
+                chart: "jenkins",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F57/jenkins-config-auto-reload-image-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: jenkins/templates/jenkins-controller-statefulset.yaml:122:4 — jenkins/templates/_helpers.tpl:639:18 — nil pointer evaluating interface {}.registry",
+                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+                adjudicated: "cfac41d1be2c4072",
+            },
+            Witness {
+                id: "jenkins-config-auto-reload-disabled-image-null",
+                chart: "jenkins",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F57/jenkins-config-auto-reload-disabled-image-null.yaml",
+                ),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "b9d8d8c2b16ea506",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F58,
+        witnesses: &[
+            Witness {
+                id: "kube-prometheus-stack-alertmanager-ingress-paths-number",
+                chart: "kube-prometheus-stack",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F58/kube-prometheus-stack-alertmanager-ingress-paths-number.yaml",
+                ),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: kube-prometheus-stack/templates/alertmanager/ingress.yaml:38:25 — wrong type for value; expected string; got float64",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "4cfb21450e3a69b0",
+            },
+            Witness {
+                id: "kube-prometheus-stack-alertmanager-ingress-paths-string",
+                chart: "kube-prometheus-stack",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F58/kube-prometheus-stack-alertmanager-ingress-paths-string.yaml",
+                ),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "a0d4b9b2f8b1b373",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F59,
+        witnesses: &[
+            Witness {
+                id: "kube-prometheus-stack-prometheus-network-policy-flavor-list-disabled",
+                chart: "kube-prometheus-stack",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F59/kube-prometheus-stack-prometheus-network-policy-flavor-list-disabled.yaml",
+                ),
+                oracle: RENDERS,
+                schema: SchemaExpectation::KnownFalseRejection,
+                adjudicated: "39eefb18079e995f",
+            },
+            Witness {
+                id: "kube-prometheus-stack-operator-network-policy-flavor-list-disabled",
+                chart: "kube-prometheus-stack",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F59/kube-prometheus-stack-operator-network-policy-flavor-list-disabled.yaml",
+                ),
+                oracle: RENDERS,
+                schema: SchemaExpectation::KnownFalseRejection,
+                adjudicated: "65770abde7af185f",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F60,
+        witnesses: &[
+            Witness {
+                id: "vault-extra-volumes-secret",
+                chart: "vault",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F60/vault-extra-volumes-secret.yaml"),
+                oracle: OracleExpectation::Renders {
+                    kubernetes: KubernetesExpectation::Valid,
+                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "879320de27a67e48",
+            },
+            Witness {
+                id: "vault-extra-volumes-config-map",
+                chart: "vault",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F60/vault-extra-volumes-config-map.yaml"),
+                oracle: OracleExpectation::Renders {
+                    kubernetes: KubernetesExpectation::Valid,
+                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "5649ab1b40ded0a2",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F61,
+        witnesses: &[
+            Witness {
+                id: "datadog-cluster-checks-share-process-namespace-string",
+                chart: "datadog",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F61/datadog-cluster-checks-share-process-namespace-string.yaml",
+                ),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "027c7c6208ef4a57",
+            },
+            Witness {
+                id: "datadog-agents-share-process-namespace-maybe",
+                chart: "datadog",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F61/datadog-agents-share-process-namespace-maybe.yaml",
+                ),
+                oracle: OracleExpectation::Renders {
+                    kubernetes: KubernetesExpectation::Invalid {
+                        violations: &[ExpectedViolation {
+                            kind: "DaemonSet",
+                            instance_path: "/spec/template/spec/shareProcessNamespace",
+                            message: "got string, want null or boolean",
+                        }],
+                    },
+                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+                adjudicated: "6a8840d4050f5ab8",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F62,
+        witnesses: &[
+            Witness {
+                id: "weblate-postgresql-ldap-null",
+                chart: "weblate",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F62/weblate-postgresql-ldap-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: weblate/charts/postgresql/templates/primary/statefulset.yaml:340:50 — nil pointer evaluating interface {}.enabled",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "f22fb4047c273dd6",
+            },
+            Witness {
+                id: "weblate-postgresql-audit-null",
+                chart: "weblate",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F62/weblate-postgresql-audit-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: weblate/charts/postgresql/templates/primary/statefulset.yaml:398:31 — nil pointer evaluating interface {}.logHostname",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "2ad4b6c4501345ae",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[
+            "airflow `postgresql.*` nil dereferences (34 aborts) and the oncall subchart witnesses: Helm refuses both shipped fixtures under Go regexp (`/config/api/base_url`, `rabbitmq.ldap.uri`), so the verdict is not reproducible offline; the milvus witnesses are masked by its D3 defaults rejection.",
+        ],
     },
     FamilyWitnesses {
         family: Family::F69,
