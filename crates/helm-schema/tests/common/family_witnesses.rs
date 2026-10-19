@@ -276,8 +276,8 @@ pub(crate) enum ShippedOutput {
     /// Compact JSON with short `$defs` keys: what `helm-schema lint` /
     /// `template` hand Helm.
     HelmReady,
-    /// Pretty JSON with readable `$defs` keys: what `helm-schema` writes
-    /// without `--compact` or `--shorten-defs`, the file a chart author ships.
+    /// The default CLI file: pretty JSON with readable `$defs` keys when it fits
+    /// Helm, otherwise compact JSON with short keys, including a final newline.
     DefaultCli,
 }
 
@@ -652,7 +652,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     diagnostic: "Error: YAML parse error on grafana/templates/extra-manifests.yaml: error unmarshaling JSON: while decoding JSON: json: cannot unmarshal number into Go value of type util.SimpleHead",
                 },
                 schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
-                adjudicated: "2a9ba02632234c6c",
+                adjudicated: "2a9ba02632234c6c", // spellcheck:ignore-line
             },
             Witness {
                 id: "grafana-values-extra-objects-int-minus-1",
@@ -725,7 +725,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     diagnostic: "Error: jaeger/templates/jaeger/jaeger-extra-list.yaml:1:17 — range can't iterate over -1",
                 },
                 schema: SchemaExpectation::KnownFalseAcceptance,
-                adjudicated: "09b5212fb9ede737",
+                adjudicated: "09b5212fb9ede737", // spellcheck:ignore-line
             },
             Witness {
                 id: "jaeger-values-extra-objects-int-0",
@@ -2192,7 +2192,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     diagnostic: "Error: template: promtail/templates/networkpolicy.yaml:59:13: executing \"promtail/templates/networkpolicy.yaml\" at <len .Values.networkPolicy.k8sApi.cidrs>: error calling len: len of type bool",
                 },
                 schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
-                adjudicated: "30089c54688ba952",
+                adjudicated: "30089c54688ba952", // spellcheck:ignore-line
             },
             Witness {
                 id: "promtail-set-cidrs-string",
@@ -2399,7 +2399,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     kubernetes: KubernetesExpectation::Valid,
                 },
                 schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
-                adjudicated: "5649ab1b40ded0a2",
+                adjudicated: "5649ab1b40ded0a2", // spellcheck:ignore-line
             },
         ],
         size_obligations: &[],
@@ -2645,7 +2645,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     diagnostic: "Error: datadog/templates/NOTES.txt:672:72 — wrong type for value; expected string; got float64",
                 },
                 schema: SchemaExpectation::KnownFalseAcceptance,
-                adjudicated: "e049391b08b6caf2",
+                adjudicated: "e049391b08b6caf2", // spellcheck:ignore-line
             },
             Witness {
                 id: "synapse-form-secret-number",
@@ -2676,7 +2676,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     diagnostic: "Error: execution error at (cilium/templates/clustermesh-config/clustermesh-secret.yaml:21:13): unknown type invalid for clustermesh.config.clusters",
                 },
                 schema: SchemaExpectation::KnownFalseAcceptance,
-                adjudicated: "1cf5840736cb8ba8",
+                adjudicated: "1cf5840736cb8ba8", // spellcheck:ignore-line
             },
             Witness {
                 id: "cilium-clusters-empty-list",
@@ -2957,13 +2957,13 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 id: "gitea-default-output-size",
                 chart: "gitea",
                 output: ShippedOutput::DefaultCli,
-                expectation: ObligationExpectation::KnownUnmet,
+                expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "kube-prometheus-stack-default-output-size",
                 chart: "kube-prometheus-stack",
                 output: ShippedOutput::DefaultCli,
-                expectation: ObligationExpectation::KnownUnmet,
+                expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "kyverno-default-output-size",
@@ -2975,7 +2975,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 id: "milvus-default-output-size",
                 chart: "milvus",
                 output: ShippedOutput::DefaultCli,
-                expectation: ObligationExpectation::KnownUnmet,
+                expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "nats-default-output-size",
@@ -2999,13 +2999,13 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 id: "oncall-default-output-size",
                 chart: "oncall",
                 output: ShippedOutput::DefaultCli,
-                expectation: ObligationExpectation::KnownUnmet,
+                expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "openebs-default-output-size",
                 chart: "openebs",
                 output: ShippedOutput::DefaultCli,
-                expectation: ObligationExpectation::KnownUnmet,
+                expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "prometheus-default-output-size",
@@ -3855,7 +3855,7 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 }]),
                 oracle: RENDERS,
                 schema: SchemaExpectation::KnownFalseRejection,
-                adjudicated: "88deed4025ba59b9",
+                adjudicated: "88deed4025ba59b9", // spellcheck:ignore-line
             },
             Witness {
                 id: "influxdb-set-hostname-null",

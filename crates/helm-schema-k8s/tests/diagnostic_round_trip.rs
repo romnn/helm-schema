@@ -77,6 +77,10 @@ fn sample_variants() -> Vec<Diagnostic> {
             limit: 5_242_880,
             shortened: false,
         },
+        Diagnostic::SchemaCompactedForHelm {
+            bytes: 4_000_000,
+            limit: 5_242_880,
+        },
     ]
 }
 
@@ -94,8 +98,8 @@ fn diagnostic_text_format_per_variant() {
     for d in sample_variants() {
         let text = format_diagnostic_text(&d);
         assert!(
-            text.starts_with("warning:") || text.starts_with("info:"),
-            "diagnostic text must start with warning: or info:; got {text:?}"
+            text.starts_with("warning:") || text.starts_with("info:") || text.starts_with("note:"),
+            "diagnostic text must start with warning:, info:, or note:; got {text:?}"
         );
     }
 }

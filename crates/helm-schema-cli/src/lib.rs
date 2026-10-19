@@ -16,7 +16,7 @@ use helm_schema::diagnostics::DiagnosticSink;
 use helm_schema::helm::HelmCommand;
 use helm_schema::output::{
     FetchPolicy, HELM_MAX_CHART_FILE_BYTES, JsonOutputFormat, LoadBudget, PolicyInputOptions,
-    shorten_definition_names, write_schema_json_without_metrics,
+    serialize_default_schema_json, shorten_definition_names, write_schema_json_without_metrics,
 };
 use helm_schema::{AnalysisSession, EngineResult};
 use serde_json::Value;
@@ -155,19 +155,50 @@ fn run_inner(cli: Cli) -> EngineResult<()> {
     diag_emit::emit_to_stderr(&diagnostics, cli.diag.diag_format);
     let schema = generated?;
 
-    let json_format = cli.output.json_format();
-    let output = cli.output.output;
-    if !cli.output.shorten_defs {
-        let bytes = write_schema(output.as_deref(), &schema, json_format)?;
-        warn_over_helm_limit(bytes, false, cli.diag.diag_format);
+    write_generated_schema(cli.output, &schema, cli.diag.diag_format)
+}
+
+fn write_generated_schema(
+    options: cli::OutputArgs,
+    schema: &Value,
+    diag_format: cli::DiagFormat,
+) -> EngineResult<()> {
+    let json_format = options.json_format();
+    let output = options.output;
+    if options.output_layout == cli::OutputLayout::Auto && !options.compact && !options.shorten_defs
+    {
+        let serialized = serialize_default_schema_json(schema)?;
+        write_schema_bytes(output.as_deref(), &serialized.bytes)?;
+        if let Some(path) = &options.defs_map {
+            write_definition_map(path, &serialized.readable_names)?;
+        }
+        if serialized.compacted {
+            let output_diagnostics = DiagnosticSink::new();
+            output_diagnostics.push(
+                helm_schema::diagnostics::Diagnostic::SchemaCompactedForHelm {
+                    bytes: serialized.bytes.len(),
+                    limit: HELM_MAX_CHART_FILE_BYTES,
+                },
+            );
+            diag_emit::emit_to_stderr(&output_diagnostics, diag_format);
+        }
+        warn_over_helm_limit(serialized.bytes.len(), serialized.compacted, diag_format);
         return Ok(());
     }
-    let shortened = shorten_definition_names(&schema);
+    if !options.shorten_defs && options.output_layout != cli::OutputLayout::Compact {
+        let bytes = write_schema(output.as_deref(), schema, json_format)?;
+        if let Some(path) = &options.defs_map {
+            write_definition_map(path, &BTreeMap::new())?;
+        }
+        warn_over_helm_limit(bytes, false, diag_format);
+        return Ok(());
+    }
+    let shortened = shorten_definition_names(schema);
     let bytes = write_schema(output.as_deref(), &shortened.schema, json_format)?;
-    if let Some(path) = &cli.output.defs_map {
+    if let Some(path) = &options.defs_map {
         write_definition_map(path, &shortened.readable_names)?;
     }
-    warn_over_helm_limit(bytes, true, cli.diag.diag_format);
+    warn_over_helm_limit(bytes, true, diag_format);
     Ok(())
 }
 
@@ -197,21 +228,31 @@ fn write_schema(
     schema: &Value,
     format: JsonOutputFormat,
 ) -> EngineResult<usize> {
+    let mut bytes = Vec::new();
+    write_schema_json_without_metrics(&mut bytes, schema, format)?;
+    write_schema_bytes(path, &bytes)?;
+    Ok(bytes.len())
+}
+
+fn write_schema_bytes(path: Option<&Path>, bytes: &[u8]) -> EngineResult<()> {
     let Some(path) = path else {
         let stdout = std::io::stdout();
         let mut out = BufWriter::new(stdout.lock());
-        let written = write_schema_json_without_metrics(&mut out, schema, format)?;
+        out.write_all(bytes)?;
         out.flush()?;
-        return Ok(written);
+        return Ok(());
     };
     let mut out = BufWriter::new(create_output_file(path)?);
-    let written = write_schema_json_without_metrics(&mut out, schema, format)
-        .map_err(|err| write_output_error_with_path(err, path))?;
+    out.write_all(bytes)
+        .map_err(|source| CliError::WriteOutput {
+            path: path.to_path_buf(),
+            source,
+        })?;
     out.flush().map_err(|err| CliError::WriteOutput {
         path: path.to_path_buf(),
         source: err,
     })?;
-    Ok(written)
+    Ok(())
 }
 
 /// Writes the map from each short `$defs` key to its readable name.
@@ -256,14 +297,4 @@ fn create_output_file(path: &Path) -> EngineResult<std::fs::File> {
         path: path.to_path_buf(),
         source: err,
     })
-}
-
-fn write_output_error_with_path(err: CliError, path: &Path) -> CliError {
-    match err {
-        CliError::Io(source) => CliError::WriteOutput {
-            path: path.to_path_buf(),
-            source,
-        },
-        err => err,
-    }
 }

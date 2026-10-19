@@ -19,10 +19,10 @@ use std::path::{Path, PathBuf};
 
 use color_eyre::eyre::{self, WrapErr as _};
 use helm_schema::output::{
-    HELM_MAX_CHART_FILE_BYTES, JsonOutputFormat, shorten_definition_names,
-    write_schema_json_without_metrics,
+    HELM_MAX_CHART_FILE_BYTES, serialize_default_schema_json, shorten_definition_names,
 };
 use helm_schema_test_support::helm::kubernetes_version;
+use indoc::indoc;
 use serde_json::{Value, json};
 use sha2::{Digest as _, Sha256};
 use test_util::prelude::sim_assert_eq;
@@ -408,19 +408,11 @@ fn shipped_bytes(schema: &Value) -> eyre::Result<usize> {
     Ok(serde_json::to_vec(&shorten_definition_names(schema).schema)?.len())
 }
 
-/// The bytes `output` writes for `schema`. The default CLI output goes through
-/// the CLI's own writer: pretty JSON, readable `$defs` keys, a final newline.
+/// The bytes `output` writes for `schema`, using the CLI's size-aware default policy.
 fn output_bytes(schema: &Value, output: ShippedOutput) -> eyre::Result<usize> {
     match output {
         ShippedOutput::HelmReady => shipped_bytes(schema),
-        ShippedOutput::DefaultCli => {
-            let mut bytes = Vec::new();
-            Ok(write_schema_json_without_metrics(
-                &mut bytes,
-                schema,
-                JsonOutputFormat::Pretty,
-            )?)
-        }
+        ShippedOutput::DefaultCli => Ok(serialize_default_schema_json(schema)?.bytes.len()),
     }
 }
 
@@ -1602,11 +1594,9 @@ fn size_obligation_follows_helms_file_limit() -> eyre::Result<()> {
     Ok(())
 }
 
-/// The default-output obligation measures what `helm-schema` writes without
-/// `--compact` or `--shorten-defs`: a fixture that fits Helm compact can still
-/// be too large to ship as the CLI writes it.
+/// Default-output obligations measure the CLI's automatic compaction, including its newline.
 #[test]
-fn default_output_obligation_measures_the_pretty_cli_bytes() -> eyre::Result<()> {
+fn default_output_obligation_measures_the_size_aware_cli_bytes() -> eyre::Result<()> {
     let schemas = test_util::scratch::ScratchDir::new("family-witness-default-output")?;
     let layout = Layout {
         charts: gate_root().join("charts"),
@@ -1621,22 +1611,29 @@ fn default_output_obligation_measures_the_pretty_cli_bytes() -> eyre::Result<()>
         expectation,
     };
 
-    // Exactly at the limit compact, a few indentation bytes over it pretty.
-    write_schema_shipping_at(&layout.fixture(GATE_CHART), HELM_MAX_CHART_FILE_BYTES)?;
+    // The compact document plus the CLI's final newline fits exactly at the limit.
+    write_schema_shipping_at(&layout.fixture(GATE_CHART), HELM_MAX_CHART_FILE_BYTES - 1)?;
     let schema = read_fixture(&layout.fixture(GATE_CHART))?;
-    let mut cli = Vec::new();
-    write_schema_json_without_metrics(&mut cli, &schema, JsonOutputFormat::Pretty)?;
+    let cli = serialize_default_schema_json(&schema)?;
+    assert!(cli.compacted);
     sim_assert_eq!(
         have: output_bytes(&schema, ShippedOutput::DefaultCli)?,
-        want: cli.len()
+        want: cli.bytes.len()
     );
     for (output, expectation) in [
         (ShippedOutput::HelmReady, ObligationExpectation::Met),
-        (ShippedOutput::DefaultCli, ObligationExpectation::KnownUnmet),
+        (ShippedOutput::DefaultCli, ObligationExpectation::Met),
     ] {
         let row = evaluate_size(Family::F74, &obligation(output, expectation), &layout)?;
         sim_assert_eq!(have: row.have, want: row.want);
     }
+
+    // Oversized compact output remains available for validators without Helm's file limit.
+    write_schema_shipping_at(&layout.fixture(GATE_CHART), HELM_MAX_CHART_FILE_BYTES)?;
+    sim_assert_eq!(
+        have: output_bytes(&read_fixture(&layout.fixture(GATE_CHART))?, ShippedOutput::DefaultCli)?,
+        want: HELM_MAX_CHART_FILE_BYTES + 1
+    );
 
     // Small enough either way.
     write_schema_shipping_at(&layout.fixture(GATE_CHART), 1024)?;
@@ -1664,15 +1661,27 @@ fn a_template_named_like_a_manifest_is_not_parsed_as_one() -> eyre::Result<()> {
     };
     write(
         "Chart.yaml",
-        "apiVersion: v2\nname: probe\nversion: 0.1.0\n",
+        indoc! {"
+            apiVersion: v2
+            name: probe
+            version: 0.1.0
+        "},
     )?;
     write(
         "templates/requirements.yaml",
-        "{{- if .Values.gate }}\nkind: ConfigMap\n{{- end }}\n",
+        indoc! {"
+            {{- if .Values.gate }}
+            kind: ConfigMap
+            {{- end }}
+        "},
     )?;
     write(
         "charts/dep/requirements.yaml",
-        "dependencies:\n  - name: inner\n    import-values: [data]\n",
+        indoc! {"
+            dependencies:
+              - name: inner
+                import-values: [data]
+        "},
     )?;
     let layout = Layout {
         charts: root.path().join("charts"),

@@ -90,6 +90,8 @@ pub enum DiagnosticKey {
     DiscoveredConfigWeakensEmission,
     /// The written schema is larger than Helm accepts for one chart file.
     SchemaExceedsHelmFileLimit,
+    /// Default output was compacted to fit Helm's chart-file limit.
+    SchemaCompactedForHelm,
 }
 
 /// User-facing diagnostic. Every event helm-schema emits at runtime is
@@ -219,6 +221,13 @@ pub enum Diagnostic {
         /// Whether definition names were already shortened.
         shortened: bool,
     },
+    /// Pretty output exceeded Helm's limit and was written compact with short names.
+    SchemaCompactedForHelm {
+        /// Bytes written, including the trailing newline.
+        bytes: usize,
+        /// Helm's per-file limit.
+        limit: usize,
+    },
 }
 
 impl Diagnostic {
@@ -312,6 +321,7 @@ impl Diagnostic {
             Diagnostic::SchemaExceedsHelmFileLimit { .. } => {
                 DiagnosticKey::SchemaExceedsHelmFileLimit
             }
+            Diagnostic::SchemaCompactedForHelm { .. } => DiagnosticKey::SchemaCompactedForHelm,
         }
     }
 
@@ -348,6 +358,7 @@ impl Diagnostic {
             | Diagnostic::CacheLayoutInvalidated { .. }
             | Diagnostic::CacheLayoutForwardIncompatible { .. }
             | Diagnostic::InputChannelNumericRangeAmbiguity { .. }
+            | Diagnostic::SchemaCompactedForHelm { .. }
             | Diagnostic::SchemaExceedsHelmFileLimit { .. } => {}
         }
     }

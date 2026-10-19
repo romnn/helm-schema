@@ -27,7 +27,8 @@ Run `helm-schema --help` for the authoritative, version-specific summary.
 | Flag | Description |
 |---|---|
 | `-o`, `--output <FILE>` | Write the schema to a file; standard output is used when absent. |
-| `--compact` | Compact JSON instead of the default pretty-printed output. |
+| `--output-layout <LAYOUT>` | `auto` (default): pretty JSON until Helm's 5 MiB limit requires compact JSON with short names. `pretty`: always pretty with readable names. `compact`: always compact with short names. Every mode writes oversized output with a warning, never a size error. |
+| `--compact` | Deprecated: compact JSON whitespace only. Retains readable names unless `--shorten-defs` is also used. Conflicts with explicit `--output-layout`. |
 | `--strip-descriptions` | Remove JSON Schema `description` annotations. Schema-aware: a property literally named `description` is kept. |
 | `--profile <full\|lean>` | Select emitted validation detail. `full` is the default. `lean` retains mandatory and local ordinary facts, while dropping root ordinary conditionals, terminals, and kind partitions. |
 | `--root-anchored-conditionals <on\|off>` | Override root-anchored ordinary conditional emission. |
@@ -38,12 +39,12 @@ Run `helm-schema --help` for the authoritative, version-specific summary.
 | `--inline-refs` | Fully inline resolved file/URL `$ref`s instead of writing `$defs`. |
 | `--no-minimize` | Keep repeated subtrees inline instead of interning them into root-level `$defs`. Interning is on by default. |
 | `--defs-names <source\|destination>` | Name the `$defs` entries helm-schema creates by the schema path their content comes from (`source`, the default) or by their first reference (`destination`). |
-| `--shorten-defs` | Rename every `$defs` entry to a short key, for a schema handed to Helm directly. Never applied automatically. |
-| `--defs-map <PATH>` | With `--shorten-defs`, write the map from each short key to its readable name. |
+| `--shorten-defs` | Deprecated: short definition names only; pretty JSON unless `--compact` is also used. Conflicts with explicit `--output-layout`. |
+| `--defs-map <PATH>` | Write the map from each short key to its readable name; an empty object when the chosen layout keeps names unchanged. |
 
 ## `shorten`
 
-`helm-schema shorten <INPUT> <OUTPUT>` renames the `$defs` entries of a generated schema to short keys, the form to hand Helm when the readable schema exceeds Helm's 5 MiB chart-file limit. `--map <PATH>` writes the map from each short key to its readable name; `--compact` writes compact JSON. Both commands warn when the written schema is still over the limit.
+`helm-schema shorten <INPUT> <OUTPUT>` renames the `$defs` entries of a generated schema to short keys, the form to hand Helm when the readable schema exceeds Helm's 5 MiB chart-file limit. `--map <PATH>` writes the map from each short key to its readable name; `--compact` writes compact JSON. This subcommand and all generation layouts warn when the written schema is over the limit and still exit successfully. Default generation automatically compacts and shortens oversized pretty output and reports the resulting size on stderr.
 
 ## `lint` and `template`
 

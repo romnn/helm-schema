@@ -152,5 +152,8 @@ pub fn format_diagnostic_text(diagnostic: &Diagnostic) -> String {
         } => format!(
             "warning: the schema is {bytes} bytes even with short definition names, over Helm's {limit}-byte chart-file limit, so Helm will refuse the chart"
         ),
+        Diagnostic::SchemaCompactedForHelm { bytes, limit } => format!(
+            "note: pretty schema exceeds Helm's {limit}-byte chart-file limit; wrote compact JSON with short definition names ({bytes} bytes)"
+        ),
     }
 }

@@ -1239,6 +1239,68 @@ const LEAN_FIXTURE_CHARTS: &[&str] = &[
     "schema-emission-unconditional-fail",
 ];
 
+/// A bijective definition rename and whitespace removal preserve every corpus contract.
+#[test]
+#[ignore = "maintenance: corpus-wide default output equivalence"]
+fn pretty_and_compact_short_output_accept_the_same_corpus_probes() -> eyre::Result<()> {
+    use helm_schema::output::{serialize_default_schema_json, shorten_definition_names};
+    use helm_schema_json_schema_minify::rename_definitions;
+
+    let mut probes_checked = 0;
+    let mut compacted_charts = Vec::new();
+    for &chart_id in registry::ChartId::CORPUS {
+        let chart = chart_id.relative_path();
+        let readable = read_chart_schema_fixture(chart)?;
+        let pretty_bytes = serde_json::to_vec_pretty(&readable)?;
+        let pretty: serde_json::Value = serde_json::from_slice(&pretty_bytes)?;
+        let shortened = shorten_definition_names(&readable);
+        let compact_bytes = serde_json::to_vec(&shortened.schema)?;
+        let compact: serde_json::Value = serde_json::from_slice(&compact_bytes)?;
+
+        // Restoring the names must recover the entire schema, including annotations.
+        let mut restored = compact.clone();
+        rename_definitions(&mut restored, &shortened.readable_names);
+        sim_assert_eq!(have: restored, want: readable);
+        let output = serialize_default_schema_json(&readable)?;
+        if output.compacted {
+            compacted_charts.push(chart);
+        }
+        let default_schema: serde_json::Value = serde_json::from_slice(&output.bytes)?;
+        sim_assert_eq!(have: &default_schema, want: if output.compacted { &compact } else { &pretty });
+
+        // Reuse the acceptance battery's Helm-coalesced defaults and null-deletion probes.
+        let defaults = read_coalesced_defaults(chart)?;
+        let comparison = ProfileSchemas::compile(&pretty, &compact, defaults.clone())?;
+        let probes = structural_probe_battery(chart, &defaults, &[&pretty, &compact])?;
+        for (name, probe) in &probes {
+            let (before, after) = comparison.verdicts(probe);
+            eyre::ensure!(
+                before == after,
+                "output acceptance changed: {chart}: {name}"
+            );
+        }
+        probes_checked += probes.len();
+        eprintln!(
+            "OUTPUT_EQUIVALENCE {chart}: pretty={} compact={} default={} compacted={} probes={}",
+            pretty_bytes.len() + 1,
+            compact_bytes.len() + 1,
+            output.bytes.len(),
+            output.compacted,
+            probes.len()
+        );
+    }
+    compacted_charts.sort_unstable();
+    sim_assert_eq!(
+        have: compacted_charts,
+        want: ["gitea", "kube-prometheus-stack", "milvus", "oncall", "openebs"]
+    );
+    eprintln!(
+        "OUTPUT_EQUIVALENCE charts={} probes={probes_checked} flips=0",
+        registry::ChartId::CORPUS.len()
+    );
+    Ok(())
+}
+
 #[test]
 fn lean_profile_schemas_match_their_separate_fixture_lane() -> eyre::Result<()> {
     let _guard = test_util::builder().with_tracing(false).build()?;

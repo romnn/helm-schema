@@ -21,7 +21,7 @@ pub use emission_args::{EmissionArgs, PolicyToggle};
 pub use helm_args::HelmArgs;
 pub use inference_args::InferenceArgs;
 pub use k8s_args::{DEFAULT_AUTO_WINDOW, K8sArgs, K8sVersionFallback};
-pub use output_args::{DefsNames, OutputArgs};
+pub use output_args::{DefsNames, OutputArgs, OutputLayout};
 pub use perf_args::PerfArgs;
 pub use profile_args::SchemaProfile;
 pub use shorten_args::ShortenArgs;

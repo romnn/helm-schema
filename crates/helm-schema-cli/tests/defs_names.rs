@@ -1,5 +1,4 @@
-//! Readable `$defs` names in every committed schema, and the explicit
-//! shortening that is the only way to short keys.
+//! Readable `$defs` names in committed schemas and explicit shortening with a name map.
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::{Path, PathBuf};
@@ -242,7 +241,8 @@ fn oversized_output_keeps_its_bytes_and_warns() -> eyre::Result<()> {
 }
 
 #[test]
-fn generate_shortens_only_on_request_and_names_the_short_keys() -> eyre::Result<()> {
+fn small_generated_schemas_stay_readable_and_explicit_shortening_writes_the_map() -> eyre::Result<()>
+{
     let dir = ScratchDir::new("defs_names")?;
     let chart = test_util::workspace_testdata().join("fixture-charts/full-fixture");
     let readable_path = dir.path().join("readable.json");
@@ -289,11 +289,8 @@ fn definition_name_options_parse() -> eyre::Result<()> {
     assert!(!cli.output.shorten_defs);
 
     let map_without_shortening =
-        Cli::try_parse_from(["helm-schema", "/tmp/chart", "--defs-map", "/tmp/map.json"]);
-    assert!(
-        map_without_shortening.is_err(),
-        "--defs-map requires --shorten-defs"
-    );
+        Cli::try_parse_from(["helm-schema", "/tmp/chart", "--defs-map", "/tmp/map.json"])?;
+    sim_assert_eq!(have: map_without_shortening.output.output_layout, want: helm_schema_cli::cli::OutputLayout::Auto);
 
     let shorten = Cli::try_parse_from(["helm-schema", "shorten", "in.json", "out.json"])?;
     assert!(

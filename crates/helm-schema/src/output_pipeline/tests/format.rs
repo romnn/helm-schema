@@ -99,3 +99,55 @@ fn oversized_output_keeps_its_format_and_names() -> eyre::Result<()> {
     }
     Ok(())
 }
+
+#[test]
+fn default_output_keeps_pretty_bytes_through_the_inclusive_helm_limit() -> eyre::Result<()> {
+    use crate::output_pipeline::serialize_default_schema_json;
+    use helm_schema_json_schema_minify::shorten_definition_names;
+
+    let mut schema = serde_json::json!({
+        "$defs": { "values/long-definition-name": { "type": "string" } },
+        "description": "",
+        "properties": { "name": { "$ref": "#/$defs/values~1long-definition-name" } }
+    });
+    let overhead = serde_json::to_vec_pretty(&schema)?.len() + 1;
+    for pretty_bytes in [
+        HELM_MAX_CHART_FILE_BYTES - 1,
+        HELM_MAX_CHART_FILE_BYTES,
+        HELM_MAX_CHART_FILE_BYTES + 1,
+    ] {
+        // Count UTF-8 bytes and the final newline at the exact switching boundary.
+        schema["description"] = serde_json::Value::String("x".repeat(pretty_bytes - overhead));
+        let output = serialize_default_schema_json(&schema)?;
+        let compacted = pretty_bytes > HELM_MAX_CHART_FILE_BYTES;
+        let mut want = Vec::new();
+        if compacted {
+            write_schema_json_without_metrics(
+                &mut want,
+                &shorten_definition_names(&schema).schema,
+                JsonOutputFormat::Compact,
+            )?;
+        } else {
+            write_schema_json_without_metrics(&mut want, &schema, JsonOutputFormat::Pretty)?;
+        }
+        sim_assert_eq!(have: output.compacted, want: compacted);
+        sim_assert_eq!(have: output.bytes, want: want);
+        assert!(output.bytes.len() <= HELM_MAX_CHART_FILE_BYTES);
+    }
+    Ok(())
+}
+
+#[test]
+fn default_output_returns_oversized_compact_bytes_for_other_validators() -> eyre::Result<()> {
+    use crate::output_pipeline::serialize_default_schema_json;
+
+    let schema = serde_json::json!({ "description": "é".repeat(HELM_MAX_CHART_FILE_BYTES / 2) });
+    let output = serialize_default_schema_json(&schema)?;
+    let mut want = serde_json::to_vec(&schema)?;
+    want.push(b'\n');
+    assert!(output.compacted);
+    assert!(output.bytes.len() > HELM_MAX_CHART_FILE_BYTES);
+    sim_assert_eq!(have: output.bytes, want: want);
+    assert!(output.readable_names.is_empty());
+    Ok(())
+}
