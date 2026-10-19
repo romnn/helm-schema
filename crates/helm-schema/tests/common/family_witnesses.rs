@@ -1056,6 +1056,22 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
         unfrozen: &[],
     },
     FamilyWitnesses {
+        family: Family::F16,
+        witnesses: &[Witness {
+            id: "vector-custom-config-values-example",
+            chart: "vector",
+            kubernetes_version: "1.29.0",
+            overrides: Overrides::ValuesFile("F16/vector-custom-config-values-example.yaml"),
+            oracle: OracleExpectation::Renders {
+                kubernetes: KubernetesExpectation::Valid,
+            },
+            schema: SchemaExpectation::KnownFalseRejection,
+            adjudicated: "ceb0d1a83873e7e0",
+        }],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
         family: Family::F17,
         witnesses: &[
             Witness {
@@ -1099,6 +1115,128 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
         unfrozen: &[],
     },
     FamilyWitnesses {
+        family: Family::F18,
+        witnesses: &[Witness {
+            id: "synapse-macaroon-secret-key-null",
+            chart: "synapse",
+            kubernetes_version: "1.29.0",
+            overrides: Overrides::ValuesFile("F18/synapse-macaroon-secret-key-null.yaml"),
+            oracle: OracleExpectation::Aborts {
+                diagnostic: "Error: synapse/templates/deployment.yaml:1:27 — wrong type for value; expected string; got interface {}",
+            },
+            // Masked: the fixture rejects this document only with the errors it already
+            // gives the chart defaults (F4 `synapse-defaults`), so the verdict says nothing
+            // about F18.
+            schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+            adjudicated: "2181e36a8f27395d",
+        }],
+        size_obligations: &[],
+        unfrozen: &[
+            "synapse is the only chart calling `required <value> <message>`, and its fixture rejects its own defaults (F4), so `synapse-macaroon-secret-key-null` is rejected only through that unrelated rejection; re-adjudicate the row once the synapse defaults are accepted.",
+        ],
+    },
+    FamilyWitnesses {
+        family: Family::F19,
+        witnesses: &[
+            Witness {
+                id: "nats-config-leafnodes-null",
+                chart: "nats",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F19/nats-config-leafnodes-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: template: nats/templates/stateful-set.yaml:3:4 … gotpl:8:47: executing \"gotpl\" at <$configProtocol.enabled>: can't evaluate field enabled in type string",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "df632397293ca7fc",
+            },
+            Witness {
+                id: "nats-config-monitor-null",
+                chart: "nats",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F19/nats-config-monitor-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: template: nats/templates/stateful-set.yaml:3:4 … gotpl:8:47: executing \"gotpl\" at <$configProtocol.enabled>: can't evaluate field enabled in type string",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "57cc6076898993ad",
+            },
+            Witness {
+                id: "nats-container-ports-nats-null",
+                chart: "nats",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F19/nats-container-ports-nats-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: template: nats/templates/stateful-set.yaml:3:4 … gotpl:9:72: executing \"gotpl\" at <$containerPort>: wrong type for value; expected map[string]interface {}; got string",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "d3c80034c4461046",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F20,
+        witnesses: &[Witness {
+            id: "cluster-autoscaler-pdb-max-unavailable-percent",
+            chart: "cluster-autoscaler",
+            kubernetes_version: "1.29.0",
+            overrides: Overrides::ValuesFile(
+                "F20/cluster-autoscaler-pdb-max-unavailable-percent.yaml",
+            ),
+            oracle: OracleExpectation::Renders {
+                kubernetes: KubernetesExpectation::Valid,
+            },
+            schema: SchemaExpectation::KnownFalseRejection,
+            adjudicated: "7cc0de498ec09c5b",
+        }],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F21,
+        witnesses: &[Witness {
+            id: "minio-ingress-path-number-disabled",
+            chart: "minio",
+            kubernetes_version: "1.29.0",
+            overrides: Overrides::ValuesFile("F21/minio-ingress-path-number-disabled.yaml"),
+            oracle: RENDERS,
+            schema: SchemaExpectation::KnownFalseRejection,
+            adjudicated: "689d272e9f41eda5",
+        }],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F22,
+        witnesses: &[
+            Witness {
+                id: "clickhouse-liveness-probe-null",
+                chart: "clickhouse",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F22/clickhouse-liveness-probe-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: clickhouse/templates/statefulset.yaml:201:23 — nil pointer evaluating interface {}.enabled",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "e824001734c35ffe",
+            },
+            Witness {
+                id: "clickhouse-persistence-null",
+                chart: "clickhouse",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F22/clickhouse-persistence-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: clickhouse/templates/statefulset.yaml:226:24 — nil pointer evaluating interface {}.volumeName",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "3193aa607740303b",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
         family: Family::F23,
         witnesses: &[Witness {
             id: "rook-ceph-controller-manager-null",
@@ -1115,6 +1253,127 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
         unfrozen: &[
             "oncall `postgresql.auth.secretKeys.adminPasswordKey=null`: Helm renders without the schema, and with the shipped (compact, 3,658,802-byte) schema Helm refuses the schema itself: its `rabbitmq.ldap.uri` `pattern` is invalid under Go regexp. The jsonschema crate compiles that pattern, so the verdict is not reproducible offline.",
         ],
+    },
+    FamilyWitnesses {
+        family: Family::F24,
+        witnesses: &[
+            Witness {
+                id: "cilium-flowlog-content-string-item",
+                chart: "cilium",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F24/cilium-flowlog-content-string-item.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: cilium/templates/cilium-flowlog-configmap.yaml:19:20 — wrong type for value; expected map[string]interface {}; got string",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "eaf5a292733e8a22",
+            },
+            Witness {
+                id: "cilium-flowlog-content-string-item-no-file-size",
+                chart: "cilium",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F24/cilium-flowlog-content-string-item-no-file-size.yaml",
+                ),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "07a7c23665f9d783",
+            },
+            Witness {
+                id: "clickhouse-readiness-probe-null",
+                chart: "clickhouse",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F24/clickhouse-readiness-probe-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: clickhouse/templates/statefulset.yaml:208:23 — nil pointer evaluating interface {}.enabled",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "55a1bc2ec6e16d15",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F25,
+        witnesses: &[
+            Witness {
+                id: "okteto-redis-image-null",
+                chart: "okteto",
+                kubernetes_version: "1.33.0",
+                overrides: Overrides::ValuesFile("F25/okteto-redis-image-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (okteto/templates/redis-deployment.yaml:57:20): Invalid type for image value. Must be string or map.",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "cb2d799098776a5a",
+            },
+            Witness {
+                id: "okteto-redis-image-string",
+                chart: "okteto",
+                kubernetes_version: "1.33.0",
+                overrides: Overrides::ValuesFile("F25/okteto-redis-image-string.yaml"),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "e7dd02e7f8042d0d",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F26,
+        witnesses: &[
+            Witness {
+                id: "istiod-global-enable-tracing-true",
+                chart: "istiod",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F26/istiod-global-enable-tracing-true.yaml"),
+                oracle: RENDERS,
+                schema: SchemaExpectation::KnownFalseRejection,
+                adjudicated: "65a9f1761621ee4b",
+            },
+            Witness {
+                id: "istiod-global-outbound-traffic-policy-map",
+                chart: "istiod",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F26/istiod-global-outbound-traffic-policy-map.yaml",
+                ),
+                oracle: RENDERS,
+                schema: SchemaExpectation::KnownFalseRejection,
+                adjudicated: "438b1c09c0388f15",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F27,
+        witnesses: &[
+            Witness {
+                id: "base-profile-bogus-global-demo",
+                chart: "base",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F27/base-profile-bogus-global-demo.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (base/templates/zzz_profile.yaml:31:3): unknown profile bogus",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "6d457224dc2365e0",
+            },
+            Witness {
+                id: "base-profile-demo-global-bogus",
+                chart: "base",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F27/base-profile-demo-global-bogus.yaml"),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "40b18529d41b16ca",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
     },
     FamilyWitnesses {
         family: Family::F30,
