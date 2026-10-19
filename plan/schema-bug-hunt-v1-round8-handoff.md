@@ -185,7 +185,10 @@ is at the end of this section.
 
 ### Semantic tracks
 - **W1 rework 14 (membership/emptiness; 317 false acceptances left vs roster f7be7ba5, 0 false rejections):** clone `/Volumes/T7/dev/round8-w1`
-  (track/w1-main; target `/Volumes/T7/dev/round7-f9/target`). R81 propagation repairs committed (31312880). Part 2 (R78–R80: abstract
+  (track/w1-main; target `/Volumes/T7/dev/round7-f9/target`). R81 propagation repairs committed (31312880); part-2 WIP checkpoint
+  c0a2b4a9 (builds; unit/lint/integration/battery NOT run): new expr_call_eval/mergo.rs (one merge/mergeOverwrite model, nil per
+  obligation 1, old classifiers deleted), GUARDED_WRITES, tpl write guard shape; oauth2-proxy 8/10 FAs fixed; nats needs files/*.yaml
+  programs evaluated as helpers + guarded MutationFacts wired. Part 2 (R78–R80: abstract
   mergo merge model, aggregate reads, ASCII `lower` partial truth, vault literal-tpl fact, nats NoMarker proof, nginx key/value boundary)
   under BINDING OBLIGATIONS. Resume brief `round8/brief-w1-rework14-part2-resume.md`; current state in
   `round8-w1-evidence/rework8/handoff.md`. Known landing blocker: bitnami-redis generation +50% (CPU gate within 10% of w12).
