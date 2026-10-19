@@ -8745,6 +8745,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (the script ends with `(( failed == 0 ))` under bash); queued to investigate as a gate-honesty item. T7 fell to 113 GB: deleted
   idle round8-tracing/target (55 GB) and round8-witness2-target (10 GB) → 176 GB. T7 disconnected briefly ~14:40 (user); all Codex
   runs kept writing, all clones clean, no I/O errors seen. Orchestrator.
+- 15:41 (Oct 19) — **Track G design handed back (`round8-guards-evidence/design.md`, spike-validated); design review sent (astra
+  134148-d50af00e, sol 134148-5445c39c); builder writing red tests meanwhile.** Three structural rules: D5 finish_block (a control region
+  open where a block body starts → the body starts after it; removes the unguarded double evaluation); D1 node_belongs_inside (an output
+  with a `fail` stage renders no text, so it cannot evict its region); milvus/openebs-loki deferred_node_belongs_inside (judge by YAML
+  node kind instead of a line-indent stand-in; merge the two parallel belongs-inside checks, delete the deferral copy; ~+35/−25 LOC).
+  Spike evidence: reduced cells for all five causes (Helm renders defaults, main rejects, spike accepts; negative controls match helm
+  template); helm lint on defaults 0 failures for kube-starrocks / openldap-stack-ha / nginx-ingress (main fails all three); corpus:
+  31 schemas change, of 26 under 5 MiB 3 go rejected → accepted, none the other way; syntax/ir/gen units 1,289 unchanged. Residuals:
+  D1's `printf ""` witness; astra's `-}` trim case (frontend 2.3). Files: syntax parse.rs, ir fragment_eval eval.rs/control.rs —
+  no W1/W4 files. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
