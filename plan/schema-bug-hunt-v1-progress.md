@@ -8776,4 +8776,10 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   committed (5640581b, reviews 143700-106056ac / -427a9774 running). Native builders (W1 part 2, W4 rework 17, Track G) asked to
   checkpoint and rewrite their hand-offs; resume briefs: brief-w1-rework14-part2-resume.md, brief-w4-rework17-impl-resume.md,
   brief-guards-resume.md. Orchestrator.
+- 16:44 (Oct 19) — **Session-end checkpoints received from all three native builders; hand-off §6 updated.** W1 part 2: c0a2b4a9 (mergo model,
+  GUARDED_WRITES; untested). Track G: fix e39ec0c9, wip 5ce4546b (obligations 1–4 done; 34 fixtures not adopted; live battery was in
+  flight). W4 rework 17: R77–R80 implemented, wip 2c7fefc0 on c9fc41fa; Z gate 57/57; battery 0 unmatched tightenings but 15 unlisted
+  false acceptances + 2 undecided + 2 okteto roster rows now correctly rejected; LOC +640 vs r16 / +2,936 vs main (over the design
+  estimate). ROOT CAUSE of the 03:29 external SIGTERM: the W4 builder's `pkill` by name pattern (it confirmed) — the never-pkill rule
+  now in every brief stands. Orchestrator.
 Next: resume per plan/schema-bug-hunt-v1-round8-handoff.md §6 (session-6 resume prompt); first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.

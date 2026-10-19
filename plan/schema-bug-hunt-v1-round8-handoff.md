@@ -194,6 +194,13 @@ is at the end of this section.
   `round8-w1-evidence/rework8/handoff.md`. Known landing blocker: bitnami-redis generation +50% (CPU gate within 10% of w12).
 - **W4 rework 17 (scalar preimages, CONSOLIDATION):** design rev 3 BUILDABLE ×2; implementing. Clone `/Volumes/T7/dev/round8-w4-r9`
   (w4-rebase, base b51c8589). Resume brief `round8/brief-w4-rework17-impl-resume.md`; state `round8-w4-evidence/rebase/r17/handoff.md`.
+  Checkpoint 2c7fefc0 (empty wip on c9fc41fa): W4-R77–R80 implemented (933842a3 d6f37bcd a0a9d810 e9e89f63 6ded204a 57e807e4), tests +
+  fixtures from clean dump-e9e89f63; Z gate 57/57 by named contract; the 224 rows 0 problems; battery 0 unmatched tightenings but
+  the final gate fails on 15 unlisted false acceptances + 2 undecided + 2 okteto roster rows now correctly rejected (remove those two
+  rows — roster rule) — ORCHESTRATOR DECISION NEEDED on the 17 (causes per row in the hand-off; default: fix, do not roster new ones).
+  fmt 0, task lint 0; gates2.sh (lint:fc, ast-grep, nextest, integration, verify, tokei) was running and dies with the session — re-run.
+  CONCERN for review: production LOC +640 vs r16 / +2,936 vs main, above the design's −140..+290 — reviewers must weigh item 10.
+  The 03:29 SIGTERM that killed landing 10a's battery (and W1's) was this builder's `pkill` by name pattern (confirmed).
 - **Track G (D1/D5 execution guards; fixes kube-starrocks, openldap-stack-ha, nginx-ingress defaults; milvus/openebs-loki):** design
   released with binding obligations; red tests 21505846, fix e39ec0c9, wip checkpoint 5ce4546b (obligations 1–4 done, 10 cell tests
   red→green; kube-starrocks, milvus, nginx-ingress, openldap-stack-ha out of quarantine but the 34 regenerated fixtures NOT adopted,
