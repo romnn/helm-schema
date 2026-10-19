@@ -8763,6 +8763,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   1,834/1,834; dump1 205 artifacts verify 0, 19 schemas moved; live battery vs f7be7ba5: 0 false rejections, 317 false acceptances
   (all pre-existing in battery7; 155 fewer: aws-ebs 133, nats 21, ingress-nginx 1). CPU (noisy, load 13–25): redis 16.23 s vs w12
   15.84. Cells built for R78–R80 (merge counterexamples, Unicode/metachar/newline/pipeline strings, mini/nats2). Orchestrator.
+- 15:56 (Oct 19) — **Track G design: sol BUILDABLE, astra REDESIGN on local points → released with binding obligations; red tests committed
+  (21505846, 8 tests red for the right reason, the five cells green on the spike).** Obligations: D5 removes block-hole actions only
+  when another evaluator provably owns them (comment-line region with a guarded fail must still abort-reject); deferral evidence =
+  positive rendered content, comments/assignments transparent; do NOT merge the two belongs-inside checks (different contracts:
+  nindent width vs floating placement, empty-control adoption) — share only agreed layout facts; D1 direct-fail-stage rule sound,
+  nested short-circuits excluded; adjudicate ALL changed schemas with the differential prober + Helm (not just defaults), incl. gitea
+  and milvus, oversized after equivalent compaction; tally 27 not 26. Reviews `round8/design-guards-{astra,sol}.md`. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
