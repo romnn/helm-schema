@@ -8782,4 +8782,24 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   false acceptances + 2 undecided + 2 okteto roster rows now correctly rejected; LOC +640 vs r16 / +2,936 vs main (over the design
   estimate). ROOT CAUSE of the 03:29 external SIGTERM: the W4 builder's `pkill` by name pattern (it confirmed) — the never-pkill rule
   now in every brief stands. Orchestrator.
-Next: resume per plan/schema-bug-hunt-v1-round8-handoff.md §6 (session-6 resume prompt); first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
+- 17:18 (Oct 19) — **Session 6 started (orchestrator Opus 5.5). USER DECISION: Claude models only for orchestration; builders,
+  reviews and analyses go to Codex via agentmux ("use claude models very sparingly", "use codex via agentmux as much as
+  possible").** Consequences: W1, W4 and Track G resume as Codex `workspace_write` builders instead of Opus subagents; no Fable
+  challenger. State: main 5ddb38f9 clean (code b51c8589), heavy lock absent, load 5.8, T7 128 GB free, Codex account 80% of its
+  weekly window used. Sandbox adaptation (orchestrator): a Codex sandbox writes only inside its cwd, so the three track targets
+  were moved INTO their clones by rename (round8-w4-r9-target → round8-w4-r9/target, round8-guards-target → round8-guards/target,
+  round7-f9/target → round8-w1/target; symlinks left at the old paths), new evidence goes to `<clone>/.codex-evidence/` (git-
+  excluded), the orchestrator commits transfer patches; shared rules in `round8/codex-builder-sandbox.md`. Started (kept runs):
+  W4 rework 17 impl sol 20261019T151643-2803bf0c (`round8/brief-w4-rework17-codex.md`; decisions: FIX the 15 unlisted false
+  acceptances + 2 undecided — roster only rows proven pre-existing on f7be7ba5; remove the 2 okteto rows now correctly rejected;
+  item 10: make the promised deletions or justify each, LOC +640 vs r16 is over the design; nacos + airflow/oncall defaults lint);
+  Track G astra 20261019T151645-85023aae (`round8/brief-guards-codex.md`); runner v10 sol 20261019T151752-43ab1824 in
+  `round8/runner-v10-dev` (`round8/brief-runner-v10-codex.md`: shipped schema must accept its own chart defaults when the
+  schema-free control renders, shipped bytes ≤ 5,242,880, an explicit shrinking `ACCEPTED_DEFAULTS_FAILURES` list, plus the
+  run-all exit-0 honesty bug). W1 (`round8/brief-w1-rework14-codex.md`) starts when the battery builder's timed run ends (≤ 3
+  cargo-heavy builders). Size-aware output reviews: sol LAND (P3s), astra REWORK (P2: the F74 witness measures fixtures without
+  the final 563-byte CLI annotations — boundary case 5,242,880 vs 5,243,443; P3: the compaction note claims short names when
+  the shortener abstained) → `round8/review-size-{astra,sol}.md`, rework sent as follow_up turn 1 on 20261019T124058-a71f3fa5.
+  Battery builder 78d55437 (turn 13) is in its final timed full run (~21 min in, inside the 45-min target; Dify's repeated
+  lints and milvus's schema recompiles fixed by grouping + a 256 MiB compiled-schema retention bound). Orchestrator.
+Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
