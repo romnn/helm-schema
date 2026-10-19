@@ -8871,4 +8871,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   brief `round8/q/design-chart-crds-rev2.md` (C1–C9; the oracle change must stay fixture-neutral) goes to the Track G builder when its
   nginx explicit-null turn ends. Also: `round8/full-check.sh` + `/Volumes/T7/dev/landing-10a-v2.bundle` (190 MB, d7ab4078) prepared so
   the user can time one full gate run on a 24-core / 64 GB machine (user request). Orchestrator.
+- 22:31 (Oct 19) — **Reviewer-mix experiment (user asked whether two sol reviewers can replace astra): YES on this data point.** A second
+  gpt-6.1-sol with a different lens (Helm/Kubernetes byte- and install-path semantics, not shown the other reviews) on the chart-CRD design
+  (`round8/design-chart-crds-sol2.md`, REDESIGN) independently found BOTH of astra's unique P1s (rendered/hook CRDs; Helm's YAML 1.1
+  decoding incl. `off` and `<<` merges) plus four P1s neither earlier review raised: pre-validation request transformations (null
+  stripping, defaulting), list-map key uniqueness (StarRocks' own CRD uses it; Draft 7 ignores it), Helm's strict field validation, and
+  `v1beta1` CRDs on 1.29. DEFAULT from now on (the user proposed it; this run supports it): two sol reviewers with distinct lenses for hard reviews; astra only as a
+  tie-breaker (running astra runs left untouched — user: "leave the current ones running"). Added to the design revision brief as C10–C13
+  with orchestrator scope guidance: the smallest oracle that is never falsely decisive — abstain on any construct it does not model
+  exactly, and measure whether StarRocks' defaults CR still becomes decidable. Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
