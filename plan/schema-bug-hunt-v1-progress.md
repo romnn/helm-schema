@@ -8850,4 +8850,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   566e6bc2… / 16079d41…; tree == builder worktree). Stopped the builder's stale old-source battery PID 51373 at its request. Runner
   v10 rework (only `chart=defaults` listable; oversize always fatal at dump; net +2; run-all 14/14) committed 608229f (transfer-10
   sha256 0878983e…); re-checks follow_ups on 78a08a6a (sol) and fd4d13fe (astra). Orchestrator.
+- 20:44 (Oct 19) — **USER DECISION: the battery speed target becomes ~1 h (was 45 min); launch landing 10a as soon as parity passes.**
+  Asked whether anything landed (nothing on main this session or session 5; runner v10 is live in the runner repo; size-aware output
+  joined 10a) and how the Codex builders/reviewers perform, the orchestrator reported: implementers precise and honest but the battery
+  builder (46 h, 14 turns) has no stopping rule and keeps finding the next cost, which blocks 10a; reviewers fast and catching real
+  defects; throughput to main is zero because the battery step became the bottleneck and W1/W4 are deep in rework. Proposals accepted:
+  accept ~1 h. Battery state at 20:40: full run 72m14s, 10,543 screened / 10,000 adjudicated flips — the coverage check FAILED on 543
+  adjudication failures (being classified); the GC trim is ~1% (not the cause); a bounded two-entry compiled-schema cache cuts openebs'
+  peak 1,079 → 677 MiB with identical outputs. Directive for the builder's next turn (`round8/q/battery-finalize-directive.md`): no more
+  perf work; classify the 543 against the slow reference; parity or explained reference defects only; final timed run; gates; hand
+  back. Also on the live runner: v10 suite green (run-all 0; 13 shell suites + 135 Python tests). Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
