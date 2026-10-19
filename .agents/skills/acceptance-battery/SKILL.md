@@ -110,8 +110,8 @@ live run it covers.
   directory. Alternatively set `HELM_SCHEMA_HELMSWEEP=<path>`, or use
   `SCHEMA_HELM_ENGINE=cli` with Helm v4.2.3 on `PATH`, which is slower. The
   runner refuses any other Helm build.
-  Live lint also requires the pinned Helm v4.2.3 CLI on `PATH`, including when
-  rendering uses helmsweep.
+  Lint and template both use the selected engine; the resident engine runs
+  the pinned Helm library with the CLI's default flags and separate streams.
   Lint has a separate 1,200-second timeout; timeouts and unknown diagnostics fail.
 - **Room under the cargo target directory.** Evidence and Helm roots live in
   `<target>/scratch/<crate>/<label>-<pid>-<nonce>-<n>` (`crates/test-util/src/scratch.rs`)
@@ -235,10 +235,27 @@ even when no flips were screened.
 Unchanged rows invoke no Helm.
 Measure `lint_compilation_ms` and `lint_screening_ms` in the invocation report;
 the sum is per-chart elapsed work and overlaps across workers.
-A screened overlay can need baseline, candidate, and schema-free lints, shared
-across document flips. Defaults and explicit context controls require the same
-operations; expensive cold charts can add tens of minutes.
-Existing worker, memory, and invocation-cache controls apply.
+A screened overlay can need baseline, candidate, and schema-free lints. One fresh
+triplet serves all document flips with the same exact values-file bytes and
+Kubernetes version within a prepared chart/schema pair. Defaults and explicit
+context controls run only schema-free lint plus their template/coalescing checks.
+Payload renders are shared within their group; exact-byte defaults/context
+controls are shared across groups within the immutable chart experiment, keyed
+by Kubernetes version too. The owner fixes chart bytes, engine/build and
+environment. Payload freshness, context selection and verdicts remain per document.
+The invocation report counts physical executions once, even when several document
+verdicts use them; the coverage report retains every flip.
+Existing worker, memory, and invocation-cache controls apply. Resident lint
+reuses only successful compiled schemas that loaded no external resource,
+keyed by exact schema bytes; the memo retains the two most recently used
+schemas. Eviction releases only the retained reference; active callers keep
+their immutable validator and later requests recompile it. This bounds entries,
+not bytes. Each request reloads chart and values and creates fresh validation
+state. Warning history resets between commands. Idle servers
+share the configured Helm memory budget and evict the oldest idle holdings
+when necessary; a server larger than the entire budget is retired. Active
+reservations and idle holdings are separate bounds, not a combined hard RSS
+limit. Report measured RSS as well as pool reservations.
 
 ## Reading the result
 
