@@ -8599,6 +8599,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   write unless a source can reach an aliased key), W1-R79 overlay precision (exclusive / sibling / merge-preserving writes), W1-R80
   bisect + fix the earlier-rework losses, W1-R81 redis cost +50% (single evaluation of write facts). Brief `round8/brief-w1-rework14.md`;
   W1's target is /Volumes/T7/dev/round7-f9/target (not idle — not deleted). Orchestrator.
+- 03:53 (Oct 19) — **Perf fix 1 for the top hotspot handed back (sol, f9ee6567 turn 4); committed 9424072a in round8-tracing; reviews sent.**
+  Five child spans confirmed repeated validator construction (231,243 builds for 77,079 facts). Fix: each fact's original and projected
+  lint validators built once and reused; the lint floor borrowed; schemas moved, not cloned; no cache. append_selected_constraints
+  87.2 → 59.9 s inclusive over five charts; tracing-off medians of 3: openebs 63.2 → 50.6 s (1.25×), oncall 29.4 → 25.4, kps 32.5 →
+  27.9, milvus 20.4 → 17.1, redis 3.40 → 3.61 (+6%, to adjudicate). All 205 artifacts byte-identical; LOC +36; fmt/lint/lint:fc/unit
+  (1,701)/integration (925) 0; test:all 201 = a timeout-harness PID-file read (passes standalone) + 4 live fetches. Validator builds
+  remain the top self-time span (148,910 builds, 33 s) — the next structural step. Reviews 015305-b998ff79 (astra), 015305-406e0b5b
+  (sol), question `round8/q/perf-asc-review.md`. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
