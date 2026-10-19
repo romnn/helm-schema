@@ -8584,6 +8584,21 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   slower battery is expected; the cost is to be measured from this run's coverage/cost report and attacked in a battery perf pass
   (candidate: one Helm render per distinct coalesced document across lanes). Perf fix for append_selected_constraints (sol,
   f9ee6567 turn 4) running; W1 r13 and W4 r17 builders running. T7 172 GB. Orchestrator.
+- 03:31 (Oct 19) — **Landing 10a battery killed by an EXTERNAL SIGTERM at 03:29 (83 min in, not a verdict); restarted from battery at 03:30.**
+  nextest logged "Cancelling due to signal" at 5,000 s; the integration profile allows 3 h, the runner has no timeout. The same signal
+  killed W1's battery8 at 03:29, so something killed nextest processes host-wide; the sol perf builder ran no kill command; the W4
+  builder was asked. New standing rule in every resume brief: kill only PIDs you started, never pkill/killall by name. Progress before
+  the kill: one adjudication pool had 954 probe dirs, still writing at 03:28 — the battery was working, just slow (perf pass queued).
+- 03:31 (Oct 19) — **W1 rework 13 WIP hand-back (b960b607): nats + falco blockers fixed with Helm-backed tests, 0 false rejections, but 472 false
+  acceptances vs roster f7be7ba5; fresh builder dispatched on rework 14 (design gate first).** Fixes: nats (two-write actions dropped the
+  helper's reads → reads kept under an approximate condition, eval_effect.rs:545), falco (Serialized row kept beside descendants,
+  hole_effects.rs:738), aws-ebs-csi-driver 147 (a write into a literal-only dict is no observable write); −42 LOC vs b0a708ac. Remaining
+  false acceptances: nats 133, falco 53, nack 41 (rework 13's coarse two-write rule and R77 overlay abstention), cilium 18,
+  prometheus 14, oauth2-proxy 10, vault (earlier reworks). ORCHESTRATOR DECISION: no roster extension — a false acceptance the track
+  introduced is a regression (user: never relax the bar); rework 14 = W1-R78 two-write precision (a fresh dict holding `$` is no
+  write unless a source can reach an aliased key), W1-R79 overlay precision (exclusive / sibling / merge-preserving writes), W1-R80
+  bisect + fix the earlier-rework losses, W1-R81 redis cost +50% (single evaluation of write facts). Brief `round8/brief-w1-rework14.md`;
+  W1's target is /Volumes/T7/dev/round7-f9/target (not idle — not deleted). Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
