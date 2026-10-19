@@ -260,14 +260,25 @@ pub(crate) enum SchemaVerdict {
     Rejects,
 }
 
-/// Not a verdict: the schema Helm reads for `chart`'s fixture (compact, with
-/// short `$defs` keys, as `helm-schema lint` / `template` ship it) must fit
-/// Helm's file-size limit (`HELM_MAX_CHART_FILE_BYTES`,
-/// inclusive), or Helm refuses the chart before any values are checked.
+/// Not a verdict: `chart`'s fixture, serialized as `output` writes it, must
+/// fit Helm's file-size limit (`HELM_MAX_CHART_FILE_BYTES`, inclusive), or
+/// Helm refuses the chart before any values are checked.
 pub(crate) struct SizeObligation {
     pub(crate) id: &'static str,
     pub(crate) chart: &'static str,
+    pub(crate) output: ShippedOutput,
     pub(crate) expectation: ObligationExpectation,
+}
+
+/// The serialization a size obligation measures.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) enum ShippedOutput {
+    /// Compact JSON with short `$defs` keys: what `helm-schema lint` /
+    /// `template` hand Helm.
+    HelmReady,
+    /// Pretty JSON with readable `$defs` keys: what `helm-schema` writes
+    /// without `--compact` or `--shorten-defs`, the file a chart author ships.
+    DefaultCli,
 }
 
 /// The state an obligation is required to be in today.
@@ -1608,15 +1619,30 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 adjudicated: "4eba7574ff63c335",
             },
             Witness {
-                id: "trino-resource-groups-configmap",
+                id: "trino-resource-groups-configmap-with-config",
                 chart: "trino",
                 kubernetes_version: "1.29.0",
-                overrides: Overrides::ValuesFile("F35/trino-resource-groups-configmap.yaml"),
-                oracle: OracleExpectation::Aborts {
-                    diagnostic: "Error: trino/templates/deployment-coordinator.yaml:37:40 — trino/templates/configmap-coordinator.yaml:213:62 — invalid value; expected string",
+                overrides: Overrides::ValuesFile(
+                    "F35/trino-resource-groups-configmap-with-config.yaml",
+                ),
+                oracle: OracleExpectation::Renders {
+                    kubernetes: KubernetesExpectation::Valid,
                 },
-                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
-                adjudicated: "016ef4a63937917e",
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "2201e4b71df0934b",
+            },
+            Witness {
+                id: "trino-session-properties-configmap-with-config",
+                chart: "trino",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F35/trino-session-properties-configmap-with-config.yaml",
+                ),
+                oracle: OracleExpectation::Renders {
+                    kubernetes: KubernetesExpectation::Valid,
+                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "91e3953dc6b85e91",
             },
         ],
         size_obligations: &[],
@@ -2412,6 +2438,63 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
                 adjudicated: "6a8840d4050f5ab8",
             },
+            Witness {
+                id: "datadog-cluster-agent-share-process-namespace-maybe",
+                chart: "datadog",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F61/datadog-cluster-agent-share-process-namespace-maybe.yaml",
+                ),
+                oracle: OracleExpectation::Renders {
+                    kubernetes: KubernetesExpectation::Invalid {
+                        violations: &[ExpectedViolation {
+                            kind: "Deployment",
+                            instance_path: "/spec/template/spec/shareProcessNamespace",
+                            message: "got string, want null or boolean",
+                        }],
+                    },
+                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+                adjudicated: "27b172dc62ca4f12",
+            },
+            Witness {
+                id: "datadog-cluster-checks-runner-share-process-namespace-maybe",
+                chart: "datadog",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F61/datadog-cluster-checks-runner-share-process-namespace-maybe.yaml",
+                ),
+                oracle: OracleExpectation::Renders {
+                    kubernetes: KubernetesExpectation::Invalid {
+                        violations: &[ExpectedViolation {
+                            kind: "Deployment",
+                            instance_path: "/spec/template/spec/shareProcessNamespace",
+                            message: "got string, want null or boolean",
+                        }],
+                    },
+                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+                adjudicated: "a9765a77d94202b6",
+            },
+            Witness {
+                id: "datadog-otel-agent-gateway-share-process-namespace-maybe",
+                chart: "datadog",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F61/datadog-otel-agent-gateway-share-process-namespace-maybe.yaml",
+                ),
+                oracle: OracleExpectation::Renders {
+                    kubernetes: KubernetesExpectation::Invalid {
+                        violations: &[ExpectedViolation {
+                            kind: "Deployment",
+                            instance_path: "/spec/template/spec/shareProcessNamespace",
+                            message: "got string, want null or boolean",
+                        }],
+                    },
+                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+                adjudicated: "41e16888309e5c97",
+            },
         ],
         size_obligations: &[],
         unfrozen: &[],
@@ -2659,29 +2742,57 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
     },
     FamilyWitnesses {
         family: Family::F71,
-        witnesses: &[Witness {
-            id: "datadog-agents-image-tag-below-floor",
-            chart: "datadog",
-            kubernetes_version: "1.29.0",
-            overrides: Overrides::ValuesFile("F71/datadog-agents-image-tag-below-floor.yaml"),
-            oracle: OracleExpectation::Aborts {
-                diagnostic: "Error: execution error at (datadog/templates/_helpers.tpl:116:4): This version of the chart requires an agent image 7.36.0 or greater. If you want to force and skip this check, use `--set agents.image.doNotCheckTag=true`",
+        witnesses: &[
+            Witness {
+                id: "traefik-image-tag-below-proxy-min",
+                chart: "traefik",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F71/traefik-image-tag-below-proxy-min.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (traefik/templates/requirements.yaml:6:8): ERROR: This version of the Chart only supports Traefik Proxy v3.6.0+",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "729a21a9a019fd1d",
             },
-            schema: SchemaExpectation::KnownFalseAcceptance,
-            adjudicated: "efe6825441aead9f",
-        }],
-        size_obligations: &[],
-        unfrozen: &[
-            "traefik `image.tag: v3.5.0` (Helm aborts at templates/requirements.yaml:6 below the v3.6.0 floor) and the other four traefik gates: the gate's enrollment check parses `templates/requirements.yaml` as a dependency manifest and fails, so traefik cannot be enrolled.",
+            Witness {
+                id: "datadog-agents-image-tag-below-floor",
+                chart: "datadog",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F71/datadog-agents-image-tag-below-floor.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (datadog/templates/_helpers.tpl:116:4): This version of the chart requires an agent image 7.36.0 or greater. If you want to force and skip this check, use `--set agents.image.doNotCheckTag=true`",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "efe6825441aead9f",
+            },
         ],
+        size_obligations: &[],
+        unfrozen: &[],
     },
     FamilyWitnesses {
         family: Family::F72,
-        witnesses: &[],
-        size_obligations: &[],
-        unfrozen: &[
-            "traefik `livenessProbe: null` / `readinessProbe: null` (Helm renders): the gate's enrollment check parses traefik's `templates/requirements.yaml` template as a dependency manifest and fails, so traefik cannot be enrolled.",
+        witnesses: &[
+            Witness {
+                id: "traefik-liveness-probe-null",
+                chart: "traefik",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F72/traefik-liveness-probe-null.yaml"),
+                oracle: RENDERS,
+                schema: SchemaExpectation::KnownFalseRejection,
+                adjudicated: "ab9d3d32490202b4",
+            },
+            Witness {
+                id: "traefik-readiness-probe-null",
+                chart: "traefik",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F72/traefik-readiness-probe-null.yaml"),
+                oracle: RENDERS,
+                schema: SchemaExpectation::KnownFalseRejection,
+                adjudicated: "4b12b4e9a039af59",
+            },
         ],
+        size_obligations: &[],
+        unfrozen: &[],
     },
     FamilyWitnesses {
         family: Family::F73,
@@ -2719,91 +2830,217 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
             SizeObligation {
                 id: "airflow-fixture-size",
                 chart: "airflow",
+                output: ShippedOutput::HelmReady,
                 expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "datadog-fixture-size",
                 chart: "datadog",
+                output: ShippedOutput::HelmReady,
                 expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "dify-fixture-size",
                 chart: "dify",
+                output: ShippedOutput::HelmReady,
                 expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "gitea-fixture-size",
                 chart: "gitea",
+                output: ShippedOutput::HelmReady,
                 expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "kube-prometheus-stack-fixture-size",
                 chart: "kube-prometheus-stack",
+                output: ShippedOutput::HelmReady,
                 expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "kyverno-fixture-size",
                 chart: "kyverno",
+                output: ShippedOutput::HelmReady,
                 expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "milvus-fixture-size",
                 chart: "milvus",
+                output: ShippedOutput::HelmReady,
                 expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "nats-fixture-size",
                 chart: "nats",
+                output: ShippedOutput::HelmReady,
                 expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "netbox-fixture-size",
                 chart: "netbox",
+                output: ShippedOutput::HelmReady,
                 expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "okteto-fixture-size",
                 chart: "okteto",
+                output: ShippedOutput::HelmReady,
                 expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "oncall-fixture-size",
                 chart: "oncall",
+                output: ShippedOutput::HelmReady,
                 expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "openebs-fixture-size",
                 chart: "openebs",
+                output: ShippedOutput::HelmReady,
                 expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "prometheus-fixture-size",
                 chart: "prometheus",
+                output: ShippedOutput::HelmReady,
                 expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "redmine-fixture-size",
                 chart: "redmine",
+                output: ShippedOutput::HelmReady,
                 expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "signoz-signoz-fixture-size",
                 chart: "signoz-signoz",
+                output: ShippedOutput::HelmReady,
                 expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "stacks-blockchain-api-fixture-size",
                 chart: "stacks-blockchain-api",
+                output: ShippedOutput::HelmReady,
                 expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "synapse-fixture-size",
                 chart: "synapse",
+                output: ShippedOutput::HelmReady,
                 expectation: ObligationExpectation::Met,
             },
             SizeObligation {
                 id: "weblate-fixture-size",
                 chart: "weblate",
+                output: ShippedOutput::HelmReady,
+                expectation: ObligationExpectation::Met,
+            },
+            SizeObligation {
+                id: "airflow-default-output-size",
+                chart: "airflow",
+                output: ShippedOutput::DefaultCli,
+                expectation: ObligationExpectation::Met,
+            },
+            SizeObligation {
+                id: "datadog-default-output-size",
+                chart: "datadog",
+                output: ShippedOutput::DefaultCli,
+                expectation: ObligationExpectation::Met,
+            },
+            SizeObligation {
+                id: "dify-default-output-size",
+                chart: "dify",
+                output: ShippedOutput::DefaultCli,
+                expectation: ObligationExpectation::Met,
+            },
+            SizeObligation {
+                id: "gitea-default-output-size",
+                chart: "gitea",
+                output: ShippedOutput::DefaultCli,
+                expectation: ObligationExpectation::KnownUnmet,
+            },
+            SizeObligation {
+                id: "kube-prometheus-stack-default-output-size",
+                chart: "kube-prometheus-stack",
+                output: ShippedOutput::DefaultCli,
+                expectation: ObligationExpectation::KnownUnmet,
+            },
+            SizeObligation {
+                id: "kyverno-default-output-size",
+                chart: "kyverno",
+                output: ShippedOutput::DefaultCli,
+                expectation: ObligationExpectation::Met,
+            },
+            SizeObligation {
+                id: "milvus-default-output-size",
+                chart: "milvus",
+                output: ShippedOutput::DefaultCli,
+                expectation: ObligationExpectation::KnownUnmet,
+            },
+            SizeObligation {
+                id: "nats-default-output-size",
+                chart: "nats",
+                output: ShippedOutput::DefaultCli,
+                expectation: ObligationExpectation::Met,
+            },
+            SizeObligation {
+                id: "netbox-default-output-size",
+                chart: "netbox",
+                output: ShippedOutput::DefaultCli,
+                expectation: ObligationExpectation::Met,
+            },
+            SizeObligation {
+                id: "okteto-default-output-size",
+                chart: "okteto",
+                output: ShippedOutput::DefaultCli,
+                expectation: ObligationExpectation::Met,
+            },
+            SizeObligation {
+                id: "oncall-default-output-size",
+                chart: "oncall",
+                output: ShippedOutput::DefaultCli,
+                expectation: ObligationExpectation::KnownUnmet,
+            },
+            SizeObligation {
+                id: "openebs-default-output-size",
+                chart: "openebs",
+                output: ShippedOutput::DefaultCli,
+                expectation: ObligationExpectation::KnownUnmet,
+            },
+            SizeObligation {
+                id: "prometheus-default-output-size",
+                chart: "prometheus",
+                output: ShippedOutput::DefaultCli,
+                expectation: ObligationExpectation::Met,
+            },
+            SizeObligation {
+                id: "redmine-default-output-size",
+                chart: "redmine",
+                output: ShippedOutput::DefaultCli,
+                expectation: ObligationExpectation::Met,
+            },
+            SizeObligation {
+                id: "signoz-signoz-default-output-size",
+                chart: "signoz-signoz",
+                output: ShippedOutput::DefaultCli,
+                expectation: ObligationExpectation::Met,
+            },
+            SizeObligation {
+                id: "stacks-blockchain-api-default-output-size",
+                chart: "stacks-blockchain-api",
+                output: ShippedOutput::DefaultCli,
+                expectation: ObligationExpectation::Met,
+            },
+            SizeObligation {
+                id: "synapse-default-output-size",
+                chart: "synapse",
+                output: ShippedOutput::DefaultCli,
+                expectation: ObligationExpectation::Met,
+            },
+            SizeObligation {
+                id: "weblate-default-output-size",
+                chart: "weblate",
+                output: ShippedOutput::DefaultCli,
                 expectation: ObligationExpectation::Met,
             },
         ],

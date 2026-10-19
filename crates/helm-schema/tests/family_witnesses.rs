@@ -18,7 +18,10 @@ use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 
 use color_eyre::eyre::{self, WrapErr as _};
-use helm_schema::output::{HELM_MAX_CHART_FILE_BYTES, shorten_definition_names};
+use helm_schema::output::{
+    HELM_MAX_CHART_FILE_BYTES, JsonOutputFormat, shorten_definition_names,
+    write_schema_json_without_metrics,
+};
 use helm_schema_test_support::helm::kubernetes_version;
 use serde_json::{Value, json};
 use sha2::{Digest as _, Sha256};
@@ -33,7 +36,7 @@ mod known_false_acceptances;
 use family_witnesses::{
     CAMPAIGN_FAMILIES, ExpectedViolation, FAMILY_WITNESSES, FamilyWitnesses, KubernetesExpectation,
     ObligationExpectation, OracleExpectation, Overrides, PolicyOption, SchemaExpectation,
-    SchemaVerdict, SetPair, SetValue, SizeObligation, Witness,
+    SchemaVerdict, SetPair, SetValue, ShippedOutput, SizeObligation, Witness,
 };
 use known_false_acceptances::{
     Family, KNOWN_CONTEXT_FALSE_ACCEPTANCES, KNOWN_FALSE_ACCEPTANCES, ROSTER_BASELINE, Rejection,
@@ -405,6 +408,22 @@ fn shipped_bytes(schema: &Value) -> eyre::Result<usize> {
     Ok(serde_json::to_vec(&shorten_definition_names(schema).schema)?.len())
 }
 
+/// The bytes `output` writes for `schema`. The default CLI output goes through
+/// the CLI's own writer: pretty JSON, readable `$defs` keys, a final newline.
+fn output_bytes(schema: &Value, output: ShippedOutput) -> eyre::Result<usize> {
+    match output {
+        ShippedOutput::HelmReady => shipped_bytes(schema),
+        ShippedOutput::DefaultCli => {
+            let mut bytes = Vec::new();
+            Ok(write_schema_json_without_metrics(
+                &mut bytes,
+                schema,
+                JsonOutputFormat::Pretty,
+            )?)
+        }
+    }
+}
+
 fn load_fixture(path: &Path) -> eyre::Result<Fixture> {
     let schema = read_fixture(path)?;
     let size = shipped_bytes(&schema)?;
@@ -459,7 +478,10 @@ fn evaluate_size(
     obligation: &SizeObligation,
     layout: &Layout,
 ) -> eyre::Result<RowResult> {
-    let size = shipped_bytes(&read_fixture(&layout.fixture(obligation.chart))?)?;
+    let size = output_bytes(
+        &read_fixture(&layout.fixture(obligation.chart))?,
+        obligation.output,
+    )?;
     let observed = if size <= HELM_MAX_CHART_FILE_BYTES {
         ObligationExpectation::Met
     } else {
@@ -476,7 +498,8 @@ fn evaluate_size(
         have: outcome(observed),
         want: outcome(obligation.expectation),
         context: vec![format!(
-            "Helm reads {size} shipped bytes; its limit is {HELM_MAX_CHART_FILE_BYTES}"
+            "Helm reads {size} bytes of {:?} output; its limit is {HELM_MAX_CHART_FILE_BYTES}",
+            obligation.output
         )],
     })
 }
@@ -617,9 +640,20 @@ fn chart_problems(chart: &str, layout: &Layout) -> eyre::Result<Vec<String>> {
                 relative.display()
             ));
         }
-        let manifest = relative
-            .file_name()
-            .is_some_and(|name| name == "Chart.yaml" || name == "requirements.yaml");
+        // A dependency manifest sits at the chart root or at the root of a
+        // vendored dependency (`charts/<name>/`); a file of the same name
+        // under `templates/` is a template.
+        let at_chart_root = relative.parent().is_none_or(|parent| {
+            parent.as_os_str().is_empty()
+                || parent
+                    .parent()
+                    .and_then(Path::file_name)
+                    .is_some_and(|grandparent| grandparent == "charts")
+        });
+        let manifest = at_chart_root
+            && relative
+                .file_name()
+                .is_some_and(|name| name == "Chart.yaml" || name == "requirements.yaml");
         if manifest {
             let path = dir.join(&relative);
             let source = std::fs::read_to_string(&path)
@@ -1517,6 +1551,7 @@ fn size_obligation_follows_helms_file_limit() -> eyre::Result<()> {
         size_obligations: &[SizeObligation {
             id: "gate-fixture-size",
             chart: GATE_CHART,
+            output: ShippedOutput::HelmReady,
             expectation: ObligationExpectation::Met,
         }],
         unfrozen: &[],
@@ -1526,6 +1561,7 @@ fn size_obligation_follows_helms_file_limit() -> eyre::Result<()> {
         size_obligations: &[SizeObligation {
             id: "gate-fixture-size",
             chart: GATE_CHART,
+            output: ShippedOutput::HelmReady,
             expectation: ObligationExpectation::KnownUnmet,
         }],
         ..met
@@ -1561,6 +1597,95 @@ fn size_obligation_follows_helms_file_limit() -> eyre::Result<()> {
                 RowState::FileSize(ObligationExpectation::KnownUnmet),
                 RowState::FileSize(ObligationExpectation::Met),
             ),
+        ]
+    );
+    Ok(())
+}
+
+/// The default-output obligation measures what `helm-schema` writes without
+/// `--compact` or `--shorten-defs`: a fixture that fits Helm compact can still
+/// be too large to ship as the CLI writes it.
+#[test]
+fn default_output_obligation_measures_the_pretty_cli_bytes() -> eyre::Result<()> {
+    let schemas = test_util::scratch::ScratchDir::new("family-witness-default-output")?;
+    let layout = Layout {
+        charts: gate_root().join("charts"),
+        schemas: schemas.path().to_path_buf(),
+        policy_schemas: gate_root().join("policy-schemas").join("accepting"),
+        values_files: gate_root().join("values"),
+    };
+    let obligation = |output, expectation| SizeObligation {
+        id: "gate-output-size",
+        chart: GATE_CHART,
+        output,
+        expectation,
+    };
+
+    // Exactly at the limit compact, a few indentation bytes over it pretty.
+    write_schema_shipping_at(&layout.fixture(GATE_CHART), HELM_MAX_CHART_FILE_BYTES)?;
+    let schema = read_fixture(&layout.fixture(GATE_CHART))?;
+    let mut cli = Vec::new();
+    write_schema_json_without_metrics(&mut cli, &schema, JsonOutputFormat::Pretty)?;
+    sim_assert_eq!(
+        have: output_bytes(&schema, ShippedOutput::DefaultCli)?,
+        want: cli.len()
+    );
+    for (output, expectation) in [
+        (ShippedOutput::HelmReady, ObligationExpectation::Met),
+        (ShippedOutput::DefaultCli, ObligationExpectation::KnownUnmet),
+    ] {
+        let row = evaluate_size(Family::F74, &obligation(output, expectation), &layout)?;
+        sim_assert_eq!(have: row.have, want: row.want);
+    }
+
+    // Small enough either way.
+    write_schema_shipping_at(&layout.fixture(GATE_CHART), 1024)?;
+    let row = evaluate_size(
+        Family::F74,
+        &obligation(ShippedOutput::DefaultCli, ObligationExpectation::Met),
+        &layout,
+    )?;
+    sim_assert_eq!(have: row.have, want: row.want);
+    Ok(())
+}
+
+/// Only a chart's root and its vendored dependencies' roots hold manifests: a
+/// template named `requirements.yaml` is not parsed as one, while a vendored
+/// dependency's `import-values` is still refused.
+#[test]
+fn a_template_named_like_a_manifest_is_not_parsed_as_one() -> eyre::Result<()> {
+    let root = test_util::scratch::ScratchDir::new("family-witness-manifests")?;
+    let chart = root.path().join("charts").join("probe");
+    let write = |relative: &str, text: &str| -> eyre::Result<()> {
+        let path = chart.join(relative);
+        std::fs::create_dir_all(path.parent().unwrap_or(&chart))?;
+        std::fs::write(&path, text)?;
+        Ok(())
+    };
+    write(
+        "Chart.yaml",
+        "apiVersion: v2\nname: probe\nversion: 0.1.0\n",
+    )?;
+    write(
+        "templates/requirements.yaml",
+        "{{- if .Values.gate }}\nkind: ConfigMap\n{{- end }}\n",
+    )?;
+    write(
+        "charts/dep/requirements.yaml",
+        "dependencies:\n  - name: inner\n    import-values: [data]\n",
+    )?;
+    let layout = Layout {
+        charts: root.path().join("charts"),
+        schemas: root.path().join("schemas"),
+        policy_schemas: root.path().join("policy-schemas"),
+        values_files: root.path().join("values"),
+    };
+    sim_assert_eq!(
+        have: chart_problems("probe", &layout)?,
+        want: vec![
+            "chart probe: no fixture".to_string(),
+            "chart probe: import-values in charts/dep/requirements.yaml is not modelled"
+                .to_string(),
         ]
     );
     Ok(())
