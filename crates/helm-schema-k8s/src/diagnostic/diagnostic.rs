@@ -212,7 +212,7 @@ pub enum Diagnostic {
         explicit: bool,
     },
     /// The written schema is larger than Helm accepts for one chart file,
-    /// so Helm refuses the chart until the schema is shortened.
+    /// so Helm refuses the chart until the schema's size is reduced.
     SchemaExceedsHelmFileLimit {
         /// Bytes written, including the trailing newline.
         bytes: usize,
@@ -221,12 +221,14 @@ pub enum Diagnostic {
         /// Whether definition names were already shortened.
         shortened: bool,
     },
-    /// Pretty output exceeded Helm's limit and was written compact with short names.
+    /// Pretty output exceeded Helm's limit and was written as compact JSON.
     SchemaCompactedForHelm {
         /// Bytes written, including the trailing newline.
         bytes: usize,
         /// Helm's per-file limit.
         limit: usize,
+        /// Whether definition names were shortened.
+        shortened: bool,
     },
 }
 

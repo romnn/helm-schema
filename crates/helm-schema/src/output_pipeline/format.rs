@@ -10,7 +10,7 @@ use crate::output_pipeline::JsonOutputFormat;
 /// `values.schema.json` counts against that limit.
 ///
 /// Explicit-format writers preserve the requested format.
-/// [`serialize_default_schema_json`] compacts oversized default output to fit.
+/// [`serialize_default_schema_json`] tries compaction for oversized default output.
 pub const HELM_MAX_CHART_FILE_BYTES: usize = 5 * 1024 * 1024;
 
 /// A complete default CLI document, choosing its layout by Helm's chart-file limit.
@@ -18,13 +18,15 @@ pub const HELM_MAX_CHART_FILE_BYTES: usize = 5 * 1024 * 1024;
 pub struct DefaultSchemaOutput {
     /// Serialized JSON, including the trailing newline.
     pub bytes: Vec<u8>,
-    /// Whether oversized pretty output required compact JSON with short definition names.
+    /// Whether oversized pretty output required compact JSON.
     pub compacted: bool,
-    /// Each short definition key's readable name; empty when names are unchanged.
+    /// Whether the shortener changed any definition names.
+    pub shortened: bool,
+    /// Each short definition key's readable name; empty when shortening abstains.
     pub readable_names: BTreeMap<String, String>,
 }
 
-/// Serializes pretty JSON when it fits Helm, otherwise compact JSON with short names.
+/// Serializes pretty JSON when it fits Helm, otherwise compact JSON with short names when safe.
 ///
 /// The limit includes the final newline and depends only on `schema`.
 /// The complete document is prepared before callers open their output destination.
@@ -38,15 +40,18 @@ pub fn serialize_default_schema_json(schema: &Value) -> EngineResult<DefaultSche
     bytes.push(b'\n');
     let compacted = bytes.len() > HELM_MAX_CHART_FILE_BYTES;
     let mut readable_names = BTreeMap::new();
+    let mut names_changed = false;
     if compacted {
         let shortened = helm_schema_json_schema_minify::shorten_definition_names(schema);
         bytes = serde_json::to_vec(&shortened.schema)?;
         bytes.push(b'\n');
         readable_names = shortened.readable_names;
+        names_changed = shortened.shortened;
     }
     Ok(DefaultSchemaOutput {
         bytes,
         compacted,
+        shortened: names_changed,
         readable_names,
     })
 }

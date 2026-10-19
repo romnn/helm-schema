@@ -60,7 +60,10 @@ fn auto_compacts_large_output_for_files_and_stdout_and_reports_json_diagnostics(
     );
     sim_assert_eq!(have: stderr.matches("note: pretty schema").count(), want: 1);
     assert!(
-        stderr.contains("compact") && stderr.contains("short"),
+        stderr.contains(&format!(
+            "wrote compact JSON with short definition names ({} bytes)",
+            stdout.stdout.len()
+        )),
         "{stderr}"
     );
     let file = run(command()
@@ -105,6 +108,72 @@ fn auto_compacts_large_output_for_files_and_stdout_and_reports_json_diagnostics(
         .collect();
     sim_assert_eq!(have: notes.len(), want: 1);
     sim_assert_eq!(have: notes[0]["bytes"], want: json!(json_diagnostics.stdout.len()));
+    sim_assert_eq!(have: notes[0]["shortened"], want: json!(true));
+    Ok(())
+}
+
+#[test]
+fn auto_compaction_reports_unchanged_names_when_shortening_abstains() -> eyre::Result<()> {
+    let scratch = ScratchDir::new("size-aware-output-abstained")?;
+    let override_path = scratch.path().join("override.json");
+    let map_path = scratch.path().join("defs-map.json");
+    for unsafe_schema in [
+        json!({ "$ref": "https://example.invalid/external.json" }),
+        json!({ "$anchor": "named", "type": "string" }),
+        json!({ "$id": "nested.json", "type": "string" }),
+    ] {
+        std::fs::write(
+            &override_path,
+            serde_json::to_vec(&json!({
+                "$comment": "x".repeat(4_800_000),
+                "enum": (0..50_000).collect::<Vec<_>>(),
+                "$defs": { "readable-name": { "type": "string" } },
+                "properties": {
+                    "local": { "$ref": "#/$defs/readable-name" },
+                    "unsafe": unsafe_schema
+                }
+            }))?,
+        )?;
+        let output = run(command()
+            .arg("--keep-refs")
+            .arg("--override-schema")
+            .arg(&override_path)
+            .arg("--defs-map")
+            .arg(&map_path))?;
+        let stderr = String::from_utf8(output.stderr)?;
+        assert!(
+            stderr.contains(&format!(
+                "wrote compact JSON with unchanged definition names ({} bytes)",
+                output.stdout.len()
+            )),
+            "{stderr}"
+        );
+        let names: BTreeMap<String, String> = serde_json::from_slice(&std::fs::read(&map_path)?)?;
+        assert!(names.is_empty());
+        let pretty = run(command()
+            .arg("--keep-refs")
+            .arg("--override-schema")
+            .arg(&override_path)
+            .args(["--output-layout", "pretty"]))?;
+        let readable: Value = serde_json::from_slice(&pretty.stdout)?;
+        let mut expected = serde_json::to_vec(&readable)?;
+        expected.push(b'\n');
+        sim_assert_eq!(have: output.stdout, want: expected);
+        let json_output = run(command()
+            .arg("--keep-refs")
+            .arg("--override-schema")
+            .arg(&override_path)
+            .arg("--diag-format=json"))?;
+        let diagnostics = serde_json::Deserializer::from_slice(&json_output.stderr)
+            .into_iter::<Value>()
+            .collect::<Result<Vec<_>, _>>()?;
+        let notes: Vec<_> = diagnostics
+            .iter()
+            .filter(|diagnostic| diagnostic["type"] == "SchemaCompactedForHelm")
+            .collect();
+        sim_assert_eq!(have: notes.len(), want: 1);
+        sim_assert_eq!(have: notes[0]["shortened"], want: json!(false));
+    }
     Ok(())
 }
 

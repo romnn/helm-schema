@@ -178,11 +178,12 @@ fn write_generated_schema(
                 helm_schema::diagnostics::Diagnostic::SchemaCompactedForHelm {
                     bytes: serialized.bytes.len(),
                     limit: HELM_MAX_CHART_FILE_BYTES,
+                    shortened: serialized.shortened,
                 },
             );
             diag_emit::emit_to_stderr(&output_diagnostics, diag_format);
         }
-        warn_over_helm_limit(serialized.bytes.len(), serialized.compacted, diag_format);
+        warn_over_helm_limit(serialized.bytes.len(), serialized.shortened, diag_format);
         return Ok(());
     }
     if !options.shorten_defs && options.output_layout != cli::OutputLayout::Compact {
@@ -198,7 +199,7 @@ fn write_generated_schema(
     if let Some(path) = &options.defs_map {
         write_definition_map(path, &shortened.readable_names)?;
     }
-    warn_over_helm_limit(bytes, true, diag_format);
+    warn_over_helm_limit(bytes, shortened.shortened, diag_format);
     Ok(())
 }
 
@@ -218,7 +219,7 @@ fn shorten(args: &cli::ShortenArgs, diag_format: cli::DiagFormat) -> EngineResul
     if let Some(path) = &args.map {
         write_definition_map(path, &shortened.readable_names)?;
     }
-    warn_over_helm_limit(written, true, diag_format);
+    warn_over_helm_limit(written, shortened.shortened, diag_format);
     Ok(())
 }
 

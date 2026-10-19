@@ -83,6 +83,8 @@ pub struct ShortenedSchema {
     pub schema: Value,
     /// The readable name of every short name.
     pub readable_names: BTreeMap<String, String>,
+    /// Whether any definition name changed.
+    pub shortened: bool,
 }
 
 /// Names the anonymous root definitions of `schema` by `policy`.
@@ -133,12 +135,15 @@ pub fn shorten_definition_names(schema: &Value) -> ShortenedSchema {
     let mut shortened = schema.clone();
     rename_definitions(&mut shortened, &short_names);
     let mut readable_names = BTreeMap::new();
+    let mut names_changed = false;
     for (readable, short) in short_names {
+        names_changed |= readable != short;
         readable_names.insert(short, readable);
     }
     ShortenedSchema {
         schema: shortened,
         readable_names,
+        shortened: names_changed,
     }
 }
 

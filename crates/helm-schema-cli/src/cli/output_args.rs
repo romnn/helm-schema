@@ -29,12 +29,13 @@ impl From<DefsNames> for DefinitionNames {
 /// JSON whitespace and definition names used for generated schema output.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default, ValueEnum)]
 pub enum OutputLayout {
-    /// Pretty JSON unless it exceeds Helm's file limit, then compact JSON with short names.
+    /// Pretty JSON unless it exceeds Helm's file limit, then compact JSON.
+    /// Shorten names when safe.
     #[default]
     Auto,
     /// Always pretty JSON with readable definition names.
     Pretty,
-    /// Always compact JSON with short definition names.
+    /// Always compact JSON; shorten definition names when safe.
     Compact,
 }
 
@@ -47,13 +48,16 @@ pub struct OutputArgs {
 
     /// Output layout; auto keeps pretty JSON until Helm's 5 MiB chart-file limit.
     ///
+    /// Compact output shortens names only when every reference is a resolvable local pointer
+    /// and no anchors, dynamic references, or nested identifiers prevent a safe rename.
+    /// External refs retained by --keep-refs also prevent renaming.
     /// Oversized output is always written with a warning, for use by other validators.
     #[arg(long, value_enum, default_value_t = OutputLayout::Auto, conflicts_with_all = ["compact", "shorten_defs"])]
     pub output_layout: OutputLayout,
 
     /// Deprecated: write compact JSON while keeping readable definition names.
     ///
-    /// Use --output-layout compact for compact JSON with short definition names.
+    /// Use --output-layout compact for compact JSON and short definition names when safe.
     #[arg(long)]
     pub compact: bool,
 
@@ -91,11 +95,11 @@ pub struct OutputArgs {
 
     /// Deprecated: shorten `$defs` names, keeping pretty JSON unless --compact is set.
     ///
-    /// Use --output-layout compact for compact JSON with short definition names.
+    /// Use --output-layout compact for compact JSON and short definition names when safe.
     #[arg(long)]
     pub shorten_defs: bool,
 
-    /// Write each short `$defs` key's readable name; empty when names are unchanged.
+    /// Write the short-to-readable `$defs` name map; empty when shortening abstains.
     #[arg(long, value_name = "PATH")]
     pub defs_map: Option<PathBuf>,
 }

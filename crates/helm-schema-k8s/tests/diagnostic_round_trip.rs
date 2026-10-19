@@ -80,6 +80,12 @@ fn sample_variants() -> Vec<Diagnostic> {
         Diagnostic::SchemaCompactedForHelm {
             bytes: 4_000_000,
             limit: 5_242_880,
+            shortened: true,
+        },
+        Diagnostic::SchemaCompactedForHelm {
+            bytes: 4_000_000,
+            limit: 5_242_880,
+            shortened: false,
         },
     ]
 }
@@ -100,6 +106,23 @@ fn diagnostic_text_format_per_variant() {
         assert!(
             text.starts_with("warning:") || text.starts_with("info:") || text.starts_with("note:"),
             "diagnostic text must start with warning:, info:, or note:; got {text:?}"
+        );
+    }
+}
+
+#[test]
+fn compaction_note_reports_whether_definition_names_changed() {
+    for (shortened, names) in [(true, "short"), (false, "unchanged")] {
+        let diagnostic = Diagnostic::SchemaCompactedForHelm {
+            bytes: 4_000_000,
+            limit: 5_242_880,
+            shortened,
+        };
+        sim_assert_eq!(
+            have: format_diagnostic_text(&diagnostic),
+            want: format!(
+                "note: pretty schema exceeds Helm's 5242880-byte chart-file limit; wrote compact JSON with {names} definition names (4000000 bytes)"
+            )
         );
     }
 }

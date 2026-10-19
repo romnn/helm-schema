@@ -131,6 +131,7 @@ fn default_output_keeps_pretty_bytes_through_the_inclusive_helm_limit() -> eyre:
             write_schema_json_without_metrics(&mut want, &schema, JsonOutputFormat::Pretty)?;
         }
         sim_assert_eq!(have: output.compacted, want: compacted);
+        sim_assert_eq!(have: output.shortened, want: compacted);
         sim_assert_eq!(have: output.bytes, want: want);
         assert!(output.bytes.len() <= HELM_MAX_CHART_FILE_BYTES);
     }
@@ -149,5 +150,6 @@ fn default_output_returns_oversized_compact_bytes_for_other_validators() -> eyre
     assert!(output.bytes.len() > HELM_MAX_CHART_FILE_BYTES);
     sim_assert_eq!(have: output.bytes, want: want);
     assert!(output.readable_names.is_empty());
+    assert!(!output.shortened);
     Ok(())
 }
