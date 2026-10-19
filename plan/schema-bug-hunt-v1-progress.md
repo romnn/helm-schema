@@ -8885,4 +8885,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   falsy controls 64/64 (`round8-guards/.codex-evidence/proxy-null/`); red→green guard tests 11, unit 1,712, fmt/lint/lint:fc 0;
   +37 prod LOC (+125 vs landing 10a); moves 76 artifacts (to be covered by Track G's final battery). Committed 3ebdc547 (transfer-13
   sha256 298b60c7…). Revision brief `round8/q/design-chart-crds-rev2.md` (C1–C13) sent as follow_up turn 3 on 536e8e16. Orchestrator.
+- 23:12 (Oct 19) — **Chart-CRD design revision 2 (Track G builder): a Rust supported-subset oracle would NOT unblock StarRocks; revision 3
+  redirected to Kubernetes' own validator.** Revision 2 (`round8-guards/.codex-evidence/design-chart-crds.md`, C1–C13 resolved, abstain
+  on anything unmodelled, est. 230–330 Rust + 100–160 Go LOC) measured kube-starrocks' defaults CR still Uncertain: int-or-string +
+  quantity regex on 8 active CPU/memory fields (starrocks_clusters.yaml:1279/:1320/:6488/:6529), formats, defaults, list-maps. Generation
+  findings recorded with witnesses (`chart-crds-rev2/generation-findings.md`): G1 a preserve-unknown-fields parent leaves its declared
+  child open (universe.rs:216); G2 CRD `enum: [on, off]` decoded as strings (local_crd_projection.rs:68) — both main-too, separate
+  schema-moving changes, queued. Orchestrator decision (CLAUDE.md "reuse upstream", item 10): decide CRs with Kubernetes' OWN apiextensions
+  validation (pinned v0.29.x, test-only Go checker in its own module, not helmsweep) fed by Helm's sidecar declarations; keep only
+  install-scope vetoes, conflict and identity rules; delete the Rust subset vocabulary. Feasibility spike on the StarRocks CR first
+  (`round8/q/design-chart-crds-rev3.md`; follow_up turn 4 on 536e8e16; the orchestrator downloads Go modules outside the sandbox).
+  Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
