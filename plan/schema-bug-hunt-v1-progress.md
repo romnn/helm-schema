@@ -8915,4 +8915,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   rollbacks — decisions NOT to do something count), batched by theme with a commit per batch. First recorded ADR content includes the
   drift-tooling decision (simple maintainer-run tools/ tooling; setup-heavy parts behind one container/script; isolated, reproducible,
   extendable via data; fully separate from the core crates). Orchestrator.
+- 00:18 (Oct 20) — **ADRs merged: 100 architecture decision records squash-merged into main as 3eba01d6 (user: squash).** One Opus 5.5
+  writer (user-requested exception) fed by seven Haiku 5.5 sweepers (user suggestion) that listed 698 candidates from all plan/ files,
+  CLAUDE.md and 1,538 commit subjects (`round8/adr-candidates/H1–H7.md`); the writer verified each against its reference (~350 covered,
+  ~310 tactics/process, ~25 unsupported dropped). 92 Accepted, 4 Proposed (0039, 0052–0054), 4 Superseded; docs/adr/ only. Points it raised,
+  settled: strict root — the Sep 26 13:00 decision (KEEP strict + `--open-root`) supersedes the 12:35 note, 0060 is right; `$defs`
+  shortening — 0068 (size-aware auto) supersedes 0066 once landing 10a merges, matching the fixture-naming policy; "D1" in the 17:52 Oct 19
+  entry = decision 1 of `round8/brief-w4-rework17-codex.md` (fix the 15 false acceptances; roster only rows failing alike on f7be7ba5).
+  USER DECISIONS: ADR 0049's cache-scan tier of `--api-version-guess` (cold vs warm cache can infer differently) is a DEFECT, not an
+  exception — recorded in 0049 (81164b29) and assigned to sol builder 20261019T221814-154cb939 in a new clone `round8-apiguess`
+  (`round8/brief-apiguess-codex.md`: delete the tier if the others cover it, else upstream-first; empty-vs-warm cache red/green);
+  CLAUDE.md is NOT shortened to ADR links for now. Memory: tree-sitter-cli pin corrected to 0.27.0. Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
