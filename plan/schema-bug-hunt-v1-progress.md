@@ -8707,6 +8707,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   120647-2b0a20e5 attributes each chart's failing constraint to a family / W1 / W4 / new and analyses the size; next, a runner rule:
   the sweep must fail when the shipped schema rejects the chart's defaults (control renders) or exceeds 5 MiB, regardless of main.
   Orchestrator.
+- 14:19 (Oct 19) — **Runner v9 = LAND ×2 (`round8/review-runner-v9-r1-{astra,sol}.md`) — applied to the live runner (no chain running, lock
+  absent); its helmsweep half and the perf fix (LAND ×2) added to landing 10a.** Live runner commit "runner v9: schema-bearing chart
+  copies must load the shipped schema (.helmignore); CLI cache keyed by the prepared copy" (patch dfdde5a0…), run-all suite rerunning.
+  Landing 10a now also holds 576ec9e4 (helmsweep reports the schema bytes Helm loaded; patch 2e1d729a…), 1bdc7ca8 + fe44a313 (perf
+  fix, cherry-picked clean). The runner change means the next 10a chain starts from dump with a fresh E.
+- 14:19 (Oct 19) — **Witness reviews: REWORK ×2, then rework 1 handed back (b7cd5071); re-reviews sent.** Reviewers CONFIRMED F32 F45 F57 F60;
+  F74 NOT closed (the gate measured compact short-$defs JSON, not the emitted bytes; five fixtures exceed Helm's 5 MiB limit); F35 and
+  F61 lacked defining witnesses. Rework: 18 obligations on the CLI's default pretty output (milvus, gitea, kps, oncall, openebs unmet →
+  F74 open), F35 configmap accepting rows, F61 three more paths, traefik enrolment fixed (chart_problems parses manifests only at chart
+  roots) with F71/F72 rows. CORRECTION to the strict-closure count reported all session: the true baseline is 3 (F17, F54, F77) — F30
+  carries 19 roster cells and F74 is open; the candidate claims 3 → 9 (+F32 F35 F45 F57 F60 F61), pending re-review. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
