@@ -8718,6 +8718,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   F74 open), F35 configmap accepting rows, F61 three more paths, traefik enrolment fixed (chart_problems parses manifests only at chart
   roots) with F71/F72 rows. CORRECTION to the strict-closure count reported all session: the true baseline is 3 (F17, F54, F77) — F30
   carries 19 roster cells and F74 is open; the candidate claims 3 → 9 (+F32 F35 F45 F57 F60 F61), pending re-review. Orchestrator.
+- 14:32 (Oct 19) — **Witness freeze = LAND ×2 after rework (`round8/review-witness-r1-{astra,sol}.md`); added to landing 10a (7 commits,
+  clean). Verified strict closures on landing: 3 → 9 (F17 F32 F35 F45 F54 F57 F60 F61 F77); F74 open (five fixtures > 5 MiB).**
+- 14:32 (Oct 19) — **Defaults-rejection triage (sol, `round8/triage-defaults-sol.md`): every failing chart attributed; W1/W4 alone are
+  insufficient; size needs no new dedup.** Causes: aws-ebs (partial-object splice, NEW), eck-stack F50, headscale (whole-Values
+  replacement, NEW/D2-like), imgproxy F49 (mustRegexSplit/mustLast aliases), kube-starrocks + openldap-stack-ha D5 (block-scalar header
+  before dedented control region), nacos (nullable-string preimage, W4), netbox/stacks-blockchain-api/yourls D4 (.Subcharts helpers
+  root their requirements at the parent), nginx-ingress D1 (guard lost when the control region is evicted), synapse F4 (sink
+  string-member contract through influence paths), gitea D2 (set-before-navigate writes, W1 partial), airflow/oncall `\u` (W4);
+  exposed once small: milvus (else-if storageClass chain) and openebs (loki bucket guard; F31 container projection). Size: `$defs`
+  → `definitions` alone makes files LARGER; compact JSON + short definition handles measured 2.0–4.3 MiB for all five, Helm loads all.
+  Actions: new Track G (D1/D5 guard preservation: kube-starrocks, openldap-stack-ha, nginx-ingress, then milvus/openebs-loki) — Opus
+  builder, design gate first (`round8/brief-guards-d1-d5.md`, clone round8-guards on landing 10a); D4 and F4/F31 tracks queued (they
+  touch W1's expr_eval/control files); imgproxy aliases → W4 or after; the shipping-size policy (compact + short handles by default?)
+  asked to the user as a product decision. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
