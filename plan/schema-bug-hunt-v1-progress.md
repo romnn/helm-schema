@@ -8836,4 +8836,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   change. Landing 10a stays blocked on it; the chain's hard bound is nextest's 3 h. W1 rework 14 part 2 started on sol
   20261019T171138-e0881b7b (`round8/brief-w1-rework14-codex.md`; load 4 at start). Model rule (user, 18:2x): sol 6.1 for all
   implementation and every review, astra only as an additional reviewer on hard reviews. Orchestrator.
+- 19:53 (Oct 19) — **Track G code complete, BLOCKED on an oracle gap (StarRocks CRD); runner v10 rework committed and in re-review.**
+  Track G (sol 536e8e16): R7 direct aborts are no containment evidence (red→green `an_aborting_output_is_no_containment_evidence`;
+  11/11 guard cells); real `helm lint` passes on kube-starrocks / openldap-stack-ha / nginx-ingress defaults; MinIO/S3 matrix 24/24;
+  fmt, task lint, lint:fc (51 PASS), ast-grep, unit 1,706, dialect 2/2 all 0; exact `task test:integration`/`test:all` 201 = sandbox
+  DNS (orchestrator gate), fallback integration 1,012/1,048 (35 unadopted-fixture checks + one timeout-harness flake that passes
+  isolated); +88 prod LOC; one clean dump `dump-r7-final` (205 verified). Blocker: the scoped live battery leaves 21 kube-starrocks
+  cases unresolved because the offline Kubernetes oracle has no pinned `starrocks.com/v1/StarRocksCluster` schema, so the defaults
+  control is uncertain — although the chart vendors that CRD (charts/operator/crds/). Orchestrator: an oracle gap, not a Track G
+  defect; DESIGN first (oracle validates CRs against the CRDs the chart itself installs; one CRD source shared with generation;
+  identity/keying, precedence, conversion, blast radius on KNOWN_UNDECIDED_ACCEPTANCES; lands as its own test-infra commit) —
+  follow_up turn 1 on 536e8e16. Committed R6/R7/R8 in round8-guards as cbc491f2, b854ac5e, 8adccb24 (patch sha256 d38227fb… /
+  566e6bc2… / 16079d41…; tree == builder worktree). Stopped the builder's stale old-source battery PID 51373 at its request. Runner
+  v10 rework (only `chart=defaults` listable; oversize always fatal at dump; net +2; run-all 14/14) committed 608229f (transfer-10
+  sha256 0878983e…); re-checks follow_ups on 78a08a6a (sol) and fd4d13fe (astra). Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
