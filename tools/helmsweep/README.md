@@ -37,6 +37,7 @@ that accounted for 27.40% of the measured OnCall compile/validation CPU.
 | Command | Does |
 |---|---|
 | `version` | prints `build <sha256 of the executable>`, `go`, the Helm and jsonschema module versions and `patch <sha256>` |
+| `schema [--prepare] CHART` | prints the sha256 of the root schema Helm's directory loader actually loaded; exits 2 if loading fails or no schema is loaded |
 | `lint [--helm-env-clear] --kube-version K --values F CHART` | one `helm lint CHART --kube-version K -f F`: prints the CLI's combined output, exits with its code |
 | `template [--helm-env-clear] --kube-version K --values F CHART` | one `helm template t CHART --skip-schema-validation --kube-version K -f F`: prints the CLI's stderr, exits with its code |
 | `classify lint\|template RC LOG` | prints the gate's class of a log (a port of `landing.py classify_helm`; both are tested against `testdata/helm-classes.json`, a byte-identical copy of the runner's `tests/helm-classes.json`) |
@@ -44,6 +45,15 @@ that accounted for 27.40% of the measured OnCall compile/validation CPU.
 | `serve` | a resident `helm template` server for helm-schema's battery, below |
 
 ## Sweep contract (for `run-landing.sh sweep`)
+
+`version` advertises `schema-probe 1`. `schema --prepare` changes only a schema-bearing
+copy's `.helmignore`: each rule that `helm.sh/helm/v4/pkg/ignore` says excludes the
+root `values.schema.json` is blanked, preserving its line ending and the file's
+leading BOM while keeping all other lines byte for byte in their original context.
+Negated rules follow Helm's semantics, including exclusion of nonmatches.
+The command then loads the chart with Helm and reports the loaded bytes' sha256;
+callers must compare this hash with their planned schema bytes.
+Without `--prepare`, the command is read-only.
 
 Inputs, as `landing.py sweep-plan` and `sweep-one.sh` lay them out today:
 
@@ -59,7 +69,8 @@ roster hashes to `H` and every row is well formed (read_roster's checks);
 every override file and name and every plan schema matches the roster; `plain`
 holds no `values.schema.json` at any depth; `base` and `cand` equal `plain`
 (content digest over every path, type, permission bits and file bytes)
-plus exactly the planned root schema; no copy holds a symlink or special
+plus exactly the planned root schema and the ignore edit derived above;
+Helm's loaded root schema matches the roster hash; no copy holds a symlink or special
 file; no chart has outputs yet; and no schema has a `$ref`, `$dynamicRef` or
 `$recursiveRef` that does not start with `#`, or a `$schema` jsonschema/v6
 does not know (their compile could read files or the network).

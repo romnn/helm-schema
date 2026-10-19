@@ -53,12 +53,14 @@ func main() {
 
 func run(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		fmt.Fprintln(stderr, "usage: helmsweep version | lint | template | classify | sweep | serve ...")
+		fmt.Fprintln(stderr, "usage: helmsweep version | schema | lint | template | classify | sweep | serve ...")
 		return exitRefused
 	}
 	switch args[0] {
 	case "version":
 		return cmdVersion(stdout, stderr)
+	case "schema":
+		return cmdSchema(args[1:], stdout, stderr)
 	case "lint", "template":
 		return cmdCell(args[0], args[1:], stdout, stderr)
 	case "classify":
@@ -131,6 +133,7 @@ func cmdVersion(stdout, stderr io.Writer) int {
 	}
 	fmt.Fprintf(stdout, "build %s\ngo %s\n%s %s\nhelm-build %s\n%s %s\npatch %s\n",
 		id.Executable, id.Go, helmModule, id.Helm, id.HelmBuild, jsonschemaModule, id.JSONSchema, id.Patch)
+	fmt.Fprintln(stdout, "schema-probe 1")
 	return 0
 }
 
