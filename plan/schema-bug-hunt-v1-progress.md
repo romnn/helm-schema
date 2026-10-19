@@ -8635,6 +8635,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Pre-existing, not a landing-10a regression. Process fix dispatched: runner v9 (sol builder 025256-a347da0c in
   round8/runner-v9-dev, brief `round8/brief-runner-v9-helmignore.md`): neutralise only the schema-excluding rule via Helm's own ignore
   semantics, assert per copy that Helm LOADED the planned schema bytes, red/green runner tests. Orchestrator.
+- 05:03 (Oct 19) — **Throughput check (user asked: only one Opus agent running).** Honest answer recorded: Opus capacity was idle — the W1 builder
+  stopped after its design and waited on review, k8s waits on W4 by design, and no other semantic track was running. Actions: the W1
+  builder starts W1-R81 (redis cost; independent of the design decision) while astra/sol review the design; a read-only triage (sol,
+  030350-314108f7, `round8/q/triage-open-findings.md`) lists open findings no active track covers and proposes 1–2 parallel tracks
+  without file overlap with W1/W4; the next Opus builders start from it. Process lesson: a builder waiting on a review is idle
+  capacity — always give it design-independent work. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
