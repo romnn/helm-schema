@@ -1762,6 +1762,267 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
         unfrozen: &[],
     },
     FamilyWitnesses {
+        family: Family::F41,
+        witnesses: &[
+            Witness {
+                id: "zabbix-postgres-access-secret-host-key-empty",
+                chart: "zabbix",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F41/zabbix-postgres-access-secret-host-key-empty.yaml",
+                ),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: YAML parse error on zabbix/templates/secret-db-access.yaml: error converting YAML to JSON: yaml: line 15: did not find expected key",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "19f381bb52feea8d",
+            },
+            Witness {
+                id: "redis-ha-fullname-override-string",
+                chart: "redis-ha",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F41/redis-ha-fullname-override-string.yaml"),
+                oracle: RENDERS,
+                schema: SchemaExpectation::KnownFalseRejection,
+                adjudicated: "27512ed6c550baab",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F42,
+        witnesses: &[
+            Witness {
+                id: "redis-ha-auth-true-without-password",
+                chart: "redis-ha",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F42/redis-ha-auth-true-without-password.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: redis-ha/templates/redis-auth-secret.yaml:18:52 — invalid value; expected string",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "77d30373bf7c7337",
+            },
+            Witness {
+                id: "redis-ha-auth-true-with-password",
+                chart: "redis-ha",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F42/redis-ha-auth-true-with-password.yaml"),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "e6bbdccb391c5661",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F43,
+        witnesses: &[Witness {
+            id: "zabbix-server-host-port-string-true",
+            chart: "zabbix",
+            kubernetes_version: "1.29.0",
+            overrides: Overrides::ValuesFile("F43/zabbix-server-host-port-string-true.yaml"),
+            oracle: RENDERS,
+            schema: SchemaExpectation::KnownFalseRejection,
+            adjudicated: "732a8769bb3a51b2",
+        }],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F44,
+        witnesses: &[Witness {
+            id: "loki-use-test-schema",
+            chart: "loki",
+            kubernetes_version: "1.29.0",
+            overrides: Overrides::ValuesFile("F44/loki-use-test-schema.yaml"),
+            oracle: OracleExpectation::Aborts {
+                diagnostic: "Error: execution error at (loki/templates/write/statefulset-write.yaml:50:28): Please define loki.storage.bucketNames.chunks",
+            },
+            schema: SchemaExpectation::KnownFalseAcceptance,
+            adjudicated: "fd15ee240f877c29",
+        }],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F45,
+        witnesses: &[
+            Witness {
+                id: "x509-certificate-exporter-disable-builtin-without-extra-groups",
+                chart: "x509-certificate-exporter",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F45/x509-certificate-exporter-disable-builtin-without-extra-groups.yaml",
+                ),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (x509-certificate-exporter/templates/prometheusrule.yaml:28:9): Extra alert groups (extraAlertGroups) are required when disableBuiltinAlertGroup is set!",
+                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+                adjudicated: "432a4f4aac94f26a",
+            },
+            Witness {
+                id: "x509-certificate-exporter-disable-builtin-with-extra-groups",
+                chart: "x509-certificate-exporter",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F45/x509-certificate-exporter-disable-builtin-with-extra-groups.yaml",
+                ),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "47b1b8d942518508",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F46,
+        witnesses: &[Witness {
+            id: "datadog-operator-migration-preview",
+            chart: "datadog",
+            kubernetes_version: "1.29.0",
+            overrides: Overrides::ValuesFile("F46/datadog-operator-migration-preview.yaml"),
+            oracle: RENDERS,
+            schema: SchemaExpectation::KnownFalseRejection,
+            adjudicated: "7af29168d688a7b1",
+        }],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F47,
+        witnesses: &[
+            Witness {
+                id: "jupyterhub-rbac-enabled",
+                chart: "jupyterhub",
+                kubernetes_version: "1.33.0",
+                overrides: Overrides::ValuesFile("F47/jupyterhub-rbac-enabled.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (jupyterhub/templates/NOTES.txt:175:4): ################################################################################# ######   BREAKING: The config values passed contained no longer accepted    #####",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "c907d960aba7b150",
+            },
+            Witness {
+                id: "jupyterhub-hub-fs-gid",
+                chart: "jupyterhub",
+                kubernetes_version: "1.33.0",
+                overrides: Overrides::ValuesFile("F47/jupyterhub-hub-fs-gid.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (jupyterhub/templates/NOTES.txt:175:4): ################################################################################# ######   BREAKING: The config values passed contained no longer accepted    #####",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "a9ae7732f55b1acc",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F48,
+        witnesses: &[
+            Witness {
+                id: "logstash-secrets-value-number",
+                chart: "logstash",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F48/logstash-secrets-value-number.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: logstash/templates/statefulset.yaml:62:28 — logstash/templates/secret.yaml:22:24 — wrong type for value; expected string; got float64",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "9b8d00e3e3e175e1",
+            },
+            Witness {
+                id: "logstash-secrets-value-string",
+                chart: "logstash",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F48/logstash-secrets-value-string.yaml"),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "db9c2f5846ec56d0",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F49,
+        witnesses: &[
+            Witness {
+                id: "imgproxy-defaults",
+                chart: "imgproxy",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::Set(&[]),
+                oracle: RENDERS,
+                schema: SchemaExpectation::KnownFalseRejection,
+                adjudicated: "d5f311498add0be1",
+            },
+            Witness {
+                id: "nginx-ingress-controller-tcp-number",
+                chart: "nginx-ingress-controller",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F49/nginx-ingress-controller-tcp-number.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: nginx-ingress-controller/templates/controller-networkpolicy.yaml:39:41 — wrong type for value; expected string; got float64",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "7dcb240a8f4f76bd",
+            },
+            Witness {
+                id: "nginx-ingress-controller-tcp-string",
+                chart: "nginx-ingress-controller",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F49/nginx-ingress-controller-tcp-string.yaml"),
+                oracle: OracleExpectation::Renders {
+                    kubernetes: KubernetesExpectation::Valid,
+                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "c992c3eb40a5f779",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F50,
+        witnesses: &[
+            Witness {
+                id: "eck-stack-kibana-spec-ref-namespace-only",
+                chart: "eck-stack",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F50/eck-stack-kibana-spec-ref-namespace-only.yaml",
+                ),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (eck-stack/charts/eck-kibana/templates/kibana.yaml:27:5): An elasticsearchRef name or secretName is required",
+                },
+                // Masked: the fixture rejects this document only with the errors it already
+                // gives the chart defaults (F51 `eck-stack-defaults`, `/properties/eck-
+                // kibana/allOf/16`), so the verdict says nothing about F50.
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+                adjudicated: "33e684c276f5bf4b",
+            },
+            Witness {
+                id: "eck-stack-kibana-spec-ref-name-fallback-null",
+                chart: "eck-stack",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F50/eck-stack-kibana-spec-ref-name-fallback-null.yaml",
+                ),
+                oracle: RENDERS,
+                schema: SchemaExpectation::KnownFalseRejection,
+                adjudicated: "f6af6dc42884e662",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[
+            "`eck-stack-kibana-spec-ref-namespace-only` is rejected only by the arm that also rejects the eck-stack defaults (F51); re-adjudicate it once the defaults are accepted.",
+        ],
+    },
+    FamilyWitnesses {
         family: Family::F51,
         witnesses: &[Witness {
             id: "eck-stack-defaults",
