@@ -198,7 +198,7 @@ is at the end of this section.
   fixtures from clean dump-e9e89f63; Z gate 57/57 by named contract; the 224 rows 0 problems; battery 0 unmatched tightenings but
   the final gate fails on 15 unlisted false acceptances + 2 undecided + 2 okteto roster rows now correctly rejected (remove those two
   rows — roster rule) — ORCHESTRATOR DECISION NEEDED on the 17 (causes per row in the hand-off; default: fix, do not roster new ones).
-  fmt 0, task lint 0; gates2.sh (lint:fc, ast-grep, nextest, integration, verify, tokei) was running and dies with the session — re-run.
+  fmt 0, task lint 0, lint:fc 0, ast-grep 0 (gates.txt); gates2.sh was stopped at session end before nextest/integration/verify/tokei — re-run those.
   CONCERN for review: production LOC +640 vs r16 / +2,936 vs main, above the design's −140..+290 — reviewers must weigh item 10.
   The 03:29 SIGTERM that killed landing 10a's battery (and W1's) was this builder's `pkill` by name pattern (confirmed).
 - **Track G (D1/D5 execution guards; fixes kube-starrocks, openldap-stack-ha, nginx-ingress defaults; milvus/openebs-loki):** design
