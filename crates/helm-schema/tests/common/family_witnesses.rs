@@ -2448,6 +2448,140 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
         ],
     },
     FamilyWitnesses {
+        family: Family::F63,
+        witnesses: &[Witness {
+            id: "milvus-ingress-tls-string-item",
+            chart: "milvus",
+            kubernetes_version: "1.29.0",
+            overrides: Overrides::ValuesFile("F63/milvus-ingress-tls-string-item.yaml"),
+            oracle: OracleExpectation::Aborts {
+                diagnostic: "Error: milvus/templates/ingress.yaml:71:16 — can't evaluate field hosts in type interface {}",
+            },
+            // Masked: the fixture rejects this document only with the errors it already
+            // gives the chart defaults (D3 `milvus-defaults`), so the verdict says nothing
+            // about F63.
+            schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+            adjudicated: "24d12d1043dfa03e",
+        }],
+        size_obligations: &[],
+        unfrozen: &[
+            "milvus `ingress.tls: [\"a\"]` is rejected only by the D3 arms that reject the milvus defaults, and oncall's fixture is refused by Helm under Go regexp; no unmasked witness exists in the corpus.",
+        ],
+    },
+    FamilyWitnesses {
+        family: Family::F64,
+        witnesses: &[],
+        size_obligations: &[],
+        unfrozen: &[
+            "oncall `oncall.smtp.ssl: true` (SMTP tls+ssl guard): Helm refuses oncall's shipped fixture under Go regexp (`rabbitmq.ldap.uri`), so the verdict is not reproducible offline; no other chart has the shape.",
+        ],
+    },
+    FamilyWitnesses {
+        family: Family::F65,
+        witnesses: &[Witness {
+            id: "gitea-replica-count-2",
+            chart: "gitea",
+            kubernetes_version: "1.29.0",
+            overrides: Overrides::ValuesFile("F65/gitea-replica-count-2.yaml"),
+            oracle: OracleExpectation::Aborts {
+                diagnostic: "Error: execution error at (gitea/templates/gitea/deployment.yaml:30:28): When using multiple replicas, a RWX file system is required and persistence.accessModes[0] must be set to ReadWriteMany.",
+            },
+            // Masked: the fixture rejects this document only with the errors it already
+            // gives the chart defaults (`gitea-defaults`), so the verdict says nothing
+            // about F65.
+            schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+            adjudicated: "87086a69c5606a55",
+        }],
+        size_obligations: &[],
+        unfrozen: &[
+            "`gitea-replica-count-2` is rejected only by the errors the gitea defaults already have; re-adjudicate once `gitea-defaults` is accepted.",
+        ],
+    },
+    FamilyWitnesses {
+        family: Family::F66,
+        witnesses: &[Witness {
+            id: "gitea-client-settings-policy-empty-body",
+            chart: "gitea",
+            kubernetes_version: "1.29.0",
+            overrides: Overrides::ValuesFile("F66/gitea-client-settings-policy-empty-body.yaml"),
+            oracle: OracleExpectation::Aborts {
+                diagnostic: "Error: execution error at (gitea/templates/gitea/clientSettingsPolicy.yaml:3:4): gatewayAPI.nginx.clientSettingsPolicies.body is required",
+            },
+            // Masked: the fixture rejects this document only with the errors it already
+            // gives the chart defaults (`gitea-defaults`), so the verdict says nothing
+            // about F66.
+            schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+            adjudicated: "4eb16220b9c24c9d",
+        }],
+        size_obligations: &[],
+        unfrozen: &[
+            "`gitea-client-settings-policy-empty-body` is rejected only by the errors the gitea defaults already have; re-adjudicate once `gitea-defaults` is accepted.",
+        ],
+    },
+    FamilyWitnesses {
+        family: Family::F67,
+        witnesses: &[Witness {
+            id: "gitea-pod-security-context-string",
+            chart: "gitea",
+            kubernetes_version: "1.29.0",
+            overrides: Overrides::ValuesFile("F67/gitea-pod-security-context-string.yaml"),
+            oracle: OracleExpectation::Aborts {
+                diagnostic: "Error: gitea/templates/gitea/deployment.yaml:47:33 — gitea/templates/_helpers.tpl:109:81 — wrong type for value; expected map[string]interface {}; got string",
+            },
+            // Masked: the fixture rejects this document only with the errors it already
+            // gives the chart defaults (`gitea-defaults`), so the verdict says nothing
+            // about F67.
+            schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+            adjudicated: "72434ea88a1f7054",
+        }],
+        size_obligations: &[],
+        unfrozen: &[
+            "`gitea-pod-security-context-string` is rejected only by the errors the gitea defaults already have; re-adjudicate once `gitea-defaults` is accepted.",
+        ],
+    },
+    FamilyWitnesses {
+        family: Family::F68,
+        witnesses: &[
+            Witness {
+                id: "datadog-dogstatsd-socket-path-number",
+                chart: "datadog",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F68/datadog-dogstatsd-socket-path-number.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: datadog/templates/NOTES.txt:672:29 — wrong type for value; expected string; got float64",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "1507c3857372f7d9",
+            },
+            Witness {
+                id: "datadog-apm-socket-path-number",
+                chart: "datadog",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F68/datadog-apm-socket-path-number.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: datadog/templates/NOTES.txt:672:72 — wrong type for value; expected string; got float64",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "e049391b08b6caf2",
+            },
+            Witness {
+                id: "synapse-form-secret-number",
+                chart: "synapse",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F68/synapse-form-secret-number.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: synapse/templates/deployment.yaml:4:27 — wrong type for value; expected string; got float64",
+                },
+                // The one error beyond the 25 F4 defaults errors is the declared `homeserver`
+                // string typing, not the `required` string-parameter contract.
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+                adjudicated: "6edce1291d2415c9",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
         family: Family::F69,
         witnesses: &[
             Witness {
@@ -2491,6 +2625,63 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
         ],
         size_obligations: &[],
         unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F70,
+        witnesses: &[
+            Witness {
+                id: "cilium-eni-iam-role-operator-annotations-null",
+                chart: "cilium",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F70/cilium-eni-iam-role-operator-annotations-null.yaml",
+                ),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: cilium/templates/cilium-operator/serviceaccount.yaml:3:22 — wrong type for value; expected map[string]interface {}; got interface {}",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "f16a8480a8f92936",
+            },
+            Witness {
+                id: "cilium-tls-ca-cert-key-numbers",
+                chart: "cilium",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F70/cilium-tls-ca-cert-key-numbers.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: cilium/templates/hubble/tls-helm/server-secret.yaml:2:10 — cilium/templates/_helpers.tpl:77:32 — wrong type for value; expected string; got float64",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "a81484db0f62bcd2",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F71,
+        witnesses: &[Witness {
+            id: "datadog-agents-image-tag-below-floor",
+            chart: "datadog",
+            kubernetes_version: "1.29.0",
+            overrides: Overrides::ValuesFile("F71/datadog-agents-image-tag-below-floor.yaml"),
+            oracle: OracleExpectation::Aborts {
+                diagnostic: "Error: execution error at (datadog/templates/_helpers.tpl:116:4): This version of the chart requires an agent image 7.36.0 or greater. If you want to force and skip this check, use `--set agents.image.doNotCheckTag=true`",
+            },
+            schema: SchemaExpectation::KnownFalseAcceptance,
+            adjudicated: "efe6825441aead9f",
+        }],
+        size_obligations: &[],
+        unfrozen: &[
+            "traefik `image.tag: v3.5.0` (Helm aborts at templates/requirements.yaml:6 below the v3.6.0 floor) and the other four traefik gates: the gate's enrollment check parses `templates/requirements.yaml` as a dependency manifest and fails, so traefik cannot be enrolled.",
+        ],
+    },
+    FamilyWitnesses {
+        family: Family::F72,
+        witnesses: &[],
+        size_obligations: &[],
+        unfrozen: &[
+            "traefik `livenessProbe: null` / `readinessProbe: null` (Helm renders): the gate's enrollment check parses traefik's `templates/requirements.yaml` template as a dependency manifest and fails, so traefik cannot be enrolled.",
+        ],
     },
     FamilyWitnesses {
         family: Family::F73,
@@ -2616,6 +2807,62 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 expectation: ObligationExpectation::Met,
             },
         ],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F75,
+        witnesses: &[
+            Witness {
+                id: "datadog-cluster-name-90-lowercase",
+                chart: "datadog",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F75/datadog-cluster-name-90-lowercase.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (datadog/templates/cluster-agent-deployment.yaml:188:14): Your `clusterName` isn't valid, it must be 80 characters or less.",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "4c57b55e223890ab",
+            },
+            Witness {
+                id: "datadog-cluster-name-80-lowercase",
+                chart: "datadog",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F75/datadog-cluster-name-80-lowercase.yaml"),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "037a8a5c5321bb6d",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F76,
+        witnesses: &[
+            Witness {
+                id: "surveyor-image-repository-null-registry",
+                chart: "surveyor",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F76/surveyor-image-repository-null-registry.yaml",
+                ),
+                oracle: RENDERS,
+                schema: SchemaExpectation::KnownFalseRejection,
+                adjudicated: "80884189f380e2e6",
+            },
+            Witness {
+                id: "surveyor-image-repository-null",
+                chart: "surveyor",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F76/surveyor-image-repository-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: YAML parse error on surveyor/templates/deployment.yaml: error converting YAML to JSON: yaml: line 33: found character that cannot start any token",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "b87bcd85e87728dc",
+            },
+        ],
+        size_obligations: &[],
         unfrozen: &[],
     },
     FamilyWitnesses {
@@ -3283,6 +3530,37 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                     option: PolicyOption::DeclaredTypesAnnotate,
                 },
                 adjudicated: "aefa91b204944273",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::D4,
+        witnesses: &[
+            Witness {
+                id: "stacks-blockchain-api-postgresql-auth-username",
+                chart: "stacks-blockchain-api",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "D4/stacks-blockchain-api-postgresql-auth-username.yaml",
+                ),
+                oracle: RENDERS,
+                // Rejected by the ten parent-root arms `stacks-blockchain-api-defaults` also
+                // hits.
+                schema: SchemaExpectation::KnownFalseRejection,
+                adjudicated: "ac63ffaef3a21bc2",
+            },
+            Witness {
+                id: "netbox-postgresql-auth-username",
+                chart: "netbox",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("D4/netbox-postgresql-auth-username.yaml"),
+                oracle: RENDERS,
+                // Rejected by the five root arms `netbox-defaults` also hits (D3 and D4
+                // together).
+                schema: SchemaExpectation::KnownFalseRejection,
+                adjudicated: "9741e34664f7db1c",
             },
         ],
         size_obligations: &[],
