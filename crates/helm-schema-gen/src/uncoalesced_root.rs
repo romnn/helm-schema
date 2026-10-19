@@ -1,5 +1,6 @@
 //! The documents `helm lint` validates, as further must-accept documents.
 
+use std::borrow::Cow;
 use std::collections::{BTreeMap, BTreeSet};
 
 use helm_schema_core::{ConditionalGuard, Segment, ValuesPath};
@@ -21,6 +22,12 @@ pub(crate) struct GuardEncoding<'a> {
     pub(crate) values_yaml_doc: &'a YamlValue,
     pub(crate) absence: AbsenceDefaults<'a>,
     pub(crate) polarity: ConditionPolarity,
+}
+
+/// The original condition and validator shared by one fact's lint checks.
+struct LintConstraint {
+    condition: Value,
+    validator: Option<jsonschema::Validator>,
 }
 
 /// Relaxes conditional constraints that `helm lint` documents fail.
@@ -88,31 +95,48 @@ impl<'a> UncoalescedRootGate<'a> {
         }
     }
 
-    /// The `then` part `if condition then then_schema`, anchored at
+    /// The `then` part `if condition then then_value`, anchored at
     /// `ancestor_segments`, keeps under the lint contract: unchanged,
     /// conditioned on the paths the lint documents lack, or `None` when the
-    /// constraint is withdrawn. `condition` encodes `guards` with
-    /// `encoding`.
+    /// constraint is withdrawn.
+    /// `condition` encodes `guards` with `encoding`.
+    #[tracing::instrument(skip_all, fields(guards = guards.len(), anchor_depth = ancestor_segments.len()))]
     pub(crate) fn lint_safe_then(
         &mut self,
         ancestor_segments: &[String],
         guards: &[ConditionalGuard],
         condition: &SchemaNode,
-        then_schema: &SchemaNode,
+        then_value: Value,
         encoding: GuardEncoding<'_>,
-    ) -> Option<SchemaNode> {
+    ) -> Option<Value> {
         let Some(uncoalesced_root) = self.uncoalesced_root else {
-            return Some(then_schema.clone());
+            return Some(then_value);
         };
         let anchor = ValuesPath::from_segments(
             ancestor_segments
                 .iter()
                 .map(|segment| Segment::from_encoded_component(segment)),
         );
-        let then_value = then_schema.clone().into_value();
+        let condition = condition.clone().into_value();
+        let constraint = LintConstraint {
+            validator: self.constraint_validator(&condition, &then_value),
+            condition,
+        };
+        let mut instances = Vec::new();
+        collect_anchored_instances(uncoalesced_root, ancestor_segments, &mut instances);
+        let mut coalesced_instances = Vec::new();
+        collect_anchored_instances(
+            self.coalesced_defaults,
+            ancestor_segments,
+            &mut coalesced_instances,
+        );
         let mut document = None;
         let mut deciding_paths = BTreeSet::new();
-        if self.root_fails(uncoalesced_root, ancestor_segments, condition, then_schema) {
+        if Self::fails_only_lint(
+            &instances,
+            &coalesced_instances,
+            constraint.validator.as_ref(),
+        ) {
             document = Some(LintDocument::Root);
             self.collect_deciding_paths(
                 uncoalesced_root,
@@ -122,9 +146,14 @@ impl<'a> UncoalescedRootGate<'a> {
                 &mut deciding_paths,
             );
         }
-        if let Some((held, failing)) =
-            self.floor_failure(&anchor, ancestor_segments, guards, then_schema, encoding)
-        {
+        if let Some((held, failing)) = self.floor_failure(
+            &anchor,
+            ancestor_segments,
+            guards,
+            &then_value,
+            encoding,
+            &constraint,
+        ) {
             document.get_or_insert(LintDocument::Floor);
             for floor in &failing {
                 self.collect_deciding_paths(
@@ -138,39 +167,24 @@ impl<'a> UncoalescedRootGate<'a> {
         }
         let lacking = self.member_requirements_the_floor_lacks(&anchor, &then_value);
         if !lacking.is_empty()
-            && self.coalesced_satisfies(ancestor_segments, condition, then_schema)
+            && constraint.validator.as_ref().is_some_and(|validator| {
+                coalesced_instances
+                    .iter()
+                    .all(|instance| validator.is_valid(instance))
+            })
         {
             document.get_or_insert(LintDocument::Floor);
             deciding_paths.extend(lacking);
         }
         let Some(document) = document else {
-            return Some(then_schema.clone());
+            return Some(then_value);
         };
-        // A guard testing a deciding path for absence contradicts its
-        // presence: conditioning would leave a constraint that never fires.
-        let mut encodable = !deciding_paths.is_empty();
-        for guard in guards {
-            if let ConditionalGuard::Absent { path } = guard
-                && deciding_paths.contains(path)
-            {
-                encodable = false;
-            }
-        }
-        let mut presence = Vec::new();
-        for path in &deciding_paths {
-            match input_path_present_condition(path, ancestor_segments) {
-                Some(present) => presence.push(present),
-                None => encodable = false,
-            }
-        }
-        let (outcome, kept) = if encodable {
-            let conditioned = SchemaNode::foreign(serde_json::json!({
-                "if": SchemaNode::all_of(presence).into_value(),
-                "then": then_value,
-            }));
-            (LintOutcome::Conditioned, Some(conditioned))
+        let kept =
+            condition_on_deciding_paths(ancestor_segments, guards, &deciding_paths, then_value);
+        let outcome = if kept.is_some() {
+            LintOutcome::Conditioned
         } else {
-            (LintOutcome::Withdrawn, None)
+            LintOutcome::Withdrawn
         };
         tracing::debug!(
             anchor = anchor.encode(),
@@ -220,25 +234,6 @@ impl<'a> UncoalescedRootGate<'a> {
         }
     }
 
-    /// Whether the root document as written fails the whole constraint.
-    fn root_fails(
-        &self,
-        root: &Value,
-        ancestor_segments: &[String],
-        condition: &SchemaNode,
-        then_schema: &SchemaNode,
-    ) -> bool {
-        let mut instances = Vec::new();
-        collect_anchored_instances(root, ancestor_segments, &mut instances);
-        let mut coalesced_instances = Vec::new();
-        collect_anchored_instances(
-            self.coalesced_defaults,
-            ancestor_segments,
-            &mut coalesced_instances,
-        );
-        self.fails_only_lint(&instances, &coalesced_instances, condition, then_schema)
-    }
-
     /// The guards already holding on the lint floor and the floor documents
     /// failing the constraint's lint projection (those guards, every other
     /// guard switched on): the floor itself and the floor with the tables
@@ -248,12 +243,13 @@ impl<'a> UncoalescedRootGate<'a> {
         anchor: &ValuesPath,
         ancestor_segments: &[String],
         guards: &[ConditionalGuard],
-        then_schema: &SchemaNode,
+        then_value: &Value,
         encoding: GuardEncoding<'_>,
-    ) -> Option<(Vec<ConditionalGuard>, Vec<Value>)> {
+        constraint: &LintConstraint,
+    ) -> Option<(Vec<ConditionalGuard>, Vec<Cow<'_, Value>>)> {
         let (floor, floor_yaml) = self.lint_floor.as_ref()?;
         let mut held = Vec::new();
-        let mut created = floor.clone();
+        let mut created = Cow::Borrowed(floor);
         let anchor_segments = anchor.segments().collect::<Vec<_>>();
         create_override_tables(&mut created, self.coalesced_defaults, &anchor_segments);
         for guard in guards {
@@ -268,7 +264,7 @@ impl<'a> UncoalescedRootGate<'a> {
             }
         }
         let mut member_paths = BTreeSet::new();
-        collect_property_paths(&then_schema.clone().into_value(), anchor, &mut member_paths);
+        collect_property_paths(then_value, anchor, &mut member_paths);
         for path in member_paths {
             let segments = path.segments().collect::<Vec<_>>();
             if let Some((_, parents)) = segments.split_last() {
@@ -281,7 +277,15 @@ impl<'a> UncoalescedRootGate<'a> {
             encoding.values_yaml_doc,
             encoding.absence,
             encoding.polarity,
-        ));
+        ))
+        .into_value();
+        let projected;
+        let validator = if projection == constraint.condition {
+            constraint.validator.as_ref()
+        } else {
+            projected = self.constraint_validator(&projection, then_value);
+            projected.as_ref()
+        };
         let mut coalesced_instances = Vec::new();
         collect_anchored_instances(
             self.coalesced_defaults,
@@ -289,10 +293,10 @@ impl<'a> UncoalescedRootGate<'a> {
             &mut coalesced_instances,
         );
         let mut failing = Vec::new();
-        for document in [floor.clone(), created] {
+        for document in [Cow::Borrowed(floor), created] {
             let mut instances = Vec::new();
             collect_anchored_instances(&document, ancestor_segments, &mut instances);
-            if self.fails_only_lint(&instances, &coalesced_instances, &projection, then_schema) {
+            if Self::fails_only_lint(&instances, &coalesced_instances, validator) {
                 failing.push(document);
             }
         }
@@ -340,66 +344,37 @@ impl<'a> UncoalescedRootGate<'a> {
         lacking
     }
 
-    /// Whether every coalesced defaults instance at the constraint's anchor
-    /// satisfies `if condition then then_schema`.
-    fn coalesced_satisfies(
-        &self,
-        ancestor_segments: &[String],
-        condition: &SchemaNode,
-        then_schema: &SchemaNode,
-    ) -> bool {
-        let Some(validator) = self.constraint_validator(condition, then_schema) else {
-            return false;
-        };
-        let mut coalesced_instances = Vec::new();
-        collect_anchored_instances(
-            self.coalesced_defaults,
-            ancestor_segments,
-            &mut coalesced_instances,
-        );
-        coalesced_instances
-            .iter()
-            .all(|instance| validator.is_valid(instance))
-    }
-
-    /// Whether `if condition then then_schema` rejects one of
+    /// Whether the validator rejects one of
     /// `lint_instances` while every one of `coalesced_instances` satisfies
     /// it; both are values at the constraint's anchor.
     fn fails_only_lint(
-        &self,
         lint_instances: &[&Value],
         coalesced_instances: &[&Value],
-        condition: &SchemaNode,
-        then_schema: &SchemaNode,
+        validator: Option<&jsonschema::Validator>,
     ) -> bool {
-        if lint_instances.is_empty() {
-            return false;
-        }
-        let Some(validator) = self.constraint_validator(condition, then_schema) else {
+        let Some(validator) = validator else {
             return false;
         };
-        if lint_instances
+        lint_instances
             .iter()
-            .all(|instance| validator.is_valid(instance))
-        {
-            return false;
-        }
-        coalesced_instances
-            .iter()
-            .all(|instance| validator.is_valid(instance))
+            .any(|instance| !validator.is_valid(instance))
+            && coalesced_instances
+                .iter()
+                .all(|instance| validator.is_valid(instance))
     }
 
-    /// The validator of `if condition then then_schema`, or `None` when it
+    /// The validator of `if condition then then_value`, or `None` when it
     /// does not compile: an uncompilable constraint cannot be judged, so it
     /// stays.
+    #[tracing::instrument(skip_all, fields(reachable_definitions = tracing::field::Empty))]
     fn constraint_validator(
         &self,
-        condition: &SchemaNode,
-        then_schema: &SchemaNode,
+        condition: &Value,
+        then_value: &Value,
     ) -> Option<jsonschema::Validator> {
         let constraint = serde_json::json!({
-            "if": condition.clone().into_value(),
-            "then": then_schema.clone().into_value(),
+            "if": condition,
+            "then": then_value,
         });
         let mut definitions =
             crate::provider_definitions::definitions_reachable_from(&constraint, self.definitions);
@@ -409,6 +384,7 @@ impl<'a> UncoalescedRootGate<'a> {
                 helm_truthy_definition_schema(),
             );
         }
+        tracing::Span::current().record("reachable_definitions", definitions.len());
         let document = serde_json::json!({
             "$defs": definitions,
             "allOf": [constraint],
@@ -420,6 +396,31 @@ impl<'a> UncoalescedRootGate<'a> {
     pub(crate) fn into_relaxed(self) -> Vec<LintWithdrawal> {
         self.relaxed
     }
+}
+
+fn condition_on_deciding_paths(
+    ancestor_segments: &[String],
+    guards: &[ConditionalGuard],
+    deciding_paths: &BTreeSet<ValuesPath>,
+    then_value: Value,
+) -> Option<Value> {
+    // A guard testing a deciding path for absence contradicts its
+    // presence: conditioning would leave a constraint that never fires.
+    if deciding_paths.is_empty()
+        || guards.iter().any(|guard| {
+            matches!(guard, ConditionalGuard::Absent { path } if deciding_paths.contains(path))
+        })
+    {
+        return None;
+    }
+    let mut presence = Vec::new();
+    for path in deciding_paths {
+        presence.push(input_path_present_condition(path, ancestor_segments)?);
+    }
+    let mut conditioned = serde_json::Map::new();
+    conditioned.insert("if".to_string(), SchemaNode::all_of(presence).into_value());
+    conditioned.insert("then".to_string(), then_value);
+    Some(Value::Object(conditioned))
 }
 
 /// Whether `guard` already holds on the lint floor, so no override is
@@ -457,7 +458,39 @@ fn collect_tested_keys(guard: &ConditionalGuard, paths: &mut BTreeSet<ValuesPath
 /// creates. A ranged segment creates every member table the coalesced
 /// defaults hold, as an override naming that member does. A null or scalar
 /// the document holds stops the walk.
-fn create_override_tables(document: &mut Value, coalesced: &Value, segments: &[&Segment]) {
+fn create_override_tables(document: &mut Cow<'_, Value>, coalesced: &Value, segments: &[&Segment]) {
+    if matches!(document, Cow::Borrowed(_))
+        && !override_tables_missing(document, coalesced, segments)
+    {
+        return;
+    }
+    create_override_tables_in(document.to_mut(), coalesced, segments);
+}
+
+fn override_tables_missing(document: &Value, coalesced: &Value, segments: &[&Segment]) -> bool {
+    let Some((head, tail)) = segments.split_first() else {
+        return false;
+    };
+    let (Value::Object(members), Value::Object(coalesced_members)) = (document, coalesced) else {
+        return false;
+    };
+    if let Some(key) = head.literal() {
+        let Some(coalesced_member @ Value::Object(_)) = coalesced_members.get(key) else {
+            return false;
+        };
+        return members
+            .get(key)
+            .is_none_or(|member| override_tables_missing(member, coalesced_member, tail));
+    }
+    coalesced_members.iter().any(|(key, coalesced_member)| {
+        coalesced_member.is_object()
+            && members
+                .get(key)
+                .is_none_or(|member| override_tables_missing(member, coalesced_member, tail))
+    })
+}
+
+fn create_override_tables_in(document: &mut Value, coalesced: &Value, segments: &[&Segment]) {
     let Some((head, tail)) = segments.split_first() else {
         return;
     };
@@ -469,7 +502,7 @@ fn create_override_tables(document: &mut Value, coalesced: &Value, segments: &[&
             let member = members
                 .entry(key.to_string())
                 .or_insert_with(|| Value::Object(serde_json::Map::new()));
-            create_override_tables(member, coalesced_member, tail);
+            create_override_tables_in(member, coalesced_member, tail);
         }
         return;
     }
@@ -478,7 +511,7 @@ fn create_override_tables(document: &mut Value, coalesced: &Value, segments: &[&
             let member = members
                 .entry(key.clone())
                 .or_insert_with(|| Value::Object(serde_json::Map::new()));
-            create_override_tables(member, coalesced_member, tail);
+            create_override_tables_in(member, coalesced_member, tail);
         }
     }
 }

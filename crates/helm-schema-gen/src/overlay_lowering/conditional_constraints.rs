@@ -681,7 +681,7 @@ pub(crate) fn append_selected_constraints(
         for conditional in group {
             let mandatory = usize::from(matches!(conditional.class, EmissionClass::Mandatory));
             let Some(fragment) = build_scoped_target_fragment(
-                &conditional,
+                conditional,
                 values_yaml_doc,
                 absence,
                 values_document,
@@ -705,24 +705,20 @@ pub(crate) fn append_selected_constraints(
                 absence,
                 polarity: crate::condition_encoding::ConditionPolarity::Widen,
             };
-            let Some(fragment) = gate.lint_safe_then(
-                &ancestor_segments,
-                &guards,
-                condition,
-                &SchemaNode::foreign(fragment),
-                encoding,
-            ) else {
+            let Some(fragment) =
+                gate.lint_safe_then(&ancestor_segments, &guards, condition, fragment, encoding)
+            else {
                 continue;
             };
-            let fragment = fragment.into_value();
             match &mut merged {
                 None => merged = Some((fragment, 1, mandatory)),
                 Some((target, facts, mandatory_facts)) => {
-                    if merge_disjoint_property_fragment(target, fragment.clone()) {
-                        *facts += 1;
-                        *mandatory_facts += mandatory;
-                    } else {
-                        separate.push((fragment, 1, mandatory));
+                    match merge_disjoint_property_fragment(target, fragment) {
+                        Ok(()) => {
+                            *facts += 1;
+                            *mandatory_facts += mandatory;
+                        }
+                        Err(fragment) => separate.push((fragment, 1, mandatory)),
                     }
                 }
             }
@@ -836,7 +832,7 @@ pub(crate) fn append_selected_constraints(
 }
 
 fn build_scoped_target_fragment(
-    conditional: &LoweredConjunct,
+    mut conditional: LoweredConjunct,
     values_yaml_doc: &YamlValue,
     absence: crate::condition_encoding::AbsenceDefaults<'_>,
     values_document: Option<usize>,
@@ -845,7 +841,7 @@ fn build_scoped_target_fragment(
     let mut target_segments = conditional.carrier.ancestor_segments.clone();
     target_segments.extend(conditional.carrier.relative_target_segments.iter().cloned());
     let mut current_anchor = target_segments;
-    let mut content = conditional.schema.clone();
+    let mut content = std::mem::replace(&mut conditional.schema, SchemaNode::empty());
 
     for scope in conditional.nested_guard_scopes().iter().rev() {
         let relative = current_anchor.strip_prefix(scope.ancestor_segments.as_slice())?;
@@ -880,10 +876,10 @@ fn build_scoped_target_fragment(
     Some(build_target_fragment(relative, content).into_value())
 }
 
-/// Merge `incoming` into `target` when both are plain `properties` object
-/// fragments whose leaves do not collide; returns false (leaving `target`
-/// unchanged) when they do.
-fn merge_disjoint_property_fragment(target: &mut Value, incoming: Value) -> bool {
+/// Merges `incoming` into `target` when both are plain `properties` object
+/// fragments whose leaves do not collide.
+/// Returns `incoming` on collision, leaving `target` unchanged.
+fn merge_disjoint_property_fragment(target: &mut Value, incoming: Value) -> Result<(), Value> {
     fn mergeable(target: &Value, incoming: &Value) -> bool {
         let (Some(target), Some(incoming)) = (target.as_object(), incoming.as_object()) else {
             return false;
@@ -930,10 +926,10 @@ fn merge_disjoint_property_fragment(target: &mut Value, incoming: Value) -> bool
         }
     }
     if !mergeable(target, &incoming) {
-        return false;
+        return Err(incoming);
     }
     merge(target, incoming);
-    true
+    Ok(())
 }
 
 fn build_target_fragment(path_segments: &[String], leaf_schema: SchemaNode) -> SchemaNode {
@@ -1005,14 +1001,17 @@ fn append_unless_withdrawn(
     condition: SchemaNode,
     encoding: GuardEncoding<'_>,
 ) {
-    let then_schema = SchemaNode::foreign(Value::Bool(false));
     if let Some(then_schema) = gate.lint_safe_then(
         ancestor_segments,
         guards,
         &condition,
-        &then_schema,
+        Value::Bool(false),
         encoding,
     ) {
-        root_schema.append_conditional(ancestor_segments, condition, then_schema);
+        root_schema.append_conditional(
+            ancestor_segments,
+            condition,
+            SchemaNode::foreign(then_schema),
+        );
     }
 }

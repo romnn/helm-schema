@@ -64,7 +64,7 @@ fn judge(
         &anchor,
         guards,
         &condition,
-        &SchemaNode::foreign(then_schema),
+        then_schema,
         GuardEncoding {
             values_yaml_doc: &values_yaml_doc,
             absence,
@@ -74,7 +74,7 @@ fn judge(
     let document = kept.map(|then_schema| {
         let mut constraint = json!({
             "if": condition.into_value(),
-            "then": then_schema.into_value(),
+            "then": then_schema,
         });
         for segment in anchor.iter().rev() {
             constraint = if segment == "*" {
@@ -409,6 +409,56 @@ fn a_constraint_no_lint_document_fails_is_kept() -> eyre::Result<()> {
         &NO_DEPENDENCIES,
     )?;
     let document = document.ok_or_eyre("the constraint was withdrawn")?;
+    sim_assert_eq!(have: document.pointer("/allOf/0/then"), want: Some(&then_schema));
+    sim_assert_eq!(have: relaxed, want: vec![]);
+    Ok(())
+}
+
+#[test]
+fn an_uncompilable_constraint_is_kept_without_relaxation() -> eyre::Result<()> {
+    // An unresolved local reference makes both validator builds fail even
+    // though the dependency supplies the key missing from the lint floor.
+    let then_schema = json!({ "properties": { "kid": {
+        "required": ["p"],
+        "properties": { "p": { "$ref": "#/$defs/missing" } },
+    } } });
+    let (document, relaxed) = judge(
+        &json!({ "kid": {} }),
+        &json!({ "kid": { "p": true } }),
+        &[],
+        &[ConditionalGuard::Truthy {
+            path: ValuesPath::parse("kid.p"),
+        }],
+        then_schema.clone(),
+        ConditionPolarity::Widen,
+        &NO_DEPENDENCIES,
+    )?;
+    let document = document.ok_or_eyre("an uncompilable constraint was withdrawn")?;
+    sim_assert_eq!(have: document.pointer("/allOf/0/then"), want: Some(&then_schema));
+    sim_assert_eq!(have: relaxed, want: vec![]);
+    Ok(())
+}
+
+#[test]
+fn a_projection_the_coalesced_defaults_fail_is_kept() -> eyre::Result<()> {
+    // The original condition is false on the defaults. Switching it on for
+    // lint must use the projected validator for the coalesced check too.
+    let then_schema = json!({ "properties": { "kid": {
+        "required": ["p"],
+        "properties": { "p": { "type": "integer" } },
+    } } });
+    let (document, relaxed) = judge(
+        &json!({ "kid": { "enabled": false } }),
+        &json!({ "kid": { "enabled": false, "p": "invalid" } }),
+        &[],
+        &[ConditionalGuard::Truthy {
+            path: ValuesPath::parse("kid.enabled"),
+        }],
+        then_schema.clone(),
+        ConditionPolarity::Widen,
+        &NO_DEPENDENCIES,
+    )?;
+    let document = document.ok_or_eyre("a constraint failing the defaults was withdrawn")?;
     sim_assert_eq!(have: document.pointer("/allOf/0/then"), want: Some(&then_schema));
     sim_assert_eq!(have: relaxed, want: vec![]);
     Ok(())

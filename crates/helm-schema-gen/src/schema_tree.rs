@@ -111,6 +111,7 @@ impl SchemaDocument {
         canonicalize_constraint_at_parts(&mut self.root, path_segments, &constraint)
     }
 
+    #[tracing::instrument(skip_all, fields(anchor_depth = ancestor_segments.len()))]
     pub(crate) fn append_conditional(
         &mut self,
         ancestor_segments: &[String],

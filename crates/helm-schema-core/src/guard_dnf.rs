@@ -57,6 +57,7 @@ impl GuardDnf {
 
     /// Canonicalizes a disjunction of conditional-guard conjunctions.
     #[must_use]
+    #[tracing::instrument(skip_all, fields(alternatives = tracing::field::Empty))]
     pub fn normalize_conditional_guard_disjunction(
         conjunctions: impl IntoIterator<Item = impl IntoIterator<Item = ConditionalGuard>>,
     ) -> Vec<Vec<ConditionalGuard>> {
@@ -68,7 +69,8 @@ impl GuardDnf {
                 key.dedup();
                 key
             })
-            .collect();
+            .collect::<Vec<_>>();
+        tracing::Span::current().record("alternatives", keys.len());
         minimize_disjunction_by(keys, crate::guard_algebra::guards_are_complementary)
     }
 
