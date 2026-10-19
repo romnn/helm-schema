@@ -8802,4 +8802,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   the shortener abstained) → `round8/review-size-{astra,sol}.md`, rework sent as follow_up turn 1 on 20261019T124058-a71f3fa5.
   Battery builder 78d55437 (turn 13) is in its final timed full run (~21 min in, inside the 45-min target; Dify's repeated
   lints and milvus's schema recompiles fixed by grouping + a 256 MiB compiled-schema retention bound). Orchestrator.
+- 17:52 (Oct 19) — **W4 builder stopped on a transport question that the campaign had already answered; resumed.** Its matrix
+  (`round8-w4-r9/.codex-evidence/transport-matrix/`): InfluxDB `extraContainerPorts=0` renders through `--set` (int64; kubeconform 6/6
+  valid) and aborts through `-f` YAML/JSON (float64, `range can't iterate over 0`); the JSON documents are identical. Orchestrator
+  answer: the standing user decision (F5 keeps the TRANSPORT UNION; `-f` false acceptances rostered under F5 as a transport
+  limitation; gen/src/lib.rs:240) governs — roster the cell under F5, the only exception to D1; positive integers, which abort on
+  member access in every transport, must stay rejected (cell required). Also done this turn: the two stale okteto roster rows
+  removed (6/6 documents reject); nacos/airflow/oncall pass stock `helm lint` on their defaults (sizes 1.1/2.3/5.0 MB); deletion
+  audit (R72 wrap, R73 fields, range-priority union, R78/R79 duplicates deleted; two still outstanding). The orchestrator stopped
+  the builder's stale filtered battery PID 76815 at its request (sandbox denied the kill). Follow_up turn 1 on 2803bf0c.
+  Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
