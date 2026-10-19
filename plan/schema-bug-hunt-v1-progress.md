@@ -8860,4 +8860,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   peak 1,079 → 677 MiB with identical outputs. Directive for the builder's next turn (`round8/q/battery-finalize-directive.md`): no more
   perf work; classify the 543 against the slow reference; parity or explained reference defects only; final timed run; gates; hand
   back. Also on the live runner: v10 suite green (run-all 0; 13 shell suites + 135 Python tests). Orchestrator.
+- 20:52 (Oct 19) — **Chart-CRD oracle design = REDESIGN ×2 (`round8/design-chart-crds-{sol,astra}.md`), convergent; revision 2 queued.
+  Two main-too GENERATION defects surfaced.** Both endorse the boundary (pinned Helm's selected-CRD sidecar, no Rust replica of Helm's
+  selection, content/policy/control cache identities, one shared conversion). Blocking: lossy provider path can turn a constrained
+  property into `{}` (resolve_ctx.rs:234); declarations must be resolved by CRD identity incl. unserved versions before per-GVK
+  projection (universe.rs:126); rendered template CRDs overlapping a static GVK ⇒ Uncertain; Helm-compatible YAML decoding; `kind: List`
+  flattening; the CLI engine's evidence; catalog normalization split out (it moves existing verdicts). Generation-side findings to track
+  separately with witnesses: the shared pruning stops at preserve-unknown-fields although Kubernetes resumes pruning inside declared
+  children (universe.rs:212); generation decodes CRD `enum: [on]` as a string (local_crd_projection.rs:68; Helm reads a boolean). Merged
+  brief `round8/q/design-chart-crds-rev2.md` (C1–C9; the oracle change must stay fixture-neutral) goes to the Track G builder when its
+  nginx explicit-null turn ends. Also: `round8/full-check.sh` + `/Volumes/T7/dev/landing-10a-v2.bundle` (190 MB, d7ab4078) prepared so
+  the user can time one full gate run on a 24-core / 64 GB machine (user request). Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
