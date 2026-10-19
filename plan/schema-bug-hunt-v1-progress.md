@@ -8896,4 +8896,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   install-scope vetoes, conflict and identity rules; delete the Rust subset vocabulary. Feasibility spike on the StarRocks CR first
   (`round8/q/design-chart-crds-rev3.md`; follow_up turn 4 on 536e8e16; the orchestrator downloads Go modules outside the sandbox).
   Orchestrator.
+- 23:45 (Oct 19) — **USER REQUEST: keep the Helm/Kubernetes semantics knowledge as permanent drift tooling in tools/, re-runnable every
+  few months or on a version bump, as simple as possible (no over-engineering).** Today every builder re-derives Helm/K8s behaviour in
+  per-track evidence matrices (W1 quoted-grammar cells and 161 go-yaml productions, W4 transport cells, Track G hasKey-null cells and
+  YAML 1.1 decoding, mergo nil, range-over-int, .helmignore) that are lost after landing; capability_probe.rs is hand-maintained debt.
+  Two read-only sol design studies with distinct lenses (the new two-sol default), both bound by the user's simplicity constraint
+  (promote existing tests/harnesses + a plain directory of cases; every component must name the drift it would have caught):
+  Helm lens 20261019T214547-6fd61faa (`round8/q/drift-toolkit-helm.md`), Kubernetes lens 20261019T214548-d1fd7c1e
+  (`round8/q/drift-toolkit-k8s.md`). Also: Track G's crdcheck spike (Kubernetes apiextensions v0.29) builds offline after the orchestrator
+  ran `go mod download all` + `go mod tidy` outside the sandbox (it rewrote tools/crdcheck/go.mod, created go.sum); the builder resumed.
+  Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
