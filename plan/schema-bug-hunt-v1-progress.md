@@ -8675,6 +8675,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   expr_call_eval/{mod,collections,serialization}.rs — overlapping W4's current IR edits, so it starts after W4 lands (12-line brief in
   the file). W1 design rev 3 under re-review (abstract mergo model; +300 LOC); host load 38 (W1/witness builds, W4 tests, battery perf
   run, runner v9 suite). Orchestrator.
+- 13:08 (Oct 19) — **W1 design revision 3: REDESIGN ×2 on two narrow, convergent items; orchestrator accepts the design as BUILDABLE with binding
+  obligations (no fourth design round) and releases R78–R80.** Both confirm the abstract mergo model, aggregate descendant guards, the
+  ASCII partial-truth pair, the nats NoMarker induction, the guarded value join and the nginx key/value boundary. Open: (1) nil —
+  mergeOverwrite installs a present nil source member, plain merge skips it even into an absent slot (mergo's map-member branch);
+  (2) vault — the default affinity strings contain `{` and their root-context tpl runs, so the guarded unknown-writer union still
+  blocks recovery on the default probes. Obligations sent: the nil table with literal and fromJson cells; for vault, a bounded fact
+  (a known-literal tpl text parsed and proven free of writes to the field contributes no writer; user override guarded by "text
+  differs") — or vault stays red, NOT rostered; all pending cells (Unicode/metachar/final-newline/pipeline, real mini/nats2), R81
+  red/green before deleting the pre-pass, falco written arm, one model only, the perf gate. LOC ~+360 per the reviewers' sum.
+  Reviews `round8/design3-w1-r14-{astra,sol}.md`. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
