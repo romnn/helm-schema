@@ -1376,6 +1376,79 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
         unfrozen: &[],
     },
     FamilyWitnesses {
+        family: Family::F28,
+        witnesses: &[
+            Witness {
+                id: "consul-datadog-otlp-protocol-bogus",
+                chart: "consul",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F28/consul-datadog-otlp-protocol-bogus.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (consul/templates/_helpers.tpl:627:2): Valid values for global.metrics.datadog.otlp.protocol must be one of either \"http\" or \"grpc\".",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "5bcb8f8a71939484",
+            },
+            Witness {
+                id: "consul-datadog-otlp-protocol-upper-grpc",
+                chart: "consul",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F28/consul-datadog-otlp-protocol-upper-grpc.yaml",
+                ),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "b6ab869a71e777c1",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F29,
+        witnesses: &[
+            Witness {
+                id: "aws-node-termination-handler-probes-null",
+                chart: "aws-node-termination-handler",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F29/aws-node-termination-handler-probes-null.yaml",
+                ),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: aws-node-termination-handler/templates/daemonset.linux.yaml:77:31 — nil pointer evaluating interface {}.httpGet",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "2a9db035491b126f",
+            },
+            Witness {
+                id: "minecraft-server-type-ftba-without-modpack",
+                chart: "minecraft",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F29/minecraft-server-type-ftba-without-modpack.yaml",
+                ),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (minecraft/templates/deployment.yaml:142:55): You must supply a minecraftserver.ftbModpackVersionID with type=FTBA",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "dfe476c2c7ef49ec",
+            },
+            Witness {
+                id: "minecraft-restic-without-hostname",
+                chart: "minecraft",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F29/minecraft-restic-without-hostname.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (minecraft/templates/deployment.yaml:392:56): mcbackup.resticHostname is required",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "8c64bd7169c04142",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
         family: Family::F30,
         witnesses: &[Witness {
             id: "kubeshark-cloud-license-enabled-false",
@@ -1434,6 +1507,239 @@ pub(crate) const FAMILY_WITNESSES: &[FamilyWitnesses] = &[
                 oracle: RENDERS,
                 schema: SchemaExpectation::KnownFalseRejection,
                 adjudicated: "efaa31e5e063478f",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F32,
+        witnesses: &[
+            Witness {
+                id: "falco-services-string-item",
+                chart: "falco",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F32/falco-services-string-item.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: falco/templates/services.yaml:7:55 — can't evaluate field name in type interface {}",
+                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+                adjudicated: "b199b568a3a91405",
+            },
+            Witness {
+                id: "falco-services-named-item",
+                chart: "falco",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F32/falco-services-named-item.yaml"),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "61a8675ffa2a2358",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F33,
+        witnesses: &[
+            Witness {
+                id: "falco-falco-plugins-null",
+                chart: "falco",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F33/falco-falco-plugins-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: template: falco/templates/falcoctl-configmap.yaml:12:8: executing \"falco/templates/falcoctl-configmap.yaml\" at <include \"falco.containerPlugin\" .>: error calling include: template: falco/templates/_helpers.tpl:435:17: executing \"falco.containerPlugin\" at <append .Values.falco.plugins $pluginConfig>: error calling append: runtime error: invalid memory address or nil pointer dereference",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "a0a91f9cb8ff96fc",
+            },
+            Witness {
+                id: "falco-falco-plugins-empty",
+                chart: "falco",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F33/falco-falco-plugins-empty.yaml"),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "273146e8747372d8",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F34,
+        witnesses: &[
+            Witness {
+                id: "trino-worker-jvm-null",
+                chart: "trino",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F34/trino-worker-jvm-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: trino/templates/deployment-worker.yaml:37:35 — trino/templates/configmap-worker.yaml:23:18 — nil pointer evaluating interface {}.maxHeapSize",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "731f61367292a748",
+            },
+            Witness {
+                id: "trino-worker-liveness-probe-null",
+                chart: "trino",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F34/trino-worker-liveness-probe-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: trino/templates/deployment-worker.yaml:201:43 — nil pointer evaluating interface {}.initialDelaySeconds",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "79ae7979799ef34a",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F35,
+        witnesses: &[
+            Witness {
+                id: "trino-access-control-configmap",
+                chart: "trino",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F35/trino-access-control-configmap.yaml"),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "4eba7574ff63c335",
+            },
+            Witness {
+                id: "trino-resource-groups-configmap",
+                chart: "trino",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F35/trino-resource-groups-configmap.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: trino/templates/deployment-coordinator.yaml:37:40 — trino/templates/configmap-coordinator.yaml:213:62 — invalid value; expected string",
+                },
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Rejects),
+                adjudicated: "016ef4a63937917e",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F36,
+        witnesses: &[
+            Witness {
+                id: "vault-standalone-config-null",
+                chart: "vault",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F36/vault-standalone-config-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (vault/templates/_helpers.tpl:1168:4): structured server config is not supported, value must be a string",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "2b252fed5a583607",
+            },
+            Witness {
+                id: "vault-ha-config-null",
+                chart: "vault",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F36/vault-ha-config-null.yaml"),
+                oracle: OracleExpectation::Aborts {
+                    diagnostic: "Error: execution error at (vault/templates/_helpers.tpl:1168:4): structured server config is not supported, value must be a string",
+                },
+                schema: SchemaExpectation::KnownFalseAcceptance,
+                adjudicated: "0ecd2c2da2e0fb3c",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F37,
+        witnesses: &[
+            Witness {
+                id: "prometheus-pushgateway-service-target-port-null",
+                chart: "prometheus-pushgateway",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F37/prometheus-pushgateway-service-target-port-null.yaml",
+                ),
+                oracle: OracleExpectation::Renders {
+                    kubernetes: KubernetesExpectation::Invalid {
+                        violations: &[ExpectedViolation {
+                            kind: "Service",
+                            instance_path: "/spec/ports/0/targetPort",
+                            message: "'oneOf' failed, subschemas 0, 1 matched",
+                        }],
+                    },
+                },
+                // Helm renders `targetPort:` (null); the pinned bundle rejects it the way the
+                // schema does.
+                schema: SchemaExpectation::PolicyUnresolved {
+                    current: SchemaVerdict::Rejects,
+                    question: INT_OR_STRING_NULL_POLICY,
+                },
+                adjudicated: "b125d6cf70441f30",
+            },
+            Witness {
+                id: "alertmanager-defaults",
+                chart: "alertmanager",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::Set(&[]),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "bd00eb92672bffa2",
+            },
+        ],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F38,
+        witnesses: &[Witness {
+            id: "nats-kafka-monitoring-http-port",
+            chart: "nats-kafka",
+            kubernetes_version: "1.29.0",
+            overrides: Overrides::ValuesFile("F38/nats-kafka-monitoring-http-port.yaml"),
+            oracle: OracleExpectation::Renders {
+                kubernetes: KubernetesExpectation::Valid,
+            },
+            schema: SchemaExpectation::KnownFalseRejection,
+            adjudicated: "30a3b4e39e5b5cf3",
+        }],
+        size_obligations: &[],
+        unfrozen: &[],
+    },
+    FamilyWitnesses {
+        family: Family::F39,
+        witnesses: &[
+            Witness {
+                id: "zabbix-postgresql-storage-size-empty",
+                chart: "zabbix",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile("F39/zabbix-postgresql-storage-size-empty.yaml"),
+                oracle: RENDERS,
+                schema: SchemaExpectation::Fixed(SchemaVerdict::Accepts),
+                adjudicated: "f878b88ef999f22f",
+            },
+            Witness {
+                id: "prometheus-pushgateway-service-target-port-empty",
+                chart: "prometheus-pushgateway",
+                kubernetes_version: "1.29.0",
+                overrides: Overrides::ValuesFile(
+                    "F39/prometheus-pushgateway-service-target-port-empty.yaml",
+                ),
+                oracle: OracleExpectation::Renders {
+                    kubernetes: KubernetesExpectation::Invalid {
+                        violations: &[ExpectedViolation {
+                            kind: "Service",
+                            instance_path: "/spec/ports/0/targetPort",
+                            message: "'oneOf' failed, subschemas 0, 1 matched",
+                        }],
+                    },
+                },
+                schema: SchemaExpectation::PolicyUnresolved {
+                    current: SchemaVerdict::Rejects,
+                    question: INT_OR_STRING_NULL_POLICY,
+                },
+                adjudicated: "0e22d97c7d1e00f3",
             },
         ],
         size_obligations: &[],
