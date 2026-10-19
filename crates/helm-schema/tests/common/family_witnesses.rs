@@ -276,8 +276,8 @@ pub(crate) enum ShippedOutput {
     /// Compact JSON with short `$defs` keys: what `helm-schema lint` /
     /// `template` hand Helm.
     HelmReady,
-    /// The default CLI file: pretty JSON with readable `$defs` keys when it fits
-    /// Helm, otherwise compact JSON with short keys, including a final newline.
+    /// The fully emitted default CLI file, including policy annotations and a newline:
+    /// pretty JSON when it fits Helm, otherwise compact JSON with short keys when safe.
     DefaultCli,
 }
 

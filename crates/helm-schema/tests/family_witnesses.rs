@@ -22,6 +22,7 @@ use helm_schema::output::{
     HELM_MAX_CHART_FILE_BYTES, serialize_default_schema_json, shorten_definition_names,
 };
 use helm_schema_test_support::helm::kubernetes_version;
+use helm_schema_test_support::{generate, registry};
 use indoc::indoc;
 use serde_json::{Value, json};
 use sha2::{Digest as _, Sha256};
@@ -408,14 +409,6 @@ fn shipped_bytes(schema: &Value) -> eyre::Result<usize> {
     Ok(serde_json::to_vec(&shorten_definition_names(schema).schema)?.len())
 }
 
-/// The bytes `output` writes for `schema`, using the CLI's size-aware default policy.
-fn output_bytes(schema: &Value, output: ShippedOutput) -> eyre::Result<usize> {
-    match output {
-        ShippedOutput::HelmReady => shipped_bytes(schema),
-        ShippedOutput::DefaultCli => Ok(serialize_default_schema_json(schema)?.bytes.len()),
-    }
-}
-
 fn load_fixture(path: &Path) -> eyre::Result<Fixture> {
     let schema = read_fixture(path)?;
     let size = shipped_bytes(&schema)?;
@@ -470,10 +463,27 @@ fn evaluate_size(
     obligation: &SizeObligation,
     layout: &Layout,
 ) -> eyre::Result<RowResult> {
-    let size = output_bytes(
-        &read_fixture(&layout.fixture(obligation.chart))?,
-        obligation.output,
-    )?;
+    let size = match obligation.output {
+        ShippedOutput::HelmReady => {
+            shipped_bytes(&read_fixture(&layout.fixture(obligation.chart))?)?
+        }
+        ShippedOutput::DefaultCli => {
+            let recipe = registry::PolicyRecipe {
+                chart: registry::ChartRecipe::corpus(
+                    obligation.chart,
+                    helm_schema_gen::SchemaProfile::Full,
+                ),
+                reference_policy: helm_schema::output::ReferencePolicy::SelfContained,
+                override_file: None,
+            };
+            let session = helm_schema::AnalysisSession::new(generate::generate_options_at(
+                &layout.chart_dir(obligation.chart),
+                &recipe.chart,
+            ));
+            let emitted = generate::emit_policy(&session, &recipe)?;
+            serialize_default_schema_json(&emitted)?.bytes.len()
+        }
+    };
     let observed = if size <= HELM_MAX_CHART_FILE_BYTES {
         ObligationExpectation::Met
     } else {
@@ -1594,55 +1604,80 @@ fn size_obligation_follows_helms_file_limit() -> eyre::Result<()> {
     Ok(())
 }
 
-/// Default-output obligations measure the CLI's automatic compaction, including its newline.
+/// Final annotations push an otherwise fitting compact schema over Helm's limit.
 #[test]
-fn default_output_obligation_measures_the_size_aware_cli_bytes() -> eyre::Result<()> {
+fn default_output_obligation_counts_final_annotations() -> eyre::Result<()> {
     let schemas = test_util::scratch::ScratchDir::new("family-witness-default-output")?;
     let layout = Layout {
-        charts: gate_root().join("charts"),
+        charts: schemas.path().join("charts"),
         schemas: schemas.path().to_path_buf(),
         policy_schemas: gate_root().join("policy-schemas").join("accepting"),
         values_files: gate_root().join("values"),
     };
-    let obligation = |output, expectation| SizeObligation {
-        id: "gate-output-size",
-        chart: GATE_CHART,
-        output,
-        expectation,
+    let chart_dir = layout.chart_dir(GATE_CHART);
+    std::fs::create_dir_all(&chart_dir)?;
+    std::fs::copy(
+        gate_root().join("charts/gate/Chart.yaml"),
+        chart_dir.join("Chart.yaml"),
+    )?;
+    let recipe = registry::PolicyRecipe {
+        chart: registry::ChartRecipe::corpus(GATE_CHART, helm_schema_gen::SchemaProfile::Full),
+        reference_policy: helm_schema::output::ReferencePolicy::SelfContained,
+        override_file: None,
     };
-
-    // The compact document plus the CLI's final newline fits exactly at the limit.
-    write_schema_shipping_at(&layout.fixture(GATE_CHART), HELM_MAX_CHART_FILE_BYTES - 1)?;
-    let schema = read_fixture(&layout.fixture(GATE_CHART))?;
-    let cli = serialize_default_schema_json(&schema)?;
-    assert!(cli.compacted);
+    std::fs::write(
+        chart_dir.join("values.yaml"),
+        indoc! {"
+            # x
+            value: hello
+        "},
+    )?;
+    let session =
+        helm_schema::AnalysisSession::new(generate::generate_options_at(&chart_dir, &recipe.chart));
+    let fixture = generate::session_schema(&session, &recipe.chart)?;
+    let padding = HELM_MAX_CHART_FILE_BYTES - shipped_bytes(&fixture)?;
+    std::fs::write(
+        chart_dir.join("values.yaml"),
+        indoc::formatdoc! {"
+            # {}
+            value: hello
+        ", "x".repeat(padding)},
+    )?;
+    let session =
+        helm_schema::AnalysisSession::new(generate::generate_options_at(&chart_dir, &recipe.chart));
+    let fixture = generate::session_schema(&session, &recipe.chart)?;
+    std::fs::write(
+        layout.fixture(GATE_CHART),
+        serde_json::to_vec_pretty(&fixture)?,
+    )?;
+    // The fixture plus its newline fits exactly; the CLI's complete document does not.
     sim_assert_eq!(
-        have: output_bytes(&schema, ShippedOutput::DefaultCli)?,
-        want: cli.bytes.len()
+        have: serialize_default_schema_json(&fixture)?.bytes.len(),
+        want: HELM_MAX_CHART_FILE_BYTES
     );
+    let emitted = generate::emit_policy(&session, &recipe)?;
+    assert!(emitted.get("x-helm-schema-policy").is_some());
+    assert!(emitted.get("x-helm-schema-generated").is_some());
+    assert!(serialize_default_schema_json(&emitted)?.bytes.len() > HELM_MAX_CHART_FILE_BYTES);
+    let mut unannotated = emitted;
+    if let Some(object) = unannotated.as_object_mut() {
+        object.remove("x-helm-schema-policy");
+        object.remove("x-helm-schema-generated");
+    }
+    sim_assert_eq!(have: unannotated, want: fixture);
     for (output, expectation) in [
         (ShippedOutput::HelmReady, ObligationExpectation::Met),
-        (ShippedOutput::DefaultCli, ObligationExpectation::Met),
+        (ShippedOutput::DefaultCli, ObligationExpectation::KnownUnmet),
     ] {
-        let row = evaluate_size(Family::F74, &obligation(output, expectation), &layout)?;
+        let obligation = SizeObligation {
+            id: "gate-output-size",
+            chart: GATE_CHART,
+            output,
+            expectation,
+        };
+        let row = evaluate_size(Family::F74, &obligation, &layout)?;
         sim_assert_eq!(have: row.have, want: row.want);
     }
-
-    // Oversized compact output remains available for validators without Helm's file limit.
-    write_schema_shipping_at(&layout.fixture(GATE_CHART), HELM_MAX_CHART_FILE_BYTES)?;
-    sim_assert_eq!(
-        have: output_bytes(&read_fixture(&layout.fixture(GATE_CHART))?, ShippedOutput::DefaultCli)?,
-        want: HELM_MAX_CHART_FILE_BYTES + 1
-    );
-
-    // Small enough either way.
-    write_schema_shipping_at(&layout.fixture(GATE_CHART), 1024)?;
-    let row = evaluate_size(
-        Family::F74,
-        &obligation(ShippedOutput::DefaultCli, ObligationExpectation::Met),
-        &layout,
-    )?;
-    sim_assert_eq!(have: row.have, want: row.want);
     Ok(())
 }
 
