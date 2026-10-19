@@ -8906,4 +8906,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (`round8/q/drift-toolkit-k8s.md`). Also: Track G's crdcheck spike (Kubernetes apiextensions v0.29) builds offline after the orchestrator
   ran `go mod download all` + `go mod tidy` outside the sandbox (it rewrote tools/crdcheck/go.mod, created go.sum); the builder resumed.
   Orchestrator.
+- 23:49 (Oct 19) — **USER REQUEST: an ADR track — design requirements and decisions extracted into `docs/adr/`; one Opus 5.5 subagent
+  (user-requested exception to the Codex-first rule).** Worktree `/Volumes/T7/dev/round8-adr`, branch `docs/adr-initial` from main 8910ea1e
+  (docs only; the orchestrator reviews and merges). Brief `round8/brief-adr.md`: README index + template + one decision per ADR (Status,
+  Date, Context, Decision, Consequences, References traced to CLAUDE.md / plan/ / commits); product, architecture and verification-
+  infrastructure decisions, not campaign process. Scope raised by the user mid-launch from ~15–25 to 50–100 high-value ADRs: every plan/
+  document (architecture reviews v2–v4, interpreter/frontend redesigns, emission profiles, corpus, performance, post-mortems and
+  rollbacks — decisions NOT to do something count), batched by theme with a commit per batch. First recorded ADR content includes the
+  drift-tooling decision (simple maintainer-run tools/ tooling; setup-heavy parts behind one container/script; isolated, reproducible,
+  extendable via data; fully separate from the core crates). Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
