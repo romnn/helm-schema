@@ -8826,4 +8826,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (airflow, aws-ebs-csi-driver, eck-stack, gitea, headscale, imgproxy, kube-starrocks, milvus, nacos, netbox, nginx-ingress, oncall,
   openebs, openldap-stack-ha, stacks-blockchain-api, synapse, yourls); all five formerly oversized schemas fit compact — no oversize
   waivers. Reviews sol 20261019T163209-78a08a6a, astra 20261019T163210-fd4d13fe (`round8/q/runner-v10-review.md`). Orchestrator.
+- 19:12 (Oct 19) — **Runner v10 = REWORK ×2 on one P2; W1 Codex builder started; battery timed run missed 45 min.** Runner
+  (`round8/review-runner-v10-{sol,astra}.md`): an accepted `chart=oversize` passes dump, then battery preparation's
+  loaded_schema_sha (landing.py:2061) gets Helm's load error and exits 4 — the waiver is ineffective. Orchestrator decision (item
+  10): delete the oversize acceptance class — an unloadable shipped schema is never acceptable, none needs a waiver today; only
+  `chart=defaults` entries remain (follow_up turn 1 on 43ab1824). Battery builder 78d55437: the full timed run exceeded 45 min
+  (~1 h; openebs the long pole: its schemas now stay compiled, 215 lint pairs) — it is measuring a forced-GC trim that fires above
+  64 MiB of intentionally retained schemas before the coverage-parity reference and final gates; no verdict, probe or roster
+  change. Landing 10a stays blocked on it; the chain's hard bound is nextest's 3 h. W1 rework 14 part 2 started on sol
+  20261019T171138-e0881b7b (`round8/brief-w1-rework14-codex.md`; load 4 at start). Model rule (user, 18:2x): sol 6.1 for all
+  implementation and every review, astra only as an additional reviewer on hard reviews. Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
