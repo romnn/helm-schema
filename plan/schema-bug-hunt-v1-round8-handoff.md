@@ -195,7 +195,10 @@ is at the end of this section.
 - **W4 rework 17 (scalar preimages, CONSOLIDATION):** design rev 3 BUILDABLE ×2; implementing. Clone `/Volumes/T7/dev/round8-w4-r9`
   (w4-rebase, base b51c8589). Resume brief `round8/brief-w4-rework17-impl-resume.md`; state `round8-w4-evidence/rebase/r17/handoff.md`.
 - **Track G (D1/D5 execution guards; fixes kube-starrocks, openldap-stack-ha, nginx-ingress defaults; milvus/openebs-loki):** design
-  released with binding obligations; red tests committed (21505846). Clone `/Volumes/T7/dev/round8-guards` (guards-d1-d5 on 10a).
+  released with binding obligations; red tests 21505846, fix e39ec0c9, wip checkpoint 5ce4546b (obligations 1–4 done, 10 cell tests
+  red→green; kube-starrocks, milvus, nginx-ingress, openldap-stack-ha out of quarantine but the 34 regenerated fixtures NOT adopted,
+  so chart_corpus fails until adoption; clean dump `round8-guards-target/dump-e39ec0c9-hr`; a live battery vs f7be7ba5 was started
+  16:38 into `round8-guards-evidence/battery-live/` — it dies with the session if unfinished: re-run it). Clone `/Volumes/T7/dev/round8-guards` (guards-d1-d5 on 10a).
   Resume brief `round8/brief-guards-resume.md`; state `round8-guards-evidence/handoff.md`.
 - **Size-aware output (F74; USER DECISION):** `--output-layout auto|pretty|compact`, default auto = pretty unless > 5,242,880 bytes, then
   compact + short `$defs` handles with a stderr note; forced modes or still-oversized output warn and exit 0 (never fail on size).
