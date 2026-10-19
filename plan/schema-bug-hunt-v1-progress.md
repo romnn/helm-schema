@@ -8926,4 +8926,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   exception — recorded in 0049 (81164b29) and assigned to sol builder 20261019T221814-154cb939 in a new clone `round8-apiguess`
   (`round8/brief-apiguess-codex.md`: delete the tier if the others cover it, else upstream-first; empty-vs-warm cache red/green);
   CLAUDE.md is NOT shortened to ADR links for now. Memory: tree-sitter-cli pin corrected to 0.27.0. Orchestrator.
+- 00:52 (Oct 20) — **AGENTS.md slimmed 448 → 90 lines and squash-merged as 958f3cd4 (USER REQUEST: keep only the goal and the most
+  important rules, link ADRs for the rest).** sol builder d459ac78 in worktree round8-agentsmd (transfer sha256 cd24e4ab…): goal, every-session
+  rules, gate list, fixture/battery rules, ADR + skill links; `.codex-evidence/coverage.tsv` maps all 164 old blocks. Independent sol review
+  cb4ae373 (`round8/review-agentsmd-sol.md`): opened every destination, verified 214 excerpts — LAND, no gaps. CLAUDE.md stays a symlink.
+  apiVersion guess (user discussion): upstream publishes one `_definitions.json` per Kubernetes version (v1.29.0: 577 definitions, 264 GVKs)
+  — a complete authoritative GVK index; direction appended to `round8/brief-apiguess-codex.md`: replace the cache-scan tier with a
+  fetch-on-miss lookup in that index (cold: one fetch per version; warm: identical answer), then retire capability_probe.rs the same way
+  (CLAUDE.md debt), both cache-independent. Track G chart-CRD revision 3 reviews: Kubernetes lens REDESIGN (Helm installs by server-side
+  apply; create-path metadata uid/resourceVersion/managedFields/generateName; internal CEL failures; environment premises), architecture
+  lens BUILDABLE; revision 4 (57/57 matrix, StarRocks Accepted, the four metadata witnesses Uncertain, est. 440–560 LOC) re-checks sent
+  on both sessions. Disk: the user freed space (T7 299 GB). Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
