@@ -8607,6 +8607,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   (1,701)/integration (925) 0; test:all 201 = a timeout-harness PID-file read (passes standalone) + 4 live fetches. Validator builds
   remain the top self-time span (148,910 builds, 33 s) — the next structural step. Reviews 015305-b998ff79 (astra), 015305-406e0b5b
   (sol), question `round8/q/perf-asc-review.md`. Orchestrator.
+- 04:12 (Oct 19) — **Perf fix 1 reviews: sol LAND, astra REWORK (P2: validators compiled eagerly even with no anchored instances; sol has the same
+  as P3); small rework sent (follow_up turn 5 on f9ee6567).** Both: no lint decision changed, no cross-fact state, the borrowed floor is
+  safe (Cow::to_mut), all 205 outputs and trace counts independently verified; redis +6% inconclusive (overlapping, non-interleaved
+  samples; its traced phase halved); the timeout-harness failure is a test instability unrelated to the change but `task test:all` is
+  not green. Rework: lazy validator preparation (zero builds with no instances), interleaved 7-run parent/candidate timing for redis and
+  openebs, a measurement of byte-identical compilation inputs among the remaining 148,910 builds (decides whether generation-scoped
+  reuse helps), and a deterministic fix for the timeout-harness test. Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
