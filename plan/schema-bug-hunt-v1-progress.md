@@ -8755,6 +8755,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   31 schemas change, of 26 under 5 MiB 3 go rejected → accepted, none the other way; syntax/ir/gen units 1,289 unchanged. Residuals:
   D1's `printf ""` witness; astra's `-}` trim case (frontend 2.3). Files: syntax parse.rs, ir fragment_eval eval.rs/control.rs —
   no W1/W4 files. Orchestrator.
+- 15:43 (Oct 19) — **W1 rework 14 part 1 checkpoint (31312880): the four R81 propagation repairs committed, each red on b960b607 / green after;
+  fresh builder dispatched for part 2 (R78–R80 + obligations, `round8/brief-w1-rework14-part2-resume.md`).** f5ee7ee8 tpl keeps its
+  context's execution effects; eec52679 short-circuit writes joined (two skipped-write cells allowed to abstain until P3); c7c2e7c0
+  writes into set/unset/merge results write into that map; 5400886b non-writing helpers/tpl still run operand writes; 31312880 two
+  unit fixtures stricter (unset target must be a map; Helm cells confirm aborts). 282 cells, the 275 earlier byte-identical; nextest
+  1,834/1,834; dump1 205 artifacts verify 0, 19 schemas moved; live battery vs f7be7ba5: 0 false rejections, 317 false acceptances
+  (all pre-existing in battery7; 155 fewer: aws-ebs 133, nats 21, ingress-nginx 1). CPU (noisy, load 13–25): redis 16.23 s vs w12
+  15.84. Cells built for R78–R80 (merge counterexamples, Unicode/metachar/newline/pipeline strings, mini/nats2). Orchestrator.
 Next: session 5 resumes from hand-off §6 (the resume prompt there is verbatim): spawn the W4 replacement builder from
 `round8/brief-w4-rework15-resume.md` (finish rework 15 at b10d54b3: test-level reds, `then`-branch classification, gates, live
 battery, final-v17.patch, Self-attack section) and, in parallel, the W1 replacement from `round8/brief-w1-rework9-resume.md`
