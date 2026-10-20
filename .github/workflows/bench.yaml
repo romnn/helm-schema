@@ -78,13 +78,15 @@ jobs:
           mise exec -- python3 tools/bench/bench.py
           --binary target/release/helm-schema
           --json target/bench/history.json
-          --instructions-json target/bench/instructions.json
+          --valgrind valgrind
           --summary "$GITHUB_STEP_SUMMARY"
       # No threshold alert is evaluated: github-action-benchmark only checks its alert threshold
       # to post a commit comment or fail the job, and runner hardware and the millisecond phases of
       # the small charts are too noisy for either. The job summary lists every value against the
       # previous run with their ratio (`summary-always`), and benchtrail's change detection, which
-      # weighs each benchmark's own noise, marks regressions on the dashboard.
+      # weighs each benchmark's own noise, marks regressions on the dashboard. One suite holds every
+      # metric, the instruction counts too (pages.yaml keeps them one series across runner CPUs),
+      # and keeps the newest 500 runs: each recording drops the older ones from `data.js`.
       - name: Record the history
         uses: benchmark-action/github-action-benchmark@4322e5726e6334590d251fc4f92bec0efafc45dc # v1.22.2
         with:
@@ -97,20 +99,7 @@ jobs:
           comment-on-alert: false
           fail-on-alert: false
           summary-always: true
-      # The instruction counts are a suite of their own: the dashboard splits the times by CPU
-      # model, while the counts, which do not depend on it, stay one series per configuration.
-      - name: Record the instruction counts
-        uses: benchmark-action/github-action-benchmark@4322e5726e6334590d251fc4f92bec0efafc45dc # v1.22.2
-        with:
-          name: helm-schema instructions
-          tool: customSmallerIsBetter
-          output-file-path: target/bench/instructions.json
-          benchmark-data-dir-path: bench
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          auto-push: true
-          comment-on-alert: false
-          fail-on-alert: false
-          summary-always: true
+          max-items-in-chart: 500
 
   # The pages workflow builds the documentation and installs the benchtrail dashboard, with the
   # history this run recorded, at `/bench/`. It deploys even when the benchmark failed, so a
