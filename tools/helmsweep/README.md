@@ -17,7 +17,7 @@ task build:helmsweep
 ```
 
 stages the patched Helm module and this module's sources in
-`$CARGO_TARGET_DIR/helmsweep-build` (`stage.sh`, `PATCH.md`) and builds
+`$CARGO_TARGET_DIR/helmsweep-build` (`stage/main.go`, `PATCH.md`) and builds
 `$CARGO_TARGET_DIR/helmsweep` (else `./target/…`) there with
 `mise exec go@1.26.5`, `GOTOOLCHAIN=local`, `-trimpath` and `-buildvcs=false`
 (so its sha256, the cache's build id, depends only on sources and toolchain), then checks
@@ -117,7 +117,7 @@ CLI plugins, stdin (`-`) or remote values, and a Helm build other than the
 pinned release (`sweep`). The build links the release's version, Git commit
 and tree state (`task build:helmsweep`), so templates see the CLI's
 `.Capabilities.HelmVersion`; `helmsweep version` prints them as `helm-build`.
-Building natively on Windows (stage.sh, shasum, git apply) is unverified.
+Staging (`go run ./stage`) uses only Go's standard library and `git apply`, so it runs on Windows too.
 
 ### Log records
 

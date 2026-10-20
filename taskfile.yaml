@@ -219,8 +219,9 @@ tasks:
         test "$({{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- go env GOVERSION)" = "go{{.HELMSWEEP_GO}}"
         || { echo "helmsweep needs go{{.HELMSWEEP_GO}}" >&2; exit 1; }
       # Tagged Helm module, digest-checked and patched, in a build-local copy
-      # (stage.sh); the source tree holds only the patch.
-      - '{{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- sh ./stage.sh "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build"'
+      # (go run ./stage: standard library only, so it runs on every platform); the source tree
+      # holds only the patch.
+      - '{{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- go run ./stage "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build"'
       # No VCS stamp: the binary's sha256 (the verdict cache's build id)
       # changes only when its sources or toolchain do.
       - >-
@@ -230,7 +231,7 @@ tasks:
       # The binary must report the pinned toolchain, modules and patch.
       - |
         version="$("${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep{{exeExt}}" version)"
-        patch="$(shasum -a 256 helm-memo.patch | cut -d' ' -f1)"
+        patch="$(cat "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build/helm-memo.patch.sha256")"
         for line in "go go{{.HELMSWEEP_GO}}" "helm.sh/helm/v4 v4.2.3 => ./third_party/helm-v4.2.3" \
           "helm-build v4.2.3 {{.HELMSWEEP_HELM_COMMIT}} clean go{{.HELMSWEEP_GO}}" \
           "github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 => github.com/romnn/jsonschema/v6 v6.0.3-0.20261018154229-cb4d114ec4c7" "patch $patch"; do
@@ -252,7 +253,7 @@ tasks:
     cmds:
       - mkdir -p "{{.TEST_TMP}}"
       - test -z "$({{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- gofmt -l .)" || { echo "gofmt -l is not empty" >&2; exit 1; }
-      - '{{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- sh ./stage.sh "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build"'
+      - '{{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- go run ./stage "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build"'
       - cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build" && {{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- go vet ./...
       - cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build" && {{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- go test -race -count=1 ./...
 

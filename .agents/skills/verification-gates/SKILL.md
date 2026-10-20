@@ -86,7 +86,7 @@ tagged Helm module (currently v4.2.3) plus one performance patch (`helm-memo.pat
 integration suite's Helm adjudication renders through resident `helmsweep serve` processes.
 
 - `task build:helmsweep`: checks the exact Go toolchain (`HELMSWEEP_GO`, `GOTOOLCHAIN=local`),
-  `stage.sh` builds a patched copy in `<target>/helmsweep-build` (download → go.sum verify →
+  `go run ./stage` (stage/main.go) builds a patched copy in `<target>/helmsweep-build` (download → go.sum verify →
   content-digest check → strict `git apply`), builds `<target>/helmsweep` with release ldflags,
   then checks `helmsweep version` against pinned lines (Go, Helm module + replace, `helm-build`,
   jsonschema/v6 version, patch sha256).
@@ -152,7 +152,7 @@ tokei excludes there. (`task tokei` is the whole-repo count minus grammars/testd
 | `cargo t` runs only CLI tests | alias has no `--workspace`; `default-members` = cli | add `--workspace` |
 | `no helmsweep at …/helmsweep` | integration run without building the driver | `task build:helmsweep` or `SCHEMA_HELM_ENGINE=cli` |
 | `helmsweep needs go1.x.y` | pinned Go not installed via mise | `mise install go@<HELMSWEEP_GO>` |
-| `module copy has digest …, not the pinned …` | Helm version changed without re-pinning `stage.sh` | see `references/helmsweep.md` |
+| `module copy has digest …, not the pinned …` | Helm version changed without re-pinning `stage/main.go` | see `references/helmsweep.md` |
 | `helmsweep version lacks: <line>` | taskfile identity lines, `main.go` constants, ldflags or go.mod disagree | align all pin sites |
 | `task lint:fc` 201, all non-host rows fail before clippy | sandbox/filesystem blocks zig's cache dir or cross toolchain missing | tooling failure, not a source diagnostic: fix permissions/tools and re-run the exact command |
 | lint "clean" but dependents never checked | clippy error in an upstream crate | fix it, re-run until every crate compiles |

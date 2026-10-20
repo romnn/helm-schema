@@ -2,7 +2,7 @@
 
 The source tree holds no Helm sources. `go.mod` requires the tagged module
 `helm.sh/helm/v4 v4.2.3`, pinned by `go.sum`
-(`h1:JEejtPE04+SvyRomOfgRXVxyJ/lude7eShio30oQr0Y=`). `stage.sh` (run by
+(`h1:JEejtPE04+SvyRomOfgRXVxyJ/lude7eShio30oQr0Y=`). `stage/main.go` (run by
 `task build:helmsweep` and `task test:helmsweep`) builds from a build-local
 copy under the target directory, never the source tree:
 

@@ -15,7 +15,7 @@ testdata files hit the runner's zero-byte rule (ledger 23:05 entry).
 
 - No vendored Helm sources and no submodules. `tools/helmsweep/go.mod`
   requires the tagged module `helm.sh/helm/v4 v4.2.3`, pinned by `go.sum`.
-- `stage.sh` downloads the module, copies it into a build-local directory under
+- `stage/main.go` (`go run ./stage`; replaced stage.sh on 2026-10-20 so Windows can build it) downloads the module, copies it into a build-local directory under
   the target dir, refuses unless the copy's content digest equals the pinned
   `ad77014f…`, applies the single `helm-memo.patch` with `git apply --check`
   (no fuzz), and builds there with a pinned Go and `-trimpath

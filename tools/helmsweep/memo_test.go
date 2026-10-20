@@ -161,7 +161,7 @@ func TestConcurrentValidationMatchesFreshCompiles(t *testing.T) {
 	}
 }
 
-// The staged module (stage.sh; the tests run in its build directory) is the
+// The staged module (stage/main.go; the tests run in its build directory) is the
 // tagged v4.2.3 module (h1:JEejtPE0… in go.sum), every file byte-identical
 // except the one file helm-memo.patch changes (PATCH.md: upstream 7dabf3ef…,
 // patched 80104edd…).

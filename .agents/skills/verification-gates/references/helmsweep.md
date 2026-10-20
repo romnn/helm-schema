@@ -12,7 +12,7 @@ deviates from the CLI only in performance: a schema-compile memo (the patch), a 
 pool, and a fail-closed verdict cache. Every pin exists so a helmsweep verdict equals the pinned
 Helm CLI's verdict byte for byte:
 
-- **Module + digest**: `go.sum` verifies the tagged module zip; `stage.sh` additionally checks a
+- **Module + digest**: `go.sum` verifies the tagged module zip; `stage/main.go` additionally checks a
   content digest of the extracted tree (sha256 of `shasum -a 256` over every file, C-sorted paths).
 - **Patch**: applied with `git apply --check` then `git apply` (no fuzz, no rejects).
   `TestVendoredHelmIsUpstreamPlusOnePatch` pins the staged tree: N unpatched files hashing to one
@@ -73,9 +73,9 @@ first: `git grep -nE '<old version>|<old commit>|<old go version>|<old digest pr
 4. **go.mod**: set `require helm.sh/helm/v4 v<ver>`, delete the old indirect block, then
    `go get helm.sh/helm/v4@v<ver>` and `go mod tidy` (with `GOTOOLCHAIN=local` and the pinned Go).
    Never `go get -u`. Run the requirement-set check above; both outputs must be empty.
-5. **stage.sh**: version in the download spec, the `third_party/helm-v<ver>` path and messages, and
-   `pinned` — computed with stage.sh's own pipeline over the go.sum-verified module directory:
-   `cd "$(go list -m -f '{{.Dir}}' helm.sh/helm/v4)" && find . -type f | LC_ALL=C sort | tr '\n' '\0' | xargs -0 shasum -a 256 | shasum -a 256`.
+5. **stage/main.go**: version in the download spec, the `third_party/helm-v<ver>` path and messages, and
+   `pinned`. With a stale `pinned`, `go run ./stage <dir>` (from tools/helmsweep) fails with the module
+   copy's actual digest (the sha256 of `shasum -a 256` lines over every file, sorted by path); record that.
    Only record a digest from a download that go.sum verified.
 6. **helm-memo.patch**: re-port the change in PATCH.md onto the new
    `pkg/chart/common/util/jsonschema.go` (paths `a/pkg/…` relative to the module root). It must
@@ -113,7 +113,7 @@ first: `git grep -nE '<old version>|<old commit>|<old go version>|<old digest pr
 | `helm v… module copy has digest X, not the pinned Y` | version moved without re-pinning, or the module dir is not the verified download. Never paste X in without step 5's provenance |
 | `git apply --check` error | patch does not fit this release: re-port it (step 6) |
 | `helmsweep version lacks: <line>` | a taskfile identity line, `main.go` constant, ldflag or go.mod disagrees |
-| `binary is not built from helm.sh/helm/v4 … => ./third_party/…` | built outside `stage.sh` (no replace) or jsonschema/v6 version/replace differs |
+| `binary is not built from helm.sh/helm/v4 … => ./third_party/…` | built outside `go run ./stage` (no replace) or jsonschema/v6 version/replace differs |
 | `Helm build "…" is not the pinned release` (sweep) | built without `HELMSWEEP_LDFLAGS`; use `task build:helmsweep` |
 | `undefined: util.DropCompiledSchema` | compiling the source tree directly; only the staged copy compiles |
 | Rust: `no helmsweep at …` / unpinned engine program | not built into this target dir, or Rust pins (step 11) disagree with the binary |
