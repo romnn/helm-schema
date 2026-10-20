@@ -8970,4 +8970,11 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   resolved by decision (any CR carrying `status` ⇒ Uncertain) and the implementation RELEASED to the Track G builder as its own
   test-infrastructure change before Track G's fixtures. Queued: a generator track for group A (54 main-too false rejections in lint documents)
   once a builder slot frees. Orchestrator.
+- 02:12 (Oct 20) — **ADR 0049 defect fixed (step 1): `--api-version-guess` no longer scans local caches.** sol builder 154cb939: deleted the
+  cache-scan tier and obsolete inference APIs; explicit local sources stay authoritative; 5 new tests (4 red→green, incl.
+  crates/helm-schema/tests/api_version_inference_cache.rs); fmt/lint/lint:fc (51)/unit 1,699/integration 922 all 0; test:all 201 = four
+  DNS-blocked live tests; −124 prod LOC; 204 fixtures byte-identical. Committed f5860fe0 in round8-apiguess (final.patch sha256
+  2559c0f7…, reverse-checked). Review: sol 20261020T001155-87b9a720. Step 2 sent (follow_up turn 1): an exact built-in tier from upstream's
+  per-version `_definitions.json` only if it adds cases, and retiring capability_probe.rs (ADR 0044 debt) from the same index with the
+  tri-state contract. Battery builder still pruning its 275 GB target (reference checks before any deletion). Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
