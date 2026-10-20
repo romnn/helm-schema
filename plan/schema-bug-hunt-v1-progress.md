@@ -9129,4 +9129,10 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   its clone; network DNS; downstream path) — run 4 re-runs them cleanly. No fixture bytes move, so folding it into 10a keeps the battery
   outcome attributable. Patch sha256 be89c235…; part-2 stays parked. W1 follow-up sent: next single defect class from
   obligations-index-final-r4.json under the same ratchet. Orchestrator.
-Next: on the lint199 hand-back, commit its patch onto landing-10a-v3, point landing-10a.env at a fresh E (run 4) and run the full chain dump→finalize; on "chain green" commit adopted fixtures, merge landing-10a-v3 --no-ff into main with components + receipt sha256, re-tally closures; then apiguess and the CRD oracle; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
+- 17:32 (Oct 20) — **Clippy 1.99.1 fix LAND-ready (b7a0e46d on landing-10a-v3); landing 10a run 4 launched from dump at 17:31.**
+  lint199 builder (20261020T144147-daf9b843, sol high): 33 `assert_is_empty` sites → `sim_assert_eq!`/`assert_ne!` against an empty
+  slice, two redundant `#[must_use]` removed (contract_use.rs:94, value_path.rs:153); fmt 0, task lint 0 (whole workspace, zero
+  diagnostics), lint:fc 0 (51 PASS), nextest 0 (1709/1709), typos 0, tokei:core −2; patch sha256 57b67ec3…; orchestrator spot-checked
+  the diff. Runner commit b6a1d6e: E=/Volumes/T7/dev/round8-landing10a-run4. Branch = 6c8c9e5e + 105704f1 (W1 ternary) + b7a0e46d.
+  Orchestrator.
+Next: watch landing 10a run 4 (`tail /Volumes/T7/dev/round8-landing10a-run4/chain.log`); on "chain green" commit adopted fixtures, merge landing-10a-v3 --no-ff into main with components + receipt sha256, push only if the user asks, re-tally closures; then apiguess and the CRD oracle; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
