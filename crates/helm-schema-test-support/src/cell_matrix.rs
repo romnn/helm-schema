@@ -47,7 +47,7 @@ use crate::source_digest::sha256_hex;
 /// The committed provider bundle's content identities ([`tree_sha256`]); verified before any
 /// generation or validation, so a wrong bundle is refused even when it does not change.
 pub const KUBERNETES_BUNDLE_SHA256: &str =
-    "f0544d9487290b92c8d43cdf4b48e93b816d94f2ee26e4d57ffae66ade5b815b";
+    "af56b70fb41ba4af2dee50e64faea36922e9ee2235401ea81fd8bc0f9be3d661";
 /// See [`KUBERNETES_BUNDLE_SHA256`].
 pub const CRD_BUNDLE_SHA256: &str =
     "73dd3a9ff91d5905162021f6926a6190f88b9798a9ca849d5be2655c29815700";
