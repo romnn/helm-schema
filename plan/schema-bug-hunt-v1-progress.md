@@ -9025,4 +9025,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   types (DeleteOptions, WatchEvent), so "any GVK with this group/version" proves removed APIs present — 11/19/16 regressions at
   1.24/1.29/1.35 (e.g. `Has "autoscaling/v2beta1"` true at 1.35, selecting a removed HPA version); P2 a partial cached index answers
   Some(false) for absent groups. Step 1 (f5860fe0) stays LAND. Orchestrator.
+- 05:22 (Oct 20) — **Landing 10a's live battery is GREEN with the exact inherited-failure list (exit 0); in review.** sol builder c1fe95be
+  (clone round8-inherited, from round8-battery c23467f4): KNOWN_INHERITED_FAILURES with roster selector types (exact identity, owner,
+  stale ⇒ fail, no wildcards): 547 entries — generator A 54, W4 `\u` B 455, CRD oracle C/D 17, kube-version oracle 21; +131 false-
+  acceptance rows, +7 undecided rows. Live battery on the frozen 10a inputs: `charts_checked=160 probes_checked=278821 flips=10000
+  listed_false_acceptances=362 listed_undecided_acceptances=14 listed_inherited_failures=564`, exit 0. Contract tests listed/unlisted/stale/
+  near-miss + 5 evidence tests; fmt/lint/lint:fc (51)/unit 1,701/dialect 2/2 0; integration fallback 1,047 passed (exact task gate: DNS in
+  sandbox → orchestrator/chain); tokei 0. Committed eaefa2a1 in round8-inherited (final.patch sha256 e0059b8b…, forward-checked; the
+  skills-doc hunk existed only in the patch because the sandbox cannot write .agents). Reviews (two sol lenses): gate soundness
+  20261020T032143-90c2fd33, data correctness -5a899819 (count reconciliation 547 vs 564, B 455 vs 471). Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
