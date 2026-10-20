@@ -9161,7 +9161,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   insert_row callers); 160/160 real-report charts pass, 971 dependency contexts match. Optional, queued for between chains: anchor the
   case parse on re.escape(label) (landing.py:1557, a label containing ": document=" would be falsely refused) and update README.md:235
   (still promises zero adjudication errors). Run 5: dump 19:34–19:42 (0 adopted), unit running. Orchestrator.
-- 21:42 (Oct 20) — **LANDED: landing 10a merged into main as fe36e909 (chain green, run 5). First semantic landing since landing 9
+- 21:39 (Oct 20) — **LANDED: landing 10a merged into main as fe36e909 (chain green, run 5). First semantic landing since landing 9
   (Sep 30).** Components: battery perf 3ae46e70 + the lint-document lane; size-aware output (5640581b, e70be667, d7ab4078); witnesses;
   exact shrink-only KNOWN_INHERITED_FAILURES (800b32c1, a3b05637); W1 ternary slices 1–3 (105704f1, e28690f6, ca69543a: literal, piped
   literal and nil conditions → Fail; 27 registered false acceptances closed, 0 NEW, 0 fixture bytes); clippy 1.99.1 (b7a0e46d). Chain
