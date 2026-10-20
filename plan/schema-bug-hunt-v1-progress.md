@@ -9046,4 +9046,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   completeness not provable ⇒ the builder RESTORED the probe table and withdrew index inference; step 1 + a guard fix remain; 164 anchor
   cells zero regressions, 46 false presences removed; −47 prod LOC; all gates 0 except DNS; committed 6f1e4585 (sha256 94e62b5e…);
   re-check on df188fd0. Its ADR edits are re-targeted to the new numbering (rework/adr-main.patch). Orchestrator.
+- 06:32 (Oct 20) — **apiguess = LAND (lands after 10a); CRD oracle implementation = REWORK ×2 on local repairs.** apiguess re-check
+  (`round8/review-apiguess-rework-sol.md`): no `_definitions.json`-derived presence remains; 46 removed presences independently verified as
+  retired APIs (0/11/19/16 at v1.15/1.24/1.29/1.35); P3 the branch's ADR 0101 text describes the withdrawn design — at landing use
+  `round8-apiguess/.codex-evidence/rework/adr-main.patch` (new numbering 0029/0032/0034) and discard the branch's ADR edits. CRD oracle
+  (`round8/review-crd-oracle-{k8s,arch}.md`): P1 SSA typed-patch validation rejects object-valued list-type set entries that the create
+  strategy accepts; P2 naming-controller conflicts (listKind/shortNames/singular) not reconciled; P2 empty crds/ files bypass Helm's
+  "resources are empty"; P2 omitted vs "" namespace normalisation in duplicate counting; delete the unused declaration-only path. Replay
+  claim (1,143 preserved) corroborated. Sent as follow_up turn 10 on 536e8e16. Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
