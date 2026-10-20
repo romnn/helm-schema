@@ -9092,4 +9092,11 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `round8/review-benchmarks-sol.md`) = REWORK: remove the path filter, pin Rust via mise, pin every action exactly, fail clearly
   without gh-pages, make the 150% summary alert real; ADR → 0067 — sent to the Opus builder. Landing 10a run 2: dump 13:09–13:14,
   unit 13:14–13:23, lint 13:23–13:26 all OK; battery running since 13:26. Orchestrator.
+- 15:36 (Oct 20) — **Landing 10a run 2 is DEAD IN PLACE: the T7 volume remounted (~14:10, disk5s1 → disk6s1) and revoked the chain's file
+  handles.** Evidence: no file in any adjudication pool or battery.log written since 14:10; the battery test binary (pid 6038) reports
+  `cwd … No such file or directory` and a `(revoked)` fd; it and five `helmsweep serve` workers spin at ~100% CPU each with no possible
+  progress (load 40–52). dump/unit/lint (13:09–13:26) were OK and remain valid for the unchanged tree. Orchestrator tried to stop the runner
+  by PID (it owns this chain); the auto-mode permission classifier DENIED it ("Interfere With Workloads") — escalated to the user. Builders
+  look unaffected (W1's cwd valid). Benchmark rework (Opus) handed back: no path filter, mise.bench pins Rust 1.99.0, every action
+  SHA-pinned, early failure without gh-pages, alert docs corrected, ADR 0067 (511a7eab..495fb748); re-check on b50ea74a. Orchestrator.
 Next: watch landing 10a run 2 (`tail /Volumes/T7/dev/round8-landing10a-run2/chain.log`); on "chain green" commit adopted fixtures, merge landing-10a-v3 --no-ff into main with components + receipt sha256, re-tally closures; then apiguess and the CRD oracle as the next small landings; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
