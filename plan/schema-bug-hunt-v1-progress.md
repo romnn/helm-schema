@@ -9067,4 +9067,12 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   W4 still in its 20-h turn (user: let it finish). landing-10a-v3 in round8-landing10a = v2 + 3ae46e70 (perf landing-compatible patch
   46996b87…) + 800b32c1/a3b05637 (inherited list) + 6c8c9e5e (docs; one conflict kept HEAD, logged in round8-landing10a-conflicts.md);
   chain launches when the re-checks are LAND. Codex quota reset: 16% used. Orchestrator.
-Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
+- 13:10 (Oct 20) — **All five re-checks LAND; landing 10a chain RUN 2 LAUNCHED (13:09).** Battery perf rework LAND ×2 (`round8-battery`
+  ca008841/87a91d66: controls refreshed per group unless `Replay::Cacheable`, retained controls hold hashes + evidence paths, two-entry memo
+  only for resident serve — sweep keeps warmed schemas; threshold, 3 MiB and overlap regressions red→green); inherited-list gate LAND
+  (564 entries bind original values bytes + controls; 471 group-B entries bind the underlying lint diagnostics; seven red→green);
+  CRD oracle LAND ×2 (12db5cb0: SSA object-set witness Rejected natively; listKind/shortName conflicts Uncertain; empty crds/ files vetoed;
+  namespaces normalised; 78/78; 1,143/1,143 preserved). Chain: runner c6a52a4→v10 608229f, env 7ee88da (`runner/landing-10a.env`, branch
+  landing-10a-v3, E=/Volumes/T7/dev/round8-landing10a-run2, BASELINE f7be7ba5, 17 accepted defaults failures), steps dump → unit → lint →
+  battery → integration → sweep → finalize. Orchestrator.
+Next: watch landing 10a run 2 (`tail /Volumes/T7/dev/round8-landing10a-run2/chain.log`); on "chain green" commit adopted fixtures, merge landing-10a-v3 --no-ff into main with components + receipt sha256, re-tally closures; then apiguess and the CRD oracle as the next small landings; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
