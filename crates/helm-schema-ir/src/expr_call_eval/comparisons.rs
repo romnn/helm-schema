@@ -10,7 +10,10 @@ use crate::eval_effect::{
 };
 use crate::eval_env::EvalEnv;
 use crate::expr_eval::{HelperCallValueResolver, eval_expr_with_helper_calls};
-use crate::function_semantics::{ArgumentEvaluationMode, function_semantics, type_is_schema_type};
+use crate::function_semantics::{
+    ArgumentEvaluationMode, OutputSemantics, PredicateSemantics, function_semantics,
+    type_is_schema_type,
+};
 use crate::scalar_value::{
     ScalarValue, ScalarValueDispatch, TruthCondition, any_predicates_with_memo, bool_predicate,
     conjoin_predicates_with_memo,
@@ -133,18 +136,21 @@ fn eval_ternary_condition(
             }
         },
     };
-    // Source literals keep their type across preceding argument mutations.
-    if source.is_some_and(|source| {
-        matches!(
-            source.deparen(),
-            TemplateExpr::Literal(
-                Literal::String(_)
-                    | Literal::RawString(_)
-                    | Literal::Int(_)
-                    | Literal::Float(_)
-                    | Literal::Nil
-            )
-        )
+    // Literal and intrinsic return types survive preceding argument mutations.
+    if source.is_some_and(|source| match source.deparen() {
+        TemplateExpr::Literal(
+            Literal::String(_)
+            | Literal::RawString(_)
+            | Literal::Int(_)
+            | Literal::Float(_)
+            | Literal::Nil,
+        ) => true,
+        TemplateExpr::Call { function, .. } => {
+            let semantics = function_semantics(function);
+            semantics.output == OutputSemantics::TotalNumericCast
+                || semantics.predicate == PredicateSemantics::TypeDescriptor
+        }
+        _ => false,
     }) {
         push_fail_capture(Vec::new(), effects);
     }

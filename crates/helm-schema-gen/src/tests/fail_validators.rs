@@ -3983,3 +3983,56 @@ fn ternary_nil_literal_check_preserves_reachability_and_converted_conditions() {
         sim_assert_eq!(have: &schema, want: &expected, "source={source}");
     }
 }
+
+#[test]
+fn ternary_rejects_intrinsically_non_boolean_call_conditions() {
+    let expected = schema_for_values_yaml(parse_ir(r#"{{ fail "bad" }}"#), None);
+    for source in [
+        r#"{{ $_ := ternary "a" "b" (int "0") }}"#,
+        r#"{{ $_ := "0" | int | ternary "a" "b" }}"#,
+        r#"{{ $_ := ternary "a" "b" (int64 "invalid") }}"#,
+        r#"{{ $_ := "invalid" | int64 | ternary "a" "b" }}"#,
+        r#"{{ $_ := ternary "a" "b" (float64 "1.5") }}"#,
+        r#"{{ $_ := "1.5" | float64 | ternary "a" "b" }}"#,
+        r#"{{ $_ := ternary "a" "b" (printf "%t" false) }}"#,
+        r#"{{ $_ := false | printf "%t" | ternary "a" "b" }}"#,
+        r#"{{ $_ := ternary "a" "b" (typeOf false) }}"#,
+        r#"{{ $_ := false | typeOf | ternary "a" "b" }}"#,
+        r#"{{ $_ := ternary "a" "b" (kindOf nil) }}"#,
+        r#"{{ $_ := false | kindOf | ternary "a" "b" }}"#,
+        r#"{{ $_ := ternary (set $ "flag" false) "b" (int $.flag) }}"#,
+        r#"{{ $_ := printf "%t" false | ternary (set $ "flag" true) "b" }}"#,
+    ] {
+        let schema = schema_for_values_yaml(parse_ir(source), None);
+        sim_assert_eq!(have: &schema, want: &expected, "source={source}");
+    }
+}
+
+#[test]
+fn ternary_intrinsic_call_failures_respect_reachability() {
+    let reference = r#"{{ if .Values.enabled }}{{ fail "bad" }}{{ end }}"#;
+    let expected = schema_for_values_yaml(parse_ir(reference), None);
+    for source in [
+        r#"{{ if .Values.enabled }}{{ $_ := ternary "a" "b" (int "0") }}{{ end }}"#,
+        r#"{{ if .Values.enabled }}{{ $_ := false | printf "%t" | ternary "a" "b" }}{{ end }}"#,
+    ] {
+        let schema = schema_for_values_yaml(parse_ir(source), None);
+        sim_assert_eq!(have: &schema, want: &expected, "source={source}");
+    }
+}
+
+#[test]
+fn ternary_intrinsic_call_check_preserves_boolean_conversions() {
+    let expected = schema_for_values_yaml(parse_ir(""), None);
+    for source in [
+        r#"{{ $_ := int "0" | not | ternary "a" "b" }}"#,
+        r#"{{ $_ := false | printf "%t" | eq "false" | ternary "a" "b" }}"#,
+        r#"{{ $_ := ternary "a" "b" (eq (kindOf false) "bool") }}"#,
+        r#"{{ $_ := ternary "a" "b" (typeIs "bool" false) }}"#,
+        r#"{{ $_ := and false (ternary "a" "b" (int "0")) }}"#,
+        r#"{{ $_ := or true (false | printf "%t" | ternary "a" "b") }}"#,
+    ] {
+        let schema = schema_for_values_yaml(parse_ir(source), None);
+        sim_assert_eq!(have: &schema, want: &expected, "source={source}");
+    }
+}
