@@ -9142,7 +9142,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   lint/lint:fc 201 were the inherited 1.99.1 lints that b7a0e46d fixes. Patch d6e7bd17… archived at
   /Volumes/T7/dev/round8/w1-slice2-piped-ternary.patch; applies cleanly on b7a0e46d. Run 4 battery in progress (started 17:58). W1 sent
   on to the next class (ternary 59 / required 22 / message 2 remain). Orchestrator.
-- 19:36 (Oct 20) — **Run 4 battery TEST passed (1/1, 2893 s) but runner v10 refused the coverage report; runner v11 fixes the check;
+- 19:35 (Oct 20) — **Run 4 battery TEST passed (1/1, 2893 s) but runner v10 refused the coverage report; runner v11 fixes the check;
   run 5 launched 19:34 with W1 slices 2+3.** Run 4: dump 17:31–17:40 (0 adopted), unit –17:51, lint –17:58 (clippy fix holds on
   1.99.1), battery –18:51: `battery coverage report refused` for every chart. Causes (runner, not candidate): (1) battery 5295ea7b
   (per-context inheritance) records a context for every row origin, dependency origins with overlay `{}` (sha256 44136fa3…), which v10
