@@ -66,13 +66,16 @@ jobs:
       # docs/public. Before the first benchmark run there is no history yet,
       # and the documentation still deploys. Every value records the runner's
       # CPU model in its environment, which changes with the runner GitHub
-      # assigns. The end-to-end times split into one series per CPU model
-      # (benchtrail `splitEnvironment`), so a change is judged only against
-      # runs on the same hardware; values recorded before the CPU model show
-      # as CPU "unknown". The instruction counts do not depend on the CPU, so
-      # they stay one series (tools/bench/README.md, ADR 0068).
+      # assigns. The times split into one series per CPU model
+      # (`splitEnvironment`), so a change is judged only against runs on the
+      # same hardware; values recorded before the CPU model show as CPU
+      # "unknown". The instruction counts do not depend on the CPU, so their
+      # metric keeps one series across runners and comes first. The page opens
+      # on the newest 50 runs; its range buttons widen it
+      # (tools/bench/README.md, ADR 0068). The per-metric settings, `lineLabel`
+      # and `range` need benchtrail v0.5.0 or later.
       - name: Install the benchmark dashboard
-        uses: romnn/benchtrail@3cd06a47c772db72c5ce5ceac03159ee8cfda1ab # v0.4.0
+        uses: romnn/benchtrail@2d439907e81ac1e5ad063cefafc4bfe0be5fa649 # v0.5.0
         with:
           path: docs/public/bench
           benchmark-data-dir-path: bench
@@ -82,22 +85,19 @@ jobs:
               "title": "helm-schema benchmarks",
               "links": [{ "label": "Documentation", "url": "../" }],
               "threshold": 0.1,
-              "label": "{{chart}} / {{profile}}",
+              "range": 50,
+              "label": "{{chart}} / {{profile}} ({{cpu}})",
+              "lineLabel": "{{profile}} ({{cpu}})",
               "dimensions": {
                 "chart": { "label": "Chart", "order": 0 },
-                "profile": { "label": "Profile", "order": 1 }
+                "profile": { "label": "Profile", "order": 1 },
+                "cpu": { "label": "CPU", "order": 2 }
               },
-              "colorBy": "chart",
+              "splitEnvironment": ["cpu"],
+              "colorBy": "cpu",
               "dashBy": "profile",
-              "ignoreEnvironment": ["cpu"],
-              "suites": {
-                "helm-schema end-to-end": {
-                  "splitEnvironment": ["cpu"],
-                  "label": "{{chart}} / {{profile}} / {{cpu}}",
-                  "dimensions": { "cpu": { "label": "CPU", "order": 2 } },
-                  "colorBy": "cpu",
-                  "dashBy": "profile"
-                }
+              "metrics": {
+                "instructions": { "order": 0, "splitEnvironment": [], "ignoreEnvironment": ["cpu"] }
               }
             }
       - name: Upload artifact
