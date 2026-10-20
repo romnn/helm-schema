@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792533359970,
+  "lastUpdate": 1792533363990,
   "repoUrl": "https://github.com/romnn/helm-schema",
   "entries": {
     "helm-schema end-to-end": [
@@ -3192,6 +3192,44 @@ window.BENCHMARK_DATA = {
             "value": 0.8991,
             "unit": "s",
             "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"oncall\",\"profile\":\"lean\"},\"metric\":{\"id\":\"phase:minimize_schema\",\"label\":\"Phase: minimization (minimize_schema)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"AMD EPYC 7763 64-Core Processor\"}},\"text\":\"cpu 23.282-23.527 s over 3 runs; AMD EPYC 7763 64-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          }
+        ]
+      }
+    ],
+    "helm-schema instructions": [
+      {
+        "commit": {
+          "author": {
+            "email": "roman.dahm@gmx.de",
+            "name": "romnn",
+            "username": "romnn"
+          },
+          "committer": {
+            "email": "roman.dahm@gmx.de",
+            "name": "romnn",
+            "username": "romnn"
+          },
+          "distinct": true,
+          "id": "e6e4c5845ec458d2c839f1c87d8636809f0cfcea",
+          "message": "Merge feat/bench-cpu-and-instructions: benchmark per runner CPU, cachegrind instruction counts\n\nbench.py records the runner CPU model; pages.yaml pins benchtrail v0.4.0 and splits the\nend-to-end times into one series per CPU (GitHub's ubuntu-24.04 pool mixes EPYC 7763/9V74/9V45,\nwhich moved CPU times 20-50% between pushes without code changes); a new 'helm-schema\ninstructions' suite counts instructions under pinned valgrind cachegrind for kubeview and\nbitnami-redis full (spread < 0.1%, est. +2-4.5 min CI). ADR 0068; bench wording says every\npush, not every commit. Opus subagent; local bench.py exit 0, Linux container cachegrind run\nexit 0, actionlint 0, typos 0; benchtrail 83 tests.",
+          "timestamp": "2026-10-20T23:46:39+02:00",
+          "tree_id": "6d5121fe28c881b2300b0e252541b3b75a73b78f",
+          "url": "https://github.com/romnn/helm-schema/commit/e6e4c5845ec458d2c839f1c87d8636809f0cfcea"
+        },
+        "date": 1792533362584,
+        "tool": "customSmallerIsBetter",
+        "benches": [
+          {
+            "name": "kubeview/full instructions",
+            "value": 604661744,
+            "unit": "count",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"kubeview\",\"profile\":\"full\"},\"metric\":{\"id\":\"instructions\",\"label\":\"Instructions (cachegrind)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"AMD EPYC 7763 64-Core Processor\",\"valgrind\":\"valgrind-3.22.0\"}},\"text\":\"one cachegrind run; valgrind-3.22.0; AMD EPYC 7763 64-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
+          },
+          {
+            "name": "bitnami-redis/full instructions",
+            "value": 27780152544,
+            "unit": "count",
+            "extra": "{\"benchtrail\":{\"version\":1,\"dimensions\":{\"chart\":\"bitnami-redis\",\"profile\":\"full\"},\"metric\":{\"id\":\"instructions\",\"label\":\"Instructions (cachegrind)\",\"direction\":\"lower\"},\"environment\":{\"rustc\":\"rustc 1.99.0 (b940084d7 2026-09-28)\",\"cpu\":\"AMD EPYC 7763 64-Core Processor\",\"valgrind\":\"valgrind-3.22.0\"}},\"text\":\"one cachegrind run; valgrind-3.22.0; AMD EPYC 7763 64-Core Processor; rustc 1.99.0 (b940084d7 2026-09-28)\"}"
           }
         ]
       }
