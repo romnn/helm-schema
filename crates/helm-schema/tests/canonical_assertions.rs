@@ -107,7 +107,7 @@ fn homogeneous_array_relocation_inherits_once_and_keeps_additional_failures_new(
         .ok_or_eyre("missing context comparison")?;
     sim_assert_eq!(have: comparison.inherited_violations.len(), want: 1);
     sim_assert_eq!(have: comparison.new_violations.len(), want: 1);
-    assert!(comparison.uncertain.is_empty());
+    sim_assert_eq!(have: comparison.uncertain, want: [] as [String; 0]);
 
     Ok(())
 }
@@ -200,7 +200,7 @@ fn map_key_renaming_uses_only_additional_and_pattern_property_positions() -> eyr
             .ok_or_eyre("missing context comparison")?;
         sim_assert_eq!(have: comparison.new_violations.len(), want: case.new_count);
         sim_assert_eq!(have: comparison.inherited_violations.len(), want: case.inherited_count);
-        assert!(comparison.uncertain.is_empty());
+        sim_assert_eq!(have: comparison.uncertain, want: [] as [String; 0]);
     }
     Ok(())
 }
@@ -281,7 +281,7 @@ fn empty_numeric_and_keyword_property_names_follow_their_schema_position() -> ey
                 have: comparison.new_violations.iter().chain(&comparison.inherited_violations).map(|violation| violation.instance_path.as_str()).collect::<Vec<_>>(),
                 want: vec!["/data/moved"],
             );
-            assert!(comparison.uncertain.is_empty());
+            sim_assert_eq!(have: comparison.uncertain, want: [] as [String; 0]);
         }
     }
     Ok(())
@@ -324,7 +324,7 @@ fn nested_arrays_of_maps_retain_concrete_locations_and_failure_multiplicity() ->
         .ok_or_eyre("missing context comparison")?;
     sim_assert_eq!(have: comparison.inherited_violations.len(), want: 1);
     sim_assert_eq!(have: comparison.new_violations.len(), want: 1);
-    assert!(comparison.uncertain.is_empty());
+    sim_assert_eq!(have: comparison.uncertain, want: [] as [String; 0]);
     Ok(())
 }
 
@@ -547,7 +547,7 @@ fn assert_grouped_array_result(
         let comparison = result?;
         sim_assert_eq!(have: comparison.inherited_violations.len(), want: 1);
         sim_assert_eq!(have: comparison.new_violations.len(), want: 1);
-        assert!(comparison.uncertain.is_empty());
+        sim_assert_eq!(have: comparison.uncertain, want: [] as [String; 0]);
     } else {
         sim_assert_eq!(have: keyword, want: "unevaluatedItems");
         let err = result

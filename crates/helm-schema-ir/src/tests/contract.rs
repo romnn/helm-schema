@@ -441,7 +441,7 @@ fn contract_ir_pathless_scalar_seed_projects_without_rendered_path() {
     sim_assert_eq!(have: value_uses[0].source_expr, want: conditional_path("extraConfig"));
     sim_assert_eq!(have: value_uses[0].path, want: YamlPath(Vec::new()));
     sim_assert_eq!(have: value_uses[0].kind, want: ValueKind::Scalar);
-    assert!(value_uses[0].single_guard_conjunction().is_empty());
+    sim_assert_eq!(have: value_uses[0].single_guard_conjunction(), want: [] as [Guard; 0]);
     assert!(value_uses[0].resource.is_none());
 }
 

@@ -298,7 +298,10 @@ fn infer_api_version_candidates_default_impl_empty() {
         }
     }
     let provider = Empty;
-    assert!(provider.infer_api_version_candidates("Pod").is_empty());
+    sim_assert_eq!(
+        have: provider.infer_api_version_candidates("Pod"),
+        want: [] as [ApiVersionCandidate; 0]
+    );
 }
 
 #[test]

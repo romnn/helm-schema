@@ -390,7 +390,7 @@ fn contextual_assertion_counts_preserve_multiplicity_without_scalar_identity() -
             // Changing each scalar does not hide a genuinely additional assertion.
             sim_assert_eq!(have: comparison.new_violations.len(), want: probe_count - context_count);
             sim_assert_eq!(have: comparison.inherited_violations.len(), want: context_count);
-            assert!(comparison.uncertain.is_empty());
+            sim_assert_eq!(have: comparison.uncertain, want: [] as [String; 0]);
         }
     }
     Ok(())

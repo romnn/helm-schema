@@ -146,7 +146,7 @@ fn incomplete_inline_kind_chains_record_no_branch_sources() {
 
     let span = spans.first().expect("span");
     sim_assert_eq!(have: span.resource.kind.as_str(), want: "StatefulSet");
-    assert!(span.kind_branch_sources.is_empty());
+    sim_assert_eq!(have: span.kind_branch_sources, want: [] as [helm_schema_ast::KindBranchSource; 0]);
 }
 
 #[test]
@@ -242,7 +242,7 @@ fn resolves_helper_returned_api_version() {
 
     sim_assert_eq!(have: resource.kind, want: "Deployment");
     sim_assert_eq!(have: resource.api_version, want: "apps/v1");
-    assert!(resource.api_version_candidates.is_empty());
+    sim_assert_eq!(have: resource.api_version_candidates, want: [] as [String; 0]);
 }
 
 #[test]
@@ -387,8 +387,8 @@ fn capability_guard_without_api_version_does_not_create_empty_branch_resource() 
 
     sim_assert_eq!(have: resource.kind, want: "ConfigMap");
     sim_assert_eq!(have: resource.api_version, want: "v1");
-    assert!(resource.api_version_candidates.is_empty());
-    assert!(resource.api_version_branches.is_empty());
+    sim_assert_eq!(have: resource.api_version_candidates, want: [] as [String; 0]);
+    sim_assert_eq!(have: resource.api_version_branches, want: [] as [helm_schema_core::HelperBranch; 0]);
 }
 
 #[test]
@@ -416,8 +416,8 @@ fn helper_output_under_guarded_resource_does_not_become_api_version_candidate() 
     .expect("resource");
 
     sim_assert_eq!(have: resource.api_version, want: "networking.k8s.io/v1");
-    assert!(resource.api_version_candidates.is_empty());
-    assert!(resource.api_version_branches.is_empty());
+    sim_assert_eq!(have: resource.api_version_candidates, want: [] as [String; 0]);
+    sim_assert_eq!(have: resource.api_version_branches, want: [] as [helm_schema_core::HelperBranch; 0]);
 }
 
 /// signoz HPA: a capability call piped into `ternary` selects one of

@@ -104,7 +104,7 @@ fn external_pair_rejects_exhausted_lint_budget_instead_of_certifying_zero_lint_d
         roster_sha256: None,
         available_probes: 0,
     })?;
-    assert!(!capped.coverage.failures.is_empty());
+    assert_ne!(capped.coverage.failures, [] as [String; 0]);
     screened.coverage.lint = Some(capped.coverage);
     let comparison = external_comparison(screened)?;
     assert!(

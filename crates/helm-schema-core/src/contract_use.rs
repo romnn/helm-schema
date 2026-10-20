@@ -91,7 +91,6 @@ impl MergeLayersUse {
     }
 
     /// Returns the higher-precedence layers whose keys shadow this layer's.
-    #[must_use]
     pub fn shadowed_by(&self) -> impl ExactSizeIterator<Item = &MergeLayer> {
         self.layers.iter().take(self.position)
     }

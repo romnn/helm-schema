@@ -783,7 +783,7 @@ fn lint_screen_is_deterministic_and_budget_exhaustion_fails_closed() -> eyre::Re
         ..request
     })?;
     assert!(capped.coverage.validate().is_err());
-    assert!(!capped.coverage.failures.is_empty());
+    assert_ne!(capped.coverage.failures, [] as [String; 0]);
     sim_assert_eq!(have: capped.coverage.rows_screened, want: 0);
     Ok(())
 }
@@ -1105,7 +1105,7 @@ fn assert_portable_control_evidence(error: &str) -> eyre::Result<()> {
         .get("controls")
         .and_then(Value::as_array)
         .ok_or_eyre("no controls in evidence")?;
-    assert!(!controls.is_empty());
+    assert_ne!(controls.as_slice(), [] as [Value; 0]);
     for control in controls {
         for field in ["lint_evidence", "render_evidence"] {
             let relative = Path::new(

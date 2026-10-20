@@ -113,7 +113,7 @@ fn forbidden_members_keep_escaped_paths_and_comma_names() -> eyre::Result<()> {
         have: comparison.inherited_violations.iter().map(|violation| violation.instance_path.as_str()).collect::<BTreeSet<_>>(),
         want: BTreeSet::from(["/a, b", "/existing~1~0"]),
     );
-    assert!(comparison.uncertain.is_empty());
+    sim_assert_eq!(have: comparison.uncertain, want: [] as [String; 0]);
 
     // A comma inside one member name cannot identify two different members.
     let payload = chart.adjudicate(&json!({"members": {"a, b": null, "a": 2, "b": 2}}))?;
@@ -126,7 +126,7 @@ fn forbidden_members_keep_escaped_paths_and_comma_names() -> eyre::Result<()> {
         want: BTreeSet::from(["/a", "/b"]),
     );
     sim_assert_eq!(have: comparison.inherited_violations.len(), want: 1);
-    assert!(comparison.uncertain.is_empty());
+    sim_assert_eq!(have: comparison.uncertain, want: [] as [String; 0]);
     Ok(())
 }
 
@@ -245,7 +245,7 @@ fn unidentified_list_members_retain_each_missing_identity_field() -> eyre::Resul
         have: comparison.inherited_violations.iter().map(|violation| violation.instance_path.as_str()).collect::<Vec<_>>(),
         want: vec!["/kind"],
     );
-    assert!(comparison.uncertain.is_empty());
+    sim_assert_eq!(have: comparison.uncertain, want: [] as [String; 0]);
     Ok(())
 }
 
@@ -910,13 +910,13 @@ fn duplicate_reports_preserve_occurrences_at_distinct_positions_and_resources() 
             .ok_or_eyre("missing context comparison")?;
         sim_assert_eq!(have: comparison.inherited_violations.len(), want: 1);
         sim_assert_eq!(have: comparison.new_violations.len(), want: 1);
-        assert!(comparison.uncertain.is_empty());
+        sim_assert_eq!(have: comparison.uncertain, want: [] as [String; 0]);
 
         let payload = chart.adjudicate(&overlay)?;
         let comparison = validator.compare_with_defaults(&chart, &payload)?;
         sim_assert_eq!(have: comparison.inherited_violations.len(), want: 1);
         sim_assert_eq!(have: comparison.new_violations.len(), want: 1);
-        assert!(comparison.uncertain.is_empty());
+        sim_assert_eq!(have: comparison.uncertain, want: [] as [String; 0]);
     }
     Ok(())
 }
