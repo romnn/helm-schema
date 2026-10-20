@@ -1,4 +1,4 @@
-# NNNN. Continuous end-to-end benchmarks, published with benchtrail beside the docs
+# 0067. Continuous end-to-end benchmarks, published with benchtrail beside the docs
 
 Status: Accepted
 Date: 2026-10-20 (user request)
