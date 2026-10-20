@@ -42,6 +42,9 @@ ingest it or intersect it with generated output. Explicit override schemas are c
   context; do not add suppressed `expect`, `unwrap`, or `panic!` for representable errors.
 - Before adding/changing Rust lint suppressions, load `rust-lint`; every `#[allow]` needs a
   concrete `reason = "…"` per the [lint policy](.agents/skills/verification-gates/SKILL.md#lint-policy-pointers).
+- Destructure every semantic-carrier field and match owned enums without wildcards in merges, path maps, cache keys and dispatch; collapse hand-synced twins.
+- Preserve semantic features during refactors; removing one requires an explicit product decision.
+- Profile product and verification tooling through `tracing::instrument` spans and the existing Perfetto layer; do not add custom phase timers.
 - Run tests in debug mode with `cargo nextest run --workspace`; never use `--release` for tests.
 
 ## Verification gates
@@ -72,15 +75,14 @@ gate command's own exit code, never a trailing pipe's. Follow the
 
 Start with the [ADR index](docs/adr/README.md); read the relevant decisions before changing a subsystem.
 
-- Analysis and ambiguity: [0001](docs/adr/0001-structural-static-analysis-first.md), [0002](docs/adr/0002-preserve-ambiguity-prefer-unknown-over-a-wrong-guess.md).
-- Simplicity and phases: [0004](docs/adr/0004-simplicity-by-deletion.md), [0005](docs/adr/0005-compiler-style-phases.md), [0023](docs/adr/0023-six-phase-pipeline-with-one-typed-artifact-per-phase.md).
-- Rust and tests: [0006](docs/adr/0006-kiss-rust-and-indoc-for-multiline-strings.md), [0077](docs/adr/0077-schema-tests-assert-full-schema-equality.md), [0100](docs/adr/0100-test-and-error-handling-conventions.md).
-- Inference inputs and parsing: [0007](docs/adr/0007-values-schema-json-is-output-not-evidence.md), [0009](docs/adr/0009-parsers-over-string-heuristics.md).
-- Caches and capability probes: [0041](docs/adr/0041-schema-cache-is-fetch-on-miss-never-an-oracle.md), [0043](docs/adr/0043-tri-state-upstream-first-capability-oracle.md), [0044](docs/adr/0044-declarative-capability-probe-table-as-bounded-debt.md); history: [0042](docs/adr/0042-resolve-capability-branches-by-first-successful-literal.md) (superseded).
+- Analysis and ambiguity: [0001](docs/adr/0001-structural-static-analysis-first.md), [0013](docs/adr/0013-evidence-error-polarity-uncertainty-widens.md).
+- Simplicity and phases: [0003](docs/adr/0003-simplicity-by-deletion.md), [0014](docs/adr/0014-six-phase-pipeline-with-one-typed-artifact-per-phase.md), [0015](docs/adr/0015-contract-ir-is-the-semantic-seam.md).
+- Inference inputs and parsing: [0004](docs/adr/0004-values-schema-json-is-output-not-evidence.md), [0006](docs/adr/0006-parsers-over-string-heuristics.md).
+- Caches and capability probes: [0028](docs/adr/0028-schema-cache-is-fetch-on-miss-never-an-oracle.md), [0029](docs/adr/0029-tri-state-upstream-first-capability-oracle.md).
   Choose canonical probe kinds present from the API version's inception.
-- Helm adjudication and values: [0073](docs/adr/0073-real-helm-is-the-correctness-oracle.md), [0076](docs/adr/0076-validate-the-coalesced-values-document.md).
-- Dumps and probing: [0079](docs/adr/0079-one-verified-producer-one-clean-dump.md), [0080](docs/adr/0080-battery-requires-an-explicit-candidate-dump.md), [0081](docs/adr/0081-compiled-rust-prober-for-acceptance-probing.md).
-- Verification and performance: [0088](docs/adr/0088-verification-gates-run-on-the-final-tree.md), [0093](docs/adr/0093-deterministic-output-and-the-performance-law.md).
+- Helm adjudication and values: [0051](docs/adr/0051-real-helm-is-the-correctness-oracle.md), [0054](docs/adr/0054-validate-the-coalesced-values-document.md).
+- Dumps and candidates: [0056](docs/adr/0056-one-verified-producer-one-clean-dump.md).
+- Performance and landing criteria: [0063](docs/adr/0063-deterministic-output-and-the-performance-law.md), [0066](docs/adr/0066-landing-ratchet.md).
 
 Load the relevant skill for procedures:
 

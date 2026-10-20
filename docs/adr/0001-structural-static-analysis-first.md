@@ -45,3 +45,5 @@ diagnosable when they materially affect resolution.
   cc2662e6, 2026-05-18)
 - CLAUDE.md "Parsers over string heuristics"
 - `plan/unified-frontend-redesign.md` "Ground rules (unchanged from the campaign)"
+
+Historical guide: `3a50e8d39e5549dbc85fadc8069d6175187ba79b:AGENTS.md`.
