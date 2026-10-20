@@ -36,6 +36,12 @@ tasks:
     cmds:
       - cargo build --all-targets --release {{.CLI_ARGS}}
 
+  bench:
+    desc: "run the end-to-end benchmark (tools/bench/bench.py) on a release build"
+    cmds:
+      - cargo build --release --package helm-schema-cli
+      - python3 tools/bench/bench.py {{.CLI_ARGS}}
+
   goreleaser:
     internal: true
     requires:
