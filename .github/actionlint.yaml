@@ -1,0 +1,7 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/rhysd/actionlint/main/docs/config.schema.json
+paths:
+  .github/workflows/bench.yaml:
+    ignore:
+      # `concurrency.queue` is a GitHub Actions key actionlint does not know yet; the bench history
+      # needs it so a queued commit is not replaced by a newer one.
+      - 'unexpected key "queue" for "concurrency" section'

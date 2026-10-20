@@ -1,0 +1,96 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
+name: bench
+on:
+  push:
+    branches: [main]
+    # What the benchmark measures: the tool, its inputs, and the benchmark itself. A docs-only
+    # commit is deployed by the pages workflow alone.
+    paths:
+      - "crates/**"
+      - "Cargo.toml"
+      - "Cargo.lock"
+      - "testdata/charts/**"
+      - "testdata/provider-bundle/**"
+      - "tools/bench/**"
+      - ".github/workflows/bench.yaml"
+  workflow_dispatch: {}
+
+env:
+  MISE_GITHUB_TOKEN: ${{ github.token }}
+  MISE_AUTO_INSTALL: "0"
+
+# Every commit is a point in the history, so pending runs queue in order rather than replacing each
+# other, and none is cancelled.
+concurrency:
+  group: bench
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  benchmark:
+    name: end-to-end schema generation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    # The history lives on `gh-pages`, which this job commits to.
+    permissions:
+      contents: write
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: sccache
+    steps:
+      - uses: actions/checkout@v7
+      # Python for the driver, as mise.toml pins it.
+      - uses: jdx/mise-action@v4
+        with:
+          install: false
+          cache: true
+          env: false
+      - run: mise install python
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+      - uses: mozilla-actions/sccache-action@v0.0.10
+      - name: Build
+        run: cargo build --release --package helm-schema-cli
+      # Four corpus charts from the fixed cost to the heavy tails, under the full and (where it
+      # changes the cost) the lean profile, offline against the committed provider bundle;
+      # tools/bench/bench.py says why each chart is there. CPU time is the figure a shared runner
+      # holds steadiest; the per-phase times come from a separate traced run.
+      - name: Measure
+        run: >-
+          mise exec python -- python3 tools/bench/bench.py
+          --binary target/release/helm-schema
+          --json target/bench/history.json
+          --summary "$GITHUB_STEP_SUMMARY"
+      # Runner hardware varies between runs, and the millisecond phases of the small charts are
+      # noisy, so an alert (a move beyond 150%) is only listed in the job summary, never posted as
+      # a commit comment; benchtrail's change detection, which weighs each benchmark's own noise,
+      # is where changes are read.
+      # The history is committed to `bench/data.js` on `gh-pages`, which must exist.
+      - name: Record the history
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          name: helm-schema end-to-end
+          tool: customSmallerIsBetter
+          output-file-path: target/bench/history.json
+          benchmark-data-dir-path: bench
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          alert-threshold: "150%"
+          comment-on-alert: false
+          fail-on-alert: false
+          summary-always: true
+
+  # The pages workflow builds the documentation and installs the benchtrail dashboard, with the
+  # history this run recorded, at `/bench/`. It deploys even when the benchmark failed, so a
+  # failed measurement never holds back the documentation of the commit.
+  deploy:
+    name: deploy the site
+    needs: benchmark
+    if: ${{ !cancelled() }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yaml
