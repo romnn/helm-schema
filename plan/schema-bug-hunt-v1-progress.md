@@ -9109,4 +9109,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   GitHub (unpushed). `task typos` had been red on main since the ADR landing: 19 false hits (commit shas, "reguarded" file name,
   "mis-trimming"); fix = hex-sha ignore rule + word entry + one rewording. W4 (2803bf0c, 23 h) and W1 (e0881b7b, 21 h) still running
   (user: let them finish). Orchestrator.
-Next: watch landing 10a run 3 (`tail /Volumes/T7/dev/round8-landing10a-run3/chain.log`); on "chain green" commit adopted fixtures, merge landing-10a-v3 --no-ff into main with components + receipt sha256, re-tally closures; then apiguess and the CRD oracle as the next small landings; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
+- 16:44 (Oct 20) — **Landing 10a run 3 FAILED at battery (exit 101, link error): the user upgraded stable Rust to 1.99.1 at
+  16:40, mid-compile; not a landing defect.** dump 16:11–16:18 (205 verified, 0 adopted), unit 16:18–16:29, lint 16:29–16:36 all OK on
+  1.98.0; the battery's `cargo test --no-run` then linked against 1.98.0 std rlibs rustup had just replaced
+  (`clang: no such file …/libstd-61f27fb94867ea3a.rlib`; log /Volumes/T7/dev/round8-landing10a-run3/battery/battery.log). The toolchain
+  binding changed, so run 4 needs a fresh E from dump; 1.99.1's clippy also denies `assert_is_empty` ×18 and `double_must_use` ×3 —
+  the same errors that fail GitHub CI lint on main (CI uses moving stable) — so run 4's lint step would fail too. Lint fix delegated:
+  sol builder 20261020T144147-daf9b843 in worktree /Volumes/T7/dev/round8-lint199 (branch lint-rust-1.99.1 from 6c8c9e5e; brief
+  /Volumes/T7/dev/round8/brief-lint199-codex.md); its commit goes onto landing-10a-v3, then run 4. Also pushed main (user request,
+  527576d3..a0141424); bench workflow green and https://romnn.github.io/helm-schema/bench/ live with the Hugo menu link. CI test also
+  red on main since before this session: Windows checkout refuses provider-bundle file `certificate-".json.not-found` (queued: bundle
+  fix needs its own landing). Orchestrator.
+Next: on the lint199 hand-back, commit its patch onto landing-10a-v3, point landing-10a.env at a fresh E (run 4) and run the full chain dump→finalize; on "chain green" commit adopted fixtures, merge landing-10a-v3 --no-ff into main with components + receipt sha256, re-tally closures; then apiguess and the CRD oracle; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
