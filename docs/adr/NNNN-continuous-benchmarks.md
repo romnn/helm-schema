@@ -54,6 +54,9 @@ the user's benchtrail dashboard.
   series' own noise; github-action-benchmark alerts (beyond 150%) stay in the job summary
   and post no comments. The history is a trend monitor, not a performance claim: claims
   still follow ADR [0064](0064-performance-measurement-protocol.md).
+- Every action in `bench.yaml` and `pages.yaml` is pinned to a commit SHA with its
+  release noted, unlike the moving majors of the other workflows: the bench job can
+  push to `gh-pages`, and an upstream update must not change what runs.
 - The driver is isolated maintainer tooling in the sense of ADR
   [0065](0065-drift-tooling-is-isolated-maintainer-tooling.md); renaming a phase span
   fails the benchmark until `PHASES` follows.

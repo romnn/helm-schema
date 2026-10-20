@@ -32,11 +32,11 @@ jobs:
       RUSTC_WRAPPER: sccache
     steps:
       # The site as main holds it now, whichever run asked for the deploy.
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
       # Go, Python, and the extended Hugo build come from mise.
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
           install: false
           cache: true
@@ -44,14 +44,17 @@ jobs:
       - run: mise install task go python "asdf:NeoHsu/asdf-hugo"
       # helm-schema is built from source so the docs render its live output
       # (schema snippets generated from docs/examples by scripts/schemas.sh).
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
+      # Every action is pinned to a commit (its release noted), since this workflow runs
+      # after the bench job. The docs build with the current stable compiler: it only
+      # renders schema snippets and records no measurement.
+      - uses: dtolnay/rust-toolchain@b725eda525362e7cf34af9a7243cac1e3f01a7ec # stable branch
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           cache-on-failure: true
-      - uses: mozilla-actions/sccache-action@v0.0.10
+      - uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696 # v0.0.10
       - name: Configure Pages
         id: pages
-        uses: actions/configure-pages@v6
+        uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
       # Regenerates the schema snippets from the current source, then builds the
       # site — the same `task docs:build` used locally. mise-action puts the tool
       # shims on PATH, so `task` resolves as in the other workflows.
@@ -63,7 +66,7 @@ jobs:
       # docs/public. Before the first benchmark run there is no history yet,
       # and the documentation still deploys.
       - name: Install the benchmark dashboard
-        uses: romnn/benchtrail@v0.3.0
+        uses: romnn/benchtrail@b9608b8f4191a056be08a730d0312eb75bb9e366 # v0.3.0
         with:
           path: docs/public/bench
           benchmark-data-dir-path: bench
@@ -82,7 +85,7 @@ jobs:
               "dashBy": "profile"
             }
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v5
+        uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: docs/public
 
@@ -96,4 +99,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

@@ -33,19 +33,21 @@ jobs:
       SCCACHE_GHA_ENABLED: "true"
       RUSTC_WRAPPER: sccache
     steps:
-      - uses: actions/checkout@v7
+      # Every action is pinned to a commit (its release noted): an upstream update must not
+      # change what runs, least of all in a job that can push to `gh-pages`.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       # Rust and Python at the exact versions mise.bench.toml pins (rustup installs the toolchain;
       # `mise exec` selects it). The compiler is recorded with every value as its environment.
-      - uses: jdx/mise-action@v4
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
         with:
           install: false
           cache: true
           env: false
       - run: mise install rust python
-      - uses: Swatinem/rust-cache@v2
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
         with:
           cache-on-failure: true
-      - uses: mozilla-actions/sccache-action@v0.0.10
+      - uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696 # v0.0.10
       - name: Build
         run: mise exec -- cargo build --release --package helm-schema-cli
       # Four corpus charts from the fixed cost to the heavy tails, under the full and (where it
@@ -64,7 +66,7 @@ jobs:
       # is where changes are read.
       # The history is committed to `bench/data.js` on `gh-pages`, which must exist.
       - name: Record the history
-        uses: benchmark-action/github-action-benchmark@v1
+        uses: benchmark-action/github-action-benchmark@4322e5726e6334590d251fc4f92bec0efafc45dc # v1.22.2
         with:
           name: helm-schema end-to-end
           tool: customSmallerIsBetter
