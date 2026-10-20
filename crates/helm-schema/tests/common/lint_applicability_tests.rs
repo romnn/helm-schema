@@ -141,16 +141,16 @@ fn prometheus_operator_crds_lint_coverage_matches_pinned_rule_applicability() ->
         roster_sha256: None,
         available_probes: usize::MAX,
     })?;
-    sim_assert_eq!(have: screened.coverage.builtin_rows, want: 2);
+    sim_assert_eq!(have: screened.coverage.builtin_rows, want: 3);
     sim_assert_eq!(have: screened.coverage.imported_rows, want: 0);
-    sim_assert_eq!(have: screened.coverage.rows_screened, want: 2);
+    sim_assert_eq!(have: screened.coverage.rows_screened, want: 3);
     // The root default crds table consumes the null, then Helm refills the dependency.
-    // Both input rows therefore compose template documents; only lint's rule is absent.
-    assert_skipped_template_rule(&screened.coverage, 2)?;
+    // All three input rows compose template documents; only lint's rule is absent.
+    assert_skipped_template_rule(&screened.coverage, 3)?;
     let inputs = test_util::helm_values::AcceptanceInputs::load(&chart)?;
     sim_assert_eq!(
         have: inputs.dependency_probes()?.into_iter().map(|probe| probe.overlay).collect::<Vec<_>>(),
-        want: vec![json!({}), json!({"crds": null})]
+        want: vec![json!({}), json!({"crds": null}), json!({"crds": {}})]
     );
     assert!(screened.flips.is_empty());
     assert_pinned_lint_skips_templates(&chart, &schemas, &json!({}))?;

@@ -4,7 +4,12 @@ use std::collections::BTreeSet;
 
 use serde_json::{Value, json};
 
-use super::{AcceptanceInputs, ValuesError, chart::Chart, dependencies, go_value::table_from_json};
+use super::{
+    AcceptanceInputs, ValuesError,
+    chart::{Chart, Requirement},
+    dependencies,
+    go_value::{table_from_json, table_to_json},
+};
 
 /// One loaded dependency instance and its ordered activation controls.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -32,6 +37,8 @@ pub enum DependencyProbeKind {
     ConditionNull,
     /// Delete the dependency values scope.
     ScopeNull,
+    /// Set one parsed subchart default under its enabled, alias-aware parent scope.
+    PartialOverride,
 }
 
 /// A deterministic dependency overlay and its observed activation.
@@ -56,12 +63,15 @@ impl AcceptanceInputs {
     ///
     /// Refuses inventories deeper than 64 levels or incompatible version syntax.
     pub fn dependency_controls(&self) -> Result<Vec<DependencyControl>, ValuesError> {
-        let mut controls = Vec::new();
-        inventory(&self.chart, &[], &mut controls)?;
-        Ok(controls)
+        let mut instances = Vec::new();
+        inventory(&self.chart, &[], &mut instances)?;
+        Ok(instances
+            .into_iter()
+            .map(|DependencyInstance { control, chart: _ }| control)
+            .collect())
     }
 
-    /// Produce defaults and bounded dependency activation/deletion rows.
+    /// Produce defaults and bounded dependency activation, deletion, and partial override rows.
     ///
     /// Null rows record observed activation rather than assuming deletion disables a chart.
     /// Every row is processed using a fresh deep copy of the cached chart.
@@ -71,7 +81,8 @@ impl AcceptanceInputs {
     /// Fails instead of truncating inventories or more than 8,192 distinct overlays.
     /// Loader, dependency processing, or ineffective activation controls also fail.
     pub fn dependency_probes(&self) -> Result<Vec<DependencyProbe>, ValuesError> {
-        let controls = self.dependency_controls()?;
+        let mut instances = Vec::new();
+        inventory(&self.chart, &[], &mut instances)?;
         let mut probes = vec![DependencyProbe {
             overlay: json!({}),
             scope: Vec::new(),
@@ -80,9 +91,13 @@ impl AcceptanceInputs {
             not_validated: None,
         }];
         let mut distinct = BTreeSet::from(["{}".to_string()]);
-        for control in &controls {
+        for DependencyInstance { control, chart } in &instances {
             let mut ancestors = json!({});
-            for ancestor in &controls {
+            for DependencyInstance {
+                control: ancestor,
+                chart: _,
+            } in &instances
+            {
                 if control.scope.starts_with(&ancestor.scope)
                     && ancestor.scope.len() < control.scope.len()
                 {
@@ -91,7 +106,7 @@ impl AcceptanceInputs {
             }
             let row_count = control.conditions.len().saturating_mul(3)
                 + usize::from(!control.tags.is_empty()) * 2
-                + 1;
+                + 2;
             if probes.len().saturating_add(row_count) > 8192 {
                 return Err(ValuesError::Unmodelled(
                     "dependency row cap exceeded: more than 8192 rows".to_string(),
@@ -101,7 +116,7 @@ impl AcceptanceInputs {
                 overlay,
                 kind,
                 expected,
-            } in planned_probes(control, ancestors)
+            } in planned_probes(control, &ancestors, chart)
             {
                 let mut not_validated = None;
                 let enabled = match self.dependency_enabled(&overlay, &control.scope) {
@@ -181,17 +196,22 @@ fn assign(overlay: &mut Value, path: &[String], value: Value) {
     current[key] = value;
 }
 
-fn inventory(
-    chart: &Chart,
+struct DependencyInstance<'a> {
+    control: DependencyControl,
+    chart: &'a Chart,
+}
+
+fn inventory<'a>(
+    chart: &'a Chart,
     scope: &[String],
-    controls: &mut Vec<DependencyControl>,
+    instances: &mut Vec<DependencyInstance<'a>>,
 ) -> Result<(), ValuesError> {
     if scope.len() > 64 {
         return Err(ValuesError::Unmodelled(
             "dependency depth cap exceeded: more than 64 levels".to_string(),
         ));
     }
-    if controls.len() > 8192 {
+    if instances.len() > 8192 {
         return Err(ValuesError::Unmodelled(
             "dependency inventory cap exceeded".to_string(),
         ));
@@ -212,48 +232,65 @@ fn inventory(
             };
             let mut child_scope = scope.to_vec();
             child_scope.push(name.clone());
-            if requirement.condition.split(',').count() > 8192 || requirement.tags.len() > 8192 {
-                return Err(ValuesError::Unmodelled(
-                    "dependency control path cap exceeded".to_string(),
-                ));
-            }
-            let conditions = requirement
-                .condition
-                .trim()
-                .split(',')
-                .filter(|path| !path.is_empty())
-                .map(|path| {
-                    let mut full = scope.to_vec();
-                    full.extend(path.split('.').map(str::to_string));
-                    full
-                })
-                .collect();
-            let tags = requirement
-                .tags
-                .iter()
-                .map(|tag| vec!["tags".to_string(), tag.clone()])
-                .collect();
-            controls.push(DependencyControl {
-                scope: child_scope.clone(),
-                conditions,
-                tags,
-                declared: true,
+            instances.push(DependencyInstance {
+                control: dependency_control(scope, child_scope.clone(), Some(requirement), true)?,
+                chart: child,
             });
-            inventory(child, &child_scope, controls)?;
+            inventory(child, &child_scope, instances)?;
         }
         if !matched {
             let mut child_scope = scope.to_vec();
             child_scope.push(child.name.clone());
-            controls.push(DependencyControl {
-                scope: child_scope.clone(),
-                conditions: Vec::new(),
-                tags: Vec::new(),
-                declared: false,
+            // Helm can disable an unmatched loaded version through a same-name requirement.
+            let requirement = chart.requirements.iter().flatten().find(|requirement| {
+                requirement.name == child.name
+                    && (requirement.alias.is_empty() || requirement.alias == child.name)
             });
-            inventory(child, &child_scope, controls)?;
+            instances.push(DependencyInstance {
+                control: dependency_control(scope, child_scope.clone(), requirement, false)?,
+                chart: child,
+            });
+            inventory(child, &child_scope, instances)?;
         }
     }
     Ok(())
+}
+
+fn dependency_control(
+    parent_scope: &[String],
+    scope: Vec<String>,
+    requirement: Option<&Requirement>,
+    declared: bool,
+) -> Result<DependencyControl, ValuesError> {
+    let mut control = DependencyControl {
+        scope,
+        conditions: Vec::new(),
+        tags: Vec::new(),
+        declared,
+    };
+    if let Some(requirement) = requirement {
+        if requirement.condition.split(',').count() > 8192 || requirement.tags.len() > 8192 {
+            return Err(ValuesError::Unmodelled(
+                "dependency control path cap exceeded".to_string(),
+            ));
+        }
+        for path in requirement
+            .condition
+            .trim()
+            .split(',')
+            .filter(|path| !path.is_empty())
+        {
+            let mut full = parent_scope.to_vec();
+            full.extend(path.split('.').map(str::to_string));
+            control.conditions.push(full);
+        }
+        control.tags = requirement
+            .tags
+            .iter()
+            .map(|tag| vec!["tags".to_string(), tag.clone()])
+            .collect();
+    }
+    Ok(control)
 }
 
 struct PlannedProbe {
@@ -262,7 +299,11 @@ struct PlannedProbe {
     expected: Option<bool>,
 }
 
-fn planned_probes(control: &DependencyControl, ancestors: Value) -> Vec<PlannedProbe> {
+fn planned_probes(
+    control: &DependencyControl,
+    ancestors: &Value,
+    chart: &Chart,
+) -> Vec<PlannedProbe> {
     let mut rows = Vec::new();
     for (index, condition) in control.conditions.iter().enumerate() {
         for enabled in [true, false] {
@@ -310,7 +351,7 @@ fn planned_probes(control: &DependencyControl, ancestors: Value) -> Vec<PlannedP
             });
         }
     }
-    let mut overlay = ancestors;
+    let mut overlay = ancestors.clone();
     activate(&mut overlay, control, true);
     assign(&mut overlay, &control.scope, Value::Null);
     rows.push(PlannedProbe {
@@ -318,5 +359,34 @@ fn planned_probes(control: &DependencyControl, ancestors: Value) -> Vec<PlannedP
         kind: DependencyProbeKind::ScopeNull,
         expected: None,
     });
+    let mut overlay = json!({});
+    assign(
+        &mut overlay,
+        &control.scope,
+        partial_default(&Value::Object(table_to_json(&chart.values))),
+    );
+    let mut overlay = super::coalesce_tables(ancestors, &overlay);
+    // Activation wins when the selected default is itself a false condition or tag.
+    activate(&mut overlay, control, true);
+    rows.push(PlannedProbe {
+        overlay,
+        kind: DependencyProbeKind::PartialOverride,
+        expected: Some(true),
+    });
     rows
+}
+
+fn partial_default(value: &Value) -> Value {
+    let Value::Object(values) = value else {
+        return value.clone();
+    };
+    // Null deletes a parent default instead of supplying an ordinary partial override.
+    // Empty/all-null values still need an explicit scope control, including library charts.
+    values
+        .iter()
+        .find(|(_, value)| !value.is_null())
+        .map_or_else(
+            || json!({}),
+            |(key, value)| json!({key: partial_default(value)}),
+        )
 }

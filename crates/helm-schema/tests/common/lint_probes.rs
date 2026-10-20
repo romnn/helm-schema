@@ -9,7 +9,9 @@ use helm_schema_test_support::{
 };
 use serde::{Deserialize, Serialize};
 use serde_json::{Value, json};
-use test_util::helm_values::{AcceptanceDocument, AcceptanceInputs, ValuesError, ValuesOptions};
+use test_util::helm_values::{
+    AcceptanceDocument, AcceptanceInputs, DependencyProbeKind, ValuesError, ValuesOptions,
+};
 use test_util::scratch::ScratchDir;
 
 use crate::harness::ProfileSchemas;
@@ -374,6 +376,8 @@ pub(crate) struct ScreenedProbe {
 #[derive(Clone)]
 pub(crate) struct ScreenedDocument {
     pub(crate) kind: AcceptanceDocument,
+    /// Audit a rejected raw lint control even when both schemas reject it alike.
+    pub(crate) lint_control: bool,
     pub(crate) values: Value,
     pub(crate) defaults: Option<Value>,
     pub(crate) kubernetes_version: String,
@@ -388,6 +392,7 @@ struct OverlayRow {
     kubernetes_version: String,
     origins: Vec<String>,
     contexts: Vec<ContextEvidence>,
+    lint_control: bool,
 }
 
 pub(crate) struct LintScreen {
@@ -442,7 +447,14 @@ pub(crate) fn screen(request: &ScreenRequest<'_>) -> eyre::Result<LintScreen> {
                 Ok(values) => {
                     counts.composed += 1;
                     counts.screened += 1;
-                    if request.schemas.profiles.screen_document(&values.root) {
+                    let lint_control = row.lint_control && kind == AcceptanceDocument::LintRaw;
+                    if request.schemas.profiles.screen_document(&values.root)
+                        || (lint_control && {
+                            let (_, candidate_accepts) =
+                                request.schemas.profiles.document_verdicts(&values.root);
+                            !candidate_accepts
+                        })
+                    {
                         counts.flips += 1;
                         // Full context identity cannot collide with legacy path/class roster names.
                         let name = format!(
@@ -455,6 +467,7 @@ pub(crate) fn screen(request: &ScreenRequest<'_>) -> eyre::Result<LintScreen> {
                             overlay: row.overlay.clone(),
                             document: Some(ScreenedDocument {
                                 kind,
+                                lint_control,
                                 values: values.root,
                                 defaults: defaults.get(&kind).cloned().flatten(),
                                 kubernetes_version: row.kubernetes_version.clone(),
@@ -510,6 +523,7 @@ fn screening_rows(
             request.kubernetes_version.to_string(),
             format!("dependency:{:?}:{:?}", probe.scope, probe.kind),
             &json!({}),
+            probe.kind == DependencyProbeKind::PartialOverride,
         )?;
     }
     for row in request.imported {
@@ -527,6 +541,7 @@ fn screening_rows(
             row.kubernetes_version.clone(),
             format!("roster:{}", row.id),
             &row.context_overlay,
+            false,
         )?;
     }
     Ok(rows)
@@ -539,6 +554,7 @@ fn insert_row(
     kubernetes_version: String,
     origin: String,
     context: &Value,
+    lint_control: bool,
 ) -> eyre::Result<()> {
     let key = serde_json::to_string(&json!([kubernetes_version, sha256_hex(&values_file)]))?;
     let row = rows.entry(key).or_insert(OverlayRow {
@@ -547,7 +563,9 @@ fn insert_row(
         kubernetes_version,
         origins: Vec::new(),
         contexts: Vec::new(),
+        lint_control: false,
     });
+    row.lint_control |= lint_control;
     row.contexts.push(ContextEvidence {
         origin: origin.clone(),
         overlay: context.clone(),
