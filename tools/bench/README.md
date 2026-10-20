@@ -44,8 +44,8 @@ counts do not depend on the CPU, so their suite ignores it for good.
 
 ## Splitting the times by CPU model
 
-Once a benchtrail release has `splitEnvironment`, move the `romnn/benchtrail` pin in
-`pages.yaml` to it and give the time suite its own settings beside the shared ones:
+`pages.yaml` pins benchtrail v0.4.0, the first release with `splitEnvironment`, and gives the
+time suite its own settings beside the shared ones:
 
 ```json
 "ignoreEnvironment": ["cpu"],
