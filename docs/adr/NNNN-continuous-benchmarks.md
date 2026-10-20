@@ -47,15 +47,18 @@ the user's benchtrail dashboard.
 - `gh-pages` only stores the history (`bench/data.js`); Pages still publishes from
   Actions. github-action-benchmark needs the branch to exist: romnn/helm-schema has it
   (an empty orphan, created 2026-10-20), and the workflow checks for it before building
-  and fails with the one-time setup, which `tools/bench/README.md` documents for forks. Runs queue (`concurrency.queue: max`), so no commit's point is dropped; the
-  docs deploy even when a benchmark fails, and before any history exists.
+  and fails with the one-time setup, which `tools/bench/README.md` documents for forks.
+- Runs queue (`concurrency.queue: max`), so no commit's point is dropped; the docs
+  deploy even when a benchmark fails, and before any history exists.
 - The compiler and Python are exact versions in `mise.bench.toml` (Rust 1.99.0, Python
   3.14.7, active under `MISE_ENV=bench`, so contributors' toolchains are unaffected): no
   toolchain release moves a value without a commit, and moving the pin starts a new
-  history segment. Hosted runners still vary in hardware, so each run notes its CPU model. benchtrail marks a change only beyond 10% and four times the
-  series' own noise; github-action-benchmark alerts (beyond 150%) stay in the job summary
-  and post no comments. The history is a trend monitor, not a performance claim: claims
-  still follow ADR [0064](0064-performance-measurement-protocol.md).
+  history segment. Hosted runners still vary in hardware, so each run notes its CPU model.
+- benchtrail marks a change only beyond 10% and four times the series' own noise.
+  github-action-benchmark evaluates no threshold (it does so only to comment or fail,
+  both off); its job summary lists every value against the previous run with the ratio.
+  The history is a trend monitor, not a performance claim: claims still follow ADR
+  [0064](0064-performance-measurement-protocol.md).
 - Every action in `bench.yaml` and `pages.yaml` is pinned to a commit SHA with its
   release noted, unlike the moving majors of the other workflows: the bench job can
   push to `gh-pages`, and an upstream update must not change what runs.

@@ -69,11 +69,11 @@ jobs:
           --binary target/release/helm-schema
           --json target/bench/history.json
           --summary "$GITHUB_STEP_SUMMARY"
-      # Runner hardware varies between runs, and the millisecond phases of the small charts are
-      # noisy, so an alert (a move beyond 150%) is only listed in the job summary, never posted as
-      # a commit comment; benchtrail's change detection, which weighs each benchmark's own noise,
-      # is where changes are read.
-      # The history is committed to `bench/data.js` on `gh-pages` (checked above).
+      # No threshold alert is evaluated: github-action-benchmark only checks its alert threshold
+      # to post a commit comment or fail the job, and runner hardware and the millisecond phases of
+      # the small charts are too noisy for either. The job summary lists every value against the
+      # previous run with their ratio (`summary-always`), and benchtrail's change detection, which
+      # weighs each benchmark's own noise, marks regressions on the dashboard.
       - name: Record the history
         uses: benchmark-action/github-action-benchmark@4322e5726e6334590d251fc4f92bec0efafc45dc # v1.22.2
         with:
@@ -83,7 +83,6 @@ jobs:
           benchmark-data-dir-path: bench
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true
-          alert-threshold: "150%"
           comment-on-alert: false
           fail-on-alert: false
           summary-always: true
