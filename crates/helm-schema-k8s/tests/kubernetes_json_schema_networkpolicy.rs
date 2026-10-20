@@ -107,7 +107,7 @@ fn deployment_container_security_context_leaf_is_not_pod_spec() {
 
 #[test]
 fn chain_infers_networkpolicy_matchlabels_schema_from_empty_api_version() {
-    let provider = bundled_k8s_provider("v1.35.0").with_api_version_guess(true);
+    let provider = bundled_k8s_provider("v1.35.0");
     let chain = Chain::new(vec![Box::new(provider)]).with_inference_enabled(true);
 
     let use_ = ProviderSchemaUse {

@@ -36,17 +36,8 @@ const KIND_TO_API_VERSION: &[(&str, &str)] = &[
     ("RoleBinding", "rbac.authorization.k8s.io/v1"),
     ("ClusterRole", "rbac.authorization.k8s.io/v1"),
     ("ClusterRoleBinding", "rbac.authorization.k8s.io/v1"),
-    // `PodDisruptionBudget` is DELIBERATELY omitted from the shortlist:
-    // it lived at `policy/v1beta1` until v1.21 and at `policy/v1`
-    // afterward. With `--k8s-version-fallback=auto` enabled, both
-    // versions can co-exist in the cache (the primary version's file
-    // plus the fallback version's file), and the cache scan tier
-    // would surface a distinct set of two api_versions for the same
-    // kind → `AmbiguousApiVersion`. Inference for a kind that lacks a
-    // YAML-level `apiVersion` falls back to the cache scan tier
-    // alone, which still produces the right answer when only the
-    // primary version dir holds the file (see the cache-scan
-    // explicit-versions filter).
+    // `PodDisruptionBudget` has multiple plausible versions, so it requires structural
+    // chart evidence or an explicit local schema.
     // storage.k8s.io/v1
     ("StorageClass", "storage.k8s.io/v1"),
     // External — the cases that matter for Temporal
@@ -64,8 +55,8 @@ pub fn canonical_api_version_for_kind(kind: &str) -> Option<&'static str> {
 }
 
 /// Extended `kind → (canonical_group, canonical_version)` mapping for
-/// the online probe tier. Only kinds we know exactly which group they
-/// belong to. Tier 3 abstains for kinds not in this table.
+/// the online probe tier.
+/// Only kinds with a known canonical group are probed.
 #[must_use]
 pub(crate) fn canonical_group_version_for_kind(kind: &str) -> Option<(&'static str, &'static str)> {
     let api_version = canonical_api_version_for_kind(kind)?;

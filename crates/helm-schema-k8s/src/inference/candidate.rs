@@ -11,8 +11,8 @@ pub enum InferenceSource {
     ChartLocalCrd,
     /// Hardcoded canonical `kind → apiVersion` table.
     Shortlist,
-    /// Scan across all configured K8s + CRD cache namespaces.
-    LocalCacheScan,
+    /// Schemas explicitly supplied in a local override directory.
+    LocalOverride,
     /// Kind-scoped HTTP probe against the upstream catalog/mirrors.
     OnlineProbe,
 }

@@ -86,8 +86,7 @@ fn provider() -> Chain {
 fn production_chain_provider() -> Chain {
     let k8s_provider = KubernetesJsonSchemaProvider::new("v1.35.0")
         .with_cache_dir(bundle_cache_dir())
-        .with_allow_download(false)
-        .with_api_version_guess(true);
+        .with_allow_download(false);
     Chain::new(vec![Box::new(k8s_provider)]).with_inference_enabled(true)
 }
 

@@ -22,9 +22,13 @@ provider additionally writes disk not-found markers.
 
 For `group/version`, a declarative canonical-kind table remains bounded debt;
 `group/version/Kind` probes directly. Validate rows against live/removed APIs
-and choose kinds present since that API version's inception. The old claim
-that upstream has no index is obsolete: per-version `_definitions.json`
-provides authoritative GVKs. Index-based retirement is queued, not landed.
+and choose kinds present since that API version's inception. Upstream publishes
+per-version `_definitions.json`, but generic meta types carry retired
+group/versions and the document has no completeness certificate. The
+2026-10-20 index replacement was withdrawn after its four-release comparison
+found 46 removed-API false positives. Even all core resources and closed local
+references cannot certify completeness: a core-only subset omits entire groups.
+Retain the table until an exact, complete served-resource inventory is available.
 
 Adopted uncertainty policy, pending implementation: undecided capabilities
 abstain with `UnresolvedCapability`; `Uncertain` propagates as provider/chain
@@ -36,14 +40,23 @@ provider contracts without erasing chart-derived typing.
 
 Round 7 skipped guard evaluation and picked the first resolving branch literal.
 It avoided cold-cache collapse but discarded guard meaning and was superseded
-by the tri-state oracle. Eager bundle enumeration was also rejected; the new
-fetch-on-miss authoritative index is a separate replacement for the probe table.
+by the tri-state oracle. Eager bundle enumeration and index-only retirement
+were also rejected: filtering generic definitions does not establish
+completeness. No denylist or core-sentinel approximation replaces the table.
 
 ## Consequences
 
 - One cache-then-fetch core serves lookup and capability queries. Third-party
   API groups abstain: the built-in bundle cannot prove CRD absence.
 - Offline empty/partial-cache and confirmed-404 tests pin the current oracle.
+  `capability_index_rework.rs` compares all 41 old anchors at four releases
+  (v1.15/v1.24/v1.29/v1.35) and tests ConfigMap-only and reference-closed
+  core-only index subsets.
+- Eight inherited anchor omissions remain: networking/v1 at v1.15;
+  storage/v1beta1 at v1.24; admissionregistration/v1beta1 at v1.29;
+  networking, storage, admissionregistration, coordination and certificates
+  v1beta1 at v1.35 (all groups use their `.k8s.io` suffix). These need a
+  separate exact inventory solution; index retirement is not claimed.
 - Provider uncertainty rework 9 had two LAND reviews (Sep 30), but is off main.
   The queued kube-version fix also limits 404 authority to published kinds;
   standalone bundles omit CustomResourceDefinition despite API availability.

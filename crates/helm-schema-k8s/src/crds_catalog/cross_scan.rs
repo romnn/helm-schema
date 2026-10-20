@@ -4,7 +4,7 @@ use std::path::Path;
 use helm_schema_core::ResourceRef;
 
 use crate::cache::{json_files, subdirs};
-use crate::inference::cache_scan::match_crd_filename;
+use crate::filename::match_crd_filename;
 
 /// Walk every CONFIGURED `<crd_cache_root>/<source_id>/<group>/`
 /// directory and collect the version suffixes of files that match

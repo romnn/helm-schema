@@ -131,3 +131,14 @@ pub(crate) fn group_relative_path_for_resource(resource: &ResourceRef) -> Option
     let kind = kind.to_ascii_lowercase();
     Some(format!("{group}/{kind}_{version}.json"))
 }
+
+/// Matches a CRD catalog filename `<kind_lc>_<version>.json` and returns the version suffix.
+pub(crate) fn match_crd_filename(filename: &str, kind_lc: &str) -> Option<String> {
+    let prefix = format!("{kind_lc}_");
+    let stem = filename.strip_suffix(".json")?;
+    let version = stem.strip_prefix(&prefix)?;
+    if version.is_empty() {
+        return None;
+    }
+    Some(version.to_string())
+}

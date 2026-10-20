@@ -187,8 +187,8 @@ fn ambiguous_candidates_use_inference_priority_order() {
             },
             ApiVersionCandidate {
                 api_version: api_version.to_string(),
-                source: InferenceSource::LocalCacheScan,
-                origin: ProviderOrigin::DefaultCatalog,
+                source: InferenceSource::LocalOverride,
+                origin: ProviderOrigin::LocalOverride,
             },
             ApiVersionCandidate {
                 api_version: api_version.to_string(),
@@ -225,8 +225,8 @@ fn ambiguous_candidates_use_inference_priority_order() {
             },
             ApiVersionCandidate {
                 api_version: api_version.to_string(),
-                source: InferenceSource::LocalCacheScan,
-                origin: ProviderOrigin::DefaultCatalog,
+                source: InferenceSource::LocalOverride,
+                origin: ProviderOrigin::LocalOverride,
             },
             ApiVersionCandidate {
                 api_version: api_version.to_string(),

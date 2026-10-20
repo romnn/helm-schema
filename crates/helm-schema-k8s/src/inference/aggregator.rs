@@ -16,7 +16,7 @@ use super::inference_outcome::ApiVersionInferenceOutcome;
 ///    ambiguous — an internally-inconsistent local source is not collapsed.
 /// 2. Otherwise, exactly one distinct `api_version` across non-authoritative
 ///    sources → `Resolved`. Reported `source` uses the priority
-///    `Shortlist > LocalCacheScan > OnlineProbe` when multiple tiers
+///    `Shortlist > OnlineProbe` when multiple tiers
 ///    contribute the same `api_version`.
 /// 3. Otherwise `Ambiguous`.
 #[must_use]

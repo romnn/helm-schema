@@ -1,7 +1,5 @@
 mod aggregator;
 mod api_version_guess;
-/// Deterministic scans of configured local schema caches.
-pub mod cache_scan;
 /// API-version candidates and their evidence tier.
 pub mod candidate;
 mod inference_outcome;

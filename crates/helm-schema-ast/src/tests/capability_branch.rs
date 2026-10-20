@@ -74,3 +74,19 @@ fn core_query_parser_understands_resource_literals() {
         })
     );
 }
+
+#[test]
+fn compound_capability_conditions_remain_opaque() -> eyre::Result<()> {
+    for condition in [
+        "and (.Capabilities.APIVersions.Has \"autoscaling/v2beta2\") (semverCompare \"<1.23-0\" .Capabilities.KubeVersion.GitVersion)",
+        "or (.Capabilities.APIVersions.Has \"policy/v1\") .Values.enabled",
+        "not (and (.Capabilities.APIVersions.Has \"policy/v1\") .Values.enabled)",
+        ".Capabilities.APIVersions.Has \"policy/v1\" | eq false",
+    ] {
+        sim_assert_eq!(
+            have: decode_header_guard(&if_header(condition)?),
+            want: CapabilityGuard::Opaque { text: condition.to_string() }
+        );
+    }
+    Ok(())
+}

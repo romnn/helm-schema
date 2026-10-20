@@ -11,7 +11,6 @@ use crate::diagnostic::{Diagnostic, DiagnosticSink};
 use crate::doc_backed_schema::{LocalSchemaLeaf, lookup_root_metadata_path};
 use crate::fetch::{HttpFetcher, UreqFetcher};
 use crate::inference::ApiVersionCandidate;
-use crate::inference::cache_scan::scan_crd_cache;
 use crate::lookup::{
     K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaSource,
 };
@@ -289,13 +288,7 @@ impl K8sSchemaProvider for CrdsCatalogSchemaProvider {
         if !self.allow_api_version_guess {
             return Vec::new();
         }
-        let mut out = scan_crd_cache(
-            &self.cache_dir,
-            kind,
-            ProviderOrigin::DefaultCatalog,
-            &self.mirrors.source_ids(),
-        );
-        // Tier 3 online probe.
+        let mut out = Vec::new();
         if self.allow_download {
             for source in &self.mirrors.sources {
                 out.extend(crate::inference::online_probe::probe_crd_catalog(
