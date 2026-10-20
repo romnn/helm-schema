@@ -101,7 +101,7 @@ hand-off, then the ledger's last entries.
 - Every fix lands with a red-then-green test; fixture drift is not a test.
 - Report closures strictly (verified closures only; policy closures separately).
 
-- **Landing ratchet (user, 2026-10-20; ADR 0101, supersedes "inherited defects block landings").** A candidate lands when it adds
+- **Landing ratchet (user, 2026-10-20; ADR 0066, supersedes "inherited defects block landings").** A candidate lands when it adds
   no new failure vs main, strictly reduces known failures (test-infra landings may only record what they make visible), and adds no net
   production code unless reviewers justify the growth by the defect class it closes. Every unfixed counterexample becomes an exact
   obligation (frozen witness row, roster row where allowed, or an entry of the battery's shrink-only inherited-failure list). Builders

@@ -9016,4 +9016,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   only configurations that change cost), a GitHub Actions workflow recording history with benchtrail, Pages publishing the Hugo site and
   the benchmark results side by side with a Hugo link, local verification, an ADR. Nothing is pushed or configured on GitHub without asking
   the user. Orchestrator.
+- 04:52 (Oct 20) — **ADR value audit applied: 66 ADRs remain, renumbered 0001–0066 (squash 9c73badb).** sol builder 6f506c88: 21 merged
+  (rejected/superseded designs became "Alternatives considered"), 14 dropped, 6 factual corrections; 148 links verified; AGENTS.md links
+  updated. NUMBERS IN EARLIER LEDGER ENTRIES ARE PRE-RENUMBERING; map: `round8/adr-renumber-2026-10-20.tsv` (e.g. ratchet 0101→0066,
+  inherited-blocking 0091→merged into 0066, capability oracle 0043→0029 with the probe-table debt 0044 merged into it, apiVersion
+  inference 0049→0034, drift tooling 0099→0065). Playbook reference updated. apiguess step 2 (39c5f84e) = REWORK (sol df188fd0,
+  `round8/review-apiguess-step2-sol.md`): P1 `_definitions.json` attaches every group/version, including retired ones, to generic meta
+  types (DeleteOptions, WatchEvent), so "any GVK with this group/version" proves removed APIs present — 11/19/16 regressions at
+  1.24/1.29/1.35 (e.g. `Has "autoscaling/v2beta1"` true at 1.35, selecting a removed HPA version); P2 a partial cached index answers
+  Some(false) for absent groups. Step 1 (f5860fe0) stays LAND. Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
