@@ -9135,4 +9135,11 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   diagnostics), lint:fc 0 (51 PASS), nextest 0 (1709/1709), typos 0, tokei:core −2; patch sha256 57b67ec3…; orchestrator spot-checked
   the diff. Runner commit b6a1d6e: E=/Volumes/T7/dev/round8-landing10a-run4. Branch = 6c8c9e5e + 105704f1 (W1 ternary) + b7a0e46d.
   Orchestrator.
+- 18:12 (Oct 20) — **W1 slice 2 (piped literal ternary conditions) LAND-ready, queued for landing 10b.** W1 turn 2: the producing AST
+  replaces the stored pipeline Boolean and ternary tuple adapter, +2 production LOC; three full-schema tests (fail_validators.rs:3888),
+  red 2 failed/1 passed → green 3/3; witness ratchet 821 checks, 0 NEW, 7 false acceptances closed (+36 extra probes 0 NEW); dump 205,
+  0 fixtures moved; schema battery 0 flips; shipping screen 0; CPU max median ratio 1.0118; builder two-lens reviews approve. Its
+  lint/lint:fc 201 were the inherited 1.99.1 lints that b7a0e46d fixes. Patch d6e7bd17… archived at
+  /Volumes/T7/dev/round8/w1-slice2-piped-ternary.patch; applies cleanly on b7a0e46d. Run 4 battery in progress (started 17:58). W1 sent
+  on to the next class (ternary 59 / required 22 / message 2 remain). Orchestrator.
 Next: watch landing 10a run 4 (`tail /Volumes/T7/dev/round8-landing10a-run4/chain.log`); on "chain green" commit adopted fixtures, merge landing-10a-v3 --no-ff into main with components + receipt sha256, push only if the user asks, re-tally closures; then apiguess and the CRD oracle; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
