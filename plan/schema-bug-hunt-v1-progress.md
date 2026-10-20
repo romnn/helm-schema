@@ -9142,4 +9142,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   lint/lint:fc 201 were the inherited 1.99.1 lints that b7a0e46d fixes. Patch d6e7bd17… archived at
   /Volumes/T7/dev/round8/w1-slice2-piped-ternary.patch; applies cleanly on b7a0e46d. Run 4 battery in progress (started 17:58). W1 sent
   on to the next class (ternary 59 / required 22 / message 2 remain). Orchestrator.
-Next: watch landing 10a run 4 (`tail /Volumes/T7/dev/round8-landing10a-run4/chain.log`); on "chain green" commit adopted fixtures, merge landing-10a-v3 --no-ff into main with components + receipt sha256, push only if the user asks, re-tally closures; then apiguess and the CRD oracle; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
+- 19:36 (Oct 20) — **Run 4 battery TEST passed (1/1, 2893 s) but runner v10 refused the coverage report; runner v11 fixes the check;
+  run 5 launched 19:34 with W1 slices 2+3.** Run 4: dump 17:31–17:40 (0 adopted), unit –17:51, lint –17:58 (clippy fix holds on
+  1.99.1), battery –18:51: `battery coverage report refused` for every chart. Causes (runner, not candidate): (1) battery 5295ea7b
+  (per-context inheritance) records a context for every row origin, dependency origins with overlay `{}` (sha256 44136fa3…), which v10
+  compared as absent; (2) v10 demanded `adjudication_failures == 0` and `flips == adjudicated`, predating ADR 0066's exact inherited list
+  (the battery passes only when each failure is listed). v11 (runner 96291fc): dependency contexts must equal the empty overlay;
+  per-kind failures must equal the report's listed failures for that chart+kind (535 lint-document entries, 0 count mismatches on run 4);
+  flips == adjudicated + failures; errors still 0. Dry run on run 4's real coverage.json via a scratch receipt copy: v10 reproduces the
+  refusal, v11 prints `coverage charts=160 … flips_adjudicated=10000`. Runner suite: every file PASS (test_target with GUARD_SRC; fakes
+  updated to the battery's format). Review: sol 20261020T173538-d420cedf in flight; a REWORK stops run 5 before its battery finishes.
+  W1 slice 3 (nil conditions, +4 LOC, 2 FA closed, 888 checks 0 NEW, all builder gates 0 incl. lint/lint:fc) and slice 2 committed onto
+  landing-10a-v3 as e28690f6, ca69543a; E=/Volumes/T7/dev/round8-landing10a-run5 (runner a8e2cb1). Bench workflow fires per push, not
+  per commit (GitHub semantics); user: leave as is, wording to be corrected. Orchestrator.
+Next: watch landing 10a run 5 (`tail /Volumes/T7/dev/round8-landing10a-run5/chain.log`) and the runner v11 review; on "chain green" commit adopted fixtures, merge landing-10a-v3 --no-ff into main with components + receipt sha256, push only if the user asks, re-tally closures; then apiguess and the CRD oracle; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
