@@ -9054,4 +9054,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   strategy accepts; P2 naming-controller conflicts (listKind/shortNames/singular) not reconciled; P2 empty crds/ files bypass Helm's
   "resources are empty"; P2 omitted vs "" namespace normalisation in duplicate counting; delete the unused declaration-only path. Replay
   claim (1,143 preserved) corroborated. Sent as follow_up turn 10 on 536e8e16. Orchestrator.
+- 13:09 (Oct 20) — **Heartbeats stalled 07:11–13:03 (session waiting on an open question); three hand-backs processed late; landing 10a
+  assembled as landing-10a-v3; W1 resumed under the ratchet.** Battery perf rework (astra 78d55437 turn 15): retained controls honour the
+  nondeterministic-render policy, bounded retention, memo scoped to the resident lint path; full live run 64m20s (accepted ~1 h); coverage +
+  10,000 verdicts byte-identical; gates 0 (network DNS only); +60 impl / +176 test LOC; committed ca008841 + 87a91d66 in round8-battery
+  (sha256 d9bcc5b5… / 7f7a1934…). Inherited list rework (sol c1fe95be turn 1): identities bind exact input/control hashes and the complete
+  diagnostic tree; 564 entries (generator 54, W4 471, CRD oracle 18, kube-version oracle 21); seven real red→green transitions; battery
+  exit 0; committed ed67c702 (sha256 6ffcef80…). CRD oracle repairs (Track G 536e8e16 turn 10): native SSA converter, naming conflicts,
+  empty crds/ files, namespace normalisation; matrix 78/78, replay 1,143/1,143 preserved (240 controls, zero demotions); committed 12db5cb0
+  (sha256 7c033076…). Re-checks sent on the original review sessions (282d3774, 42562258, 90c2fd33, 7a59f4fd, 32c3c87b). W1 (e0881b7b)
+  had FAILED at 08:45 ("model at capacity"); resumed with the ratchet redirect toward the b0a708ac slice (park part-2 as a transfer patch).
+  W4 still in its 20-h turn (user: let it finish). landing-10a-v3 in round8-landing10a = v2 + 3ae46e70 (perf landing-compatible patch
+  46996b87…) + 800b32c1/a3b05637 (inherited list) + 6c8c9e5e (docs; one conflict kept HEAD, logged in round8-landing10a-conflicts.md);
+  chain launches when the re-checks are LAND. Codex quota reset: 16% used. Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
