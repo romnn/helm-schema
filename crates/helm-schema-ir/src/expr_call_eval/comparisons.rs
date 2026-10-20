@@ -16,6 +16,7 @@ use crate::scalar_value::{
     conjoin_predicates_with_memo,
 };
 
+use super::PipedOperand;
 use super::collections::direct_raw_identity_path;
 use super::strict_operands::{
     push_fail_capture, record_comparable_kind_result, record_strict_kind_result,
@@ -26,7 +27,7 @@ use super::value_facts::identity_value_paths;
 /// the trailing (or piped) condition must be a Go `bool`.
 pub(super) fn eval_ternary(
     args: &[TemplateExpr],
-    piped_condition: Option<(EvalResult, bool)>,
+    piped_condition: Option<PipedOperand<'_>>,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
@@ -112,29 +113,18 @@ pub(super) fn eval_ternary(
 /// while its returned identity never reaches the ternary's output slot.
 fn eval_ternary_condition(
     args: &[TemplateExpr],
-    piped_condition: Option<(EvalResult, bool)>,
+    piped_condition: Option<PipedOperand<'_>>,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
     effects: &mut Effects,
 ) -> (TruthCondition, SelectionReachability) {
-    let condition = match piped_condition {
-        Some((condition, _is_direct_values_path)) => condition,
+    let (condition, source) = match piped_condition {
+        Some(piped) => (piped.result, piped.source),
         None => match args.get(2) {
-            Some(condition_arg) => {
-                // Source literals keep their type across preceding argument mutations.
-                if matches!(
-                    condition_arg.deparen(),
-                    TemplateExpr::Literal(
-                        Literal::String(_)
-                            | Literal::RawString(_)
-                            | Literal::Int(_)
-                            | Literal::Float(_)
-                    )
-                ) {
-                    push_fail_capture(Vec::new(), effects);
-                }
-                eval_expr_with_helper_calls(condition_arg, env, resolver)
-            }
+            Some(condition_arg) => (
+                eval_expr_with_helper_calls(condition_arg, env, resolver),
+                Some(condition_arg),
+            ),
             None => {
                 return (
                     TruthCondition::Unknown,
@@ -143,6 +133,17 @@ fn eval_ternary_condition(
             }
         },
     };
+    // Source literals keep their type across preceding argument mutations.
+    if source.is_some_and(|source| {
+        matches!(
+            source.deparen(),
+            TemplateExpr::Literal(
+                Literal::String(_) | Literal::RawString(_) | Literal::Int(_) | Literal::Float(_)
+            )
+        )
+    }) {
+        push_fail_capture(Vec::new(), effects);
+    }
     // Derived Boolean values carry no raw identity, so this records a
     // contract only for direct selectors and aliases of direct selectors.
     record_strict_kind_result(

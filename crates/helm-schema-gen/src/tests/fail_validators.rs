@@ -3883,3 +3883,66 @@ fn ternary_literal_check_keeps_mutable_trailing_conditions_dynamic() {
         sim_assert_eq!(have: &schema, want: &expected, "source={source}");
     }
 }
+
+#[test]
+fn ternary_rejects_piped_non_boolean_literal_conditions() {
+    let expected = schema_for_values_yaml(parse_ir(r#"{{ fail "bad" }}"#), None);
+    for source in [
+        r#"{{ $_ := 0 | ternary "a" "b" }}"#,
+        r#"{{ $_ := 1 | ternary "a" "b" }}"#,
+        r#"{{ $_ := -1 | ternary "a" "b" }}"#,
+        r#"{{ $_ := 0x10 | ternary "a" "b" }}"#,
+        r#"{{ $_ := 0.0 | ternary "a" "b" }}"#,
+        r#"{{ $_ := 1.5 | ternary "a" "b" }}"#,
+        r#"{{ $_ := "" | ternary "a" "b" }}"#,
+        r#"{{ $_ := "true" | ternary "a" "b" }}"#,
+        r#"{{ $_ := `true` | ternary "a" "b" }}"#,
+        r#"{{ $_ := (0) | ternary "a" "b" }}"#,
+        r#"{{ $_ := ("true") | ternary "a" "b" }}"#,
+    ] {
+        let schema = schema_for_values_yaml(parse_ir(source), None);
+        sim_assert_eq!(have: &schema, want: &expected, "source={source}");
+    }
+}
+
+#[test]
+fn ternary_piped_literal_failures_respect_outer_control_flow() {
+    let source = r#"{{ if .Values.enabled }}{{ $_ := 0 | ternary "a" "b" }}{{ end }}"#;
+    let reference = r#"{{ if .Values.enabled }}{{ fail "bad" }}{{ end }}"#;
+    let schema = schema_for_values_yaml(parse_ir(source), None);
+    let expected = schema_for_values_yaml(parse_ir(reference), None);
+    sim_assert_eq!(have: &schema, want: &expected);
+    assert!(!schema_accepts_instance(
+        &schema,
+        &serde_json::json!({"enabled": true})
+    ));
+    assert!(schema_accepts_instance(
+        &schema,
+        &serde_json::json!({"enabled": false})
+    ));
+
+    let expected = schema_for_values_yaml(parse_ir(""), None);
+    for source in [
+        r#"{{ $_ := and false (0 | ternary "a" "b") }}"#,
+        r#"{{ $_ := or true (0 | ternary "a" "b") }}"#,
+    ] {
+        let schema = schema_for_values_yaml(parse_ir(source), None);
+        sim_assert_eq!(have: &schema, want: &expected, "source={source}");
+    }
+}
+
+#[test]
+fn ternary_piped_literal_type_belongs_to_the_immediately_preceding_stage() {
+    let expected = schema_for_values_yaml(parse_ir(""), None);
+    for source in [
+        r#"{{ $_ := false | ternary "a" "b" }}"#,
+        r#"{{ $_ := true | ternary "a" "b" }}"#,
+        r#"{{ $_ := 0 | default false | ternary "a" "b" }}"#,
+        r#"{{ $_ := "" | not | ternary "a" "b" }}"#,
+        r#"{{ $_ := (0 | default false) | ternary "a" "b" }}"#,
+        r#"{{ $_ := set $ "flag" "bad" }}{{ $_ := (default (not (set $ "flag" true)) $.flag) | ternary "a" "b" }}"#,
+    ] {
+        let schema = schema_for_values_yaml(parse_ir(source), None);
+        sim_assert_eq!(have: &schema, want: &expected, "source={source}");
+    }
+}
