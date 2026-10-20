@@ -34,11 +34,12 @@ the user's benchtrail dashboard.
   proportions of kube-prometheus-stack at twice its cost) and the CRD-heavy charts, whose
   CRD universe costs under 5 ms. The compact output layout is not a timed configuration:
   shortening the largest output takes 0.13 s, so only its size is recorded.
-- `.github/workflows/bench.yaml` runs on pushes to main that touch the tool or its inputs,
+- `.github/workflows/bench.yaml` runs on every push to main, whatever it touches, and
   records the results with github-action-benchmark (`customSmallerIsBetter`, benchtrail's
   typed `extra` payload: chart and profile dimensions, rustc as environment) on the
   `gh-pages` branch under `bench/`, then calls `pages.yaml`, which installs the benchtrail
-  dashboard into the Hugo output at `/bench/` with the `romnn/benchtrail` action. A
+  dashboard into the Hugo output at `/bench/` with the `romnn/benchtrail` action; the
+  pages workflow has no push trigger of its own, so each commit deploys once. A
   "Benchmarks" menu entry links the site to it.
 
 ## Consequences

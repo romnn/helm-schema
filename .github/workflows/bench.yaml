@@ -1,18 +1,10 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
 name: bench
 on:
+  # Every commit to main is a point in the history, whatever it touches: a docs-only commit, a
+  # lockfile or a Cargo configuration change still yields a measurement.
   push:
     branches: [main]
-    # What the benchmark measures: the tool, its inputs, and the benchmark itself. A docs-only
-    # commit is deployed by the pages workflow alone.
-    paths:
-      - "crates/**"
-      - "Cargo.toml"
-      - "Cargo.lock"
-      - "testdata/charts/**"
-      - "testdata/provider-bundle/**"
-      - "tools/bench/**"
-      - ".github/workflows/bench.yaml"
   workflow_dispatch: {}
 
 env:
