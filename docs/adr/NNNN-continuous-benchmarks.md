@@ -47,8 +47,10 @@ the user's benchtrail dashboard.
 - `gh-pages` only stores the history (`bench/data.js`); Pages still publishes from
   Actions. Runs queue (`concurrency.queue: max`), so no commit's point is dropped; the
   docs deploy even when a benchmark fails, and before any history exists.
-- Hosted runners vary in hardware, so each run notes its CPU model; a toolchain update
-  starts a new segment. benchtrail marks a change only beyond 10% and four times the
+- The compiler and Python are exact versions in `mise.bench.toml` (Rust 1.99.0, Python
+  3.14.7, active under `MISE_ENV=bench`, so contributors' toolchains are unaffected): no
+  toolchain release moves a value without a commit, and moving the pin starts a new
+  history segment. Hosted runners still vary in hardware, so each run notes its CPU model. benchtrail marks a change only beyond 10% and four times the
   series' own noise; github-action-benchmark alerts (beyond 150%) stay in the job summary
   and post no comments. The history is a trend monitor, not a performance claim: claims
   still follow ADR [0064](0064-performance-measurement-protocol.md).

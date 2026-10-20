@@ -10,6 +10,9 @@ on:
 env:
   MISE_GITHUB_TOKEN: ${{ github.token }}
   MISE_AUTO_INSTALL: "0"
+  # mise.bench.toml pins the compiler and Python the benchmark runs with, so a toolchain release
+  # moves no value without a commit here.
+  MISE_ENV: bench
 
 # Every commit is a point in the history, so pending runs queue in order rather than replacing each
 # other, and none is cancelled.
@@ -31,27 +34,27 @@ jobs:
       RUSTC_WRAPPER: sccache
     steps:
       - uses: actions/checkout@v7
-      # Python for the driver, as mise.toml pins it.
+      # Rust and Python at the exact versions mise.bench.toml pins (rustup installs the toolchain;
+      # `mise exec` selects it). The compiler is recorded with every value as its environment.
       - uses: jdx/mise-action@v4
         with:
           install: false
           cache: true
           env: false
-      - run: mise install python
-      - uses: dtolnay/rust-toolchain@stable
+      - run: mise install rust python
       - uses: Swatinem/rust-cache@v2
         with:
           cache-on-failure: true
       - uses: mozilla-actions/sccache-action@v0.0.10
       - name: Build
-        run: cargo build --release --package helm-schema-cli
+        run: mise exec -- cargo build --release --package helm-schema-cli
       # Four corpus charts from the fixed cost to the heavy tails, under the full and (where it
       # changes the cost) the lean profile, offline against the committed provider bundle;
       # tools/bench/bench.py says why each chart is there. CPU time is the figure a shared runner
       # holds steadiest; the per-phase times come from a separate traced run.
       - name: Measure
         run: >-
-          mise exec python -- python3 tools/bench/bench.py
+          mise exec -- python3 tools/bench/bench.py
           --binary target/release/helm-schema
           --json target/bench/history.json
           --summary "$GITHUB_STEP_SUMMARY"
