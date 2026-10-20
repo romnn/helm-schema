@@ -36,6 +36,16 @@ tasks:
     cmds:
       - cargo build --all-targets --release {{.CLI_ARGS}}
 
+  bench:
+    desc: "run the end-to-end benchmark (tools/bench/bench.py) on a release build"
+    env:
+      # The toolchain the CI benchmark pins (mise.bench.toml).
+      MISE_ENV: bench
+    cmds:
+      - mise install rust python
+      - mise exec -- cargo build --release --package helm-schema-cli
+      - mise exec -- python3 tools/bench/bench.py {{.CLI_ARGS}}
+
   goreleaser:
     internal: true
     requires:

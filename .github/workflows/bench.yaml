@@ -1,0 +1,101 @@
+# yaml-language-server: $schema=https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
+name: bench
+on:
+  # Every commit to main is a point in the history, whatever it touches: a docs-only commit, a
+  # lockfile or a Cargo configuration change still yields a measurement.
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+env:
+  MISE_GITHUB_TOKEN: ${{ github.token }}
+  MISE_AUTO_INSTALL: "0"
+  # mise.bench.toml pins the compiler and Python the benchmark runs with, so a toolchain release
+  # moves no value without a commit here.
+  MISE_ENV: bench
+
+# Every commit is a point in the history, so pending runs queue in order rather than replacing each
+# other, and none is cancelled.
+concurrency:
+  group: bench
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  benchmark:
+    name: end-to-end schema generation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    # The history lives on `gh-pages`, which this job commits to.
+    permissions:
+      contents: write
+    env:
+      SCCACHE_GHA_ENABLED: "true"
+      RUSTC_WRAPPER: sccache
+    steps:
+      # Every action is pinned to a commit (its release noted): an upstream update must not
+      # change what runs, least of all in a job that can push to `gh-pages`.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # github-action-benchmark commits the history to `gh-pages` and needs the branch to exist.
+      # Without it, fail here, naming the one-time setup, rather than lose the measurement after
+      # the build. romnn/helm-schema has the branch; a fork creates it once (tools/bench/README.md).
+      - name: Check the history branch
+        run: |
+          if ! git ls-remote --exit-code --heads origin gh-pages > /dev/null; then
+            echo "::error::The benchmark history branch gh-pages does not exist. Create it once, as tools/bench/README.md says: git switch --orphan gh-pages && git commit --allow-empty -m 'Benchmark history' && git push origin gh-pages"
+            exit 1
+          fi
+      # Rust and Python at the exact versions mise.bench.toml pins (rustup installs the toolchain;
+      # `mise exec` selects it). The compiler is recorded with every value as its environment.
+      - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
+        with:
+          install: false
+          cache: true
+          env: false
+      - run: mise install rust python
+      - uses: Swatinem/rust-cache@6323deb102c322ba6fcbdcafc7e3dddab59af2b6 # v2.9.2
+        with:
+          cache-on-failure: true
+      - uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696 # v0.0.10
+      - name: Build
+        run: mise exec -- cargo build --release --package helm-schema-cli
+      # Four corpus charts from the fixed cost to the heavy tails, under the full and (where it
+      # changes the cost) the lean profile, offline against the committed provider bundle;
+      # tools/bench/bench.py says why each chart is there. CPU time is the figure a shared runner
+      # holds steadiest; the per-phase times come from a separate traced run.
+      - name: Measure
+        run: >-
+          mise exec -- python3 tools/bench/bench.py
+          --binary target/release/helm-schema
+          --json target/bench/history.json
+          --summary "$GITHUB_STEP_SUMMARY"
+      # No threshold alert is evaluated: github-action-benchmark only checks its alert threshold
+      # to post a commit comment or fail the job, and runner hardware and the millisecond phases of
+      # the small charts are too noisy for either. The job summary lists every value against the
+      # previous run with their ratio (`summary-always`), and benchtrail's change detection, which
+      # weighs each benchmark's own noise, marks regressions on the dashboard.
+      - name: Record the history
+        uses: benchmark-action/github-action-benchmark@4322e5726e6334590d251fc4f92bec0efafc45dc # v1.22.2
+        with:
+          name: helm-schema end-to-end
+          tool: customSmallerIsBetter
+          output-file-path: target/bench/history.json
+          benchmark-data-dir-path: bench
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          comment-on-alert: false
+          fail-on-alert: false
+          summary-always: true
+
+  # The pages workflow builds the documentation and installs the benchtrail dashboard, with the
+  # history this run recorded, at `/bench/`. It deploys even when the benchmark failed, so a
+  # failed measurement never holds back the documentation of the commit.
+  deploy:
+    name: deploy the site
+    needs: benchmark
+    if: ${{ !cancelled() }}
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/pages.yaml
