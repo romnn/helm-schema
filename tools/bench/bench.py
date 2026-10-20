@@ -9,19 +9,26 @@ per chart and configuration:
   short `$defs` keys that `helm-schema shorten --compact` makes of it (what a chart over Helm's
   5 MiB limit ships), plus the number of `$defs` entries;
 - per-phase wall times from the CLI's own tracing spans (`--trace-output`), taken from a separate
-  traced run, since tracing slows the run it observes (ADR 0064).
+  traced run, since tracing slows the run it observes (ADR 0064);
+- for the cheap charts (INSTRUCTION_CASES), the instructions one run executes, counted by valgrind's
+  cachegrind when valgrind is available: unlike a time, the count does not depend on the CPU a
+  hosted runner happens to get.
 
 Every untraced run of one configuration must write the same bytes, or the benchmark fails: the
 output is deterministic by contract (ADR 0063).
 
-The results are written as a `github-action-benchmark` `customSmallerIsBetter` history entry list
+The results are written as `github-action-benchmark` `customSmallerIsBetter` history entry lists
 whose `extra` strings carry benchtrail's typed payload (chart and profile as dimensions, the metric
-with its unit and direction), and as a Markdown table for the job summary.
+with its unit and direction, the compiler and the CPU model as the environment), and as Markdown
+tables for the job summary. The instruction counts are a list of their own (`--instructions-json`),
+recorded as a separate suite: the dashboard splits the times by CPU model, and the counts, which do
+not depend on it, stay one series.
 
 Only the Python standard library is used; the Perfetto trace is decoded by hand, since it holds
 nothing but the slice begin/end packets `tracing-perfetto` writes.
 
 Usage: task bench, or python3 tools/bench/bench.py [--chart NAME] [--json PATH] [--summary PATH]
+       [--valgrind PATH] [--instructions-json PATH]
 """
 
 from __future__ import annotations
@@ -31,6 +38,7 @@ import hashlib
 import json
 import os
 import platform
+import shutil
 import statistics
 import subprocess
 import sys
@@ -79,6 +87,19 @@ CASES = [
     Case("kube-prometheus-stack", ("full", "lean"), 3),
     Case("oncall", ("lean",), 3),
 ]
+
+# The configurations whose executed instructions are counted under cachegrind, which runs a binary
+# about 27 times slower than natively (an Ubuntu 24.04 container on an Apple M3 Pro, 2026-10-20):
+# kubeview, the fixed cost (5 s, 553 million instructions), and bitnami-redis full, helper-heavy
+# analysis (95-110 s, 25.6 billion). bitnami-redis lean (70-80 s, 19.0 billion) would add over a
+# minute on a hosted runner for a path its full run mostly covers, and the heavy tails would add
+# tens of minutes.
+# One counted run per configuration: for a fixed binary and input the count varies by under 0.1%
+# between runs (std's per-process random hash seeds change hash-table probing; disabling address
+# space randomization changes nothing), against benchtrail's 10% threshold. helm-schema generates
+# a schema on one thread, so thread scheduling adds nothing, and valgrind hides AVX-512 from the
+# program, so CPU feature dispatch takes the same paths on every runner CPU.
+INSTRUCTION_CASES = [("kubeview", "full"), ("bitnami-redis", "full")]
 
 # The tracing spans reported as phases, in pipeline order: the direct children of the CLI's
 # `helm_schema_run` span that cost time, and the two heavy stages inside schema generation. A
@@ -256,7 +277,26 @@ def traced_phases(args: list[str], trace: Path) -> dict[str, float]:
     return phases
 
 
-def bench(binary: Path, chart: str, profile: str, reps: int, traces: int, work: Path) -> dict:
+def instruction_count(valgrind: str, args: list[str], out: Path) -> int:
+    """The instructions one run executes, from the summary line of its cachegrind output."""
+    # Without the cache simulation, cachegrind counts instructions only, which is what the count
+    # needs and the fastest way to run.
+    run_once([valgrind, "--tool=cachegrind", "--cache-sim=no", f"--cachegrind-out-file={out}", *args])
+    for line in out.read_text().splitlines():
+        if line.startswith("summary:"):
+            return int(line.split()[1])
+    sys.exit(f"the cachegrind output {out} has no summary line")
+
+
+def bench(
+    binary: Path,
+    chart: str,
+    profile: str,
+    reps: int,
+    traces: int,
+    valgrind: str | None,
+    work: Path,
+) -> dict:
     output = work / f"{chart}-{profile}.json"
     args = cli_args(binary, chart, profile, output)
     runs = []
@@ -274,6 +314,14 @@ def bench(binary: Path, chart: str, profile: str, reps: int, traces: int, work: 
 
     trace = work / f"{chart}-{profile}.pftrace"
     phase_runs = [traced_phases(args, trace) for _ in range(traces)]
+
+    instructions = None
+    if valgrind and (chart, profile) in INSTRUCTION_CASES:
+        instructions = instruction_count(valgrind, args, work / f"{chart}-{profile}.cachegrind")
+        # The counted run must write what the untraced runs wrote, or it did not run the same work.
+        if hashlib.sha256(output.read_bytes()).hexdigest() not in digests:
+            sys.exit(f"{chart}/{profile} wrote a different schema under cachegrind")
+
     cpus = [run.cpu for run in runs]
     return {
         "chart": chart,
@@ -289,6 +337,7 @@ def bench(binary: Path, chart: str, profile: str, reps: int, traces: int, work: 
         "phases": {
             phase: statistics.median(run[phase] for run in phase_runs) for phase in PHASES
         },
+        "instructions": instructions,
     }
 
 
@@ -319,16 +368,34 @@ def cpu_model() -> str:
     return platform.machine()
 
 
+def valgrind_version(valgrind: str) -> str:
+    """The valgrind that counts the instructions; a new one may count differently."""
+    return subprocess.run(
+        [valgrind, "--version"], capture_output=True, text=True, check=True
+    ).stdout.strip()
+
+
 RUSTC = rustc_version()
 CPU = cpu_model()
 
 
-def entry(result: dict, metric: str, label: str, unit: str, value, direction: str = "lower"):
+def entry(
+    result: dict,
+    metric: str,
+    label: str,
+    unit: str,
+    value,
+    direction: str = "lower",
+    environment: dict | None = None,
+    text: str | None = None,
+):
     """One `customSmallerIsBetter` entry with benchtrail's typed payload in `extra`.
 
-    The compiler is the environment: a toolchain update starts a new segment of the history, so
-    no change is reported across it. The CPU model is only noted, since segmenting on it would
-    leave no runs to compare on a runner pool of mixed hardware.
+    The compiler and the CPU model are the environment. A toolchain update starts a new segment
+    of the history, so no change is reported across it. The CPU model changes from run to run on a
+    pool of hosted runners, which would leave no segment long enough to judge, so the dashboard
+    splits each benchmark into one series per CPU model (benchtrail's `splitEnvironment`): a
+    change is a jump within one CPU's series, never a change of runner.
     """
     low, high = result["cpu_range"]
     payload = {
@@ -336,9 +403,9 @@ def entry(result: dict, metric: str, label: str, unit: str, value, direction: st
             "version": 1,
             "dimensions": {"chart": result["chart"], "profile": result["profile"]},
             "metric": {"id": metric, "label": label, "direction": direction},
-            "environment": {"rustc": RUSTC},
+            "environment": {"rustc": RUSTC, "cpu": CPU, **(environment or {})},
         },
-        "text": f"cpu {low:.3f}-{high:.3f} s over {result['reps']} runs; {CPU}; {RUSTC}",
+        "text": text or f"cpu {low:.3f}-{high:.3f} s over {result['reps']} runs; {CPU}; {RUSTC}",
     }
     return {
         "name": f"{result['chart']}/{result['profile']} {metric}",
@@ -377,6 +444,23 @@ def entries(result: dict) -> list[dict]:
     return out
 
 
+def instruction_entries(result: dict, valgrind: str) -> list[dict]:
+    """The instruction count, with the valgrind that counted it as part of its environment."""
+    if result["instructions"] is None:
+        return []
+    return [
+        entry(
+            result,
+            "instructions",
+            "Instructions (cachegrind)",
+            "count",
+            result["instructions"],
+            environment={"valgrind": valgrind},
+            text=f"one cachegrind run; {valgrind}; {CPU}; {RUSTC}",
+        )
+    ]
+
+
 def markdown(results: list[dict], traces: int) -> str:
     header = ["chart", "profile", "runs", "cpu s", "wall s", "peak RSS MiB", "schema KiB"]
     header += ["compact KiB", "$defs", *PHASES]
@@ -393,6 +477,16 @@ def markdown(results: list[dict], traces: int) -> str:
         row += [f"{r['compact'] / 1024:.0f}", str(r["defs"])]
         row += [f"{r['phases'][phase]:.3f}" for phase in PHASES]
         lines.append("| " + " | ".join(row) + " |")
+    counted = [r for r in results if r["instructions"] is not None]
+    if counted:
+        lines += [
+            "",
+            "Executed instructions, counted by one cachegrind run per configuration:",
+            "",
+            "| chart | profile | instructions |",
+            "| --- | --- | ---: |",
+        ]
+        lines += [f"| {r['chart']} | {r['profile']} | {r['instructions']:,} |" for r in counted]
     return "\n".join(lines) + "\n"
 
 
@@ -404,6 +498,17 @@ def main() -> None:
     parser.add_argument("--chart", action="append", help="only these charts (repeatable)")
     parser.add_argument("--json", type=Path, help="write the github-action-benchmark entries here")
     parser.add_argument("--summary", type=Path, help="append the Markdown table here")
+    parser.add_argument(
+        "--valgrind",
+        default=shutil.which("valgrind"),
+        help="the valgrind that counts instructions (default: the one on PATH; without one, "
+        "instructions are not counted)",
+    )
+    parser.add_argument(
+        "--instructions-json",
+        type=Path,
+        help="write the instruction-count entries here, a suite of their own (needs valgrind)",
+    )
     args = parser.parse_args()
     if args.reps is not None and args.reps < 3:
         parser.error("--reps must be at least 3, so that the median ignores an outlier")
@@ -412,6 +517,11 @@ def main() -> None:
     cases = [case for case in CASES if not args.chart or case.chart in args.chart]
     if args.chart and len(cases) != len(set(args.chart)):
         parser.error(f"--chart must name charts of the benchmark: {[c.chart for c in CASES]}")
+    if args.instructions_json and not args.valgrind:
+        parser.error("--instructions-json needs valgrind, on PATH or given with --valgrind")
+    valgrind = valgrind_version(args.valgrind) if args.valgrind else None
+    if not valgrind:
+        print("valgrind not found: instructions are not counted", file=sys.stderr)
 
     results = []
     with tempfile.TemporaryDirectory(prefix="helm-schema-bench-") as work:
@@ -419,12 +529,24 @@ def main() -> None:
             for profile in case.profiles:
                 started = time.perf_counter()
                 reps = args.reps or case.reps
-                result = bench(args.binary, case.chart, profile, reps, args.traces, Path(work))
+                result = bench(
+                    args.binary,
+                    case.chart,
+                    profile,
+                    reps,
+                    args.traces,
+                    args.valgrind,
+                    Path(work),
+                )
                 results.append(result)
+                counted = result["instructions"] is not None
                 print(
                     f"{case.chart}/{profile}: cpu {result['cpu']:.3f} s, "
-                    f"wall {result['wall']:.3f} s, rss {result['peak_rss'] / MIB:.0f} MiB "
-                    f"({time.perf_counter() - started:.1f} s for {reps} + {args.traces} runs)",
+                    f"wall {result['wall']:.3f} s, rss {result['peak_rss'] / MIB:.0f} MiB"
+                    + (f", {result['instructions']:,} instructions" if counted else "")
+                    + f" ({time.perf_counter() - started:.1f} s for {reps} + {args.traces}"
+                    + (" + 1 cachegrind" if counted else "")
+                    + " runs)",
                     file=sys.stderr,
                 )
 
@@ -437,6 +559,12 @@ def main() -> None:
         history = [item for result in results for item in entries(result)]
         args.json.parent.mkdir(parents=True, exist_ok=True)
         args.json.write_text(json.dumps(history, indent=2) + "\n")
+    if args.instructions_json:
+        counts = [item for result in results for item in instruction_entries(result, valgrind)]
+        if not counts:
+            sys.exit("no configuration of the selected charts counts instructions")
+        args.instructions_json.parent.mkdir(parents=True, exist_ok=True)
+        args.instructions_json.write_text(json.dumps(counts, indent=2) + "\n")
 
 
 if __name__ == "__main__":

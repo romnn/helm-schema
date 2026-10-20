@@ -64,7 +64,12 @@ jobs:
       # history the bench workflow records on `gh-pages` (read through the API,
       # no checkout). Installed after the Hugo build, which may clean
       # docs/public. Before the first benchmark run there is no history yet,
-      # and the documentation still deploys.
+      # and the documentation still deploys. Every value records the runner's
+      # CPU model in its environment, which may change from run to run; it
+      # must not start a new segment of the history, so it is ignored, as it
+      # was before it was recorded. (Splitting the times into one series per
+      # CPU model takes benchtrail's `splitEnvironment`, after the release
+      # that adds it: tools/bench/README.md.)
       - name: Install the benchmark dashboard
         uses: romnn/benchtrail@b9608b8f4191a056be08a730d0312eb75bb9e366 # v0.3.0
         with:
@@ -82,7 +87,8 @@ jobs:
                 "profile": { "label": "Profile", "order": 1 }
               },
               "colorBy": "chart",
-              "dashBy": "profile"
+              "dashBy": "profile",
+              "ignoreEnvironment": ["cpu"]
             }
       - name: Upload artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
