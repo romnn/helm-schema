@@ -401,7 +401,24 @@ and additionally bind the exact Kubernetes version and values-file transport.
 Every row binds chart, complete lane/overlay or exact probe selector, failure
 class and exact reason, plus `owner` (repair track) and `observed_on`.
 No chart-wide, class-wide, targeted-probe suffix, or overlay wildcard is allowed.
-Repeated observations of the same complete identity share one entry.
+The identity also binds the original values-file SHA256 and a SHA256 of the
+ordered applicable control inputs plus the defaults control.
+Byte-distinct encodings remain separate entries even when their parsed overlay
+and display case are identical; each entry must recur independently.
+Repeated observations share an entry only when all these inputs match.
+
+Contextual failures also bind a digest of the complete real Helm lint error
+blocks for baseline, candidate, schema-free execution, and executed controls.
+Normalization removes invocation headers, summaries, blank lines, and trailing
+whitespace, but retains rule headers and every diagnostic continuation line.
+JSON Schema error trees sort siblings because Go map iteration can reorder them;
+parent/child relationships, exact messages and duplicate multiplicity remain bound.
+Other diagnostic text retains its order.
+In particular, a metaschema error binds its failing keyword and pattern/message,
+not only the generic Rust/Helm disagreement or the first lint error line.
+The live matcher verifies the saved original values bytes as well as the digest.
+Legacy template failures without lint executions bind their exact specific
+Kubernetes-control reason and original input/control hashes.
 
 A live round-74 run must match every adjudication failure exactly and observe
 every entry, including entries for charts omitted by a chart filter.

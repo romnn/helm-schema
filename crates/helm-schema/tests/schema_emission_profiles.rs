@@ -2686,7 +2686,7 @@ enum AcceptanceJob {
 
 enum AcceptanceResult {
     Chart(eyre::Result<Box<ScreenedChart>>),
-    Probe(AdjudicatedProbe),
+    Probe(Box<AdjudicatedProbe>),
 }
 
 /// A chart's probe battery and its screening.
@@ -2709,6 +2709,7 @@ struct AdjudicatedProbe {
     case: String,
     document_kind: Option<test_util::helm_values::AcceptanceDocument>,
     kubernetes_version: String,
+    input: Option<known_inherited_failures::FailureInput>,
     outcome: Result<(HelmFlipVerdict, std::path::PathBuf), String>,
     adjudication_ms: u64,
 }
@@ -2784,7 +2785,7 @@ fn compare_charts(charts: Vec<ComparedChart>) -> eyre::Result<AcceptanceComparis
                     .map(|probe| {
                         (
                             (chart_index, probe.flip + 1),
-                            AcceptanceResult::Probe(probe),
+                            AcceptanceResult::Probe(Box::new(probe)),
                         )
                     })
                     .collect()
@@ -2871,6 +2872,7 @@ fn fold_results(
                             probe.case,
                             probe.kubernetes_version,
                             &failure,
+                            probe.input,
                         ),
                     ),
                     Ok((verdict, evidence)) => {
@@ -3227,11 +3229,13 @@ fn adjudicate_probe(
             case: format!("{}: flip {flip}", live.label),
             document_kind: None,
             kubernetes_version: String::new(),
+            input: None,
             outcome: Err(format!("{}: no screened flip {flip}", live.label)),
             adjudication_ms: 0,
         };
     };
     let case = format!("{}: {}", live.label, probe.name);
+    let input = known_inherited_failures::FailureInput::for_probe(probe);
     let kubernetes_version = probe.document.as_ref().map_or_else(
         || {
             live.helm
@@ -3243,10 +3247,11 @@ fn adjudicate_probe(
         },
         |document| document.kubernetes_version.clone(),
     );
-    let outcome = match (live.helm.chart(&live.path), kubernetes) {
-        (Err(error), _) => Err(format!("{case}: {error}")),
-        (Ok(_), None) => Err(format!("{case}: no Kubernetes validator")),
-        (Ok(chart), Some(kubernetes)) => {
+    let outcome = match (&input, live.helm.chart(&live.path), kubernetes) {
+        (Err(error), _, _) => Err(format!("{case}: cannot identify input: {error}")),
+        (_, Err(error), _) => Err(format!("{case}: {error}")),
+        (_, Ok(_), None) => Err(format!("{case}: no Kubernetes validator")),
+        (_, Ok(chart), Some(kubernetes)) => {
             let outcome = match &probe.document {
                 Some(document) => match observations {
                     Some(Ok(observations)) => lint_adjudication::adjudicate_lint_observation(
@@ -3275,6 +3280,7 @@ fn adjudicate_probe(
         case,
         document_kind: probe.document.as_ref().map(|document| document.kind),
         kubernetes_version,
+        input: input.ok(),
         outcome,
         adjudication_ms: elapsed_ms(started),
     }

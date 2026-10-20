@@ -526,14 +526,15 @@ fn live_grouped_outcomes_fold_in_original_probe_order() -> eyre::Result<()> {
             let case = format!("flip {flip}");
             (
                 (0, flip + 1),
-                super::AcceptanceResult::Probe(super::AdjudicatedProbe {
+                super::AcceptanceResult::Probe(Box::new(super::AdjudicatedProbe {
                     flip,
                     case: case.clone(),
                     document_kind: Some(AcceptanceDocument::LintRaw),
                     kubernetes_version: "1.29.0".into(),
+                    input: None,
                     outcome: Err(case),
                     adjudication_ms: 0,
-                }),
+                })),
             )
         })
         .collect();

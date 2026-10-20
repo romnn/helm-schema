@@ -267,7 +267,11 @@ fn judge(
         "candidate_errors": candidate_errors.iter().map(ToString::to_string).collect::<Vec<_>>(),
         "baseline_lint": format!("{baseline_lint:?}"), "candidate_lint": format!("{candidate_lint:?}"),
         "schema_free_lint": format!("{plain_lint:?}"), "render_evidence": rendered.evidence_dir,
-        "kubernetes_version": document.kubernetes_version, "transport": "values-file"
+        "kubernetes_version": document.kubernetes_version, "transport": "values-file",
+        "failure_input": crate::known_inherited_failures::FailureInput::new(
+            &document.values_file,
+            &document.control_overlays,
+        )?
     });
     let verdict = if document.kind != AcceptanceDocument::Template
         && (schema_accepts(&baseline_lint, document.kind) != before
