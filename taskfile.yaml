@@ -220,7 +220,7 @@ tasks:
         || { echo "helmsweep needs go{{.HELMSWEEP_GO}}" >&2; exit 1; }
       # Tagged Helm module, digest-checked and patched, in a build-local copy
       # (stage.sh); the source tree holds only the patch.
-      - '{{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- ./stage.sh "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build"'
+      - '{{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- sh ./stage.sh "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build"'
       # No VCS stamp: the binary's sha256 (the verdict cache's build id)
       # changes only when its sources or toolchain do.
       - >-
@@ -252,7 +252,7 @@ tasks:
     cmds:
       - mkdir -p "{{.TEST_TMP}}"
       - test -z "$({{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- gofmt -l .)" || { echo "gofmt -l is not empty" >&2; exit 1; }
-      - '{{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- ./stage.sh "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build"'
+      - '{{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- sh ./stage.sh "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build"'
       - cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build" && {{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- go vet ./...
       - cd "${CARGO_TARGET_DIR:-{{.ROOT_DIR}}/target}/helmsweep-build" && {{.TEMP_ENV}} mise exec go@{{.HELMSWEEP_GO}} -- go test -race -count=1 ./...
 
