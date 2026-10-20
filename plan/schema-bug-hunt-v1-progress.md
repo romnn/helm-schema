@@ -8996,4 +8996,17 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   small slices, so root-cause fixes compound on main and generalisation is measurable per landing (closures and removed obligations vs
   net LOC). Recorded: docs/adr/0101-landing-ratchet.md, 0091 → Superseded, playbook standing decisions (incl. the Codex-sol model rule).
   Next: re-brief every builder to hand back at its next landable improvement with a stopping rule. Orchestrator.
+- 04:32 (Oct 20) — **Ratchet triage of the tracks; ADR value audit; apiguess step 2 (probe table deleted).** ADR audit (sol b20b14ac,
+  `round8/review-adr-value-sol.md`; user suspected the exact-100 count was anchored): 66 survive (60 KEEP, 6 FIX), 21 MERGE, 14 DROP
+  (conventions already in AGENTS.md, expired/unadopted items, implementation details) — being applied with contiguous renumbering by sol
+  20261020T023223-6f506c88 in worktree round8-adraudit. W4 ratchet analysis (`analysis-ratchet-w4.md`): no checkpoint landable yet; nearest
+  slice 45a3d884 (canonical comparison operands + overlay guard; +24 nonblank LOC; 16 corpus cells improve: gitea g4–g6, trino t1/t2/t5–t11,
+  openebs o1/o3/o5, alertmanager a1) after a main+10a differential; r16 introduces false acceptances (m19/m21, n16/n18) and +2,296 LOC.
+  W1 (`analysis-ratchet-w1.md`): nearest b0a708ac after removing 2 introduced false rejections and ~59 introduced false acceptances
+  (+4,160 LOC vs main); 31312880 has 297 main-reject/candidate-accept regressions. apiguess step 2 (sol 154cb939 turn 1): capability
+  checks and built-in apiVersion guesses answered from upstream's per-version `_definitions.json`, the hand-maintained probe table DELETED;
+  gates 0 (unit 1,692, integration 931), +33 LOC (track total −91), 204 fixtures identical; committed 39c5f84e (sha256 a3e18ee3…); review
+  sol 20261020T023223-df188fd0. Track G CRD oracle: vendor tree dropped (patch 55 KB); its vetoes would turn 221 passing outcomes into
+  unusable controls → orchestrator: vetoes apply only to chart-sourced CRD authority, catalog-backed decisions keep today's behaviour, the
+  oracle may only ADD decisions (ratchet rule 1); measurement CLI out of the landing patch. Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
