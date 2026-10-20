@@ -8,7 +8,7 @@ Date: 2026-10-20 (user request)
 ADR [0063](0063-deterministic-output-and-the-performance-law.md) sets a performance
 law, but nothing watched it between performance campaigns: regressions surfaced only
 when a later campaign re-traced the slow charts. The user asked for a small,
-representative benchmark on every commit to main, its history kept over time, and the
+representative benchmark on every push to main, its history kept over time, and the
 results published on GitHub Pages beside the Hugo site, as romnn/progeny does with
 the user's benchtrail dashboard.
 
@@ -39,7 +39,7 @@ the user's benchtrail dashboard.
   typed `extra` payload: chart and profile dimensions, rustc as environment) on the
   `gh-pages` branch under `bench/`, then calls `pages.yaml`, which installs the benchtrail
   dashboard into the Hugo output at `/bench/` with the `romnn/benchtrail` action; the
-  pages workflow has no push trigger of its own, so each commit deploys once. A
+  pages workflow has no push trigger of its own, so each push deploys once. A
   "Benchmarks" menu entry links the site to it.
 
 ## Consequences
@@ -48,12 +48,14 @@ the user's benchtrail dashboard.
   Actions. github-action-benchmark needs the branch to exist: romnn/helm-schema has it
   (an empty orphan, created 2026-10-20), and the workflow checks for it before building
   and fails with the one-time setup, which `tools/bench/README.md` documents for forks.
-- Runs queue (`concurrency.queue: max`), so no commit's point is dropped; the docs
+- Runs queue (`concurrency.queue: max`), so no push's point is dropped; the docs
   deploy even when a benchmark fails, and before any history exists.
 - The compiler and Python are exact versions in `mise.bench.toml` (Rust 1.99.0, Python
   3.14.7, active under `MISE_ENV=bench`, so contributors' toolchains are unaffected): no
   toolchain release moves a value without a commit, and moving the pin starts a new
   history segment. Hosted runners still vary in hardware, so each run notes its CPU model.
+- GitHub runs a push workflow once per push, on its head commit: the commits of one push
+  share one point, and a regression is located to a push, not to one of its commits.
 - benchtrail marks a change only beyond 10% and four times the series' own noise.
   github-action-benchmark evaluates no threshold (it does so only to comment or fail,
   both off); its job summary lists every value against the previous run with the ratio.

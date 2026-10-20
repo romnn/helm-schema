@@ -1,8 +1,9 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
 name: bench
 on:
-  # Every commit to main is a point in the history, whatever it touches: a docs-only commit, a
-  # lockfile or a Cargo configuration change still yields a measurement.
+  # Every push to main is a point in the history, whatever it touches: GitHub runs the workflow once
+  # per push, on the pushed head commit, so the commits of one push share a point, and a docs-only
+  # push, a lockfile or a Cargo configuration change still yields a measurement.
   push:
     branches: [main]
   workflow_dispatch: {}
@@ -14,7 +15,7 @@ env:
   # moves no value without a commit here.
   MISE_ENV: bench
 
-# Every commit is a point in the history, so pending runs queue in order rather than replacing each
+# Every push is a point in the history, so pending runs queue in order rather than replacing each
 # other, and none is cancelled.
 concurrency:
   group: bench
