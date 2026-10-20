@@ -89,13 +89,13 @@ fn resource_locator_keeps_multi_document_resources_separate() {
     let first = locator.resource_at(first_byte).expect("first resource");
     sim_assert_eq!(have: first.kind, want: "ConfigMap");
     sim_assert_eq!(have: first.api_version, want: "v1");
-    assert!(first.api_version_candidates.is_empty());
+    sim_assert_eq!(have: first.api_version_candidates, want: [] as [String; 0]);
 
     let second_byte = source.find("replicas").expect("replicas marker");
     let second = locator.resource_at(second_byte).expect("second resource");
     sim_assert_eq!(have: second.kind, want: "Deployment");
     sim_assert_eq!(have: second.api_version, want: "apps/v1");
-    assert!(second.api_version_candidates.is_empty());
+    sim_assert_eq!(have: second.api_version_candidates, want: [] as [String; 0]);
 }
 
 #[test]

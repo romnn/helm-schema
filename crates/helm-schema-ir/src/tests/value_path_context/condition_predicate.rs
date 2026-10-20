@@ -605,14 +605,14 @@ fn not_or_paths_uses_demorgan_negated_guards() {
 
 #[test]
 fn empty_condition_returns_empty() {
-    assert!(parse_condition("").is_empty());
-    assert!(parse_condition("   ").is_empty());
+    sim_assert_eq!(have: parse_condition(""), want: [] as [Guard; 0]);
+    sim_assert_eq!(have: parse_condition("   "), want: [] as [Guard; 0]);
 }
 
 #[test]
 fn condition_without_values_reference_returns_empty() {
-    assert!(parse_condition(".Chart.Name").is_empty());
-    assert!(parse_condition("not (empty $var)").is_empty());
+    sim_assert_eq!(have: parse_condition(".Chart.Name"), want: [] as [Guard; 0]);
+    sim_assert_eq!(have: parse_condition("not (empty $var)"), want: [] as [Guard; 0]);
 }
 
 #[test]

@@ -8,6 +8,8 @@
 
 use std::num::NonZero;
 
+use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
+
 const GIB: u64 = 1024 * 1024 * 1024;
 
 /// The cores and memory available to this process.
@@ -54,6 +56,22 @@ impl Machine {
     #[must_use]
     pub fn helm_memory_bytes(&self) -> u64 {
         self.memory_bytes / 3
+    }
+
+    /// The configured Helm memory budget, defaulting to the host-sized budget.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error if `SCHEMA_HELM_MEMORY_MIB` is not a representable byte count.
+    pub fn helm_memory_budget(&self) -> eyre::Result<u64> {
+        match std::env::var("SCHEMA_HELM_MEMORY_MIB") {
+            Ok(memory) => memory
+                .parse::<u64>()
+                .wrap_err("SCHEMA_HELM_MEMORY_MIB")?
+                .checked_mul(1024 * 1024)
+                .ok_or_eyre("SCHEMA_HELM_MEMORY_MIB exceeds a representable byte count"),
+            Err(_) => Ok(self.helm_memory_bytes()),
+        }
     }
 
     /// Helm render workers: one per GiB of [`Self::helm_memory_bytes`].

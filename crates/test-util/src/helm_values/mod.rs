@@ -11,6 +11,7 @@
 //!   AGAIN over that result, so a default a null override deleted in the
 //!   first pass is back in the second. The rule reads the overrides after
 //!   the values rule has rewritten their nested tables in place.
+//!   Helm skips this rule when the root has no `templates/` directory.
 //! - [`AcceptanceDocument::Template`]: `helm template` / `helm install`.
 //!   `ProcessDependencies`, then one `CoalesceValues`.
 //!
@@ -29,6 +30,7 @@ mod dependencies;
 mod go_value;
 mod ignore;
 mod options;
+mod probes;
 mod semver;
 mod yaml;
 
@@ -38,16 +40,20 @@ use std::path::Path;
 use serde_json::Value;
 
 pub use options::ValuesOptions;
+pub use probes::{DependencyControl, DependencyProbe, DependencyProbeKind};
 
 use chart::Chart;
 use go_value::{Node, Table, get, new_table, table_from_json, table_to_json};
 
 /// Which of the documents Helm validates schemas against.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(
+    Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, serde::Serialize, serde::Deserialize,
+)]
 pub enum AcceptanceDocument {
     /// `helm lint`'s values rule; checked against the root schema only.
     LintRaw,
     /// `helm lint`'s template rule: the twice-coalesced document.
+    /// Charts without a root `templates/` directory do not validate this document.
     LintCoalescedTwice,
     /// `helm template` and `helm install`: the once-coalesced document.
     Template,
@@ -145,7 +151,8 @@ pub enum Warning {
 pub enum ValuesError {
     /// Helm validates no such document for this input: it aborts first
     /// (a non-map dependency scope, an unloadable chart, a malformed flag)
-    /// or the rule does not run (no `values.yaml` for lint's values rule).
+    /// or the rule does not run (no `values.yaml` for lint's values rule or
+    /// no `templates/` directory for lint's template rule).
     #[error("Helm validates no document: {0}")]
     NotValidated(String),
     /// The input needs a Helm behaviour this port does not model.
@@ -179,42 +186,184 @@ pub fn acceptance_values(
     overrides: Value,
     document: AcceptanceDocument,
 ) -> Result<ValidatedValues, ValuesError> {
+    if document != AcceptanceDocument::LintRaw {
+        return AcceptanceInputs::load(chart_dir)?.compose(overrides, document);
+    }
     let overrides = match overrides {
         Value::Null => new_table(),
         Value::Object(overrides) => table_from_json(overrides),
         other => return Err(ValuesError::Overrides(other)),
     };
     let mut warnings = BTreeSet::new();
-    match document {
-        AcceptanceDocument::LintRaw => {
-            let root = lint_values_rule(chart_dir, &overrides, &mut warnings)?;
-            Ok(ValidatedValues {
-                root: Value::Object(table_to_json(&root)),
-                dependencies: Vec::new(),
-                warnings,
+    let root = lint_values_rule_at(chart_dir, &overrides, &mut warnings)?;
+    Ok(ValidatedValues {
+        root: Value::Object(table_to_json(&root)),
+        dependencies: Vec::new(),
+        warnings,
+    })
+}
+
+/// Parsed chart inputs reused with isolated mutable values for every composition.
+pub struct AcceptanceInputs {
+    chart: Chart,
+    raw_values: Option<RawValues>,
+    templates_directory: bool,
+}
+
+// Raw lint reads even ignored files; its parse failures must not reject template inputs.
+enum RawValues {
+    Parsed(serde_json::Map<String, Value>),
+    NotValidated(String),
+    Unmodelled(String),
+}
+
+impl AcceptanceInputs {
+    /// Load chart metadata, dependencies, root values, and lint applicability once.
+    ///
+    /// Raw-rule parse failures are cached and reported only when composing lint documents.
+    ///
+    /// # Errors
+    ///
+    /// Returns loader or filesystem failures.
+    pub fn load(chart_dir: &Path) -> Result<Self, ValuesError> {
+        let chart = chart::load_directory(chart_dir)?;
+        let path = chart_dir.join("values.yaml");
+        let raw_values = if path.exists() {
+            let bytes = std::fs::read(&path).map_err(|source| ValuesError::Io {
+                path: path.display().to_string(),
+                source,
+            })?;
+            Some(match chart::read_values_bytes(&bytes) {
+                Ok(values) => RawValues::Parsed(values),
+                Err(ValuesError::NotValidated(reason)) => RawValues::NotValidated(reason),
+                Err(ValuesError::Unmodelled(reason)) => RawValues::Unmodelled(reason),
+                Err(err) => return Err(err),
             })
-        }
-        AcceptanceDocument::LintCoalescedTwice => {
-            // The values rule runs first and rewrites the overrides' nested
-            // tables in place; the template rule reads what it left.
-            match lint_values_rule(chart_dir, &overrides, &mut warnings) {
-                Ok(_) | Err(ValuesError::NotValidated(_)) => {}
-                Err(error) => return Err(error),
+        } else {
+            None
+        };
+        Ok(Self {
+            chart,
+            raw_values,
+            templates_directory: chart_dir.join("templates").is_dir(),
+        })
+    }
+
+    /// Compose an overlay without sharing mutable tables with any other call.
+    ///
+    /// # Errors
+    ///
+    /// Returns unsupported inputs or documents Helm does not validate.
+    pub fn compose(
+        &self,
+        overrides: Value,
+        document: AcceptanceDocument,
+    ) -> Result<ValidatedValues, ValuesError> {
+        let overrides = match overrides {
+            Value::Null => new_table(),
+            Value::Object(overrides) => table_from_json(overrides),
+            other => return Err(ValuesError::Overrides(other)),
+        };
+        let mut warnings = BTreeSet::new();
+        match document {
+            AcceptanceDocument::LintRaw => {
+                let root = self.lint_values_rule(&overrides, &mut warnings)?;
+                Ok(ValidatedValues {
+                    root: Value::Object(table_to_json(&root)),
+                    dependencies: Vec::new(),
+                    warnings,
+                })
             }
-            let mut chart = chart::load_directory(chart_dir)?;
-            dependencies::process_dependencies(&mut chart, &overrides, &mut warnings)?;
-            let once = coalesce::coalesce_values(&chart, &overrides, &mut warnings)?;
-            let twice = coalesce::coalesce_values(&chart, &once, &mut warnings)?;
-            validated(&chart, &twice, warnings)
-        }
-        AcceptanceDocument::Template => {
-            let mut chart = chart::load_directory(chart_dir)?;
-            check_dependencies(&chart)?;
-            dependencies::process_dependencies(&mut chart, &overrides, &mut warnings)?;
-            let values = coalesce::coalesce_values(&chart, &overrides, &mut warnings)?;
-            validated(&chart, &values, warnings)
+            AcceptanceDocument::LintCoalescedTwice => {
+                if !self.templates_directory {
+                    return Err(ValuesError::NotValidated(
+                        "lint's template rule needs a templates directory".to_string(),
+                    ));
+                }
+                // The values rule runs first and rewrites the overrides' nested
+                // tables in place; the template rule reads what it left.
+                match self.lint_values_rule(&overrides, &mut warnings) {
+                    Ok(_) | Err(ValuesError::NotValidated(_)) => {}
+                    Err(error) => return Err(error),
+                }
+                let mut chart = self.chart.deep_copy();
+                dependencies::process_dependencies(&mut chart, &overrides, &mut warnings)?;
+                let once = coalesce::coalesce_values(&chart, &overrides, &mut warnings)?;
+                let twice = coalesce::coalesce_values(&chart, &once, &mut warnings)?;
+                validated(&chart, &twice, warnings)
+            }
+            AcceptanceDocument::Template => {
+                let mut chart = self.chart.deep_copy();
+                check_dependencies(&chart)?;
+                dependencies::process_dependencies(&mut chart, &overrides, &mut warnings)?;
+                let values = coalesce::coalesce_values(&chart, &overrides, &mut warnings)?;
+                validated(&chart, &values, warnings)
+            }
         }
     }
+
+    fn lint_values_rule(
+        &self,
+        overrides: &Table,
+        warnings: &mut BTreeSet<Warning>,
+    ) -> Result<Table, ValuesError> {
+        let Some(values) = &self.raw_values else {
+            return Err(ValuesError::NotValidated(
+                "lint's values rule needs values.yaml".to_string(),
+            ));
+        };
+        match values {
+            RawValues::Parsed(values) => {
+                Ok(lint_values_tables(values.clone(), overrides, warnings))
+            }
+            RawValues::NotValidated(reason) => Err(ValuesError::NotValidated(reason.clone())),
+            RawValues::Unmodelled(reason) => Err(ValuesError::Unmodelled(reason.clone())),
+        }
+    }
+}
+
+/// `helm lint`'s values rule: `CoalesceTables(CoalesceTables({}, overrides),
+/// values)`.
+/// The first call shares the overrides' nested tables, so the second writes into them.
+fn lint_values_rule_at(
+    chart_dir: &Path,
+    overrides: &Table,
+    warnings: &mut BTreeSet<Warning>,
+) -> Result<Table, ValuesError> {
+    let path = chart_dir.join("values.yaml");
+    if !path.exists() {
+        return Err(ValuesError::NotValidated(
+            "lint's values rule needs values.yaml".to_string(),
+        ));
+    }
+    let bytes = std::fs::read(&path).map_err(|source| ValuesError::Io {
+        path: path.display().to_string(),
+        source,
+    })?;
+    lint_values_rule(&bytes, overrides, warnings)
+}
+
+fn lint_values_rule(
+    bytes: &[u8],
+    overrides: &Table,
+    warnings: &mut BTreeSet<Warning>,
+) -> Result<Table, ValuesError> {
+    Ok(lint_values_tables(
+        chart::read_values_bytes(bytes)?,
+        overrides,
+        warnings,
+    ))
+}
+
+fn lint_values_tables(
+    values: serde_json::Map<String, Value>,
+    overrides: &Table,
+    warnings: &mut BTreeSet<Warning>,
+) -> Table {
+    let coalesced = new_table();
+    coalesce::coalesce_tables(&coalesced, overrides, "", false, warnings);
+    coalesce::coalesce_tables(&coalesced, &table_from_json(values), "", false, warnings);
+    coalesced
 }
 
 /// The document `helm template` validates and hands the templates: the
@@ -245,27 +394,6 @@ pub fn coalesce_tables(overrides: &Value, base: &Value) -> Value {
         &mut warnings,
     );
     Value::Object(table_to_json(&dst))
-}
-
-/// `helm lint`'s values rule: `CoalesceTables(CoalesceTables({}, overrides),
-/// values)`. The first call shares the overrides' nested tables, so the
-/// second writes into them.
-fn lint_values_rule(
-    chart_dir: &Path,
-    overrides: &Table,
-    warnings: &mut BTreeSet<Warning>,
-) -> Result<Table, ValuesError> {
-    let path = chart_dir.join("values.yaml");
-    if !path.exists() {
-        return Err(ValuesError::NotValidated(
-            "lint's values rule needs values.yaml".to_string(),
-        ));
-    }
-    let values = chart::read_values_file(&path)?;
-    let coalesced = new_table();
-    coalesce::coalesce_tables(&coalesced, overrides, "", false, warnings);
-    coalesce::coalesce_tables(&coalesced, &table_from_json(values), "", false, warnings);
-    Ok(coalesced)
 }
 
 /// `action.CheckDependencies`: every root requirement names a loaded chart.

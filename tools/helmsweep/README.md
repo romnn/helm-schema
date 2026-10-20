@@ -6,7 +6,8 @@ The landing sweep's Helm oracle, in-process: `helm lint` and
 It deviates from the Helm CLI only in performance:
 
 - a schema compile memo, the one Helm patch (`PATCH.md`);
-- a bounded worker pool with one schema compile at a time;
+- an indexed compiler queue from our jsonschema/v6 fork (`PATCH.md`);
+- a bounded worker pool with serialized initial schema warm-up retained until chart completion;
 - a fail-closed on-disk verdict cache.
 
 ## Build
@@ -21,21 +22,38 @@ stages the patched Helm module and this module's sources in
 `mise exec go@1.26.5`, `GOTOOLCHAIN=local`, `-trimpath` and `-buildvcs=false`
 (so its sha256, the cache's build id, depends only on sources and toolchain), then checks
 `helmsweep version`: Go 1.26.5, `helm.sh/helm/v4 v4.2.3 => ./third_party/helm-v4.2.3`,
-`github.com/santhosh-tekuri/jsonschema/v6 v6.0.2` and the sha256 of
+`github.com/santhosh-tekuri/jsonschema/v6 v6.0.2 => github.com/romnn/jsonschema/v6 v6.0.3-0.20261018154229-cb4d114ec4c7`
+and the sha256 of
 `helm-memo.patch`.
+
+The versioned validator replacement is fetched by Go and verified against
+`go.sum`; a landing clone needs no local fork checkout.
+It is based on upstream v6.0.2 and removes the linear compiler-queue scan
+that accounted for 27.40% of the measured OnCall compile/validation CPU.
+`PATCH.md` records the change and how to remove the override.
 
 ## Commands
 
 | Command | Does |
 |---|---|
 | `version` | prints `build <sha256 of the executable>`, `go`, the Helm and jsonschema module versions and `patch <sha256>` |
+| `schema [--prepare] CHART` | prints the sha256 of the root schema Helm's directory loader actually loaded; exits 2 if loading fails or no schema is loaded |
 | `lint [--helm-env-clear] --kube-version K --values F CHART` | one `helm lint CHART --kube-version K -f F`: prints the CLI's combined output, exits with its code |
 | `template [--helm-env-clear] --kube-version K --values F CHART` | one `helm template t CHART --skip-schema-validation --kube-version K -f F`: prints the CLI's stderr, exits with its code |
 | `classify lint\|template RC LOG` | prints the gate's class of a log (a port of `landing.py classify_helm`; both are tested against `testdata/helm-classes.json`, a byte-identical copy of the runner's `tests/helm-classes.json`) |
 | `sweep --roster R --roster-sha256 H --work W [--jobs N] --cache C --helm-env-clear` | the sweep, below |
-| `serve` | a resident `helm template` server for helm-schema's battery, below |
+| `serve` | a resident lint/template server for helm-schema's battery, below |
 
 ## Sweep contract (for `run-landing.sh sweep`)
+
+`version` advertises `schema-probe 1`. `schema --prepare` changes only a schema-bearing
+copy's `.helmignore`: each rule that `helm.sh/helm/v4/pkg/ignore` says excludes the
+root `values.schema.json` is blanked, preserving its line ending and the file's
+leading BOM while keeping all other lines byte for byte in their original context.
+Negated rules follow Helm's semantics, including exclusion of nonmatches.
+The command then loads the chart with Helm and reports the loaded bytes' sha256;
+callers must compare this hash with their planned schema bytes.
+Without `--prepare`, the command is read-only.
 
 Inputs, as `landing.py sweep-plan` and `sweep-one.sh` lay them out today:
 
@@ -51,7 +69,8 @@ roster hashes to `H` and every row is well formed (read_roster's checks);
 every override file and name and every plan schema matches the roster; `plain`
 holds no `values.schema.json` at any depth; `base` and `cand` equal `plain`
 (content digest over every path, type, permission bits and file bytes)
-plus exactly the planned root schema; no copy holds a symlink or special
+plus exactly the planned root schema and the ignore edit derived above;
+Helm's loaded root schema matches the roster hash; no copy holds a symlink or special
 file; no chart has outputs yet; and no schema has a `$ref`, `$dynamicRef` or
 `$recursiveRef` that does not start with `#`, or a `$schema` jsonschema/v6
 does not know (their compile could read files or the network).
@@ -137,11 +156,11 @@ key, certificate or salted-hash functions, `keys`, `values`, `tpl` and
 not parse; `lookup` stays cacheable (lint and client-only template answer it
 empty).
 
-## Resident template server (`serve`)
+## Resident Helm server (`serve`)
 
 The battery's Helm adjudication (`crates/helm-schema/tests/common/helm_invocation.rs`,
 engine `helmsweep`, the default; `SCHEMA_HELM_ENGINE=cli` spawns the CLI
-instead) keeps `helmsweep serve` processes, one per concurrent render, each
+instead) keeps `helmsweep serve` processes, one per concurrent command, each
 started under exactly the environment and working directory a CLI child
 would get; the server does not change them. One JSON request per stdin line,
 one answer per stdout line, in order, matched by `id`; the server exits at EOF.
@@ -153,21 +172,40 @@ one answer per stdout line, in order, matched by `id`; the server exits at EOF.
 The render is `helm template R C --kube-version K [--skip-schema-validation]
 -f F…` (`templateRun`: `pkg/cmd/template.go` and `install.go runInstall` with
 default flags), stdout composed as the CLI prints it (manifest, then hooks).
-A server renders one request at a time, so every log record written during a
-render is that render's own and goes into its stderr where the CLI prints it:
-stdout, stderr and exit code are the CLI's byte for byte. `error` is a
-harness failure, never a verdict: a malformed or unsupported request,
+A lint request uses `"op":"lint"`, an empty release and no schema bypass;
+it runs `helm lint C --kube-version K -f F…` through the same `lintRun` as
+the standalone command. Lint writes its report on stdout and cobra's final
+error on stderr. Each request loads its chart, values and action afresh.
+Only successful compiled schemas with no external loads are shared, keyed
+by every schema byte; each validation has fresh state. The memo retains the
+two most recently used schemas, covering the battery’s baseline/candidate
+pair. Eviction discards only the memo reference; active callers keep their
+immutable validator, and a later request recompiles it. This bounds entries,
+not bytes. The driver resets
+Helm's unresolved-URN warning history between commands under its exclusive
+lock, preserving the warnings a fresh CLI process would print.
+
+A server runs one request at a time, so every log record belongs to that
+command and goes into its stderr where the CLI prints it:
+the driver preserves Helm's stdout, stderr and exit code without normalization.
+`error` is a harness failure, never a verdict: a malformed or unsupported request,
 unwritable outputs, or an abnormal end (a panic, where the CLI would exit 2).
 Chart, values and outputs must be absolute local paths.
 
-Memory: `peak_bytes` is the most memory the server held while this render
-ran (sampled every millisecond) — the per-render figure the battery's pool
+Memory: `peak_bytes` is the most memory the server held while this command
+ran (sampled every millisecond) — the per-command figure the battery's pool
 reservations use; `held_bytes` is what it holds idle afterwards, having
 returned free memory to the OS above 64 MiB; `max_rss_bytes` is the server's
-lifetime peak, telemetry only. The client retires a server holding more than
-128 MiB after a render, kills and reaps any server that fails or does not
-answer within its timeout (600 s), and never runs more servers than
-concurrent renders, so idle servers stay small beside the pool's budget.
+lifetime peak, telemetry only. Idle servers share the configured Helm memory
+budget (`SCHEMA_HELM_MEMORY_MIB`, otherwise one third of host memory); returning
+servers evict the oldest idle servers when necessary. A server larger than
+that whole budget is retired. Active peaks remain separately measured and
+reserved; the idle budget is not a hard combined RSS limit. Failed or late
+servers are killed and reaped (600 s for template, 1,200 s for lint), and the
+client never runs more servers than concurrent commands. Responses also expose cumulative
+`schema_compiles` and `schema_memo_hits` for measuring compilation reuse.
+Invocation identity, replay policy and failure handling are shared by both
+operations; nondeterministic charts still bypass result replay.
 
 ## CLI adjudication
 

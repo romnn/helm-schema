@@ -1,4 +1,4 @@
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 use std::io::Write;
 
 use serde_json::Value;
@@ -9,10 +9,52 @@ use crate::output_pipeline::JsonOutputFormat;
 /// Helm refuses to load any chart file larger than 5 MiB, and a chart's
 /// `values.schema.json` counts against that limit.
 ///
-/// The writer never changes a document to fit: callers compare
-/// [`FinalOutputMetrics::serialized_bytes`] against this limit and shorten
-/// definition names explicitly when they ship to Helm.
+/// Explicit-format writers preserve the requested format.
+/// [`serialize_default_schema_json`] tries compaction for oversized default output.
 pub const HELM_MAX_CHART_FILE_BYTES: usize = 5 * 1024 * 1024;
+
+/// A complete default CLI document, choosing its layout by Helm's chart-file limit.
+#[derive(Debug)]
+pub struct DefaultSchemaOutput {
+    /// Serialized JSON, including the trailing newline.
+    pub bytes: Vec<u8>,
+    /// Whether oversized pretty output required compact JSON.
+    pub compacted: bool,
+    /// Whether the shortener changed any definition names.
+    pub shortened: bool,
+    /// Each short definition key's readable name; empty when shortening abstains.
+    pub readable_names: BTreeMap<String, String>,
+}
+
+/// Serializes pretty JSON when it fits Helm, otherwise compact JSON with short names when safe.
+///
+/// The limit includes the final newline and depends only on `schema`.
+/// The complete document is prepared before callers open their output destination.
+/// Oversized compact output is returned so callers can warn and still write it.
+///
+/// # Errors
+///
+/// Returns an error if JSON serialization fails.
+pub fn serialize_default_schema_json(schema: &Value) -> EngineResult<DefaultSchemaOutput> {
+    let mut bytes = serde_json::to_vec_pretty(schema)?;
+    bytes.push(b'\n');
+    let compacted = bytes.len() > HELM_MAX_CHART_FILE_BYTES;
+    let mut readable_names = BTreeMap::new();
+    let mut names_changed = false;
+    if compacted {
+        let shortened = helm_schema_json_schema_minify::shorten_definition_names(schema);
+        bytes = serde_json::to_vec(&shortened.schema)?;
+        bytes.push(b'\n');
+        readable_names = shortened.readable_names;
+        names_changed = shortened.shortened;
+    }
+    Ok(DefaultSchemaOutput {
+        bytes,
+        compacted,
+        shortened: names_changed,
+        readable_names,
+    })
+}
 
 /// Measurements of the exact final document written for Helm to compile.
 #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]

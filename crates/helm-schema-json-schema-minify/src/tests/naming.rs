@@ -491,6 +491,7 @@ fn readable_document() -> Value {
 fn shortening_is_a_bijection_that_inverts_to_the_readable_document() -> eyre::Result<()> {
     let readable = readable_document();
     let shortened = shorten_definition_names(&readable);
+    assert!(shortened.shortened);
 
     // Total coverage, unique destinations, equal definition counts.
     sim_assert_eq!(
@@ -616,8 +617,22 @@ fn shortening_decodes_encoded_references_and_abstains_on_others() {
         anchor,
     ] {
         let shortened = shorten_definition_names(&schema);
+        assert!(!shortened.shortened);
         sim_assert_eq!(have: shortened.readable_names, want: BTreeMap::new());
         sim_assert_eq!(have: shortened.schema, want: schema);
+    }
+}
+
+#[test]
+fn shortening_reports_no_change_for_absent_or_already_short_names() {
+    for schema in [
+        json!({ "type": "string" }),
+        json!({ "$defs": {} }),
+        json!({ "$defs": { "1": { "type": "string" } }, "$ref": "#/$defs/1" }),
+    ] {
+        let output = shorten_definition_names(&schema);
+        assert!(!output.shortened);
+        sim_assert_eq!(have: output.schema, want: schema);
     }
 }
 

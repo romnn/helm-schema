@@ -62,9 +62,9 @@ use value_facts::{
 /// An already-evaluated pipeline value in Go's final-argument position.
 ///
 /// Consumers must reuse `result`; evaluating the source expression again would duplicate effects.
-struct PipedOperand {
+struct PipedOperand<'a> {
     result: EvalResult,
-    is_direct_values_path: bool,
+    source: Option<&'a TemplateExpr>,
 }
 
 /// One direct-call or pipeline-stage invocation.
@@ -74,7 +74,7 @@ struct PipedOperand {
 struct CallInvocation<'a> {
     function: &'a str,
     args: &'a [TemplateExpr],
-    piped: Option<PipedOperand>,
+    piped: Option<PipedOperand<'a>>,
 }
 
 /// Special forms whose evaluation order belongs to the dispatcher but which
@@ -196,18 +196,18 @@ fn eval_invocation(
             return eval_sequence_invocation(function, args, piped.take(), env, resolver);
         }
         "eq" | "ne" if operand_count >= 2 => {
-            let piped = piped
-                .take()
-                .map(|piped| (piped.result, piped.is_direct_values_path));
+            let piped = piped.take().map(|piped| {
+                (
+                    piped.result,
+                    piped.source.and_then(direct_values_path).is_some(),
+                )
+            });
             return eval_comparison(function, args, piped, env, resolver);
         }
         "ternary" => {
             // The piped operand is the condition: its strict Boolean contract and effects flow,
             // but its value is not a result arm.
-            let piped = piped
-                .take()
-                .map(|piped| (piped.result, piped.is_direct_values_path));
-            return eval_ternary(args, piped, env, resolver);
+            return eval_ternary(args, piped.take(), env, resolver);
         }
         "replace" if operand_count == 3 => {
             return eval_replace(args, piped.take().map(|piped| piped.result), env, resolver);
@@ -324,7 +324,7 @@ fn eval_string_transform_invocation(
 fn eval_sequence_invocation(
     function: &str,
     args: &[TemplateExpr],
-    piped: Option<PipedOperand>,
+    piped: Option<PipedOperand<'_>>,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
@@ -989,14 +989,15 @@ fn record_values_root_helper_include(
 fn eval_piped_invocation(
     function: &str,
     args: &[TemplateExpr],
-    piped: PipedOperand,
+    piped: PipedOperand<'_>,
     env: &EvalEnv,
     resolver: &mut impl HelperCallValueResolver,
 ) -> EvalResult {
     let PipedOperand {
         result: current,
-        is_direct_values_path: piped_is_direct_values_path,
+        source,
     } = piped;
+    let piped_is_direct_values_path = source.and_then(direct_values_path).is_some();
     match function {
         "default" => eval_default(current, args, env, resolver),
         function if function_semantics(function).collection == CollectionShape::Merge => {
@@ -1291,14 +1292,14 @@ pub(crate) fn eval_pipeline_with_helper_calls(
         return EvalResult::none();
     };
     let mut current = eval_expr_with_helper_calls(first_stage, env, resolver);
-    let mut current_is_direct_values_path = direct_values_path(first_stage).is_some();
+    let mut current_source = Some(first_stage);
 
     for stage in remaining_stages {
         let TemplateExpr::Call { function, args } = stage else {
             current
                 .effects
                 .merge(eval_expr_with_helper_calls(stage, env, resolver).effects);
-            current_is_direct_values_path = false;
+            current_source = None;
             continue;
         };
 
@@ -1308,13 +1309,13 @@ pub(crate) fn eval_pipeline_with_helper_calls(
                 args,
                 piped: Some(PipedOperand {
                     result: current,
-                    is_direct_values_path: current_is_direct_values_path,
+                    source: current_source,
                 }),
             },
             env,
             resolver,
         );
-        current_is_direct_values_path = false;
+        current_source = Some(stage);
     }
 
     current

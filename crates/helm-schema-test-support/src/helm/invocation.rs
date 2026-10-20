@@ -2,9 +2,9 @@
 //!
 //! Helm runs either as the pinned CLI, one child per invocation, or inside
 //! resident `helmsweep serve` processes (`tools/helmsweep`), one per
-//! concurrent render, which answer each `helm template` with exactly the
-//! CLI's stdout, stderr and exit code from Helm's own code. `SCHEMA_HELM_ENGINE=cli` selects the CLI; the
-//! resident engine is the default.
+//! concurrent command. Both operations return the CLI's stdout, stderr and
+//! exit code from Helm's own code. `SCHEMA_HELM_ENGINE=cli` selects the CLI;
+//! the resident engine is the default.
 //!
 //! An execution is identified by everything that can change what Helm prints:
 //! the engine, its program's bytes and version, the platform, the complete child
@@ -70,9 +70,8 @@ const HELMSWEEP_HELM_LINES: [&str; 2] = [
 /// a harness failure.
 pub const RENDER_TIMEOUT: Duration = Duration::from_secs(600);
 
-/// A resident server holding more than this after a render is retired, not
-/// kept idle: idle servers stay small beside the pool's memory budget.
-const RETIRE_ABOVE_BYTES: u64 = 128 << 20;
+/// Maximum duration of a Helm lint, including large dependency charts.
+pub const LINT_TIMEOUT: Duration = Duration::from_mins(20);
 
 /// A chart tree at its content address, made only by [`HelmRunner::publish_tree`].
 #[derive(Clone, Debug)]
@@ -137,7 +136,7 @@ impl Cacheability {
 }
 
 /// How the outputs of one invocation were obtained.
-#[derive(Clone, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Outcome {
     /// Run by Helm now.
     Executed,
@@ -148,6 +147,7 @@ pub enum Outcome {
 }
 
 /// One completed Helm execution: Helm ran and exited with its own status.
+#[derive(Clone)]
 pub struct HelmExecution {
     /// Helm's exit code: 0 on success, 1 when Helm reports an error.
     pub exit_code: i32,
@@ -160,6 +160,21 @@ pub struct HelmExecution {
 }
 
 impl HelmExecution {
+    /// Reloads a completed invocation from its private evidence directory.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for missing or malformed evidence.
+    pub fn read(directory: &Path, stage: &str) -> eyre::Result<Self> {
+        let record = InvocationRecord::read(directory, stage)?;
+        Ok(Self {
+            exit_code: record.exit_code,
+            stdout: fs::read(directory.join(format!("{stage}.yaml")))?,
+            stderr: fs::read(directory.join(format!("{stage}.stderr")))?,
+            record,
+        })
+    }
+
     /// Whether Helm exited 0.
     #[must_use]
     pub const fn success(&self) -> bool {
@@ -168,7 +183,7 @@ impl HelmExecution {
 }
 
 /// What one invocation cost, retained beside its outputs.
-#[derive(Clone, Debug, Serialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct InvocationRecord {
     /// The caller's label for the execution, such as `render` or `coalesce`.
     pub stage: String,
@@ -194,6 +209,19 @@ pub struct InvocationRecord {
     pub stdout_bytes: u64,
     /// Size of Helm's stderr.
     pub stderr_bytes: u64,
+}
+
+impl InvocationRecord {
+    pub(super) fn read(directory: &Path, stage: &str) -> eyre::Result<Self> {
+        #[derive(Deserialize)]
+        struct SavedInvocation {
+            record: InvocationRecord,
+        }
+        let saved: SavedInvocation = serde_json::from_slice(&fs::read(
+            directory.join(format!("{stage}{INVOCATION_RECORD_SUFFIX}")),
+        )?)?;
+        Ok(saved.record)
+    }
 }
 
 /// Everything that identifies one Helm execution.
@@ -409,9 +437,9 @@ impl HelmRunner {
         })
     }
 
-    /// A runner rendering in resident `helmsweep serve` processes started
-    /// from `program`, under the environment a CLI child gets, each render
-    /// answered within `timeout`.
+    /// A runner using resident `helmsweep serve` processes started from `program`.
+    /// Each template is answered within `timeout`; lint uses [`LINT_TIMEOUT`].
+    /// Both operations use the environment a CLI child gets.
     ///
     /// # Errors
     ///
@@ -436,8 +464,9 @@ impl HelmRunner {
             program_version: version,
             resident: Some(ResidentPool {
                 idle: Mutex::new(Vec::new()),
-                timeout,
+                memory_bytes: crate::machine::Machine::detect().helm_memory_budget()?,
             }),
+            timeout,
             ..runner
         })
     }
@@ -461,6 +490,7 @@ impl HelmRunner {
     }
 
     /// The engine program's stdout for `arguments` under the child environment.
+    #[tracing::instrument(skip_all, fields(command = "version"))]
     fn program_output(&self, arguments: &[&str]) -> eyre::Result<String> {
         let output = output_within(
             Command::new(&self.program)
@@ -553,13 +583,43 @@ impl HelmRunner {
         stage: &str,
         cacheability: &Cacheability,
     ) -> eyre::Result<HelmExecution> {
+        self.invoke(request, case, stage, cacheability, HelmOperation::Template)
+    }
+
+    /// Runs pinned Helm lint with values and template schema rules through the selected engine.
+    /// The deadline is [`LINT_TIMEOUT`].
+    /// Outputs, evidence and replay identities follow [`Self::template`].
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for an unavailable or unpinned engine, abnormal termination,
+    /// timeout, or inaccessible inputs, evidence or replay storage.
+    pub fn lint(
+        &self,
+        request: &TemplateRequest<'_>,
+        case: &Path,
+        stage: &str,
+        cacheability: &Cacheability,
+    ) -> eyre::Result<HelmExecution> {
+        self.invoke(request, case, stage, cacheability, HelmOperation::Lint)
+    }
+
+    fn invoke(
+        &self,
+        request: &TemplateRequest<'_>,
+        case: &Path,
+        stage: &str,
+        cacheability: &Cacheability,
+        operation: HelmOperation,
+    ) -> eyre::Result<HelmExecution> {
         let (values_path, values_sha256) = self.publish_input(request.values)?;
         let chart = utf8(&request.chart.path)?;
         let values = utf8(&values_path)?;
 
         let home = self.root.join("home");
         let environment = self.environment()?;
-        let call = TemplateCall {
+        let call = HelmCall {
+            operation,
             chart: chart.to_string(),
             kubernetes_version: request.kubernetes_version.to_string(),
             values: values.to_string(),
@@ -597,10 +657,14 @@ impl HelmRunner {
         )
     }
 
+    #[tracing::instrument(
+        skip_all,
+        fields(command = "template", chart = %call.chart, lane = stage, engine = %invocation.engine)
+    )]
     fn run(
         &self,
         invocation: &InvocationRequest,
-        call: &TemplateCall,
+        call: &HelmCall,
         input_bytes: u64,
         case: &Path,
         stage: &str,
@@ -635,6 +699,10 @@ impl HelmRunner {
             None
         };
         let lookup_ms = elapsed_ms(lookup);
+        let timeout = match call.operation {
+            HelmOperation::Lint => LINT_TIMEOUT,
+            HelmOperation::Template => self.timeout,
+        };
         let (result, stdout, stderr, outcome, server_max_rss_bytes) =
             if let Some((result, stdout, stderr)) = stored {
                 fs::write(case.join(format!("{stage}.yaml")), &stdout)?;
@@ -643,9 +711,10 @@ impl HelmRunner {
             } else {
                 let (result, stdout, stderr, server_max_rss_bytes) =
                     if let Some(resident) = &self.resident {
-                        resident.execute(self, call, case, stage)?
+                        resident.execute(self, call, case, stage, timeout)?
                     } else {
-                        let (result, stdout, stderr) = self.execute(invocation, case, stage)?;
+                        let (result, stdout, stderr) =
+                            self.execute(invocation, case, stage, timeout)?;
                         (result, stdout, stderr, 0)
                     };
                 if replayable {
@@ -687,11 +756,13 @@ impl HelmRunner {
         })
     }
 
+    #[tracing::instrument(skip_all, fields(command = "template", engine = "cli", lane = stage))]
     fn execute(
         &self,
         invocation: &InvocationRequest,
         case: &Path,
         stage: &str,
+        timeout: Duration,
     ) -> eyre::Result<(StoredResult, Vec<u8>, Vec<u8>)> {
         let stdout_path = case.join(format!("{stage}.yaml"));
         let stderr_path = case.join(format!("{stage}.stderr"));
@@ -729,11 +800,11 @@ impl HelmRunner {
             if let Some(usage) = waited {
                 break usage;
             }
-            if started.elapsed() > self.timeout {
+            if started.elapsed() > timeout {
                 kill_process_group(&mut child);
                 eyre::bail!(
                     "Helm {stage} timed out after {:?}; evidence={}",
-                    self.timeout,
+                    timeout,
                     preserve_failure(case).display()
                 );
             }
@@ -818,16 +889,36 @@ impl HelmRunner {
     }
 }
 
-/// One `helm template` as both engines run it.
-struct TemplateCall {
+/// The Helm operations supported by both engines.
+#[derive(Clone, Copy)]
+enum HelmOperation {
+    Template,
+    Lint,
+}
+
+/// One local Helm command whose arguments also identify its resident request.
+struct HelmCall {
+    operation: HelmOperation,
     chart: String,
     kubernetes_version: String,
     values: String,
 }
 
-impl TemplateCall {
+impl HelmCall {
     /// The CLI's arguments, which the key binds for either engine.
     fn arguments(&self) -> Vec<String> {
+        if matches!(self.operation, HelmOperation::Lint) {
+            return [
+                "lint",
+                &self.chart,
+                "--kube-version",
+                &self.kubernetes_version,
+                "-f",
+                &self.values,
+            ]
+            .map(str::to_string)
+            .to_vec();
+        }
         [
             "template",
             RELEASE_NAME,
@@ -854,14 +945,14 @@ struct ServeAnswer {
     error: Option<String>,
 }
 
-/// The resident `helmsweep serve` processes. Each serves one render at a
-/// time, so every log record of a render is that render's own; a caller
-/// takes an idle server or starts one, so there are no more servers than
-/// concurrent renders. A server that fails, answers late or holds more than
-/// `RETIRE_ABOVE_BYTES` after a render is terminated and reaped, never kept.
+/// Resident servers run one command at a time, attributing its log records
+/// exclusively. A caller takes an idle server or starts one, so there are no
+/// more servers than concurrent calls. Failed or late servers are terminated
+/// and reaped. Idle holdings share one budget; active peaks remain measured
+/// separately by the caller's admission pool.
 struct ResidentPool {
     idle: Mutex<Vec<Resident>>,
-    timeout: Duration,
+    memory_bytes: u64,
 }
 
 /// One `helmsweep serve` process: a request line out, its answer line back
@@ -871,20 +962,26 @@ struct Resident {
     stdin: ChildStdin,
     answers: mpsc::Receiver<std::io::Result<String>>,
     next_id: u64,
+    held_bytes: u64,
 }
 
 impl ResidentPool {
-    /// Renders `call` in an idle or new server, which writes stdout and
+    /// Runs `call` in an idle or new server, which writes stdout and
     /// stderr where the CLI engine's child would; also returns the server's
     /// lifetime peak. Anything but the answer to this request within the
     /// timeout (the server ending, a malformed line, another id, an error, a
     /// status Helm never uses) is a harness failure.
+    #[tracing::instrument(
+        skip_all,
+        fields(command = "template", engine = "helmsweep", chart = %call.chart, lane = stage)
+    )]
     fn execute(
         &self,
         runner: &HelmRunner,
-        call: &TemplateCall,
+        call: &HelmCall,
         case: &Path,
         stage: &str,
+        timeout: Duration,
     ) -> eyre::Result<(StoredResult, Vec<u8>, Vec<u8>, u64)> {
         let idle = lock(&self.idle).pop();
         let mut resident = match idle {
@@ -895,7 +992,7 @@ impl ResidentPool {
         let stderr_path = case.join(format!("{stage}.stderr"));
         let started = Instant::now();
         let answer = resident
-            .render(call, &stdout_path, &stderr_path, self.timeout)
+            .invoke(call, &stdout_path, &stderr_path, timeout)
             .wrap_err_with(|| {
                 format!(
                     "helmsweep serve failed; evidence={}",
@@ -916,8 +1013,15 @@ impl ResidentPool {
                 preserve_failure(case).display()
             );
         };
-        if answer.held_bytes <= RETIRE_ABOVE_BYTES {
-            lock(&self.idle).push(resident);
+        resident.held_bytes = answer.held_bytes;
+        if resident.held_bytes <= self.memory_bytes {
+            let mut idle = lock(&self.idle);
+            let mut held: u64 = idle.iter().map(|server| server.held_bytes).sum();
+            while held > self.memory_bytes - resident.held_bytes {
+                let evicted = idle.remove(0);
+                held -= evicted.held_bytes;
+            }
+            idle.push(resident);
         }
         let stdout = fs::read(&stdout_path)?;
         let stderr = fs::read(&stderr_path)?;
@@ -933,6 +1037,7 @@ impl ResidentPool {
 }
 
 impl Resident {
+    #[tracing::instrument(skip_all, fields(command = "serve"))]
     fn start(runner: &HelmRunner) -> eyre::Result<Self> {
         let mut child = Command::new(&runner.program)
             .env_clear()
@@ -964,26 +1069,31 @@ impl Resident {
             stdin,
             answers,
             next_id: 0,
+            held_bytes: 0,
         })
     }
 
-    fn render(
+    fn invoke(
         &mut self,
-        call: &TemplateCall,
+        call: &HelmCall,
         stdout: &Path,
         stderr: &Path,
         timeout: Duration,
     ) -> eyre::Result<ServeAnswer> {
         let id = self.next_id;
         self.next_id += 1;
+        let (operation, release, skip_schema) = match call.operation {
+            HelmOperation::Template => ("template", RELEASE_NAME, true),
+            HelmOperation::Lint => ("lint", "", false),
+        };
         let request = serde_json::json!({
             "id": id,
-            "op": "template",
-            "release": RELEASE_NAME,
+            "op": operation,
+            "release": release,
             "chart": call.chart,
             "kube_version": call.kubernetes_version,
             "values": [call.values],
-            "skip_schema_validation": true,
+            "skip_schema_validation": skip_schema,
             "stdout_path": utf8(stdout)?,
             "stderr_path": utf8(stderr)?,
         });
@@ -1183,6 +1293,7 @@ pub struct TimedOut(pub String);
 /// # Errors
 ///
 /// Returns an error when `command` cannot start, cannot be waited for, or outlives `timeout`.
+#[tracing::instrument(skip_all, fields(command = %command.get_program().to_string_lossy(), class = what))]
 pub fn output_within(command: &mut Command, timeout: Duration, what: &str) -> eyre::Result<Output> {
     let deadline = Instant::now() + timeout;
     own_process_group(command);
@@ -1405,44 +1516,7 @@ pub fn preserve_failure(case: &Path) -> PathBuf {
 
 fn preserve_bundle(case: &Path) -> eyre::Result<PathBuf> {
     let preserved = test_util::scratch::preserve(case)?;
-    // Original path -> bundle-relative copy.
-    let mut copies: BTreeMap<String, String> = BTreeMap::new();
-    for entry in fs::read_dir(&preserved)? {
-        let record_path = entry?.path();
-        let Some(stage) = record_path
-            .file_name()
-            .and_then(|name| name.to_str())
-            .and_then(|name| name.strip_suffix(INVOCATION_RECORD_SUFFIX))
-            .map(str::to_string)
-        else {
-            continue;
-        };
-        let mut record: serde_json::Map<String, serde_json::Value> =
-            serde_json::from_slice(&fs::read(&record_path)?)?;
-        for (field, relative) in [
-            ("chart", format!("charts/{stage}")),
-            ("values", format!("inputs/{stage}.values.json")),
-        ] {
-            let original = record
-                .get(field)
-                .and_then(serde_json::Value::as_str)
-                .ok_or_eyre("invocation record lacks a path")?
-                .to_string();
-            let copy = preserved.join(&relative);
-            if field == "chart" {
-                test_util::scratch::copy_tree(Path::new(&original), &copy)?;
-            } else {
-                fs::create_dir_all(preserved.join("inputs"))?;
-                fs::copy(&original, &copy)?;
-            }
-            record.insert(
-                field.to_string(),
-                serde_json::Value::String(relative.clone()),
-            );
-            copies.insert(original, relative);
-        }
-        fs::write(&record_path, serde_json::to_vec_pretty(&record)?)?;
-    }
+    let copies = preserve_bundle_inputs(&preserved)?;
     // A probe's chart evidence names the same trees; point it at the copies.
     if let Some(prepared) = case
         .parent()
@@ -1462,4 +1536,68 @@ fn preserve_bundle(case: &Path) -> eyre::Result<PathBuf> {
         )?;
     }
     Ok(preserved)
+}
+
+fn preserve_bundle_inputs(directory: &Path) -> eyre::Result<BTreeMap<String, String>> {
+    // Original path -> bundle-relative copy.
+    let mut copies: BTreeMap<String, String> = BTreeMap::new();
+    let mut entries = fs::read_dir(directory)?.collect::<std::io::Result<Vec<_>>>()?;
+    entries.sort_by_key(std::fs::DirEntry::file_name);
+    for entry in entries {
+        let record_path = entry.path();
+        if entry.file_type()?.is_dir() {
+            // Materialized inputs belong to the chart, not the evidence record format.
+            if entry.file_name() != "charts" && entry.file_name() != "inputs" {
+                preserve_bundle_inputs(&record_path)?;
+            }
+            continue;
+        }
+        let Some(stage) = record_path
+            .file_name()
+            .and_then(|name| name.to_str())
+            .and_then(|name| name.strip_suffix(INVOCATION_RECORD_SUFFIX))
+            .map(str::to_string)
+        else {
+            continue;
+        };
+        let mut record: serde_json::Map<String, serde_json::Value> =
+            serde_json::from_slice(&fs::read(&record_path)?)?;
+        for (field, relative) in [
+            ("chart", format!("charts/{stage}")),
+            ("values", format!("inputs/{stage}.values.json")),
+        ] {
+            let original = record
+                .get(field)
+                .and_then(serde_json::Value::as_str)
+                .ok_or_eyre("invocation record lacks a path")?
+                .to_string();
+            // Already-portable nested evidence needs no second copy.
+            if !Path::new(&original).is_absolute() {
+                eyre::ensure!(
+                    directory.join(&original).exists(),
+                    "missing portable input {original}"
+                );
+                continue;
+            }
+            let relative = if let Some(relative) = copies.get(&original) {
+                relative.clone()
+            } else {
+                let copy = directory.join(&relative);
+                if field == "chart" {
+                    test_util::scratch::copy_tree(Path::new(&original), &copy)?;
+                } else {
+                    fs::create_dir_all(directory.join("inputs"))?;
+                    fs::copy(&original, &copy)?;
+                }
+                copies.insert(original.clone(), relative.clone());
+                relative
+            };
+            record.insert(
+                field.to_string(),
+                serde_json::Value::String(relative.clone()),
+            );
+        }
+        fs::write(&record_path, serde_json::to_vec_pretty(&record)?)?;
+    }
+    Ok(copies)
 }

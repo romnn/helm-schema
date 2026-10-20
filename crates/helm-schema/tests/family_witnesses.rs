@@ -18,8 +18,12 @@ use std::fmt::Write as _;
 use std::path::{Path, PathBuf};
 
 use color_eyre::eyre::{self, WrapErr as _};
-use helm_schema::output::{HELM_MAX_CHART_FILE_BYTES, shorten_definition_names};
+use helm_schema::output::{
+    HELM_MAX_CHART_FILE_BYTES, serialize_default_schema_json, shorten_definition_names,
+};
 use helm_schema_test_support::helm::kubernetes_version;
+use helm_schema_test_support::{generate, registry};
+use indoc::indoc;
 use serde_json::{Value, json};
 use sha2::{Digest as _, Sha256};
 use test_util::prelude::sim_assert_eq;
@@ -33,9 +37,11 @@ mod known_false_acceptances;
 use family_witnesses::{
     CAMPAIGN_FAMILIES, ExpectedViolation, FAMILY_WITNESSES, FamilyWitnesses, KubernetesExpectation,
     ObligationExpectation, OracleExpectation, Overrides, PolicyOption, SchemaExpectation,
-    SchemaVerdict, SetPair, SetValue, SizeObligation, Witness,
+    SchemaVerdict, SetPair, SetValue, ShippedOutput, SizeObligation, Witness,
 };
-use known_false_acceptances::{Family, KNOWN_FALSE_ACCEPTANCES, ROSTER_BASELINE};
+use known_false_acceptances::{
+    Family, KNOWN_CONTEXT_FALSE_ACCEPTANCES, KNOWN_FALSE_ACCEPTANCES, ROSTER_BASELINE, Rejection,
+};
 
 /// Schema errors printed beside a failing row.
 const CONTEXT_ERRORS: usize = 5;
@@ -150,6 +156,12 @@ enum Fixture {
 
 #[test]
 fn fixture_verdicts() -> eyre::Result<()> {
+    eyre::ensure!(
+        KNOWN_FALSE_ACCEPTANCES
+            .iter()
+            .all(|group| group.rejection != Rejection::LintRejects),
+        "legacy path/class roster rows cannot identify lint documents; use exact context selectors"
+    );
     let layout = Layout::corpus();
     let run = run_gate(FAMILY_WITNESSES, &layout)?;
     println!("{}", family_report(FAMILY_WITNESSES, &run)?);
@@ -451,7 +463,27 @@ fn evaluate_size(
     obligation: &SizeObligation,
     layout: &Layout,
 ) -> eyre::Result<RowResult> {
-    let size = shipped_bytes(&read_fixture(&layout.fixture(obligation.chart))?)?;
+    let size = match obligation.output {
+        ShippedOutput::HelmReady => {
+            shipped_bytes(&read_fixture(&layout.fixture(obligation.chart))?)?
+        }
+        ShippedOutput::DefaultCli => {
+            let recipe = registry::PolicyRecipe {
+                chart: registry::ChartRecipe::corpus(
+                    obligation.chart,
+                    helm_schema_gen::SchemaProfile::Full,
+                ),
+                reference_policy: helm_schema::output::ReferencePolicy::SelfContained,
+                override_file: None,
+            };
+            let session = helm_schema::AnalysisSession::new(generate::generate_options_at(
+                &layout.chart_dir(obligation.chart),
+                &recipe.chart,
+            ));
+            let emitted = generate::emit_policy(&session, &recipe)?;
+            serialize_default_schema_json(&emitted)?.bytes.len()
+        }
+    };
     let observed = if size <= HELM_MAX_CHART_FILE_BYTES {
         ObligationExpectation::Met
     } else {
@@ -468,7 +500,8 @@ fn evaluate_size(
         have: outcome(observed),
         want: outcome(obligation.expectation),
         context: vec![format!(
-            "Helm reads {size} shipped bytes; its limit is {HELM_MAX_CHART_FILE_BYTES}"
+            "Helm reads {size} bytes of {:?} output; its limit is {HELM_MAX_CHART_FILE_BYTES}",
+            obligation.output
         )],
     })
 }
@@ -609,9 +642,20 @@ fn chart_problems(chart: &str, layout: &Layout) -> eyre::Result<Vec<String>> {
                 relative.display()
             ));
         }
-        let manifest = relative
-            .file_name()
-            .is_some_and(|name| name == "Chart.yaml" || name == "requirements.yaml");
+        // A dependency manifest sits at the chart root or at the root of a
+        // vendored dependency (`charts/<name>/`); a file of the same name
+        // under `templates/` is a template.
+        let at_chart_root = relative.parent().is_none_or(|parent| {
+            parent.as_os_str().is_empty()
+                || parent
+                    .parent()
+                    .and_then(Path::file_name)
+                    .is_some_and(|grandparent| grandparent == "charts")
+        });
+        let manifest = at_chart_root
+            && relative
+                .file_name()
+                .is_some_and(|name| name == "Chart.yaml" || name == "requirements.yaml");
         if manifest {
             let path = dir.join(&relative);
             let source = std::fs::read_to_string(&path)
@@ -904,12 +948,38 @@ fn family_tallies(catalog: &[FamilyWitnesses], run: &GateRun) -> BTreeMap<Family
     for group in KNOWN_FALSE_ACCEPTANCES {
         tallies.entry(group.family).or_default().roster += group.probes.len();
     }
+    for row in KNOWN_CONTEXT_FALSE_ACCEPTANCES {
+        tallies.entry(row.family).or_default().roster += 1;
+    }
     for conflict in &run.conflicts {
         for family in &conflict.families {
             tallies.entry(*family).or_default().conflicts += 1;
         }
     }
     tallies
+}
+
+fn write_roster_report(report: &mut String) -> eyre::Result<()> {
+    for group in KNOWN_FALSE_ACCEPTANCES {
+        for probe in group.probes {
+            writeln!(
+                report,
+                "roster {:?}: {}: {} <- {} ({:?}, baseline {:?} at {ROSTER_BASELINE})",
+                group.family, group.chart, probe.path, probe.value, group.rejection, group.baseline
+            )?;
+        }
+    }
+    for row in KNOWN_CONTEXT_FALSE_ACCEPTANCES {
+        writeln!(
+            report,
+            "roster {:?}: {} ({:?}, baseline {:?} at {ROSTER_BASELINE})",
+            row.family,
+            row.selector.case(row.chart)?,
+            row.rejection,
+            row.baseline
+        )?;
+    }
+    Ok(())
 }
 
 /// The deterministic per-family report and the campaign metric.
@@ -991,15 +1061,7 @@ fn family_report(catalog: &[FamilyWitnesses], run: &GateRun) -> eyre::Result<Str
             writeln!(report, "unfrozen {:?}: {note}", entry.family)?;
         }
     }
-    for group in KNOWN_FALSE_ACCEPTANCES {
-        for probe in group.probes {
-            writeln!(
-                report,
-                "roster {:?}: {}: {} <- {} ({:?}, baseline {:?} at {ROSTER_BASELINE})",
-                group.family, group.chart, probe.path, probe.value, group.rejection, group.baseline
-            )?;
-        }
-    }
+    write_roster_report(&mut report)?;
     for conflict in &run.conflicts {
         writeln!(
             report,
@@ -1491,6 +1553,7 @@ fn size_obligation_follows_helms_file_limit() -> eyre::Result<()> {
         size_obligations: &[SizeObligation {
             id: "gate-fixture-size",
             chart: GATE_CHART,
+            output: ShippedOutput::HelmReady,
             expectation: ObligationExpectation::Met,
         }],
         unfrozen: &[],
@@ -1500,6 +1563,7 @@ fn size_obligation_follows_helms_file_limit() -> eyre::Result<()> {
         size_obligations: &[SizeObligation {
             id: "gate-fixture-size",
             chart: GATE_CHART,
+            output: ShippedOutput::HelmReady,
             expectation: ObligationExpectation::KnownUnmet,
         }],
         ..met
@@ -1535,6 +1599,137 @@ fn size_obligation_follows_helms_file_limit() -> eyre::Result<()> {
                 RowState::FileSize(ObligationExpectation::KnownUnmet),
                 RowState::FileSize(ObligationExpectation::Met),
             ),
+        ]
+    );
+    Ok(())
+}
+
+/// Final annotations push an otherwise fitting compact schema over Helm's limit.
+#[test]
+fn default_output_obligation_counts_final_annotations() -> eyre::Result<()> {
+    let schemas = test_util::scratch::ScratchDir::new("family-witness-default-output")?;
+    let layout = Layout {
+        charts: schemas.path().join("charts"),
+        schemas: schemas.path().to_path_buf(),
+        policy_schemas: gate_root().join("policy-schemas").join("accepting"),
+        values_files: gate_root().join("values"),
+    };
+    let chart_dir = layout.chart_dir(GATE_CHART);
+    std::fs::create_dir_all(&chart_dir)?;
+    std::fs::copy(
+        gate_root().join("charts/gate/Chart.yaml"),
+        chart_dir.join("Chart.yaml"),
+    )?;
+    let recipe = registry::PolicyRecipe {
+        chart: registry::ChartRecipe::corpus(GATE_CHART, helm_schema_gen::SchemaProfile::Full),
+        reference_policy: helm_schema::output::ReferencePolicy::SelfContained,
+        override_file: None,
+    };
+    std::fs::write(
+        chart_dir.join("values.yaml"),
+        indoc! {"
+            # x
+            value: hello
+        "},
+    )?;
+    let session =
+        helm_schema::AnalysisSession::new(generate::generate_options_at(&chart_dir, &recipe.chart));
+    let fixture = generate::session_schema(&session, &recipe.chart)?;
+    let padding = HELM_MAX_CHART_FILE_BYTES - shipped_bytes(&fixture)?;
+    std::fs::write(
+        chart_dir.join("values.yaml"),
+        indoc::formatdoc! {"
+            # {}
+            value: hello
+        ", "x".repeat(padding)},
+    )?;
+    let session =
+        helm_schema::AnalysisSession::new(generate::generate_options_at(&chart_dir, &recipe.chart));
+    let fixture = generate::session_schema(&session, &recipe.chart)?;
+    std::fs::write(
+        layout.fixture(GATE_CHART),
+        serde_json::to_vec_pretty(&fixture)?,
+    )?;
+    // The fixture plus its newline fits exactly; the CLI's complete document does not.
+    sim_assert_eq!(
+        have: serialize_default_schema_json(&fixture)?.bytes.len(),
+        want: HELM_MAX_CHART_FILE_BYTES
+    );
+    let emitted = generate::emit_policy(&session, &recipe)?;
+    assert!(emitted.get("x-helm-schema-policy").is_some());
+    assert!(emitted.get("x-helm-schema-generated").is_some());
+    assert!(serialize_default_schema_json(&emitted)?.bytes.len() > HELM_MAX_CHART_FILE_BYTES);
+    let mut unannotated = emitted;
+    if let Some(object) = unannotated.as_object_mut() {
+        object.remove("x-helm-schema-policy");
+        object.remove("x-helm-schema-generated");
+    }
+    sim_assert_eq!(have: unannotated, want: fixture);
+    for (output, expectation) in [
+        (ShippedOutput::HelmReady, ObligationExpectation::Met),
+        (ShippedOutput::DefaultCli, ObligationExpectation::KnownUnmet),
+    ] {
+        let obligation = SizeObligation {
+            id: "gate-output-size",
+            chart: GATE_CHART,
+            output,
+            expectation,
+        };
+        let row = evaluate_size(Family::F74, &obligation, &layout)?;
+        sim_assert_eq!(have: row.have, want: row.want);
+    }
+    Ok(())
+}
+
+/// Only a chart's root and its vendored dependencies' roots hold manifests: a
+/// template named `requirements.yaml` is not parsed as one, while a vendored
+/// dependency's `import-values` is still refused.
+#[test]
+fn a_template_named_like_a_manifest_is_not_parsed_as_one() -> eyre::Result<()> {
+    let root = test_util::scratch::ScratchDir::new("family-witness-manifests")?;
+    let chart = root.path().join("charts").join("probe");
+    let write = |relative: &str, text: &str| -> eyre::Result<()> {
+        let path = chart.join(relative);
+        std::fs::create_dir_all(path.parent().unwrap_or(&chart))?;
+        std::fs::write(&path, text)?;
+        Ok(())
+    };
+    write(
+        "Chart.yaml",
+        indoc! {"
+            apiVersion: v2
+            name: probe
+            version: 0.1.0
+        "},
+    )?;
+    write(
+        "templates/requirements.yaml",
+        indoc! {"
+            {{- if .Values.gate }}
+            kind: ConfigMap
+            {{- end }}
+        "},
+    )?;
+    write(
+        "charts/dep/requirements.yaml",
+        indoc! {"
+            dependencies:
+              - name: inner
+                import-values: [data]
+        "},
+    )?;
+    let layout = Layout {
+        charts: root.path().join("charts"),
+        schemas: root.path().join("schemas"),
+        policy_schemas: root.path().join("policy-schemas"),
+        values_files: root.path().join("values"),
+    };
+    sim_assert_eq!(
+        have: chart_problems("probe", &layout)?,
+        want: vec![
+            "chart probe: no fixture".to_string(),
+            "chart probe: import-values in charts/dep/requirements.yaml is not modelled"
+                .to_string(),
         ]
     );
     Ok(())

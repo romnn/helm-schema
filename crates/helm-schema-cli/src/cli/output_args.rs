@@ -26,6 +26,19 @@ impl From<DefsNames> for DefinitionNames {
     }
 }
 
+/// JSON whitespace and definition names used for generated schema output.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, ValueEnum)]
+pub enum OutputLayout {
+    /// Pretty JSON unless it exceeds Helm's file limit, then compact JSON.
+    /// Shorten names when safe.
+    #[default]
+    Auto,
+    /// Always pretty JSON with readable definition names.
+    Pretty,
+    /// Always compact JSON; shorten definition names when safe.
+    Compact,
+}
+
 /// Destination, serialization, reference, and minimization options.
 #[derive(Args, Debug, Clone)]
 pub struct OutputArgs {
@@ -33,7 +46,18 @@ pub struct OutputArgs {
     #[arg(short, long)]
     pub output: Option<PathBuf>,
 
-    /// Write compact JSON output instead of the default pretty JSON.
+    /// Output layout; auto keeps pretty JSON until Helm's 5 MiB chart-file limit.
+    ///
+    /// Compact output shortens names only when every reference is a resolvable local pointer
+    /// and no anchors, dynamic references, or nested identifiers prevent a safe rename.
+    /// External refs retained by --keep-refs also prevent renaming.
+    /// Oversized output is always written with a warning, for use by other validators.
+    #[arg(long, value_enum, default_value_t = OutputLayout::Auto, conflicts_with_all = ["compact", "shorten_defs"])]
+    pub output_layout: OutputLayout,
+
+    /// Deprecated: write compact JSON while keeping readable definition names.
+    ///
+    /// Use --output-layout compact for compact JSON and short definition names when safe.
     #[arg(long)]
     pub compact: bool,
 
@@ -69,17 +93,14 @@ pub struct OutputArgs {
     #[arg(long, value_enum, default_value_t = DefsNames::Source)]
     pub defs_names: DefsNames,
 
-    /// Rename every `$defs` entry to a short key before writing, for a schema
-    /// that is handed to Helm directly.
+    /// Deprecated: shorten `$defs` names, keeping pretty JSON unless --compact is set.
     ///
-    /// Helm refuses chart files over 5 MiB; short names and `--compact` keep
-    /// large schemas under that limit. Error messages that mention a short
-    /// key translate back through the `--defs-map` file.
+    /// Use --output-layout compact for compact JSON and short definition names when safe.
     #[arg(long)]
     pub shorten_defs: bool,
 
-    /// Write the map from each short `$defs` key to its readable name here.
-    #[arg(long, value_name = "PATH", requires = "shorten_defs")]
+    /// Write the short-to-readable `$defs` name map; empty when shortening abstains.
+    #[arg(long, value_name = "PATH")]
     pub defs_map: Option<PathBuf>,
 }
 
@@ -96,6 +117,6 @@ impl OutputArgs {
     }
 
     pub(crate) fn json_format(&self) -> JsonOutputFormat {
-        JsonOutputFormat::from_compact(self.compact)
+        JsonOutputFormat::from_compact(self.compact || self.output_layout == OutputLayout::Compact)
     }
 }

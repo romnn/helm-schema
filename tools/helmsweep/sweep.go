@@ -128,8 +128,8 @@ func cmdSweep(args []string, stderr io.Writer) int {
 
 // prepare verifies the roster against its frozen hash, every override and
 // schema in the plan against the roster, and every prepared copy: plain has
-// no values.schema.json anywhere, base and cand are plain plus exactly the
-// planned root schema, and no chart has outputs yet.
+// no values.schema.json anywhere, base and cand are plain plus the planned
+// root schema and its required ignore edit, and no chart has outputs yet.
 func (s *sweeper) prepare(rosterPath, rosterSHA string) ([]*chartRun, error) {
 	text, err := os.ReadFile(rosterPath)
 	if err != nil {
@@ -216,7 +216,14 @@ func (s *sweeper) verifyChart(c *chartRun) error {
 		return err
 	}
 	for cell, want := range planned {
-		digest, schema, err := copyDigest(filepath.Join(dir, cell))
+		root := filepath.Join(dir, cell)
+		digestCopy := copyDigest
+		if want != "-" {
+			digestCopy = func(root string) (string, []byte, error) {
+				return schemaCopyDigest(root, filepath.Join(dir, "plain"))
+			}
+		}
+		digest, schema, err := digestCopy(root)
 		if err != nil {
 			return err
 		}
@@ -227,6 +234,10 @@ func (s *sweeper) verifyChart(c *chartRun) error {
 			return fmt.Errorf("the %s copy's values.schema.json does not match the roster", cell)
 		}
 		if schema != nil {
+			loaded, err := loadedSchemaSHA(root)
+			if err != nil || loaded != want {
+				return fmt.Errorf("the %s copy's Helm-loaded schema differs from the roster (%v)", cell, err)
+			}
 			if err := localReferencesOnly(schema); err != nil {
 				return fmt.Errorf("%s schema: %w", cell, err)
 			}
@@ -242,6 +253,10 @@ func (s *sweeper) verifyChart(c *chartRun) error {
 // values.schema.json, which it returns. A symlink, special file or nested
 // values.schema.json is refused.
 func copyDigest(root string) (string, []byte, error) {
+	return copyDigestWithIgnore(root, nil)
+}
+
+func copyDigestWithIgnore(root string, originalIgnore []byte) (string, []byte, error) {
 	h := sha256.New()
 	var schema []byte
 	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
@@ -268,6 +283,9 @@ func copyDigest(root string) (string, []byte, error) {
 			sum, err := fileSHA256(path)
 			if err != nil {
 				return err
+			}
+			if rel == ".helmignore" && originalIgnore != nil {
+				sum = fmt.Sprintf("%x", sha256.Sum256(originalIgnore))
 			}
 			fmt.Fprintf(h, "f %o %q %s\n", info.Mode().Perm(), rel, sum)
 		default:

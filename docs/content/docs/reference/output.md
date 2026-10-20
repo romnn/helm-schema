@@ -113,15 +113,26 @@ downstream validator compilation larger.
 
 ## Size limit
 
-Helm refuses chart files larger than 5 MiB (5,242,880 bytes). `helm-schema`
-never changes the format or the names of its output to fit: when the written
-schema is larger, it warns and names the fix. Ship Helm a shortened copy,
-with every `$defs` entry renamed to a short base-62 key (the most referenced
-definition getting the shortest one), usually as compact JSON:
+Helm refuses chart files larger than 5 MiB (5,242,880 bytes). Default output
+stays pretty JSON with readable `$defs` names through that limit, including
+the final newline. Above it, `helm-schema` automatically writes compact JSON
+with short base-62 definition keys (the most referenced definition getting
+the shortest one) and prints a one-line note on stderr with the reason and
+resulting size. If even that exceeds the limit, it writes the compact schema
+with a warning that Helm will refuse the chart. Size never causes an error:
+other validators may accept larger files.
+
+`--output-layout pretty` always keeps pretty JSON and readable names;
+`--output-layout compact` always uses compact JSON and short names.
+Both write the requested layout and warn when it exceeds the limit.
+The deprecated `--compact` (JSON whitespace only) and `--shorten-defs`
+(definition names only) flags preserve their independent behavior and cannot
+be combined with an explicit `--output-layout`.
+To request a map of short keys (an empty object when names are unchanged):
 
 ```bash
 # generate and shorten in one step
-helm-schema ./mychart --compact --shorten-defs --defs-map defs-map.json -o values.schema.json
+helm-schema ./mychart --output-layout compact --defs-map defs-map.json -o values.schema.json
 # or shorten a reviewed readable schema
 helm-schema shorten values.readable.json values.schema.json --map defs-map.json --compact
 ```
@@ -157,8 +168,10 @@ Helm validator compilation cost on arm-heavy charts.
 
 | Flag | Effect |
 |---|---|
-| *(default)* | Pretty-printed, human-readable JSON. |
-| `--compact` | Single-line JSON — smaller, for committing or piping. |
+| `--output-layout auto` *(default)* | Pretty JSON with readable names; compact JSON with short names when pretty exceeds Helm's limit. |
+| `--output-layout pretty` | Always pretty JSON with readable names. |
+| `--output-layout compact` | Always single-line JSON with short definition names. |
+| `--compact`, `--shorten-defs` | Deprecated independent whitespace and definition-name controls; conflict with explicit `--output-layout`. |
 | `--strip-descriptions` | Drop `description` annotations (schema-aware: a property named `description` is preserved). Useful when the upstream Kubernetes descriptions make the file larger than you want. |
 
 ## Determinism

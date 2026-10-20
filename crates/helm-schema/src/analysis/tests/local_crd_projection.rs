@@ -73,7 +73,7 @@ fn dynamic_schema_subtree_is_not_projected() -> eyre::Result<()> {
     let schemas =
         local_resource_schemas_from_template_source(source, "/chart/templates/crd.yaml", true)?;
 
-    assert!(schemas.is_empty());
+    sim_assert_eq!(have: schemas, want: [] as [helm_schema_k8s::LocalResourceSchema; 0]);
 
     Ok(())
 }

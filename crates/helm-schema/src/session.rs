@@ -335,6 +335,7 @@ impl AnalysisSession {
     /// # Errors
     ///
     /// Returns an error when resolving the contract or preparing chart values fails.
+    #[tracing::instrument(skip_all)]
     pub fn generated_schema(&self) -> EngineResult<GeneratedSchema> {
         Ok((*self
             .generated_schema
@@ -497,6 +498,7 @@ impl AnalysisSession {
         )?)
     }
 
+    #[tracing::instrument(skip_all)]
     fn prepared(&self) -> EngineResult<Arc<PreparedSession>> {
         self.prepared.get_or_try_init(&self.initializing, || {
             PreparedSession::from_generate_options(&self.opts)
@@ -507,6 +509,7 @@ impl AnalysisSession {
         Path::new(self.opts.chart_dir.as_str())
     }
 
+    #[tracing::instrument(skip_all)]
     fn finalized_contract(&self) -> EngineResult<Arc<FinalizedContract>> {
         self.finalized_contract
             .get_or_try_init(&self.initializing, || {
@@ -517,6 +520,7 @@ impl AnalysisSession {
             })
     }
 
+    #[tracing::instrument(skip_all)]
     fn resolved(&self) -> EngineResult<Arc<ResolvedContract>> {
         self.resolved_contract
             .get_or_try_init(&self.initializing, || {

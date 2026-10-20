@@ -164,14 +164,14 @@ func TestConcurrentValidationMatchesFreshCompiles(t *testing.T) {
 // The staged module (stage.sh; the tests run in its build directory) is the
 // tagged v4.2.3 module (h1:JEejtPE0… in go.sum), every file byte-identical
 // except the one file helm-memo.patch changes (PATCH.md: upstream 7dabf3ef…,
-// patched 3afeb41d…).
+// patched 80104edd…).
 func TestVendoredHelmIsUpstreamPlusOnePatch(t *testing.T) {
 	const (
 		root      = "third_party/helm-v4.2.3"
 		patched   = "pkg/chart/common/util/jsonschema.go"
 		upstream  = "2b885ee5328b25b29859a02a044f2fd3774349659a5852c424e1db286fd0d5a4" // 1983 unpatched files
-		patchedTo = "3afeb41df3be576b93e2cbc3f00c4d0b20bf598daca5c30583f9a6145748da0e"
-		patchFile = "3c2d5c3823710929129895faecdfa7d59baea4b2bc4754d72d85e43e9039155f"
+		patchedTo = "80104edd35b11dbf0b04d5f45aac50450f71f6fd5902d1256ed0c42632cb9f07"
+		patchFile = "1f6767beb8128846c3b231f342089c885c53ecfeba9e8d3f2237e558f843bae4"
 	)
 	if sum, err := fileSHA256("helm-memo.patch"); err != nil || sum != patchFile {
 		t.Fatalf("helm-memo.patch has sha256 %s (%v), want %s", sum, err, patchFile)
@@ -216,7 +216,7 @@ func TestBuildIdentityPinsHelmJSONSchemaAndPatch(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if id.Helm != "v4.2.3 => ./third_party/helm-v4.2.3" || id.JSONSchema != "v6.0.2" || id.Patch != patch || len(id.Executable) != 64 {
+	if id.Helm != "v4.2.3 => ./third_party/helm-v4.2.3" || id.JSONSchema != "v6.0.2 => github.com/romnn/jsonschema/v6 v6.0.3-0.20261018154229-cb4d114ec4c7" || id.Patch != patch || len(id.Executable) != 64 {
 		t.Fatalf("identity %+v (patch file %s)", id, patch)
 	}
 }
@@ -225,4 +225,80 @@ func sortedLines(text string) string {
 	lines := strings.Split(text, "\n")
 	sort.Strings(lines)
 	return strings.Join(lines, "\n")
+}
+
+// The two resident chart schemas stay hot until another schema request
+// displaces the least recently used entry; validation results are never cached.
+func TestMemoRetainsOnlyTwoLeastRecentlyUsedSchemas(t *testing.T) {
+	util.SetCompiledSchemaMemoLimit(2)
+	t.Cleanup(func() { util.SetCompiledSchemaMemoLimit(0) })
+	a := schemaFor(t, `"type":"object","properties":{"a":{"type":"string"}}`)
+	b := schemaFor(t, `"type":"object","properties":{"b":{"type":"string"}}`)
+	c := schemaFor(t, `"type":"object","properties":{"c":{"type":"string"}}`)
+	var verdicts []string
+	compiles, hits := memoDelta(func() {
+		for _, schema := range []string{a, b, a, c, a, b} {
+			verdicts = append(verdicts, validate(schema, map[string]any{}))
+		}
+	})
+	if compiles != 4 || hits != 2 {
+		t.Fatalf("compiles=%d hits=%d, want 4 and 2", compiles, hits)
+	}
+	for _, verdict := range verdicts {
+		if verdict != "" {
+			t.Fatalf("cache eviction changed validation: %q", verdict)
+		}
+	}
+}
+
+// A third schema cannot leave the first schema permanently retained.
+func TestMemoEvictionRecompilesWithoutChangingRejection(t *testing.T) {
+	util.SetCompiledSchemaMemoLimit(2)
+	t.Cleanup(func() { util.SetCompiledSchemaMemoLimit(0) })
+	a := schemaFor(t, `"type":"object","properties":{"a":{"type":"string"}}`)
+	b := schemaFor(t, `"type":"object","properties":{"b":{"type":"string"}}`)
+	c := schemaFor(t, `"type":"object","properties":{"c":{"type":"string"}}`)
+	var before, after string
+	compiles, hits := memoDelta(func() {
+		before = validate(a, map[string]any{"a": 1})
+		validate(b, map[string]any{})
+		validate(c, map[string]any{})
+		after = validate(a, map[string]any{"a": 1})
+	})
+	if compiles != 4 || hits != 0 || before == "" || before != after {
+		t.Fatalf("compiles=%d hits=%d verdicts %q / %q, want 4 and 0 with identical rejection", compiles, hits, before, after)
+	}
+}
+
+// Eviction cannot invalidate validators or waiters already using another entry.
+func TestMemoConcurrentEvictionPreservesFreshVerdicts(t *testing.T) {
+	util.SetCompiledSchemaMemoLimit(2)
+	t.Cleanup(func() { util.SetCompiledSchemaMemoLimit(0) })
+	schemas := []string{
+		schemaFor(t, `"type":"object","required":["first"]`),
+		schemaFor(t, `"type":"object","required":["second"]`),
+		schemaFor(t, `"type":"object","required":["third"]`),
+	}
+	want := make([]string, len(schemas))
+	for index, schema := range schemas {
+		util.DropCompiledSchema([]byte(schema))
+		want[index] = validate(schema, map[string]any{})
+	}
+	const callers = 24
+	have := make([]string, callers)
+	var start, done sync.WaitGroup
+	start.Add(1)
+	for index := range callers {
+		done.Go(func() {
+			start.Wait()
+			have[index] = validate(schemas[index%len(schemas)], map[string]any{})
+		})
+	}
+	start.Done()
+	done.Wait()
+	for index, verdict := range have {
+		if verdict != want[index%len(schemas)] {
+			t.Fatalf("caller %d: shared %q, fresh %q", index, verdict, want[index%len(schemas)])
+		}
+	}
 }

@@ -315,6 +315,7 @@ fn copy_tree(
 
 /// Runs Helm on `chart`, relays its output until both streams close, and
 /// reaps it.
+#[tracing::instrument(skip_all, fields(command = ?options.command, chart = %options.chart.display()))]
 fn run_helm(
     options: &HelmRunOptions,
     chart: &Path,

@@ -141,16 +141,26 @@ pub fn format_diagnostic_text(diagnostic: &Diagnostic) -> String {
         Diagnostic::SchemaExceedsHelmFileLimit {
             bytes,
             limit,
-            shortened: false,
-        } => format!(
-            "warning: the schema is {bytes} bytes, over Helm's {limit}-byte chart-file limit, so Helm will refuse the chart; ship a copy with short definition names instead (`--shorten-defs --compact`, or `helm-schema shorten`)"
-        ),
-        Diagnostic::SchemaExceedsHelmFileLimit {
+            shortened,
+        } => {
+            let names = if *shortened {
+                " even with short definition names"
+            } else {
+                ""
+            };
+            format!(
+                "warning: the schema is {bytes} bytes{names}, over Helm's {limit}-byte chart-file limit, so Helm will refuse the chart"
+            )
+        }
+        Diagnostic::SchemaCompactedForHelm {
             bytes,
             limit,
-            shortened: true,
-        } => format!(
-            "warning: the schema is {bytes} bytes even with short definition names, over Helm's {limit}-byte chart-file limit, so Helm will refuse the chart"
-        ),
+            shortened,
+        } => {
+            let names = if *shortened { "short" } else { "unchanged" };
+            format!(
+                "note: pretty schema exceeds Helm's {limit}-byte chart-file limit; wrote compact JSON with {names} definition names ({bytes} bytes)"
+            )
+        }
     }
 }

@@ -11,13 +11,12 @@ import (
 	"runtime/metrics"
 	"time"
 
+	chartutil "helm.sh/helm/v4/pkg/chart/common/util"
 	"helm.sh/helm/v4/pkg/cli"
 )
 
-// serveRequest is one `helm template` the battery would otherwise spawn:
-// `helm template RELEASE CHART --kube-version K [--skip-schema-validation]
-// -f VALUES...`. The server writes the CLI's stdout and stderr to the named
-// files before it answers.
+// serveRequest is one local Helm lint or template command.
+// The server writes each CLI output stream to its named file before answering.
 type serveRequest struct {
 	ID                   *uint64  `json:"id"`
 	Op                   string   `json:"op"`
@@ -37,27 +36,29 @@ type serveResponse struct {
 	ID       *uint64 `json:"id"`
 	ExitCode *int    `json:"exit_code,omitempty"`
 	// PeakBytes is the most memory the process held from the OS while this
-	// render ran (sampled every millisecond): the render's own measurement.
+	// command ran (sampled every millisecond): the command's own measurement.
 	PeakBytes int64 `json:"peak_bytes"`
-	// HeldBytes is what the idle server holds after the render, having
+	// HeldBytes is what the idle server holds after the command, having
 	// returned memory to the OS when it held more than trimAboveBytes.
 	HeldBytes int64 `json:"held_bytes"`
 	// MaxRSSBytes is the server's peak resident set size over its lifetime:
-	// telemetry of the process, not of any one render.
+	// telemetry of the process, not of any one command.
 	MaxRSSBytes int64  `json:"max_rss_bytes"`
 	Error       string `json:"error,omitempty"`
+	// These process totals distinguish reuse from a server restart.
+	SchemaCompiles int64 `json:"schema_compiles"`
+	SchemaMemoHits int64 `json:"schema_memo_hits"`
 }
 
-// trimAboveBytes: after a render leaving more held than this, the server
+// trimAboveBytes: after a command leaving more held than this, the server
 // returns its free memory to the OS before it idles.
 const trimAboveBytes = 64 << 20
 
 // cmdServe answers one JSON request per stdin line with one JSON response
-// per stdout line, one request at a time, until EOF. Serial service makes
-// every log record written during a render that render's own, so its
-// stderr is the CLI's exactly; the caller runs one server per concurrent
-// render. The caller sets the environment a Helm CLI child would get (the
-// server does not change it).
+// per stdout line, one request at a time, until EOF.
+// Serial service attributes every log record to its command, on stderr as
+// the CLI prints it. The caller runs one server per concurrent command and
+// sets the environment a CLI child would get; the server does not change it.
 func cmdServe(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 	if len(args) != 0 {
 		fmt.Fprintln(stderr, "usage: helmsweep serve")
@@ -67,6 +68,8 @@ func cmdServe(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		fmt.Fprintln(stderr, "helmsweep serve: refused:", err)
 		return exitRefused
 	}
+	chartutil.SetCompiledSchemaMemoLimit(2)
+	defer chartutil.SetCompiledSchemaMemoLimit(0)
 	sink := installLogSink(stderr)
 	encoder := json.NewEncoder(stdout)
 	encoder.SetEscapeHTML(false)
@@ -99,8 +102,7 @@ func cmdServe(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 // renderFunc is templateRun's signature.
 type renderFunc func(release, chartPath, kubeVersion string, valuesFiles []string, skipSchema bool) (int, []byte, []byte)
 
-// serve runs one request through render (templateRun), its log records
-// captured into its stderr where the CLI prints them.
+// serve dispatches one command and captures its log records into stderr.
 func serve(sink *logSink, req serveRequest, render renderFunc) serveResponse {
 	reply := serveResponse{ID: req.ID}
 	if err := supportedRequest(req); err != nil {
@@ -111,6 +113,7 @@ func serve(sink *logSink, req serveRequest, render renderFunc) serveResponse {
 	var rc int
 	reply.PeakBytes = sampledPeak(func() {
 		rc, stderrText = sink.exclusive(func() (int, []byte) {
+			chartutil.ResetUnresolvedURNWarnings()
 			rc, out, errText := guarded(req, render)
 			stdout = out
 			return rc, errText
@@ -120,8 +123,9 @@ func serve(sink *logSink, req serveRequest, render renderFunc) serveResponse {
 		debug.FreeOSMemory()
 	}
 	reply.HeldBytes = memoryHeld()
+	reply.SchemaCompiles, reply.SchemaMemoHits = chartutil.CompiledSchemaMemoStats()
 	if rc != 0 && rc != 1 {
-		reply.Error = fmt.Sprintf("abnormal: helm template would exit %d: %s", rc, stderrText)
+		reply.Error = fmt.Sprintf("abnormal: helm %s would exit %d: %s", req.Op, rc, stderrText)
 		return reply
 	}
 	if err := os.WriteFile(req.StdoutPath, stdout, 0o644); err != nil {
@@ -168,13 +172,22 @@ func sampledPeak(run func()) int64 {
 	return max(<-sampled, memoryHeld())
 }
 
-// supportedRequest refuses what is not a local `helm template`: another
-// op, an empty release or Kubernetes version (the CLI's default capabilities
-// path is not reproduced), or a chart, values or output that is not an
-// absolute local path — `-` would read the protocol's own stdin and a URL
-// would fetch.
+// supportedRequest accepts only the local lint and template flags reproduced here.
+// Stdin values would consume the protocol; remote paths would fetch.
 func supportedRequest(req serveRequest) error {
-	if req.Op != "template" || req.Release == "" || req.KubeVersion == "" || len(req.Values) == 0 {
+	if req.KubeVersion == "" || len(req.Values) == 0 {
+		return fmt.Errorf("unsupported request %q", req.Op)
+	}
+	switch req.Op {
+	case "template":
+		if req.Release == "" {
+			return fmt.Errorf("template requires a release")
+		}
+	case "lint":
+		if req.Release != "" || req.SkipSchemaValidation {
+			return fmt.Errorf("lint does not accept template flags")
+		}
+	default:
 		return fmt.Errorf("unsupported request %q", req.Op)
 	}
 	for _, path := range append([]string{req.Chart, req.StdoutPath, req.StderrPath}, req.Values...) {
@@ -185,12 +198,15 @@ func supportedRequest(req serveRequest) error {
 	return nil
 }
 
-// guarded runs render for req; a panic ends it as it ends the CLI: exit 2.
+// guarded dispatches req; a panic ends it as it ends the CLI: exit 2.
 func guarded(req serveRequest, render renderFunc) (rc int, stdout, stderr []byte) {
 	defer func() {
 		if r := recover(); r != nil {
 			rc, stdout, stderr = 2, nil, fmt.Appendf(nil, "panic: %v\n\n%s", r, debug.Stack())
 		}
 	}()
+	if req.Op == "lint" {
+		return lintRun(req.Chart, req.KubeVersion, req.Values)
+	}
 	return render(req.Release, req.Chart, req.KubeVersion, req.Values, req.SkipSchemaValidation)
 }

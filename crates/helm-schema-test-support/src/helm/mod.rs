@@ -4,6 +4,8 @@
 //! version a chart renders under, and the values and resource validators.
 
 pub mod adjudication;
+pub(crate) mod assertion_identity;
 pub mod cache_policy;
 pub mod invocation;
 pub mod kubernetes_version;
+pub mod lint;

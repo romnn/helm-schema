@@ -16,7 +16,7 @@
  	"time"
  
  	"github.com/santhosh-tekuri/jsonschema/v6"
-@@ -136,32 +138,125 @@
+@@ -136,32 +138,169 @@
  	}
  	slog.Debug("unmarshalled JSON schema", "schema", schemaJSON)
  
@@ -35,20 +35,24 @@
 +
 +// helmsweep patch (tools/helmsweep/third_party/PATCH.md): the compiled schema
 +// is memoized by the SHA-256 of the schema bytes, so a process validating many
-+// value sets against one schema compiles it once. Only a successful compile
-+// that loaded no external resource is kept; everything else compiles per call
-+// exactly as upstream does. A compiled schema is shared read-only: Validate
-+// allocates its own validator state per call.
++// value sets against a chart's baseline/candidate pair reuses those compiles.
++// Sweep retains warmed schemas until its chart completes.
++// Resident servers set a two-entry limit before accepting commands.
++// Only a successful compile that loaded no external resource is kept; everything
++// else compiles per call exactly as upstream does.
++// A compiled schema is shared read-only: Validate allocates its own validator state per call.
 +type compiledSchema struct {
++	sum       [sha256.Size]byte
 +	done      chan struct{}
 +	validator *jsonschema.Schema
 +}
 +
 +var (
-+	compiledSchemasMu sync.Mutex
-+	compiledSchemas   = map[[sha256.Size]byte]*compiledSchema{}
-+	schemaCompiles    atomic.Int64
-+	schemaMemoHits    atomic.Int64
++	compiledSchemasMu   sync.Mutex
++	compiledSchemas     []*compiledSchema
++	compiledSchemaLimit int
++	schemaCompiles      atomic.Int64
++	schemaMemoHits      atomic.Int64
 +)
 +
 +// CompiledSchemaMemoStats reports how many compiles ran and how many calls
@@ -57,22 +61,57 @@
 +	return schemaCompiles.Load(), schemaMemoHits.Load()
 +}
 +
-+// DropCompiledSchema forgets the memoized compile of schemaJSON, if any.
-+func DropCompiledSchema(schemaJSON []byte) {
++// SetCompiledSchemaMemoLimit bounds retained entries; zero retains them until dropped.
++// Configure this before starting commands, never during concurrent validation.
++func SetCompiledSchemaMemoLimit(limit int) {
 +	compiledSchemasMu.Lock()
-+	delete(compiledSchemas, sha256.Sum256(schemaJSON))
-+	compiledSchemasMu.Unlock()
++	defer compiledSchemasMu.Unlock()
++	compiledSchemaLimit = limit
++	if limit > 0 && len(compiledSchemas) > limit {
++		clear(compiledSchemas[limit:])
++		compiledSchemas = compiledSchemas[:limit]
++	}
 +}
 +
-+// compileMemoized returns the memoized compile of schemaJSON, compiling it
-+// once when concurrent callers ask for the same bytes.
++// DropCompiledSchema forgets the memoized compile of schemaJSON, if any.
++func DropCompiledSchema(schemaJSON []byte) {
++	sum := sha256.Sum256(schemaJSON)
++	compiledSchemasMu.Lock()
++	defer compiledSchemasMu.Unlock()
++	for index, entry := range compiledSchemas {
++		if entry.sum == sum {
++			copy(compiledSchemas[index:], compiledSchemas[index+1:])
++			compiledSchemas[len(compiledSchemas)-1] = nil
++			compiledSchemas = compiledSchemas[:len(compiledSchemas)-1]
++			return
++		}
++	}
++}
++
++// compileMemoized shares a pending compile while its entry remains retained.
++// Eviction drops only the cache's reference; running validators and waiting
++// callers retain their own immutable entry.
++// An evicted compile is never reinserted.
 +func compileMemoized(schemaJSON []byte, schema any) (*jsonschema.Schema, error) {
 +	sum := sha256.Sum256(schemaJSON)
 +	compiledSchemasMu.Lock()
-+	entry, found := compiledSchemas[sum]
++	var entry *compiledSchema
++	for index, cached := range compiledSchemas {
++		if cached.sum == sum {
++			entry = cached
++			copy(compiledSchemas[1:index+1], compiledSchemas[:index])
++			compiledSchemas[0] = cached
++			break
++		}
++	}
++	found := entry != nil
 +	if !found {
-+		entry = &compiledSchema{done: make(chan struct{})}
-+		compiledSchemas[sum] = entry
++		entry = &compiledSchema{sum: sum, done: make(chan struct{})}
++		retained := len(compiledSchemas)
++		if compiledSchemaLimit > 0 {
++			retained = min(retained, compiledSchemaLimit-1)
++		}
++		compiledSchemas = append([]*compiledSchema{entry}, compiledSchemas[:retained]...)
 +	}
 +	compiledSchemasMu.Unlock()
 +
@@ -89,8 +128,13 @@
 +	defer func() {
 +		if entry.validator == nil {
 +			compiledSchemasMu.Lock()
-+			if compiledSchemas[sum] == entry {
-+				delete(compiledSchemas, sum)
++			for index, cached := range compiledSchemas {
++				if cached == entry {
++					copy(compiledSchemas[index:], compiledSchemas[index+1:])
++					compiledSchemas[len(compiledSchemas)-1] = nil
++					compiledSchemas = compiledSchemas[:len(compiledSchemas)-1]
++					break
++				}
 +			}
 +			compiledSchemasMu.Unlock()
 +		}
@@ -124,9 +168,10 @@
  	compiler := jsonschema.NewCompiler()
  	compiler.UseLoader(loader)
 -	err = compiler.AddResource("file:///values.schema.json", schema)
-+	err := compiler.AddResource("file:///values.schema.json", schema)
- 	if err != nil {
+-	if err != nil {
 -		return err
++	err := compiler.AddResource("file:///values.schema.json", schema)
++	if err != nil {
 +		return nil, loader.loaded, err
  	}
  
@@ -134,23 +179,38 @@
 -	if err != nil {
 -		return err
 -	}
-+	return validator, loader.loaded, err
-+}
- 
+-
 -	err = validator.Validate(values.AsMap())
 -	if err != nil {
 -		return JSONSchemaValidationError{err}
 -	}
+-
+-	return nil
++	return validator, loader.loaded, err
++}
++
 +// recordingLoader delegates to upstream's loaders and records that one ran.
 +type recordingLoader struct {
 +	loader jsonschema.URLLoader
 +	loaded bool
 +}
- 
--	return nil
++
 +func (l *recordingLoader) Load(url string) (any, error) {
 +	l.loaded = true
 +	return l.loader.Load(url)
  }
  
  // URNResolverFunc allows SDK to plug a URN resolver. It must return a
+@@ -183,6 +322,12 @@
+ // warnedURNs ensures we log the unresolved-URN warning only once per URN.
+ var warnedURNs sync.Map
+ 
++// ResetUnresolvedURNWarnings restores the diagnostics of a fresh Helm process.
++// Call only between commands while no Helm validation is running.
++func ResetUnresolvedURNWarnings() {
++	warnedURNs.Clear()
++}
++
+ func (l urnLoader) Load(urlStr string) (any, error) {
+ 	if doc, err := URNResolver(urlStr); err == nil && doc != nil {
+ 		return doc, nil

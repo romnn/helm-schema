@@ -1,5 +1,7 @@
 //! End-to-end command-line behavior regressions.
 
+use std::path::PathBuf;
+
 use clap::Parser;
 use color_eyre::eyre::{self, OptionExt as _, WrapErr, eyre};
 use helm_schema::AnalysisSession;
@@ -101,8 +103,8 @@ fn cli_parses_defaults() -> eyre::Result<()> {
     assert!(!cli.k8s.no_k8s_schemas);
     assert!(!cli.chart.exclude_tests);
     assert!(!cli.chart.no_subchart_values);
-    assert!(cli.chart.values_files.is_empty());
-    assert!(cli.override_schema.is_empty());
+    sim_assert_eq!(have: cli.chart.values_files, want: [] as [PathBuf; 0]);
+    sim_assert_eq!(have: cli.override_schema, want: [] as [PathBuf; 0]);
     assert!(!cli.output.compact);
 
     Ok(())

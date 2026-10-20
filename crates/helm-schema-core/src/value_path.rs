@@ -150,7 +150,6 @@ impl ValuesPath {
     }
 
     /// Iterates structural segments from root to leaf.
-    #[must_use]
     pub fn segments(&self) -> impl DoubleEndedIterator<Item = &Segment> + ExactSizeIterator {
         self.segments.iter()
     }

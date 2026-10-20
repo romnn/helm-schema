@@ -37,7 +37,7 @@ use test_util::helm_values::{ValuesError, ValuesOptions, coalesce_chart_values};
 use test_util::scratch::ScratchDir;
 
 use crate::helm::adjudication::{
-    KubernetesVerdict, OfflineKubernetesValidator, PinnedHelmChart, ViolationKey, decode,
+    KubernetesVerdict, OfflineKubernetesValidator, PinnedHelmChart, ValuesViolationKey, decode,
 };
 use crate::helm::invocation::{
     HelmExecution, HelmRunner, Replay, TimedOut, output_within, tree_sha256,
@@ -896,9 +896,9 @@ fn adjudicate(
         let verdict = match &instance {
             None => "unavailable",
             Some(instance) => {
-                let keys: BTreeSet<ViolationKey> = validator
+                let keys: BTreeSet<ValuesViolationKey> = validator
                     .iter_errors(instance)
-                    .map(|error| ViolationKey::new("", "", &error))
+                    .map(|error| ValuesViolationKey::new(&error))
                     .collect();
                 for key in &keys {
                     diagnostics.push([
@@ -998,13 +998,11 @@ fn k8s_column(
                         "k8s".to_string(),
                         format!(
                             "{}/{} {}",
-                            violation.key.api_version,
-                            violation.key.kind,
-                            violation.key.instance_path
+                            violation.key.api_version, violation.key.kind, violation.instance_path
                         ),
                         violation.key.keyword.clone(),
-                        violation.key.detail.clone(),
-                        violation.key.schema_path.clone(),
+                        violation.message,
+                        violation.key.schema_location.clone(),
                     ]);
                 }
                 "invalid"

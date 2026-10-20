@@ -147,26 +147,33 @@ func cliError(out *bytes.Buffer, err error) (int, []byte) {
 	return 1, out.Bytes()
 }
 
-// lintCell is `helm lint CHART --kube-version K -f VALUES` with every other
-// flag at its default: pkg/cmd/lint.go newLintCmd's RunE for one path,
-// writing stdout and stderr to one log as `> log 2>&1` does.
+// lintCell retains the sweep's combined-log interface.
 func lintCell(chartPath, kubeVersion, valuesFile string) (int, []byte) {
-	var out bytes.Buffer
+	rc, stdout, stderr := lintRun(chartPath, kubeVersion, []string{valuesFile})
+	return rc, append(stdout, stderr...)
+}
+
+// lintRun is the CLI's one-chart lint command with its default flags.
+// The command body writes stdout; cobra's final error belongs to stderr.
+func lintRun(chartPath, kubeVersion string, valuesFiles []string) (int, []byte, []byte) {
+	var out, stderr bytes.Buffer
 	settings := cli.New()
 	if _, ok := initRootConfig(settings); !ok {
-		return 1, out.Bytes()
+		return 1, out.Bytes(), stderr.Bytes()
 	}
 	client := action.NewLint()
 	parsed, err := common.ParseKubeVersion(kubeVersion)
 	if err != nil {
-		return cliError(&out, fmt.Errorf("invalid kube version '%s': %s", kubeVersion, err))
+		rc, text := cliError(&stderr, fmt.Errorf("invalid kube version '%s': %s", kubeVersion, err))
+		return rc, out.Bytes(), text
 	}
 	client.KubeVersion = parsed
 	client.Namespace = settings.Namespace()
-	valueOpts := &values.Options{ValueFiles: []string{valuesFile}}
+	valueOpts := &values.Options{ValueFiles: valuesFiles}
 	vals, err := valueOpts.MergeValues(getter.All(settings))
 	if err != nil {
-		return cliError(&out, err)
+		rc, text := cliError(&stderr, err)
+		return rc, out.Bytes(), text
 	}
 
 	result := client.Run([]string{chartPath}, vals)
@@ -187,10 +194,11 @@ func lintCell(chartPath, kubeVersion, valuesFile string) (int, []byte) {
 
 	summary := fmt.Sprintf("%d chart(s) linted, %d chart(s) failed", 1, failed)
 	if failed > 0 {
-		return cliError(&out, errors.New(summary))
+		rc, text := cliError(&stderr, errors.New(summary))
+		return rc, out.Bytes(), text
 	}
 	fmt.Fprintln(&out, summary)
-	return 0, out.Bytes()
+	return 0, out.Bytes(), stderr.Bytes()
 }
 
 // templateCell is `helm template t CHART --skip-schema-validation

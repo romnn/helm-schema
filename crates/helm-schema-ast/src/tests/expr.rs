@@ -612,12 +612,15 @@ fn surrogate_code_point_is_not_silently_decoded() {
 
 #[test]
 fn empty_body_returns_empty_list() {
-    assert!(parse_action_expressions("").is_empty());
+    sim_assert_eq!(have: parse_action_expressions(""), want: [] as [TemplateExpr; 0]);
 }
 
 #[test]
 fn body_with_no_actions_returns_empty() {
-    assert!(parse_action_expressions("just plain yaml text\nkey: value\n").is_empty());
+    sim_assert_eq!(
+        have: parse_action_expressions("just plain yaml text\nkey: value\n"),
+        want: [] as [TemplateExpr; 0]
+    );
 }
 
 #[test]

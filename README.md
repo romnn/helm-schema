@@ -69,11 +69,22 @@ helm-schema ./path/to/chart --output values.schema.json
 Compact output:
 
 ```bash
-helm-schema ./path/to/chart --output values.schema.json --compact
+helm-schema ./path/to/chart --output values.schema.json --output-layout compact
 ```
 
-`$defs` entries carry readable schema-path names. To hand Helm a schema over
-its 5 MiB chart-file limit, shorten them (`helm-schema shorten readable.json
+Default output is pretty JSON with readable `$defs` names. If it would exceed
+Helm's 5 MiB chart-file limit, the CLI automatically uses compact JSON with
+short names when safe and reports the resulting size on stderr. Use `--output-layout pretty`
+to always keep the readable layout, or `--output-layout compact` to
+always use compact JSON (`auto` is the default). Both compact paths shorten names
+when safe. Definition names stay unchanged when references are external (for
+example with `--keep-refs`), unresolved, or use anchors, dynamic references, or
+nested identifiers that prevent a safe rename. Every layout writes oversized
+output with a warning that Helm will refuse the chart; size
+never prevents use with another validator. The deprecated `--compact` and
+`--shorten-defs` flags retain their independent formatting behavior and cannot
+be combined with an explicit `--output-layout`.
+You can also shorten a readable schema (`helm-schema shorten readable.json
 values.schema.json --map defs-map.json --compact`), or let helm-schema run
 Helm on a temporary copy of the chart whose schema is shortened; Helm's output
 names the readable definitions and the command exits with Helm's status:

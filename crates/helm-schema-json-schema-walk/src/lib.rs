@@ -301,6 +301,7 @@ fn object_has_unsafe_reference_scope_keyword(object: &Map<String, Value>) -> boo
 
 /// Serializes a JSON value after recursively sorting every object's keys.
 #[must_use]
+#[tracing::instrument(skip_all, fields(entries = value.as_object().map_or(0, serde_json::Map::len)))]
 pub fn canonical_json_string(value: &Value) -> String {
     canonical_json_value(value).to_string()
 }

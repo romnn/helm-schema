@@ -14,9 +14,9 @@ use test_util::helm_values::ValuesError;
 use test_util::scratch::ScratchDir;
 use vfs::VfsPath;
 
-use crate::helm_adjudication::ViolationKey;
+use crate::helm_adjudication::ValuesViolationKey;
 
-const MAX_PROBES_PER_CHART: usize = 50_000;
+pub(crate) const MAX_PROBES_PER_CHART: usize = 50_000;
 const MAX_THIRD_LEVEL_DELETIONS_PER_CHART: usize = 2_048;
 const MAX_GUARD_STATE_PAIRS_PER_CHART: usize = 8;
 const MAX_GUARD_ARMS_ATTEMPTED_PER_CHART: usize = 24;
@@ -33,6 +33,8 @@ pub(crate) enum GuardSamplingStrategy {
 #[derive(Clone, Debug, Default, Deserialize, PartialEq, Eq, Serialize)]
 pub(crate) struct ProbeCoverage {
     pub(crate) label: String,
+    #[serde(default)]
+    pub(crate) lint: Option<crate::lint_probes::LintCoverage>,
     pub(crate) base_candidates: usize,
     pub(crate) base_emitted: usize,
     pub(crate) base_dropped: usize,
@@ -215,6 +217,7 @@ pub(crate) struct ProfileSchemas {
 }
 
 impl ProfileSchemas {
+    #[tracing::instrument(target = "helm_schema::acceptance", skip_all)]
     pub(crate) fn compile(
         full_schema: &Value,
         lean_schema: &Value,
@@ -253,22 +256,27 @@ impl ProfileSchemas {
     /// behind an old one.
     pub(crate) fn screens_a_flip(&self, probe: &ProbeInstance) -> bool {
         let instance = self.compose(probe);
-        let before = self.full.is_valid(&instance);
-        let after = self.lean.is_valid(&instance);
+        self.screen_document(&instance)
+    }
+
+    /// Screens an already composed document without applying template defaults.
+    pub(crate) fn screen_document(&self, instance: &Value) -> bool {
+        let before = self.full.is_valid(instance);
+        let after = self.lean.is_valid(instance);
         if before != after {
             return true;
         }
         !after
             && rejects_for_a_new_reason(
-                &violations(&self.full, &instance),
-                &violations(&self.lean, &instance),
+                &violations(&self.full, instance),
+                &violations(&self.lean, instance),
             )
     }
 
     pub(crate) fn coalesced_errors(
         &self,
         values: &crate::helm_adjudication::CoalescedValues,
-    ) -> (Vec<ViolationKey>, Vec<ViolationKey>) {
+    ) -> (Vec<ValuesViolationKey>, Vec<ValuesViolationKey>) {
         self.errors(values.as_json())
     }
 
@@ -276,7 +284,7 @@ impl ProfileSchemas {
     pub(crate) fn override_errors(
         &self,
         overlay: &Value,
-    ) -> (Vec<ViolationKey>, Vec<ViolationKey>) {
+    ) -> (Vec<ValuesViolationKey>, Vec<ValuesViolationKey>) {
         self.errors(&self.compose(&ProbeInstance::SparseOverride(overlay.clone())))
     }
 
@@ -304,7 +312,10 @@ impl ProfileSchemas {
         judged.into_iter().collect::<BTreeSet<_>>() == defaults.into_iter().collect()
     }
 
-    fn errors(&self, instance: &Value) -> (Vec<ViolationKey>, Vec<ViolationKey>) {
+    pub(crate) fn errors(
+        &self,
+        instance: &Value,
+    ) -> (Vec<ValuesViolationKey>, Vec<ValuesViolationKey>) {
         (
             violations(&self.full, instance),
             violations(&self.lean, instance),
@@ -486,6 +497,11 @@ pub(crate) fn structural_probe_battery(
         .map(|(probes, _)| probes)
 }
 
+#[tracing::instrument(
+    target = "helm_schema::acceptance",
+    skip_all,
+    fields(chart = chart_relative_path)
+)]
 pub(crate) fn structural_probe_battery_with_coverage(
     chart_relative_path: &str,
     defaults: &Value,
@@ -819,10 +835,10 @@ fn synthesized_guard_witness_candidates(
 }
 
 /// The violations `validator` reports on a values document.
-fn violations(validator: &Validator, instance: &Value) -> Vec<ViolationKey> {
+fn violations(validator: &Validator, instance: &Value) -> Vec<ValuesViolationKey> {
     validator
         .iter_errors(instance)
-        .map(|error| ViolationKey::new("", "", &error))
+        .map(|error| ValuesViolationKey::new(&error))
         .collect()
 }
 
@@ -831,8 +847,8 @@ fn violations(validator: &Validator, instance: &Value) -> Vec<ViolationKey> {
 /// different keyword locations, so the violated keyword and its detail
 /// identify it.
 pub(crate) fn rejects_for_a_new_reason(
-    baseline: &[ViolationKey],
-    candidate: &[ViolationKey],
+    baseline: &[ValuesViolationKey],
+    candidate: &[ValuesViolationKey],
 ) -> bool {
     candidate.iter().any(|violation| {
         !baseline.iter().any(|known| {
