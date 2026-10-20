@@ -74,7 +74,7 @@ func loadedSchemaSHA(root string) (string, error) {
 		return "", err
 	}
 	if len(chart.Schema) == 0 {
-		return "", errors.New("Helm loaded no root values.schema.json")
+		return "", errors.New("Helm loaded no root values.schema.json") //nolint:staticcheck // ST1005: Helm is a product name.
 	}
 	return fmt.Sprintf("%x", sha256.Sum256(chart.Schema)), nil
 }
@@ -125,7 +125,7 @@ func schemaCopyDigest(root, plain string) (string, []byte, error) {
 	}
 	got, err := os.ReadFile(filepath.Join(root, ignore.HelmIgnore))
 	if err != nil || !bytes.Equal(got, want) {
-		return "", nil, fmt.Errorf("%s .helmignore differs from schema preparation (%v)", root, err)
+		return "", nil, fmt.Errorf("%s .helmignore differs from schema preparation (%v)", root, err) //nolint:errorlint // A byte mismatch can have a nil error; preserve its diagnostic.
 	}
 	return copyDigestWithIgnore(root, data)
 }

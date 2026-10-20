@@ -78,7 +78,7 @@ func cmdServe(args []string, stdin io.Reader, stdout, stderr io.Writer) int {
 		line, err := reader.ReadBytes('\n')
 		if len(line) > 0 {
 			var req serveRequest
-			response := serveResponse{}
+			var response serveResponse
 			if decodeErr := json.Unmarshal(line, &req); decodeErr != nil || req.ID == nil {
 				response = serveResponse{ID: req.ID, Error: fmt.Sprintf("protocol: malformed request: %v", decodeErr)}
 			} else {
@@ -146,7 +146,7 @@ func serve(sink *logSink, req serveRequest, render renderFunc) serveResponse {
 func memoryHeld() int64 {
 	samples := []metrics.Sample{{Name: "/memory/classes/total:bytes"}, {Name: "/memory/classes/heap/released:bytes"}}
 	metrics.Read(samples)
-	return int64(samples[0].Value.Uint64() - samples[1].Value.Uint64())
+	return int64(samples[0].Value.Uint64() - samples[1].Value.Uint64()) //nolint:gosec // G115: Process memory is bounded by the address space, below MaxInt64.
 }
 
 // sampledPeak runs run and returns the most memoryHeld while it ran.

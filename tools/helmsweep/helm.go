@@ -164,7 +164,7 @@ func lintRun(chartPath, kubeVersion string, valuesFiles []string) (int, []byte, 
 	client := action.NewLint()
 	parsed, err := common.ParseKubeVersion(kubeVersion)
 	if err != nil {
-		rc, text := cliError(&stderr, fmt.Errorf("invalid kube version '%s': %s", kubeVersion, err))
+		rc, text := cliError(&stderr, fmt.Errorf("invalid kube version '%s': %w", kubeVersion, err))
 		return rc, out.Bytes(), text
 	}
 	client.KubeVersion = parsed

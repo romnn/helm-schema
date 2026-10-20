@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"io/fs"
@@ -77,7 +78,7 @@ func scanChartFile(name string, data []byte, reasons *[]string) error {
 		archive := tar.NewReader(unzipped)
 		for {
 			header, err := archive.Next()
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				return nil
 			}
 			if err != nil {

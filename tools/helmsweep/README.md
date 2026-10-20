@@ -220,5 +220,6 @@ CLI side.
 task test:helmsweep
 ```
 
-runs `gofmt -l`, then `go vet` and `go test -race` in the staged build copy
+runs `task lint:go` (`golangci-lint fmt --diff` and `run` on the staging program's
+source and staged driver), then `go test -race` in the staged build copy
 (the source tree alone does not compile: it needs the patched Helm).

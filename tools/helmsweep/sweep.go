@@ -181,7 +181,7 @@ func (s *sweeper) verifyChart(c *chartRun) error {
 		}
 		sum, err := fileSHA256(filepath.Join(plan, "ov", row.ID+".json"))
 		if err != nil || sum != row.OverrideSHA {
-			return fmt.Errorf("override %s does not match the roster (%v)", row.ID, err)
+			return fmt.Errorf("override %s does not match the roster (%v)", row.ID, err) //nolint:errorlint // A digest mismatch can have a nil error; preserve its diagnostic.
 		}
 		if name, err := os.ReadFile(filepath.Join(plan, "ov", row.ID+".name")); err != nil || string(name) != row.Name {
 			return fmt.Errorf("override %s name does not match the roster", row.ID)
@@ -190,7 +190,7 @@ func (s *sweeper) verifyChart(c *chartRun) error {
 	for cell, want := range planned {
 		sum, err := fileSHA256(filepath.Join(plan, cell+".schema.json"))
 		if (want == "-" && !errors.Is(err, fs.ErrNotExist)) || (want != "-" && sum != want) {
-			return fmt.Errorf("plan %s schema does not match the roster (%v)", cell, err)
+			return fmt.Errorf("plan %s schema does not match the roster (%v)", cell, err) //nolint:errorlint // A digest mismatch can have a nil error; preserve its diagnostic.
 		}
 	}
 
@@ -236,7 +236,7 @@ func (s *sweeper) verifyChart(c *chartRun) error {
 		if schema != nil {
 			loaded, err := loadedSchemaSHA(root)
 			if err != nil || loaded != want {
-				return fmt.Errorf("the %s copy's Helm-loaded schema differs from the roster (%v)", cell, err)
+				return fmt.Errorf("the %s copy's Helm-loaded schema differs from the roster (%v)", cell, err) //nolint:errorlint // A digest mismatch can have a nil error; preserve its diagnostic.
 			}
 			if err := localReferencesOnly(schema); err != nil {
 				return fmt.Errorf("%s schema: %w", cell, err)

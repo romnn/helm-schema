@@ -51,7 +51,7 @@ func reexecClean(args []string, stderr io.Writer) (code int, done bool) {
 		return exitHarness, true
 	}
 	defer os.RemoveAll(home)
-	child := exec.Command(exe, args...)
+	child := exec.Command(exe, args...) //nolint:gosec // G702: Re-execute this binary directly with its original CLI arguments.
 	child.Env = append(cleanEnv(home), cleanEnvMarker+"="+home)
 	child.Stdin, child.Stdout, child.Stderr = os.Stdin, os.Stdout, os.Stderr
 	err = child.Run()

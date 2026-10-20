@@ -107,14 +107,14 @@ func TestMemoKeepsNoFailedCompile(t *testing.T) {
 // change while the schema bytes do not.
 func TestMemoKeepsNoCompileThatLoadedAResource(t *testing.T) {
 	external := filepath.Join(t.TempDir(), "external.json")
-	if err := os.WriteFile(external, []byte(`{"type":"integer"}`), 0o644); err != nil {
+	if err := os.WriteFile(external, []byte(`{"type":"integer"}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
 	schema := schemaFor(t, fmt.Sprintf(`"type":"object","properties":{"a":{"$ref":"file://%s"}}`, external))
 	var first, second string
 	compiles, hits := memoDelta(func() {
 		first = validate(schema, map[string]any{"a": "x"})
-		if err := os.WriteFile(external, []byte(`{"type":"string"}`), 0o644); err != nil {
+		if err := os.WriteFile(external, []byte(`{"type":"string"}`), 0o600); err != nil {
 			t.Fatal(err)
 		}
 		second = validate(schema, map[string]any{"a": "x"})

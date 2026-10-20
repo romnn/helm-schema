@@ -200,7 +200,7 @@ func copyFile(src, dst string, mode fs.FileMode) error {
 }
 
 func run(dir string, env []string, name string, args ...string) error {
-	cmd := exec.Command(name, args...)
+	cmd := exec.Command(name, args...) //nolint:gosec // G702: Callers select fixed Go and Git commands with local build arguments.
 	cmd.Dir = dir
 	cmd.Env = append(os.Environ(), env...)
 	cmd.Stdout = os.Stdout

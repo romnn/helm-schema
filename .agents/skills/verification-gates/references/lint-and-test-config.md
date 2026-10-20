@@ -9,6 +9,7 @@
 | nextest profiles | `.config/nextest.toml` |
 | Workspace lints, cargo-fc matrix | root `Cargo.toml` (`[workspace.lints.*]`, `[workspace.metadata.cargo-fc]`) |
 | Clippy settings | `clippy.toml` |
+| Go lint and formatting | `.golangci.yaml` (`task lint:go`: source staging program + staged helmsweep driver) |
 | ast-grep | `sgconfig.yaml`, `.ast-grep/rules/*.yaml`, `.ast-grep/tests/*.yaml` |
 | Spellcheck | `.typos.toml` |
 | Tool versions | `mise.toml` / `mise.lock` |

@@ -66,7 +66,7 @@ func rewriteEntry(t *testing.T, dir string, files map[string][]byte, fixManifest
 		files[manifestFile] = manifest(all)
 	}
 	for name, data := range files {
-		if err := os.WriteFile(filepath.Join(dir, name), data, 0o644); err != nil {
+		if err := os.WriteFile(filepath.Join(dir, name), data, 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}

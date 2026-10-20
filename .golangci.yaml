@@ -1,0 +1,40 @@
+version: "2"
+linters:
+  default: none
+  enable:
+    - bodyclose
+    - contextcheck
+    - copyloopvar
+    - cyclop
+    - durationcheck
+    - errcheck
+    - errname
+    - errorlint
+    - gocritic
+    - gosec
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+  settings:
+    cyclop:
+      max-complexity: 40
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      # Local maintainer CLI: paths are explicit caller arguments, reports are non-secret readable artifacts.
+      - path: (tools/helmsweep|helmsweep-build)/
+        linters: [gosec]
+        text: "G(122|304|306|703)"
+    paths: []
+formatters:
+  enable:
+    - goimports
+  exclusions:
+    generated: lax
+    paths: []

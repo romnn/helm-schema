@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"strings"
@@ -33,10 +34,14 @@ func serveAll(t *testing.T, lines []string) map[int64]serveResponse {
 		}
 		id := int64(-1)
 		if response.ID != nil {
+			if *response.ID > math.MaxInt64 {
+				t.Errorf("answer id %d exceeds the test helper's signed range", *response.ID)
+				continue
+			}
 			id = int64(*response.ID)
 		}
 		var request struct{ ID *int64 }
-		if json.Unmarshal([]byte(lines[i]), &request) == nil && request.ID != nil && *request.ID != id {
+		if json.Unmarshal([]byte(lines[i]), &request) == nil && request.ID != nil && *request.ID != id { //nolint:gosec // G602: Equal slice lengths are checked before this loop.
 			t.Errorf("answer %d has id %d, request %d", i, id, *request.ID)
 		}
 		answers[id] = response

@@ -35,7 +35,7 @@ Helm CLI's verdict byte for byte:
 
 ```sh
 task build:helmsweep   # stage + build + identity check → <target>/helmsweep
-task test:helmsweep    # gofmt -l (source tree), stage, go vet, go test -race (staged copy)
+task test:helmsweep    # lint:go (golangci-lint fmt --diff + run), go test -race (staged copy)
 <target>/helmsweep version
 ```
 

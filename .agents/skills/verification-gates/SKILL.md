@@ -36,7 +36,7 @@ adjudication, `SCHEMA_ACCEPTANCE_CANDIDATE_DUMP`), `landing-workflow` (campaign 
 | # | Command | Actually runs | Catches | Cost |
 |---|---|---|---|---|
 | 1 | `cargo fmt --check` | rustfmt over every workspace member (root invocation) | formatting | seconds |
-| 2 | `task lint` | `cargo lint --workspace --all-features` → clippy-wrapper → `cargo clippy --no-deps --all-targets --all-features --workspace`; then `task lint:ast-grep` (rule tests + scan) | clippy `all`+`pedantic` (deny), `unwrap/expect/panic/indexing` in non-test code, disallowed macros, reasonless `#[allow]`, indoc/formatdoc/label policy | ~0.5–1 min warm |
+| 2 | `task lint` | `cargo lint --workspace --all-features` → clippy-wrapper → `cargo clippy --no-deps --all-targets --all-features --workspace`; then `task lint:ast-grep` (rule tests + scan) and `task lint:go` | clippy `all`+`pedantic` (deny), `unwrap/expect/panic/indexing` in non-test code, disallowed macros, reasonless `#[allow]`, indoc/formatdoc/label policy, Go lint and formatting | ~0.5–1 min warm |
 | 3 | `task lint:fc` | `cargo fc lint` (every package × feature combination × Linux, Windows-gnu, macOS-arm64 via cargo-zigbuild), then ast-grep | cfg/feature/target-specific breakage invisible to `--all-features` on the host | ~1–3 min warm; slowest lint |
 | 4 | `cargo nextest run --workspace` (≈ `task test`) | nextest `default` profile: `not kind(test)` = lib/bin unit tests incl. `src/tests/` | private-API and unit regressions | seconds + rebuild |
 | 5 | `task test:integration` | `task build:helmsweep`, the corpus producer, then nextest `integration` profile (all `tests/` binaries except `network_*`) | corpus fixtures, whole-chart schemas, Helm adjudication, dialect hygiene | the long pole: roughly 8–15 min |
@@ -90,7 +90,7 @@ integration suite's Helm adjudication renders through resident `helmsweep serve`
   content-digest check → strict `git apply`), builds `<target>/helmsweep` with release ldflags,
   then checks `helmsweep version` against pinned lines (Go, Helm module + replace, `helm-build`,
   jsonschema/v6 version, patch sha256).
-- `task test:helmsweep`: `gofmt -l`, stage, `go vet`, `go test -race` — in the staged copy. The
+- `task test:helmsweep`: `task lint:go` (`golangci-lint fmt --diff` and `run` on the staging program's source and staged driver), then `go test -race` in the staged copy. The
   source tree alone does not compile (it calls functions only the patch adds); never `go build`
   or `go test` in `tools/helmsweep` directly.
 - `go.mod` must stay **exactly Helm's release requirement set** (a subset of Helm's go.mod with

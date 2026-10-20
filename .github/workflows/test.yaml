@@ -81,10 +81,10 @@ jobs:
           install: false
           cache: true
           env: false
-      - run: mise install task go@1.26.5
+      - run: mise install task go@1.26.5 golangci-lint
       - name: Build
         run: task build:helmsweep
-      - name: Vet, race tests and gofmt
+      - name: Lint, race tests and formatting
         run: task test:helmsweep
 
   network:
