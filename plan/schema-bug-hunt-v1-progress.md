@@ -9086,4 +9086,10 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   Actions (already); gh-pages unprotected. Notes: benchtrail v0.3.0 is inside the 14-day cooldown (user-owned tool); the compact
   measurement stands in for `--output-layout compact` until landing 10a merges. Review: sol 20261020T111741-b50ea74a. Landing 10a run 2:
   dump OK 13:09–13:14 (205 verified, 0 of 204 adopted), unit running. Orchestrator.
+- 13:42 (Oct 20) — **gh-pages branch created on origin (USER-AUTHORISED, the only push of this session).** Empty orphan commit decb0be6
+  (empty tree), pushed as refs/heads/gh-pages only; unprotected; Pages already publishes from GitHub Actions (build_type workflow,
+  https://romnn.github.io/helm-schema/). main and all other branches remain unpushed. Benchmark review (sol b50ea74a,
+  `round8/review-benchmarks-sol.md`) = REWORK: remove the path filter, pin Rust via mise, pin every action exactly, fail clearly
+  without gh-pages, make the 150% summary alert real; ADR → 0067 — sent to the Opus builder. Landing 10a run 2: dump 13:09–13:14,
+  unit 13:14–13:23, lint 13:23–13:26 all OK; battery running since 13:26. Orchestrator.
 Next: watch landing 10a run 2 (`tail /Volumes/T7/dev/round8-landing10a-run2/chain.log`); on "chain green" commit adopted fixtures, merge landing-10a-v3 --no-ff into main with components + receipt sha256, re-tally closures; then apiguess and the CRD oracle as the next small landings; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
