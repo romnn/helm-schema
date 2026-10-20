@@ -9075,4 +9075,15 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   namespaces normalised; 78/78; 1,143/1,143 preserved). Chain: runner c6a52a4→v10 608229f, env 7ee88da (`runner/landing-10a.env`, branch
   landing-10a-v3, E=/Volumes/T7/dev/round8-landing10a-run2, BASELINE f7be7ba5, 17 accepted defaults failures), steps dump → unit → lint →
   battery → integration → sweep → finalize. Orchestrator.
+- 13:18 (Oct 20) — **Continuous benchmarks handed back (Opus builder; worktree round8-bench, branch feat/benchmarks, 4 commits 78a85a5a
+  9f43735b 0c412e30 f8239d8a; nothing pushed, nothing on GitHub changed).** tools/bench/bench.py (stdlib Python, `task bench`, outside the
+  Rust workspace; phase times decoded from the existing Perfetto spans; offline provider bundle; fails on nondeterministic output) over
+  kubeview (fixed cost), bitnami-redis full+lean, kube-prometheus-stack full+lean (subcharts + chart-local CRDs), oncall lean; openebs and
+  CRD-heavy charts dropped with reasons; metrics: median CPU/wall, peak RSS, pretty/compact bytes, `$defs` count, six phase times.
+  Local run 221–229 s (loaded host); CI estimate 5–7 min + 4–10 min release build. History: github-action-benchmark commits bench/data.js
+  to gh-pages; bench.yaml calls pages.yaml which deploys Hugo + the benchtrail v0.3.0 dashboard at /bench/; Hugo menu link
+  /helm-schema/bench/; actionlint 0; local dashboard render verified. Needs on GitHub (user): an orphan gh-pages branch; Pages from
+  Actions (already); gh-pages unprotected. Notes: benchtrail v0.3.0 is inside the 14-day cooldown (user-owned tool); the compact
+  measurement stands in for `--output-layout compact` until landing 10a merges. Review: sol 20261020T111741-b50ea74a. Landing 10a run 2:
+  dump OK 13:09–13:14 (205 verified, 0 of 204 adopted), unit running. Orchestrator.
 Next: watch landing 10a run 2 (`tail /Volumes/T7/dev/round8-landing10a-run2/chain.log`); on "chain green" commit adopted fixtures, merge landing-10a-v3 --no-ff into main with components + receipt sha256, re-tally closures; then apiguess and the CRD oracle as the next small landings; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
