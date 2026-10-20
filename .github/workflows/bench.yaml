@@ -1,8 +1,9 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/SchemaStore/schemastore/refs/heads/master/src/schemas/json/github-workflow.json
 name: bench
 on:
-  # Every commit to main is a point in the history, whatever it touches: a docs-only commit, a
-  # lockfile or a Cargo configuration change still yields a measurement.
+  # Every push to main is a point in the history, whatever it touches: GitHub runs the workflow once
+  # per push, on the pushed head commit, so the commits of one push share a point, and a docs-only
+  # push, a lockfile or a Cargo configuration change still yields a measurement.
   push:
     branches: [main]
   workflow_dispatch: {}
@@ -14,7 +15,7 @@ env:
   # moves no value without a commit here.
   MISE_ENV: bench
 
-# Every commit is a point in the history, so pending runs queue in order rather than replacing each
+# Every push is a point in the history, so pending runs queue in order rather than replacing each
 # other, and none is cancelled.
 concurrency:
   group: bench
@@ -59,15 +60,25 @@ jobs:
       - uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696 # v0.0.10
       - name: Build
         run: mise exec -- cargo build --release --package helm-schema-cli
+      # valgrind counts the instructions of the cheap charts. Its exact Ubuntu 24.04 package, from
+      # the release pocket that keeps it: a new valgrind may count differently, so moving it is a
+      # commit here, and the version is recorded with every count as its environment.
+      - name: Install valgrind
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends valgrind=1:3.22.0-0ubuntu3
       # Four corpus charts from the fixed cost to the heavy tails, under the full and (where it
       # changes the cost) the lean profile, offline against the committed provider bundle;
       # tools/bench/bench.py says why each chart is there. CPU time is the figure a shared runner
-      # holds steadiest; the per-phase times come from a separate traced run.
+      # holds steadiest; the per-phase times come from a separate traced run. Runner CPUs differ
+      # from run to run, so every value records its CPU model, and the cheap charts also record
+      # their executed instructions from one cachegrind run, which no runner CPU changes.
       - name: Measure
         run: >-
           mise exec -- python3 tools/bench/bench.py
           --binary target/release/helm-schema
           --json target/bench/history.json
+          --instructions-json target/bench/instructions.json
           --summary "$GITHUB_STEP_SUMMARY"
       # No threshold alert is evaluated: github-action-benchmark only checks its alert threshold
       # to post a commit comment or fail the job, and runner hardware and the millisecond phases of
@@ -80,6 +91,20 @@ jobs:
           name: helm-schema end-to-end
           tool: customSmallerIsBetter
           output-file-path: target/bench/history.json
+          benchmark-data-dir-path: bench
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          comment-on-alert: false
+          fail-on-alert: false
+          summary-always: true
+      # The instruction counts are a suite of their own: the dashboard splits the times by CPU
+      # model, while the counts, which do not depend on it, stay one series per configuration.
+      - name: Record the instruction counts
+        uses: benchmark-action/github-action-benchmark@4322e5726e6334590d251fc4f92bec0efafc45dc # v1.22.2
+        with:
+          name: helm-schema instructions
+          tool: customSmallerIsBetter
+          output-file-path: target/bench/instructions.json
           benchmark-data-dir-path: bench
           github-token: ${{ secrets.GITHUB_TOKEN }}
           auto-push: true

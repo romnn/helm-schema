@@ -64,9 +64,15 @@ jobs:
       # history the bench workflow records on `gh-pages` (read through the API,
       # no checkout). Installed after the Hugo build, which may clean
       # docs/public. Before the first benchmark run there is no history yet,
-      # and the documentation still deploys.
+      # and the documentation still deploys. Every value records the runner's
+      # CPU model in its environment, which changes with the runner GitHub
+      # assigns. The end-to-end times split into one series per CPU model
+      # (benchtrail `splitEnvironment`), so a change is judged only against
+      # runs on the same hardware; values recorded before the CPU model show
+      # as CPU "unknown". The instruction counts do not depend on the CPU, so
+      # they stay one series (tools/bench/README.md, ADR 0068).
       - name: Install the benchmark dashboard
-        uses: romnn/benchtrail@b9608b8f4191a056be08a730d0312eb75bb9e366 # v0.3.0
+        uses: romnn/benchtrail@3cd06a47c772db72c5ce5ceac03159ee8cfda1ab # v0.4.0
         with:
           path: docs/public/bench
           benchmark-data-dir-path: bench
@@ -82,7 +88,17 @@ jobs:
                 "profile": { "label": "Profile", "order": 1 }
               },
               "colorBy": "chart",
-              "dashBy": "profile"
+              "dashBy": "profile",
+              "ignoreEnvironment": ["cpu"],
+              "suites": {
+                "helm-schema end-to-end": {
+                  "splitEnvironment": ["cpu"],
+                  "label": "{{chart}} / {{profile}} / {{cpu}}",
+                  "dimensions": { "cpu": { "label": "CPU", "order": 2 } },
+                  "colorBy": "cpu",
+                  "dashBy": "profile"
+                }
+              }
             }
       - name: Upload artifact
         uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
