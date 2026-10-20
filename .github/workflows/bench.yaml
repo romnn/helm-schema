@@ -36,6 +36,15 @@ jobs:
       # Every action is pinned to a commit (its release noted): an upstream update must not
       # change what runs, least of all in a job that can push to `gh-pages`.
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      # github-action-benchmark commits the history to `gh-pages` and needs the branch to exist.
+      # Without it, fail here, naming the one-time setup, rather than lose the measurement after
+      # the build. romnn/helm-schema has the branch; a fork creates it once (tools/bench/README.md).
+      - name: Check the history branch
+        run: |
+          if ! git ls-remote --exit-code --heads origin gh-pages > /dev/null; then
+            echo "::error::The benchmark history branch gh-pages does not exist. Create it once, as tools/bench/README.md says: git switch --orphan gh-pages && git commit --allow-empty -m 'Benchmark history' && git push origin gh-pages"
+            exit 1
+          fi
       # Rust and Python at the exact versions mise.bench.toml pins (rustup installs the toolchain;
       # `mise exec` selects it). The compiler is recorded with every value as its environment.
       - uses: jdx/mise-action@c2a87611a18de5b3828c5652fe268e992400cb5c # v4.3.0
@@ -64,7 +73,7 @@ jobs:
       # noisy, so an alert (a move beyond 150%) is only listed in the job summary, never posted as
       # a commit comment; benchtrail's change detection, which weighs each benchmark's own noise,
       # is where changes are read.
-      # The history is committed to `bench/data.js` on `gh-pages`, which must exist.
+      # The history is committed to `bench/data.js` on `gh-pages` (checked above).
       - name: Record the history
         uses: benchmark-action/github-action-benchmark@4322e5726e6334590d251fc4f92bec0efafc45dc # v1.22.2
         with:

@@ -45,7 +45,9 @@ the user's benchtrail dashboard.
 ## Consequences
 
 - `gh-pages` only stores the history (`bench/data.js`); Pages still publishes from
-  Actions. Runs queue (`concurrency.queue: max`), so no commit's point is dropped; the
+  Actions. github-action-benchmark needs the branch to exist: romnn/helm-schema has it
+  (an empty orphan, created 2026-10-20), and the workflow checks for it before building
+  and fails with the one-time setup, which `tools/bench/README.md` documents for forks. Runs queue (`concurrency.queue: max`), so no commit's point is dropped; the
   docs deploy even when a benchmark fails, and before any history exists.
 - The compiler and Python are exact versions in `mise.bench.toml` (Rust 1.99.0, Python
   3.14.7, active under `MISE_ENV=bench`, so contributors' toolchains are unaffected): no
