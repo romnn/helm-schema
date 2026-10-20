@@ -9034,4 +9034,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   sandbox → orchestrator/chain); tokei 0. Committed eaefa2a1 in round8-inherited (final.patch sha256 e0059b8b…, forward-checked; the
   skills-doc hunk existed only in the patch because the sandbox cannot write .agents). Reviews (two sol lenses): gate soundness
   20261020T032143-90c2fd33, data correctness -5a899819 (count reconciliation 547 vs 564, B 455 vs 471). Orchestrator.
+- 06:11 (Oct 20) — **Inherited list: data LAND, gate REWORK; CRD oracle meets the ratchet; apiguess takes the honest fallback.** Inherited
+  list reviews (`round8/review-inherited-{data,gate}-sol.md`): data LAND (547 identities cover 564 observations; every roster row matches
+  its evidence); gate REWORK on two P1s — identity omits the original input bytes (two byte-distinct oncall inputs share one entry) and
+  group B binds only the generic adjudicator message (a new metaschema failure could hide) — sent back with real red→green for every
+  contract test (follow_up turn 1 on c1fe95be). CRD oracle (Track G builder turn 9): vetoes scoped to chart-sourced CRD authority; replay
+  1,143/1,143 outcomes preserved, zero control demotions; newly decidable kube-starrocks, nats-operator, trivy-operator, zalando-postgres-
+  operator; vendor tree and measurement CLI removed (897 infrastructure LOC, core 0); gates 0 (unit 1,712), integration 201 = 85 pending
+  Track G fixtures only. Committed in round8-guards as b6a9d899 / b63cee28 / a192a6eb (patch sha256 e15e1971… / 2a8cca52… / f11488e5…);
+  reviews (two sol lenses) 20261020T041128-7a59f4fd (Kubernetes exactness) and -32c3c87b (integration/isolation). apiguess: index
+  completeness not provable ⇒ the builder RESTORED the probe table and withdrew index inference; step 1 + a guard fix remain; 164 anchor
+  cells zero regressions, 46 false presences removed; −47 prod LOC; all gates 0 except DNS; committed 6f1e4585 (sha256 94e62b5e…);
+  re-check on df188fd0. Its ADR edits are re-targeted to the new numbering (rework/adr-main.patch). Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
