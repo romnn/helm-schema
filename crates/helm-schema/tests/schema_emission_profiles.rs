@@ -41,6 +41,12 @@ mod helm_pool;
 #[path = "common/known_false_acceptances.rs"]
 mod known_false_acceptances;
 
+#[path = "common/inherited_failure_tests.rs"]
+mod inherited_failure_tests;
+
+#[path = "common/known_inherited_failures.rs"]
+mod known_inherited_failures;
+
 #[path = "common/known_undecided_acceptances.rs"]
 mod known_undecided_acceptances;
 
@@ -49,6 +55,9 @@ use helm_pool::{PoolLimits, PoolPeaks, run_ordered};
 use known_false_acceptances::{
     Baseline, ContextFalseAcceptance, Family, KNOWN_CONTEXT_FALSE_ACCEPTANCES,
     KNOWN_FALSE_ACCEPTANCES, KnownFalseAcceptances, Probe, ROSTER_BASELINE, Rejection,
+};
+use known_inherited_failures::{
+    KNOWN_INHERITED_FAILURES, ObservedFailure, validate_inherited_failures,
 };
 use known_undecided_acceptances::{
     ContextUndecidedAcceptance, KNOWN_CONTEXT_UNDECIDED_ACCEPTANCES, KNOWN_UNDECIDED_ACCEPTANCES,
@@ -197,6 +206,7 @@ fn coverage_report_path() -> eyre::Result<std::path::PathBuf> {
 #[derive(Debug, Default, Serialize)]
 struct HelmAdjudicationCoverage {
     enabled: bool,
+    adjudication_failures: Vec<ObservedFailure>,
     /// Rust screening can miss flips that exact Helm coalescence would expose.
     screening_is_exact: bool,
     screened_flips: usize,
@@ -425,9 +435,10 @@ fn validate_helm_adjudication_coverage_with_contexts(
     contextual_undecided: &[ContextUndecidedAcceptance],
 ) -> eyre::Result<()> {
     let mut problems = Vec::new();
-    if coverage.enabled
-        && coverage.screened_flips != coverage.flips_adjudicated + coverage.screened_flips_collapsed
-    {
+    let outcomes = coverage.flips_adjudicated
+        + coverage.screened_flips_collapsed
+        + coverage.adjudication_failures.len();
+    if coverage.enabled && coverage.screened_flips != outcomes {
         problems.push(format!(
             "screened flip outcome accounting mismatch: {coverage:?}"
         ));
@@ -473,7 +484,7 @@ fn validate_helm_adjudication_coverage_with_contexts(
         let listed = roster
             .iter()
             .any(|group| group.lists(&observed.case, observed.rejection, observed.baseline))
-            || context_false_lists(contextual_false, observed)?;
+            || context_false_is_known(contextual_false, observed)?;
         if !listed {
             unlisted.push(format!(
                 "{} ({:?}, {:?}){}",
@@ -524,7 +535,7 @@ fn validate_helm_adjudication_coverage_with_contexts(
     Ok(())
 }
 
-fn context_false_lists(
+fn context_false_is_known(
     rows: &[ContextFalseAcceptance],
     observed: &ObservedFalseAcceptance,
 ) -> eyre::Result<bool> {
@@ -536,7 +547,7 @@ fn context_false_lists(
             return Ok(true);
         }
     }
-    Ok(false)
+    known_inherited_failures::oracle_false_acceptance_is_listed(KNOWN_INHERITED_FAILURES, observed)
 }
 
 fn context_undecided_lists(
@@ -888,6 +899,7 @@ fn helm_adjudication_records_each_outcome_once() {
         sim_assert_eq!(have: coverage.record_verdict(verdict, "case".to_string(), None), want: accepted);
     }
     sim_assert_eq!(have: json!(coverage), want: json!({
+        "adjudication_failures": [],
         "enabled": false, "screening_is_exact": false, "screened_flips": 0,
         "screened_flips_collapsed": 1, "flips_adjudicated": 9,
         "tightenings_matched_helm_abort": 1, "tightenings_matched_kubernetes_rejection": 1,
@@ -1176,7 +1188,7 @@ struct AcceptanceComparison {
     probes_checked: usize,
     flips: Vec<String>,
     coverage: Vec<ProbeCoverage>,
-    helm_adjudication_failures: Vec<String>,
+    screening_failures: Vec<String>,
     helm_adjudication: HelmAdjudicationCoverage,
     costs: Vec<ChartCost>,
     pool: Option<PoolReport>,
@@ -2179,7 +2191,7 @@ fn round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed() -> eyre:
         probes_checked,
         flips,
         coverage,
-        helm_adjudication_failures,
+        screening_failures,
         helm_adjudication,
         costs: _,
         pool: _,
@@ -2192,9 +2204,10 @@ fn round73_fixture_flips_are_adjudicated_and_probe_caps_are_disclosed() -> eyre:
     };
     report.write_and_validate(charts_checked, probes_checked)?;
     eyre::ensure!(
-        helm_adjudication_failures.is_empty(),
-        "Round 73 Helm adjudication failures:\n{}",
-        helm_adjudication_failures.join("\n")
+        screening_failures.is_empty() && report.helm_adjudication.adjudication_failures.is_empty(),
+        "Round 73 Helm adjudication failures:\n{}\n{:?}",
+        screening_failures.join("\n"),
+        report.helm_adjudication.adjudication_failures
     );
     validate_helm_adjudication_coverage(
         &report.helm_adjudication,
@@ -2257,7 +2270,7 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
         probes_checked,
         flips,
         coverage,
-        helm_adjudication_failures,
+        screening_failures,
         helm_adjudication,
         costs,
         pool,
@@ -2271,10 +2284,17 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
     };
     report.write_and_validate(charts_checked, probes_checked)?;
     eyre::ensure!(
-        helm_adjudication_failures.is_empty(),
+        screening_failures.is_empty(),
         "Round 74 Helm adjudication failures:\n{}",
-        helm_adjudication_failures.join("\n")
+        screening_failures.join("\n")
     );
+    let inherited_oracle_false_acceptances = if report.helm_adjudication.enabled {
+        validate_inherited_failures(&report.helm_adjudication, KNOWN_INHERITED_FAILURES)?
+    } else {
+        0
+    };
+    let listed_inherited_failures =
+        report.helm_adjudication.adjudication_failures.len() + inherited_oracle_false_acceptances;
     eyre::ensure!(
         report.helm_adjudication.flips_adjudicated == flips.len(),
         "fixture flips were not all live-adjudicated: {report:?}"
@@ -2306,9 +2326,9 @@ fn round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced() -> eyre::
     }
     eprintln!(
         "charts_checked={charts_checked} probes_checked={probes_checked} flips={} \
-         listed_false_acceptances={} listed_undecided_acceptances={}",
+         listed_false_acceptances={} listed_undecided_acceptances={} listed_inherited_failures={listed_inherited_failures}",
         flips.len(),
-        report.helm_adjudication.false_acceptances.len(),
+        report.helm_adjudication.false_acceptances.len() - inherited_oracle_false_acceptances,
         report
             .helm_adjudication
             .loosenings_with_uncertain_kubernetes
@@ -2376,9 +2396,14 @@ fn validate_external_comparison(comparison: &AcceptanceComparison) -> eyre::Resu
         validate_probe_coverage(coverage)?;
     }
     eyre::ensure!(
-        comparison.helm_adjudication_failures.is_empty(),
-        "external Helm adjudication failures:\n{}",
-        comparison.helm_adjudication_failures.join("\n")
+        comparison.screening_failures.is_empty()
+            && comparison
+                .helm_adjudication
+                .adjudication_failures
+                .is_empty(),
+        "external Helm adjudication failures:\n{}\n{:?}",
+        comparison.screening_failures.join("\n"),
+        comparison.helm_adjudication.adjudication_failures
     );
     validate_helm_adjudication_coverage(
         &comparison.helm_adjudication,
@@ -2683,6 +2708,7 @@ struct AdjudicatedProbe {
     flip: usize,
     case: String,
     document_kind: Option<test_util::helm_values::AcceptanceDocument>,
+    kubernetes_version: String,
     outcome: Result<(HelmFlipVerdict, std::path::PathBuf), String>,
     adjudication_ms: u64,
 }
@@ -2804,9 +2830,7 @@ fn fold_results(
                 }
                 comparison.probes_checked += screened.probes_checked;
                 comparison.flips.extend(screened.flips);
-                comparison
-                    .helm_adjudication_failures
-                    .extend(screened.failures);
+                comparison.screening_failures.extend(screened.failures);
                 comparison.helm_adjudication.screened_flips += screened.screened_flips;
                 for unreachable in &screened.coverage.unreachable_probes {
                     comparison
@@ -2842,7 +2866,13 @@ fn fold_results(
                     cost.adjudication_ms += probe.adjudication_ms;
                 }
                 match probe.outcome {
-                    Err(failure) => comparison.helm_adjudication_failures.push(failure),
+                    Err(failure) => comparison.helm_adjudication.adjudication_failures.push(
+                        ObservedFailure::from_adjudication(
+                            probe.case,
+                            probe.kubernetes_version,
+                            &failure,
+                        ),
+                    ),
                     Ok((verdict, evidence)) => {
                         eprintln!("HELM_FLIP {verdict:?}: evidence={}", evidence.display());
                         if let Some(candidate_accepts) = comparison
@@ -3196,11 +3226,23 @@ fn adjudicate_probe(
             flip,
             case: format!("{}: flip {flip}", live.label),
             document_kind: None,
+            kubernetes_version: String::new(),
             outcome: Err(format!("{}: no screened flip {flip}", live.label)),
             adjudication_ms: 0,
         };
     };
     let case = format!("{}: {}", live.label, probe.name);
+    let kubernetes_version = probe.document.as_ref().map_or_else(
+        || {
+            live.helm
+                .chart(&live.path)
+                .ok()
+                .and_then(PinnedHelmChart::kubernetes_version)
+                .unwrap_or_default()
+                .to_string()
+        },
+        |document| document.kubernetes_version.clone(),
+    );
     let outcome = match (live.helm.chart(&live.path), kubernetes) {
         (Err(error), _) => Err(format!("{case}: {error}")),
         (Ok(_), None) => Err(format!("{case}: no Kubernetes validator")),
@@ -3232,6 +3274,7 @@ fn adjudicate_probe(
         flip,
         case,
         document_kind: probe.document.as_ref().map(|document| document.kind),
+        kubernetes_version,
         outcome,
         adjudication_ms: elapsed_ms(started),
     }

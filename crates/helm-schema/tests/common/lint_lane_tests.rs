@@ -530,6 +530,7 @@ fn live_grouped_outcomes_fold_in_original_probe_order() -> eyre::Result<()> {
                     flip,
                     case: case.clone(),
                     document_kind: Some(AcceptanceDocument::LintRaw),
+                    kubernetes_version: "1.29.0".into(),
                     outcome: Err(case),
                     adjudication_ms: 0,
                 }),
@@ -537,7 +538,7 @@ fn live_grouped_outcomes_fold_in_original_probe_order() -> eyre::Result<()> {
         })
         .collect();
     let comparison = super::fold_results(results, true)?;
-    sim_assert_eq!(have: comparison.helm_adjudication_failures, want: (0..7).map(|flip| format!("flip {flip}")).collect::<Vec<_>>());
+    sim_assert_eq!(have: comparison.helm_adjudication.adjudication_failures.into_iter().map(|failure| failure.reason).collect::<Vec<_>>(), want: (0..7).map(|flip| format!("flip {flip}")).collect::<Vec<_>>());
     sim_assert_eq!(have: comparison.helm_adjudication.examined_contexts.len(), want: 7);
     Ok(())
 }

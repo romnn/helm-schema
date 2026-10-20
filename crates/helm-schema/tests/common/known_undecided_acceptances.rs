@@ -7,7 +7,7 @@
 //! must be removed. Rows are adjudicated against the same baseline as the
 //! false-acceptance roster (`ROSTER_BASELINE`).
 
-use crate::known_false_acceptances::{ContextSelector, Probe};
+use crate::known_false_acceptances::{ContextSelector, ContextTransport, Probe};
 
 /// The known accepted cells of one chart that Helm renders and whose
 /// changed resources the pinned evidence cannot decide, for the same
@@ -27,7 +27,110 @@ pub(crate) struct ContextUndecidedAcceptance {
     pub(crate) uncertain: &'static [&'static str],
 }
 
-pub(crate) const KNOWN_CONTEXT_UNDECIDED_ACCEPTANCES: &[ContextUndecidedAcceptance] = &[];
+pub(crate) const KNOWN_CONTEXT_UNDECIDED_ACCEPTANCES: &[ContextUndecidedAcceptance] = &[
+    // The pinned bundle/catalog lacks the rendered resource versions below, so their
+    // changed resources remain undecided despite a successful Helm render.
+    ContextUndecidedAcceptance {
+        chart: "apisix",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintCoalescedTwice,
+            overlay: r#"{"ingress-controller":{"enabled":true,"gatewayProxy":{"createDefault":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        uncertain: &[
+            "document 38: apisix.apache.org/v1alpha1/GatewayProxy adjudication-config: pinned CRD schema not found",
+        ],
+    },
+    // The pinned bundle/catalog lacks the rendered resource versions below, so their
+    // changed resources remain undecided despite a successful Helm render.
+    ContextUndecidedAcceptance {
+        chart: "apisix",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"ingress-controller":{"enabled":true,"gatewayProxy":{"createDefault":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        uncertain: &[
+            "document 38: apisix.apache.org/v1alpha1/GatewayProxy adjudication-config: pinned CRD schema not found",
+        ],
+    },
+    // The pinned bundle/catalog lacks the rendered resource versions below, so their
+    // changed resources remain undecided despite a successful Helm render.
+    ContextUndecidedAcceptance {
+        chart: "apisix",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::Template,
+            overlay: r#"{"ingress-controller":{"enabled":true,"gatewayProxy":{"createDefault":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        uncertain: &[
+            "document 38: apisix.apache.org/v1alpha1/GatewayProxy adjudication-config: pinned CRD schema not found",
+        ],
+    },
+    // The pinned bundle/catalog lacks the rendered resource versions below, so their
+    // changed resources remain undecided despite a successful Helm render.
+    ContextUndecidedAcceptance {
+        chart: "milvus",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"pulsar":{"certs":{"internal_issuer":{"enabled":true}},"enabled":true}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        uncertain: &[
+            "document 90: cert-manager.io/v1alpha2/Certificate adjudication-pulsar-ca: pinned CRD schema not found",
+            "document 91: cert-manager.io/v1alpha2/Issuer adjudication-pulsar-internal-cert-issuer: pinned CRD schema not found",
+            "document 92: cert-manager.io/v1alpha2/Issuer adjudication-pulsar-internal-cert-issuer-ca-issuer: pinned CRD schema not found",
+        ],
+    },
+    // The pinned bundle/catalog lacks the rendered resource versions below, so their
+    // changed resources remain undecided despite a successful Helm render.
+    ContextUndecidedAcceptance {
+        chart: "openebs",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"engines":{"replicated":{"mayastor":{"enabled":true}}},"mayastor":{"base":{"jaeger":{"enabled":true}}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        uncertain: &[
+            "document 113: jaegertracing.io/v1/Jaeger jaeger: pinned CRD schema not found",
+        ],
+    },
+    // The pinned bundle/catalog lacks the rendered resource versions below, so their
+    // changed resources remain undecided despite a successful Helm render.
+    ContextUndecidedAcceptance {
+        chart: "openebs",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"loki":{"enabled":true,"monitoring":{"selfMonitoring":{"enabled":true}}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        uncertain: &[
+            "document 106: monitoring.grafana.com/v1alpha1/GrafanaAgent adjudication-loki: pinned CRD schema not found",
+            "document 107: monitoring.grafana.com/v1alpha1/LogsInstance adjudication-loki: pinned CRD schema not found",
+            "document 108: monitoring.grafana.com/v1alpha1/PodLogs adjudication-loki: pinned CRD schema not found",
+        ],
+    },
+    // The pinned bundle/catalog lacks the rendered resource versions below, so their
+    // changed resources remain undecided despite a successful Helm render.
+    ContextUndecidedAcceptance {
+        chart: "openebs",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"loki":{"enabled":true,"rbac":{"sccEnabled":true}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        uncertain: &[
+            "document 105: security.openshift.io/v1/SecurityContextConstraints loki: pinned CRD schema not found",
+        ],
+    },
+];
 
 pub(crate) const KNOWN_UNDECIDED_ACCEPTANCES: &[KnownUndecidedAcceptances] = &[
     // A truthy `openshift.enabled` adds the `route.openshift.io/v1` Route of

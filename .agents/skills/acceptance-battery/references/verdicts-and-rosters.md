@@ -353,7 +353,7 @@ JSON overlay, transport, and Kubernetes version:
 Legacy path/class selectors do not authorize these names.
 Add explicit `ContextSelector` rows to `KNOWN_CONTEXT_FALSE_ACCEPTANCES` or
 `KNOWN_CONTEXT_UNDECIDED_ACCEPTANCES`, with the full document kind, JSON overlay,
-`ContextTransport::ValuesFile`, and Kubernetes version. Both lists start empty.
+`ContextTransport::ValuesFile`, and Kubernetes version. Each row records one complete context.
 False-acceptance rows also bind rejection, baseline class, and family; undecided
 rows bind the exact ordered uncertainty reasons. Stale contextual rows are checked
 only when that complete identity was actually examined.
@@ -391,6 +391,38 @@ Editing rules:
   of listing the row.
 - An undecided row needs the adjudicator's exact uncertainty text and a comment
   explaining why the pinned evidence cannot decide the resource.
+
+## Exact inherited hard failures
+
+`common/known_inherited_failures.rs` holds `KNOWN_INHERITED_FAILURES`, the
+shrink-only list of hard failures inherited by landing 10a (`c23467f4`).
+Its contextual rows reuse `ContextSelector`; legacy template rows reuse `Probe`
+and additionally bind the exact Kubernetes version and values-file transport.
+Every row binds chart, complete lane/overlay or exact probe selector, failure
+class and exact reason, plus `owner` (repair track) and `observed_on`.
+No chart-wide, class-wide, targeted-probe suffix, or overlay wildcard is allowed.
+Repeated observations of the same complete identity share one entry.
+
+A live round-74 run must match every adjudication failure exactly and observe
+every entry, including entries for charts omitted by a chart filter.
+An unlisted failure, changed reason, duplicate entry, missing ownership, or stale
+entry fails; even an unexamined or unreachable entry is stale.
+Removing an entry requires proving the defect fixed or the oracle corrected.
+Later landings may only remove entries, never add or broaden one to admit a new
+failure.
+Schema-only preservation runs gain no allowance from this list.
+
+The CRD-v1 not-found oracle false alarms bind the exact false-acceptance
+identity, rejection/baseline class, and complete ordered Kubernetes errors.
+They remain visible in raw false-acceptance coverage, but count separately in
+the summary and never authorize a false-acceptance roster row.
+They require real saved adjudication evidence: a matching case alone cannot
+excuse a different Kubernetes rejection or missing evidence.
+An unusable defaults/context control is an adjudication failure, never a
+roster-eligible undecided acceptance.
+Genuine inherited false acceptances and accepted undecided resources still
+require the existing contextual rosters and their evidence rules.
+The list changes neither `ROSTER_BASELINE` nor the matched-flip count policy.
 
 ## Why the roster baseline is pinned, and how to move it
 

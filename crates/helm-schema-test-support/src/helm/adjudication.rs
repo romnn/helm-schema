@@ -1387,7 +1387,7 @@ impl OfflineKubernetesValidator {
                 .or_insert_with(|| {
                     self.evaluate_defaults(chart, kubernetes_version)
                         .map(Arc::new)
-                        .map_err(|err| format!("{err:?}"))
+                        .map_err(|err| format!("{err:#}"))
                 });
             evaluated
                 .as_ref()

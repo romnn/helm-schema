@@ -351,7 +351,7 @@ impl LintCoverage {
         self.validate()?;
         for (kind, counts) in &self.documents {
             eyre::ensure!(
-                counts.adjudication_failures == 0 && counts.flips == counts.adjudicated,
+                counts.flips == counts.adjudicated + counts.adjudication_failures,
                 "incomplete {kind} adjudication: {counts:?}"
             );
         }
