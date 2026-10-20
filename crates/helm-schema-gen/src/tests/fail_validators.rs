@@ -3824,3 +3824,62 @@ fn kind_dispatch_else_fail_accepts_every_dispatched_kind() {
         sim_assert_eq!(have: have, want: want);
     }
 }
+
+#[test]
+fn ternary_rejects_direct_non_boolean_literal_conditions() {
+    let expected = schema_for_values_yaml(parse_ir(r#"{{ fail "bad" }}"#), None);
+    for source in [
+        r#"{{ $_ := ternary "a" "b" 0 }}"#,
+        r#"{{ $_ := ternary "a" "b" 1 }}"#,
+        r#"{{ $_ := ternary "a" "b" 0x10 }}"#,
+        r#"{{ $_ := ternary "a" "b" 0.0 }}"#,
+        r#"{{ $_ := ternary "a" "b" 1.5 }}"#,
+        r#"{{ $_ := ternary "a" "b" "" }}"#,
+        r#"{{ $_ := ternary "a" "b" `true` }}"#,
+        r#"{{ $_ := ternary "a" "b" (0) }}"#,
+        r#"{{ $_ := ternary "a" "b" ("true") }}"#,
+    ] {
+        let schema = schema_for_values_yaml(parse_ir(source), None);
+        sim_assert_eq!(have: &schema, want: &expected, "source={source}");
+    }
+}
+
+#[test]
+fn ternary_literal_failures_respect_outer_control_flow() {
+    let source = r#"{{ if .Values.enabled }}{{ $_ := ternary "a" "b" 0 }}{{ end }}"#;
+    let reference = r#"{{ if .Values.enabled }}{{ fail "bad" }}{{ end }}"#;
+    let schema = schema_for_values_yaml(parse_ir(source), None);
+    let expected = schema_for_values_yaml(parse_ir(reference), None);
+    // A dormant call does not consume its invalid condition.
+    sim_assert_eq!(have: &schema, want: &expected);
+    assert!(!schema_accepts_instance(
+        &schema,
+        &serde_json::json!({"enabled": true})
+    ));
+    assert!(schema_accepts_instance(
+        &schema,
+        &serde_json::json!({"enabled": false})
+    ));
+
+    let expected = schema_for_values_yaml(parse_ir(""), None);
+    for source in [
+        r#"{{ $_ := and false (ternary "a" "b" 0) }}"#,
+        r#"{{ $_ := or true (ternary "a" "b" 0) }}"#,
+    ] {
+        let schema = schema_for_values_yaml(parse_ir(source), None);
+        sim_assert_eq!(have: &schema, want: &expected, "source={source}");
+    }
+}
+
+#[test]
+fn ternary_literal_check_keeps_mutable_trailing_conditions_dynamic() {
+    let expected = schema_for_values_yaml(parse_ir(""), None);
+    for source in [
+        r#"{{ $_ := set $ "flag" "bad" }}{{ $_ := ternary (set $ "flag" false) "b" $.flag }}"#,
+        r#"{{ $_ := set $ "flag" "bad" }}{{ $_ := ternary "a" (set $ "flag" false) $.flag }}"#,
+    ] {
+        let schema = schema_for_values_yaml(parse_ir(source), None);
+        // Earlier arguments can change a computed condition before its direct read.
+        sim_assert_eq!(have: &schema, want: &expected, "source={source}");
+    }
+}

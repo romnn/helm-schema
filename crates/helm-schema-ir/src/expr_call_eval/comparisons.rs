@@ -17,7 +17,9 @@ use crate::scalar_value::{
 };
 
 use super::collections::direct_raw_identity_path;
-use super::strict_operands::{record_comparable_kind_result, record_strict_kind_result};
+use super::strict_operands::{
+    push_fail_capture, record_comparable_kind_result, record_strict_kind_result,
+};
 use super::value_facts::identity_value_paths;
 
 /// `ternary A B COND`: the first two arguments are the branch values, while
@@ -118,7 +120,21 @@ fn eval_ternary_condition(
     let condition = match piped_condition {
         Some((condition, _is_direct_values_path)) => condition,
         None => match args.get(2) {
-            Some(condition_arg) => eval_expr_with_helper_calls(condition_arg, env, resolver),
+            Some(condition_arg) => {
+                // Source literals keep their type across preceding argument mutations.
+                if matches!(
+                    condition_arg.deparen(),
+                    TemplateExpr::Literal(
+                        Literal::String(_)
+                            | Literal::RawString(_)
+                            | Literal::Int(_)
+                            | Literal::Float(_)
+                    )
+                ) {
+                    push_fail_capture(Vec::new(), effects);
+                }
+                eval_expr_with_helper_calls(condition_arg, env, resolver)
+            }
             None => {
                 return (
                     TruthCondition::Unknown,
