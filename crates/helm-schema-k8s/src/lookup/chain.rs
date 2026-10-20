@@ -4,6 +4,7 @@ use helm_schema_core::{
 };
 
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
+use crate::group_version::GroupVersion;
 use crate::inference::{ApiVersionInferenceOutcome, infer_api_version};
 
 use super::chain_outcome::ChainLookupOutcome;
@@ -178,6 +179,17 @@ impl Chain {
         path: &YamlPath,
         commit_miss_diagnostics: bool,
     ) -> ChainLookupOutcome {
+        // A malformed apiVersion names no schema any provider could own, so
+        // it resolves as unknown without reaching a cache or the network.
+        if !resource.api_version.trim().is_empty()
+            && GroupVersion::parse(&resource.api_version).is_none()
+        {
+            return self.finish_concrete_resource_lookup(
+                resource,
+                ChainLookupOutcome::MissingSchema,
+                commit_miss_diagnostics,
+            );
+        }
         for (provider_index, provider) in self.providers.iter().enumerate() {
             let result = self.provider_lookup_cache.get_or_compute(
                 ProviderLookupCacheKey::new(provider_index, resource, path),

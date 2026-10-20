@@ -40,3 +40,26 @@ fn candidate_filenames_for_k8s_io_group_prefer_group_prefix() {
         ]
     );
 }
+
+/// A malformed apiVersion names no file at all, so no lookup can cache one.
+#[test]
+fn candidate_filenames_for_malformed_api_versions_are_empty() {
+    for api_version in [
+        "\"",
+        "autoscaling/",
+        "Cert-Manager.io/v1",
+        "apps/v1/Deployment",
+    ] {
+        let r = ResourceRef::concrete(api_version.to_string(), "Certificate".to_string());
+        sim_assert_eq!(
+            have: candidate_filenames_for_resource(&r),
+            want: Vec::<String>::new(),
+            "{api_version:?}"
+        );
+        sim_assert_eq!(
+            have: crate::filename::group_relative_path_for_resource(&r),
+            want: None,
+            "{api_version:?}"
+        );
+    }
+}

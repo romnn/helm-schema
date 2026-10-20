@@ -168,13 +168,12 @@ impl KubernetesJsonSchemaProvider {
     /// return the first source that owns the resource.
     #[tracing::instrument(skip_all, fields(kind = resource.kind.as_str(), api_version = resource.api_version.as_str()))]
     fn load_resource_doc(&self, resource: &ResourceRef) -> Option<LoadedK8sSchemaDoc> {
-        if resource.api_version.trim().is_empty() {
+        // Empty exactly when the apiVersion is missing or malformed: such a
+        // resource names no upstream file.
+        let candidates = candidate_filenames_for_resource(resource);
+        if candidates.is_empty() {
             return None;
         }
-
-        // `candidate_filenames_for_resource` always yields at least one
-        // filename for a non-empty apiVersion.
-        let candidates = candidate_filenames_for_resource(resource);
 
         let layout = self.run_layout_check();
         if layout == LayoutCheckOutcome::ForwardIncompatible {
