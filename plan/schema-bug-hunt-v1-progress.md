@@ -9099,4 +9099,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   by PID (it owns this chain); the auto-mode permission classifier DENIED it ("Interfere With Workloads") — escalated to the user. Builders
   look unaffected (W1's cwd valid). Benchmark rework (Opus) handed back: no path filter, mise.bench pins Rust 1.99.0, every action
   SHA-pinned, early failure without gh-pages, alert docs corrected, ADR 0067 (511a7eab..495fb748); re-check on b50ea74a. Orchestrator.
-Next: watch landing 10a run 2 (`tail /Volumes/T7/dev/round8-landing10a-run2/chain.log`); on "chain green" commit adopted fixtures, merge landing-10a-v3 --no-ff into main with components + receipt sha256, re-tally closures; then apiguess and the CRD oracle as the next small landings; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
+- 16:14 (Oct 20) — **Landing 10a restarted as run 3 from dump; benchmarks LAND and merged into main (4c4f3e1d); main's typos gate
+  repaired (e5f04a48).** The user stopped the run-2 runner, nextest and test processes (SIGTERM) and the five surviving helmsweep servers
+  (SIGKILL); lock released. Restart from battery refused twice (exit 4): `rust toolchain (rustc -vV) differ` — mise created rust shims at
+  13:40 (installing mise.bench.toml's Rust 1.99.0) after run 2's dump bound `~/.cargo/bin/rustup`; the resolved toolchain is identical
+  (1.98.0, 88d9e12ae), only the bound path moved (read-only binding diff: scratchpad bindiff.zsh). Per runner rules: fresh
+  E=/Volumes/T7/dev/round8-landing10a-run3, runner commit e767c6c, full chain dump→finalize launched 16:11. Bench re-review
+  (sol, 20261020T111741-b50ea74a): all four P2 + P3 resolved, VERDICT LAND; actionlint 0, typos 0, fmt 0 on merged main; not exercised on
+  GitHub (unpushed). `task typos` had been red on main since the ADR landing: 19 false hits (commit shas, "reguarded" file name,
+  "mis-trimming"); fix = hex-sha ignore rule + word entry + one rewording. W4 (2803bf0c, 23 h) and W1 (e0881b7b, 21 h) still running
+  (user: let them finish). Orchestrator.
+Next: watch landing 10a run 3 (`tail /Volumes/T7/dev/round8-landing10a-run3/chain.log`); on "chain green" commit adopted fixtures, merge landing-10a-v3 --no-ff into main with components + receipt sha256, re-tally closures; then apiguess and the CRD oracle as the next small landings; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
