@@ -267,7 +267,7 @@ pub fn bundled_crd_provider() -> CrdsCatalogSchemaProvider {
 /// single-provider shortcut.
 #[must_use]
 pub fn production_k8s_chain(version: &str) -> Chain {
-    let k8s_provider = bundled_k8s_provider(version).with_api_version_guess(true);
+    let k8s_provider = bundled_k8s_provider(version);
     Chain::new(vec![Box::new(k8s_provider)]).with_inference_enabled(true)
 }
 
@@ -279,7 +279,7 @@ pub fn production_k8s_chain(version: &str) -> Chain {
 #[must_use]
 pub fn production_crd_k8s_chain(version: &str) -> Chain {
     let crds = bundled_crd_provider();
-    let k8s_provider = bundled_k8s_provider(version).with_api_version_guess(true);
+    let k8s_provider = bundled_k8s_provider(version);
     Chain::new(vec![Box::new(crds), Box::new(k8s_provider)]).with_inference_enabled(true)
 }
 

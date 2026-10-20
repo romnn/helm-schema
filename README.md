@@ -188,10 +188,9 @@ helm-schema ./path/to/chart --no-k8s-schemas --output values.schema.json
     Mutually exclusive with `--strict-k8s-version`; rejected when combined with
     multiple explicit `--k8s-version` values (the right knob in that case is the
     explicit list).
-  - Auto-fallback versions are escape valves for the schema-lookup layer only;
-    they do NOT participate in apiVersion inference cache scans (so a chart
-    that's missing an `apiVersion` for a `PodDisruptionBudget` won't pick up the
-    fallback's `policy/v1beta1` and become ambiguous against `policy/v1`).
+  - Auto-fallback versions extend schema lookup only. API-version inference
+    uses structural facts, explicit local sources, and bounded canonical
+    candidates regardless of which release caches are warm.
 - `--k8s-schema-mirror <URL>` (repeatable)
   - Additional upstream K8s schema mirror URL. Per-source cache namespacing keeps
     mirror entries from masking the default catalog. **Available in both strict
@@ -260,17 +259,27 @@ templated or absent), the lookup normally fails with `apiVersion unknown`. Two
 flags control the optional inference:
 
 - `--api-version-guess`
-  - Enable a three-tier inference path: (1) a hardcoded canonical
+  - Enable bounded inference from a hardcoded canonical
     `kind → apiVersion` shortlist for unambiguous K8s + Prometheus operator kinds,
-    (2) a local cache scan across every configured K8s + CRD cache namespace,
-    (3) a kind-scoped HTTP probe against the CRD catalog mirrors (only for
-    kinds in the extended shortlist — no blind group sweeps). When exactly one
-    apiVersion is implied, the chain emits `InferredApiVersion`. When multiple
-    plausible candidates exist (e.g. `Ingress` in both `networking.k8s.io/v1`
-    and `extensions/v1beta1`), the chain abstains and emits `AmbiguousApiVersion`.
+    plus a kind-scoped HTTP probe against the CRD catalog mirrors for shortlisted
+    kinds. Explicit local overrides take precedence, followed by chart-bundled
+    CRDs; multiple versions within the first present local source stay ambiguous.
+    Remote cache contents never contribute inference candidates. Kinds outside
+    the shortlist, including `Ingress` and `PodDisruptionBudget`, require a
+    structurally known apiVersion or explicit local evidence; otherwise inference
+    abstains, even with a warm cache. A unique inference emits
+    `InferredApiVersion` for custom resources; conflicting candidates emit
+    `AmbiguousApiVersion`.
 - `--strict-api-versions`
   - Disable the inference path entirely. Mutually exclusive with
     `--api-version-guess`.
+
+The Kubernetes capability oracle probes a canonical resource at the primary
+release for `.Capabilities.APIVersions.Has "group/version"`; resource-qualified
+queries probe the named kind. Cache misses fetch upstream when allowed, while
+offline misses without confirmed negative evidence remain unknown. The upstream
+`_definitions.json` document is excluded: generic types name retired APIs, and
+partial documents cannot prove that an API version is absent.
 
 ### Diagnostics
 

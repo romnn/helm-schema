@@ -20,11 +20,11 @@ pub trait K8sSchemaProvider: Send + Sync + std::fmt::Debug {
     ///
     fn lookup(&self, resource: &ResourceRef, path: &YamlPath) -> ProviderLookupResult;
 
-    /// Contribute apiVersion candidates for a kind whose apiVersion
-    /// the caller couldn't pin AFTER `api_version_candidates` has been
-    /// exhausted. Returns ALL candidates the provider knows about; the
-    /// caller aggregates across providers and decides Resolved vs
-    /// Ambiguous. Default returns an empty list.
+    /// Contributes API versions after the caller exhausts structural candidates.
+    ///
+    /// The caller aggregates all providers' candidates and resolves or abstains.
+    /// The default returns an empty list.
+    /// Remote cache contents must not determine which candidates exist.
     fn infer_api_version_candidates(&self, _kind: &str) -> Vec<ApiVersionCandidate> {
         Vec::new()
     }

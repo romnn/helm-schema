@@ -3,10 +3,10 @@ use std::path::PathBuf;
 use helm_schema_core::{ResourceRef, YamlPath};
 use serde_json::Value;
 
-use crate::cache::SourceDocCache;
+use crate::cache::{SourceDocCache, json_files, subdirs};
 use crate::doc_backed_schema::{LocalSchemaLeaf, lookup_root_metadata_path};
-use crate::inference::ApiVersionCandidate;
-use crate::inference::cache_scan::scan_crd_source_dir;
+use crate::filename::match_crd_filename;
+use crate::inference::{ApiVersionCandidate, InferenceSource};
 use crate::local_schema_universe::ResourceDocKey;
 use crate::lookup::{
     K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaSource,
@@ -134,7 +134,22 @@ impl K8sSchemaProvider for LocalSchemaProvider {
             return Vec::new();
         }
         let kind_lc = kind.to_ascii_lowercase();
-        scan_crd_source_dir(&self.root_dir, &kind_lc, ProviderOrigin::LocalOverride)
+        let mut candidates = Vec::new();
+        for (group, directory) in subdirs(&self.root_dir) {
+            for path in json_files(&directory) {
+                let Some(filename) = path.file_name().and_then(|name| name.to_str()) else {
+                    continue;
+                };
+                if let Some(version) = match_crd_filename(filename, &kind_lc) {
+                    candidates.push(ApiVersionCandidate {
+                        api_version: format!("{group}/{version}"),
+                        source: InferenceSource::LocalOverride,
+                        origin: ProviderOrigin::LocalOverride,
+                    });
+                }
+            }
+        }
+        candidates
     }
 }
 

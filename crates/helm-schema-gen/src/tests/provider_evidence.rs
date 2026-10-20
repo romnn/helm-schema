@@ -2760,8 +2760,7 @@ fn surveyor_metric_relabelings_keeps_crd_provider_evidence() -> eyre::Result<()>
         Box::new(
             KubernetesJsonSchemaProvider::new("v1.35.0")
                 .with_cache_dir(super::bundle_cache_dir())
-                .with_allow_download(false)
-                .with_api_version_guess(true),
+                .with_allow_download(false),
         ),
     ])
     .with_inference_enabled(true);

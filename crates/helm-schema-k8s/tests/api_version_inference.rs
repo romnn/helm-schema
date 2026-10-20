@@ -51,28 +51,34 @@ fn inference_skipped_when_api_version_candidates_nonempty() -> eyre::Result<()> 
         .with_allow_download(false)
         .with_cache_dir(tmp_dir("inf-skip")?)
         .with_api_version_guess(true);
-    let chain = Chain::new(vec![Box::new(crd)]).with_inference_enabled(true);
-    // No diagnostic sink because inference wouldn't actually emit
-    // InferredApiVersion if candidates are pre-pinned.
+    let sink = DiagnosticSink::new();
+    let chain = Chain::new(vec![Box::new(crd)])
+        .with_inference_enabled(true)
+        .with_diagnostic_sink(sink.clone());
     let _ = chain.schema_fragment_for_use(&use_);
-    // The contract is: this should NOT trigger inference. If it did,
-    // we'd see InferredApiVersion in a sink; absence here is the test.
+    assert!(!sink.snapshot().iter().any(|diagnostic| matches!(
+        diagnostic,
+        Diagnostic::InferredApiVersion { .. } | Diagnostic::AmbiguousApiVersion { .. }
+    )));
     Ok(())
 }
 
 #[test]
 fn inference_returns_no_match_without_opt_in() -> eyre::Result<()> {
-    // Inference reads no cache, but constructing a provider prepares one:
-    // point it at a throwaway root so the test never touches the shared
-    // per-user cache.
-    let provider = KubernetesJsonSchemaProvider::new("v1.35.0")
+    // An explicit scratch root keeps this check independent of the user cache.
+    let fetcher = Arc::new(MockFetcher::new());
+    let transport = Arc::clone(&fetcher);
+    let provider = CrdsCatalogSchemaProvider::new()
         .with_cache_dir(tmp_dir("inf-no-opt-in")?)
+        .with_allow_download(true)
+        .with_fetcher(transport)
         .with_api_version_guess(false);
-    let candidates = provider.infer_api_version_candidates("Pod");
+    let candidates = provider.infer_api_version_candidates("ServiceMonitor");
     assert!(
         candidates.is_empty(),
         "without opt-in, infer_api_version_candidates must return empty"
     );
+    sim_assert_eq!(have: fetcher.total_calls(), want: 0);
     Ok(())
 }
 
@@ -87,8 +93,7 @@ fn api_version_guess_shortlist_resolves_known_kind() -> eyre::Result<()> {
         .with_api_version_guess(true);
     let k8s_provider = KubernetesJsonSchemaProvider::new("v1.35.0")
         .with_cache_dir(k8s)
-        .with_fetcher(mock)
-        .with_api_version_guess(true);
+        .with_fetcher(mock);
     let diagnostics = DiagnosticSink::new();
     let chain = Chain::new(vec![Box::new(crd_provider), Box::new(k8s_provider)])
         .with_inference_enabled(true)
@@ -232,12 +237,11 @@ fn inference_local_override_wins_over_online_probe() {
 
 #[test]
 fn api_version_guess_aggregates_across_providers() {
-    // Shortlist AND LocalCacheScan contribute the same apiVersion →
-    // single Resolved outcome, source = Shortlist (higher priority).
+    // The shortlist and online probe agree; the shortlist supplies the diagnostic source.
     let candidates = vec![
         ApiVersionCandidate {
             api_version: "x/v1".to_string(),
-            source: InferenceSource::LocalCacheScan,
+            source: InferenceSource::OnlineProbe,
             origin: ProviderOrigin::DefaultCatalog,
         },
         ApiVersionCandidate {
@@ -256,7 +260,7 @@ fn api_version_guess_aggregates_across_providers() {
             sim_assert_eq!(
                 have: source,
                 want: InferenceSource::Shortlist,
-                "Shortlist must win over LocalCacheScan"
+                "Shortlist must win over OnlineProbe"
             );
         }
         other => panic!("expected Resolved with Shortlist source; got {other:?}"),
@@ -265,17 +269,27 @@ fn api_version_guess_aggregates_across_providers() {
 
 #[test]
 fn api_version_guess_strict_disables_inference() -> eyre::Result<()> {
-    // With guess off, providers return empty candidates regardless of
-    // the kind being in the shortlist.
-    let provider = KubernetesJsonSchemaProvider::new("v1.35.0")
+    let fetcher = Arc::new(MockFetcher::new());
+    let transport = Arc::clone(&fetcher);
+    let provider = CrdsCatalogSchemaProvider::new()
         .with_cache_dir(tmp_dir("inf-strict")?)
-        .with_api_version_guess(false);
+        .with_allow_download(true)
+        .with_fetcher(transport)
+        .with_api_version_guess(true);
+    let sink = DiagnosticSink::new();
+    let chain = Chain::new(vec![Box::new(provider)])
+        .with_inference_enabled(false)
+        .with_diagnostic_sink(sink.clone());
     assert!(
-        provider
-            .infer_api_version_candidates("ServiceMonitor")
-            .is_empty(),
-        "with --strict-api-versions (= guess off), no candidates"
+        chain
+            .schema_fragment_for_use(&use_with_kind("ServiceMonitor"))
+            .is_none()
     );
+    assert!(!sink.snapshot().iter().any(|diagnostic| matches!(
+        diagnostic,
+        Diagnostic::InferredApiVersion { .. } | Diagnostic::AmbiguousApiVersion { .. }
+    )));
+    sim_assert_eq!(have: fetcher.total_calls(), want: 0);
     Ok(())
 }
 
@@ -304,218 +318,15 @@ fn infer_api_version_candidates_default_impl_empty() {
     );
 }
 
-#[test]
-fn api_version_guess_cache_scan_spans_all_version_dirs() -> eyre::Result<()> {
-    // Pre-populate two version dirs in the cache; tier 2 must scan both.
-    let cache = tmp_dir("inf-version-spans")?;
-    std::fs::write(
-        cache.join("CACHE_LAYOUT_VERSION"),
-        format!("{}\n", helm_schema_k8s::CACHE_LAYOUT_VERSION),
-    )
-    .expect("seed marker");
-    std::fs::create_dir_all(cache.join("default/v1.24.0")).expect("v1.24 dir");
-    std::fs::write(
-        cache.join("default/v1.24.0/foo.json"),
-        r#"{"x-kubernetes-group-version-kind":[{"group":"policy","version":"v1beta1","kind":"PodDisruptionBudget"}]}"#,
-    )
-    .expect("seed file");
-
-    let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
-        vec!["v1.35.0".to_string(), "v1.24.0".to_string()],
-        None,
-    ))
-    .with_cache_dir(cache)
-    .with_allow_download(false)
-    .with_api_version_guess(true);
-
-    let candidates = provider.infer_api_version_candidates("PodDisruptionBudget");
-    assert!(
-        candidates
-            .iter()
-            .any(|c| c.api_version == "policy/v1beta1"
-                && c.source == InferenceSource::LocalCacheScan),
-        "tier 2 must find PDB v1beta1 in v1.24.0 cache dir; got {candidates:?}"
-    );
-    Ok(())
-}
-
-// Tier-2 CRD cache scan walks EVERY CONFIGURED source namespace.
-// Configured = default + every mirror passed to `with_mirrors`.
-#[test]
-fn api_version_guess_cache_scan_spans_all_configured_crd_sources() -> eyre::Result<()> {
-    let cache = tmp_dir("inf-crd-sources-configured")?;
-    let mirror_url = "https://example.com/mirror-a";
-    let mirror_source_id = source_id_for_url(mirror_url);
-    std::fs::write(
-        cache.join("CACHE_LAYOUT_VERSION"),
-        format!("{}\n", helm_schema_k8s::CACHE_LAYOUT_VERSION),
-    )
-    .expect("seed marker");
-    std::fs::create_dir_all(cache.join("default/monitoring.coreos.com"))
-        .expect("default group dir");
-    std::fs::write(
-        cache.join("default/monitoring.coreos.com/customkind_v1.json"),
-        r#"{"type":"object"}"#,
-    )
-    .expect("seed default file");
-    std::fs::create_dir_all(cache.join(format!("{mirror_source_id}/example.io")))
-        .expect("mirror namespace");
-    std::fs::write(
-        cache.join(format!("{mirror_source_id}/example.io/customkind_v2.json")),
-        r#"{"type":"object"}"#,
-    )
-    .expect("seed mirror file");
-
-    let provider = CrdsCatalogSchemaProvider::new()
-        .with_cache_dir(cache)
-        .with_allow_download(false)
-        .with_mirrors(vec![mirror_url.to_string()])
-        .with_api_version_guess(true);
-
-    let candidates = provider.infer_api_version_candidates("CustomKind");
-    let api_versions: std::collections::HashSet<String> = candidates
-        .into_iter()
-        .filter(|c| c.source == InferenceSource::LocalCacheScan)
-        .map(|c| c.api_version)
-        .collect();
-    assert!(
-        api_versions.contains("monitoring.coreos.com/v1"),
-        "default source result missing; got {api_versions:?}"
-    );
-    assert!(
-        api_versions.contains("example.io/v2"),
-        "configured-mirror source result missing; got {api_versions:?}"
-    );
-    Ok(())
-}
-
-// A CRD source-id dir on disk that is NOT in the currently-configured
-// mirror set MUST NOT contribute inference candidates. The "removed-mirror" case: yesterday's run used
-// `--crd-catalog-mirror=https://stale.example.com`, today's run
-// doesn't. Today's inference must ignore the stale-mirror dir.
-#[test]
-fn api_version_guess_cache_scan_ignores_stale_unconfigured_crd_source() -> eyre::Result<()> {
-    let cache = tmp_dir("inf-crd-sources-stale")?;
-    std::fs::write(
-        cache.join("CACHE_LAYOUT_VERSION"),
-        format!("{}\n", helm_schema_k8s::CACHE_LAYOUT_VERSION),
-    )
-    .expect("seed marker");
-    std::fs::create_dir_all(cache.join("default/monitoring.coreos.com"))
-        .expect("default group dir");
-    std::fs::write(
-        cache.join("default/monitoring.coreos.com/customkind_v1.json"),
-        r#"{"type":"object"}"#,
-    )
-    .expect("seed default file");
-    // Stale mirror namespace from a previous run; not in current config.
-    std::fs::create_dir_all(cache.join("removed-mirror-id/example.io")).expect("stale namespace");
-    std::fs::write(
-        cache.join("removed-mirror-id/example.io/customkind_v2.json"),
-        r#"{"type":"object"}"#,
-    )
-    .expect("seed stale file");
-
-    // Configure only `default` — no mirrors. Stale on-disk dirs must
-    // be ignored.
-    let provider = CrdsCatalogSchemaProvider::new()
-        .with_cache_dir(cache)
-        .with_allow_download(false)
-        .with_api_version_guess(true);
-
-    let candidates = provider.infer_api_version_candidates("CustomKind");
-    let api_versions: std::collections::HashSet<String> = candidates
-        .into_iter()
-        .filter(|c| c.source == InferenceSource::LocalCacheScan)
-        .map(|c| c.api_version)
-        .collect();
-    assert!(
-        api_versions.contains("monitoring.coreos.com/v1"),
-        "default source result missing; got {api_versions:?}"
-    );
-    assert!(
-        !api_versions.contains("example.io/v2"),
-        "stale removed-mirror cache MUST NOT contribute inference candidates; got {api_versions:?}"
-    );
-    Ok(())
-}
-
-// `PodDisruptionBudget` is version-dependent
-// (`policy/v1` since v1.21, `policy/v1beta1` before), so it MUST NOT
-// appear on the unambiguous shortlist. With auto-fallback enabled the
-// cache can hold BOTH versions; if the shortlist also contributed an
-// answer, the aggregator would observe two distinct api_versions and
-// fire `AmbiguousApiVersion(kind=PodDisruptionBudget)`. The Temporal
-// chart's loose-mode run regressed on exactly this in PR review.
+// A version-dependent kind needs structural chart evidence or an explicit local schema.
 #[test]
 fn shortlist_does_not_resolve_pod_disruption_budget() {
     use helm_schema_k8s::inference::shortlist::canonical_api_version_for_kind;
     sim_assert_eq!(
         have: canonical_api_version_for_kind("PodDisruptionBudget"),
         want: None,
-        "PodDisruptionBudget must NOT be on the shortlist; it would cause AmbiguousApiVersion when auto-fallback populates v1beta1 in cache"
+        "version-dependent kinds must abstain without structural or explicit local evidence"
     );
-}
-
-// End-to-end variant of the shortlist rule above: PDB inference with BOTH
-// policy/v1 (in v1.35 primary cache) and policy/v1beta1 (in v1.24
-// auto-fallback cache) populated must NOT fire AmbiguousApiVersion.
-// The combination of (a) PDB off shortlist and (b) inference scanning
-// only the EXPLICIT version (not auto-fallback) keeps the loose-mode
-// invocation clean.
-#[test]
-fn pdb_inference_is_not_ambiguous_with_auto_fallback_cache() -> eyre::Result<()> {
-    let cache = tmp_dir("inf-pdb-no-ambiguous")?;
-    std::fs::write(
-        cache.join("CACHE_LAYOUT_VERSION"),
-        format!("{}\n", helm_schema_k8s::CACHE_LAYOUT_VERSION),
-    )
-    .expect("seed marker");
-    // Primary v1.35.0 has policy/v1 PDB.
-    std::fs::create_dir_all(cache.join("default/v1.35.0")).expect("v1.35 dir");
-    std::fs::write(
-        cache.join("default/v1.35.0/poddisruptionbudget-policy-v1.json"),
-        r#"{"x-kubernetes-group-version-kind":[{"group":"policy","version":"v1","kind":"PodDisruptionBudget"}]}"#,
-    )
-    .expect("seed v1.35 file");
-    // Auto-fallback v1.24.0 has policy/v1beta1 PDB.
-    std::fs::create_dir_all(cache.join("default/v1.24.0")).expect("v1.24 dir");
-    std::fs::write(
-        cache.join("default/v1.24.0/poddisruptionbudget-policy-v1beta1.json"),
-        r#"{"x-kubernetes-group-version-kind":[{"group":"policy","version":"v1beta1","kind":"PodDisruptionBudget"}]}"#,
-    )
-    .expect("seed v1.24 file");
-
-    // EXPLICIT = [v1.35.0]; auto_fallback_window = 11 → ordered chain
-    // includes v1.24.0 too. inference_scan_versions = explicit only.
-    let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
-        vec!["v1.35.0".to_string()],
-        Some(11),
-    ))
-    .with_cache_dir(cache)
-    .with_allow_download(false)
-    .with_api_version_guess(true);
-
-    let candidates = provider.infer_api_version_candidates("PodDisruptionBudget");
-    let outcome = aggregate(candidates.clone());
-    match outcome {
-        ApiVersionInferenceOutcome::Resolved { api_version, .. } => {
-            sim_assert_eq!(
-                have: api_version,
-                want: "policy/v1",
-                "inference must resolve to current policy/v1, not the auto-fallback's v1beta1; candidates={candidates:?}"
-            );
-        }
-        ApiVersionInferenceOutcome::Ambiguous {
-            candidates: amb_candidates,
-        } => panic!(
-            "must NOT be Ambiguous; got candidates {amb_candidates:?} from full set {candidates:?}"
-        ),
-        ApiVersionInferenceOutcome::NoMatch => panic!(
-            "must resolve via primary cache scan; got NoMatch from candidates {candidates:?}"
-        ),
-    }
-    Ok(())
 }
 
 // InferredApiVersion is informational and must NOT fire for built-in
@@ -537,8 +348,7 @@ fn inference_for_builtin_kind_does_not_emit_diagnostic() -> eyre::Result<()> {
         .with_api_version_guess(true);
     let k8s_provider = KubernetesJsonSchemaProvider::new("v1.35.0")
         .with_cache_dir(tmp_dir("inf-builtin-kind")?)
-        .with_allow_download(false)
-        .with_api_version_guess(true);
+        .with_allow_download(false);
     let diagnostics = DiagnosticSink::new();
     let chain = Chain::new(vec![Box::new(crd_provider), Box::new(k8s_provider)])
         .with_inference_enabled(true)
@@ -629,109 +439,6 @@ fn inference_for_crd_kind_still_emits_diagnostic() -> eyre::Result<()> {
     Ok(())
 }
 
-// The inference K8s cache scan must skip auto-fallback version dirs
-// even when they are part of the
-// configured chain via `K8sVersionChain::new(_, Some(window))`.
-// Only EXPLICIT versions participate in inference; auto-fallback
-// dirs exist as schema-lookup escape valves, not as user intent.
-#[test]
-fn k8s_cache_scan_skips_auto_fallback_version_dir() -> eyre::Result<()> {
-    let cache = tmp_dir("inf-skip-auto-fallback")?;
-    std::fs::write(
-        cache.join("CACHE_LAYOUT_VERSION"),
-        format!("{}\n", helm_schema_k8s::CACHE_LAYOUT_VERSION),
-    )
-    .expect("seed marker");
-    // Primary v1.35.0 (EXPLICIT) holds NetworkPolicy v1.
-    std::fs::create_dir_all(cache.join("default/v1.35.0")).expect("v1.35 dir");
-    std::fs::write(
-        cache.join("default/v1.35.0/networkpolicy-networking-v1.json"),
-        r#"{"x-kubernetes-group-version-kind":[{"group":"networking.k8s.io","version":"v1","kind":"NetworkPolicy"}]}"#,
-    )
-    .expect("seed primary file");
-    // Auto-fallback v1.24.0 (NOT explicit) holds an old extensions/v1beta1.
-    std::fs::create_dir_all(cache.join("default/v1.24.0")).expect("v1.24 dir");
-    std::fs::write(
-        cache.join("default/v1.24.0/networkpolicy-extensions-v1beta1.json"),
-        r#"{"x-kubernetes-group-version-kind":[{"group":"extensions","version":"v1beta1","kind":"NetworkPolicy"}]}"#,
-    )
-    .expect("seed fallback file");
-
-    let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
-        vec!["v1.35.0".to_string()],
-        Some(11),
-    ))
-    .with_cache_dir(cache)
-    .with_allow_download(false)
-    .with_api_version_guess(true);
-
-    let candidates = provider.infer_api_version_candidates("NetworkPolicy");
-    let cache_versions: std::collections::HashSet<String> = candidates
-        .iter()
-        .filter(|c| c.source == InferenceSource::LocalCacheScan)
-        .map(|c| c.api_version.clone())
-        .collect();
-    assert!(
-        cache_versions.contains("networking.k8s.io/v1"),
-        "primary v1.35 cache must contribute networking.k8s.io/v1; got {cache_versions:?}"
-    );
-    assert!(
-        !cache_versions.contains("extensions/v1beta1"),
-        "auto-fallback v1.24 dir MUST NOT contribute extensions/v1beta1 to inference; got {cache_versions:?}"
-    );
-    Ok(())
-}
-
-// Like the CRD-side stale-mirror test above, the K8s cache scan must
-// ignore stale `<source_id>` dirs left behind by a previously
-// configured `--k8s-schema-mirror`.
-#[test]
-fn api_version_guess_k8s_cache_scan_ignores_stale_unconfigured_source() -> eyre::Result<()> {
-    let cache = tmp_dir("inf-k8s-sources-stale")?;
-    std::fs::write(
-        cache.join("CACHE_LAYOUT_VERSION"),
-        format!("{}\n", helm_schema_k8s::CACHE_LAYOUT_VERSION),
-    )
-    .expect("seed marker");
-    std::fs::create_dir_all(cache.join("default/v1.24.0")).expect("default version dir");
-    std::fs::write(
-        cache.join("default/v1.24.0/foo.json"),
-        r#"{"x-kubernetes-group-version-kind":[{"group":"policy","version":"v1beta1","kind":"PodDisruptionBudget"}]}"#,
-    )
-    .expect("seed default file");
-    // Stale K8s mirror namespace from a previous run.
-    std::fs::create_dir_all(cache.join("removed-k8s-mirror/v1.24.0")).expect("stale namespace");
-    std::fs::write(
-        cache.join("removed-k8s-mirror/v1.24.0/bar.json"),
-        r#"{"x-kubernetes-group-version-kind":[{"group":"unconfigured.example","version":"v9","kind":"PodDisruptionBudget"}]}"#,
-    )
-    .expect("seed stale file");
-
-    let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
-        vec!["v1.35.0".to_string(), "v1.24.0".to_string()],
-        None,
-    ))
-    .with_cache_dir(cache)
-    .with_allow_download(false)
-    .with_api_version_guess(true);
-
-    let candidates = provider.infer_api_version_candidates("PodDisruptionBudget");
-    let api_versions: std::collections::HashSet<String> = candidates
-        .into_iter()
-        .filter(|c| c.source == InferenceSource::LocalCacheScan)
-        .map(|c| c.api_version)
-        .collect();
-    assert!(
-        api_versions.contains("policy/v1beta1"),
-        "default source result missing; got {api_versions:?}"
-    );
-    assert!(
-        !api_versions.contains("unconfigured.example/v9"),
-        "stale removed-mirror cache MUST NOT contribute K8s inference candidates; got {api_versions:?}"
-    );
-    Ok(())
-}
-
 #[test]
 fn api_version_guess_online_probe_kind_scoped() -> eyre::Result<()> {
     // Shortlist-known kind: online probe answers; an unknown kind: no
@@ -749,7 +456,7 @@ fn api_version_guess_online_probe_kind_scoped() -> eyre::Result<()> {
     let online = known
         .iter()
         .find(|c| c.source == InferenceSource::OnlineProbe);
-    assert!(online.is_some(), "tier 3 must fire for known kinds");
+    assert!(online.is_some(), "online probe must fire for known kinds");
 
     let baseline = mock.total_calls();
     let unknown = provider.infer_api_version_candidates("TotallyUnknownKindXYZ");
@@ -757,7 +464,7 @@ fn api_version_guess_online_probe_kind_scoped() -> eyre::Result<()> {
     sim_assert_eq!(
         have: after,
         want: baseline,
-        "tier 3 must NOT fire for kinds not in the extended shortlist"
+        "online probe must not fire for kinds outside the shortlist"
     );
     assert!(
         !unknown
@@ -804,6 +511,164 @@ fn crd_doc() -> String {
 }
 
 #[test]
+fn cache_contents_do_not_change_shortlisted_crd_inference() -> eyre::Result<()> {
+    #[derive(Debug, PartialEq)]
+    struct Observation {
+        schema: Option<serde_json::Value>,
+        diagnostics: Vec<Diagnostic>,
+    }
+
+    let cache = ScratchDir::new("inf-shortlist-cache-independent")?;
+    let url = "https://raw.githubusercontent.com/datreeio/CRDs-catalog/main/monitoring.coreos.com/servicemonitor_v1.json";
+    let fetcher = Arc::new(MockFetcher::new().with_body(url, crd_doc().into_bytes()));
+    let infer = || {
+        let sink = DiagnosticSink::new();
+        let transport = Arc::clone(&fetcher);
+        let provider = CrdsCatalogSchemaProvider::new()
+            .with_cache_dir(cache.path().to_path_buf())
+            .with_allow_download(true)
+            .with_fetcher(transport)
+            .with_api_version_guess(true);
+        let chain = Chain::new(vec![Box::new(provider)])
+            .with_inference_enabled(true)
+            .with_diagnostic_sink(sink.clone());
+        let fragment = chain.schema_fragment_for_use(&use_with_kind("ServiceMonitor"));
+        Observation {
+            schema: fragment.map(|fragment| fragment.schema().clone()),
+            diagnostics: sink.snapshot(),
+        }
+    };
+    let cold = infer();
+    sim_assert_eq!(have: cold.schema, want: Some(serde_json::json!({"type": "object"})));
+    assert!(cold.diagnostics.iter().any(|diagnostic| matches!(
+        diagnostic,
+        Diagnostic::InferredApiVersion {
+            source: InferenceSource::Shortlist,
+            ..
+        }
+    )));
+
+    // A previous lookup of another version must not add an inference alternative.
+    std::fs::write(
+        cache
+            .path()
+            .join("default/monitoring.coreos.com/servicemonitor_v2.json"),
+        crd_doc(),
+    )?;
+    sim_assert_eq!(have: infer(), want: cold);
+    Ok(())
+}
+
+#[test]
+fn explicit_override_inference_survives_remote_cache_conflicts() -> eyre::Result<()> {
+    let root = ScratchDir::new("inf-local-override")?;
+    let overrides = root.path().join("overrides");
+    std::fs::create_dir_all(overrides.join("local.example"))?;
+    std::fs::write(overrides.join("local.example/widget_v1.json"), crd_doc())?;
+    let cache = root.path().join("cache");
+    std::fs::create_dir_all(cache.join("default/remote.example"))?;
+    std::fs::write(
+        cache.join("default/remote.example/widget_v9.json"),
+        crd_doc(),
+    )?;
+    let local =
+        helm_schema_k8s::LocalSchemaProvider::new(overrides.clone()).with_api_version_guess(true);
+    let remote = CrdsCatalogSchemaProvider::new()
+        .with_cache_dir(cache)
+        .with_allow_download(false)
+        .with_api_version_guess(true);
+    let sink = DiagnosticSink::new();
+    let chain = Chain::new(vec![Box::new(local), Box::new(remote)])
+        .with_inference_enabled(true)
+        .with_diagnostic_sink(sink.clone());
+    let fragment = chain.schema_fragment_for_use(&use_with_kind("Widget"));
+    sim_assert_eq!(
+        have: fragment.map(|fragment| fragment.schema().clone()),
+        want: Some(serde_json::json!({"type": "object"}))
+    );
+    assert!(sink.snapshot().iter().any(|diagnostic| matches!(
+        diagnostic,
+        Diagnostic::InferredApiVersion { inferred_api_version, origin: ProviderOrigin::LocalOverride, .. }
+            if inferred_api_version == "local.example/v1"
+    )));
+
+    // Two authored versions remain ambiguous even though either schema can load.
+    std::fs::write(overrides.join("local.example/widget_v2.json"), crd_doc())?;
+    let local = helm_schema_k8s::LocalSchemaProvider::new(overrides).with_api_version_guess(true);
+    assert!(matches!(
+        aggregate(local.infer_api_version_candidates("Widget")),
+        ApiVersionInferenceOutcome::Ambiguous { .. }
+    ));
+    Ok(())
+}
+
+#[test]
+fn unshortlisted_kinds_ignore_remote_cache_inventory() -> eyre::Result<()> {
+    let root = ScratchDir::new("inf-remote-inventory")?;
+    let mirror = "https://example.com/schemas";
+    let mirror_id = source_id_for_url(mirror);
+    for namespace in ["default", &mirror_id, "removed-mirror"] {
+        for version in ["v1.35.0", "v1.24.0"] {
+            let directory = root.path().join(format!("k8s/{namespace}/{version}"));
+            std::fs::create_dir_all(&directory)?;
+            std::fs::write(
+                directory.join("poddisruptionbudget-policy-v1.json"),
+                r#"{"x-kubernetes-group-version-kind":[{"group":"policy","version":"v1","kind":"PodDisruptionBudget"}]}"#,
+            )?;
+        }
+        let directory = root.path().join(format!("crds/{namespace}/example.io"));
+        std::fs::create_dir_all(&directory)?;
+        for version in ["v1", "v2"] {
+            std::fs::write(directory.join(format!("widget_{version}.json")), crd_doc())?;
+        }
+    }
+    for cache in ["k8s", "crds"] {
+        std::fs::write(
+            root.path().join(cache).join("CACHE_LAYOUT_VERSION"),
+            format!("{}\n", helm_schema_k8s::CACHE_LAYOUT_VERSION),
+        )?;
+    }
+    let fetcher = Arc::new(MockFetcher::new());
+    // Cached namespaces and releases are storage history, including configured mirrors.
+    for allow_download in [false, true] {
+        for use_cache in [false, true] {
+            for explicit in [
+                vec!["v1.35.0".into()],
+                vec!["v1.35.0".into(), "v1.24.0".into()],
+            ] {
+                let transport = Arc::clone(&fetcher);
+                let provider = KubernetesJsonSchemaProvider::with_versions(K8sVersionChain::new(
+                    explicit,
+                    Some(11),
+                ))
+                .with_cache_dir(root.path().join("k8s"))
+                .with_mirrors(vec![mirror.to_string()])
+                .with_allow_download(allow_download)
+                .with_use_cache(use_cache)
+                .with_fetcher(transport);
+                sim_assert_eq!(
+                    have: provider.infer_api_version_candidates("PodDisruptionBudget"),
+                    want: Vec::<ApiVersionCandidate>::new()
+                );
+            }
+        }
+        let transport = Arc::clone(&fetcher);
+        let provider = CrdsCatalogSchemaProvider::new()
+            .with_cache_dir(root.path().join("crds"))
+            .with_mirrors(vec![mirror.to_string()])
+            .with_allow_download(allow_download)
+            .with_fetcher(transport)
+            .with_api_version_guess(true);
+        sim_assert_eq!(
+            have: provider.infer_api_version_candidates("Widget"),
+            want: Vec::<ApiVersionCandidate>::new()
+        );
+    }
+    sim_assert_eq!(have: fetcher.total_calls(), want: 0);
+    Ok(())
+}
+
+#[test]
 fn inference_emits_diagnostic_through_chain() -> eyre::Result<()> {
     let crd = tmp_dir("inf-diag")?;
     let k8s = tmp_dir("inf-diag-k8s")?;
@@ -814,8 +679,7 @@ fn inference_emits_diagnostic_through_chain() -> eyre::Result<()> {
         .with_api_version_guess(true);
     let k8s_provider = KubernetesJsonSchemaProvider::new("v1.35.0")
         .with_cache_dir(k8s)
-        .with_fetcher(mock)
-        .with_api_version_guess(true);
+        .with_fetcher(mock);
     let diagnostics = DiagnosticSink::new();
     let chain = Chain::new(vec![Box::new(crd_provider), Box::new(k8s_provider)])
         .with_inference_enabled(true)

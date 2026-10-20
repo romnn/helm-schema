@@ -18,7 +18,7 @@ fn candidate(
 fn declaration_order_is_inference_priority() {
     let mut sources = vec![
         InferenceSource::OnlineProbe,
-        InferenceSource::LocalCacheScan,
+        InferenceSource::LocalOverride,
         InferenceSource::Shortlist,
         InferenceSource::ChartLocalCrd,
     ];
@@ -28,7 +28,7 @@ fn declaration_order_is_inference_priority() {
         want: vec![
             InferenceSource::ChartLocalCrd,
             InferenceSource::Shortlist,
-            InferenceSource::LocalCacheScan,
+            InferenceSource::LocalOverride,
             InferenceSource::OnlineProbe,
         ]
     );

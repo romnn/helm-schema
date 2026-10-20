@@ -18,7 +18,7 @@ removed APIs" as an acceptable bounded heuristic.
 single explicit version, `--k8s-version-fallback=auto|<N>` appends a
 descending window of `N` older minors (`auto` = 15, sized to the realistic
 deprecation horizon). Auto-fallback versions are escape valves for schema
-lookup only: they do not take part in apiVersion-inference cache scans. A
+lookup only: they do not take part in API-version inference. A
 non-primary answer emits `ResolvedFromFallbackVersion`.
 `--strict-k8s-version` disables the auto-fallback.
 
@@ -41,7 +41,7 @@ non-primary answer emits `ResolvedFromFallbackVersion`.
 - CLAUDE.md "When heuristics are appropriate" (version fallback)
 - `README.md` "Kubernetes schema configuration"
 - `crates/helm-schema-k8s/src/kubernetes_openapi/version_chain.rs`,
-  `crates/helm-schema-k8s/src/inference/cache_scan.rs`
+  ADR [0034](0034-opt-in-tiered-apiversion-inference-that-abstains.md)
 - Commit cc2662e6 (2026-05-18)
 
 Historical guide: `3a50e8d39e5549dbc85fadc8069d6175187ba79b:AGENTS.md`.

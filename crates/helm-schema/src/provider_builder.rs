@@ -87,7 +87,6 @@ pub fn build_provider(opts: &ProviderOptions, diagnostic_sink: Option<&Diagnosti
             .with_allow_download(opts.allow_net)
             .with_use_cache(!opts.no_cache)
             .with_mirrors(opts.k8s_schema_mirrors.clone())
-            .with_api_version_guess(opts.api_version_guess)
             .with_negative_cache(Arc::clone(&negative_cache))
             .with_layout_checker(Arc::clone(&layout_checker));
         if let Some(dir) = &opts.k8s_schema_cache_dir {

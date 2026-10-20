@@ -11,8 +11,6 @@ use crate::cache::{
 use crate::diagnostic::DiagnosticSink;
 use crate::fetch::{HttpFetcher, UreqFetcher};
 use crate::filename::candidate_filenames_for_resource;
-use crate::inference::ApiVersionCandidate;
-use crate::inference::cache_scan::scan_k8s_cache;
 use crate::lookup::source_bundle::{SourceBundleNode, bundle_source_definition};
 use crate::lookup::{
     K8sSchemaProvider, ProviderLookupResult, ProviderOrigin, ProviderSchemaFragment,
@@ -59,8 +57,6 @@ pub struct KubernetesJsonSchemaProvider {
     pub allow_download: bool,
     /// Whether successful upstream responses are read from and written to disk.
     pub use_cache: bool,
-    /// Whether bounded API-version inference is enabled.
-    pub allow_api_version_guess: bool,
     fetcher: Arc<dyn HttpFetcher>,
     negative_cache: Arc<NegativeCache>,
     layout_checker: Arc<LayoutChecker>,
@@ -92,7 +88,6 @@ impl KubernetesJsonSchemaProvider {
             cache_dir: default_k8s_schema_cache_dir(),
             allow_download: allow_download_from_env(),
             use_cache: true,
-            allow_api_version_guess: false,
             fetcher: Arc::new(UreqFetcher::new()),
             negative_cache: Arc::new(NegativeCache::new()),
             layout_checker: Arc::new(LayoutChecker::new()),
@@ -154,13 +149,6 @@ impl KubernetesJsonSchemaProvider {
     #[must_use]
     pub fn with_diagnostic_sink(mut self, sink: DiagnosticSink) -> Self {
         self.diagnostic_sink = Some(sink);
-        self
-    }
-
-    /// Enables or disables API-version inference for resources that omit it.
-    #[must_use]
-    pub fn with_api_version_guess(mut self, enabled: bool) -> Self {
-        self.allow_api_version_guess = enabled;
         self
     }
 
@@ -441,26 +429,6 @@ impl K8sSchemaProvider for KubernetesJsonSchemaProvider {
             }
         }
         (!uncertain).then_some(false)
-    }
-
-    fn infer_api_version_candidates(&self, kind: &str) -> Vec<ApiVersionCandidate> {
-        if !self.allow_api_version_guess {
-            return Vec::new();
-        }
-        let mut out: Vec<ApiVersionCandidate> = Vec::new();
-        let inference_versions: std::collections::HashSet<String> = self
-            .versions
-            .inference_scan_versions()
-            .iter()
-            .cloned()
-            .collect();
-        out.extend(scan_k8s_cache(
-            &self.cache_dir,
-            kind,
-            &self.mirrors.source_ids(),
-            &inference_versions,
-        ));
-        out
     }
 }
 
