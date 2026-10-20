@@ -4,8 +4,8 @@ use std::sync::Arc;
 use helm_schema_core::{ResourceRef, YamlPath};
 
 use crate::cache::{
-    LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache, cache_root_has_legacy_layout,
-    crd_cache_path, default_cache_dir,
+    CacheEntry, LayoutCheckOutcome, LayoutChecker, NegativeCache, SourceDocCache,
+    cache_root_has_legacy_layout, default_cache_dir,
 };
 use crate::diagnostic::{Diagnostic, DiagnosticSink};
 use crate::doc_backed_schema::{LocalSchemaLeaf, lookup_root_metadata_path};
@@ -189,9 +189,11 @@ impl CrdsCatalogSchemaProvider {
         source: &SchemaSource,
         relative_path: &str,
     ) -> Option<SchemaDoc> {
+        // `relative_path_for_resource` paths are `<group>/<file>`.
+        let (group, file) = relative_path.split_once('/')?;
         load_source_schema_doc(
             &CachedSchemaDocRequest {
-                local: crd_cache_path(&self.cache_dir, &source.source_id, relative_path),
+                entry: CacheEntry::new(&self.cache_dir, &source.source_id, group, file),
                 url: source_url(&source.base_url, relative_path),
                 source_id: &source.source_id,
                 cache_namespace: "",
@@ -202,6 +204,7 @@ impl CrdsCatalogSchemaProvider {
                 },
                 fetcher: self.fetcher.as_ref(),
                 negative_cache: &self.negative_cache,
+                diagnostic_sink: self.diagnostic_sink.as_ref(),
             },
             &self.mem,
             mem_key(&source.source_id, relative_path),
