@@ -9173,4 +9173,22 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `task test:all` (network), luup2 downstream (running now). Not pushed. W1 slice 4 (typed ternary, +6 LOC, 4 FA closed, 984 checks
   0 NEW; archived /Volumes/T7/dev/round8/w1-slice4-typed-ternary.patch) heads landing 10b with apiguess and the CRD oracle.
   Orchestrator.
-Next: luup2 downstream result; then assemble landing 10b on fe36e909 — W1 slice 4 (/Volumes/T7/dev/round8/w1-slice4-typed-ternary.patch), apiguess (f5860fe0 + 6f1e4585 + .codex-evidence/rework/adr-main.patch), CRD oracle (Track G b6a9d899..12db5cb0); runner v11 optional fixes (anchored label parse, README) between chains; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
+- 22:12 (Oct 20) — **Downstream luup2 gate RED on main (5/32), pre-existing: new false-rejection class; fixes in flight. Windows
+  checkout and bench CI fixed on GitHub main. Main pushed by the user (a752e62b), then 5c5d0e9f and 4b2359d0.**
+  luup2 (cargo install of fe36e909, then `<chart>:check:local` per chart; aggregate fails on BSD xargs): certmanager, signoz,
+  postgres:operator, qdrant, oauth2proxy fail `helm lint` with `missing property` on keys only a subchart default provides; the
+  pre-10a build (2121329e, release, worktree round8-luup2-bisect) fails the same five, so not 10a. Helm 4.2.3 on a scratch copy of
+  cert-manager: lint with schema exit 1, lint without schema 0, template with/without schema 0 and byte-identical → false rejection
+  (lint validates parent values + -f without subchart defaults; schema puts enableServiceLinks/replicaCount in required). No corpus
+  chart has a parent partially overriding a subchart, so the LintRaw lane never saw it. User: follow-up fix landing asap with very
+  extensive coverage. Builders: sol 20261020T195146-5e5044ab (fix + Helm-differential matrix + fixtures + public umbrella chart;
+  brief /Volumes/T7/dev/round8/brief-lintreq-codex.md + coverage addendum) and sol 20261020T195353-02d92f4f (battery lint lane: a
+  partial-override document per dependency for every corpus chart; brief-lintlane-codex.md). Lands as 10c right after 10b.
+  Windows CI: two bundle records with `"` in the name (certificate-".json.not-found, issuer-".json.not-found, from intake 3fbd9209);
+  deletion branch fix/windows-safe-paths cc991d97, corpus dump 0/204 fixtures changed, merged 4b2359d0 and pushed (user: no gates).
+  Root cause + Windows-safe cache writer (warn and skip non-portable names; never look up an invalid apiVersion) + repo-wide
+  Windows-path test: Opus subagent on the same branch, separate commits. Bench CI: tools/bench/bench.py paired span ends by name;
+  the tracing-perfetto fork writes nameless SLICE_END per track → pair per track_uuid (5c5d0e9f, local kubeview run exit 0, pushed).
+  W1 turn 5: BLOCKED honestly (three `required` attempts each added NEW cells; reviewers REWORK), tree restored to slice 4; next turn
+  is a design note for authoritative output-kind facts + post-mutation guards, reviewed before code. Orchestrator.
+Next: runner v11.1 suite → commit, then launch landing 10b (env landing-10b.env, E=/Volumes/T7/dev/round8-landing10b-run1); collect the lintreq/lintlane/Windows hand-backs for 10c; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
