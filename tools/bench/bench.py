@@ -179,21 +179,22 @@ def fields(data: bytes):
         yield number, wire, value
 
 
-# Perfetto field numbers: Trace.packet, TracePacket.timestamp and .track_event, TrackEvent.type
-# and .name; and the TrackEvent types SLICE_BEGIN and SLICE_END.
+# Perfetto field numbers: Trace.packet, TracePacket.timestamp and .track_event, TrackEvent.type,
+# .track_uuid and .name; and the TrackEvent types SLICE_BEGIN and SLICE_END.
 TRACE_PACKET, PACKET_TIMESTAMP, PACKET_TRACK_EVENT = 1, 8, 11
-EVENT_TYPE, EVENT_NAME = 9, 23
+EVENT_TYPE, EVENT_TRACK_UUID, EVENT_NAME = 9, 11, 23
 SLICE_BEGIN, SLICE_END = 1, 2
 
 
 def span_intervals(trace: bytes) -> dict[str, list[tuple[int, int]]]:
     """The [begin, end) nanosecond intervals of every span, by name.
 
-    `tracing-perfetto` writes a span's begin and end packets together when the span closes, so
-    each begin is followed by its own end.
+    Perfetto pairs a SLICE_END, which carries no name, with the most recent open SLICE_BEGIN on
+    the same track, so nested spans close innermost first. A span drawn on several tracks yields
+    the same interval once per track; phase times are unions, so the repeats do not count twice.
     """
     intervals: dict[str, list[tuple[int, int]]] = {}
-    open_span: tuple[str, int] | None = None
+    open_spans: dict[int | None, list[tuple[str, int]]] = {}
     for number, _, packet in fields(trace):
         if number != TRACE_PACKET:
             continue
@@ -207,19 +208,26 @@ def span_intervals(trace: bytes) -> dict[str, list[tuple[int, int]]]:
         if event is None or timestamp is None:
             continue
         kind = None
+        track = None
         name = None
         for field, _, value in fields(event):
             if field == EVENT_TYPE:
                 kind = value
+            elif field == EVENT_TRACK_UUID:
+                track = value
             elif field == EVENT_NAME:
                 name = value.decode()
         if kind == SLICE_BEGIN:
-            open_span = (name, timestamp)
+            open_spans.setdefault(track, []).append((name, timestamp))
         elif kind == SLICE_END:
-            if open_span is None or open_span[0] != name:
-                raise ValueError(f"span end {name!r} without its begin")
-            intervals.setdefault(name, []).append((open_span[1], timestamp))
-            open_span = None
+            stack = open_spans.get(track)
+            if not stack:
+                raise ValueError(f"span end on track {track} without its begin")
+            begin_name, begin = stack.pop()
+            intervals.setdefault(begin_name, []).append((begin, timestamp))
+    unclosed = sorted(name for stack in open_spans.values() for name, _ in stack)
+    if unclosed:
+        raise ValueError(f"spans never closed: {unclosed[:5]}")
     return intervals
 
 
