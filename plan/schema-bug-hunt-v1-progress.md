@@ -9155,4 +9155,10 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   W1 slice 3 (nil conditions, +4 LOC, 2 FA closed, 888 checks 0 NEW, all builder gates 0 incl. lint/lint:fc) and slice 2 committed onto
   landing-10a-v3 as e28690f6, ca69543a; E=/Volumes/T7/dev/round8-landing10a-run5 (runner a8e2cb1). Bench workflow fires per push, not
   per commit (GitHub semantics); user: leave as is, wording to be corrected. Orchestrator.
+- 19:51 (Oct 20) — **Runner v11 review (sol 20261020T173538-d420cedf): VERDICT LAND, no required fixes.** Verified the battery
+  counts and lists each failed outcome together (schema_emission_profiles.rs:2853), rejects every unmatched failure and stale entry
+  (known_inherited_failures.rs:128, propagated at :2292) before the runner's 1/1 check; dependency contexts are always `{}` (two
+  insert_row callers); 160/160 real-report charts pass, 971 dependency contexts match. Optional, queued for between chains: anchor the
+  case parse on re.escape(label) (landing.py:1557, a label containing ": document=" would be falsely refused) and update README.md:235
+  (still promises zero adjudication errors). Run 5: dump 19:34–19:42 (0 adopted), unit running. Orchestrator.
 Next: watch landing 10a run 5 (`tail /Volumes/T7/dev/round8-landing10a-run5/chain.log`) and the runner v11 review; on "chain green" commit adopted fixtures, merge landing-10a-v3 --no-ff into main with components + receipt sha256, push only if the user asks, re-tally closures; then apiguess and the CRD oracle; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
