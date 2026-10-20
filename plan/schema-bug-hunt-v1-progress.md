@@ -9173,7 +9173,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   `task test:all` (network), luup2 downstream (running now). Not pushed. W1 slice 4 (typed ternary, +6 LOC, 4 FA closed, 984 checks
   0 NEW; archived /Volumes/T7/dev/round8/w1-slice4-typed-ternary.patch) heads landing 10b with apiguess and the CRD oracle.
   Orchestrator.
-- 22:12 (Oct 20) — **Downstream luup2 gate RED on main (5/32), pre-existing: new false-rejection class; fixes in flight. Windows
+- 22:11 (Oct 20) — **Downstream luup2 gate RED on main (5/32), pre-existing: new false-rejection class; fixes in flight. Windows
   checkout and bench CI fixed on GitHub main. Main pushed by the user (a752e62b), then 5c5d0e9f and 4b2359d0.**
   luup2 (cargo install of fe36e909, then `<chart>:check:local` per chart; aggregate fails on BSD xargs): certmanager, signoz,
   postgres:operator, qdrant, oauth2proxy fail `helm lint` with `missing property` on keys only a subchart default provides; the
