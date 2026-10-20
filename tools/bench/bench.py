@@ -17,18 +17,17 @@ per chart and configuration:
 Every untraced run of one configuration must write the same bytes, or the benchmark fails: the
 output is deterministic by contract (ADR 0063).
 
-The results are written as `github-action-benchmark` `customSmallerIsBetter` history entry lists
+The results are written as a `github-action-benchmark` `customSmallerIsBetter` history entry list
 whose `extra` strings carry benchtrail's typed payload (chart and profile as dimensions, the metric
 with its unit and direction, the compiler and the CPU model as the environment), and as Markdown
-tables for the job summary. The instruction counts are a list of their own (`--instructions-json`),
-recorded as a separate suite: the dashboard splits the times by CPU model, and the counts, which do
-not depend on it, stay one series.
+tables for the job summary. The dashboard splits the times by CPU model, while the instruction
+counts, which do not depend on it, stay one series (benchtrail's per-metric settings).
 
 Only the Python standard library is used; the Perfetto trace is decoded by hand, since it holds
 nothing but the slice begin/end packets `tracing-perfetto` writes.
 
 Usage: task bench, or python3 tools/bench/bench.py [--chart NAME] [--json PATH] [--summary PATH]
-       [--valgrind PATH] [--instructions-json PATH]
+       [--valgrind PATH]
 """
 
 from __future__ import annotations
@@ -38,6 +37,7 @@ import hashlib
 import json
 import os
 import platform
+import re
 import shutil
 import statistics
 import subprocess
@@ -368,15 +368,47 @@ def cpu_model() -> str:
     return platform.machine()
 
 
+# The vendor words a CPU model name starts with, which `short_cpu` drops.
+CPU_VENDORS = ("AMD", "Intel", "Apple")
+
+
+def short_cpu(raw: str) -> str:
+    """A CPU model name without its noise, which names a series on the dashboard.
+
+    Only noise goes: the vendor word, trademark marks, an Intel name's `CPU @ <frequency>`, an AMD
+    name's trailing `<N>-Core Processor` or `Processor` (the host's core count, not the runner's),
+    and repeated whitespace. The family word and every model token stay, so different models never
+    share a name: "AMD EPYC 7763 64-Core Processor" is "EPYC 7763", "Intel(R) Xeon(R) Platinum
+    8370C CPU @ 2.80GHz" is "Xeon Platinum 8370C", "Apple M3 Pro" is "M3 Pro". A name that does
+    not start with a known vendor, or that would be left empty, stays as it is, whitespace
+    collapsed: nothing is guessed.
+    """
+    collapsed = " ".join(raw.split())
+    marks = re.compile(r"\((?:R|TM|C)\)", re.IGNORECASE)
+    words = marks.sub("", collapsed).split()
+    if not words or words[0] not in CPU_VENDORS:
+        return collapsed
+    text = " ".join(words[1:])
+    text = re.sub(r" CPU @ [0-9.]+ ?[GM]Hz$", "", text)
+    text = re.sub(r" (?:[0-9]+-Core )?Processor$", "", text)
+    return text or collapsed
+
+
 def valgrind_version(valgrind: str) -> str:
     """The valgrind that counts the instructions; a new one may count differently."""
-    return subprocess.run(
-        [valgrind, "--version"], capture_output=True, text=True, check=True
-    ).stdout.strip()
+    try:
+        return subprocess.run(
+            [valgrind, "--version"], capture_output=True, text=True, check=True
+        ).stdout.strip()
+    except (OSError, subprocess.CalledProcessError) as error:
+        sys.exit(f"valgrind {valgrind} does not run: {error}")
 
 
 RUSTC = rustc_version()
-CPU = cpu_model()
+# The model as the host names it, noted beside each value, and its short name, which the
+# environment records.
+CPU_NAME = cpu_model()
+CPU = short_cpu(CPU_NAME)
 
 
 def entry(
@@ -405,7 +437,8 @@ def entry(
             "metric": {"id": metric, "label": label, "direction": direction},
             "environment": {"rustc": RUSTC, "cpu": CPU, **(environment or {})},
         },
-        "text": text or f"cpu {low:.3f}-{high:.3f} s over {result['reps']} runs; {CPU}; {RUSTC}",
+        "text": text
+        or f"cpu {low:.3f}-{high:.3f} s over {result['reps']} runs; {CPU_NAME}; {RUSTC}",
     }
     return {
         "name": f"{result['chart']}/{result['profile']} {metric}",
@@ -415,8 +448,9 @@ def entry(
     }
 
 
-def entries(result: dict) -> list[dict]:
-    out = [
+def entries(result: dict, valgrind: str | None) -> list[dict]:
+    out = instruction_entries(result, valgrind) if valgrind else []
+    out += [
         entry(result, "cpu", "CPU time", "s", round(result["cpu"], 4)),
         entry(result, "wall", "Wall time", "s", round(result["wall"], 4)),
         entry(result, "peak-rss", "Peak RSS", "MiB", round(result["peak_rss"] / MIB, 1)),
@@ -456,7 +490,7 @@ def instruction_entries(result: dict, valgrind: str) -> list[dict]:
             "count",
             result["instructions"],
             environment={"valgrind": valgrind},
-            text=f"one cachegrind run; {valgrind}; {CPU}; {RUSTC}",
+            text=f"one cachegrind run; {valgrind}; {CPU_NAME}; {RUSTC}",
         )
     ]
 
@@ -466,7 +500,7 @@ def markdown(results: list[dict], traces: int) -> str:
     header += ["compact KiB", "$defs", *PHASES]
     lines = [
         f"helm-schema benchmark: medians of untraced runs; phases (wall s) from {traces} traced "
-        f"run(s) per configuration. Host: {CPU}, {os.cpu_count()} CPUs; {RUSTC}.",
+        f"run(s) per configuration. Host: {CPU_NAME}, {os.cpu_count()} CPUs; {RUSTC}.",
         "",
         "| " + " | ".join(header) + " |",
         "| --- | --- |" + " ---: |" * (len(header) - 2),
@@ -500,14 +534,8 @@ def main() -> None:
     parser.add_argument("--summary", type=Path, help="append the Markdown table here")
     parser.add_argument(
         "--valgrind",
-        default=shutil.which("valgrind"),
-        help="the valgrind that counts instructions (default: the one on PATH; without one, "
-        "instructions are not counted)",
-    )
-    parser.add_argument(
-        "--instructions-json",
-        type=Path,
-        help="write the instruction-count entries here, a suite of their own (needs valgrind)",
+        help="the valgrind that counts instructions, which must run (default: the one on PATH; "
+        "without one, instructions are not counted)",
     )
     args = parser.parse_args()
     if args.reps is not None and args.reps < 3:
@@ -517,9 +545,8 @@ def main() -> None:
     cases = [case for case in CASES if not args.chart or case.chart in args.chart]
     if args.chart and len(cases) != len(set(args.chart)):
         parser.error(f"--chart must name charts of the benchmark: {[c.chart for c in CASES]}")
-    if args.instructions_json and not args.valgrind:
-        parser.error("--instructions-json needs valgrind, on PATH or given with --valgrind")
-    valgrind = valgrind_version(args.valgrind) if args.valgrind else None
+    valgrind_path = args.valgrind or shutil.which("valgrind")
+    valgrind = valgrind_version(valgrind_path) if valgrind_path else None
     if not valgrind:
         print("valgrind not found: instructions are not counted", file=sys.stderr)
 
@@ -535,7 +562,7 @@ def main() -> None:
                     profile,
                     reps,
                     args.traces,
-                    args.valgrind,
+                    valgrind_path,
                     Path(work),
                 )
                 results.append(result)
@@ -556,15 +583,9 @@ def main() -> None:
         with args.summary.open("a") as summary:
             summary.write(table)
     if args.json:
-        history = [item for result in results for item in entries(result)]
+        history = [item for result in results for item in entries(result, valgrind)]
         args.json.parent.mkdir(parents=True, exist_ok=True)
         args.json.write_text(json.dumps(history, indent=2) + "\n")
-    if args.instructions_json:
-        counts = [item for result in results for item in instruction_entries(result, valgrind)]
-        if not counts:
-            sys.exit("no configuration of the selected charts counts instructions")
-        args.instructions_json.parent.mkdir(parents=True, exist_ok=True)
-        args.instructions_json.write_text(json.dumps(counts, indent=2) + "\n")
 
 
 if __name__ == "__main__":
