@@ -9120,4 +9120,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   527576d3..a0141424); bench workflow green and https://romnn.github.io/helm-schema/bench/ live with the Hugo menu link. CI test also
   red on main since before this session: Windows checkout refuses provider-bundle file `certificate-".json.not-found` (queued: bundle
   fix needs its own landing). Orchestrator.
+- 17:12 (Oct 20) — **W1 ratchet slice LAND-ready and committed onto landing-10a-v3 as 105704f1 (rides in run 4).** W1 (e0881b7b)
+  stopped at its 4 h checkpoint with one small slice: `ternary` with a direct String/RawString/Int/Float literal condition records the
+  existing Fail effect (Go bool parameter aborts the render; comparisons.rs:120), +15 production LOC, three full-schema red/green tests
+  (fail_validators.rs:3829); witness ratchet 821 checks, 0 NEW, 18 false-acceptance cells closed; clean dump 204 fixtures byte-identical
+  to a3b05637, schema battery 0 flips; builder-run two-lens sol reviews LAND conditional on gates (final-r4-reviews.md). Its gate
+  failures are environment-only (lint:fc stalled in the remount; 13 cell_matrix bundle-pin refusals from untracked v1.35 cache files in
+  its clone; network DNS; downstream path) — run 4 re-runs them cleanly. No fixture bytes move, so folding it into 10a keeps the battery
+  outcome attributable. Patch sha256 be89c235…; part-2 stays parked. W1 follow-up sent: next single defect class from
+  obligations-index-final-r4.json under the same ratchet. Orchestrator.
 Next: on the lint199 hand-back, commit its patch onto landing-10a-v3, point landing-10a.env at a fresh E (run 4) and run the full chain dump→finalize; on "chain green" commit adopted fixtures, merge landing-10a-v3 --no-ff into main with components + receipt sha256, re-tally closures; then apiguess and the CRD oracle; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
