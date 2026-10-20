@@ -9109,7 +9109,7 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   GitHub (unpushed). `task typos` had been red on main since the ADR landing: 19 false hits (commit shas, "reguarded" file name,
   "mis-trimming"); fix = hex-sha ignore rule + word entry + one rewording. W4 (2803bf0c, 23 h) and W1 (e0881b7b, 21 h) still running
   (user: let them finish). Orchestrator.
-- 16:44 (Oct 20) — **Landing 10a run 3 FAILED at battery (exit 101, link error): the user upgraded stable Rust to 1.99.1 at
+- 16:42 (Oct 20) — **Landing 10a run 3 FAILED at battery (exit 101, link error): the user upgraded stable Rust to 1.99.1 at
   16:40, mid-compile; not a landing defect.** dump 16:11–16:18 (205 verified, 0 adopted), unit 16:18–16:29, lint 16:29–16:36 all OK on
   1.98.0; the battery's `cargo test --no-run` then linked against 1.98.0 std rlibs rustup had just replaced
   (`clang: no such file …/libstd-61f27fb94867ea3a.rlib`; log /Volumes/T7/dev/round8-landing10a-run3/battery/battery.log). The toolchain
