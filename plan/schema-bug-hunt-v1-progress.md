@@ -8977,4 +8977,14 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   2559c0f7…, reverse-checked). Review: sol 20261020T001155-87b9a720. Step 2 sent (follow_up turn 1): an exact built-in tier from upstream's
   per-version `_definitions.json` only if it adds cases, and retiring capability_probe.rs (ADR 0044 debt) from the same index with the
   tri-state contract. Battery builder still pruning its 275 GB target (reference checks before any deletion). Orchestrator.
+- 03:52 (Oct 20) — **Chart-CRD oracle implemented (Track G builder, test infrastructure); one rework before commit: no vendored Go tree.**
+  tools/crdcheck (pinned k8s.io/apiextensions-apiserver v0.29.0, maintainer-only provision.sh, exact Go 1.26.5) + helmsweep sidecar of Helm-
+  selected CRD declarations + Rust oracle integration (original-input replay, conservative Uncertain). Native matrix 72/72, Go 4/4, Rust
+  replay 5/5, Helm 36/36; fmt/lint/lint:fc (51)/typos/unit 1,712 all 0; integration 201 = 85 pending Track G fixtures + 1 timeout flake;
+  dump verify 0 (205, no new movement); core LOC delta 0; infrastructure 1,104 LOC (estimate was 440–560). Corpus: kube-starrocks,
+  nats-operator, trivy-operator, zalando-postgres-operator defaults controls become decidable; 12 controls become Uncertain (new vetoes);
+  zero roster retirements. Orchestrator: NOT committed yet — the patch vendors 61 MB of Go modules into the repo (tools/crdcheck/vendor);
+  go.mod + go.sum already pin every module by hash, so drop the vendor tree and let the maintainer-only provision.sh download and verify
+  (user's isolation rule; clone size for everyone). Also asked: which of the 12 newly-Uncertain controls would turn a passing battery
+  outcome into a hard failure, and a LOC breakdown (item 10). Follow_up turn 8 on 536e8e16. Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
