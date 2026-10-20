@@ -9161,4 +9161,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   insert_row callers); 160/160 real-report charts pass, 971 dependency contexts match. Optional, queued for between chains: anchor the
   case parse on re.escape(label) (landing.py:1557, a label containing ": document=" would be falsely refused) and update README.md:235
   (still promises zero adjudication errors). Run 5: dump 19:34–19:42 (0 adopted), unit running. Orchestrator.
-Next: watch landing 10a run 5 (`tail /Volumes/T7/dev/round8-landing10a-run5/chain.log`) and the runner v11 review; on "chain green" commit adopted fixtures, merge landing-10a-v3 --no-ff into main with components + receipt sha256, push only if the user asks, re-tally closures; then apiguess and the CRD oracle; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
+- 21:42 (Oct 20) — **LANDED: landing 10a merged into main as fe36e909 (chain green, run 5). First semantic landing since landing 9
+  (Sep 30).** Components: battery perf 3ae46e70 + the lint-document lane; size-aware output (5640581b, e70be667, d7ab4078); witnesses;
+  exact shrink-only KNOWN_INHERITED_FAILURES (800b32c1, a3b05637); W1 ternary slices 1–3 (105704f1, e28690f6, ca69543a: literal, piped
+  literal and nil conditions → Fail; 27 registered false acceptances closed, 0 NEW, 0 fixture bytes); clippy 1.99.1 (b7a0e46d). Chain
+  run 5 (runner v11 96291fc, env a8e2cb1): dump 19:34–19:42 (205 verified, 0 adopted), unit –19:51, lint –19:54, battery –20:46 (1/1;
+  coverage charts=160 flips_adjudicated=10000), integration –20:57, sweep –21:37, finalize 21:38. Receipt
+  /Volumes/T7/dev/round8-landing10a-run5/receipt.json sha256 fb0483c69b9af633e9dccd5d7ebc4d0bd4cd73116a3dacf9cb6321ac6336cac0.
+  adopted.tsv empty (header only), so no fixture commit. Merge of FETCH_HEAD ca69543a into main was clean (227 files); merged tree fmt 0,
+  typos 0. Strict closures on main: 3 → 9/83 (F17 F32 F35 F45 F54 F57 F60 F61 F77); F74 open. Not run on the merged tree yet:
+  `task test:all` (network), luup2 downstream (running now). Not pushed. W1 slice 4 (typed ternary, +6 LOC, 4 FA closed, 984 checks
+  0 NEW; archived /Volumes/T7/dev/round8/w1-slice4-typed-ternary.patch) heads landing 10b with apiguess and the CRD oracle.
+  Orchestrator.
+Next: luup2 downstream result; then assemble landing 10b on fe36e909 — W1 slice 4 (/Volumes/T7/dev/round8/w1-slice4-typed-ternary.patch), apiguess (f5860fe0 + 6f1e4585 + .codex-evidence/rework/adr-main.patch), CRD oracle (Track G b6a9d899..12db5cb0); runner v11 optional fixes (anchored label parse, README) between chains; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
