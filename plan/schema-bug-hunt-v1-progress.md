@@ -9191,4 +9191,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   the tracing-perfetto fork writes nameless SLICE_END per track → pair per track_uuid (5c5d0e9f, local kubeview run exit 0, pushed).
   W1 turn 5: BLOCKED honestly (three `required` attempts each added NEW cells; reviewers REWORK), tree restored to slice 4; next turn
   is a design note for authoritative output-kind facts + post-mutation guards, reviewed before code. Orchestrator.
-Next: runner v11.1 suite → commit, then launch landing 10b (env landing-10b.env, E=/Volumes/T7/dev/round8-landing10b-run1); collect the lintreq/lintlane/Windows hand-backs for 10c; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
+- 01:52 (Oct 21) — **LANDED: landing 10b merged into main as d7de4249 (chain green).** Components: 984c8804 W1 slice 4 (typed
+  ternary conditions; 4 registered false acceptances closed, 984 checks 0 NEW, 0 fixture bytes) and 0c571409 apiguess squash
+  (apiVersion inference without local cache scans; probe table kept). Run 1 (runner v11.1 89594f9): dump 22:16–22:30 (0 adopted),
+  unit –22:47, lint –22:55, battery –00:27 (92 min under contention), integration –00:54, sweep –01:51, finalize 01:51; receipt
+  /Volumes/T7/dev/round8-landing10b-run1/receipt.json sha256 cb9ea6815b807e63864d0aee5c955e1a7e2e5afdbadcadccfe1f5edbc25b186d.
+  Not pushed. Also since 22:11 (all on main, pushed by request): bench CPU split + cachegrind instruction suite (e6e4c584,
+  benchtrail v0.4.0), one-suite dashboard (7dc5ed9e, benchtrail v0.5.0, gh-pages history migrated once in 9ab4ad6), Windows CI:
+  stage.sh → stdlib Go stager (ee4b22b5, byte-identical staging), sh-invocation fix (98b1ebd0), bundle digest re-pin after the
+  deletion broke cell_matrix (bd54428e — my gate skip), golangci-lint 2.14.0 adoption (b89ed37d). USER POLICY (01:35): Codex quota
+  is short — Opus subagents implement, Codex sol only reviews; running Codex builders finish their current turns, then their tracks
+  move to Opus. Landing 10c (next): lint-required fix + corpus-wide partial-override lint lane (Opus integrator on
+  /Volumes/T7/dev/round8-lint10c; lane surfaced 39 unjustified rejections, 31 screening disagreements, 7 unusable controls on main),
+  Windows root cause (fix/windows-safe-paths cfe8203c..48211e11), helm-schema-dev binary (review: LAND after applying
+  protected-skills.patch). Orchestrator.
+Next: assemble landing 10c when the Opus integrator (round8-lint10c) hands back; then luup2 check:local on main; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
