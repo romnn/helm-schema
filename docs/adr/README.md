@@ -99,3 +99,4 @@ strategies live in their surviving decisions.
 | [0065](0065-drift-tooling-is-isolated-maintainer-tooling.md) | Helm/Kubernetes drift tooling is isolated maintainer tooling under tools/ | Accepted | 2026-10-19 |
 | [0066](0066-landing-ratchet.md) | Landings ratchet: no new failure, strictly fewer known failures | Accepted | 2026-10-20 |
 | [0067](0067-continuous-benchmarks.md) | Continuous end-to-end benchmarks, published with benchtrail beside the docs | Accepted | 2026-10-20 |
+| [0068](0068-benchmarks-compare-like-with-like-across-runner-cpus.md) | Benchmarks compare like with like across runner CPUs, and count instructions | Accepted | 2026-10-20 |

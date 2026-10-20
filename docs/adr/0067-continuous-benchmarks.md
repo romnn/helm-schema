@@ -53,7 +53,9 @@ the user's benchtrail dashboard.
 - The compiler and Python are exact versions in `mise.bench.toml` (Rust 1.99.0, Python
   3.14.7, active under `MISE_ENV=bench`, so contributors' toolchains are unaffected): no
   toolchain release moves a value without a commit, and moving the pin starts a new
-  history segment. Hosted runners still vary in hardware, so each run notes its CPU model.
+  history segment. Hosted runners vary in hardware; ADR
+  [0068](0068-benchmarks-compare-like-with-like-across-runner-cpus.md) records the CPU model
+  with every value and adds instruction counts that do not depend on it.
 - GitHub runs a push workflow once per push, on its head commit: the commits of one push
   share one point, and a regression is located to a push, not to one of its commits.
 - benchtrail marks a change only beyond 10% and four times the series' own noise.
