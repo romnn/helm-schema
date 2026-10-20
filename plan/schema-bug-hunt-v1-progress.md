@@ -9009,4 +9009,11 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   sol 20261020T023223-df188fd0. Track G CRD oracle: vendor tree dropped (patch 55 KB); its vetoes would turn 221 passing outcomes into
   unusable controls → orchestrator: vetoes apply only to chart-sourced CRD authority, catalog-backed decisions keep today's behaviour, the
   oracle may only ADD decisions (ratchet rule 1); measurement CLI out of the landing patch. Orchestrator.
+- 04:44 (Oct 20) — **USER REQUEST: continuous benchmarks on GitHub Pages via benchtrail (the user's tool, as in romnn/progeny); one Opus 5.5
+  builder (user-requested).** Independent of the bug fixes; lands on main on its own. Worktree `/Volumes/T7/dev/round8-bench`, branch
+  `feat/benchmarks` from main 04ba3326; brief `round8/brief-benchmarks.md`: a small representative offline benchmark (corpus charts across
+  the cost spectrum incl. the heavy tails; wall time, per-phase times from the existing tracing spans, peak RSS, output bytes, `$defs` count;
+  only configurations that change cost), a GitHub Actions workflow recording history with benchtrail, Pages publishing the Hugo site and
+  the benchmark results side by side with a Hugo link, local verification, an ADR. Nothing is pushed or configured on GitHub without asking
+  the user. Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
