@@ -3946,3 +3946,40 @@ fn ternary_piped_literal_type_belongs_to_the_immediately_preceding_stage() {
         sim_assert_eq!(have: &schema, want: &expected, "source={source}");
     }
 }
+
+#[test]
+fn ternary_rejects_nil_literal_conditions() {
+    let expected = schema_for_values_yaml(parse_ir(r#"{{ fail "bad" }}"#), None);
+    for source in [
+        r#"{{ $_ := ternary "a" "b" nil }}"#,
+        r#"{{ $_ := nil | ternary "a" "b" }}"#,
+        r#"{{ $_ := ternary "a" "b" (nil) }}"#,
+        r#"{{ $_ := (nil) | ternary "a" "b" }}"#,
+        r#"{{ $_ := ternary (set $ "flag" true) "b" nil }}"#,
+        r#"{{ $_ := nil | ternary (set $ "flag" true) "b" }}"#,
+    ] {
+        let schema = schema_for_values_yaml(parse_ir(source), None);
+        sim_assert_eq!(have: &schema, want: &expected, "source={source}");
+    }
+}
+
+#[test]
+fn ternary_nil_literal_check_preserves_reachability_and_converted_conditions() {
+    let source = r#"{{ if .Values.enabled }}{{ $_ := nil | ternary "a" "b" }}{{ end }}"#;
+    let reference = r#"{{ if .Values.enabled }}{{ fail "bad" }}{{ end }}"#;
+    let schema = schema_for_values_yaml(parse_ir(source), None);
+    let expected = schema_for_values_yaml(parse_ir(reference), None);
+    sim_assert_eq!(have: &schema, want: &expected);
+
+    let expected = schema_for_values_yaml(parse_ir(""), None);
+    for source in [
+        r#"{{ $_ := and false (ternary "a" "b" nil) }}"#,
+        r#"{{ $_ := or true (nil | ternary "a" "b") }}"#,
+        r#"{{ $_ := ternary "a" "b" (default false nil) }}"#,
+        r#"{{ $_ := default false nil | ternary "a" "b" }}"#,
+        r#"{{ $_ := (default false nil) | ternary "a" "b" }}"#,
+    ] {
+        let schema = schema_for_values_yaml(parse_ir(source), None);
+        sim_assert_eq!(have: &schema, want: &expected, "source={source}");
+    }
+}

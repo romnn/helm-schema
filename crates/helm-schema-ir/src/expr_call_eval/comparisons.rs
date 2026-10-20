@@ -138,7 +138,11 @@ fn eval_ternary_condition(
         matches!(
             source.deparen(),
             TemplateExpr::Literal(
-                Literal::String(_) | Literal::RawString(_) | Literal::Int(_) | Literal::Float(_)
+                Literal::String(_)
+                    | Literal::RawString(_)
+                    | Literal::Int(_)
+                    | Literal::Float(_)
+                    | Literal::Nil
             )
         )
     }) {
