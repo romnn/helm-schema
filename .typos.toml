@@ -18,6 +18,9 @@ extend-exclude = [
 
 [default]
 extend-ignore-re = [
+  # Commit shas and hex digests, such as ba48ded5 in ADR references
+  "\\b[0-9a-f]{7,64}\\b",
+
   # Regexp Unicode category escapes such as \p{Nd}
   "\\\\p\\{[A-Za-z]+\\}",
 
@@ -41,3 +44,5 @@ ANDed = "ANDed"
 [default.extend-words]
 # Azure Kubernetes Service
 aks = "aks"
+# "re-guarded" as one word, in ADR 0016's file name
+reguarded = "reguarded"

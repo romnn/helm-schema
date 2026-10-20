@@ -8,7 +8,7 @@ Date: 2026-09-27 (user decision, ledger 14:35)
 After the unified frontend ([0010](0010-unified-templated-yaml-frontend.md)), audits found 15 source-line ownership
 heuristics and 22 text-reparsing sites: indentation-based parentage,
 block-scalar/header repairs, scalar-blind `---` handling and `{{-3}}`
-mis-trimming. Patching this D5 defect class would add more heuristics.
+wrong trimming. Patching this D5 defect class would add more heuristics.
 A June attribution rewrite had already failed by deleting fallbacks before
 explicit slots existed: annotations attached to the wrong parent and nested
 container fields disappeared. The unified CST later supplied that prerequisite.
