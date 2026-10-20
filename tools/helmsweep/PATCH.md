@@ -19,8 +19,8 @@ copy under the target directory, never the source tree:
    copy's `go.mod`, where `go build -trimpath -buildvcs=false` and the tests run.
 
 The patch changes only `pkg/chart/common/util/jsonschema.go` (upstream sha256
-`7dabf3ef…6bdce6`, patched `3afeb41d…748da0e`); the patch itself has sha256
-`3c2d5c38…039155f`, which `helmsweep version` prints and the build checks.
+`7dabf3ef…6bdce6`, patched `80104edd…32cb9f07`); the patch itself has sha256
+`1f6767be…43bae4`, which `helmsweep version` prints and the build checks.
 `TestVendoredHelmIsUpstreamPlusOnePatch` pins the staged tree: the 1,983
 unpatched files and the patched file.
 
@@ -31,8 +31,14 @@ unpatched files and the patched file.
 the `JSONSchemaValidationError` wrapping on every call. Only the compile moves
 into `compileMemoized`:
 
-- The memo is keyed by the SHA-256 of the schema bytes. Concurrent callers of
-  the same bytes wait for one compile (single flight).
+- The memo is keyed by SHA-256 of exact schema bytes. Sweep retains warmed
+  schemas until their chart completes, so overlapping charts do not evict each
+  other before validation. Resident `serve` sets a two-entry limit before
+  accepting commands. A hit promotes its entry. Concurrent callers
+  share a pending compile while its entry remains retained; eviction drops only
+  the cache reference, so active validators and waiters remain valid. An evicted
+  compile is not reinserted. Capacity bounds entries, not schema size or total
+  process memory.
 - On a miss, `compileSchema` runs upstream's loader (`file`, `http`, `https`,
   `urn`), `AddResource("file:///values.schema.json", …)` and `Compile`
   sequence unchanged. The loader is wrapped only to record whether it ran.
@@ -46,8 +52,13 @@ into `compileMemoized`:
 - `DropCompiledSchema` forgets one schema (the sweep drops a chart's schemas
   once its rows are done); `CompiledSchemaMemoStats` reports compiles and hits.
 
-Nothing else changes: no `slog` default, `log` output, `URNResolver`, archive
-limit or environment setting is touched by the patch.
+`ResetUnresolvedURNWarnings` clears upstream's process-wide warning history
+between resident commands, under the driver's exclusive lock. Each command
+therefore emits the warnings a fresh CLI process would emit. Validations
+within one command still share upstream's once-per-URN warning behavior.
+
+No `slog` default, `log` output, `URNResolver`, archive limit or environment
+setting is touched by the patch.
 
 ## Validator queue index
 

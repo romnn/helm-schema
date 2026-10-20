@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -90,6 +91,32 @@ func newSweeper(t *testing.T, roster, work string) *sweeper {
 	return &sweeper{
 		work: work, plan: filepath.Join(filepath.Dir(roster), "plan"), id: id, cache: verdictCache{filepath.Join(filepath.Dir(roster), "cache")},
 		stderr: &bytes.Buffer{}, compile: make(chan struct{}, 1), warmed: map[[32]byte]bool{},
+	}
+}
+
+// Two overlapping charts keep all four warmed schemas until their work ends.
+// Cell execution must not recompile them outside sweep's compile semaphore.
+func TestSweepWarmSchemasSurviveOverlappingCharts(t *testing.T) {
+	s := newSweeper(t, "", "")
+	s.sink = installLogSink(&bytes.Buffer{})
+	schemas := make([]string, 4)
+	for index := range schemas {
+		schemas[index] = schemaFor(t, fmt.Sprintf(`"type":"object","required":["field%d"]`, index))
+		s.warm([]byte(schemas[index]))
+	}
+	compiles, hits := memoDelta(func() {
+		var done sync.WaitGroup
+		for _, schema := range schemas {
+			done.Go(func() {
+				if result := validate(schema, map[string]any{}); !strings.Contains(result, "missing property") {
+					t.Errorf("warm schema verdict: %q", result)
+				}
+			})
+		}
+		done.Wait()
+	})
+	if compiles != 0 || hits != int64(len(schemas)) {
+		t.Fatalf("cell execution recompiled warmed schemas: compiles=%d hits=%d, want 0 and %d", compiles, hits, len(schemas))
 	}
 }
 

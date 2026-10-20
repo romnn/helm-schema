@@ -94,6 +94,7 @@ fn lint_uses_cli_identity_schema_validation_and_its_own_replay_key() -> eyre::Re
             version: 1.0.0
         "},
     )?;
+    fs::write(staged.join("chart-owned.invocation.json"), "[]")?;
     let chart = runner.publish_tree(&staged)?;
     let case = scratch.path().join("case");
     fs::create_dir(&case)?;
@@ -123,5 +124,49 @@ fn lint_uses_cli_identity_schema_validation_and_its_own_replay_key() -> eyre::Re
     let bypass = Cacheability::bypass("test".to_string());
     let uncached = runner.lint(&request, &case, "uncached", &bypass)?;
     sim_assert_eq!(have: uncached.record.outcome, want: Outcome::Bypassed("test".to_string()));
+
+    // Successful controls retain references; failure preservation makes nested inputs portable.
+    let nested = case.join("controls/default/lint");
+    fs::create_dir_all(&nested)?;
+    fs::copy(
+        case.join("lint.invocation.json"),
+        nested.join("lint.invocation.json"),
+    )?;
+    let preserved = helm_schema_test_support::helm::invocation::preserve_failure(&case);
+    assert_ne!(preserved, case);
+    fs::remove_dir_all(chart.path())?;
+    for directory in [&preserved, &preserved.join("controls/default/lint")] {
+        for entry in fs::read_dir(directory)? {
+            let path = entry?.path();
+            if !path.to_string_lossy().ends_with(".invocation.json") {
+                continue;
+            }
+            let record: serde_json::Value = serde_json::from_slice(&fs::read(path)?)?;
+            for input in ["chart", "values"] {
+                let relative = record[input]
+                    .as_str()
+                    .ok_or_else(|| eyre::eyre!("missing {input}"))?;
+                assert!(!std::path::Path::new(relative).is_absolute());
+                assert!(directory.join(relative).exists());
+            }
+        }
+    }
+    // All top-level invocations used the same immutable chart, copied once in the bundle.
+    sim_assert_eq!(have: fs::read_dir(preserved.join("charts"))?.count(), want: 1);
+    let portable_case = scratch.path().join("portable-case");
+    test_util::scratch::copy_tree(&preserved, &portable_case)?;
+    let preserved_again =
+        helm_schema_test_support::helm::invocation::preserve_failure(&portable_case);
+    assert_ne!(preserved_again, portable_case);
+
+    // Reusing the initialized CLI must still detect replacement before replaying a result.
+    let program = scratch.path().join("helm");
+    let mut replaced = fs::read(&program)?;
+    replaced.push(b' ');
+    fs::write(program, replaced)?;
+    let Err(err) = runner.lint(&request, &case, "changed-program", &policy) else {
+        eyre::bail!("changed lint executable was accepted");
+    };
+    assert!(err.to_string().contains("changed during the run"), "{err}");
     Ok(())
 }

@@ -14,8 +14,6 @@ use color_eyre::eyre::{self, WrapErr as _};
 
 /// Overrides the host-sized Helm worker count.
 const WORKERS_VAR: &str = "SCHEMA_HELM_WORKERS";
-/// Overrides the host-sized Helm memory budget, in MiB.
-const MEMORY_MIB_VAR: &str = "SCHEMA_HELM_MEMORY_MIB";
 
 /// A job's place in the result order: its chart, then its probe.
 pub(crate) type Ordinal = (usize, usize);
@@ -45,10 +43,7 @@ impl PoolLimits {
             Ok(workers) => workers.parse().wrap_err(WORKERS_VAR)?,
             Err(_) => machine.helm_workers(),
         };
-        let memory_bytes: u64 = match std::env::var(MEMORY_MIB_VAR) {
-            Ok(memory) => memory.parse::<u64>().wrap_err(MEMORY_MIB_VAR)? * 1024 * 1024,
-            Err(_) => machine.helm_memory_bytes(),
-        };
+        let memory_bytes = machine.helm_memory_budget()?;
         let cores = std::thread::available_parallelism().map_or(1, usize::from);
         Ok(Self {
             workers: workers.min(cores.saturating_sub(2)).max(1),

@@ -108,8 +108,40 @@ The candidate uses the producer's hash-verified Helm-ready companion; the
 baseline preserves committed bytes through 5 MiB and shortens only above that
 limit, exactly as the sweep does, without regenerating inference.
 Validator-only normalization is separate from shipped-byte identity.
-Lint uses the pinned CLI, the normal cleared environment and replay machinery,
-and a separate 1,200-second timeout.
+Lint uses the selected pinned Helm engine, a cleared environment and the
+same invocation identity, replay and failure machinery as template, with a
+separate 1,200-second timeout. The resident engine runs Helm's lint action
+with fresh settings, chart, values and validation state. Only successful
+compiled schemas with no external loads are reused, keyed by exact schema
+bytes. Resident `serve` keeps the two most recently used schemas; evicted schemas
+recompile on demand, while active callers retain their immutable validator.
+Sweep instead retains warmed schemas until their chart completes, so overlapping
+charts cannot evict each other before cell execution. The resident entry limit does not bound bytes. Helm's unresolved-URN warning history resets between
+commands so diagnostics match a fresh CLI. Engine/build/patch identity
+separates stored observations. After each command, idle servers share the
+configured Helm memory budget; the oldest idle servers are evicted when
+necessary. Active reservations are measured separately, so this is not a
+hard bound on combined active and idle RSS.
+One fresh baseline/candidate/schema-free lint triplet supplies every screened
+acceptance document with the same exact original values-file bytes and Kubernetes
+version within one prepared chart and schema pair.
+Helm already observes both lint schema rules in that transcript; document kinds
+are not independent statistical trials of nondeterministic templates.
+Payload renders are shared within that group. Defaults/context observations
+are shared lazily across groups only when `render_cacheability` marks the chart
+replayable. Otherwise each group observes fresh controls. The key binds SHA-256
+of exact values bytes and Kubernetes version; the owning prepared chart binds
+chart bytes, engine/build and environment. Retained entries contain evidence
+paths, not rendered output, coalesced values or lint transcripts; observations
+are reloaded on demand and missing evidence fails adjudication. Each independent
+payload group remains fresh; equivalent parsed inputs with different bytes stay
+distinct. Per-input locks coordinate only callers of the same exact control.
+Each document retains its own origins, applicable contexts, verdict and original
+coverage position, with a fresh evidence/decoder directory. A failed control is
+observed only by documents whose applicable context set needs it.
+Independent nondeterministic invocation requests still bypass replay.
+Defaults and context-only controls run schema-free lint alone: neither compared
+root schema participates in control usability.
 Timeouts, signals, loader failures, unresolved diagnostics, and disagreement
 between the Rust prediction and the corresponding real lint rule are failures.
 
@@ -295,8 +327,12 @@ rule-qualified diagnostics, exact document JSON, overlay origins, schema hashes,
 and a document-specific `schema-verdicts.json` under the shared lint evidence.
 The verdict evidence also records defaults/context controls and inherited diagnostics;
 unusable controls and inherited-only rejection evidence are unresolved failures.
-Each saved control sub-bundle includes chart and values inputs with relative paths,
-so replay does not depend on scratch directories surviving.
+Successful control evidence keeps execution records and outputs without copying
+complete chart trees.
+Failure preservation recursively materializes chart and values inputs for nested
+controls and decoders, deduplicating repeated input paths within each directory.
+Saved records use relative paths, so replay does not depend on scratch directories
+surviving.
 
 Adjudicate a flip from these files. Never rebuild a probe document by splitting
 the dotted probe label.

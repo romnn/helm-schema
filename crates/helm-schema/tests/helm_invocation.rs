@@ -17,8 +17,8 @@ mod helm_pool;
 use helm_pool::{Ordinal, PoolLimits, run_ordered};
 use helm_schema_test_support::helm::cache_policy::render_cacheability;
 use helm_schema_test_support::helm::invocation::{
-    Cacheability, HelmRunner, InvocationRequest, Outcome, PreparedTree, RENDER_TIMEOUT, Replay,
-    TemplateRequest, find_helm, find_helmsweep, stage_totals, tree_sha256,
+    Cacheability, HelmExecution, HelmRunner, InvocationRequest, Outcome, PreparedTree,
+    RENDER_TIMEOUT, Replay, TemplateRequest, find_helm, find_helmsweep, stage_totals, tree_sha256,
 };
 
 fn base_request() -> InvocationRequest {
@@ -194,6 +194,27 @@ fn render(
         stderr: execution.stderr,
         key: execution.record.key,
     })
+}
+
+fn lint(
+    runner: &HelmRunner,
+    chart: &PreparedTree,
+    values: &str,
+    kubernetes_version: &str,
+    stage: &str,
+    cacheability: &Cacheability,
+) -> eyre::Result<HelmExecution> {
+    let case = ScratchDir::new("helm_invocation")?;
+    runner.lint(
+        &TemplateRequest {
+            chart,
+            values: values.as_bytes(),
+            kubernetes_version,
+        },
+        case.path(),
+        stage,
+        cacheability,
+    )
 }
 
 /// An identical invocation replays its stored outputs, labels do not take
@@ -812,7 +833,7 @@ fn a_changed_helm_executable_is_a_harness_failure() -> eyre::Result<()> {
 #[test]
 fn lookup_charts_replay_only_as_client_only_templates() -> eyre::Result<()> {
     let root = ScratchDir::new("helm_invocation")?;
-    let runner = HelmRunner::new(root.path(), true)?;
+    let runner = HelmRunner::with_helmsweep(root.path(), true, find_helmsweep()?, RENDER_TIMEOUT)?;
     let staged = runner.staging_dir()?;
     write_chart(&staged, "value: default\n")?;
     fs::write(
@@ -826,6 +847,17 @@ fn lookup_charts_replay_only_as_client_only_templates() -> eyre::Result<()> {
     render(&runner, &chart, values, "1.29.0", "render", &client_only)?;
     let again = render(&runner, &chart, values, "1.29.0", "render", &client_only)?;
     sim_assert_eq!(have: again.outcome, want: Outcome::Replayed);
+    for _ in 0..2 {
+        let linted = lint(&runner, &chart, values, "1.29.0", "lint", &client_only)?;
+        sim_assert_eq!(
+            have: linted.record.outcome,
+            want: Outcome::Bypassed("calls lookup outside a client-only template".to_string()),
+        );
+        eyre::ensure!(linted.record.key != again.key, "lint reused a template key");
+    }
+    let after_lint = render(&runner, &chart, values, "1.29.0", "render", &client_only)?;
+    sim_assert_eq!(have: after_lint.outcome, want: Outcome::Replayed);
+    sim_assert_eq!(have: after_lint.key, want: again.key);
     let mut request = base_request();
     let client = request.key()?;
     request.client_only = false;
@@ -868,11 +900,11 @@ fn a_panicking_job_propagates_without_deadlock() -> eyre::Result<()> {
 }
 
 /// The resident helmsweep server prints exactly what the Helm CLI prints for
-/// every kind of render (a manifest, a template abort, a coalescence type
-/// mismatch, a log record, a values-file error, a bad Kubernetes version), and
-/// its invocations are keyed apart from the CLI's.
+/// every kind of render and lint (a manifest, a template abort, a coalescence
+/// type mismatch, a log record, a values-file error, a bad Kubernetes version).
+/// Each operation retains its engine identity.
 #[test]
-fn the_resident_server_renders_exactly_as_the_cli() -> eyre::Result<()> {
+fn the_resident_server_runs_both_operations_exactly_as_the_cli() -> eyre::Result<()> {
     let root = ScratchDir::new("helm_invocation")?;
     let cli = HelmRunner::with_program(root.path(), false, find_helm()?)?;
     let resident =
@@ -881,7 +913,8 @@ fn the_resident_server_renders_exactly_as_the_cli() -> eyre::Result<()> {
         &cli,
         indoc! {"
             value: default
-            sub: {}
+            sub:
+              enabled: true
         "},
     )?;
     let staged = cli.staging_dir()?;
@@ -924,11 +957,216 @@ fn the_resident_server_renders_exactly_as_the_cli() -> eyre::Result<()> {
             &render_cacheability(chart.path())?,
         )?;
         sim_assert_eq!(
-            have: (have.success, String::from_utf8_lossy(&have.stdout), String::from_utf8_lossy(&have.stderr)),
-            want: (want.success, String::from_utf8_lossy(&want.stdout), String::from_utf8_lossy(&want.stderr)),
+            have: (have.success, have.stdout, have.stderr),
+            want: (want.success, want.stdout, want.stderr),
         );
         eyre::ensure!(have.key != want.key, "the engine is part of the key");
+        let policy = render_cacheability(chart.path())?;
+        let want = lint(&cli, chart, values, kubernetes_version, "lint", &policy)?;
+        let have = lint(
+            &resident,
+            chart,
+            values,
+            kubernetes_version,
+            "lint",
+            &policy,
+        )?;
+        if values == r#"{"sub": "not a table"}"# {
+            eyre::ensure!(
+                String::from_utf8_lossy(&want.stderr)
+                    .contains("cannot overwrite table with non table"),
+                "the coalescing case did not produce its diagnostic"
+            );
+        }
+        sim_assert_eq!(
+            have: (have.exit_code, have.stdout, have.stderr),
+            want: (want.exit_code, want.stdout, want.stderr),
+        );
+        eyre::ensure!(
+            have.record.key != want.record.key,
+            "lint must retain the selected engine's identity"
+        );
     }
+
+    Ok(())
+}
+
+/// Both lint schema rules and once-per-command URN warnings match a fresh CLI.
+#[test]
+fn resident_lint_schema_rules_and_repeated_warnings_match_the_cli() -> eyre::Result<()> {
+    let root = ScratchDir::new("helm_invocation")?;
+    let cli = HelmRunner::with_program(root.path(), false, find_helm()?)?;
+    let resident =
+        HelmRunner::with_helmsweep(root.path(), false, find_helmsweep()?, RENDER_TIMEOUT)?;
+    let mut schemas = Vec::new();
+    for schema in [
+        r#"{"properties":{"replicas":{"type":"integer","maximum":2}}}"#,
+        r#"{"required":["replicas"],"properties":{"replicas":{"type":"integer"}}}"#,
+        r#"{"properties":"#,
+        r#"{"$ref":"urn:resident-lint:unresolved"}"#,
+    ] {
+        let staged = cli.staging_dir()?;
+        write_chart(
+            &staged,
+            indoc! {"
+                value: default
+                replicas: 3
+            "},
+        )?;
+        fs::write(staged.join("values.schema.json"), schema)?;
+        schemas.push(cli.publish_tree(&staged)?);
+    }
+    let [limited, required, malformed, urn] = schemas.as_slice() else {
+        eyre::bail!("the lint parity schemas are incomplete");
+    };
+    // A null deletion is absent in the raw rule and restored by the second coalescence.
+    for (chart, values, raw_error, template_error, warnings) in [
+        (limited, r#"{"replicas":2}"#, false, false, 0),
+        (limited, r#"{"replicas":3}"#, true, true, 0),
+        (limited, r#"{"replicas":null}"#, false, true, 0),
+        (required, r#"{"replicas":null}"#, true, false, 0),
+        (malformed, "{}", true, true, 0),
+        (urn, "{}", false, false, 1),
+        (urn, "{}", false, false, 1),
+    ] {
+        let policy = render_cacheability(chart.path())?;
+        let want = lint(&cli, chart, values, "1.29.0", "lint", &policy)?;
+        let have = lint(&resident, chart, values, "1.29.0", "lint", &policy)?;
+        sim_assert_eq!(
+            have: (have.exit_code, &have.stdout, &have.stderr),
+            want: (want.exit_code, &want.stdout, &want.stderr),
+        );
+        sim_assert_eq!(have: have.exit_code, want: i32::from(raw_error || template_error));
+        let stdout = String::from_utf8(want.stdout)?;
+        let stderr = String::from_utf8(want.stderr)?;
+        sim_assert_eq!(
+            have: (
+                stdout.contains("[ERROR] values.yaml:"),
+                stdout.contains("[ERROR] templates/:"),
+                stderr.matches("unresolved URN reference ignored").count(),
+            ),
+            want: (raw_error, template_error, warnings),
+        );
+        sim_assert_eq!(have: have.record.outcome, want: Outcome::Executed);
+        eyre::ensure!(
+            have.record.key != want.record.key,
+            "lint engine key collision"
+        );
+    }
+    Ok(())
+}
+
+/// One resident serves both operations, while their exact requests and stored
+/// streams remain separate even when only lint rejects the chart's schema.
+#[test]
+fn resident_lint_and_template_keep_separate_replay_entries() -> eyre::Result<()> {
+    let root = ScratchDir::new("helm_invocation")?;
+    let runner = HelmRunner::with_helmsweep(root.path(), true, find_helmsweep()?, RENDER_TIMEOUT)?;
+    let staged = runner.staging_dir()?;
+    write_chart(
+        &staged,
+        indoc! {"
+                value: default
+                replicas: 3
+            "},
+    )?;
+    fs::write(
+        staged.join("values.schema.json"),
+        r#"{"properties":{"replicas":{"maximum":2}}}"#,
+    )?;
+    let chart = runner.publish_tree(&staged)?;
+    let policy = render_cacheability(chart.path())?;
+    let case = ScratchDir::new("helm_invocation")?;
+    let request = TemplateRequest {
+        chart: &chart,
+        values: b"{}",
+        kubernetes_version: "1.29.0",
+    };
+    let rendered = runner.template(&request, case.path(), "render", &policy)?;
+    let linted = runner.lint(&request, case.path(), "lint", &policy)?;
+    let render_again = runner.template(&request, case.path(), "render-again", &policy)?;
+    let lint_again = runner.lint(&request, case.path(), "lint-again", &policy)?;
+    sim_assert_eq!(have: (rendered.exit_code, linted.exit_code), want: (0, 1));
+    eyre::ensure!(
+        rendered.record.key != linted.record.key,
+        "operation key collision"
+    );
+    for (first, again) in [(&rendered, &render_again), (&linted, &lint_again)] {
+        sim_assert_eq!(have: &first.record.outcome, want: &Outcome::Executed);
+        sim_assert_eq!(have: &again.record.outcome, want: &Outcome::Replayed);
+        sim_assert_eq!(
+            have: (&again.record.key, again.exit_code, &again.stdout, &again.stderr),
+            want: (&first.record.key, first.exit_code, &first.stdout, &first.stderr),
+        );
+    }
+    for (stage, operation, skip_schema, execution) in [
+        ("render", "template", true, &rendered),
+        ("lint", "lint", false, &linted),
+    ] {
+        let record: serde_json::Value = serde_json::from_slice(&fs::read(
+            case.path().join(format!("{stage}.invocation.json")),
+        )?)?;
+        let invocation: InvocationRequest = serde_json::from_value(record["request"].clone())?;
+        sim_assert_eq!(have: invocation.key()?, want: execution.record.key);
+        sim_assert_eq!(have: invocation.engine, want: "helmsweep");
+        sim_assert_eq!(have: invocation.arguments.first().map(String::as_str), want: Some(operation));
+        sim_assert_eq!(
+            have: invocation.arguments.iter().any(|argument| argument == "--skip-schema-validation"),
+            want: skip_schema,
+        );
+    }
+    Ok(())
+}
+
+/// Retaining a resident process never reuses a nondeterministic template's
+/// evaluation, including lint's logged `fail` diagnostic.
+#[test]
+fn resident_nondeterministic_lint_and_template_calls_stay_fresh() -> eyre::Result<()> {
+    let root = ScratchDir::new("helm_invocation")?;
+    let runner = HelmRunner::with_helmsweep(root.path(), true, find_helmsweep()?, RENDER_TIMEOUT)?;
+    let staged = runner.staging_dir()?;
+    write_chart(&staged, "value: default\n")?;
+    fs::write(
+        staged.join("templates/configmap.yaml"),
+        indoc! {r#"
+            {{ fail (printf "fresh-%s" (randAlphaNum 32)) }}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: fresh
+        "#},
+    )?;
+    let chart = runner.publish_tree(&staged)?;
+    let policy = render_cacheability(chart.path())?;
+    let Replay::Bypass(reason) = policy.replay() else {
+        eyre::bail!("randomness was marked replayable");
+    };
+    let first = lint(&runner, &chart, "{}", "1.29.0", "lint", &policy)?;
+    let again = lint(&runner, &chart, "{}", "1.29.0", "lint", &policy)?;
+    sim_assert_eq!(have: (first.exit_code, again.exit_code), want: (0, 0));
+    sim_assert_eq!(have: &first.record.key, want: &again.record.key);
+    for execution in [&first, &again] {
+        sim_assert_eq!(have: &execution.record.outcome, want: &Outcome::Bypassed(reason.clone()));
+        eyre::ensure!(
+            String::from_utf8_lossy(&execution.stderr).contains("fresh-"),
+            "lint did not expose the random diagnostic"
+        );
+    }
+    eyre::ensure!(
+        first.stderr != again.stderr,
+        "lint reused a random diagnostic"
+    );
+    let first = render(&runner, &chart, "{}", "1.29.0", "render", &policy)?;
+    let again = render(&runner, &chart, "{}", "1.29.0", "render", &policy)?;
+    sim_assert_eq!(have: (first.success, again.success), want: (false, false));
+    sim_assert_eq!(have: first.key, want: again.key);
+    for execution in [&first, &again] {
+        sim_assert_eq!(have: &execution.outcome, want: &Outcome::Bypassed(reason.clone()));
+    }
+    eyre::ensure!(
+        first.stderr != again.stderr,
+        "template reused a random diagnostic"
+    );
     Ok(())
 }
 
@@ -948,7 +1186,7 @@ fn fake_helmsweep(directory: &Path, name: &str, body: &str) -> eyre::Result<std:
     Ok(program)
 }
 
-/// Every answer that is not a completed render of the waiting request (the
+/// Every answer that is not a completed operation of the waiting request (the
 /// server ending, a malformed line, another request's id, an abnormal end,
 /// no answer within the timeout, a status Helm never uses) is a harness
 /// failure, twice: the failed server is killed and reaped, never reused,
@@ -984,45 +1222,52 @@ fn resident_protocol_failures_are_harness_failures() -> eyre::Result<()> {
             "exit code Some(2)",
         ),
     ] {
-        let root = ScratchDir::new("helm_invocation")?;
         let program = fake_helmsweep(programs.path(), name, &body)?;
-        let runner = HelmRunner::with_helmsweep(
-            root.path(),
-            true,
-            program,
-            std::time::Duration::from_secs(3),
-        )?;
-        let chart = publish_chart(&runner, "value: default\n")?;
-        let request = TemplateRequest {
-            chart: &chart,
-            values: br#"{"value": "a"}"#,
-            kubernetes_version: "1.29.0",
-        };
-        let case = ScratchDir::new("helm_invocation")?;
-        let mut failures = Vec::new();
-        for _ in 0..2 {
-            let Err(error) = runner.template(
-                &request,
-                case.path(),
-                "render",
-                &render_cacheability(chart.path())?,
-            ) else {
-                eyre::bail!("{name}: a protocol failure became a Helm verdict");
+        for operation in ["template", "lint"] {
+            // Template exercises the shared timeout without waiting through lint's long deadline.
+            if operation == "lint" && name == "hangs" {
+                continue;
+            }
+            let root = ScratchDir::new("helm_invocation")?;
+            let runner = HelmRunner::with_helmsweep(
+                root.path(),
+                true,
+                program.clone(),
+                std::time::Duration::from_secs(3),
+            )?;
+            let chart = publish_chart(&runner, "value: default\n")?;
+            let request = TemplateRequest {
+                chart: &chart,
+                values: br#"{"value": "a"}"#,
+                kubernetes_version: "1.29.0",
             };
-            check_preserved_bundle(case.path(), &format!("{error:?}"), request.values)?;
-            failures.push(format!("{error:?}"));
+            let policy = render_cacheability(chart.path())?;
+            let case = ScratchDir::new("helm_invocation")?;
+            let mut failures = Vec::new();
+            for _ in 0..2 {
+                let result = if operation == "lint" {
+                    runner.lint(&request, case.path(), "render", &policy)
+                } else {
+                    runner.template(&request, case.path(), "render", &policy)
+                };
+                let Err(err) = result else {
+                    eyre::bail!("{name}/{operation}: a protocol failure became a Helm verdict");
+                };
+                check_preserved_bundle(case.path(), &format!("{err:?}"), request.values)?;
+                failures.push(format!("{err:?}"));
+            }
+            eyre::ensure!(
+                failures
+                    .iter()
+                    .all(|failure| failure.contains(expected) && failure.contains("helmsweep")),
+                "{name}/{operation}: unexpected failures {failures:?}"
+            );
+            let mut stored = fs::read_dir(root.path())?
+                .map(|entry| Ok(entry?.file_name().to_string_lossy().into_owned()))
+                .collect::<eyre::Result<Vec<_>>>()?;
+            stored.sort();
+            sim_assert_eq!(have: stored, want: vec!["home", "inputs", "staging", "tmp", "trees"]);
         }
-        eyre::ensure!(
-            failures
-                .iter()
-                .all(|failure| failure.contains(expected) && failure.contains("helmsweep")),
-            "{name}: unexpected failures {failures:?}"
-        );
-        let mut stored = fs::read_dir(root.path())?
-            .map(|entry| Ok(entry?.file_name().to_string_lossy().into_owned()))
-            .collect::<eyre::Result<Vec<_>>>()?;
-        stored.sort();
-        sim_assert_eq!(have: stored, want: vec!["home", "inputs", "staging", "tmp", "trees"]);
     }
     Ok(())
 }
@@ -1088,13 +1333,14 @@ fn templates_see_the_release_capabilities_in_both_engines() -> eyre::Result<()> 
     Ok(())
 }
 
-/// A resident server holding more than the retirement bound after a render
-/// is terminated rather than kept idle; a small one is reused.
+/// A resident server holding more than the retirement bound after either
+/// operation is terminated; a small one is reused across both operations.
 #[cfg(unix)]
 #[test]
 fn large_idle_resident_servers_are_retired() -> eyre::Result<()> {
     let programs = ScratchDir::new("helm_invocation")?;
-    for (held, servers) in [(1_u64, 1_usize), (1 << 30, 2)] {
+    let budget = PoolLimits::from_env()?.memory_bytes;
+    for (held, servers) in [(1_u64, 1_usize), (budget, 1), (budget + 1, 4)] {
         let starts = programs.path().join(format!("starts-{held}"));
         let body = indoc::formatdoc!(
             r#"
@@ -1120,8 +1366,95 @@ fn large_idle_resident_servers_are_retired() -> eyre::Result<()> {
                 "render",
                 &render_cacheability(chart.path())?,
             )?;
+            lint(
+                &runner,
+                &chart,
+                "{}",
+                "1.29.0",
+                "lint",
+                &render_cacheability(chart.path())?,
+            )?;
         }
         sim_assert_eq!(have: fs::read_to_string(&starts)?.lines().count(), want: servers);
     }
+    Ok(())
+}
+
+/// Two overlapping commands each fit the idle budget, but their combined
+/// retained memory does not. The next round reuses exactly one server.
+#[cfg(unix)]
+#[test]
+fn resident_idle_memory_is_bounded_across_servers() -> eyre::Result<()> {
+    let programs = ScratchDir::new("helm_invocation")?;
+    let budget = PoolLimits::from_env()?.memory_bytes;
+    let held = budget / 2 + 1;
+    let starts = programs.path().join("starts");
+    let body = indoc::formatdoc!(
+        r#"
+        echo $$ >> '{starts}'
+        while read -r request; do
+          id=$(printf '%s' "$request" | sed -E 's/.*"id":([0-9]+).*/\1/')
+          round=$(cat '{coordination}/round')
+          : > "{coordination}/$round/ready/$$"
+          waited=0
+          while [ ! -f "{coordination}/$round/release" ]; do
+            waited=$((waited + 1))
+            test "$waited" -le 3000 || exit 2
+            sleep 0.01
+          done
+          : > "$(printf '%s' "$request" | sed -E 's/.*"stdout_path":"([^"]*)".*/\1/')"
+          : > "$(printf '%s' "$request" | sed -E 's/.*"stderr_path":"([^"]*)".*/\1/')"
+          printf '{{"id":%s,"exit_code":0,"peak_bytes":1,"held_bytes":{held},"max_rss_bytes":1}}\n' "$id"
+        done"#,
+        starts = starts.display(),
+        coordination = programs.path().display(),
+    );
+    let program = fake_helmsweep(programs.path(), "aggregate-memory", &body)?;
+    let root = ScratchDir::new("helm_invocation")?;
+    let runner = HelmRunner::with_helmsweep(root.path(), false, program, RENDER_TIMEOUT)?;
+    let chart = publish_chart(&runner, "value: default\n")?;
+    let policy = render_cacheability(chart.path())?;
+    for round in 0..2 {
+        let round_path = programs.path().join(round.to_string());
+        let ready = round_path.join("ready");
+        fs::create_dir_all(&ready)?;
+        fs::write(programs.path().join("round"), round.to_string())?;
+        std::thread::scope(|scope| -> eyre::Result<()> {
+            let rendered =
+                scope.spawn(|| render(&runner, &chart, "{}", "1.29.0", "render", &policy));
+            let linted = scope.spawn(|| lint(&runner, &chart, "{}", "1.29.0", "lint", &policy));
+            let overlap = (|| -> eyre::Result<()> {
+                let deadline = std::time::Instant::now() + std::time::Duration::from_secs(20);
+                loop {
+                    if fs::read_dir(&ready)?
+                        .collect::<std::io::Result<Vec<_>>>()?
+                        .len()
+                        == 2
+                    {
+                        return Ok(());
+                    }
+                    eyre::ensure!(
+                        std::time::Instant::now() < deadline,
+                        "resident commands did not overlap in round {round}"
+                    );
+                    std::thread::sleep(std::time::Duration::from_millis(10));
+                }
+            })();
+            // Release both children before propagating a failed overlap check.
+            let released = fs::write(round_path.join("release"), "");
+            let rendered = rendered
+                .join()
+                .map_err(|_| eyre::eyre!("render thread panicked"));
+            let linted = linted
+                .join()
+                .map_err(|_| eyre::eyre!("lint thread panicked"));
+            released?;
+            overlap?;
+            sim_assert_eq!(have: rendered??.success, want: true);
+            sim_assert_eq!(have: linted??.exit_code, want: 0);
+            Ok(())
+        })?;
+    }
+    sim_assert_eq!(have: fs::read_to_string(starts)?.lines().count(), want: 3);
     Ok(())
 }

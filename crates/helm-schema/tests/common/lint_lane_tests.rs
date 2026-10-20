@@ -20,6 +20,528 @@ fn corpus_chart(name: &str) -> PathBuf {
     test_util::workspace_testdata().join("charts").join(name)
 }
 
+fn document_group_chart(source: &Path) -> eyre::Result<super::LiveChart> {
+    fs::write(
+        source.join("Chart.yaml"),
+        indoc::indoc! {"
+            apiVersion: v2
+            name: grouped-observation
+            version: 1.0.0
+        "},
+    )?;
+    fs::write(source.join("values.yaml"), "enabled: false\n")?;
+    fs::create_dir(source.join("templates"))?;
+    // Random annotations force fresh lint observations without changing resource validity.
+    fs::write(
+        source.join("templates/config.yaml"),
+        indoc::indoc! {r#"
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: grouped-observation
+              annotations:
+                nonce: {{ randAlphaNum 8 | quote }}
+            data:
+              token: "ok"
+        "#},
+    )?;
+    let baseline = json!({"properties": {"enabled": {"const": false}}});
+    let candidate = json!({});
+    let overlay = json!({"enabled": true});
+    let inputs = AcceptanceInputs::load(source)?;
+    let mut flips = Vec::new();
+    for kind in [
+        AcceptanceDocument::Template,
+        AcceptanceDocument::LintRaw,
+        AcceptanceDocument::LintCoalescedTwice,
+    ] {
+        flips.push(super::ScreenedProbe {
+            name: format!("document={kind:?}"),
+            overlay: overlay.clone(),
+            document: Some(super::lint_probes::ScreenedDocument {
+                kind,
+                values: inputs.compose(overlay.clone(), kind)?.root,
+                defaults: Some(inputs.compose(json!({}), kind)?.root),
+                kubernetes_version: "1.29.0".into(),
+                origins: vec![format!("origin-{kind:?}")],
+                values_file: serde_json::to_vec(&overlay)?,
+                control_overlays: vec![json!({"context": format!("{kind:?}")})],
+            }),
+        });
+    }
+    Ok(super::LiveChart {
+        label: "grouped-observation".into(),
+        path: source.to_owned(),
+        profiles: super::ProfileSchemas::compile(&baseline, &candidate, json!({"enabled": false}))?,
+        flips,
+        lint_schemas: LintSchemas::compile(&baseline, &candidate, None)?,
+        helm: std::sync::Arc::default(),
+        annotation: None,
+    })
+}
+
+#[cfg(unix)]
+#[test]
+fn nondeterministic_controls_are_observed_again_after_the_threshold() -> eyre::Result<()> {
+    use super::helm_invocation::{HelmRunner, find_helm};
+    use super::lint_adjudication::{
+        ControlObservations, GroupObservations, adjudicate_lint_observation,
+    };
+    use helm_schema_test_support::helm::adjudication::LintProbeRequest;
+    use std::os::unix::fs::PermissionsExt as _;
+
+    let source = ScratchDir::new("control-threshold")?;
+    let mut live = document_group_chart(source.path())?;
+    fs::write(
+        source.path().join("templates/config.yaml"),
+        indoc::indoc! {r#"
+        {{ $_ := now }}
+        {{ if and (not .Values.enabled) .Values.expired }}{{ fail "control expired" }}{{ end }}
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: threshold
+    "#},
+    )?;
+    // The test double advances the template's clock input through a file, without sleeping.
+    let clock = ScratchDir::new("control-clock")?;
+    let expired = clock.path().join("expired");
+    let program = clock.path().join("helm");
+    fs::write(
+        &program,
+        indoc::formatdoc! {r#"
+        #!/bin/sh
+        if [ "$1" != version ] && [ -f '{expired}' ]; then
+          set -- "$@" --set expired=true
+        fi
+        exec '{helm}' "$@"
+    "#, expired = expired.display(), helm = find_helm()?.display()},
+    )?;
+    fs::set_permissions(&program, fs::Permissions::from_mode(0o755))?;
+    let runner = Box::leak(Box::new(HelmRunner::with_program(
+        &clock.path().join("runner"),
+        true,
+        program,
+    )?));
+    let chart = super::PinnedHelmChart::prepare(runner, source.path())?;
+    let kubernetes = super::OfflineKubernetesValidator::new(
+        &test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+        super::helm_adjudication::KUBERNETES_RELEASE,
+    )?;
+    let controls = ControlObservations::default();
+    let probe = live.flips.first_mut().ok_or_eyre("document absent")?;
+    for group in 0..2 {
+        let document = probe.document.as_mut().ok_or_eyre("document absent")?;
+        document.kind = AcceptanceDocument::LintRaw;
+        document.values = json!({"enabled":true,"group":group});
+        document.values_file = serde_json::to_vec(&document.values)?;
+        document.control_overlays = vec![json!({})];
+        let lint = chart.adjudicate_lint(&LintProbeRequest {
+            values: &document.values_file,
+            kubernetes_version: &document.kubernetes_version,
+            baseline_schema: &live.lint_schemas.baseline,
+            candidate_schema: &live.lint_schemas.candidate,
+        })?;
+        let document = probe.document.as_ref().ok_or_eyre("document absent")?;
+        let mut observations = GroupObservations::new(&chart, document, lint, &controls);
+        let result = adjudicate_lint_observation(
+            probe,
+            document,
+            &live.lint_schemas,
+            &kubernetes,
+            &mut observations,
+        );
+        if group == 0 {
+            let (verdict, _) = result?;
+            sim_assert_eq!(have: verdict, want: super::HelmFlipVerdict::LooseningMatchedLintValidation);
+            fs::write(&expired, "threshold reached")?;
+        } else {
+            let err = result
+                .err()
+                .ok_or_eyre("expired control certified another group's acceptance")?;
+            assert!(
+                err.to_string()
+                    .contains("unusable defaults/context render control"),
+                "{err:#}"
+            );
+        }
+    }
+    Ok(())
+}
+
+#[test]
+fn live_document_group_shares_one_fresh_lint_observation_and_keeps_origins() -> eyre::Result<()> {
+    let source = ScratchDir::new("grouped-lint-observation")?;
+    let live = document_group_chart(source.path())?;
+    let chart = live
+        .helm
+        .chart(&live.path)
+        .map_err(|err| eyre::eyre!("{err}"))?;
+    assert!(matches!(
+        chart.render_cacheability().replay(),
+        super::helm_invocation::Replay::Bypass(_)
+    ));
+    let kubernetes = super::OfflineKubernetesValidator::new(
+        &test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+        super::helm_adjudication::KUBERNETES_RELEASE,
+    )?;
+    let groups = super::probe_groups(&live);
+    sim_assert_eq!(have: &groups, want: &vec![vec![0, 1, 2]]);
+    let group = groups.first().ok_or_eyre("document group absent")?;
+    let results = super::adjudicate_probe_group(&live, group, Some(&kubernetes));
+    sim_assert_eq!(have: results.iter().map(|result| result.flip).collect::<Vec<_>>(), want: vec![0, 1, 2]);
+    for (result, probe) in results.into_iter().zip(&live.flips) {
+        let document = probe.document.as_ref().ok_or_eyre("document absent")?;
+        sim_assert_eq!(have: result.document_kind, want: Some(document.kind));
+        let (verdict, directory) = result.outcome.map_err(|err| eyre::eyre!("{err}"))?;
+        sim_assert_eq!(have: verdict, want: super::HelmFlipVerdict::LooseningMatchedLintValidation);
+        let evidence: Value =
+            serde_json::from_slice(&fs::read(directory.join("schema-verdicts.json"))?)?;
+        sim_assert_eq!(have: &evidence["origins"], want: &json!(document.origins));
+        sim_assert_eq!(have: &evidence["kubernetes_contexts"][0]["overlay"], want: &document.control_overlays[0]);
+    }
+    let invocations = chart.invocations();
+    let payload_bytes = u64::try_from(serde_json::to_vec(&json!({"enabled": true}))?.len())?;
+    let payload_lints: Vec<_> = invocations
+        .iter()
+        .filter(|record| record.stage.starts_with("lint-") && record.input_bytes == payload_bytes)
+        .map(|record| record.stage.as_str())
+        .collect();
+    sim_assert_eq!(have: payload_lints, want: vec!["lint-baseline", "lint-candidate", "lint-schema-free"]);
+    // Defaults are observed once; the three distinct contexts remain separate observations.
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-baseline").count(), want: 1);
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-candidate").count(), want: 1);
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-schema-free").count(), want: 5);
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "render").count(), want: 5);
+
+    // Nondeterministic controls are observed again with each independent payload group.
+    for result in super::adjudicate_probe_group(&live, group, Some(&kubernetes)) {
+        let (verdict, _) = result.outcome.map_err(|err| eyre::eyre!("{err}"))?;
+        sim_assert_eq!(have: verdict, want: super::HelmFlipVerdict::LooseningMatchedLintValidation);
+    }
+    let invocations = chart.invocations();
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-baseline").count(), want: 2);
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-candidate").count(), want: 2);
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-schema-free").count(), want: 10);
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "render").count(), want: 10);
+    Ok(())
+}
+
+#[test]
+fn retained_controls_reload_large_observations_from_evidence() -> eyre::Result<()> {
+    let source = ScratchDir::new("control-retained-bytes")?;
+    let mut live = document_group_chart(source.path())?;
+    let padding = "x".repeat(3 * 1024 * 1024);
+    fs::write(
+        source.path().join("values.yaml"),
+        serde_json::to_vec(&json!({"enabled":false,"padding":padding}))?,
+    )?;
+    fs::write(
+        source.path().join("templates/config.yaml"),
+        indoc::indoc! {r"
+        apiVersion: v1
+        kind: ConfigMap
+        metadata:
+          name: retained-bytes
+        data:
+          padding: {{ .Values.padding | quote }}
+    "},
+    )?;
+    for probe in &mut live.flips {
+        probe
+            .document
+            .as_mut()
+            .ok_or_eyre("document absent")?
+            .control_overlays = vec![json!({})];
+    }
+    let kubernetes = super::OfflineKubernetesValidator::new(
+        &test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+        super::helm_adjudication::KUBERNETES_RELEASE,
+    )?;
+    let first = super::adjudicate_probe_group(&live, &[0], Some(&kubernetes))
+        .pop()
+        .ok_or_eyre("outcome absent")?;
+    let (verdict, directory) = first.outcome.map_err(|err| eyre::eyre!("{err}"))?;
+    sim_assert_eq!(have: verdict, want: super::HelmFlipVerdict::LooseningMatchedLintValidation);
+    let pool = directory
+        .parent()
+        .and_then(Path::parent)
+        .ok_or_eyre("probe pool absent")?;
+    let mut removed = 0;
+    // Losing retained evidence must fail closed instead of using an in-memory copy of its megabytes.
+    for entry in fs::read_dir(pool)? {
+        let path = entry?.path();
+        let render = path.join("render.yaml");
+        if render.is_file() && fs::read(path.join("values.json"))? == b"{}" {
+            assert!(fs::metadata(&render)?.len() > 3 * 1024 * 1024);
+            fs::remove_file(render)?;
+            removed += 1;
+        }
+    }
+    sim_assert_eq!(have: removed, want: 1);
+    let second = super::adjudicate_probe_group(&live, &[0], Some(&kubernetes))
+        .pop()
+        .ok_or_eyre("outcome absent")?;
+    assert!(
+        second.outcome.is_err(),
+        "retained control survived without its disk observation"
+    );
+    Ok(())
+}
+
+#[test]
+fn live_group_control_failure_affects_only_its_applicable_document() -> eyre::Result<()> {
+    let source = ScratchDir::new("grouped-control-failure")?;
+    let mut live = document_group_chart(source.path())?;
+    fs::write(
+        source.path().join("templates/config.yaml"),
+        indoc::indoc! {r#"
+            {{ if eq (.Values.context | default "") "bad" }}{{ fail "bad context" }}{{ end }}
+            apiVersion: v1
+            kind: ConfigMap
+            metadata:
+              name: grouped-observation
+              annotations:
+                nonce: {{ randAlphaNum 8 | quote }}
+            data:
+              token: "ok"
+        "#},
+    )?;
+    for probe in &mut live.flips {
+        let document = probe.document.as_mut().ok_or_eyre("document absent")?;
+        document.control_overlays = vec![json!({"context":
+            if document.kind == AcceptanceDocument::LintRaw { "bad" } else { "shared" }
+        })];
+    }
+    let kubernetes = super::OfflineKubernetesValidator::new(
+        &test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+        super::helm_adjudication::KUBERNETES_RELEASE,
+    )?;
+    let results = super::adjudicate_probe_group(&live, &[0, 1, 2], Some(&kubernetes));
+    sim_assert_eq!(have: results.iter().map(|result| result.flip).collect::<Vec<_>>(), want: vec![0, 1, 2]);
+    for (result, probe) in results.into_iter().zip(&live.flips) {
+        let document = probe.document.as_ref().ok_or_eyre("document absent")?;
+        if document.kind == AcceptanceDocument::LintRaw {
+            let err = result
+                .outcome
+                .err()
+                .ok_or_eyre("bad context was accepted")?;
+            assert!(
+                err.contains("unusable defaults/context render control"),
+                "{err}"
+            );
+        } else {
+            let (verdict, directory) = result.outcome.map_err(|err| eyre::eyre!("{err}"))?;
+            sim_assert_eq!(have: verdict, want: super::HelmFlipVerdict::LooseningMatchedLintValidation);
+            let evidence: Value =
+                serde_json::from_slice(&fs::read(directory.join("schema-verdicts.json"))?)?;
+            sim_assert_eq!(have: &evidence["origins"], want: &json!(document.origins));
+            sim_assert_eq!(have: &evidence["kubernetes_contexts"][0]["overlay"], want: &json!({"context":"shared"}));
+            let overlays: Vec<_> = evidence["controls"]
+                .as_array()
+                .ok_or_eyre("controls absent")?
+                .iter()
+                .map(|control| control["overlay"].clone())
+                .collect();
+            sim_assert_eq!(have: overlays, want: vec![json!({"context":"shared"}), json!({})]);
+        }
+    }
+    let chart = live
+        .helm
+        .chart(&live.path)
+        .map_err(|err| eyre::eyre!("{err}"))?;
+    let invocations = chart.invocations();
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-schema-free").count(), want: 4);
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "render").count(), want: 4);
+    Ok(())
+}
+
+#[test]
+fn live_group_payload_controls_share_only_exact_values_bytes() -> eyre::Result<()> {
+    let source = ScratchDir::new("grouped-control-bytes")?;
+    let mut live = document_group_chart(source.path())?;
+    for probe in &mut live.flips {
+        probe
+            .document
+            .as_mut()
+            .ok_or_eyre("document absent")?
+            .control_overlays = vec![json!({"enabled": true})];
+    }
+    let kubernetes = super::OfflineKubernetesValidator::new(
+        &test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+        super::helm_adjudication::KUBERNETES_RELEASE,
+    )?;
+    for pretty in [false, true] {
+        if pretty {
+            for probe in &mut live.flips {
+                probe
+                    .document
+                    .as_mut()
+                    .ok_or_eyre("document absent")?
+                    .values_file = serde_json::to_vec_pretty(&json!({"enabled": true}))?;
+            }
+        }
+        for result in super::adjudicate_probe_group(&live, &[0, 1, 2], Some(&kubernetes)) {
+            let (verdict, _) = result.outcome.map_err(|err| eyre::eyre!("{err}"))?;
+            sim_assert_eq!(have: verdict, want: super::HelmFlipVerdict::LooseningMatchedLintValidation);
+        }
+        let chart = live
+            .helm
+            .chart(&live.path)
+            .map_err(|err| eyre::eyre!("{err}"))?;
+        let invocations = chart.invocations();
+        // Compact payload and context share one observation; pretty payload bytes do not.
+        let expected = if pretty { 5 } else { 2 };
+        sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-schema-free").count(), want: expected);
+        sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "render").count(), want: expected);
+    }
+    Ok(())
+}
+
+#[test]
+fn repeated_deterministic_documents_keep_fresh_decode_evidence() -> eyre::Result<()> {
+    let source = ScratchDir::new("grouped-deterministic-evidence")?;
+    let mut live = document_group_chart(source.path())?;
+    let template = source.path().join("templates/config.yaml");
+    fs::write(
+        &template,
+        fs::read_to_string(&template)?.replace("{{ randAlphaNum 8 | quote }}", "\"fixed\""),
+    )?;
+    let probe = live.flips.first_mut().ok_or_eyre("document absent")?;
+    probe
+        .document
+        .as_mut()
+        .ok_or_eyre("document absent")?
+        .control_overlays = vec![json!({})];
+    let document = probe.document.as_ref().ok_or_eyre("document absent")?;
+    let chart = live
+        .helm
+        .chart(&live.path)
+        .map_err(|err| eyre::eyre!("{err}"))?;
+    assert!(matches!(
+        chart.render_cacheability().replay(),
+        super::helm_invocation::Replay::Cacheable
+    ));
+    let kubernetes = super::OfflineKubernetesValidator::new(
+        &test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+        super::helm_adjudication::KUBERNETES_RELEASE,
+    )?;
+    let mut directories = BTreeSet::new();
+    for _ in 0..2 {
+        let (verdict, directory) =
+            super::adjudicate_lint_flip(chart, probe, document, &live.lint_schemas, &kubernetes)?;
+        sim_assert_eq!(have: verdict, want: super::HelmFlipVerdict::LooseningMatchedLintValidation);
+        let evidence: Value =
+            serde_json::from_slice(&fs::read(directory.join("schema-verdicts.json"))?)?;
+        sim_assert_eq!(have: &evidence["document_kind"], want: &json!(document.kind));
+        sim_assert_eq!(have: evidence["kubernetes_contexts"].as_array().map(Vec::len), want: Some(1));
+        sim_assert_eq!(have: &evidence["kubernetes_contexts"][0]["overlay"], want: &json!({}));
+        directories.insert(directory);
+    }
+    // The deterministic lint is reusable, but each independent adjudication owns its decoder files.
+    sim_assert_eq!(have: directories.len(), want: 2);
+    let invocations = chart.invocations();
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "lint-baseline").count(), want: 1);
+    sim_assert_eq!(have: invocations.iter().filter(|record| record.stage == "render").count(), want: 4);
+    Ok(())
+}
+
+#[test]
+fn live_document_groups_keep_exact_bytes_versions_and_template_probes_separate() -> eyre::Result<()>
+{
+    let source = ScratchDir::new("grouped-lint-identity")?;
+    let mut live = document_group_chart(source.path())?;
+    let mut different_bytes = live
+        .flips
+        .first()
+        .ok_or_eyre("first document absent")?
+        .clone();
+    different_bytes
+        .document
+        .as_mut()
+        .ok_or_eyre("document absent")?
+        .values_file
+        .push(b'\n');
+    live.flips.insert(1, different_bytes);
+    let mut different_version = live
+        .flips
+        .first()
+        .ok_or_eyre("first document absent")?
+        .clone();
+    different_version
+        .document
+        .as_mut()
+        .ok_or_eyre("document absent")?
+        .kubernetes_version = "1.30.0".into();
+    live.flips.insert(3, different_version);
+    let mut template = live
+        .flips
+        .first()
+        .ok_or_eyre("first document absent")?
+        .clone();
+    template.document = None;
+    live.flips.insert(2, template.clone());
+    live.flips.push(template);
+    sim_assert_eq!(have: super::probe_groups(&live), want: vec![vec![0, 3, 5], vec![1], vec![2], vec![4], vec![6]]);
+    let kubernetes = super::OfflineKubernetesValidator::new(
+        &test_util::workspace_testdata().join("provider-bundle/kubernetes-json-schema-cache"),
+        super::helm_adjudication::KUBERNETES_RELEASE,
+    )?;
+    std::thread::scope(|scope| -> eyre::Result<()> {
+        let first =
+            scope.spawn(|| super::adjudicate_probe_group(&live, &[0, 3, 5], Some(&kubernetes)));
+        let second = scope.spawn(|| super::adjudicate_probe_group(&live, &[1], Some(&kubernetes)));
+        for thread in [first, second] {
+            for result in thread
+                .join()
+                .map_err(|_| eyre::eyre!("adjudication thread failed"))?
+            {
+                let (verdict, _) = result.outcome.map_err(|err| eyre::eyre!("{err}"))?;
+                sim_assert_eq!(have: verdict, want: super::HelmFlipVerdict::LooseningMatchedLintValidation);
+            }
+        }
+        Ok(())
+    })?;
+    let chart = live
+        .helm
+        .chart(&live.path)
+        .map_err(|err| eyre::eyre!("{err}"))?;
+    // Concurrent nondeterministic groups observe their own controls.
+    sim_assert_eq!(have: chart.invocations().iter().filter(|record| record.stage == "render").count(), want: 8);
+    for result in super::adjudicate_probe_group(&live, &[4], Some(&kubernetes)) {
+        let (verdict, _) = result.outcome.map_err(|err| eyre::eyre!("{err}"))?;
+        sim_assert_eq!(have: verdict, want: super::HelmFlipVerdict::LooseningMatchedLintValidation);
+    }
+    // Another Kubernetes version requires its own payload, defaults, and applicable context.
+    sim_assert_eq!(have: chart.invocations().iter().filter(|record| record.stage == "render").count(), want: 11);
+    sim_assert_eq!(have: chart.invocations().iter().filter(|record| record.stage == "lint-schema-free").count(), want: 11);
+    Ok(())
+}
+
+#[test]
+fn live_grouped_outcomes_fold_in_original_probe_order() -> eyre::Result<()> {
+    let results = [0, 3, 5, 1, 2, 4, 6]
+        .into_iter()
+        .map(|flip| {
+            let case = format!("flip {flip}");
+            (
+                (0, flip + 1),
+                super::AcceptanceResult::Probe(super::AdjudicatedProbe {
+                    flip,
+                    case: case.clone(),
+                    document_kind: Some(AcceptanceDocument::LintRaw),
+                    outcome: Err(case),
+                    adjudication_ms: 0,
+                }),
+            )
+        })
+        .collect();
+    let comparison = super::fold_results(results, true)?;
+    sim_assert_eq!(have: comparison.helm_adjudication_failures, want: (0..7).map(|flip| format!("flip {flip}")).collect::<Vec<_>>());
+    sim_assert_eq!(have: comparison.helm_adjudication.examined_contexts.len(), want: 7);
+    Ok(())
+}
+
 fn activation_schemas() -> eyre::Result<LintSchemas> {
     LintSchemas::compile(
         &json!({}),

@@ -54,6 +54,11 @@ fn root_schema_lints_share_exact_inputs_and_isolate_shipped_schemas() -> eyre::R
         ..request
     })?;
     sim_assert_eq!(have: chart.invocations().len(), want: 6);
+    let control = chart.adjudicate_schema_free_lint(b"{}", request.kubernetes_version)?;
+    sim_assert_eq!(have: control.execution.exit_code, want: 0);
+    let invocations = chart.invocations();
+    sim_assert_eq!(have: invocations.len(), want: 7);
+    sim_assert_eq!(have: invocations.last().map(|record| record.stage.as_str()), want: Some("lint-schema-free"));
     Ok(())
 }
 

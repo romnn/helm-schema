@@ -2622,6 +2622,7 @@ struct LiveChart {
 struct ChartHelm {
     chart: std::sync::OnceLock<Result<PinnedHelmChart, String>>,
     preparation_ms: std::sync::atomic::AtomicU64,
+    controls: lint_adjudication::ControlObservations,
 }
 
 impl ChartHelm {
@@ -2655,7 +2656,7 @@ impl ChartHelm {
 
 enum AcceptanceJob {
     Chart(Box<ComparedChart>),
-    Probe(std::sync::Arc<LiveChart>, usize),
+    Probe(std::sync::Arc<LiveChart>, Vec<usize>),
 }
 
 enum AcceptanceResult {
@@ -2679,6 +2680,7 @@ struct ScreenedChart {
 }
 
 struct AdjudicatedProbe {
+    flip: usize,
     case: String,
     document_kind: Option<test_util::helm_values::AcceptanceDocument>,
     outcome: Result<(HelmFlipVerdict, std::path::PathBuf), String>,
@@ -2731,24 +2733,42 @@ fn compare_charts(charts: Vec<ComparedChart>) -> eyre::Result<AcceptanceComparis
                 let (screened, live) = match screen_chart(*chart, adjudicate_live, roster.as_ref())
                 {
                     Ok(screened) => screened,
-                    Err(error) => return AcceptanceResult::Chart(Err(error)),
+                    Err(error) => {
+                        return vec![((chart_index, 0), AcceptanceResult::Chart(Err(error)))];
+                    }
                 };
                 if let Some(live) = live {
                     let live = std::sync::Arc::new(live);
-                    for flip in 0..live.flips.len() {
+                    for flips in probe_groups(&live) {
+                        let Some(first) = flips.first() else { continue };
                         submitter.submit(
-                            (chart_index, flip + 1),
-                            AcceptanceJob::Probe(live.clone(), flip),
+                            (chart_index, first + 1),
+                            AcceptanceJob::Probe(live.clone(), flips),
                         );
                     }
                 }
-                AcceptanceResult::Chart(Ok(Box::new(screened)))
+                vec![(
+                    (chart_index, 0),
+                    AcceptanceResult::Chart(Ok(Box::new(screened))),
+                )]
             }
-            AcceptanceJob::Probe(live, flip) => {
-                AcceptanceResult::Probe(adjudicate_probe(&live, flip, kubernetes.as_ref()))
+            AcceptanceJob::Probe(live, flips) => {
+                adjudicate_probe_group(&live, &flips, kubernetes.as_ref())
+                    .into_iter()
+                    .map(|probe| {
+                        (
+                            (chart_index, probe.flip + 1),
+                            AcceptanceResult::Probe(probe),
+                        )
+                    })
+                    .collect()
             }
         },
     );
+    let results = results
+        .into_iter()
+        .flat_map(|(_, results)| results)
+        .collect();
     let mut comparison = fold_results(results, adjudicate_live)?;
     if let Some(kubernetes) = &kubernetes {
         kubernetes.verify_bundles_unchanged()?;
@@ -2762,11 +2782,13 @@ fn compare_charts(charts: Vec<ComparedChart>) -> eyre::Result<AcceptanceComparis
     Ok(comparison)
 }
 
-/// Folds chart and probe results, already in ordinal order, into one comparison.
+/// Folds chart and probe results at their original ordinals into one comparison.
 fn fold_results(
-    results: Vec<(helm_pool::Ordinal, AcceptanceResult)>,
+    mut results: Vec<(helm_pool::Ordinal, AcceptanceResult)>,
     adjudicate_live: bool,
 ) -> eyre::Result<AcceptanceComparison> {
+    // One input group can contain nonadjacent documents; execution grouping never reorders coverage.
+    results.sort_by_key(|(ordinal, _)| *ordinal);
     let mut comparison = AcceptanceComparison::default();
     comparison.helm_adjudication.enabled = adjudicate_live;
     let mut helm_charts = Vec::new();
@@ -3076,7 +3098,87 @@ fn screen_chart(
     Ok((screened, live))
 }
 
-/// Adjudicates screened flip `flip` of `live` with Helm and Kubernetes.
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct DocumentInput<'a> {
+    values: &'a [u8],
+    kubernetes_version: &'a str,
+}
+
+/// One lint invocation observes both lint documents, even when templates are nondeterministic.
+/// Chart and schema bytes are fixed by the owning `LiveChart`; imported values retain exact bytes.
+fn probe_groups(live: &LiveChart) -> Vec<Vec<usize>> {
+    let mut documents = std::collections::BTreeMap::<DocumentInput<'_>, Vec<usize>>::new();
+    let mut groups = Vec::new();
+    for (flip, probe) in live.flips.iter().enumerate() {
+        if let Some(document) = &probe.document {
+            documents
+                .entry(DocumentInput {
+                    values: &document.values_file,
+                    kubernetes_version: &document.kubernetes_version,
+                })
+                .or_default()
+                .push(flip);
+        } else {
+            groups.push(vec![flip]);
+        }
+    }
+    groups.extend(documents.into_values());
+    groups.sort_by_key(|group| group.first().copied());
+    groups
+}
+
+type LintObservation<'a> = Result<lint_adjudication::GroupObservations<'a>, String>;
+
+#[tracing::instrument(
+    target = "helm_schema::acceptance",
+    skip_all,
+    fields(
+        chart = %live.label,
+        probes = flips.len(),
+        document_group = flips.first().and_then(|flip| live.flips.get(*flip)).is_some_and(|probe| probe.document.is_some())
+    )
+)]
+fn adjudicate_probe_group(
+    live: &LiveChart,
+    flips: &[usize],
+    kubernetes: Option<&OfflineKubernetesValidator>,
+) -> Vec<AdjudicatedProbe> {
+    let started = std::time::Instant::now();
+    let document = flips
+        .first()
+        .and_then(|flip| live.flips.get(*flip))
+        .and_then(|probe| probe.document.as_ref());
+    // This observation belongs only to this experiment; another group invokes Helm afresh.
+    let mut observations = document.filter(|_| kubernetes.is_some()).map(|document| {
+        let chart = live.helm.chart(&live.path).map_err(str::to_string)?;
+        let lint = chart
+            .adjudicate_lint(&helm_adjudication::LintProbeRequest {
+                values: &document.values_file,
+                kubernetes_version: &document.kubernetes_version,
+                baseline_schema: &live.lint_schemas.baseline,
+                candidate_schema: &live.lint_schemas.candidate,
+            })
+            .map_err(|err| err.to_string())?;
+        Ok(lint_adjudication::GroupObservations::new(
+            chart,
+            document,
+            lint,
+            &live.helm.controls,
+        ))
+    });
+    let observation_ms = elapsed_ms(started);
+    let mut results: Vec<_> = flips
+        .iter()
+        .map(|flip| adjudicate_probe(live, *flip, kubernetes, &mut observations))
+        .collect();
+    // Shared execution time is charged once while every document retains its own outcome.
+    if let Some(first) = results.first_mut() {
+        first.adjudication_ms += observation_ms;
+    }
+    results
+}
+
+/// Adjudicates one screened flip using its group's observations when applicable.
 #[tracing::instrument(
     target = "helm_schema::acceptance",
     skip_all,
@@ -3086,10 +3188,12 @@ fn adjudicate_probe(
     live: &LiveChart,
     flip: usize,
     kubernetes: Option<&OfflineKubernetesValidator>,
+    observations: &mut Option<LintObservation<'_>>,
 ) -> AdjudicatedProbe {
     let started = std::time::Instant::now();
     let Some(probe) = live.flips.get(flip) else {
         return AdjudicatedProbe {
+            flip,
             case: format!("{}: flip {flip}", live.label),
             document_kind: None,
             outcome: Err(format!("{}: no screened flip {flip}", live.label)),
@@ -3102,9 +3206,17 @@ fn adjudicate_probe(
         (Ok(_), None) => Err(format!("{case}: no Kubernetes validator")),
         (Ok(chart), Some(kubernetes)) => {
             let outcome = match &probe.document {
-                Some(document) => {
-                    adjudicate_lint_flip(chart, probe, document, &live.lint_schemas, kubernetes)
-                }
+                Some(document) => match observations {
+                    Some(Ok(observations)) => lint_adjudication::adjudicate_lint_observation(
+                        probe,
+                        document,
+                        &live.lint_schemas,
+                        kubernetes,
+                        observations,
+                    ),
+                    Some(Err(err)) => Err(eyre::eyre!("{err}")),
+                    None => Err(eyre::eyre!("missing lint observation for document group")),
+                },
                 None => adjudicate_flip(
                     chart,
                     &probe.overlay,
@@ -3117,6 +3229,7 @@ fn adjudicate_probe(
         }
     };
     AdjudicatedProbe {
+        flip,
         case,
         document_kind: probe.document.as_ref().map(|document| document.kind),
         outcome,

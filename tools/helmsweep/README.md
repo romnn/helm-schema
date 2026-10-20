@@ -7,7 +7,7 @@ It deviates from the Helm CLI only in performance:
 
 - a schema compile memo, the one Helm patch (`PATCH.md`);
 - an indexed compiler queue from our jsonschema/v6 fork (`PATCH.md`);
-- a bounded worker pool with one schema compile at a time;
+- a bounded worker pool with serialized initial schema warm-up retained until chart completion;
 - a fail-closed on-disk verdict cache.
 
 ## Build
@@ -42,7 +42,7 @@ that accounted for 27.40% of the measured OnCall compile/validation CPU.
 | `template [--helm-env-clear] --kube-version K --values F CHART` | one `helm template t CHART --skip-schema-validation --kube-version K -f F`: prints the CLI's stderr, exits with its code |
 | `classify lint\|template RC LOG` | prints the gate's class of a log (a port of `landing.py classify_helm`; both are tested against `testdata/helm-classes.json`, a byte-identical copy of the runner's `tests/helm-classes.json`) |
 | `sweep --roster R --roster-sha256 H --work W [--jobs N] --cache C --helm-env-clear` | the sweep, below |
-| `serve` | a resident `helm template` server for helm-schema's battery, below |
+| `serve` | a resident lint/template server for helm-schema's battery, below |
 
 ## Sweep contract (for `run-landing.sh sweep`)
 
@@ -156,11 +156,11 @@ key, certificate or salted-hash functions, `keys`, `values`, `tpl` and
 not parse; `lookup` stays cacheable (lint and client-only template answer it
 empty).
 
-## Resident template server (`serve`)
+## Resident Helm server (`serve`)
 
 The battery's Helm adjudication (`crates/helm-schema/tests/common/helm_invocation.rs`,
 engine `helmsweep`, the default; `SCHEMA_HELM_ENGINE=cli` spawns the CLI
-instead) keeps `helmsweep serve` processes, one per concurrent render, each
+instead) keeps `helmsweep serve` processes, one per concurrent command, each
 started under exactly the environment and working directory a CLI child
 would get; the server does not change them. One JSON request per stdin line,
 one answer per stdout line, in order, matched by `id`; the server exits at EOF.
@@ -172,21 +172,40 @@ one answer per stdout line, in order, matched by `id`; the server exits at EOF.
 The render is `helm template R C --kube-version K [--skip-schema-validation]
 -f F…` (`templateRun`: `pkg/cmd/template.go` and `install.go runInstall` with
 default flags), stdout composed as the CLI prints it (manifest, then hooks).
-A server renders one request at a time, so every log record written during a
-render is that render's own and goes into its stderr where the CLI prints it:
-stdout, stderr and exit code are the CLI's byte for byte. `error` is a
-harness failure, never a verdict: a malformed or unsupported request,
+A lint request uses `"op":"lint"`, an empty release and no schema bypass;
+it runs `helm lint C --kube-version K -f F…` through the same `lintRun` as
+the standalone command. Lint writes its report on stdout and cobra's final
+error on stderr. Each request loads its chart, values and action afresh.
+Only successful compiled schemas with no external loads are shared, keyed
+by every schema byte; each validation has fresh state. The memo retains the
+two most recently used schemas, covering the battery’s baseline/candidate
+pair. Eviction discards only the memo reference; active callers keep their
+immutable validator, and a later request recompiles it. This bounds entries,
+not bytes. The driver resets
+Helm's unresolved-URN warning history between commands under its exclusive
+lock, preserving the warnings a fresh CLI process would print.
+
+A server runs one request at a time, so every log record belongs to that
+command and goes into its stderr where the CLI prints it:
+the driver preserves Helm's stdout, stderr and exit code without normalization.
+`error` is a harness failure, never a verdict: a malformed or unsupported request,
 unwritable outputs, or an abnormal end (a panic, where the CLI would exit 2).
 Chart, values and outputs must be absolute local paths.
 
-Memory: `peak_bytes` is the most memory the server held while this render
-ran (sampled every millisecond) — the per-render figure the battery's pool
+Memory: `peak_bytes` is the most memory the server held while this command
+ran (sampled every millisecond) — the per-command figure the battery's pool
 reservations use; `held_bytes` is what it holds idle afterwards, having
 returned free memory to the OS above 64 MiB; `max_rss_bytes` is the server's
-lifetime peak, telemetry only. The client retires a server holding more than
-128 MiB after a render, kills and reaps any server that fails or does not
-answer within its timeout (600 s), and never runs more servers than
-concurrent renders, so idle servers stay small beside the pool's budget.
+lifetime peak, telemetry only. Idle servers share the configured Helm memory
+budget (`SCHEMA_HELM_MEMORY_MIB`, otherwise one third of host memory); returning
+servers evict the oldest idle servers when necessary. A server larger than
+that whole budget is retired. Active peaks remain separately measured and
+reserved; the idle budget is not a hard combined RSS limit. Failed or late
+servers are killed and reaped (600 s for template, 1,200 s for lint), and the
+client never runs more servers than concurrent commands. Responses also expose cumulative
+`schema_compiles` and `schema_memo_hits` for measuring compilation reuse.
+Invocation identity, replay policy and failure handling are shared by both
+operations; nondeterministic charts still bypass result replay.
 
 ## CLI adjudication
 

@@ -35,6 +35,7 @@ use crate::helm::invocation::{
 use crate::helm::kubernetes_version::chart_kubernetes_version;
 
 /// Values obtained from template-free Helm execution, before chart mutation.
+#[derive(Clone)]
 pub struct CoalescedValues(Value);
 
 impl CoalescedValues {
@@ -46,6 +47,7 @@ impl CoalescedValues {
 }
 
 /// One adjudicated values file: Helm's coalesced values and its render.
+#[derive(Clone)]
 pub struct HelmProbe {
     /// `None` when Helm aborts while coalescing values, e.g. on a non-table subchart scope.
     pub values: Option<CoalescedValues>,
@@ -53,6 +55,29 @@ pub struct HelmProbe {
     pub rendered: HelmExecution,
     /// The case directory holding both executions' inputs and outputs.
     pub evidence_dir: PathBuf,
+}
+
+impl HelmProbe {
+    /// Reloads a values-file observation without retaining its rendered or coalesced bytes.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for missing or malformed evidence.
+    pub fn read(evidence_dir: &Path) -> eyre::Result<Self> {
+        let coalesce = InvocationRecord::read(evidence_dir, "coalesce")?;
+        let values = if coalesce.exit_code == 0 {
+            Some(CoalescedValues(serde_json::from_slice(&fs::read(
+                evidence_dir.join("coalesced.json"),
+            )?)?))
+        } else {
+            None
+        };
+        Ok(Self {
+            values,
+            rendered: HelmExecution::read(evidence_dir, "render")?,
+            evidence_dir: evidence_dir.to_owned(),
+        })
+    }
 }
 
 /// Exact inputs for comparing Helm lint with two root schemas.
@@ -76,6 +101,14 @@ pub struct HelmLintProbe {
     /// Lint with all chart and dependency schemas removed.
     pub schema_free: HelmExecution,
     /// The directory retaining the exact overlay and invocation evidence.
+    pub evidence_dir: PathBuf,
+}
+
+/// One schema-free lint control and its exact execution evidence.
+pub struct SchemaFreeLintProbe {
+    /// Lint with chart and dependency schemas removed.
+    pub execution: HelmExecution,
+    /// The directory retaining the exact values file and invocation record.
     pub evidence_dir: PathBuf,
 }
 
@@ -339,7 +372,7 @@ impl PinnedHelmChart {
         })
     }
 
-    /// Runs pinned CLI lint with baseline, candidate, and no root schema.
+    /// Runs pinned Helm lint with baseline, candidate, and no root schema.
     ///
     /// Dependency schemas are absent in every execution.
     /// Deterministic charts share the complete result for identical values bytes,
@@ -362,13 +395,15 @@ impl PinnedHelmChart {
             baseline_tree: baseline_chart.sha256().to_owned(),
             candidate_tree: candidate_chart.sha256().to_owned(),
         };
-        // Keep lookup and execution together so concurrent document kinds cannot duplicate lint.
-        let mut probes = self
-            .lint_probes
-            .lock()
-            .unwrap_or_else(PoisonError::into_inner);
-        let cacheable = matches!(self.render_cacheability.replay(), Replay::Cacheable);
-        if cacheable && let Some(probe) = probes.get(&key) {
+        // Only replayable operations need coordinated lookup and execution.
+        // Fresh nondeterministic observations of unrelated inputs can run concurrently.
+        let mut probes =
+            matches!(self.render_cacheability.replay(), Replay::Cacheable).then(|| {
+                self.lint_probes
+                    .lock()
+                    .unwrap_or_else(PoisonError::into_inner)
+            });
+        if let Some(probe) = probes.as_ref().and_then(|probes| probes.get(&key)) {
             return Ok(Arc::clone(probe));
         }
         let evidence_dir = self.new_case()?;
@@ -387,10 +422,41 @@ impl PinnedHelmChart {
             schema_free,
             evidence_dir,
         });
-        if cacheable {
+        if let Some(probes) = &mut probes {
             probes.insert(key, Arc::clone(&probe));
         }
         Ok(probe)
+    }
+
+    /// Runs the schema-free lint needed to establish a defaults or context control.
+    ///
+    /// The control does not consult either compared root schema.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when evidence cannot be written or Helm fails operationally.
+    pub fn adjudicate_schema_free_lint(
+        &self,
+        values: &[u8],
+        kubernetes_version: &str,
+    ) -> eyre::Result<SchemaFreeLintProbe> {
+        let evidence_dir = self.new_case()?;
+        fs::write(evidence_dir.join("values.json"), values)?;
+        let execution = self.runner.lint(
+            &TemplateRequest {
+                chart: &self.render_chart,
+                values,
+                kubernetes_version,
+            },
+            &evidence_dir,
+            "lint-schema-free",
+            &self.render_cacheability,
+        )?;
+        self.record(&execution.record);
+        Ok(SchemaFreeLintProbe {
+            execution,
+            evidence_dir,
+        })
     }
 
     fn lint_tree(&self, schema: &[u8]) -> eyre::Result<PreparedTree> {

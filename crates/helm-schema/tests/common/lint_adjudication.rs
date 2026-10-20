@@ -2,12 +2,13 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
+use std::sync::{Arc, Mutex, PoisonError};
 
 use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_test_support::helm::adjudication::{
     DefaultsComparison, HelmLintProbe, HelmProbe, LintProbeRequest,
 };
-use helm_schema_test_support::helm::invocation::{HelmExecution, preserve_failure};
+use helm_schema_test_support::helm::invocation::{HelmExecution, Replay, preserve_failure};
 use helm_schema_test_support::helm::lint::{LintClassification, LintErrorKind, classify_lint};
 use helm_schema_test_support::source_digest::sha256_hex;
 use serde_json::{Value, json};
@@ -18,6 +19,120 @@ use crate::{
     HelmFlipVerdict, OfflineKubernetesValidator, PinnedHelmChart, Rejection,
     rejects_for_a_new_reason,
 };
+
+/// Fresh payload observations and the owning chart experiment's shared controls.
+pub(crate) struct GroupObservations<'a> {
+    chart: &'a PinnedHelmChart,
+    kubernetes_version: &'a str,
+    values_file: &'a [u8],
+    lint: Arc<HelmLintProbe>,
+    payload: Arc<Mutex<InputObservations>>,
+    controls: &'a ControlObservations,
+    fresh_controls: ControlObservations,
+}
+
+/// Evidence paths for replayable controls of one immutable chart, engine, and environment.
+#[derive(Default)]
+pub(crate) struct ControlObservations {
+    inputs: Mutex<BTreeMap<ControlInput, Arc<Mutex<InputObservations>>>>,
+}
+
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct ControlInput {
+    values_sha256: String,
+    kubernetes_version: String,
+}
+
+#[derive(Default)]
+struct InputObservations {
+    lint: Option<PathBuf>,
+    rendered: Option<PathBuf>,
+}
+
+impl<'a> GroupObservations<'a> {
+    pub(crate) fn new(
+        chart: &'a PinnedHelmChart,
+        document: &'a ScreenedDocument,
+        lint: Arc<HelmLintProbe>,
+        controls: &'a ControlObservations,
+    ) -> Self {
+        let payload = Arc::new(Mutex::new(InputObservations {
+            lint: Some(lint.evidence_dir.clone()),
+            rendered: None,
+        }));
+        Self {
+            chart,
+            kubernetes_version: &document.kubernetes_version,
+            values_file: &document.values_file,
+            lint,
+            payload,
+            controls,
+            fresh_controls: ControlObservations::default(),
+        }
+    }
+
+    fn input(&self, bytes: &[u8]) -> Arc<Mutex<InputObservations>> {
+        if bytes == self.values_file {
+            return Arc::clone(&self.payload);
+        }
+        let controls = if matches!(self.chart.render_cacheability().replay(), Replay::Cacheable) {
+            self.controls
+        } else {
+            &self.fresh_controls
+        };
+        let mut controls = controls
+            .inputs
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        Arc::clone(
+            controls
+                .entry(ControlInput {
+                    values_sha256: sha256_hex(bytes),
+                    kubernetes_version: self.kubernetes_version.to_owned(),
+                })
+                .or_default(),
+        )
+    }
+
+    fn rendered(&mut self, bytes: &[u8], directory: &std::path::Path) -> eyre::Result<HelmProbe> {
+        let input = self.input(bytes);
+        let mut input = input.lock().unwrap_or_else(PoisonError::into_inner);
+        let evidence = if let Some(evidence) = &input.rendered {
+            evidence.clone()
+        } else {
+            let observed = self.chart.adjudicate_file(bytes, self.kubernetes_version)?;
+            input.rendered = Some(observed.evidence_dir.clone());
+            observed.evidence_dir
+        };
+        drop(input);
+        let mut observed = HelmProbe::read(&evidence)?;
+        copy_execution_evidence(&observed.evidence_dir, directory)?;
+        // Decoding writes below the probe's directory, so every document needs its own copy.
+        observed.evidence_dir = directory.to_owned();
+        Ok(observed)
+    }
+
+    fn schema_free_lint(
+        &mut self,
+        bytes: &[u8],
+        directory: &std::path::Path,
+    ) -> eyre::Result<LintClassification> {
+        let input = self.input(bytes);
+        let mut input = input.lock().unwrap_or_else(PoisonError::into_inner);
+        let evidence = if let Some(evidence) = &input.lint {
+            evidence.clone()
+        } else {
+            let observed = self
+                .chart
+                .adjudicate_schema_free_lint(bytes, self.kubernetes_version)?;
+            input.lint = Some(observed.evidence_dir.clone());
+            observed.evidence_dir
+        };
+        drop(input);
+        copy_execution_evidence(&evidence, directory)?;
+        classified(&HelmExecution::read(&evidence, "lint-schema-free")?)
+    }
+}
 
 pub(crate) fn adjudicate_lint_flip(
     chart: &PinnedHelmChart,
@@ -33,13 +148,32 @@ pub(crate) fn adjudicate_lint_flip(
         baseline_schema: &schemas.baseline,
         candidate_schema: &schemas.candidate,
     })?;
-    // Each document keeps its own evidence even when the three lint executions are shared.
-    let evidence = lint.evidence_dir.join(format!("{:?}", document.kind));
-    std::fs::create_dir_all(&evidence)?;
-    copy_execution_evidence(&lint.evidence_dir, &evidence)?;
-    let result = judge(
-        chart, document, schemas, kubernetes, bytes, &lint, &evidence,
+    let controls = ControlObservations::default();
+    let mut observations = GroupObservations::new(chart, document, lint, &controls);
+    adjudicate_lint_observation(probe, document, schemas, kubernetes, &mut observations)
+}
+
+/// Judges one document from its group's payload and the chart experiment's controls.
+pub(crate) fn adjudicate_lint_observation(
+    probe: &ScreenedProbe,
+    document: &ScreenedDocument,
+    schemas: &LintSchemas,
+    kubernetes: &OfflineKubernetesValidator,
+    observations: &mut GroupObservations<'_>,
+) -> eyre::Result<(HelmFlipVerdict, PathBuf)> {
+    eyre::ensure!(
+        document.values_file == observations.values_file
+            && document.kubernetes_version == observations.kubernetes_version,
+        "document does not belong to its observation group"
     );
+    let lint = Arc::clone(&observations.lint);
+    // A replayed lint may outlive this group; decoding still needs a fresh document directory.
+    let evidence = tempfile::Builder::new()
+        .prefix(&format!("{:?}-", document.kind))
+        .tempdir_in(&lint.evidence_dir)?
+        .keep();
+    copy_execution_evidence(&lint.evidence_dir, &evidence)?;
+    let result = judge(document, schemas, kubernetes, observations, &evidence);
     result
         .map(|verdict| (verdict, evidence.clone()))
         .map_err(|err| {
@@ -96,19 +230,17 @@ fn semantic_rejection(class: &LintClassification) -> eyre::Result<bool> {
 }
 
 fn judge(
-    chart: &PinnedHelmChart,
     document: &ScreenedDocument,
     schemas: &LintSchemas,
     kubernetes: &OfflineKubernetesValidator,
-    bytes: &[u8],
-    lint: &HelmLintProbe,
+    observations: &mut GroupObservations<'_>,
     evidence_dir: &std::path::Path,
 ) -> eyre::Result<HelmFlipVerdict> {
+    let lint = Arc::clone(&observations.lint);
     let baseline_lint = classified(&lint.baseline)?;
     let candidate_lint = classified(&lint.candidate)?;
     let plain_lint = classified(&lint.schema_free)?;
-    let rendered = chart.adjudicate_file(bytes, &document.kubernetes_version)?;
-    copy_execution_evidence(&rendered.evidence_dir, evidence_dir)?;
+    let rendered = observations.rendered(&document.values_file, evidence_dir)?;
     let values = match document.kind {
         AcceptanceDocument::Template => rendered
             .values
@@ -149,14 +281,14 @@ fn judge(
     } else {
         judge_independent(
             &OracleRequest {
-                chart,
+                chart: observations.chart,
                 document,
-                schemas,
                 kubernetes,
                 evidence_dir,
             },
             &plain_lint,
             &rendered,
+            observations,
             after,
             uninformative,
             &mut evidence,
@@ -182,9 +314,8 @@ struct Controls {
 }
 
 fn controls(
-    chart: &PinnedHelmChart,
+    observations: &mut GroupObservations<'_>,
     document: &ScreenedDocument,
-    schemas: &LintSchemas,
     evidence: &mut Value,
     evidence_dir: &std::path::Path,
 ) -> eyre::Result<Controls> {
@@ -197,20 +328,12 @@ fn controls(
     let mut lint_errors = BTreeSet::new();
     evidence["controls"] = json!([]);
     for bytes in overlays {
-        let lint = chart.adjudicate_lint(&LintProbeRequest {
-            values: &bytes,
-            kubernetes_version: &document.kubernetes_version,
-            baseline_schema: &schemas.baseline,
-            candidate_schema: &schemas.candidate,
-        })?;
-        let class = classified(&lint.schema_free)?;
-        semantic_rejection(&class)?;
-        let rendered = chart.adjudicate_file(&bytes, &document.kubernetes_version)?;
         let directory = PathBuf::from("controls").join(sha256_hex(&bytes));
         let lint_evidence = directory.join("lint");
         let render_evidence = directory.join("render");
-        preserve_control_execution(&lint.evidence_dir, &evidence_dir.join(&lint_evidence))?;
-        preserve_control_execution(&rendered.evidence_dir, &evidence_dir.join(&render_evidence))?;
+        let class = observations.schema_free_lint(&bytes, &evidence_dir.join(&lint_evidence))?;
+        semantic_rejection(&class)?;
+        let rendered = observations.rendered(&bytes, &evidence_dir.join(&render_evidence))?;
         evidence["controls"]
             .as_array_mut()
             .ok_or_eyre("controls are not an array")?
@@ -244,7 +367,6 @@ fn controls(
 struct OracleRequest<'a> {
     chart: &'a PinnedHelmChart,
     document: &'a ScreenedDocument,
-    schemas: &'a LintSchemas,
     kubernetes: &'a OfflineKubernetesValidator,
     evidence_dir: &'a std::path::Path,
 }
@@ -253,6 +375,7 @@ fn judge_independent(
     request: &OracleRequest<'_>,
     plain_lint: &LintClassification,
     rendered: &HelmProbe,
+    observations: &mut GroupObservations<'_>,
     after: bool,
     uninformative: bool,
     evidence: &mut Value,
@@ -260,11 +383,10 @@ fn judge_independent(
     let OracleRequest {
         chart,
         document,
-        schemas,
         kubernetes,
         evidence_dir,
     } = request;
-    let controls = controls(chart, document, schemas, evidence, evidence_dir)?;
+    let controls = controls(observations, document, evidence, evidence_dir)?;
     let mut applicable = Vec::new();
     for overlay in &document.control_overlays {
         let bytes = serde_json::to_vec(overlay)?;
@@ -381,26 +503,14 @@ fn rejection_verdict(after: bool, uninformative: bool, rejection: Rejection) -> 
 }
 
 fn copy_execution_evidence(from: &std::path::Path, to: &std::path::Path) -> eyre::Result<()> {
+    std::fs::create_dir_all(to)?;
+    // The failure preserver materializes nested chart/input records only when needed.
     for entry in std::fs::read_dir(from)? {
         let entry = entry?;
         if entry.file_type()?.is_file() {
             std::fs::copy(entry.path(), to.join(entry.file_name()))?;
         }
     }
-    Ok(())
-}
-
-fn preserve_control_execution(from: &std::path::Path, to: &std::path::Path) -> eyre::Result<()> {
-    std::fs::create_dir_all(to)?;
-    copy_execution_evidence(from, to)?;
-    // The ordinary bundle preserver rewrites top-level invocation records only.
-    // Preserve each control independently before nesting its portable inputs here.
-    let preserved = preserve_failure(to);
-    eyre::ensure!(
-        preserved != to,
-        "could not preserve defaults/context control inputs"
-    );
-    test_util::scratch::copy_tree(&preserved, to)?;
     Ok(())
 }
 
