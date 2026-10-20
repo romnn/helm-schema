@@ -120,7 +120,7 @@ take the next free number regardless of theme.
 | [0088](0088-verification-gates-run-on-the-final-tree.md) | Verification gates run individually on the final tree | Accepted | 2026-08-02 |
 | [0089](0089-fail-closed-landing-chain-with-sealed-receipt.md) | Landings pass a fail-closed chain that seals a receipt | Accepted | 2026-09-26 |
 | [0090](0090-every-fix-lands-with-a-red-then-green-test.md) | Every fix lands with a red-then-green regression test | Accepted | 2026-09-24 |
-| [0091](0091-inherited-defects-stay-in-scope-and-blocking.md) | Inherited defects stay in scope and block landings | Accepted | 2026-10-18 |
+| [0091](0091-inherited-defects-stay-in-scope-and-blocking.md) | Inherited defects stay in scope and block landings | Superseded by 0101 | 2026-10-18 |
 | [0092](0092-fixes-simplify-the-architecture.md) | Fixes must simplify the architecture, not add special cases | Accepted | 2026-10-18 |
 | [0093](0093-deterministic-output-and-the-performance-law.md) | Output is deterministic, ordered and fast by architecture | Accepted | 2026-06-26 |
 | [0094](0094-harness-caches-never-replay-nondeterministic-renders.md) | Verification caches never replay nondeterministic renders | Accepted | 2026-09-27 |
@@ -130,3 +130,4 @@ take the next free number regardless of theme.
 | [0098](0098-user-maintained-forks-as-pinned-git-dependencies.md) | Fix upstream defects in user-maintained forks pinned as git dependencies | Accepted | 2026-10-18 |
 | [0099](0099-drift-tooling-is-isolated-maintainer-tooling.md) | Helm/Kubernetes drift tooling is isolated maintainer tooling under tools/ | Accepted | 2026-10-19 |
 | [0100](0100-test-and-error-handling-conventions.md) | Test and error-handling conventions | Accepted | 2026-02-18 |
+| [0101](0101-landing-ratchet.md) | Landings ratchet: no new failure, strictly fewer known failures | Accepted | 2026-10-20 |

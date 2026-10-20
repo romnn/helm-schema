@@ -8987,4 +8987,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   go.mod + go.sum already pin every module by hash, so drop the vendor tree and let the maintainer-only provision.sh download and verify
   (user's isolation rule; clone size for everyone). Also asked: which of the 12 newly-Uncertain controls would turn a passing battery
   outcome into a hard failure, and a LOC breakdown (item 10). Follow_up turn 8 on 536e8e16. Orchestrator.
+- 04:20 (Oct 20) — **USER DECISION: the landing RATCHET replaces "inherited defects block landings" (ADR 0101, supersedes 0091).** Asked for
+  an honest status (nothing semantic landed since landing 9 on Sep 30; strict closures 3/83; W4 +2,936 and W1 +5,346 prod LOC over main
+  after 17 and 14 reworks; the battery track ran ~54 h), the user adopted: a candidate lands when it (1) adds no new failure vs main,
+  (2) strictly reduces known failures (test-infra landings may only record what they make visible), (3) adds no net production code
+  unless reviewers justify it by the defect class closed; every unfixed counterexample becomes an exact shrink-only obligation (frozen
+  witness row, roster row where the rules allow, or the battery's inherited-failure list). Goal: land correct, well-done fixes soon, in
+  small slices, so root-cause fixes compound on main and generalisation is measurable per landing (closures and removed obligations vs
+  net LOC). Recorded: docs/adr/0101-landing-ratchet.md, 0091 → Superseded, playbook standing decisions (incl. the Codex-sol model rule).
+  Next: re-brief every builder to hand back at its next landable improvement with a stopping rule. Orchestrator.
 Next: battery builder hand-back → commit, astra + sol review, cherry-pick into landing-10a-v2, chain run2; start W1 then; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.

@@ -101,6 +101,13 @@ hand-off, then the ledger's last entries.
 - Every fix lands with a red-then-green test; fixture drift is not a test.
 - Report closures strictly (verified closures only; policy closures separately).
 
+- **Landing ratchet (user, 2026-10-20; ADR 0101, supersedes "inherited defects block landings").** A candidate lands when it adds
+  no new failure vs main, strictly reduces known failures (test-infra landings may only record what they make visible), and adds no net
+  production code unless reviewers justify the growth by the defect class it closes. Every unfixed counterexample becomes an exact
+  obligation (frozen witness row, roster row where allowed, or an entry of the battery's shrink-only inherited-failure list). Builders
+  hand back at the next landable improvement and carry a stopping rule; land small slices often.
+- **Models (user, 2026-10-19):** Claude only orchestrates; builders and reviewers are Codex `gpt-6.1-sol`; hard reviews get two sol
+  reviewers with distinct lenses; `gpt-6-astra` only as a tie-breaker.
 - Every pre-landing review, design and diagnosis goes to BOTH Codex reviewers
   (`gpt-6.1-sol` and `gpt-6-astra`, xhigh, read-only) in parallel; Codex quota is plentiful and
   the two catch different defects. Merge their findings before resuming the builder.

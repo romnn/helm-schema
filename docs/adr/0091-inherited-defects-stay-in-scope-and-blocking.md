@@ -1,6 +1,6 @@
 # 0091. Inherited defects stay in scope and block landings
 
-Status: Accepted
+Status: Superseded by 0101
 Date: 2026-10-18 (user decision, ledger 14:31)
 
 ## Context
