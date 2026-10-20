@@ -15,7 +15,10 @@ read as a regression or an improvement.
 ## Decision
 
 - Every value records the runner's CPU model (`/proc/cpuinfo`) in its benchtrail
-  environment as `cpu`, beside `rustc`. The dashboard splits the times into one series per
+  environment as `cpu`, beside `rustc`, without its noise (vendor word, trademark marks,
+  `CPU @ <frequency>`, a trailing `<N>-Core Processor`): "EPYC 7763". The family word and
+  every model token stay, so two models never share a name, and a name of an unknown shape
+  stays as it is. The dashboard splits the times into one series per
   CPU model with benchtrail's `splitEnvironment` setting, so change detection compares a
   value only with earlier values from the same CPU. The CPU is environment, not a
   dimension: it is not a variant measured side by side but the hardware a run happened to
@@ -23,10 +26,12 @@ read as a regression or an improvement.
   their own, instead of a separate benchmark. Splitting is generic in benchtrail: any
   environment name can split a suite's series.
 - The executed instruction count of one run under valgrind's cachegrind
-  (`--cache-sim=no`) is recorded for kubeview full and bitnami-redis full, a suite of its
-  own ("helm-schema instructions", metric "Instructions (cachegrind)", lower is better)
-  whose settings ignore the CPU, so it stays one series across runners. Wall and CPU time
-  stay as they were.
+  (`--cache-sim=no`) is recorded for kubeview full and bitnami-redis full, metric
+  "Instructions (cachegrind)", lower is better, in the same suite as the times. Its own
+  benchtrail metric settings neither split nor segment on the CPU, so it stays one series
+  across runners, and it is the first chart. Wall and CPU time stay as they were.
+- The suite keeps the newest 500 runs (github-action-benchmark's `max-items-in-chart`), and
+  the dashboard opens on the newest 50.
 - valgrind is an exact Ubuntu 24.04 package (`1:3.22.0-0ubuntu3`, from the release pocket)
   installed by apt in the bench job, and its version is part of the counts' environment.
 
@@ -46,14 +51,13 @@ read as a regression or an improvement.
   up to about twice as slow, the two counted configurations add about 2-4 minutes plus the
   valgrind install; bitnami-redis lean was left out for that reason, the heavy tails for
   tens of minutes.
-- benchtrail v0.3.0 has no `splitEnvironment` and rejects the setting, so until the
-  `pages.yaml` pin moves to a release with it the dashboard ignores the CPU
-  (`ignoreEnvironment`), as before it was recorded; `tools/bench/README.md` holds the
-  settings to add with that pin.
+- The counts first ran as a suite of their own ("helm-schema instructions"); its runs were
+  folded once into the one suite with benchtrail's `scripts/suites.mjs`, on `gh-pages`.
 - valgrind does not run on macOS on Apple silicon: `task bench` there leaves the counts out.
 
 ## References
 
 - Bench runs of 2026-10-20 on romnn/helm-schema (EPYC 7763, 9V74 and 9V45 runners)
-- romnn/benchtrail branch `feat/split-environment` (`splitEnvironment` setting)
+- romnn/benchtrail v0.4.0 (`splitEnvironment`) and branch `feat/metric-overrides`
+  (per-metric settings, `lineLabel`, `range`, `scripts/suites.mjs`)
 - `tools/bench/bench.py` (`INSTRUCTION_CASES`), `.github/workflows/bench.yaml`
