@@ -1,4 +1,4 @@
-use color_eyre::eyre;
+use color_eyre::eyre::{self, OptionExt as _};
 use test_util::prelude::sim_assert_eq;
 
 use super::{load, read_baseline, read_entry, select};
@@ -42,5 +42,52 @@ fn changed_intake_inputs_or_bytes_are_rejected() -> eyre::Result<()> {
         changed.file = "../outside.schema.json".into();
         assert!(read_entry(&changed, &root).is_err());
     }
+    Ok(())
+}
+
+#[cfg(unix)]
+#[test]
+fn intake_symlinks_escaping_the_intake_root_are_rejected() -> eyre::Result<()> {
+    use super::{INTAKE_DIR, IntakePathError, read_contained};
+
+    let temp = test_util::scratch::ScratchDir::new("acceptance-intake-escape")?;
+    let root = temp.path().join("clone");
+    let intake = root.join(INTAKE_DIR);
+    std::fs::create_dir_all(&intake)?;
+    std::fs::write(intake.join("inside.schema.json"), b"{}")?;
+    std::fs::write(temp.path().join("outside.schema.json"), b"{}")?;
+    std::os::unix::fs::symlink(
+        temp.path().join("outside.schema.json"),
+        intake.join("escape.schema.json"),
+    )?;
+    std::os::unix::fs::symlink(
+        intake.join("inside.schema.json"),
+        intake.join("alias.schema.json"),
+    )?;
+    let inside = format!("{INTAKE_DIR}/inside.schema.json");
+    sim_assert_eq!(have: read_contained(&root, &inside)?, want: b"{}".to_vec());
+    let alias = format!("{INTAKE_DIR}/alias.schema.json");
+    sim_assert_eq!(have: read_contained(&root, &alias)?, want: b"{}".to_vec());
+    let escape = format!("{INTAKE_DIR}/escape.schema.json");
+    let error = read_contained(&root, &escape)
+        .err()
+        .ok_or_eyre("a symlink escaping the intake root was read")?;
+    assert!(matches!(
+        error.downcast_ref::<IntakePathError>(),
+        Some(IntakePathError::Escapes { .. })
+    ));
+
+    // A symlinked intake directory leads outside the clone even when the file inside it is real.
+    let moved = temp.path().join("moved");
+    let moved_intake = moved.join(INTAKE_DIR);
+    std::fs::create_dir_all(moved.join("testdata"))?;
+    std::os::unix::fs::symlink(&intake, &moved_intake)?;
+    let error = read_contained(&moved, &inside)
+        .err()
+        .ok_or_eyre("a symlinked intake directory was read")?;
+    assert!(matches!(
+        error.downcast_ref::<IntakePathError>(),
+        Some(IntakePathError::Escapes { .. })
+    ));
     Ok(())
 }

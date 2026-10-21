@@ -11,6 +11,17 @@ use helm_schema_test_support::source_digest::sha256_hex;
 use serde::Deserialize;
 use serde_json::Value;
 
+/// The intake directory, relative to the workspace root.
+const INTAKE_DIR: &str = "testdata/acceptance-intake";
+
+/// An intake baseline path that leaves the intake directory once resolved.
+
+#[derive(Debug, thiserror::Error)]
+enum IntakePathError {
+    #[error("intake baseline {file} resolves outside {INTAKE_DIR}")]
+    Escapes { file: String },
+}
+
 #[derive(Clone, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Entry {
@@ -54,7 +65,7 @@ pub(super) fn read_baseline(reference: &str, fixture: &str) -> eyre::Result<Vec<
     );
     let commit = std::str::from_utf8(&commit.stdout)?.trim();
     let root = test_util::workspace_root();
-    let intake = load(&root.join("testdata/acceptance-intake/manifest.json"))?;
+    let intake = load(&root.join(INTAKE_DIR).join("manifest.json"))?;
     let entry = select(&intake.entries, commit, fixture)?;
     read_entry(entry, &root)
 }
@@ -107,7 +118,10 @@ fn read_entry(entry: &Entry, root: &Path) -> eyre::Result<Vec<u8>> {
         "intake baseline must pin the generator binary"
     );
     eyre::ensure!(
-        registry::is_safe_relative_path(file) && file.starts_with("testdata/acceptance-intake/"),
+        registry::is_safe_relative_path(file)
+            && file
+                .strip_prefix(INTAKE_DIR)
+                .is_some_and(|rest| rest.starts_with('/')),
         "unsafe intake baseline path {file}"
     );
     let spec = registry::registry()
@@ -123,12 +137,31 @@ fn read_entry(entry: &Entry, root: &Path) -> eyre::Result<Vec<u8>> {
         inputs == *inputs_sha256,
         "stale intake baseline inputs for {fixture}"
     );
-    let bytes = fs::read(root.join(file))?;
+    let bytes = read_contained(root, file)?;
     eyre::ensure!(
         sha256_hex(&bytes) == *sha256,
         "intake baseline bytes changed for {fixture}"
     );
     Ok(bytes)
+}
+
+/// Reads `file` only when its resolved path stays inside the clone's own
+/// intake directory, whatever symlinks the lexical path passes through.
+fn read_contained(root: &Path, file: &str) -> eyre::Result<Vec<u8>> {
+    let canonical = |path: &Path| {
+        path.canonicalize()
+            .wrap_err_with(|| format!("resolve {}", path.display()))
+    };
+    let root = canonical(root)?;
+    let intake = canonical(&root.join(INTAKE_DIR))?;
+    let resolved = canonical(&root.join(file))?;
+    if intake != root.join(INTAKE_DIR) || resolved == intake || !resolved.starts_with(&intake) {
+        return Err(IntakePathError::Escapes {
+            file: file.to_owned(),
+        }
+        .into());
+    }
+    fs::read(&resolved).wrap_err_with(|| format!("read intake baseline {file}"))
 }
 
 #[cfg(test)]
