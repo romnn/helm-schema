@@ -966,6 +966,10 @@ const CPU_COUNT_TEMPLATE: &str = indoc! {r#"
 "#};
 
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the full expected schema and its Helm-adjudicated lint and render verdicts read as one fixture"
+)]
 fn a_dependency_numeric_abort_guard_reads_an_absent_value_as_zero() -> eyre::Result<()> {
     let chart_dir = VfsPath::new(vfs::MemoryFS::new());
     write_lint_root_chart(
