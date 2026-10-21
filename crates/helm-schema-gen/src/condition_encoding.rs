@@ -1025,14 +1025,12 @@ fn evaluate_guard_on_values(guard: &ConditionalGuard, values_yaml_doc: &YamlValu
         ConditionalGuard::Absent { path } => {
             Some(yaml_value_at_path(values_yaml_doc, path).is_none())
         }
-        ConditionalGuard::IntGt { path, bound } => Some(
-            decimal_default_int_value(yaml_value_at_path(values_yaml_doc, path))
-                .is_some_and(|value| value > *bound),
-        ),
-        ConditionalGuard::IntLt { path, bound } => Some(
-            decimal_default_int_value(yaml_value_at_path(values_yaml_doc, path))
-                .is_some_and(|value| value < *bound),
-        ),
+        ConditionalGuard::IntGt { path, bound } => {
+            int_region_holds(yaml_value_at_path(values_yaml_doc, path), true, *bound)
+        }
+        ConditionalGuard::IntLt { path, bound } => {
+            int_region_holds(yaml_value_at_path(values_yaml_doc, path), false, *bound)
+        }
         ConditionalGuard::HasKey { path, key } => Some(matches!(
             yaml_value_at_path(values_yaml_doc, path),
             Some(YamlValue::Mapping(mapping))
@@ -1171,6 +1169,34 @@ fn yaml_value_is_truthy(value: &YamlValue) -> bool {
         YamlValue::String(value) => !value.is_empty(),
         YamlValue::Sequence(value) => !value.is_empty(),
         YamlValue::Mapping(value) => !value.is_empty(),
+    }
+}
+
+/// Whether `value` lies in the `IntGt` (`greater`) or `IntLt` region of
+/// `bound` as the guard's encoding judges it: a missing key reads nil and
+/// coerces to 0, an integer compares, a string lies in the region's string
+/// preimage, and anything else lies outside. `None` when the preimage
+/// pattern does not compile.
+fn int_region_holds(value: Option<&YamlValue>, greater: bool, bound: i64) -> Option<bool> {
+    let in_region = |number: i64| {
+        if greater {
+            number > bound
+        } else {
+            number < bound
+        }
+    };
+    match value {
+        None => Some(in_region(0)),
+        Some(YamlValue::Number(number)) => Some(number.as_i64().is_some_and(in_region)),
+        Some(YamlValue::String(text)) => match int_region_string_preimage(greater, bound) {
+            IntStringPreimage::Within(pattern) => regex::Regex::new(&pattern)
+                .ok()
+                .map(|regex| regex.is_match(text)),
+            IntStringPreimage::Excluding(pattern) => regex::Regex::new(&pattern)
+                .ok()
+                .map(|regex| !regex.is_match(text)),
+        },
+        Some(_) => Some(false),
     }
 }
 

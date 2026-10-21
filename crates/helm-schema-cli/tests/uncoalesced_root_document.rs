@@ -946,3 +946,148 @@ fn webhook_defaults_keep_independent_lint_presence_guards() -> eyre::Result<()> 
     }
     Ok(())
 }
+
+/// The subchart aborts unless its piped `int` reading of `cpuCount` is at
+/// least 1 (openebs's mayastor `gt 1 (.Values.io_engine.cpuCount | int)`),
+/// and only its own defaults supply `cpuCount`. A missing key reads nil and
+/// coerces to 0, inside the abort region, so the lint document `{kid: {}}` holds
+/// the guard and the clause is conditioned on `kid.cpuCount` being present
+/// instead of rejecting the root values `helm lint` validates.
+const CPU_COUNT_TEMPLATE: &str = indoc! {r#"
+    {{- if gt 1 (.Values.cpuCount | int) }}
+    {{- fail "cpuCount must be at least 1" }}
+    {{- end }}
+    apiVersion: v1
+    kind: ConfigMap
+    metadata:
+      name: kid-cm
+    data:
+      cpus: {{ .Values.cpuCount | quote }}
+"#};
+
+#[test]
+fn a_dependency_numeric_abort_guard_reads_an_absent_value_as_zero() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+    write_lint_root_chart(
+        &chart_dir,
+        "# every value comes from the dependency\n",
+        "cpuCount: \"2\"\n",
+        CPU_COUNT_TEMPLATE,
+    )?;
+    let (schema, _) = generate(chart_dir)?;
+    sim_assert_eq!(
+        have: schema.clone(),
+        want: serde_json::json!({
+            "$schema": "http://json-schema.org/draft-07/schema#",
+            "additionalProperties": false,
+            "properties": {
+                "global": {},
+                "kid": {
+                    "additionalProperties": {},
+                    "allOf": [
+                        {
+                            "if": {
+                                "anyOf": [
+                                    {
+                                        "not": {
+                                            "properties": {
+                                                "cpuCount": {}
+                                            },
+                                            "required": [
+                                                "cpuCount"
+                                            ],
+                                            "type": "object"
+                                        }
+                                    },
+                                    {
+                                        "properties": {
+                                            "cpuCount": {
+                                                "anyOf": [
+                                                    {
+                                                        "exclusiveMaximum": 1,
+                                                        "type": "integer"
+                                                    },
+                                                    {
+                                                        "not": {
+                                                            "pattern": "^\\+?([1-9][0-9]{1,17}|[1-9]|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{1,14}|0[xX]0*[1-9a-fA-F]|0[bB]0*1[0-1]{1,61}|0[bB]0*1|0[oO]?0*[1-7][0-7]{1,19}|0[oO]?0*[1-7]|[0-9_]*[1-9][0-9_]*_[0-9_]*|[0-9_]*_[0-9_]*[1-9][0-9_]*|0[xX][0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*_[0-9a-fA-F_]*|0[xX][0-9a-fA-F_]*_[0-9a-fA-F_]*[1-9a-fA-F][0-9a-fA-F_]*|0[bB][01_]*1[01_]*_[01_]*|0[bB][01_]*_[01_]*1[01_]*|0[oO]?[0-7_]*[1-7][0-7_]*_[0-7_]*|0[oO]?[0-7_]*_[0-7_]*[1-7][0-7_]*|[1-9][0-9]{18}|0[xX]0*[1-9a-fA-F][0-9a-fA-F]{15}|0[bB]0*1[01]{62}|0[oO]?0*[1-7][0-7]{20})(\\.0*)?$"
+                                                        },
+                                                        "type": "string"
+                                                    }
+                                                ]
+                                            }
+                                        },
+                                        "required": [
+                                            "cpuCount"
+                                        ],
+                                        "type": "object"
+                                    }
+                                ]
+                            },
+                            "then": {
+                                "if": {
+                                    "properties": {
+                                        "cpuCount": {
+                                            "not": {
+                                                "enum": [
+                                                    null
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "required": [
+                                        "cpuCount"
+                                    ],
+                                    "type": "object"
+                                },
+                                "then": false
+                            }
+                        }
+                    ],
+                    "properties": {
+                        "cpuCount": {},
+                        "global": {}
+                    },
+                    "type": "object"
+                }
+            },
+            "type": "object"
+        }),
+    );
+
+    let validator = jsonschema::validator_for(&schema)?;
+    for (document, accepted, reason) in [
+        (
+            serde_json::json!({}),
+            true,
+            "`helm lint` validates the empty root values and passes",
+        ),
+        (
+            serde_json::json!({ "kid": {} }),
+            true,
+            "`helm lint -f` with an empty `kid` table validates it without `cpuCount` and passes",
+        ),
+        (
+            serde_json::json!({ "kid": { "cpuCount": null } }),
+            true,
+            "`--set kid.cpuCount=null` deletes the key and the default renders",
+        ),
+        (
+            serde_json::json!({ "kid": { "cpuCount": "2", "global": {} } }),
+            true,
+            "`helm template` renders the coalesced defaults",
+        ),
+        (
+            serde_json::json!({ "kid": { "cpuCount": 0 } }),
+            false,
+            "`helm template --set kid.cpuCount=0` aborts",
+        ),
+        (
+            serde_json::json!({ "kid": { "cpuCount": "0" } }),
+            false,
+            "a zero string coerces into the abort region",
+        ),
+    ] {
+        sim_assert_eq!(have: validator.is_valid(&document), want: accepted, "{reason}: {document}");
+    }
+    Ok(())
+}
