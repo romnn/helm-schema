@@ -34,6 +34,7 @@ macro_rules! corpus_charts {
             (coredns, Coredns, "coredns"),
             (crossplane, Crossplane, "crossplane"),
             (datadog, Datadog, "datadog"),
+            (daskhub, Daskhub, "daskhub"),
             (dict_config, DictConfig, "dict-config"),
             (external_dns, ExternalDns, "external-dns"),
             (external_secrets, ExternalSecrets, "external-secrets"),
@@ -1390,13 +1391,18 @@ impl ArtifactId {
             },
             ArtifactId::Chart(chart) => {
                 let name = chart.relative_path();
+                let mut recipe = ChartRecipe::corpus(name, SchemaProfile::Full);
+                // Strict non-nullable provider facts keep the partial-umbrella regression visible.
+                if chart == ChartId::Daskhub {
+                    recipe.k8s_version = "v1.35.0";
+                }
                 ArtifactSpec {
                     id: self,
                     dump_name: format!("helm-schema.cli.chart-corpus.{name}.schema.json"),
                     target: ArtifactTarget::Fixture(format!(
                         "testdata/chart-corpus-schemas/{name}.schema.json"
                     )),
-                    recipe: GenerationRecipe::Chart(ChartRecipe::corpus(name, SchemaProfile::Full)),
+                    recipe: GenerationRecipe::Chart(recipe),
                 }
             }
             ArtifactId::Template(template) => {
@@ -1510,7 +1516,7 @@ pub fn registry() -> Vec<ArtifactSpec> {
 
 /// The number of committed fixtures each artifact family must have.
 pub const FIXTURE_COUNTS: [(ArtifactKind, usize); 6] = [
-    (ArtifactKind::Chart, 156),
+    (ArtifactKind::Chart, 157),
     (ArtifactKind::Template, 20),
     (ArtifactKind::Lean, 4),
     (ArtifactKind::FinalPolicy, 4),

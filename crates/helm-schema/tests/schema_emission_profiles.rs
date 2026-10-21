@@ -7,6 +7,8 @@ use std::path::PathBuf;
 use test_util::prelude::sim_assert_eq;
 use test_util::scratch::ScratchDir;
 
+mod acceptance_intake;
+
 #[path = "common/emission_profile_harness.rs"]
 mod harness;
 
@@ -2497,16 +2499,7 @@ fn read_schema_at_ref(reference: &str, relative_path: &str) -> eyre::Result<serd
 }
 
 fn read_schema_bytes_at_ref(reference: &str, relative_path: &str) -> eyre::Result<Vec<u8>> {
-    let output = std::process::Command::new("git")
-        .args(["show", &format!("{reference}:{relative_path}")])
-        .output()
-        .wrap_err_with(|| format!("read {relative_path} from {reference}"))?;
-    eyre::ensure!(
-        output.status.success(),
-        "git show failed for {reference}:{relative_path}: {}",
-        String::from_utf8_lossy(&output.stderr)
-    );
-    Ok(output.stdout)
+    acceptance_intake::read_baseline(reference, relative_path)
 }
 
 /// The producer dump the candidate schemas come from. Every mode requires it:

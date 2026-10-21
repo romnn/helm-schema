@@ -21,7 +21,7 @@ fn registry_holds_every_fixture_family_once() -> eyre::Result<()> {
         have: internal,
         want: vec![ArtifactId::Chart(ChartId::SignozPostgresql)]
     );
-    sim_assert_eq!(have: specs.len(), want: 205);
+    sim_assert_eq!(have: specs.len(), want: 206);
     Ok(())
 }
 
@@ -49,7 +49,7 @@ fn validate_names_every_broken_rule() -> eyre::Result<()> {
         "duplicate file name helm-schema.cli.chart-corpus.airflow.schema.json",
         "unsafe fixture path \"../outside.schema.json\"",
         "template fixtures: 3, expected 20",
-        "chart fixtures: 157, expected 156",
+        "chart fixtures: 158, expected 157",
     ] {
         eyre::ensure!(
             message.contains(expected),
