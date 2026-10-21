@@ -2295,7 +2295,8 @@ fn a_live_battery_needs_the_roster_baseline_and_the_context_roster() {
 /// refuses before it needs Helm, a candidate dump or any chart.
 #[test]
 fn the_live_battery_entry_point_refuses_a_run_without_the_context_roster() -> eyre::Result<()> {
-    let output = std::process::Command::new(std::env::current_exe()?)
+    let mut battery = std::process::Command::new(std::env::current_exe()?);
+    battery
         .args([
             "round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced",
             "--exact",
@@ -2307,7 +2308,14 @@ fn the_live_battery_entry_point_refuses_a_run_without_the_context_roster() -> ey
         .env_remove(lint_probes::CONTEXT_ROSTER_VAR)
         .env_remove(CANDIDATE_DUMP_VAR)
         .env_remove(CHART_VAR)
-        .output()?;
+        // The child would otherwise open or truncate an inherited trace before its preflight.
+        .env_remove("HELM_SCHEMA_TRACE_OUTPUT");
+    // A preflight regression reaching Helm must not wait out Helm's own timeouts.
+    let output = helm_invocation::output_within(
+        &mut battery,
+        std::time::Duration::from_secs(60),
+        "the live battery entry point",
+    )?;
     let stdout = String::from_utf8(output.stdout)?;
     let stderr = String::from_utf8(output.stderr)?;
     assert!(stdout.contains("running 1 test"), "{stdout}");
