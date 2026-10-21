@@ -2145,6 +2145,10 @@ fn overlay_range_member_gates_carry_definite_entry_sound_subsets() {
 /// never iterates and Helm renders (the `and` short-circuits before its
 /// float-vs-int `count` comparison).
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the full expected schema and the overwritten-member verdict read as one fixture"
+)]
 fn overlay_overwritten_member_keeps_the_fail_dormant() {
     let src = indoc! {r#"
         {{- $services := .Values.service.additionalServices -}}

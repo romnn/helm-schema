@@ -90,6 +90,10 @@ fn piped_int_cast_comparison_decodes_like_the_call_spelling() {
 /// fallback escapes claims only truthy inputs. The pipeline spelling is the
 /// same call.
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the full expected schema and its truthy-input verdicts read as one fixture"
+)]
 fn defaulted_int_cast_region_claims_only_truthy_inputs() {
     let call = fail_gate_schema("gt 1 (int (default 2 .Values.count))", "count: 1\n");
     let piped = fail_gate_schema("gt 1 (.Values.count | default 2 | int)", "count: 1\n");
@@ -320,6 +324,10 @@ fn ordering_comparison_keeps_its_subset_inside_or() {
 /// shorter multibyte string that exceeds the byte bound stays accepted —
 /// the subset never claims the exact byte condition.
 #[test]
+#[expect(
+    clippy::too_many_lines,
+    reason = "the full expected schema and its byte-versus-character verdicts read as one fixture"
+)]
 fn bound_local_length_keeps_the_character_count_subset() {
     let call = fail_gate_schema("gt (len .Values.name) 8", "name: short\n");
     let piped = fail_gate_schema("gt (.Values.name | len) 8", "name: short\n");
