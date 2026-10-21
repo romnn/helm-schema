@@ -140,17 +140,27 @@ after the whole run. Start with a chart your change moves:
 ```sh
 TMPDIR="$RUN/tmp" SCHEMA_ACCEPTANCE_BASELINE_REF="$ROSTER" \
 SCHEMA_ACCEPTANCE_CANDIDATE_DUMP=<dump> SCHEMA_ACCEPTANCE_CHART=<chart> \
+SCHEMA_ACCEPTANCE_CONTEXT_ROSTER=<roster filtered to chart> \
 SCHEMA_PROBE_COVERAGE_REPORT="$RUN/coverage-<chart>.json" \
 SCHEMA_ACCEPTANCE_ALLOW_MATCHED_FLIPS=1 ADJUDICATE_WITH_HELM=1 \
 "${BATTERY[@]}" > "$RUN/battery-<chart>.log" 2>&1; echo "battery exit $?"
 ```
+
+Every live run needs `SCHEMA_ACCEPTANCE_CONTEXT_ROSTER`; the battery refuses to start
+without it, because some inherited failures are composed only from its rows. The
+landing runner passes the roster it froze for the attempt, `$B/frozen/context-roster.json`
+under the battery evidence directory `$B`; reuse that file (filtered to the selected
+charts) for manual runs. A filtered live run (`SCHEMA_ACCEPTANCE_CHART`) is diagnostic
+only: it cannot certify the complete inherited-failure list, whose rows for unselected
+charts then read as stale, so only the full run below is evidence.
 
 To iterate on the code, `corpus_generation --out <scratch> --only chart/<chart> --helm-ready`
 regenerates just that chart's artifact. The lint lane verifies candidate bytes and the Helm-ready companion against the
 producer manifest; keep the manifest and companion paths with the dump. The final evidence must still come from the one clean
 full dump.
 
-**2. Full live run.** Use the same command without `SCHEMA_ACCEPTANCE_CHART`.
+**2. Full live run.** Use the same command without `SCHEMA_ACCEPTANCE_CHART`,
+with the unfiltered context roster.
 It also screens the four `lean/<chart>` controls, which any chart filter
 skips. Expect tens of minutes. Add `SCHEMA_HELM_INVOCATION_REPORT="$RUN/cost.json"`
 to record pool peaks and per-chart cost.

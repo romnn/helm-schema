@@ -15,7 +15,6 @@ use serde_json::Value;
 const INTAKE_DIR: &str = "testdata/acceptance-intake";
 
 /// An intake baseline path that leaves the intake directory once resolved.
-
 #[derive(Debug, thiserror::Error)]
 enum IntakePathError {
     #[error("intake baseline {file} resolves outside {INTAKE_DIR}")]
