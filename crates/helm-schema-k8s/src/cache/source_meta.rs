@@ -1,12 +1,14 @@
 use std::fs;
 use std::io::Write;
-use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
+
+use super::cache_entry::PortableCachePath;
 
 /// Write a `<path>.meta` sidecar recording the source URL and a
 /// fetch timestamp. Best-effort: silently swallows errors so a sidecar
 /// failure never blocks the actual cache write.
-pub(crate) fn write_meta_sidecar(file_path: &Path, source_url: &str) {
+pub(crate) fn write_meta_sidecar(file_path: PortableCachePath<'_>, source_url: &str) {
+    let file_path = file_path.path();
     let meta_path = file_path.with_extension(
         file_path
             .extension()

@@ -1,17 +1,18 @@
 use std::fs;
 use std::hash::Hash;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 use crate::cache::{
-    NegativeCache, SourceDocCache, not_found_marker_exists, not_found_marker_path,
+    CacheEntry, NegativeCache, SourceDocCache, not_found_marker_exists, not_found_marker_path,
     read_cached_json_doc, write_not_found_marker,
 };
-use crate::cache_write::write_fetched_schema_doc;
+use crate::cache_write::{parse_schema_doc, write_fetched_schema_doc};
+use crate::diagnostic::DiagnosticSink;
 use crate::fetch::HttpFetcher;
 use crate::schema_doc::SchemaDoc;
 
 pub(crate) struct CachedSchemaDocRequest<'a> {
-    pub(crate) local: PathBuf,
+    pub(crate) entry: CacheEntry,
     pub(crate) url: String,
     pub(crate) source_id: &'a str,
     pub(crate) cache_namespace: &'a str,
@@ -20,6 +21,19 @@ pub(crate) struct CachedSchemaDocRequest<'a> {
     pub(crate) cache_policy: SchemaCachePolicy,
     pub(crate) fetcher: &'a dyn HttpFetcher,
     pub(crate) negative_cache: &'a NegativeCache,
+    /// Receives the warning for a cache write skipped over a non-portable
+    /// name.
+    pub(crate) diagnostic_sink: Option<&'a DiagnosticSink>,
+}
+
+impl CachedSchemaDocRequest<'_> {
+    /// Best effort: a write the entry's name rules out is skipped with one
+    /// warning per entry, and the lookup goes on exactly as on a cache miss.
+    fn warn_skipped_write(&self) {
+        if let (Err(reason), Some(sink)) = (self.entry.writable(), self.diagnostic_sink) {
+            sink.push(self.entry.skipped_write(reason));
+        }
+    }
 }
 
 #[derive(Clone, Copy)]
@@ -77,12 +91,15 @@ pub(crate) fn probe_source_schema_doc<K>(
 where
     K: Eq + Hash,
 {
+    // A non-portable entry has no disk presence on any platform.
+    let disk = request.entry.writable().ok();
     if request.cache_policy.use_cache() {
         if let Some(doc) = mem.read(&mem_key) {
             return SourceDocOutcome::Found(doc);
         }
-        if request.local.exists()
-            && let Some(doc) = read_cached_json_doc(&request.local)
+        if let Some(local) = disk
+            && local.path().exists()
+            && let Some(doc) = read_cached_json_doc(local.path())
         {
             mem.write(mem_key, doc.clone());
             return SourceDocOutcome::Found(doc);
@@ -96,7 +113,7 @@ where
             request.cache_namespace,
             request.cache_key,
         ) || (request.cache_policy.use_not_found_marker()
-            && not_found_marker_exists(&request.local))
+            && disk.is_some_and(|local| not_found_marker_exists(local.path())))
         {
             return SourceDocOutcome::AuthoritativelyAbsent;
         }
@@ -110,21 +127,29 @@ where
 
     match request.fetcher.fetch(&request.url) {
         Ok(Some(bytes)) => {
-            let Some(doc) = write_fetched_schema_doc(
-                &request.local,
-                &request.url,
-                &bytes,
-                request.cache_policy.record_source(),
-            ) else {
+            let doc = if let Some(local) = disk {
+                write_fetched_schema_doc(
+                    local,
+                    &request.url,
+                    &bytes,
+                    request.cache_policy.record_source(),
+                )
+            } else {
+                request.warn_skipped_write();
+                parse_schema_doc(&bytes)
+            };
+            let Some(doc) = doc else {
                 // Couldn't persist or parse — we still proved the
                 // schema exists upstream, but treat as Uncertain so
                 // a later run probes again rather than locking in a
                 // cache miss.
                 return SourceDocOutcome::Uncertain;
             };
-            if request.cache_policy.use_not_found_marker() {
+            if let Some(local) = disk
+                && request.cache_policy.use_not_found_marker()
+            {
                 remove_cache_file_if_present(
-                    &not_found_marker_path(&request.local),
+                    &not_found_marker_path(local.path()),
                     "failed to remove stale schema not-found marker",
                 );
             }
@@ -138,12 +163,17 @@ where
                 request.cache_key,
             );
             if request.cache_policy.use_not_found_marker() {
-                remove_cache_file_if_present(
-                    &request.local,
-                    "failed to remove stale schema cache file",
-                );
-                if let Err(err) = write_not_found_marker(&request.local) {
-                    tracing::debug!(?err, "failed to write schema not-found marker");
+                match disk {
+                    Some(local) => {
+                        remove_cache_file_if_present(
+                            local.path(),
+                            "failed to remove stale schema cache file",
+                        );
+                        if let Err(err) = write_not_found_marker(local) {
+                            tracing::debug!(?err, "failed to write schema not-found marker");
+                        }
+                    }
+                    None => request.warn_skipped_write(),
                 }
             }
             SourceDocOutcome::AuthoritativelyAbsent

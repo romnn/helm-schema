@@ -25,6 +25,7 @@ mod doc_backed_schema;
 /// HTTP transport abstraction used by fetch-on-miss providers.
 pub mod fetch;
 mod filename;
+mod group_version;
 /// Bounded `apiVersion` inference and its evidence types.
 pub mod inference;
 /// Versioned `Kubernetes OpenAPI` provider.

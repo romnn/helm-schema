@@ -65,6 +65,12 @@ fn sample_variants() -> Vec<Diagnostic> {
             on_disk_marker: 99,
             compiled_marker: 1,
         },
+        Diagnostic::CacheWriteSkipped {
+            cache_root: "/cache".to_string(),
+            entry: "default/v1.35.0/con\"fig-v1.json".to_string(),
+            reason: "component \"con\\\"fig-v1.json\" contains '\"', outside the portable set [a-z0-9._-]"
+                .to_string(),
+        },
         Diagnostic::InputChannelNumericRangeAmbiguity {
             value_path: "servers".to_string(),
         },
