@@ -28,6 +28,11 @@ pub(crate) enum ScalarValue {
         value: Box<ScalarValue>,
         separator: String,
     },
+    /// Go's `len` of one scalar value: the BYTE count of a string. JSON
+    /// Schema counts characters, so a character bound only strengthens a
+    /// byte bound in one direction (see
+    /// [`ScalarValueDispatch::length_exceeds_subset`]).
+    Length(Box<ScalarValue>),
 }
 
 /// One exact contribution to helper-rendered scalar text.
@@ -157,7 +162,9 @@ impl ScalarValueDispatch {
                             ScalarValue::Literal(helm_schema_core::GuardValue::string(value))
                         })
                     }),
-                    ScalarValue::PrintfStringIdentity(_) | ScalarValue::SplitLength { .. } => None,
+                    ScalarValue::PrintfStringIdentity(_)
+                    | ScalarValue::SplitLength { .. }
+                    | ScalarValue::Length(_) => None,
                 };
                 complete &= rendered.is_some();
                 rendered.map(|value| (condition.clone(), value))
@@ -200,6 +207,47 @@ impl ScalarValueDispatch {
                 .collect(),
             complete: self.complete,
         }
+    }
+
+    pub(crate) fn length(&self) -> Self {
+        Self {
+            arms: self
+                .arms
+                .iter()
+                .map(|(condition, value)| {
+                    (
+                        condition.clone(),
+                        ScalarValue::Length(Box::new(value.clone())),
+                    )
+                })
+                .collect(),
+            complete: self.complete,
+        }
+    }
+
+    /// Guards under which Go's `len` of this value certainly exceeds
+    /// `bound`. A string of more than `bound` characters has more than
+    /// `bound` bytes, so the character-count pattern is a sound subset —
+    /// never the exact byte condition, and never usable negated. Anything
+    /// but one unconditional measured raw identity abstains.
+    pub(crate) fn length_exceeds_subset(&self, bound: usize) -> Vec<helm_schema_core::Guard> {
+        let [(condition, ScalarValue::Length(measured))] = self.arms.as_slice() else {
+            return Vec::new();
+        };
+        let ScalarValue::Identity(path) = measured.as_ref() else {
+            return Vec::new();
+        };
+        let Some(minimum) = bound.checked_add(1) else {
+            return Vec::new();
+        };
+        if !self.complete || *condition != helm_schema_core::Predicate::True {
+            return Vec::new();
+        }
+        vec![helm_schema_core::Guard::MatchesPattern {
+            path: path.clone(),
+            pattern: format!("^[\\s\\S]{{{minimum},}}$"),
+            templated: false,
+        }]
     }
 
     pub(crate) fn condition_matches_pattern_with_memo(
@@ -452,7 +500,7 @@ impl ScalarValue {
             Self::PrintfStringIdentity(path) => {
                 return Some(Self::PrintfStringIdentity(path.clone()));
             }
-            Self::SplitLength { .. } => return None,
+            Self::SplitLength { .. } | Self::Length(_) => return None,
         };
         Some(Self::Rendered(parts))
     }
@@ -470,7 +518,10 @@ impl ScalarValue {
             Self::Literal(helm_schema_core::GuardValue::String(text)) => Some(Self::Literal(
                 helm_schema_core::GuardValue::string(trim(text)),
             )),
-            Self::Literal(_) | Self::PrintfStringIdentity(_) | Self::SplitLength { .. } => None,
+            Self::Literal(_)
+            | Self::PrintfStringIdentity(_)
+            | Self::SplitLength { .. }
+            | Self::Length(_) => None,
             Self::Identity(path) => {
                 let escape = if prefix {
                     crate::helper_meta::LexicalEscape::TrimPrefix(token.to_string())
@@ -530,7 +581,9 @@ impl ScalarValue {
                 lexical_escapes: BTreeSet::new(),
             }],
             Self::Rendered(parts) => parts.clone(),
-            Self::PrintfStringIdentity(_) | Self::SplitLength { .. } => return None,
+            Self::PrintfStringIdentity(_) | Self::SplitLength { .. } | Self::Length(_) => {
+                return None;
+            }
         };
         Some(parts)
     }
@@ -538,7 +591,10 @@ impl ScalarValue {
     fn constant_value(&self) -> Option<helm_schema_core::GuardValue> {
         match self {
             Self::Literal(value) => Some(value.clone()),
-            Self::Identity(_) | Self::PrintfStringIdentity(_) | Self::SplitLength { .. } => None,
+            Self::Identity(_)
+            | Self::PrintfStringIdentity(_)
+            | Self::SplitLength { .. }
+            | Self::Length(_) => None,
             Self::Rendered(parts) => {
                 rendered_constant(parts).map(helm_schema_core::GuardValue::string)
             }
@@ -621,6 +677,7 @@ impl ScalarValue {
                 };
                 value.condition_matches_pattern(&pattern, memo)
             }
+            Self::Length(_) => TruthCondition::Unknown,
         }
     }
 
@@ -648,6 +705,7 @@ impl ScalarValue {
                 .negated(),
             ),
             Self::SplitLength { .. } => Some(helm_schema_core::Predicate::True),
+            Self::Length(_) => None,
         }
     }
 
@@ -666,9 +724,10 @@ impl ScalarValue {
                 },
                 memo,
             ),
-            Self::Literal(_) | Self::PrintfStringIdentity(_) | Self::SplitLength { .. } => {
-                TruthCondition::Unknown
-            }
+            Self::Literal(_)
+            | Self::PrintfStringIdentity(_)
+            | Self::SplitLength { .. }
+            | Self::Length(_) => TruthCondition::Unknown,
             Self::Identity(path) => TruthCondition::exact_with_memo(
                 Predicate::from(Guard::MatchesPattern {
                     path: path.clone(),
@@ -768,7 +827,8 @@ impl ScalarValue {
             Self::Literal(_)
             | Self::Identity(_)
             | Self::PrintfStringIdentity(_)
-            | Self::SplitLength { .. } => None,
+            | Self::SplitLength { .. }
+            | Self::Length(_) => None,
         };
         if let Some(value) = constant {
             return match helm_schema_ast::semver_constraint_matches_version(constraint, &value) {

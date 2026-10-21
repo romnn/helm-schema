@@ -593,7 +593,7 @@ fn eval_direct_invocation(
         // membership bool reaches the sink, never the operand itself, so a
         // scalar sink position must not text-type the operand.
         "len" if args.len() == 1 => {
-            let scalar_dispatch = args
+            let split_dispatch = args
                 .first()
                 .and_then(|subject| split_length_dispatch(subject, env, resolver));
             let mut result = eval_unknown_call(args, Effects::default(), env, resolver);
@@ -602,6 +602,12 @@ fn eval_direct_invocation(
                 return result;
             };
             let subject = eval_expr_with_helper_calls(subject_expr, env, resolver);
+            let scalar_dispatch = split_dispatch.or_else(|| {
+                subject
+                    .scalar_dispatch
+                    .as_ref()
+                    .map(ScalarValueDispatch::length)
+            });
             record_total_conversion_effects(
                 identity_value_paths(subject.value.as_ref()),
                 &mut result.effects,
@@ -1044,7 +1050,11 @@ fn eval_piped_invocation(
                     [length.to_string()].into_iter().collect(),
                 ));
             }
-            result
+            match &operand.scalar_dispatch {
+                Some(dispatch) => result
+                    .with_scalar_dispatch_with_memo(dispatch.length(), env.predicate_memo.as_ref()),
+                None => result,
+            }
         }
         // The piped checksum subject keeps unknown-stage value
         // semantics (see the call form above) while gaining its
