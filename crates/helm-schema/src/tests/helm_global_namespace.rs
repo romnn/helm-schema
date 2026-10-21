@@ -1825,6 +1825,20 @@ fn declared_null_dependency_tree(condition: bool) -> eyre::Result<VfsPath> {
     Ok(root)
 }
 
+fn kid_table_when_present() -> serde_json::Value {
+    json!({
+        "if": {
+            "properties": {"kid": {"not": {"enum": [null]}}},
+            "required": ["kid"],
+            "type": "object"
+        },
+        "then": {
+            "additionalProperties": {},
+            "properties": {"kid": {"type": "object"}}
+        }
+    })
+}
+
 /// Helm v4.2.3 merges every active chart's own defaults with its active
 /// dependencies' tables after pruning, so a parent default that is not a
 /// table at an active dependency's key aborts every render ("type mismatch
@@ -1852,24 +1866,10 @@ fn a_declared_non_table_dependency_default_aborts_while_the_dependency_is_active
     sim_assert_eq!(have: always, want: json!({
         "$schema": "http://json-schema.org/draft-07/schema#",
         "additionalProperties": false,
-        "allOf": [
-            false
-        ],
+        "allOf": [kid_table_when_present(), false],
         "properties": {
             "global": {},
-            "kid": {
-                "anyOf": [
-                    {
-                        "const": null
-                    },
-                    {
-                        "properties": {
-                            "global": {}
-                        },
-                        "type": "object"
-                    }
-                ]
-            }
+            "kid": {}
         },
         "type": "object"
     }));
@@ -2519,10 +2519,6 @@ fn unlisted_dependency_tree(dependencies: &str) -> eyre::Result<VfsPath> {
 }
 
 #[test]
-#[expect(
-    clippy::too_many_lines,
-    reason = "the complete fixture scenario is clearest as one contiguous test"
-)]
 fn an_unlisted_dependency_with_a_null_default_renders() -> eyre::Result<()> {
     let mut schemas = Vec::new();
     for dependencies in [
@@ -2539,29 +2535,28 @@ fn an_unlisted_dependency_with_a_null_default_renders() -> eyre::Result<()> {
         let documents = [
             json!({ "sibEnabled": false, "kid": { "global": {} } }),
             json!({ "sibEnabled": false, "kid": 5 }),
+            json!({ "sibEnabled": false }),
+            json!({ "sibEnabled": false, "kid": null }),
+            json!({ "sibEnabled": false, "kid": false }),
+            json!({ "sibEnabled": false, "kid": 0 }),
+            json!({ "sibEnabled": false, "kid": "" }),
+            json!({ "sibEnabled": false, "kid": [] }),
+            json!({ "sibEnabled": false, "kid": {} }),
         ];
-        sim_assert_eq!(have: verdicts(&schema, &documents)?, want: vec![true, false]);
+        sim_assert_eq!(
+            have: verdicts(&schema, &documents)?,
+            want: vec![true, false, true, true, false, false, false, false, true]
+        );
         schemas.push(schema);
     }
     sim_assert_eq!(have: schemas, want: vec![
         json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
+            "allOf": [kid_table_when_present()],
             "properties": {
                 "global": {},
-                "kid": {
-                    "anyOf": [
-                        {
-                            "const": null
-                        },
-                        {
-                            "properties": {
-                                "global": {}
-                            },
-                            "type": "object"
-                        }
-                    ]
-                },
+                "kid": {},
                 "sib": {
                     "additionalProperties": {},
                     "properties": {
@@ -2576,21 +2571,10 @@ fn an_unlisted_dependency_with_a_null_default_renders() -> eyre::Result<()> {
         json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
+            "allOf": [kid_table_when_present()],
             "properties": {
                 "global": {},
-                "kid": {
-                    "anyOf": [
-                        {
-                            "const": null
-                        },
-                        {
-                            "properties": {
-                                "global": {}
-                            },
-                            "type": "object"
-                        }
-                    ]
-                },
+                "kid": {},
                 "sib": {
                     "additionalProperties": {},
                     "properties": {
@@ -2605,21 +2589,10 @@ fn an_unlisted_dependency_with_a_null_default_renders() -> eyre::Result<()> {
         json!({
             "$schema": "http://json-schema.org/draft-07/schema#",
             "additionalProperties": false,
+            "allOf": [kid_table_when_present()],
             "properties": {
                 "global": {},
-                "kid": {
-                    "anyOf": [
-                        {
-                            "const": null
-                        },
-                        {
-                            "properties": {
-                                "global": {}
-                            },
-                            "type": "object"
-                        }
-                    ]
-                },
+                "kid": {},
                 "sib": {
                     "additionalProperties": {},
                     "properties": {

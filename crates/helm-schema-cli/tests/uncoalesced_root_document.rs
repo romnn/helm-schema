@@ -10,7 +10,7 @@
 //! Every verdict below is adjudicated against Helm v4.2.3 with
 //! `--kube-version 1.29.0`.
 
-use color_eyre::eyre::{self, WrapErr as _};
+use color_eyre::eyre::{self, OptionExt as _, WrapErr as _};
 use helm_schema::AnalysisSession;
 use helm_schema::generation::{LintDocument, LintOutcome, LintWithdrawal, ValuesPath};
 use helm_schema_cli::{GenerateOptions, ProviderOptions, SchemaProfile};
@@ -631,5 +631,318 @@ fn a_dependency_value_check_survives_the_lint_gate() -> eyre::Result<()> {
         !validator.is_valid(&serde_json::json!({ "kid": { "global": {}, "mode": "bogus" } })),
         "`helm template --set kid.mode=bogus` aborts"
     );
+    Ok(())
+}
+
+fn expected_unconditional_dependency_schema() -> serde_json::Value {
+    serde_json::json!({
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false,
+        "allOf": [{
+            "if": {
+                "properties": {
+                    "kid": {
+                        "properties": {"enableServiceLinks": {"not": {"enum": [null]}}},
+                        "required": ["enableServiceLinks"],
+                        "type": "object"
+                    }
+                },
+                "required": ["kid"],
+                "type": "object"
+            },
+            "then": {
+                "additionalProperties": {},
+                "properties": {
+                    "kid": {"required": ["enableServiceLinks"], "type": "object"}
+                }
+            }
+        }],
+        "properties": {
+            "global": {},
+            "kid": {
+                "additionalProperties": {},
+                "properties": {
+                    "enableServiceLinks": {
+                        "anyOf": [
+                            {
+                                "description": "EnableServiceLinks indicates whether information about services should be injected into pod's environment variables, matching the syntax of Docker links. Optional: Defaults to true.",
+                                "type": "boolean"
+                            },
+                            {
+                                "pattern": "^(true|True|TRUE|false|False|FALSE|yes|Yes|YES|no|No|NO|on|On|ON|off|Off|OFF|y|Y|n|N)$",
+                                "type": "string"
+                            }
+                        ]
+                    },
+                    "flag": { "type": "boolean" },
+                    "global": {}
+                },
+                "type": "object"
+            }
+        },
+        "type": "object"
+    })
+}
+
+/// A direct provider hole requires a value after coalescing, while lint also sees
+/// the parent's partial override without the dependency's defaults.
+#[test]
+fn unconditional_dependency_defaults_do_not_require_raw_parent_members() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+    write_lint_root_chart(
+        &chart_dir,
+        indoc! {"
+            kid:
+              flag: true
+        "},
+        indoc! {"
+            flag: true
+            enableServiceLinks: false
+        "},
+        indoc! {"
+            apiVersion: v1
+            kind: Pod
+            metadata:
+              name: kid
+            spec:
+              enableServiceLinks: {{ .Values.enableServiceLinks }}
+              containers:
+                - name: kid
+                  image: busybox:1.37
+        "},
+    )?;
+    let schema = generate_provider_schema(chart_dir)?;
+    sim_assert_eq!(have: schema, want: expected_unconditional_dependency_schema());
+    let validator = jsonschema::validator_for(&schema)?;
+    assert!(validator.is_valid(&serde_json::json!({"kid": {"flag": true}})));
+    assert!(validator.is_valid(&serde_json::json!({
+        "kid": {"flag": true, "enableServiceLinks": false, "global": {}}
+    })));
+    for (value, accepted) in [
+        (serde_json::json!(null), false),
+        (serde_json::json!(true), true),
+        (serde_json::json!(false), true),
+        (serde_json::json!(0), false),
+        (serde_json::json!(""), false),
+        (serde_json::json!("false"), true),
+        (serde_json::json!("invalid"), false),
+        (serde_json::json!([]), false),
+        (serde_json::json!({}), false),
+    ] {
+        sim_assert_eq!(
+            have: validator.is_valid(&serde_json::json!({
+                "kid": {"flag": true, "enableServiceLinks": value}
+            })),
+            want: accepted
+        );
+    }
+    Ok(())
+}
+
+fn generate_provider_schema(chart_dir: VfsPath) -> eyre::Result<serde_json::Value> {
+    Ok(AnalysisSession::new(GenerateOptions {
+        chart_dir,
+        include_tests: false,
+        include_subchart_values: true,
+        values_files: Vec::new(),
+        infer_required: false,
+        emission: SchemaProfile::default().into(),
+        authoring: helm_schema::generation::AuthoringPolicy::default(),
+        provider: ProviderOptions {
+            k8s_versions: vec!["v1.35.0".to_string()],
+            allow_net: false,
+            k8s_schema_cache_dir: Some(
+                test_util::workspace_testdata()
+                    .join("provider-bundle/kubernetes-json-schema-cache"),
+            ),
+            crd_catalog_cache_dir: Some(test_util::cold_provider_cache_root("crd")?),
+            ..Default::default()
+        },
+    })
+    .generated_schema()?
+    .schema)
+}
+
+fn missing_webhook_condition() -> serde_json::Value {
+    serde_json::json!({
+        "allOf": [
+            {"type": "object"},
+            {"anyOf": [
+                {"not": {
+                    "properties": {"webhook": {}},
+                    "required": ["webhook"],
+                    "type": "object"
+                }},
+                {
+                    "properties": {"webhook": {"enum": [null]}},
+                    "required": ["webhook"],
+                    "type": "object"
+                }
+            ]}
+        ]
+    })
+}
+
+fn expected_webhook_dependency_schema() -> eyre::Result<serde_json::Value> {
+    let mut expected = expected_unconditional_dependency_schema();
+    let field = expected
+        .pointer("/properties/kid/properties/enableServiceLinks")
+        .ok_or_eyre("expected provider field absent")?
+        .clone();
+    let nonnull_field = serde_json::json!({
+        "properties": {"enableServiceLinks": {"not": {"enum": [null]}}},
+        "required": ["enableServiceLinks"],
+        "type": "object"
+    });
+    let missing_webhook = missing_webhook_condition();
+    let kid = expected
+        .pointer_mut("/properties/kid")
+        .and_then(serde_json::Value::as_object_mut)
+        .ok_or_eyre("expected dependency schema absent")?;
+    kid.get_mut("properties")
+        .and_then(serde_json::Value::as_object_mut)
+        .ok_or_eyre("expected dependency properties absent")?
+        .insert(
+            "webhook".into(),
+            serde_json::json!({
+                "additionalProperties": {},
+                "properties": {"enableServiceLinks": field, "flag": {"type": "boolean"}},
+                "type": "object"
+            }),
+        );
+    kid.insert(
+        "allOf".into(),
+        serde_json::json!([{
+            "if": missing_webhook,
+            "then": false
+        }]),
+    );
+    let main_clause = expected
+        .pointer("/allOf/0")
+        .ok_or_eyre("expected main presence guard absent")?
+        .clone();
+    let clauses = serde_json::json!([
+        main_clause,
+        {
+            "if": {
+                "properties": {"kid": {
+                    "properties": {"webhook": nonnull_field},
+                    "required": ["webhook"],
+                    "type": "object"
+                }},
+                "required": ["kid"],
+                "type": "object"
+            },
+            "then": {
+                "additionalProperties": {},
+                "properties": {"kid": {
+                    "additionalProperties": {},
+                    "properties": {"webhook": {
+                        "required": ["enableServiceLinks"],
+                        "type": "object"
+                    }}
+                }}
+            }
+        },
+        {
+            "if": {"allOf": [
+                {
+                    "properties": {"kid": missing_webhook},
+                    "required": ["kid"],
+                    "type": "object"
+                },
+                {"anyOf": [
+                    {"not": {
+                        "properties": {"kid": {}},
+                        "required": ["kid"],
+                        "type": "object"
+                    }},
+                    {
+                        "properties": {"kid": {"enum": [null]}},
+                        "required": ["kid"],
+                        "type": "object"
+                    }
+                ]}
+            ]},
+            "then": false
+        }
+    ]);
+    expected
+        .as_object_mut()
+        .ok_or_eyre("expected root schema is not an object")?
+        .insert("allOf".into(), clauses);
+    Ok(expected)
+}
+
+/// Independent main and webhook defaults must each survive a partial umbrella override.
+#[test]
+fn webhook_defaults_keep_independent_lint_presence_guards() -> eyre::Result<()> {
+    let chart_dir = VfsPath::new(vfs::MemoryFS::new());
+    write_lint_root_chart(
+        &chart_dir,
+        indoc! {"
+            kid:
+              flag: true
+              webhook:
+                flag: true
+        "},
+        indoc! {"
+            flag: true
+            enableServiceLinks: false
+            webhook:
+              flag: true
+              enableServiceLinks: false
+        "},
+        indoc! {"
+            apiVersion: v1
+            kind: Pod
+            metadata:
+              name: kid
+            spec:
+              enableServiceLinks: {{ .Values.enableServiceLinks }}
+              containers:
+                - name: kid
+                  image: busybox:1.37
+            ---
+            apiVersion: v1
+            kind: Pod
+            metadata:
+              name: kid-webhook
+            spec:
+              enableServiceLinks: {{ .Values.webhook.enableServiceLinks }}
+              containers:
+                - name: kid
+                  image: busybox:1.37
+        "},
+    )?;
+    let schema = generate_provider_schema(chart_dir)?;
+    sim_assert_eq!(have: schema, want: expected_webhook_dependency_schema()?);
+    let validator = jsonschema::validator_for(&schema)?;
+    let states = [
+        (None, true),
+        (Some(serde_json::json!(false)), true),
+        (Some(serde_json::json!(true)), true),
+        (Some(serde_json::json!(null)), false),
+        (Some(serde_json::json!(0)), false),
+        (Some(serde_json::json!("invalid")), false),
+        (Some(serde_json::json!([])), false),
+        (Some(serde_json::json!({})), false),
+    ];
+    for (main, main_valid) in &states {
+        for (webhook, webhook_valid) in &states {
+            let mut values = serde_json::json!({"kid": {"flag": true, "webhook": {"flag": true}}});
+            if let Some(main) = main {
+                values["kid"]["enableServiceLinks"] = main.clone();
+            }
+            if let Some(webhook) = webhook {
+                values["kid"]["webhook"]["enableServiceLinks"] = webhook.clone();
+            }
+            sim_assert_eq!(
+                have: validator.is_valid(&values),
+                want: *main_valid && *webhook_valid,
+                "{values}"
+            );
+        }
+    }
     Ok(())
 }

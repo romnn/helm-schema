@@ -30,7 +30,7 @@ pub enum LintOutcome {
     Withdrawn,
 }
 
-/// A conditional constraint relaxed because a `helm lint` document fails it
+/// A constraint relaxed because a `helm lint` document fails it
 /// while the coalesced defaults satisfy it.
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct LintWithdrawal {
