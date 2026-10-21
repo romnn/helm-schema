@@ -9221,4 +9221,16 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   W4 Codex turn FAILED on "Selected model is at capacity" after ~38 h; per user policy its track moves to Opus (no Codex
   follow-up). W1 Codex track ended blocked (11 NEW FAs at +244 LOC); moves to Opus from its blocked patch. T7 cleanup: 24 → ~200
   GiB free; plan /Volumes/T7/dev/round8/cleanup-plan.md. Orchestrator.
-Next: merge the integrator's coverage commits into landing-10c and rerun stale steps; on chain green merge 10c and run luup2 check:local on main; then Opus W4 and W1 tracks; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
+- 16:58 (Oct 21) — **LANDED: landing 10c merged into main as 7c200618 (chain green, run 2). The luup2 false rejection is fixed (5/32 →
+  32/32).** Components: d3cf7a2f lint-visible required keys (+6 LOC) with corpus-wide partial-override lane, 243+156+18-cell
+  Helm-differential matrix, daskhub intake, 80 exact inherited entries; Windows root cause (f9fb24a5); helm-schema-dev binary
+  (02e4beca). Run 1 refused at battery: runner could not read a baseline for a chart added after the roster baseline → runner v11.2
+  (296f3b1) reads the committed intake baseline (review REWORK: symlink escape → resolved containment; harness has the same gap,
+  queued); run 2 (env ef8f55e): dump 13:48–13:52 (206 verified, 0 adopted), unit, lint –14:01, battery –15:18 (161 charts,
+  flips_adjudicated=10156), integration –15:39, sweep –16:38, finalize 16:39; receipt /Volumes/T7/dev/round8-landing10c-run2/receipt.json
+  sha256 66431ff3dcbb6bf77520f037e113c1ae386d8396019007d80ddeb9fda8fc3e42. Not pushed. W1 Opus attempt BLOCKED (closed the 11 airflow
+  NEW FAs by carrying set-written locals' truth; still 2 unit regressions + 3 dependency-null lint false rejections; +346 LOC, 0
+  closures vs main). USER: one more scoped try, escalated to three models from first principles + globally cleanest design: Opus
+  (round8-w1-opus), Fable xhigh (round8-w1-fable), Astra xhigh (Codex 20261021T145716-d8520084, round8-w1-astra); shared brief
+  /Volumes/T7/dev/round8/brief-w1-first-principles.md; an architecture review compares and combines the three. Orchestrator.
+Next: collect the three W1 first-principles hand-backs and run an architecture review over them; luup2 check:local on main 7c200618; Opus W4 track; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
