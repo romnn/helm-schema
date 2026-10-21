@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """End-to-end helm-schema benchmark over a fixed set of vendored corpus charts.
 
-Runs a release `helm-schema` binary offline against the committed provider bundle and records,
+Runs a release `helm-schema-dev` binary offline against the committed provider bundle and records,
 per chart and configuration:
 
 - CPU time, wall time and peak RSS: the median of a stated number of untraced runs (CASES);
 - the output's size: the pretty schema the CLI writes by default, and the compact schema with
   short `$defs` keys that `helm-schema shorten --compact` makes of it (what a chart over Helm's
   5 MiB limit ships), plus the number of `$defs` entries;
-- per-phase wall times from the CLI's own tracing spans (`--trace-output`), taken from a separate
+- per-phase wall times from the dev binary's tracing spans (`--trace-output`), taken from a separate
   traced run, since tracing slows the run it observes (ADR 0064);
 - for the cheap charts (INSTRUCTION_CASES), the instructions one run executes, counted by valgrind's
   cachegrind when valgrind is available: unlike a time, the count does not depend on the CPU a
@@ -526,7 +526,7 @@ def markdown(results: list[dict], traces: int) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--binary", type=Path, default=REPO / "target" / "release" / "helm-schema")
+    parser.add_argument("--binary", type=Path, default=REPO / "target" / "release" / "helm-schema-dev")
     parser.add_argument("--reps", type=int, help="untraced runs per configuration, for every chart")
     parser.add_argument("--traces", type=int, default=1, help="traced runs per configuration")
     parser.add_argument("--chart", action="append", help="only these charts (repeatable)")

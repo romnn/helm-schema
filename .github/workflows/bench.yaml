@@ -59,7 +59,7 @@ jobs:
           cache-on-failure: true
       - uses: mozilla-actions/sccache-action@9e7fa8a12102821edf02ca5dbea1acd0f89a2696 # v0.0.10
       - name: Build
-        run: mise exec -- cargo build --release --package helm-schema-cli
+        run: mise exec -- cargo build --release --package helm-schema-dev
       # valgrind counts the instructions of the cheap charts. Its exact Ubuntu 24.04 package, from
       # the release pocket that keeps it: a new valgrind may count differently, so moving it is a
       # commit here, and the version is recorded with every count as its environment.
@@ -76,7 +76,7 @@ jobs:
       - name: Measure
         run: >-
           mise exec -- python3 tools/bench/bench.py
-          --binary target/release/helm-schema
+          --binary target/release/helm-schema-dev
           --json target/bench/history.json
           --valgrind valgrind
           --summary "$GITHUB_STEP_SUMMARY"

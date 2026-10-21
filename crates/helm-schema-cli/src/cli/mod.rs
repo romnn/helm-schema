@@ -6,7 +6,6 @@ mod helm_args;
 mod inference_args;
 mod k8s_args;
 mod output_args;
-mod perf_args;
 mod profile_args;
 mod shorten_args;
 
@@ -22,7 +21,6 @@ pub use helm_args::HelmArgs;
 pub use inference_args::InferenceArgs;
 pub use k8s_args::{DEFAULT_AUTO_WINDOW, K8sArgs, K8sVersionFallback};
 pub use output_args::{DefsNames, OutputArgs, OutputLayout};
-pub use perf_args::PerfArgs;
 pub use profile_args::SchemaProfile;
 pub use shorten_args::ShortenArgs;
 
@@ -67,10 +65,6 @@ pub struct Cli {
     /// Chart discovery and values-composition options.
     #[command(flatten)]
     pub chart: ChartArgs,
-
-    /// Performance tracing options.
-    #[command(flatten)]
-    pub perf: PerfArgs,
 
     /// Read policy from this file instead of discovering `helm-schema.yaml`.
     /// Relative paths are resolved from the invocation working directory.

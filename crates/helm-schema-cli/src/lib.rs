@@ -4,6 +4,7 @@
 pub mod cli;
 mod config;
 mod diag_emit;
+mod invocation;
 
 use std::collections::BTreeMap;
 use std::io::{BufWriter, Write};
@@ -25,6 +26,7 @@ pub use cli::Cli;
 pub use helm_schema::generation::{GenerateOptions, SchemaProfile};
 pub use helm_schema::provider::ProviderOptions;
 pub use helm_schema::{CliError, flatten, schema_override};
+pub use invocation::execute;
 
 /// Run the CLI; returns Helm's status for `lint` and `template`, which the
 /// process should end with. `interrupt` stops Helm once it holds a signal
@@ -36,14 +38,6 @@ pub use helm_schema::{CliError, flatten, schema_override};
 /// read/parsed, the schema cannot be generated, output cannot be written, or
 /// Helm cannot be run.
 pub fn run(cli: Cli, interrupt: &AtomicUsize) -> EngineResult<Option<ExitStatus>> {
-    if let Some(trace_output) = &cli.perf.trace_output {
-        let dispatch = helm_schema::trace::perfetto_dispatch(create_output_file(trace_output)?);
-        return tracing::dispatcher::with_default(&dispatch, || run_command(cli, interrupt));
-    }
-    run_command(cli, interrupt)
-}
-
-fn run_command(cli: Cli, interrupt: &AtomicUsize) -> EngineResult<Option<ExitStatus>> {
     let helm = match &cli.command {
         Some(cli::Command::Shorten(args)) => {
             return shorten(args, cli.diag.diag_format).map(|()| None);

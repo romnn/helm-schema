@@ -71,7 +71,7 @@ fn source_edits_invalidate_and_test_only_edits_do_not() -> eyre::Result<()> {
         ("crates/helm-schema/examples/e.rs", false),
         (&format!("{grammar}/dialects/helm/src/parser.c"), false),
         (&format!("{grammar}/package.json"), false),
-        ("crates/helm-schema-cli/src/main.rs", false),
+        ("crates/helm-schema-cli/src/main.rs", true),
     ];
     let mut verdicts = Vec::new();
     for (path, _) in cases {

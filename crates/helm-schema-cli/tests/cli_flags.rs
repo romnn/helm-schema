@@ -2,7 +2,7 @@
 //! validation rules, and strict-mode invariants.
 
 use clap::{CommandFactory as _, Parser};
-use color_eyre::eyre;
+use color_eyre::eyre::{self, OptionExt as _};
 use helm_schema_cli::Cli;
 use helm_schema_cli::cli::{CrdVersionLookup, DiagFormat, K8sVersionFallback, SchemaProfile};
 use test_util::prelude::sim_assert_eq;
@@ -21,12 +21,17 @@ fn cli_diag_format_text_is_default() {
 }
 
 #[test]
-fn cli_perf_flags_parse() {
-    let cli = parse(&["--trace-output", "/tmp/helm-schema.trace"]).expect("parse");
-    sim_assert_eq!(
-        have: cli.perf.trace_output.as_deref(),
-        want: Some(std::path::Path::new("/tmp/helm-schema.trace"))
-    );
+fn cli_rejects_dev_trace_output() -> eyre::Result<()> {
+    let err = Cli::try_parse_from([
+        "helm-schema",
+        "--trace-output",
+        "/tmp/helm-schema.trace",
+        "/tmp/chart",
+    ])
+    .err()
+    .ok_or_eyre("published CLI accepted dev tracing")?;
+    sim_assert_eq!(have: err.kind(), want: clap::error::ErrorKind::UnknownArgument);
+    Ok(())
 }
 
 #[test]

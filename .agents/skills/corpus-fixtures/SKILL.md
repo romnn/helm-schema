@@ -82,8 +82,10 @@ cargo run -p helm-schema-test-support --bin corpus_generation -- \
   `Cargo.lock`, `.cargo/config.toml`, the vendored go-template grammar `src/`, and for every crate
   in `GENERATION_CRATES` its `Cargo.toml`, `build.rs` and `src/`, **excluding anything under a
   `tests` directory**. Editing tests never invalidates a manifest; editing generation code always
-  does. `helm-schema-cli` is not a generation crate: corpus artifacts are library output
-  (`AnalysisSession` plus minimization), never CLI output.
+  does. The unpublished `helm-schema-dev` crate owns the Perfetto layer used by test support.
+  Its CLI dependency also links `helm-schema-cli` into generation, so both crates are
+  covered by the source digest; corpus artifacts remain library output
+  (`AnalysisSession` plus minimization).
 - **Recipe inputs** (`InputDigester`): a chart recipe reads its whole `testdata/charts/<dir>`,
   its values files and the entire `testdata/provider-bundle/`; template recipes read their template,
   values file (unless inline) and helpers plus the bundle; IR recipes read template and helpers.

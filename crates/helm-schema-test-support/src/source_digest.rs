@@ -10,11 +10,13 @@ use std::path::{Path, PathBuf};
 use sha2::{Digest as _, Sha256};
 
 /// Workspace crates linked into generation: the production pipeline, its
-/// grammar, `test-util`, and this crate.
+/// grammar, development tracing and CLI, `test-util`, and this crate.
 pub const GENERATION_CRATES: &[&str] = &[
     "helm-schema",
     "helm-schema-ast",
+    "helm-schema-cli",
     "helm-schema-core",
+    "helm-schema-dev",
     "helm-schema-gen",
     "helm-schema-ir",
     "helm-schema-json-schema-minify",

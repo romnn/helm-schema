@@ -127,12 +127,11 @@ See [apiVersion inference]({{< relref "/docs/guide/kubernetes-schemas.md" >}}#ap
 
 See [Schema overrides]({{< relref "/docs/guide/overrides.md" >}}).
 
-## Diagnostics & tracing
+## Diagnostics
 
 | Flag | Description |
 |---|---|
 | `--diag-format <text\|json>` | Format for diagnostics on stderr. Default `text`. `json` emits one structured object per line. |
-| `--trace-output <FILE>` | Write a Perfetto-readable trace of the run. |
 
 See [Diagnostics]({{< relref "diagnostics.md" >}}).
 
@@ -150,3 +149,9 @@ See [Diagnostics]({{< relref "diagnostics.md" >}}).
 - `--strict-k8s-version` and `--k8s-version-fallback`
 - `--api-version-guess` and `--strict-api-versions`
 - `--k8s-version-fallback` is also rejected alongside multiple explicit `--k8s-version` values.
+
+## Development tracing
+
+Perfetto tracing is available in the unpublished `helm-schema-dev` binary. It runs the same
+commands and arguments as `helm-schema`, with an additional `--trace-output <FILE>` option.
+Build it from the workspace with `cargo build --release -p helm-schema-dev`.

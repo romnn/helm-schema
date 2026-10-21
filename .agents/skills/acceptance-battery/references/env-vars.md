@@ -113,7 +113,8 @@ Set `HELM_SCHEMA_TRACE_OUTPUT=/absolute/path/run.perfetto` for `corpus_generatio
 or `round74_fixture_flips_are_adjudicated_and_probe_caps_are_enforced`.
 The parent directory must exist; the file is overwritten.
 Unset leaves tracing unchanged.
-This uses the CLI's `--trace-output` layer, `helm_schema*` target filter and
+This uses the unpublished `helm-schema-dev` crate's Perfetto layer (also used by its
+`--trace-output` flag), `helm_schema*` target filter and
 field annotations, installed process-wide so worker threads are captured.
 Use a distinct path per process and select just the battery test when tracing it.
 

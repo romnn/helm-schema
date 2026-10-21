@@ -1,8 +1,8 @@
 # Continuous benchmark
 
-`bench.py` runs a release `helm-schema` offline against the committed provider bundle on four
+`bench.py` runs a release `helm-schema-dev` offline against the committed provider bundle on four
 corpus charts and records CPU and wall time, peak RSS, schema sizes, the `$defs` count and phase
-times from the CLI's tracing spans, each with the compiler and the host's CPU model as its
+times from the unpublished dev binary's tracing spans, each with the compiler and the host's CPU model as its
 environment (shortened by `short_cpu`: "AMD EPYC 7763 64-Core Processor" is "EPYC 7763"). For the cheap configurations (`INSTRUCTION_CASES`) it also counts the executed
 instructions of one run under valgrind's cachegrind, a figure no runner CPU changes. Why each
 chart is there is written beside `CASES` in the script; the design is recorded in the
