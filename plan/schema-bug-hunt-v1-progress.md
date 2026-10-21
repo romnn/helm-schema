@@ -9235,4 +9235,18 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   /Volumes/T7/dev/round8/brief-w1-first-principles.md; an architecture review compares and combines the three. Orchestrator.
 - 17:02 (Oct 21) — **Downstream luup2 gate GREEN on main 7c200618: 0/32 charts fail** (cargo install of main, then `<chart>:check:local`
   per chart; was 5/32 before landing 10c). luup2 checkout left clean. Orchestrator.
-Next: collect the three W1 first-principles hand-backs and run an architecture review over them; luup2 check:local on main 7c200618; Opus W4 track; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
+- 21:22 (Oct 21) — **W1 three-model escalation: all three handed back; architecture review picks Opus as the stage-1 base.**
+  Opus (w1/produced-kinds 5b91e7fb+a2f01c4c): derived kind view, single `required` owner, AST required lane deleted; witnesses
+  1,294 cells 0 NEW / 79 closed; unit 1738/1738, lint 0; 18 fixtures moved; live battery timed out (exit 124) under load; +214 LOC.
+  Fable (w1/fp-fable d1de40c7): kind-only `ScalarValue::Kind` leaf + catalog kind facet; 1,048 cells 0 NEW / 75 closed; nextest
+  exit 100 (6 red gen tests: kind-only dispatch read as content); +241 LOC; no corpus evidence. Astra (Codex, uncommitted
+  final.patch f92197a1…): heap/value-algebra design + coalesce single-pass refactor, −6 LOC, 0 closures; its live battery
+  exit 100 on 387 "stale" inherited rows (386 OnCall, 1 SigNoz). Review (/Volumes/T7/dev/round8/q/w1-architecture-review.md):
+  target is one guarded value algebra (Go kind always, content optional, truth derived); stage 1 = Opus + Fable's kind
+  vocabulary + Astra's coalesce pass + exhaustive `writes_state` + stale-helper fence or nil-fold revert (Astra measured 3 FR
+  for the same nil-fold hunk); stage 2 = Fable's leaf behind private `content()`/`kinds()`; stage 3 = Astra's heap. Astra's
+  battery anomaly is a harness hole: those rows come only from the optional `SCHEMA_ACCEPTANCE_CONTEXT_ROSTER` import, which
+  the runner supplies. Dispatched: Opus builds the combined stage 1 (new branch from a2f01c4c); an Opus harness builder
+  (worktree round8-harness, branch harness/context-roster-guard) fixes the context-roster hole and the intake-baseline
+  symlink gap. Orchestrator.
+Next: collect the W1 stage-1 and harness hand-backs, Codex-review both, then assemble landing 10d; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
