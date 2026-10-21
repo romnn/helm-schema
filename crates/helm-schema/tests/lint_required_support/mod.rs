@@ -39,14 +39,27 @@ impl DefaultValue {
 pub enum Feature {
     Plain,
     Alias,
+    /// The dependency's condition disables it.
     Condition,
+    /// The dependency's condition is present and enables it.
+    ConditionEnabled,
+    /// The dependency's tag disables it.
     Tags,
+    /// The dependency's tag is present and enables it.
+    TagsEnabled,
+    /// Both the parent and the child default the global.
     Global,
+    /// Only the child defaults the global.
+    GlobalChildOnly,
     ImportChild,
     ImportParent,
     Library,
     Required,
     Fail,
+    /// A `required` token that the child's default satisfies.
+    RequiredDefaulted,
+    /// An `if not ... fail` token that the child's default satisfies.
+    FailDefaulted,
 }
 
 #[derive(Clone, Copy, Debug)]
@@ -203,10 +216,15 @@ impl Matrix {
             Feature::ImportChild | Feature::ImportParent => 2,
             Feature::Plain
             | Feature::Alias
+            | Feature::ConditionEnabled
+            | Feature::TagsEnabled
             | Feature::Global
+            | Feature::GlobalChildOnly
             | Feature::Library
             | Feature::Required
-            | Feature::Fail => 1,
+            | Feature::Fail
+            | Feature::RequiredDefaulted
+            | Feature::FailDefaulted => 1,
         };
         if documents.len() != expected {
             self.failures.push(format!(
@@ -235,6 +253,25 @@ impl Matrix {
         Ok(())
     }
 
+    /// A requirement the child's default satisfies must not reject a parent that omits it.
+    ///
+    /// The raw lint document lacks the token, so omission must pass lint, template and the
+    /// schema; an explicitly invalid token must still abort template and fail the schema.
+    pub fn check_defaulted_required(&mut self, cell: Cell) -> eyre::Result<()> {
+        for overlay in [Override::Absent, Override::Partial] {
+            self.check(Cell { overlay, ..cell })?;
+        }
+        let mut tokens = vec![json!(""), Value::Null];
+        // Helm's required accepts false; an explicit `if not ... | fail` rejects it.
+        if matches!(cell.feature, Feature::FailDefaulted) {
+            tokens.push(json!(false));
+        }
+        for token in tokens {
+            self.check_missing_token(cell, Some(token))?;
+        }
+        Ok(())
+    }
+
     fn check_missing_token(&mut self, cell: Cell, token: Option<Value>) -> eyre::Result<()> {
         let directory = self
             .scratch
@@ -251,11 +288,7 @@ impl Matrix {
                 .ok_or_eyre("dependency values absent")?
                 .insert("token".into(), token);
         }
-        if validator.is_valid(&missing) {
-            self.failures.push(format!(
-                "{cell:?}: schema accepts invalid required token: {missing}"
-            ));
-        }
+        let accepted = validator.is_valid(&missing);
         // Helm's LintMode suppresses required/fail, whereas template must still abort.
         match cell.transport {
             Transport::File => {
@@ -270,13 +303,38 @@ impl Matrix {
         let control = self.engine.run(&directory, &chart, "missing-control")?;
         write_json(&chart.join("values.schema.json"), &schema)?;
         let generated = self.engine.run(&directory, &chart, "missing-generated")?;
-        if control.lint != 0
-            || control.template != 1
-            || generated.lint != 1
-            || generated.template != 1
+        let defaulted = matches!(
+            cell.feature,
+            Feature::RequiredDefaulted | Feature::FailDefaulted
+        );
+        // `-f` null deletes the child's valid default and Helm aborts, while the same raw
+        // lint document from the chart's own values.yaml keeps the default and renders.
+        // No schema over that document can reject one without falsely rejecting the
+        // other, so the deletion stays accepted (uncertainty widens) and only Helm aborts.
+        let deleted_default = defaulted
+            && matches!(cell.transport, Transport::File)
+            && missing.pointer("/kid/token") == Some(&Value::Null);
+        let expected = if defaulted && control.template == 0 {
+            // A null that does not delete the child's default leaves a valid token.
+            (control.lint, 0, true)
+        } else if deleted_default {
+            (0, 1, true)
+        } else {
+            (1, 1, false)
+        };
+        let expected_control = if defaulted && control.template == 0 {
+            control.lint
+        } else {
+            0
+        };
+        if (generated.lint, generated.template, accepted) != expected
+            || control.lint != expected_control
+            || (!defaulted && control.template != 1)
+            || (deleted_default && control.template != 1)
         {
             self.failures.push(format!(
-                "{cell:?}: missing token: {control:?}, {generated:?}"
+                "{cell:?}: token {missing}: schema-free={control:?}, generated={generated:?}, \
+                 schema accepts={accepted}, expected (lint, template, accepts)={expected:?}"
             ));
         }
         self.rows.push(Verdicts {
