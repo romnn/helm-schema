@@ -9249,4 +9249,13 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   the runner supplies. Dispatched: Opus builds the combined stage 1 (new branch from a2f01c4c); an Opus harness builder
   (worktree round8-harness, branch harness/context-roster-guard) fixes the context-roster hole and the intake-baseline
   symlink gap. Orchestrator.
-Next: collect the W1 stage-1 and harness hand-backs, Codex-review both, then assemble landing 10d; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
+- 22:51 (Oct 21) — **USER DECISION: rearchitect the interpreter rather than keep patching it; after landing 10d the campaign
+  detours from bug-hunt fixes to the value-algebra interpreter.** Plan written to `plan/value-algebra-interpreter.md` (why main's
+  interpreter is a local maximum, the Helm facts, target model, stages 1 → R0 design closure → R1 binding ownership
+  byte-identical → R2 kind leaf behind private `content()`/`kinds()` → R3 one execution/heap/in-walk output, per-stage deletion
+  lists, admission suite, what pauses: interpreter-touching bug-hunt fixes and W4 rework beyond slice 45a3d884; what continues at
+  low priority: oracle/harness/tooling, new findings recorded as witness cells). Harness fix (round8-harness,
+  harness/context-roster-guard 02d82b82..68794746) reviewed by sol twice, all findings fixed, ready for landing 10d. Opus W4 slice
+  45a3d884 port started (worktree round8-w4-opus, branch w4/comparison-operands). Orchestrator.
+Next: collect the W1 stage-1 and W4-slice hand-backs, Codex-review, then assemble landing 10d (harness, W1 stage 1); then R0 of
+`plan/value-algebra-interpreter.md`; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
