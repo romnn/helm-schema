@@ -100,6 +100,20 @@ pub(crate) const KNOWN_CONTEXT_UNDECIDED_ACCEPTANCES: &[ContextUndecidedAcceptan
             "document 113: jaegertracing.io/v1/Jaeger jaeger: pinned CRD schema not found",
         ],
     },
+    // The partial jaeger-operator override renders the same Jaeger resource, whose
+    // pinned bundle/catalog CRD schema is absent.
+    ContextUndecidedAcceptance {
+        chart: "openebs",
+        selector: ContextSelector {
+            document: test_util::helm_values::AcceptanceDocument::LintRaw,
+            overlay: r#"{"engines":{"replicated":{"mayastor":{"enabled":true}}},"mayastor":{"base":{"jaeger":{"enabled":true}},"jaeger-operator":{"affinity":{}}}}"#,
+            transport: ContextTransport::ValuesFile,
+            kubernetes_version: "1.29.0",
+        },
+        uncertain: &[
+            "document 113: jaegertracing.io/v1/Jaeger jaeger: pinned CRD schema not found",
+        ],
+    },
     // The pinned bundle/catalog lacks the rendered resource versions below, so their
     // changed resources remain undecided despite a successful Helm render.
     ContextUndecidedAcceptance {
