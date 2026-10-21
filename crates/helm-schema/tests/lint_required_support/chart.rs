@@ -84,8 +84,11 @@ pub(super) fn write(directory: &Path, cell: Cell) -> eyre::Result<PathBuf> {
 
 fn scope(cell: Cell) -> Vec<&'static str> {
     let mut scope = vec!["kid"; cell.depth];
-    if matches!(cell.feature, Feature::Alias) {
-        scope = vec!["alias"];
+    // Only the root's dependency is aliased; nested charts keep their names.
+    if matches!(cell.feature, Feature::Alias)
+        && let Some(first) = scope.first_mut()
+    {
+        *first = "alias";
     }
     scope
 }
@@ -98,10 +101,10 @@ fn dependency(cell: Cell, level: usize) -> eyre::Result<Value> {
             Feature::Alias => {
                 fields.insert("alias".into(), json!("alias"));
             }
-            Feature::Condition => {
+            Feature::Condition | Feature::ConditionEnabled => {
                 fields.insert("condition".into(), json!("kid.enabled"));
             }
-            Feature::Tags => {
+            Feature::Tags | Feature::TagsEnabled => {
                 fields.insert("tags".into(), json!(["optional"]));
             }
             Feature::ImportChild => {
@@ -117,9 +120,12 @@ fn dependency(cell: Cell, level: usize) -> eyre::Result<Value> {
             }
             Feature::Plain
             | Feature::Global
+            | Feature::GlobalChildOnly
             | Feature::Library
             | Feature::Required
-            | Feature::Fail => {}
+            | Feature::Fail
+            | Feature::RequiredDefaulted
+            | Feature::FailDefaulted => {}
         }
     }
     Ok(dependency)
@@ -132,7 +138,7 @@ fn child_values(cell: Cell) -> eyre::Result<Value> {
         fields.insert("enableServiceLinks".into(), value);
     }
     match cell.feature {
-        Feature::Global => {
+        Feature::Global | Feature::GlobalChildOnly => {
             fields.insert("global".into(), json!({"enableServiceLinks": false}));
         }
         Feature::ImportChild | Feature::ImportParent => {
@@ -141,10 +147,15 @@ fn child_values(cell: Cell) -> eyre::Result<Value> {
                 json!({"settings": {"enableServiceLinks": false}}),
             );
         }
+        Feature::RequiredDefaulted | Feature::FailDefaulted => {
+            fields.insert("token".into(), json!("present"));
+        }
         Feature::Plain
         | Feature::Alias
         | Feature::Condition
+        | Feature::ConditionEnabled
         | Feature::Tags
+        | Feature::TagsEnabled
         | Feature::Library
         | Feature::Required
         | Feature::Fail => {}
@@ -166,16 +177,27 @@ fn parent_values(cell: Cell, scope: &[&str]) -> eyre::Result<Value> {
         Feature::Tags => {
             fields.insert("tags".into(), json!({"optional": false}));
         }
+        Feature::ConditionEnabled => {
+            // Enable the dependency without replacing its other parent defaults.
+            let kid = fields.entry("kid").or_insert_with(|| json!({}));
+            object(kid)?.insert("enabled".into(), json!(true));
+        }
+        Feature::TagsEnabled => {
+            fields.insert("tags".into(), json!({"optional": true}));
+        }
         Feature::Global => {
             fields.insert("global".into(), json!({"enableServiceLinks": true}));
         }
         Feature::Plain
         | Feature::Alias
+        | Feature::GlobalChildOnly
         | Feature::ImportChild
         | Feature::ImportParent
         | Feature::Library
         | Feature::Required
-        | Feature::Fail => {}
+        | Feature::Fail
+        | Feature::RequiredDefaulted
+        | Feature::FailDefaulted => {}
     }
     Ok(values)
 }
@@ -191,7 +213,7 @@ fn overlay(cell: Cell, scope: &[&str]) -> eyre::Result<Value> {
         object(&mut leaf)?.insert("token".into(), json!("present"));
     }
     let mut values = nested(scope, leaf);
-    if matches!(cell.feature, Feature::Global) {
+    if matches!(cell.feature, Feature::Global | Feature::GlobalChildOnly) {
         match cell.overlay {
             Override::Delete => {
                 object(&mut values)?.insert("global".into(), json!({"enableServiceLinks": null}));
@@ -237,7 +259,7 @@ fn template(cell: Cell) -> String {
         );
     }
     match cell.feature {
-        Feature::Global => {
+        Feature::Global | Feature::GlobalChildOnly => {
             template = template.replace(
                 ".Values.enableServiceLinks",
                 ".Values.global.enableServiceLinks",
@@ -246,12 +268,12 @@ fn template(cell: Cell) -> String {
         Feature::Library => {
             template = indoc::formatdoc!("{{{{ define \"kid.pod\" }}}}\n{template}{{{{ end }}}}\n");
         }
-        Feature::Required => {
+        Feature::Required | Feature::RequiredDefaulted => {
             template = indoc::formatdoc!(
                 "{{{{ $_ := required \"token must be set\" .Values.token }}}}\n{template}"
             );
         }
-        Feature::Fail => {
+        Feature::Fail | Feature::FailDefaulted => {
             template = indoc::formatdoc!(
                 "{{{{ if not .Values.token }}}}{{{{ fail \"token must be set\" }}}}{{{{ end }}}}\n{template}"
             );
@@ -260,7 +282,12 @@ fn template(cell: Cell) -> String {
             template =
                 indoc::formatdoc!("{{{{ fail \"disabled dependency rendered\" }}}}\n{template}");
         }
-        Feature::Plain | Feature::Alias | Feature::ImportChild | Feature::ImportParent => {}
+        Feature::Plain
+        | Feature::Alias
+        | Feature::ConditionEnabled
+        | Feature::TagsEnabled
+        | Feature::ImportChild
+        | Feature::ImportParent => {}
     }
     template
 }
@@ -294,10 +321,15 @@ fn write_root_template(chart: &Path, cell: Cell) -> eyre::Result<()> {
         Feature::Plain
         | Feature::Alias
         | Feature::Condition
+        | Feature::ConditionEnabled
         | Feature::Tags
+        | Feature::TagsEnabled
         | Feature::Global
+        | Feature::GlobalChildOnly
         | Feature::Required
-        | Feature::Fail => return Ok(()),
+        | Feature::Fail
+        | Feature::RequiredDefaulted
+        | Feature::FailDefaulted => return Ok(()),
     };
     fs::write(chart.join("templates/root.yaml"), template)?;
     Ok(())
