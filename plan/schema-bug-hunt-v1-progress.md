@@ -9205,4 +9205,20 @@ Next: run `task lint` on the landed tree and clear the remaining helm-schema-ir 
   /Volumes/T7/dev/round8-lint10c; lane surfaced 39 unjustified rejections, 31 screening disagreements, 7 unusable controls on main),
   Windows root cause (fix/windows-safe-paths cfe8203c..48211e11), helm-schema-dev binary (review: LAND after applying
   protected-skills.patch). Orchestrator.
-Next: assemble landing 10c when the Opus integrator (round8-lint10c) hands back; then luup2 check:local on main; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
+- 13:02 (Oct 21) — **Landing 10c assembled and launched (13:00); reviews: ratchet audit LAND, fix review REWORK (test-only coverage).**
+  Branch landing-10c on main 429eba51: 86da63c4 merge fix/lint-required-10c (Opus integrator: generator fix d3cf7a2f +6 LOC —
+  mandatory constraints checked against lint documents, pre-pass deleted; corpus-wide partial-override lint lane 71f062f0; 80
+  exact inherited entries 9d26c1e1; daskhub 2024.1.1 intake f51b369a; 243-cell Helm-differential matrix 15709a22; luup2 32/32
+  check:local with the fix vs 5/32 failing on main; live battery exit 0 charts_checked=161 probes_checked=279533 flips=10139
+  listed_inherited_failures=644; gates fmt/lint/lint:fc/nextest/test:all 0; 0/205 fixtures moved), f9fb24a5 merge
+  fix/windows-safe-paths (Opus: cfe8203c..48211e11), 02e4beca helm-schema-dev binary (Codex patch 557369ea + protected-skills
+  patch; bench conflicts resolved to main + dev-binary wording; stray __pycache__ caught and unstaged, .gitignore rule added).
+  Runner f809cc3 env landing-10c.env (E=round8-landing10c-run1). Reviews: sol 20261021T055322-03835967 ratchet audit LAND (80
+  entries pre-existing, exact, none of the fixed class); sol 20261021T055321-7d80fb9c REWORK test-only — matrix feature cases all
+  guarded, conditions/tags only disabled, no child-only global; retained requirements never test default-satisfied relaxation.
+  Sent to the Opus integrator (tests/ only, so the dump stays valid; merge into landing-10c and rerun stale steps). New finding
+  from the lane: kyverno `tpl`-name constraint rejects the chart's own default once grafana is enabled (generator obligation).
+  W4 Codex turn FAILED on "Selected model is at capacity" after ~38 h; per user policy its track moves to Opus (no Codex
+  follow-up). W1 Codex track ended blocked (11 NEW FAs at +244 LOC); moves to Opus from its blocked patch. T7 cleanup: 24 → ~200
+  GiB free; plan /Volumes/T7/dev/round8/cleanup-plan.md. Orchestrator.
+Next: merge the integrator's coverage commits into landing-10c and rerun stale steps; on chain green merge 10c and run luup2 check:local on main; then Opus W4 and W1 tracks; first run `python3 /Volumes/T7/dev/round8/watch-codex.py | grep -v '^done'`.
