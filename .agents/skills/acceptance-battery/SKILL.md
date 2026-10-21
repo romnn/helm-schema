@@ -211,8 +211,9 @@ Intrinsic Helm aborts are recorded as inapplicable documents.
 Unsupported inputs and composition errors fail coverage.
 The structural template lane also runs; there is no lane-disable switch.
 
-Optionally import `SCHEMA_ACCEPTANCE_CONTEXT_ROSTER` using the version-2 JSON
-format in [references/env-vars.md](references/env-vars.md).
+Import `SCHEMA_ACCEPTANCE_CONTEXT_ROSTER` using the version-2 JSON format in
+[references/env-vars.md](references/env-vars.md). A live `round74_…` run refuses
+to start without it: some inherited failures are composed only from its rows.
 Every supplied selected-chart row is imported, including activation plus child
 controls; no dependency-key filter applies.
 Rows naming unselected charts fail, so filter the roster when filtering charts.
